@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { ChangesetLocalId, FieldKindIdentifier, RevisionTag } from "../../core/index.js";
+import {
+	strictRebaseValidation,
+	type ChangesetLocalId,
+	type FieldKindIdentifier,
+	type RevisionTag,
+} from "../../core/index.js";
 import { brand, type Mutable } from "../../util/index.js";
 import { setInChangeAtomIdMap, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import type { FlexFieldKind } from "./fieldKind.js";
@@ -14,12 +19,21 @@ import type {
 	NodeChangeset,
 	NodeId,
 } from "./modularChangeTypes.js";
-import { getChangeHandler, nodeChangeFromId, normalizeNodeId } from "./modularChangeUtils.js";
+import {
+	getChangeHandler,
+	isChangesetValid,
+	nodeChangeFromId,
+	normalizeNodeId,
+} from "./modularChangeUtils.js";
 
 export function pruneChangeset(
 	changeset: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): ModularChangeset {
+	strictRebaseValidation("Malformed prune input", () =>
+		isChangesetValid(changeset, fieldKinds),
+	);
+
 	const prunedChangeset: Mutable<ModularChangeset> = {
 		...changeset,
 		nodeChanges: changeset.nodeChanges.clone(),
@@ -36,6 +50,9 @@ export function pruneChangeset(
 			fieldKinds,
 		) ?? new Map();
 
+	strictRebaseValidation("Malformed prune output", () =>
+		isChangesetValid(prunedChangeset, fieldKinds),
+	);
 	return prunedChangeset;
 }
 
@@ -73,7 +90,7 @@ function pruneNodeChange(
 	nodeAliases: ChangeAtomIdBTree<NodeId>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): NodeId | undefined {
-	const changeset = nodeChangeFromId(nodeMap, nodeId);
+	const changeset = nodeChangeFromId(nodeMap, nodeId, nodeAliases);
 	const prunedFields =
 		changeset.fieldChanges === undefined
 			? undefined

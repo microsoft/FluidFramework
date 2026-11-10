@@ -5,11 +5,19 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ChangeRebaser, RevisionTag } from "../../core/index.js";
+import type {
+	ChangeRebaser,
+	ChangeFamily,
+	RevisionTag,
+	ChangeFamilyEditor,
+	ChangeDecodingContext,
+	ChangeEncodingContext,
+} from "../../core/index.js";
 // Allow importing from these specific files which are being tested:
 /* eslint-disable-next-line import-x/no-internal-modules */
 import { type GraphCommit, rebaseBranch } from "../../core/rebase/index.js";
 import { mintRevisionTag } from "../utils.js";
+import type { ICodecFamily } from "../../codec/index.js";
 
 /** Given a number in the range [0, 15], turn it into a deterministic and human-rememberable v4 UUID */
 function makeRevisionTag(tag: number): RevisionTag {
@@ -44,6 +52,23 @@ export class DummyChangeRebaser implements ChangeRebaser<typeof dummyChange> {
 	public changeRevision(): typeof dummyChange {
 		return {};
 	}
+}
+
+class DummyChangeFamily implements ChangeFamily<ChangeFamilyEditor, typeof dummyChange> {
+	public buildEditor(): ChangeFamilyEditor {
+		throw new Error("Method not implemented.");
+	}
+	public get codecs(): ICodecFamily<{}, ChangeEncodingContext, ChangeDecodingContext> {
+		throw new Error("Method not implemented.");
+	}
+	public validator: (change: {}) => true | string = () => true;
+	public hasSchemaChange(change: {}): boolean {
+		return false;
+	}
+	public buildProcessor(processFn: never): (change: {}) => {} {
+		throw new Error("Method not implemented.");
+	}
+	public readonly rebaser = new DummyChangeRebaser();
 }
 
 describe("rebaser", () => {
@@ -138,7 +163,7 @@ describe("rebaser", () => {
 
 				const { newSourceHead } = rebaseBranch(
 					mintRevisionTag,
-					new DummyChangeRebaser(),
+					new DummyChangeFamily(),
 					tester.branch,
 					base,
 					tester.main,

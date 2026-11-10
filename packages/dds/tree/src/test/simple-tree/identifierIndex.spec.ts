@@ -4,10 +4,13 @@
  */
 
 import { strict as assert } from "node:assert";
+// eslint-disable-next-line import-x/no-internal-modules -- Verify index setup reuses analysis.
+import { getTreeNodeSchemaPrivateData } from "../../simple-tree/core/index.js";
 
 import type { FieldKey } from "../../core/index.js";
 import {
 	SchemaFactory,
+	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 	createIdentifierIndex,
 } from "../../simple-tree/index.js";
@@ -88,5 +91,58 @@ describe("identifier indexes", () => {
 	it("fail on lookup if two nodes have the same key", () => {
 		const { index } = init(new IndexableChild({ childKey: parentId }));
 		assert.throws(() => index.get(parentId));
+	});
+
+	it("does not index schemas with multiple identifier fields", () => {
+		class AmbiguousIdentifier extends schemaFactory.object("AmbiguousIdentifier", {
+			first: schemaFactory.identifier,
+			second: schemaFactory.identifier,
+		}) {}
+		const view = getView(new TreeViewConfiguration({ schema: AmbiguousIdentifier }));
+		view.initialize({ first: "a", second: "b" });
+
+		const index = createIdentifierIndex(view);
+		assert.equal(index.get("a"), undefined);
+		assert.equal(index.get("b"), undefined);
+		assert.equal(index.size, 0);
+	});
+
+	it("indexes an identifier whose property and stored keys differ", () => {
+		class RenamedIdentifier extends schemaFactory.object("RenamedIdentifier", {
+			identifier: SchemaFactoryAlpha.identifier({ key: "storedIdentifier" }),
+		}) {}
+		const view = getView(new TreeViewConfiguration({ schema: RenamedIdentifier }));
+		view.initialize({ identifier: "identifier" });
+
+		const index = createIdentifierIndex(view);
+		assert.equal(index.get("identifier"), view.root);
+	});
+
+	it("reuses cached definitions without rediscovering schema", () => {
+		const sf = new SchemaFactory("indexLookupReuse");
+		class Child extends sf.object("Child", { id: sf.identifier }) {}
+		class Parent extends sf.object("Parent", { id: sf.identifier, child: Child }) {}
+		const view = getView(new TreeViewConfiguration({ schema: Parent }));
+		view.initialize({ id: "parent", child: { id: "child" } });
+		let reads = 0;
+		for (const node of [Parent, Child]) {
+			const data = getTreeNodeSchemaPrivateData(node);
+			const types = data.childAllowedTypes;
+			Object.defineProperty(data, "childAllowedTypes", {
+				get() {
+					reads++;
+					return types;
+				},
+			});
+		}
+		const identifiers = createIdentifierIndex(view);
+		try {
+			assert.equal(reads, 0);
+			assert.equal(identifiers.get("parent"), view.root);
+			assert.equal(identifiers.get("child"), view.root.child);
+		} finally {
+			identifiers.dispose();
+			view.dispose();
+		}
 	});
 });

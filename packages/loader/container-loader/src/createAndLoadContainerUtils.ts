@@ -62,6 +62,7 @@ import { pkgVersion } from "./packageVersion.js";
 import type { ProtocolHandlerBuilder } from "./protocol.js";
 import type { IPendingContainerState } from "./serializedStateManager.js";
 import type {
+	AcknowledgedSummary,
 	LoadSummarizerSummaryResult,
 	OnDemandSummaryResults,
 	SummarizeOnDemandResults,
@@ -75,6 +76,9 @@ import {
 interface OnDemandSummarizeResultsPromises {
 	readonly summarySubmitted: Promise<SummarizeOnDemandResults["summarySubmitted"]>;
 	readonly summaryOpBroadcasted: Promise<SummarizeOnDemandResults["summaryOpBroadcasted"]>;
+	readonly receivedSummaryAckOrNack: Promise<
+		SummarizeOnDemandResults["receivedSummaryAckOrNack"]
+	>;
 }
 
 interface OnDemandSummarizeOptions {
@@ -227,7 +231,8 @@ export interface ILoadExistingContainerProps
 
 /**
  * Props used to load summarizer container.
- * @legacy @alpha
+ * @input
+ * @legacy @beta
  */
 export type ILoadSummarizerContainerProps = Omit<
 	ILoadExistingContainerProps,
@@ -622,6 +627,7 @@ export async function captureFullContainerState({
 		logger: captureLogger,
 		active: () => false,
 		containerDirty: () => false,
+		containerOpDirty: () => false,
 		client,
 		reconnectAllowed: true,
 	});
@@ -761,10 +767,135 @@ async function waitForCatchUp(
 }
 
 /**
- * Loads a summarizer container with the required headers, triggers an on-demand summary, and then closes it.
- * Returns success/failure and an optional error for host-side handling.
+ * Loads a summarizer container, creates a summary, waits for service acknowledgement, and disposes the container.
  *
- * @legacy @alpha
+ * @remarks
+ * The runtime handles summary retries and times out if the service ACK does not arrive.
+ * An attempt fails if the container disconnects, closes, or is disposed.
+ * The loader retries every failed attempt once with a fresh container, regardless of error retryability.
+ * This gives transient conditions another opportunity to resolve; it does not guarantee recovery.
+ * Both returned values identify the same successful attempt.
+ *
+ * @param loadSummarizerContainerProps - Services and properties necessary for loading the summarizer container.
+ * @returns The acknowledged snapshot version and the reference sequence number of its summary proposal.
+ * @throws If summarization fails after retries or times out.
+ * @legacy @beta
+ */
+export async function loadAndSummarize(
+	loadSummarizerContainerProps: ILoadSummarizerContainerProps,
+): Promise<AcknowledgedSummary> {
+	try {
+		return await loadAndSummarizeOnce(loadSummarizerContainerProps);
+	} catch {
+		// During catch-up, the runtime may discover a newer summary and dispose the container.
+		// A second load may pick up the newer snapshot. Retry once on any failure, including
+		// load failures and errors marked non-retryable, following the approach in PR #25977.
+		// https://github.com/microsoft/FluidFramework/pull/25977
+		return loadAndSummarizeOnce(loadSummarizerContainerProps);
+	}
+}
+
+async function loadAndSummarizeOnce(
+	loadSummarizerContainerProps: ILoadSummarizerContainerProps,
+): Promise<AcknowledgedSummary> {
+	const { logger, configProvider, request: originalRequest } = loadSummarizerContainerProps;
+	const subMc = mixinMonitoringContext(
+		mixinDebugLogger("fluid:telemetry", logger, {
+			all: { loaderId: uuid(), loaderVersion: pkgVersion },
+		}),
+		sessionStorageConfigProvider.value,
+		configProvider,
+	);
+	const mc = createChildMonitoringContext({
+		logger: subMc.logger,
+		namespace: "SummarizerOnDemand",
+	});
+	return PerformanceEvent.timedExecAsync(
+		mc.logger,
+		{ eventName: "SummarizerOnDemandAcknowledgedSummary" },
+		async () => {
+			const container = await loadExistingContainer({
+				...loadSummarizerContainerProps,
+				request: {
+					...originalRequest,
+					headers: {
+						...originalRequest.headers,
+						[LoaderHeader.cache]: false,
+						[LoaderHeader.clientDetails]: {
+							capabilities: { interactive: false },
+							type: "summarizer",
+						},
+						[DriverHeader.summarizingClient]: true,
+						[LoaderHeader.reconnect]: false,
+					},
+				},
+			});
+			const failureMonitor = createContainerFailureMonitor(container);
+			return Promise.race([
+				summarizeAndWaitForAcknowledgement(
+					container,
+					mc.config.getBoolean("Fluid.Summarizer.FullTree.OnDemand") === true,
+				),
+				failureMonitor.failure,
+			]).finally(() => {
+				failureMonitor.dispose();
+				container.dispose();
+			});
+		},
+		{ start: true, end: true, cancel: "generic" },
+	);
+}
+
+async function summarizeAndWaitForAcknowledgement(
+	container: IContainer,
+	fullTree: boolean,
+): Promise<AcknowledgedSummary> {
+	const entryPoint = (await container.getEntryPoint()) as FluidObject<SummarizerLike>;
+	// The failure race may have disposed the container while entry-point resolution was pending.
+	if (container.closed) {
+		throw new GenericError("Container terminated before summary generation");
+	}
+	const summarizer = entryPoint?.ISummarizer;
+	if (summarizer === undefined) {
+		throw new GenericError("Summarizer entry point not available");
+	}
+	const results = summarizer.summarizeOnDemand({
+		reason: "summaryOnRequest",
+		retryOnFailure: true,
+		fullTree,
+	});
+	const submitted = await results.summarySubmitted;
+	if (!submitted.success) {
+		throw normalizeError(submitted.error);
+	}
+	const broadcast = await results.summaryOpBroadcasted;
+	if (!broadcast.success) {
+		throw normalizeError(broadcast.error);
+	}
+	const acknowledgement = await results.receivedSummaryAckOrNack;
+	if (!acknowledgement.success) {
+		throw normalizeError(acknowledgement.error);
+	}
+	return {
+		version: acknowledgement.data.summaryAckOp.contents.handle,
+		referenceSequenceNumber: broadcast.data.summarizeOp.referenceSequenceNumber,
+	};
+}
+
+/**
+ * Loads a summarizer container with the required headers, triggers an on-demand summary, and then closes it.
+ *
+ * @remarks
+ * Success requires submission and broadcast. The loader does not explicitly wait for the service ACK,
+ * although the runtime may wait for it as part of its retry behavior.
+ * To obtain an acknowledged snapshot version, use {@link loadAndSummarize}.
+ * The returned `summaryResults.summaryInfo.handle` identifies the broadcast summary proposal.
+ * It is not guaranteed to identify an acknowledged snapshot that can be loaded with
+ * {@link @fluidframework/container-definitions#LoaderHeader.version}.
+ *
+ * @param loadSummarizerContainerProps - Services and properties necessary for loading the summarizer container.
+ * @returns A result indicating success with summary details, or failure with an error for host-side handling.
+ * @legacy @beta
  */
 export async function loadSummarizerContainerAndMakeSummary(
 	loadSummarizerContainerProps: ILoadSummarizerContainerProps,
@@ -773,11 +904,10 @@ export async function loadSummarizerContainerAndMakeSummary(
 		loadSummarizerContainerProps,
 	);
 	if (!result.success) {
-		/**
-		 * We retry once as there is potential for a race condition when loading a snapshot.
-		 * If the newest snapshot is not ready when creating the container but becomes available upon catching up, the container
-		 * will be closed so it can load from the new snapshot.
-		 */
+		// During catch-up, the runtime may discover a newer summary and dispose the container.
+		// A second load may pick up the newer snapshot. Retry once on any failure result,
+		// including errors marked non-retryable.
+		// https://github.com/microsoft/FluidFramework/pull/25977
 		result = await loadSummarizerContainerAndMakeSummaryInternal(loadSummarizerContainerProps);
 	}
 	return result;
@@ -905,4 +1035,49 @@ async function loadSummarizerContainerAndMakeSummaryInternal(
 		},
 		{ start: true, end: true, cancel: "generic" },
 	);
+}
+
+/**
+ * Monitors container termination, rejecting on failure until disposed.
+ */
+function createContainerFailureMonitor(container: IContainer): {
+	readonly failure: Promise<never>;
+	dispose(): void;
+} {
+	let onTermination: (error?: unknown) => void;
+	let onDisconnected: () => void;
+	let settled = false;
+	const failure = new Promise<never>((_resolve, reject) => {
+		onTermination = (error) => {
+			if (settled) {
+				return;
+			}
+			settled = true;
+			reject(
+				error === undefined
+					? new GenericError("Container terminated without error")
+					: normalizeError(error),
+			);
+		};
+		onDisconnected = () => {
+			// Closing a connected container disconnects before emitting the terminal error.
+			// Let that same-turn close/dispose event take precedence over this fallback.
+			queueMicrotask(() => onTermination());
+		};
+		container.on("closed", onTermination);
+		container.on("disposed", onTermination);
+		container.on("disconnected", onDisconnected);
+		if (container.closed || container.disposed === true) {
+			onTermination();
+		}
+	});
+	return {
+		failure,
+		dispose: () => {
+			settled = true;
+			container.off("closed", onTermination);
+			container.off("disposed", onTermination);
+			container.off("disconnected", onDisconnected);
+		},
+	};
 }

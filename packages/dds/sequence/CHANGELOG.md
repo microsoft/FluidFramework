@@ -1,5 +1,111 @@
 # @fluidframework/sequence
 
+## 3.12.0
+
+Dependency updates only.
+
+## 3.11.0
+
+Dependency updates only.
+
+## 3.10.0
+
+Dependency updates only.
+
+## 3.7.0
+
+Dependency updates only.
+
+## 3.6.0
+
+### Minor Changes
+
+- SharedString now allows applications to configure which snapshot format it uses ([#28370](https://github.com/microsoft/FluidFramework/pull/28370)) [46d068346f7](https://github.com/microsoft/FluidFramework/commit/46d068346f7bdbd9889f2b0970d4d498f847ad00)
+
+  Use `configuredSharedString` to select a snapshot format through the registered DDS factory.
+  Set `newMergeTreeSnapshotFormat` to `true` for flat snapshots or `false` for legacy snapshots.
+  Both snapshot formats remain supported.
+
+  ```typescript
+  import { configuredSharedString } from "@fluidframework/sequence/legacy";
+
+  const ConfiguredSharedString = configuredSharedString({
+    newMergeTreeSnapshotFormat: true,
+  });
+  const factory = ConfiguredSharedString.getFactory();
+  ```
+
+  Register this kind, or its factory, in place of the default SharedString.
+  The API is also available from `fluid-framework/legacy`.
+  Omit the factory option to allow the runtime option or loaded snapshot format to determine the format.
+
+  The existing configuration-provider flow remains supported:
+
+  ```typescript
+  const configProvider = {
+    getRawConfig(name: string): boolean | undefined {
+      return name === "Fluid.Sequence.newMergeTreeSnapshotFormat"
+        ? true
+        : undefined;
+    },
+  };
+  ```
+
+  Return `false` for this flag to explicitly select legacy snapshots.
+  Selection precedence is the configuration flag, the factory option, the runtime option, then the loaded snapshot format.
+  When no explicit setting is provided, new SharedStrings use the legacy format and loaded SharedStrings reuse the format identified by their snapshot header.
+  A summary written in the selected format becomes the inherited format for clients that load it without an explicit setting.
+  Configuration and options are fixed for each DDS instance; use a new client or factory configuration to select a different format.
+  No additional DDS attributes are stored for the setting.
+  Format selection does not force an otherwise unchanged DDS to produce a new summary.
+
+## 3.5.0
+
+Dependency updates only.
+
+## 3.4.0
+
+Dependency updates only.
+
+## 3.3.0
+
+Dependency updates only.
+
+## 3.2.0
+
+### Patch Changes
+
+- Fix intervals sharing an end position being dropped from the endpoint index ([#28191](https://github.com/microsoft/FluidFramework/pull/28191)) [63e64bf06cd](https://github.com/microsoft/FluidFramework/commit/63e64bf06cd3129e7335d288c830b1d716259f84)
+
+  [`ISequenceIntervalCollection.previousInterval`](https://fluidframework.com/docs/api/sequence/isequenceintervalcollection-interface#previousinterval-methodsignature) and
+  [`nextInterval`](https://fluidframework.com/docs/api/sequence/isequenceintervalcollection-interface#nextinterval-methodsignature) are backed by an index that ordered
+  intervals by end position alone. Because that ordering treats any two intervals ending at the same
+  position as the same entry, only one of them could be held at a time: adding a second interval with
+  an existing end position overwrote the first, and removing either one evicted both. Intervals that
+  were still present in the collection could therefore be missing from the results of
+  `previousInterval` and `nextInterval`.
+
+  The index now orders by end position and then by interval ID, so intervals sharing an end position
+  are stored and removed individually. Lookups continue to match on end position alone, so
+  `previousInterval` and `nextInterval` return the same results as before whenever end positions were
+  already distinct.
+
+- Fix interval iteration by start and end position returning nothing ([#28241](https://github.com/microsoft/FluidFramework/pull/28241)) [50c58d5cda1](https://github.com/microsoft/FluidFramework/commit/50c58d5cda1d720c674385f06893c157b4b3492e)
+
+  [`ISequenceOverlappingIntervalsIndex.gatherIterationResults`](https://fluidframework.com/docs/api/sequence/isequenceoverlappingintervalsindex-interface#gatheriterationresults-methodsignature)
+  gathered no intervals at all when it was given both a start and an end position. It compared the
+  range being searched for against each interval using an ordering that includes interval ID, and the
+  range being searched for is described by a temporary interval assigned a fresh random ID, so nothing
+  could ever compare equal to it.
+  Gathering by start position alone, by end position alone, or with no bounds was unaffected.
+
+  Interval IDs are no longer considered when gathering, so passing both a start and an end position now
+  yields every interval spanning exactly that range.
+
+## 3.1.0
+
+Dependency updates only.
+
 ## 3.0.0
 
 ### Minor Changes

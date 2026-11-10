@@ -239,11 +239,15 @@ export interface IMergeTreeOptions {
 	 *
 	 * Both formats merge segments where possible (see {@link ISegment.canAppend})
 	 *
-	 * default: false
-	 *
 	 * @remarks
-	 * Despite the "legacy"/"V1" naming, both formats are actively used at the time of writing. SharedString
-	 * uses legacy and Matrix uses V1.
+	 * Despite the "legacy"/"V1" naming, both formats are actively used.
+	 * SharedString uses the `Fluid.Sequence.newMergeTreeSnapshotFormat` configuration flag first,
+	 * then its factory option, then this runtime option, otherwise the format of its loaded snapshot.
+	 * New SharedStrings default to SnapshotLegacy.
+	 * Configuration and options are expected to stay fixed for each DDS instance.
+	 * No separate DDS attribute is persisted for this setting.
+	 * Format overrides apply when the DDS is summarized; they do not force a new summary.
+	 * SharedMatrix always uses SnapshotV1.
 	 */
 	newMergeTreeSnapshotFormat?: boolean;
 

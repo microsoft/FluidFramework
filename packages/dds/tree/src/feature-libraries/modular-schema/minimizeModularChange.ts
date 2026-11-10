@@ -4,6 +4,7 @@
  */
 
 import {
+	cheapRebaseValidation,
 	deltaFieldMapHasChanges,
 	makeAnonChange,
 	makeChangeAtomId,
@@ -56,9 +57,9 @@ import type {
 } from "./modularChangeTypes.js";
 import {
 	getChangeHandler,
+	isChangesetValid,
 	nodeChangeFromId,
 	normalizeNodeId,
-	validateChangeset,
 } from "./modularChangeUtils.js";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 
@@ -95,6 +96,9 @@ class ModularChangeMinimizer {
 		private readonly change: ModularChangeset,
 		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	) {
+		cheapRebaseValidation("Malformed minimize input", () =>
+			isChangesetValid(change, fieldKinds),
+		);
 		this.outputAttachStates = getOutputNodeAttachStates(change, fieldKinds);
 		const nodeInfo = getNodeInfo(change, fieldKinds);
 		this.builtNodeIds = nodeInfo.builtNodeIds;
@@ -114,7 +118,10 @@ class ModularChangeMinimizer {
 		);
 
 		(residualChange as Mutable<ModularChangeset>).builds = this.squashBuilds(forestFactory);
-		validateChangeset(residualChange, this.fieldKinds);
+
+		cheapRebaseValidation("Malformed minimize output", () =>
+			isChangesetValid(residualChange, this.fieldKinds),
+		);
 		return residualChange;
 	}
 
@@ -605,7 +612,7 @@ function addInputNodeAttachStatesForFields(
 
 			nodeAttachStates.set([normalizedNodeId.revision, normalizedNodeId.localId], attachState);
 
-			const nodeChangeset = nodeChangeFromId(nodes, normalizedNodeId);
+			const nodeChangeset = nodeChangeFromId(nodes, normalizedNodeId, nodeAliases);
 			if (nodeChangeset.fieldChanges !== undefined) {
 				addInputNodeAttachStatesForFields(
 					attachState,
@@ -688,7 +695,7 @@ function addNodeInfoForFields(
 				setInChangeAtomIdMap(rootIdToNodeId, detachId, normalizedNodeId);
 			}
 
-			const nodeChangeset = nodeChangeFromId(nodes, normalizedNodeId);
+			const nodeChangeset = nodeChangeFromId(nodes, normalizedNodeId, nodeAliases);
 			if (nodeChangeset.fieldChanges !== undefined) {
 				addNodeInfoForFields(
 					isPartOfBuild,

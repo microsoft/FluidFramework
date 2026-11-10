@@ -6,6 +6,7 @@
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import {
 	revisionMetadataSourceFromInfo,
+	strictRebaseValidation,
 	type ChangeAtomId,
 	type ChangesetLocalId,
 	type FieldKindIdentifier,
@@ -15,7 +16,7 @@ import {
 	type TaggedChange,
 	type TreeChunk,
 } from "../../core/index.js";
-import { brand, idAllocatorFromMaxId, type IdAllocator } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 import { newChangeAtomIdBTree, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import type {
 	FieldChange,
@@ -30,6 +31,7 @@ import {
 	getChangeHandler,
 	getRevInfoFromTaggedChanges,
 	hasConflicts,
+	isChangesetValid,
 	makeChangesetInversions,
 	makeModularChangeset,
 	newConstraintState,
@@ -39,7 +41,8 @@ import {
 } from "./modularChangeUtils.js";
 import type { CrossFieldTarget } from "./crossFieldQueries.js";
 import type { FlexFieldKind } from "./fieldKind.js";
-import { NodeAttachState } from "./fieldChangeHandler.js";
+import { NodeAttachState, type AtomIdAliasAllocator } from "./fieldChangeHandler.js";
+import { DefaultAtomIdAliasAllocator } from "./defaultAtomIdAliasAllocator.js";
 
 /**
  * @param change - The change to invert.
@@ -53,6 +56,10 @@ export function invertModularChange(
 	revisionForInvert: RevisionTag,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): ModularChangeset {
+	strictRebaseValidation("Malformed invert input", () =>
+		isChangesetValid(change.change, fieldKinds),
+	);
+
 	// Rollback changesets destroy the nodes created by the change being rolled back.
 	const destroys = isRollback ? invertBuilds(change.change.builds) : undefined;
 
@@ -66,8 +73,10 @@ export function invertModularChange(
 		? [{ revision: revisionForInvert, rollbackOf: change.revision }]
 		: [{ revision: revisionForInvert }];
 
-	const noChangeConstraint = change.change.noChangeConstraintOnRevert;
-	const noChangeConstraintOnRevert = change.change.noChangeConstraint;
+	const [noChangeConstraint, noChangeConstraintOnRevert] = isRollback
+		? // Rollbacks are not subject to constraints
+			[undefined, undefined]
+		: [change.change.noChangeConstraintOnRevert, change.change.noChangeConstraint];
 
 	if (hasConflicts(change.change)) {
 		return makeModularChangeset({
@@ -77,7 +86,7 @@ export function invertModularChange(
 		});
 	}
 
-	const genId: IdAllocator = idAllocatorFromMaxId(change.change.maxId ?? -1);
+	const genId = new DefaultAtomIdAliasAllocator();
 
 	const crossFieldTable: InvertTable = {
 		...newCrossFieldTable<FieldChange>(),
@@ -85,6 +94,12 @@ export function invertModularChange(
 	};
 	const { revInfos: oldRevInfos } = getRevInfoFromTaggedChanges([change]);
 	const revisionMetadata = revisionMetadataSourceFromInfo(oldRevInfos);
+
+	if (change.change.maxId !== undefined) {
+		for (const { revision } of oldRevInfos) {
+			genId.reserve(revision, change.change.maxId);
+		}
+	}
 
 	const invertedFields = invertFieldMap(
 		change.change.fieldChanges,
@@ -142,18 +157,23 @@ export function invertModularChange(
 		invertedFields,
 		invertedNodes,
 		fieldKinds,
+		change.change.nodeAliases,
 	);
 
 	const constraintState = newConstraintState(0);
-	updateConstraintsForFields(
-		invertedFields,
-		NodeAttachState.Attached,
-		constraintState,
-		invertedNodes,
-		fieldKinds,
-	);
+	// Rollbacks are not subject to constraints
+	if (!isRollback) {
+		updateConstraintsForFields(
+			invertedFields,
+			NodeAttachState.Attached,
+			constraintState,
+			invertedNodes,
+			change.change.nodeAliases,
+			fieldKinds,
+		);
+	}
 
-	return makeModularChangeset({
+	const inverse = makeModularChangeset({
 		fieldChanges: invertedFields,
 		nodeChanges: invertedNodes,
 		nodeToParent,
@@ -166,13 +186,18 @@ export function invertModularChange(
 		noChangeConstraintOnRevert,
 		destroys,
 	});
+
+	strictRebaseValidation("Malformed invert output", () =>
+		isChangesetValid(inverse, fieldKinds),
+	);
+	return inverse;
 }
 
 function invertFieldMap(
 	changes: FieldChangeMap,
 	parentId: NodeId | undefined,
 	isRollback: boolean,
-	genId: IdAllocator,
+	genId: AtomIdAliasAllocator,
 	crossFieldTable: InvertTable,
 	revisionMetadata: RevisionMetadataSource,
 	revisionForInvert: RevisionTag,
@@ -211,7 +236,7 @@ function invertNodeChange(
 	change: NodeChangeset,
 	id: NodeId,
 	isRollback: boolean,
-	genId: IdAllocator,
+	genId: AtomIdAliasAllocator,
 	crossFieldTable: InvertTable,
 	revisionMetadata: RevisionMetadataSource,
 	revisionForInvert: RevisionTag,
@@ -219,17 +244,20 @@ function invertNodeChange(
 ): NodeChangeset {
 	const inverse: NodeChangeset = {};
 
-	// If the node has a constraint, it should be inverted to a node-exist-on-revert constraint. This ensure that if
-	// the inverse is inverted again, the original input constraint will be restored.
-	if (change.nodeExistsConstraint !== undefined) {
-		inverse.nodeExistsConstraintOnRevert = change.nodeExistsConstraint;
-	}
+	// Rollbacks are not subject to constraints
+	if (!isRollback) {
+		// If the node has a constraint, it should be inverted to a node-exist-on-revert constraint. This ensure that if
+		// the inverse is inverted again, the original input constraint will be restored.
+		if (change.nodeExistsConstraint !== undefined) {
+			inverse.nodeExistsConstraintOnRevert = change.nodeExistsConstraint;
+		}
 
-	// The node-exist-on-revert constraint of a node is the constraint that should apply when the a change is reverted.
-	// So, it should become the constraint in the inverse. If this constraint is violated when applying the inverse,
-	// it will be discarded.
-	if (change.nodeExistsConstraintOnRevert !== undefined) {
-		inverse.nodeExistsConstraint = change.nodeExistsConstraintOnRevert;
+		// The node-exist-on-revert constraint of a node is the constraint that should apply when the a change is reverted.
+		// So, it should become the constraint in the inverse. If this constraint is violated when applying the inverse,
+		// it will be discarded.
+		if (change.nodeExistsConstraintOnRevert !== undefined) {
+			inverse.nodeExistsConstraint = change.nodeExistsConstraintOnRevert;
+		}
 	}
 
 	if (change.fieldChanges !== undefined) {

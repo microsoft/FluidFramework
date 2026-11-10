@@ -393,20 +393,35 @@ export const baseRules = {
 				"Exporting * is not permitted. You should export only named items you intend to export.",
 		},
 		"ForInStatement",
-		// Enforce the granular TypeBox import pattern. The named `Type` export of
-		// `@sinclair/typebox` is the monolithic `TypeBuilder` aggregate; importing
-		// it (`import { Type } from "@sinclair/typebox"`) pulls in every builder
-		// and defeats tree-shaking. Instead, bind the namespace with
-		// `import * as Type from "@sinclair/typebox"` so member access like
-		// `Type.Object(...)` lets the bundler prune unused builders. This can't be
-		// expressed with `no-restricted-imports`/`importNames`, since that also
-		// reports the desired `import * as Type` namespace form; a syntax selector
-		// targets only the named specifier.
+		// TypeBox import policy:
+		// - Import types by name from `typebox` using `import type`.
+		// - Import runtime schema builders as a namespace from `typebox/type`.
+		// Keeping these forms distinct makes runtime imports easy to identify and
+		// gives bundlers the narrowest documented entry point to tree-shake.
+		{
+			selector: 'ImportDeclaration[source.value="typebox"] > ImportNamespaceSpecifier',
+			message:
+				"Import TypeBox types by name with `import type` from `typebox`, and import the runtime namespace from `typebox/type`.",
+		},
+		{
+			selector: 'ImportDeclaration[source.value="typebox"] > ImportDefaultSpecifier',
+			message:
+				"Do not use the TypeBox aggregate. Import the runtime namespace from `typebox/type`.",
+		},
+		{
+			selector: 'ImportDeclaration[source.value="typebox/type"] > ImportDefaultSpecifier',
+			message: 'Import the TypeBox runtime with `import * as Type from "typebox/type"`.',
+		},
+		{
+			selector: 'ImportDeclaration[source.value="typebox/type"] > ImportSpecifier',
+			message:
+				'Import the TypeBox runtime with `import * as Type from "typebox/type"`; import types by name from `typebox`.',
+		},
 		{
 			selector:
-				'ImportDeclaration[source.value="@sinclair/typebox"] > ImportSpecifier[imported.name="Type"]',
+				'ImportDeclaration[source.value="typebox"]:not([importKind="type"]) > ImportSpecifier:not([importKind="type"])',
 			message:
-				'Import the TypeBox `Type` namespace via `import * as Type from "@sinclair/typebox"` instead of the named `Type` value export, which pulls in the entire builder and defeats tree-shaking.',
+				'Runtime TypeBox imports must use `import * as Type from "typebox/type"`; only type imports may come from `typebox`.',
 		},
 	],
 	"no-sequences": "error",

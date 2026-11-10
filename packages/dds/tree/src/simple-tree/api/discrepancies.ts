@@ -83,7 +83,7 @@ export type FieldDiscrepancy =
 	| ValueSchemaDiscrepancy;
 
 /**
- * Information about where a field discrepancy is located within a collection of schema.
+ * Information about where a field discrepancy is located within a collection of schemas.
  */
 export interface FieldDiscrepancyLocation {
 	/**
@@ -134,7 +134,7 @@ export interface AllowedTypeDiscrepancy extends FieldDiscrepancyLocation {
 }
 
 /**
- * Differences in `FieldKindIdentifier` between two schema.
+ * Differences in `FieldKindIdentifier` between two schemas.
  */
 export interface FieldKindDiscrepancy extends FieldDiscrepancyLocation {
 	readonly mismatch: "fieldKind";
@@ -155,7 +155,7 @@ export interface ValueSchemaDiscrepancy {
 /**
  * Differences in the kind of node schema.
  *
- * Includes when stored object schema are expected to be compatible with an array node schema.
+ * Includes when stored object schemas are expected to be compatible with an array node schema.
  */
 export interface NodeKindDiscrepancy {
 	identifier: TreeNodeSchemaIdentifier;

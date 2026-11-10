@@ -16,13 +16,6 @@ export default [
 			// build-tools uses some template-like tokens for use in configs
 			"no-template-curly-in-string": "off",
 
-			// TODO: AB#58049 Enable these type-safety rules ASAP and fix violations
-			"@typescript-eslint/no-explicit-any": "off",
-			"@typescript-eslint/no-unsafe-argument": "off",
-			"@typescript-eslint/no-unsafe-assignment": "off",
-			"@typescript-eslint/no-unsafe-call": "off",
-			"@typescript-eslint/no-unsafe-member-access": "off",
-
 			"@typescript-eslint/no-non-null-assertion": "error",
 
 			// Allow require imports for dynamic loading
@@ -58,12 +51,21 @@ export default [
 			"radix": "off",
 		},
 	},
-	// Enable switch-exhaustiveness-check only for TS files (not .d.ts which lack type info)
+	// Enable rules that require type information only for TS files (not .d.ts which lack type info)
 	{
 		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
 		ignores: ["**/*.d.ts"],
 		rules: {
 			"@typescript-eslint/switch-exhaustiveness-check": "error",
+
+			// The shared config enables these rules as warnings, but this package's lint command uses
+			// --quiet. Set them to errors so they are enforced while preserving shared rule options
+			// such as no-explicit-any's `ignoreRestArgs`.
+			"@typescript-eslint/no-explicit-any": "error",
+			"@typescript-eslint/no-unsafe-argument": "error",
+			"@typescript-eslint/no-unsafe-assignment": "error",
+			"@typescript-eslint/no-unsafe-call": "error",
+			"@typescript-eslint/no-unsafe-member-access": "error",
 		},
 	},
 ];

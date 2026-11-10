@@ -1,0 +1,41 @@
+{
+  "version": 2,
+  "identifiers": [],
+  "shapes": [
+    {
+      "c": {
+        "type": "test.NestedStagedOptional",
+        "value": false,
+        "fields": [
+          [
+            "a",
+            1
+          ],
+          [
+            "b",
+            2
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.leaf.number",
+        "value": true
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.leaf.string",
+        "value": true
+      }
+    }
+  ],
+  "data": [
+    [
+      0,
+      5,
+      "text"
+    ]
+  ]
+}

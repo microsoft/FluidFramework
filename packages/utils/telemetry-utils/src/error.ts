@@ -244,9 +244,6 @@ export class DataCorruptionError extends LoggingError implements IErrorBase, IFl
  * @internal
  */
 export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
-	/**
-	 * {@inheritDoc IFluidErrorBase.errorType}
-	 */
 	public readonly errorType = FluidErrorTypes.dataProcessingError;
 
 	public readonly canRetry = false;

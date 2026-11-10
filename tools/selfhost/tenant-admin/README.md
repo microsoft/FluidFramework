@@ -126,8 +126,9 @@ a first smoke test on Windows.
 
 Only needed if you are modifying `tenant-admin` itself, not to run it:
 
-- **Node.js 18+** to run the CLI directly or the test suite (`npm test`). The test suite needs no
-  cluster and no Azure access; it runs against in-process stubs.
+- **Node.js 22+** and **pnpm** to rebuild the production bundle, run the CLI directly, or run the
+  test suite. The test suite needs no cluster and no Azure access; it runs against in-process
+  stubs.
 
 ---
 
@@ -238,16 +239,16 @@ the Pod that already runs `tenant-admin` does the read itself:
 - the Pod runs as the `fluid-workload-identity` ServiceAccount and carries the
   `azure.workload.identity/use: "true"` label, so the AKS webhook injects a projected federated
   token;
-- [`src/keyVaultClient.js`](./src/keyVaultClient.js) exchanges that token for an Entra token
-  scoped to the Key Vault data plane and issues a plain `GET /secrets/<name>` over the private
-  endpoint;
+- [`src/keyVaultClient.js`](./src/keyVaultClient.js) uses `WorkloadIdentityCredential` from the
+  pinned `@azure/identity` dependency to acquire an Entra token scoped to the Key Vault data
+  plane, then issues `GET /secrets/<name>` over the private endpoint;
 - that identity holds **Key Vault Secrets User** on the vault, granted by `azure/deploy.sh`
   (`phase8_keyvault`) — the same identity and role every application pod already uses.
 
 Only the vault _name_ is passed into the Pod. The secret never leaves the cluster, and
-`tenant-admin.sh` makes no `az keyvault` calls at all. It is hand-rolled against the REST API
-rather than using `@azure/identity`, because this package ships as bare files mounted from a
-ConfigMap with no `node_modules` (see [`test/deployedLayout.test.js`](./test/deployedLayout.test.js)).
+`tenant-admin.sh` makes no `az keyvault` calls at all. The self-contained
+`bundle/tenant-admin.cjs` file is mounted from a temporary ConfigMap and includes the pinned
+`@azure/identity` dependency.
 
 Because the wrapper runs the CLI with `--json`, the outcome of the check travels back over the
 `kubectl exec` stream as `keyVaultCheck` (`performed`, `skipped-no-secret`, `skipped-no-vault`,
@@ -444,12 +445,22 @@ document operation, which is far harder to diagnose.
 Riddler's `PUT /api/tenants/:id/customData` replaces the whole object. Any update therefore reads
 the current value and merges, or it would silently drop `createdBy`/`createdAt`.
 
-### Why zero dependencies
+### Authentication dependency
 
-The CLI uses only Node built-ins. That lets `tenant-admin.sh` run it inside the cluster in
-the routerlicious image the stack already runs — no image to build, publish or keep in sync with
-the deployed revision, no `npm install`, and no prerequisites beyond the `az` / `jq` / `kubectl`
-that `azure/deploy.sh` already requires.
+The Key Vault rotation guard uses `WorkloadIdentityCredential` from `@azure/identity`. That
+package and its transitive dependencies are compiled into the checked-in
+`bundle/tenant-admin.cjs` artifact. The wrapper mounts that artifact from a temporary ConfigMap,
+so administrative commands use the locked dependency versions without downloading packages.
+
+The bundle is generated reproducibly from `pnpm-lock.yaml`:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm build
+```
+
+Commit the regenerated bundle whenever its source or dependencies change. The tests fail if the
+checked-in bundle is stale or too large for a Kubernetes ConfigMap.
 
 ### Tenant ID validation
 
@@ -470,9 +481,12 @@ cover the naming need.
 ## Running the CLI directly
 
 Normally you do not need this — use the wrapper. Direct invocation is useful for development or
-when you already have a shell inside the cluster.
+when you already have a shell inside the cluster. Install dependencies with pnpm first; direct
+execution requires Node.js 22 or later.
 
 ```bash
+pnpm install --frozen-lockfile
+
 # from inside the cluster (service DNS defaults apply)
 node bin/tenant-admin.js create contoso --contact owner@contoso.com
 
@@ -494,7 +508,7 @@ gitrest over a forwarded local port.
 ## Tests
 
 ```bash
-npm test
+pnpm test
 ```
 
 The suite runs against in-process stubs of riddler and gitrest — no cluster required. It covers
@@ -502,7 +516,6 @@ the storage-before-record ordering, duplicate handling, orphaned-repository repo
 rotation, customData merging, soft/hard delete semantics, id validation, secret redaction, and the
 CLI's argument handling and exit codes.
 
-`test/deployedLayout.test.js` additionally reconstructs the exact file layout the wrapper mounts
-into the Pod and runs the CLI from it, so a module that only resolves thanks to `package.json` or
-`node_modules` fails here rather than in the cluster. If you add a file under `src/`, that test
-fails until it is added to the wrapper's mount list.
+`test/deployedLayout.test.js` additionally verifies that the checked-in bundle matches its source,
+fits within the Kubernetes ConfigMap limit, and runs in an isolated directory. This catches stale
+or incomplete bundles before deployment.

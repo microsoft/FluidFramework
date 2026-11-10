@@ -77,7 +77,7 @@ export function testInvert(): void {
 		it("insert => remove", () => {
 			const cellId: CellId = { revision: tag1, localId: brand(0) };
 			const input = Change.insert(0, 2, tag1, cellId);
-			const actual = invert(input, tag2);
+			const actual = invert(input);
 			const expected = [
 				Mark.remove(2, brand(0), { idOverride: cellId, revision: tagForInvert }),
 			];
@@ -137,13 +137,9 @@ export function testInvert(): void {
 
 		it("active revive => remove", () => {
 			const cellId: CellId = { revision: tag1, localId: brand(0) };
-			const input = Change.revive(0, 2, cellId, tag1);
+			const input = Change.revive(0, 2, cellId, tag2);
 			const expected: Changeset = [
-				Mark.remove(
-					2,
-					{ localId: brand(0), revision: tag2 },
-					{ idOverride: cellId, revision: tagForInvert },
-				),
+				Mark.remove(2, { localId: brand(0), revision: tagForInvert }, { idOverride: cellId }),
 			];
 			const actual = invert(input, tag2);
 			assertChangesetsEqual(actual, expected);

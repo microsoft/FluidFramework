@@ -1,5 +1,102 @@
 # @fluidframework/runtime-definitions
 
+## 3.12.0
+
+### Minor Changes
+
+- Add controls to pause inbound operations while staging local changes ([#28625](https://github.com/microsoft/FluidFramework/pull/28625)) [0da51ded6b0](https://github.com/microsoft/FluidFramework/commit/0da51ded6b0b962fb231286c059a9a02af57999e)
+
+  The beta stage controls expose `pauseInbound()` and `resumeInbound()` to control inbound operation processing without leaving staging mode.
+  Await `pauseInbound()` before relying on inbound processing having stopped.
+  Repeated pause or resume calls are idempotent.
+
+  Committing or discarding staged changes automatically releases any pause acquired through these controls, even if exiting staging mode throws.
+  Pauses acquired by other code are preserved, and inbound signals are not paused.
+
+  While paused, the client's reference sequence number does not advance, which holds back the minimum sequence number for all clients.
+  If the container reconnects while paused, it might not finish connecting until inbound processing resumes.
+  Keep pauses short.
+
+  `pauseInbound` and `resumeInbound` are `undefined` if the container runtime does not support them, for example because it is an older version.
+  Check that they are defined before calling them.
+
+  ```typescript
+  const controls = containerRuntime.enterStagingMode();
+  if (controls.pauseInbound !== undefined) {
+    await controls.pauseInbound();
+  }
+  // ... make staged changes ...
+  controls.commitChanges(); // Or controls.discardChanges().
+  ```
+
+  Use `controls.resumeInbound?.()` to resume inbound operation processing while remaining in staging mode.
+
+## 3.11.0
+
+Dependency updates only.
+
+## 3.10.0
+
+### Minor Changes
+
+- Add oldestSupportedClient across runtime layers ([#28537](https://github.com/microsoft/FluidFramework/pull/28537)) [9fc4c218519](https://github.com/microsoft/FluidFramework/commit/9fc4c218519eefdf4518d22517e122325f7a055d)
+
+  Runtime and data store contexts now expose the required `oldestSupportedClient` property beside `minVersionForCollab`.
+  Consumers can use `context.oldestSupportedClient` directly instead of `context.minVersionForCollab`.
+  The runtime retains its internal fallback for older contexts that expose only `minVersionForCollab`, so mixed-version packages remain supported.
+
+  `IFluidParentContext.minVersionForCollab` is deprecated in 3.10.0 and will be removed in a future release.
+  Use `IFluidParentContext.oldestSupportedClient` instead.
+
+  ```typescript
+  const oldestSupportedClient = context.oldestSupportedClient;
+  ```
+
+  The on-disk schema and telemetry property names do not change.
+  See [the migration issue](https://github.com/microsoft/FluidFramework/issues/27851) for more details.
+
+## 3.7.0
+
+Dependency updates only.
+
+## 3.6.0
+
+### Minor Changes
+
+- Keep unresolved version marks pending when history is inconclusive ([#28448](https://github.com/microsoft/FluidFramework/pull/28448)) [2e167d8c734](https://github.com/microsoft/FluidFramework/commit/2e167d8c734c76a57eed0135a390d11e1b55ff69)
+
+  Version marks are no longer permanently classified as unresolvable when a historical operation read is empty or starts
+  after the mark's sequence-number lower bound.
+  Neither result proves that the specific batch sequenced in the unavailable range.
+  The runtime keeps the mark pending so a disconnected or resubmitted batch can still sequence and resolve later.
+  Hosts own retry suppression and expiration policy for long-lived pending marks.
+
+## 3.5.0
+
+Dependency updates only.
+
+## 3.4.0
+
+Dependency updates only.
+
+## 3.3.0
+
+Dependency updates only.
+
+## 3.2.0
+
+Dependency updates only.
+
+## 3.1.0
+
+### Minor Changes
+
+- Expose the version mark resolver on IContainerRuntimeBase ([#28168](https://github.com/microsoft/FluidFramework/pull/28168)) [c1f54dbc511](https://github.com/microsoft/FluidFramework/commit/c1f54dbc51170408ea4e4707aff1a5df4a0e48a1)
+
+  `IContainerRuntimeBase` now exposes `versionMarkResolver: IVersionMarkResolver`, the supported access point for the version mark resolver APIs ([`IVersionMarkResolver`](https://fluidframework.com/docs/api/runtime-definitions/iversionmarkresolver-interface), [`ResolveResult`](https://fluidframework.com/docs/api/runtime-definitions/resolveresult-typealias), [`VersionMarkCapture`](https://fluidframework.com/docs/api/runtime-definitions/versionmarkcapture-typealias)), which now live in `@fluidframework/runtime-definitions`. Hosts and data stores obtain the resolver from the runtime instead of the concrete `ContainerRuntime` class.
+
+  `ResolveResult`'s `pending` and `unresolvable` results also gain an optional `reason?: string`, an opaque diagnostic string for logging only. Hosts drive behavior from `kind`. `reason` is not a contract and must not be branched on.
+
 ## 3.0.0
 
 ### Minor Changes

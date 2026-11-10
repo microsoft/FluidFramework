@@ -1,5 +1,71 @@
 # @fluidframework/devtools-core
 
+## 3.12.0
+
+Dependency updates only.
+
+## 3.11.0
+
+Dependency updates only.
+
+## 3.10.0
+
+Dependency updates only.
+
+## 3.7.0
+
+### Minor Changes
+
+- Devtools ignores messages from other windows ([#28503](https://github.com/microsoft/FluidFramework/pull/28503)) [e4a2759eb7a](https://github.com/microsoft/FluidFramework/commit/e4a2759eb7a93a78fbfc6f445379581b0ae9ae3e)
+
+  Devtools now accepts window messages only from the application's own window.
+  This prevents other windows from directly issuing devtools commands through window messaging.
+
+## 3.6.0
+
+Dependency updates only.
+
+## 3.5.0
+
+Dependency updates only.
+
+## 3.4.0
+
+Dependency updates only.
+
+## 3.3.0
+
+Dependency updates only.
+
+## 3.2.0
+
+### Minor Changes
+
+- Register service client containers directly with Devtools ([#28260](https://github.com/microsoft/FluidFramework/pull/28260)) [235654550d1](https://github.com/microsoft/FluidFramework/commit/235654550d165d0da3a40c1b6fb1c6ec2bea676b)
+
+  The new `initializeDevtoolsAlpha` function returns a `FluidDevtoolsAlpha` instance whose `registerContainerDevtools` method accepts a [FluidContainer](https://fluidframework.com/docs/api/driver-definitions/fluidcontainer-interface) created by a [ServiceClient](https://fluidframework.com/docs/api/driver-definitions/serviceclient-interface).
+  Applications no longer need to access the underlying internal container to register it with Devtools.
+  The existing beta registration signature for [IContainer](https://fluidframework.com/docs/api/container-definitions/icontainer-interface) is unchanged.
+  The [ContainerDevtoolsProps](https://fluidframework.com/docs/api/devtools-core/containerdevtoolsprops-interface) input interface is no longer marked `@sealed`, which clarifies that callers can implement this property bag.
+
+  ```typescript
+  import { initializeDevtoolsAlpha } from "@fluidframework/devtools-core/alpha";
+
+  // `container` is a FluidContainer returned by a ServiceClient.
+  const devtools = initializeDevtoolsAlpha({});
+  devtools.registerContainerDevtools({
+    container,
+    containerKey: "My document",
+  });
+  ```
+
+  To enable data visualization, also provide [containerData](https://fluidframework.com/docs/api/devtools-core/containerdevtoolsprops-interface#containerdata-propertysignature) with the named DDS objects to inspect.
+  Devtools does not automatically discover DDS objects in the container's application-defined `data`.
+
+## 3.1.0
+
+Dependency updates only.
+
 ## 3.0.0
 
 ### Minor Changes

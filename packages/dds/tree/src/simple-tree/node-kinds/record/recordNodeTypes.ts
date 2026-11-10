@@ -47,7 +47,7 @@ import type { SchemaType, SimpleRecordNodeSchema } from "../../simpleSchema.js";
 export interface TreeRecordNode<
 	TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 > extends TreeNode,
-		Record<string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>> {
+		Record<string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes> | undefined> {
 	/**
 	 * Allows the record's entries to be iterated over, including in contexts like `for...of` loops.
 	 */

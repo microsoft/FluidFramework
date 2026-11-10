@@ -13,6 +13,38 @@ If you don't have `pnpm` installed, you will need to do so first.
 pnpm i
 ```
 
+## DOMPurify browser script
+
+`static/dompurify/purify.min.js` is a checked-in copy of DOMPurify's browser distribution. Its source is `dist/purify.min.js` in the official `dompurify` npm package. The website build does not generate this file.
+
+`docusaurus.config.ts` loads this script before `static/trusted-types-policy.js`. The Trusted Types policy uses `DOMPurify.sanitize` to sanitize HTML.
+
+The website serves this checked-in file directly. Updating the dependency in `package.json` does not update the script that browsers receive.
+
+### Update DOMPurify
+
+Keep the package dependency, lockfile, and checked-in browser script consistent.
+
+1. Update the `dompurify` dependency to the selected version.
+2. Regenerate `pnpm-lock.yaml` with pnpm.
+3. Confirm the installed version and the lockfile resolution.
+4. Copy `dist/purify.min.js` from that installed package into `static/dompurify/purify.min.js`.
+5. Preserve the upstream license notice and apply the repository's formatting.
+6. Build the website and check navigation, search, HTML sanitization, and Mermaid diagrams.
+
+For example, from the `website` directory, copy and format the installed distribution with PowerShell:
+
+```powershell
+Copy-Item .\node_modules\dompurify\dist\purify.min.js .\static\dompurify\purify.min.js
+pnpm exec prettier --write .\static\dompurify\purify.min.js
+```
+
+Do not manually modify DOMPurify's implementation.
+
+The update to 3.4.15 changed `package.json`, regenerated `pnpm-lock.yaml`, and replaced the checked-in browser distribution. The lockfile resolves both the direct dependency and Mermaid's DOMPurify dependency to 3.4.15.
+
+TODO: AB#84053 - Investigate using the installed DOMPurify dependency directly instead of maintaining a checked-in copy. Preserve its load order before the Trusted Types policy. This follow-up does not block dependency updates.
+
 ## Local Development
 
 There are two options for local testing.
@@ -95,27 +127,6 @@ pnpm test
 
 The aggregate command installs Playwright's browser dependencies before running the suites.
 `pnpm run build:test` type-checks all test code without executing it.
-
-## User Telemetry
-
-The Fluid Framework website collects basic user telemetry to help improve the experience for our users.
-The telemetry data includes anonymous information such as:
-
--   Daily / Monthly users
--   Pages visited
--   User flow
-
-This data is collected in compliance with relevant privacy standards.
-For more information, please refer to our [privacy policy.](https://www.microsoft.com/privacy/privacystatement).
-If you have any concerns about telemetry, please reach out to our team via [GitHub Issues](https://github.com/microsoft/FluidFramework/issues).
-
-To test this telemetry locally add the following key to the .env file.
-This key is used to instantiate Application Insights so that usage events can be tracked.
-The key can be requested from internal Microsoft Fluid Framework engineers.
-
-```
-INSTRUMENTATION_KEY=<key>
-```
 
 ## Deployment
 
@@ -303,7 +314,7 @@ For an overview of Docusaurus's versioning functionality, see [here](https://doc
 We currently offer versioned documentation for each of our supported major versions.
 This documentation is intended to be kept up-to-date with the most recent release of each major version series.
 
-For now, this means we publish documentation (including generated API documentation) for versions `1.x` and `2.x`.
+For now, this means we publish documentation (including generated API documentation) for versions `1.x`, `2.x`, and `3.x`.
 
 -   We also support generating API documentation for the local repo code in local development only.
     See [Local API docs build](#local-api-docs-build), but these are not intended to be published.
@@ -322,8 +333,8 @@ These steps are based on Docusaurus's tutorial [here](https://docusaurus.io/docs
 
 Note: generating the API documentation for the new "current" version will fail if the release branch for that version has not yet been created.
 
-1. Run `npx --no-install docusaurus docs:version v<current-major-version-number>` from the root of this directory.
-   E.g., `... docusaurus docs:version v2` when prepping for `v3` documentation.
+1. Run `npx --no-install docusaurus docs:version <current-major-version-number>` from the root of this directory.
+   E.g., `... docusaurus docs:version 2` when prepping for `v3` documentation.
     - This will copy the contents of `docs` into `versioned_docs` under the specified version ID.
     - This will also generate a sidebar configuration for the copied version under `versioned_sidebars`.
 1. Update `config/docs-versions.mjs` to update the version ID for the "current" version, and add the newly frozen version to the `otherVersions` list.
@@ -393,7 +404,7 @@ The following npm scripts are supported in this directory:
     "build": "Build everything: the API documentation, the website, the tests, etc.",
     "build:api-documentation": "Download API model artifacts and generate API documentation.",
     "prebuild:docusaurus": "Runs pre-site build metadata generation.",
-    "build:docusaurus": "Build the website with Docusaurus.",
+    "build:docusaurus": "Build the website with Docusaurus. Note that 3 documentation suite versions taxes Docusaurus and causes it to run out of memory. The default heap limit is increased to accommodate this.",
     "build:generate-content": "Generate site content. Includes API documentation, as well as content generated / embedded by `markdown-magic`.",
     "build:markdown-magic": "Run `markdown-magic` to generate / embed contents in Markdown files.",
     "build:site": "Build the site, including API documentation.",
@@ -435,7 +446,7 @@ The following npm scripts are supported in this directory:
 | `build` | `concurrently npm:build:site npm:build:test` | Build everything: the API documentation, the website, the tests, etc. |
 | `build:api-documentation` | `npm run download-doc-models && npm run generate-api-documentation` | Download API model artifacts and generate API documentation. |
 | `prebuild:docusaurus` | `npm run generate-versions` | Runs pre-site build metadata generation. |
-| `build:docusaurus` | `docusaurus build` | Build the website with Docusaurus. |
+| `build:docusaurus` | `cross-env NODE_OPTIONS=--max-old-space-size=8192 docusaurus build` | Build the website with Docusaurus. Note that 3 documentation suite versions taxes Docusaurus and causes it to run out of memory. The default heap limit is increased to accommodate this. |
 | `build:generate-content` | `concurrently npm:build:markdown-magic npm:build:api-documentation` | Generate site content. Includes API documentation, as well as content generated / embedded by `markdown-magic`. |
 | `build:markdown-magic` | `markdown-magic` | Run `markdown-magic` to generate / embed contents in Markdown files. |
 | `build:search` | `pagefind --site build` | |

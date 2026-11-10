@@ -1,3 +1,46 @@
+## [0.68.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.67.0...build-tools_v0.68.0) (2026-10-14)
+
+### Features
+
+* **build-cli:** bump build tools to 0.68.0 ([#27967](https://github.com/microsoft/FluidFramework/issues/27967)) ([7586903](https://github.com/microsoft/FluidFramework/commit/758690301b9a3e223166109674e219ab657cfb4e))
+* **build-cli:** support configurable AI launcher assets ([a309795](https://github.com/microsoft/FluidFramework/commit/a30979578b66e5a2b3114b8d01cf648adc0a468d))
+* **build-tools:** discover .mjs webpack configs ([#28234](https://github.com/microsoft/FluidFramework/issues/28234)) ([400b2f1](https://github.com/microsoft/FluidFramework/commit/400b2f1828ff7a5c671e85214dfa28bc20387fdd))
+
+### Bug Fixes
+
+* **build-cli:** accept partially successful bundle builds ([#27998](https://github.com/microsoft/FluidFramework/issues/27998)) ([3ef3e85](https://github.com/microsoft/FluidFramework/commit/3ef3e853bd9eb6e7e2c9453c114b388153a763bf))
+* **build-cli:** parallelize tarball publish preflight ([#28205](https://github.com/microsoft/FluidFramework/issues/28205)) ([ee6aaa2](https://github.com/microsoft/FluidFramework/commit/ee6aaa2353a48b19001332ca29f0de6e834cf641))
+* **build-cli:** preserve error exits in quiet mode ([#28162](https://github.com/microsoft/FluidFramework/issues/28162)) ([09abc8d](https://github.com/microsoft/FluidFramework/commit/09abc8d3f7381a9ae4cc4a8a428438ac1eff85a4))
+* **build-cli:** select unreleased report packages by release group ([#28301](https://github.com/microsoft/FluidFramework/issues/28301)) ([a614cba](https://github.com/microsoft/FluidFramework/commit/a614cba8c6f2c926fcf1b4682b4a828580c037f6))
+* **build-infrastructure:** isolate tests from shared git fixture ([#28206](https://github.com/microsoft/FluidFramework/issues/28206)) ([110e13f](https://github.com/microsoft/FluidFramework/commit/110e13f0ff489630fef099fa642ecac83ffe3208))
+* **build-tools:** hash ESM webpack config exports ([#28236](https://github.com/microsoft/FluidFramework/issues/28236)) ([6ae0c28](https://github.com/microsoft/FluidFramework/commit/6ae0c2854782e02ca2ec40d8610804ae9e71187a))
+* **build-tools:** normalize backslashes in resolved ${repoRoot} paths on Windows ([#28214](https://github.com/microsoft/FluidFramework/issues/28214)) ([4b5e110](https://github.com/microsoft/FluidFramework/commit/4b5e1101912828a3d13087e8418fff23a8a530cd))
+* **fluid-build:** Reject backslashes in declarative task globs instead of relying on OS-specific behavior. ([#28216](https://github.com/microsoft/FluidFramework/issues/28216)) ([66d337c](https://github.com/microsoft/FluidFramework/commit/66d337c9fc338cbb3d7db50e0797b9bd62ca7ba7))
+* **check:policy:** Normalize Dockerfile package paths consistently when fixing policy violations. ([#28216](https://github.com/microsoft/FluidFramework/issues/28216)) ([66d337c](https://github.com/microsoft/FluidFramework/commit/66d337c9fc338cbb3d7db50e0797b9bd62ca7ba7))
+* **build-tools:** Track API reports in incremental build state ([#28208](https://github.com/microsoft/FluidFramework/issues/28208)) ([054eee0](https://github.com/microsoft/FluidFramework/commit/054eee0ed8cb111e74c0c3310ea44e183978d754))
+* **bundle-size:** baseline PR comparisons on the commit the PR build merged ([#27965](https://github.com/microsoft/FluidFramework/issues/27965)) ([194cbdd](https://github.com/microsoft/FluidFramework/commit/194cbddaf1c4440e9a8df342696766acc754ab18))
+* upgrade fast-uri to 4.1.3 ([#28345](https://github.com/microsoft/FluidFramework/issues/28345)) ([ca15148](https://github.com/microsoft/FluidFramework/commit/ca15148559242a888faf66748b771a95aa21d0fd))
+* upgrade js-yaml to 4.3.2 ([#28346](https://github.com/microsoft/FluidFramework/issues/28346)) ([6d13579](https://github.com/microsoft/FluidFramework/commit/6d13579d6b768ca95ee9776a54cc40430b2dac7c))
+
+### Performance Improvements
+
+* **build-cli:** speed up assert-tag validation ([#28253](https://github.com/microsoft/FluidFramework/issues/28253)) ([6189091](https://github.com/microsoft/FluidFramework/commit/61890915bcd0e4ed30e31927584ab2b78f642313))
+
+### Other Changes
+
+* **build-tools:** Enable type-safety ESLint rules.
+
+## [0.67.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.66.0...build-tools_v0.67.0) (2026-08-14)
+
+### Features
+
+* **build-cli:** bump build tools to 0.67.0 ([#27848](https://github.com/microsoft/FluidFramework/issues/27848)) ([634a11b](https://github.com/microsoft/FluidFramework/commit/634a11bf90a95f7cbac6320544c1e87da7bc233c))
+
+### Bug Fixes
+
+* **build-cli:** resolve the SDK-provided Copilot CLI ([#27886](https://github.com/microsoft/FluidFramework/issues/27886)) ([7c161be](https://github.com/microsoft/FluidFramework/commit/7c161bef46c3679c2b494a6798616f5a9d1bf25e))
+* **codespaces:** update Copilot launcher guidance ([#27870](https://github.com/microsoft/FluidFramework/issues/27870)) ([7b16af1](https://github.com/microsoft/FluidFramework/commit/7b16af1eeb57f7d34ae6af48f806f6834313a163))
+
 ## [0.61.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.60.0...build-tools_v0.61.0) (2025-12-03)
 
 No documented changes.

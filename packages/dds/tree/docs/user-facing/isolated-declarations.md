@@ -61,7 +61,7 @@ TypeScript provides a few ways to declare both at once without having to repeat 
 - Using the type of an expression, and its value.
 - Using a specific language feature that does both at once, like `class` or `enum`
 
-SharedTree schema use both of these tools together, using `class`. In this example, consider a class named `Foo`:
+SharedTree schemas use both of these tools together, using `class`. In this example, consider a class named `Foo`:
 
 - The class `Foo` is the schema:
   - The expression `Foo` is the schema.
@@ -71,7 +71,7 @@ SharedTree schema use both of these tools together, using `class`. In this examp
   - The type named `Foo` is the node type, avoiding the need to add an extra declaration.
   - This type comes from the non-static members of the class/schema `Foo`, and can be extended with additional class members to express type and runtime data together.
 
-To support recursive schema, schema are occasionally referenced as `() => Foo` to allow forward references.
+To support recursive schemas, schemas are occasionally referenced as `() => Foo` to allow forward references.
 
 To avoid limitations in TypeScript `.d.ts` emission for recursive schema — and to get better IntelliSense and error messages — schema must use explicitly named types (like a class or interface) rather than simple `type` declarations.
 
@@ -99,7 +99,7 @@ This assumes the tooling in question is already:
 To add SharedTree schema to such a setup:
 
 - Factor your code to minimize the need to export schema from both files and projects.
-- For schema that are file-exported but not project-exported, mark them as `@internal` and use `stripInternal`.
+- For schemas that are file-exported but not project-exported, mark them as `@internal` and use `stripInternal`.
   - If inconsistent tagging becomes a problem (package-exported types accidentally referencing tagged types causing type errors that are hard to diagnose), use API Extractor as a linter to validate tagging is done consistently.
 - For projects that still export schema, pick one of:
     1. Simplify the exported types as much as is practical, including using tools like `eraseSchemaDetails`, and specify the simplified types explicitly.

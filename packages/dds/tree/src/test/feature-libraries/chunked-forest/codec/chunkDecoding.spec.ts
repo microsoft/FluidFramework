@@ -7,12 +7,26 @@ import { strict as assert } from "node:assert";
 
 import { compareArrays } from "@fluidframework/core-utils/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
-import { createIdCompressor, createSessionId } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	createSessionId,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import type { TreeNodeSchemaIdentifier, TreeValue } from "../../../../core/index.js";
+import {
+	type TreeNodeSchemaIdentifier,
+	type TreeValue,
+	TreeStoredSchemaRepository,
+} from "../../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { BasicChunk } from "../../../../feature-libraries/chunked-forest/basicChunk.js";
+import {
+	chunkField,
+	makeTreeChunker,
+	tryCoalesceUniformChunks,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/chunkTree.js";
 import {
 	type ChunkDecoder,
 	type StreamCursor,
@@ -26,8 +40,9 @@ import {
 	NodeDecoder,
 	SpecializedNodeDecoder,
 	aggregateChunks,
-	anyDecoder,
+	AnyDecoder,
 	applySpecialization,
+	builtInLeafChunkShapes,
 	deaggregateChunks,
 	decode,
 	normalizeToNodeShape,
@@ -46,7 +61,8 @@ import {
 	type EncodedChunkShapeV1,
 	type EncodedChunkShape,
 	type EncodedChunkShapeVTextExperimental,
-	type EncodedFieldBatchV1OrV2,
+	type EncodedFieldBatchAnyVersion,
+	type EncodedFieldBatchVTextExperimental,
 	type EncodedNodeShape,
 	type EncodedSpecializedNodeShape,
 	FieldBatchFormatVersion,
@@ -59,7 +75,18 @@ import {
 } from "../../../../feature-libraries/chunked-forest/emptyChunk.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { SequenceChunk } from "../../../../feature-libraries/chunked-forest/sequenceChunk.js";
-import type { TreeChunk } from "../../../../feature-libraries/index.js";
+import {
+	TreeShape,
+	UniformChunk,
+	// eslint-disable-next-line import-x/no-internal-modules -- Tests inspect the decoded chunk representation.
+} from "../../../../feature-libraries/chunked-forest/uniformChunk.js";
+import {
+	type TreeChunk,
+	cursorForJsonableTreeField,
+	defaultIncrementalEncodingPolicy,
+	defaultSchemaPolicy,
+} from "../../../../feature-libraries/index.js";
+import { SchemaFactory, toInitialSchema } from "../../../../simple-tree/index.js";
 import {
 	IdDecodingContext,
 	type ReferenceCountedBase,
@@ -100,12 +127,28 @@ function jsonRoundTrip<T>(value: T): T {
  */
 function makeLoggingDecoder(log: string[], chunk: TreeChunk, message?: string): ChunkDecoder {
 	return {
-		decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
+		initialize(): void {},
+		decode(stream: StreamCursor): TreeChunk {
 			log.push(message ?? (readStream(stream) as string));
 			chunk.referenceAdded();
 			return chunk;
 		},
 	};
+}
+
+/**
+ * Initializes the peer decoders and the requested decoder, then decodes one chunk from the stream.
+ */
+function decodeWith(
+	decoder: ChunkDecoder,
+	decoders: readonly ChunkDecoder[],
+	stream: StreamCursor,
+): TreeChunk {
+	for (const peer of decoders) {
+		peer.initialize(decoders);
+	}
+	decoder.initialize(decoders);
+	return decoder.decode(stream);
 }
 /**
  * Builds an {@link IdDecodingContext} for tests by composing a `resolveEncodedId`
@@ -137,6 +180,596 @@ function makeTestIdDecodingContext(opts: {
 const idDecodingContext: IdDecodingContext = makeTestIdDecodingContext({});
 
 describe("chunkDecoding", () => {
+	describe("uniform decoding", () => {
+		/**
+		 * Decodes a single field from a version-one batch using the supplied shape table and encoded data.
+		 */
+		function decodeField(
+			shapes: EncodedChunkShape[],
+			data: EncodedFieldBatchAnyVersion["data"][number],
+		): TreeChunk {
+			const chunks = decode(
+				{
+					version: brand(FieldBatchFormatVersion.v1),
+					identifiers: [],
+					shapes,
+					data: [data],
+				},
+				idDecodingContext,
+			);
+			assert.equal(chunks.length, 1);
+			return chunks[0] ?? assert.fail("missing decoded field");
+		}
+
+		it("reuses a complete nested values array", () => {
+			const values = [1, 2, 3];
+			const result = decodeField(
+				[{ a: 1 }, { c: { type: "number", value: true } }],
+				[0, values],
+			);
+			assert(result instanceof UniformChunk);
+			assert.equal(result.values, values);
+			assert.equal(result.topLevelLength, 3);
+			assertChunkCursorEquals(
+				result,
+				values.map((value) => ({ type: brand("number"), value })),
+			);
+		});
+
+		it("decodes standalone leaves into uniform chunks", () => {
+			const result = decodeField([{ c: { type: "number", value: true } }], [0, 42]);
+			assert(result instanceof UniformChunk);
+			assertChunkCursorEquals(result, [{ type: brand("number"), value: 42 }]);
+		});
+
+		it("shares a cached chunk shape across individually decoded leaves", () => {
+			const context = new DecoderContext([], [], idDecodingContext, undefined);
+			const decoder = new NodeDecoder({ type: "number", value: true }, context);
+			decoder.initialize([]);
+			const stream = { data: [99, 1, 2, 100], offset: 1 };
+			const first = decoder.decode(stream);
+			const second = decoder.decode(stream);
+			assert(first instanceof UniformChunk);
+			assert(second instanceof UniformChunk);
+			assert.equal(first.shape, second.shape);
+			assert.notEqual(first.values, second.values);
+			assert.deepEqual(first.values, [1]);
+			assert.deepEqual(second.values, [2]);
+			assert.equal(stream.offset, 3);
+		});
+
+		it("validates leaf reads and supports null", () => {
+			const context = new DecoderContext([], [], idDecodingContext, undefined);
+			const decoder = new NodeDecoder({ type: "leaf", value: true }, context);
+			decoder.initialize([]);
+			// eslint-disable-next-line @rushstack/no-new-null -- Null is a supported tree value.
+			const stream = { data: [1, "text", true, null], offset: 0 };
+			for (const value of stream.data) {
+				const chunk = decoder.decode(stream);
+				assert(chunk instanceof UniformChunk);
+				assert.equal(chunk.values[0], value);
+			}
+			assert.equal(stream.offset, stream.data.length);
+			assert.throws(() => decoder.decode(stream));
+			const invalid = { data: [{}], offset: 0 };
+			assert.throws(() => decoder.decode(invalid));
+			assert.equal(invalid.offset, 1);
+		});
+
+		it("matches built-in leaf chunk shapes to SchemaFactory.leaves", () => {
+			assert.equal(builtInLeafChunkShapes.size, SchemaFactory.leaves.length);
+			for (const schema of SchemaFactory.leaves) {
+				const type = brand<TreeNodeSchemaIdentifier>(schema.identifier);
+				const chunker = makeTreeChunker(
+					new TreeStoredSchemaRepository(toInitialSchema(schema)),
+					defaultSchemaPolicy,
+					defaultIncrementalEncodingPolicy,
+				);
+				const expectedShape = chunker.shapeFromSchema(type);
+				assert(expectedShape instanceof TreeShape);
+				chunker.dispose();
+				const actualShape = builtInLeafChunkShapes.get(type);
+				assert(actualShape !== undefined);
+				assert.equal(actualShape.topLevelLength, 1);
+				assert(actualShape.treeShape.equals(expectedShape), type);
+			}
+		});
+
+		it("shares built-in leaf shapes across batches", () => {
+			const shapes: EncodedChunkShape[] = [
+				{ c: { type: "com.fluidframework.leaf.number", value: true } },
+			];
+			const first = decodeField(shapes, [0, 1]);
+			const second = decodeField(shapes, [0, 2]);
+			assert(first instanceof UniformChunk);
+			assert(second instanceof UniformChunk);
+			assert.equal(first.shape, second.shape);
+			assert.deepEqual(first.values, [1]);
+			assert.deepEqual(second.values, [2]);
+		});
+
+		for (const encoding of ["leaf", "array", "identifier"] as const) {
+			for (const decodedFirst of [false, true]) {
+				for (const shared of [false, true]) {
+					it(`coalesces decoded strings with local strings (${encoding}, decoded first: ${decodedFirst}, shared: ${shared})`, () => {
+						const type = brand<TreeNodeSchemaIdentifier>(SchemaFactory.string.identifier);
+						const chunker = makeTreeChunker(
+							new TreeStoredSchemaRepository(toInitialSchema(SchemaFactory.string)),
+							defaultSchemaPolicy,
+							defaultIncrementalEncodingPolicy,
+						);
+						const localId = testIdCompressor.generateCompressedId();
+						const remoteId = testIdCompressor.generateCompressedId();
+						const remoteString = testIdCompressor.decompress(remoteId);
+						const localExpected = ["local", testIdCompressor.decompress(localId)].map(
+							(value) => ({ type, value }),
+						);
+						const localChunks = chunkField(cursorForJsonableTreeField(localExpected), {
+							policy: chunker,
+							idCompressor: testIdCompressor,
+						});
+						assert.equal(localChunks.length, 1);
+						const local = localChunks[0];
+						assert(local instanceof UniformChunk);
+						assert.deepEqual(local.values, ["local", localId]);
+						const encodedValues = [
+							"remote",
+							encoding === "identifier"
+								? testIdCompressor.normalizeToOpSpace(remoteId)
+								: remoteString,
+						];
+						const decoded =
+							encoding === "leaf"
+								? decodeField([{ c: { type, value: true } }], [0, "remote"])
+								: decodeField(
+										[
+											{ a: 1 },
+											{
+												c: {
+													type,
+													value: encoding === "identifier" ? SpecialField.Identifier : true,
+												},
+											},
+										],
+										[0, encodedValues],
+									);
+						assert(decoded instanceof UniformChunk);
+						assert.equal(decoded.idCompressor, testIdCompressor);
+						assert(decoded.shape.treeShape.equals(local.shape.treeShape));
+						if (encoding === "array") {
+							assert.equal(decoded.values, encodedValues);
+						} else if (encoding === "identifier") {
+							assert.deepEqual(decoded.values, ["remote", remoteId]);
+						}
+						const decodedExpected = (
+							encoding === "leaf" ? ["remote"] : ["remote", remoteString]
+						).map((value) => ({ type, value }));
+						if (shared) {
+							local.referenceAdded();
+							decoded.referenceAdded();
+						}
+						const [left, right] = decodedFirst ? [decoded, local] : [local, decoded];
+						const merged = tryCoalesceUniformChunks(left, right, chunker);
+						assert(merged instanceof UniformChunk);
+						assert.equal(merged.idCompressor, testIdCompressor);
+						assertChunkCursorEquals(
+							merged,
+							decodedFirst
+								? [...decodedExpected, ...localExpected]
+								: [...localExpected, ...decodedExpected],
+						);
+						assertRefCount(merged, 1);
+						if (shared) {
+							assert.notEqual(merged, left);
+							assertChunkCursorEquals(local, localExpected);
+							assertChunkCursorEquals(decoded, decodedExpected);
+							assertRefCount(local, 1);
+							assertRefCount(decoded, 1);
+							local.referenceRemoved();
+							decoded.referenceRemoved();
+						} else {
+							assert.equal(merged, left);
+							assertRefCount(right, 0);
+						}
+						merged.referenceRemoved();
+						chunker.dispose();
+					});
+				}
+			}
+		}
+
+		it("coalesces decoded fixed objects containing strings with local objects", () => {
+			const factory = new SchemaFactory("coalescing");
+			const objectSchema = factory.object("Object", { text: factory.string });
+			const objectType = brand<TreeNodeSchemaIdentifier>(objectSchema.identifier);
+			const stringType = brand<TreeNodeSchemaIdentifier>(factory.string.identifier);
+			const chunker = makeTreeChunker(
+				new TreeStoredSchemaRepository(toInitialSchema(objectSchema)),
+				defaultSchemaPolicy,
+				defaultIncrementalEncodingPolicy,
+			);
+			const localId = testIdCompressor.generateCompressedId();
+			const expected = ["remote", testIdCompressor.decompress(localId)].map((value) => ({
+				type: objectType,
+				fields: { text: [{ type: stringType, value }] },
+			}));
+			const values = ["remote"];
+			const decoded = decodeField(
+				[
+					{ a: 1 },
+					{ c: { type: objectType, value: false, fields: [["text", 2]] } },
+					{ c: { type: stringType, value: true } },
+				],
+				[0, values],
+			);
+			assert(decoded instanceof UniformChunk);
+			assert.equal(decoded.values, values);
+			const localChunks = chunkField(cursorForJsonableTreeField(expected.slice(1)), {
+				policy: chunker,
+				idCompressor: testIdCompressor,
+			});
+			assert.equal(localChunks.length, 1);
+			const local = localChunks[0];
+			assert(local instanceof UniformChunk);
+			assert.deepEqual(local.values, [localId]);
+			assert(decoded.shape.treeShape.equals(local.shape.treeShape));
+			const merged = tryCoalesceUniformChunks(decoded, local, chunker);
+			assert(merged instanceof UniformChunk);
+			assert.equal(merged.idCompressor, testIdCompressor);
+			assertChunkCursorEquals(merged, expected);
+			assertRefCount(local, 0);
+			merged.referenceRemoved();
+			chunker.dispose();
+		});
+
+		it("decodes empty repetitions of a nonzero-width shape", () => {
+			const shapes: EncodedChunkShape[] = [{ a: 1 }, { c: { type: "number", value: true } }];
+			assert.equal(decodeField(shapes, [0, 0]), emptyChunk);
+			assert.equal(decodeField(shapes, [0, []]), emptyChunk);
+		});
+
+		it("reuses values for fixed objects without allocating child chunks", () => {
+			const values = [1, 2, 3, 4];
+			const result = decodeField(
+				[
+					{ a: 1 },
+					{
+						c: {
+							type: "Pair",
+							value: false,
+							fields: [
+								["left", 2],
+								["right", 2],
+							],
+						},
+					},
+					{ b: { length: 1, shape: 3 } },
+					{ c: { type: "number", value: true } },
+				],
+				[0, values],
+			);
+			assert(result instanceof UniformChunk);
+			assert.equal(result.values, values);
+			assert.equal(result.topLevelLength, 2);
+			assertChunkCursorEquals(result, [
+				{
+					type: brand("Pair"),
+					fields: {
+						left: [{ type: brand("number"), value: 1 }],
+						right: [{ type: brand("number"), value: 2 }],
+					},
+				},
+				{
+					type: brand("Pair"),
+					fields: {
+						left: [{ type: brand("number"), value: 3 }],
+						right: [{ type: brand("number"), value: 4 }],
+					},
+				},
+			]);
+		});
+
+		for (const complete of [false, true]) {
+			it(`only reuses a complete inline stream: ${complete}`, () => {
+				const context = new DecoderContext([], [], idDecodingContext, undefined);
+				const leaf = new NodeDecoder({ type: "number", value: true }, context);
+				const decoder = new InlineArrayDecoder({ length: 2, shape: 0 });
+				const data = complete ? [1, 2] : [1, 2, 99];
+				const stream = { data, offset: 0 };
+				const result = decodeWith(decoder, [leaf], stream);
+				assert(result instanceof UniformChunk);
+				assert.equal(result.values === data, complete);
+				assert.deepEqual(result.values, [1, 2]);
+				assert.equal(stream.offset, 2);
+			});
+		}
+
+		it("keeps identifiers compressed and preserves their compressor when cloning", () => {
+			const sessionIds = [
+				testIdCompressor.generateCompressedId(),
+				testIdCompressor.generateCompressedId(),
+			];
+			const encodedIds = sessionIds.map((identifier) =>
+				testIdCompressor.normalizeToOpSpace(identifier),
+			);
+			const original = [...encodedIds];
+			const result = decodeField(
+				[
+					{ a: 1 },
+					{ c: { type: "com.fluidframework.leaf.string", value: SpecialField.Identifier } },
+				],
+				[0, encodedIds],
+			);
+			assert(result instanceof UniformChunk);
+			assert.deepEqual(result.values, sessionIds);
+			assert.notEqual(result.values, encodedIds);
+			assert.deepEqual(encodedIds, original);
+			const expected = sessionIds.map((identifier) => ({
+				type: brand<TreeNodeSchemaIdentifier>("com.fluidframework.leaf.string"),
+				value: testIdCompressor.decompress(identifier),
+			}));
+			assertChunkCursorEquals(result, expected);
+			const clone = result.clone();
+			assert.notEqual(clone.values, result.values);
+			assertChunkCursorEquals(clone, expected);
+		});
+
+		it("decodes identifiers and null values into the same buffer", () => {
+			const sessionId = testIdCompressor.generateCompressedId();
+			const encodedId = testIdCompressor.normalizeToOpSpace(sessionId);
+			const nullValue = null;
+			const values = [encodedId, nullValue, "literal", nullValue];
+			const result = decodeField(
+				[
+					{ a: 1 },
+					{
+						c: {
+							type: "Pair",
+							value: false,
+							fields: [
+								["identifier", 2],
+								["null", 3],
+							],
+						},
+					},
+					{ c: { type: "com.fluidframework.leaf.string", value: SpecialField.Identifier } },
+					{ c: { type: "com.fluidframework.leaf.null", value: true } },
+				],
+				[0, values],
+			);
+			assert(result instanceof UniformChunk);
+			assert.notEqual(result.values, values);
+			assert.deepEqual(result.values, [sessionId, nullValue, "literal", nullValue]);
+			assertChunkCursorEquals(
+				result,
+				[testIdCompressor.decompress(sessionId), "literal"].map((identifier) => ({
+					type: brand("Pair"),
+					fields: {
+						identifier: [{ type: brand("com.fluidframework.leaf.string"), value: identifier }],
+						null: [{ type: brand("com.fluidframework.leaf.null"), value: nullValue }],
+					},
+				})),
+			);
+		});
+
+		it("handles null values in both reused and copied arrays", () => {
+			const context = new DecoderContext([], [], idDecodingContext, undefined);
+			const leaf = new NodeDecoder({ type: "null", value: true }, context);
+			const decoder = new InlineArrayDecoder({ length: 1, shape: 0 });
+			for (const offset of [0, 1]) {
+				// eslint-disable-next-line @rushstack/no-new-null -- Null is a supported tree value.
+				const data = offset === 0 ? [null] : [42, null, 99];
+				const stream = { data, offset };
+				const result = decodeWith(decoder, [leaf], stream);
+				assert(result instanceof UniformChunk);
+				assert.equal(result.values === data, offset === 0);
+				assert.equal(result.values[0], data[offset]);
+				assert.equal(stream.offset, offset + 1);
+			}
+		});
+
+		it("uses normalized specialized shapes for uniform decoding", () => {
+			const shapes: EncodedChunkShape[] = [{ c: { type: "number", value: false } }];
+			const context = new DecoderContext([], shapes, idDecodingContext, undefined);
+			const specialized = new SpecializedNodeDecoder({ base: 0, value: true }, context);
+			const decoder = new NestedArrayDecoder(0);
+			const values = [1, 2];
+			const result = decodeWith(decoder, [specialized], { data: [values], offset: 0 });
+			assert(result instanceof UniformChunk);
+			assert.equal(result.values, values);
+			assertChunkCursorEquals(result, [
+				{ type: brand("number"), value: 1 },
+				{ type: brand("number"), value: 2 },
+			]);
+		});
+
+		it("analyzes each fixed shape once before decoding", () => {
+			/**
+			 * Counts plan computations to verify that multiple consumers share cached analysis.
+			 */
+			class CountingNodeDecoder extends NodeDecoder {
+				/**
+				 * Number of plan computations performed by this decoder.
+				 */
+				public analyses = 0;
+				protected override buildUniformDecodingPlan(
+					peers: readonly ChunkDecoder[],
+				): ReturnType<NodeDecoder["getUniformDecodingPlan"]> {
+					this.analyses++;
+					return super.buildUniformDecodingPlan(peers);
+				}
+			}
+			const context = new DecoderContext([], [], idDecodingContext, undefined);
+			const leaf = new CountingNodeDecoder({ type: "number", value: true }, context);
+			const first = new NestedArrayDecoder(0);
+			const second = new InlineArrayDecoder({ length: 2, shape: 0 });
+			const decoders = [leaf, first, second];
+			for (const decoder of decoders) {
+				decoder.initialize(decoders);
+			}
+			assert.equal(leaf.analyses, 1);
+			first.decode({ data: [[1, 2, 3]], offset: 0 });
+			second.decode({ data: [4, 5], offset: 0 });
+			assert.equal(leaf.analyses, 1);
+		});
+
+		it("keeps dynamic decoder tables isolated", () => {
+			const context = new DecoderContext([], [], idDecodingContext, undefined);
+			const firstLeaf = new NodeDecoder({ type: "First", value: false }, context);
+			const secondLeaf = new NodeDecoder({ type: "Second", value: false }, context);
+			const first = new AnyDecoder();
+			const second = new AnyDecoder();
+			firstLeaf.initialize([]);
+			secondLeaf.initialize([]);
+			first.initialize([firstLeaf]);
+			second.initialize([secondLeaf]);
+			assertChunkCursorEquals(first.decode({ data: [0], offset: 0 }), [
+				{ type: brand("First") },
+			]);
+			assertChunkCursorEquals(second.decode({ data: [0], offset: 0 }), [
+				{ type: brand("Second") },
+			]);
+		});
+
+		it("decodes zero-width repetitions without allocating one chunk per node", () => {
+			const shapes: EncodedChunkShape[] = [{ a: 1 }, { c: { type: "Empty", value: false } }];
+			const result = decodeField(shapes, [0, 3]);
+			assert(result instanceof UniformChunk);
+			assert.equal(result.topLevelLength, 3);
+			assert.deepEqual(result.values, []);
+			assertChunkCursorEquals(
+				result,
+				Array.from({ length: 3 }, () => ({ type: brand("Empty") })),
+			);
+			assert.equal(decodeField(shapes, [0, 0]), emptyChunk);
+			assert.equal(decodeField(shapes, [0, []]), emptyChunk);
+		});
+
+		it("falls back for constants and optional values", () => {
+			const constant = decodeField(
+				[{ a: 1 }, { c: { type: "Constant", value: [42] } }],
+				[0, 2],
+			);
+			assert(constant instanceof SequenceChunk);
+			assertChunkCursorEquals(constant, [
+				{ type: brand("Constant"), value: 42 },
+				{ type: brand("Constant"), value: 42 },
+			]);
+			const optional = decodeField(
+				[{ a: 1 }, { c: { type: "Optional" } }],
+				[0, [true, 1, false]],
+			);
+			assertChunkCursorEquals(optional, [
+				{ type: brand("Optional"), value: 1 },
+				{ type: brand("Optional") },
+			]);
+		});
+
+		it("supports self-recursive decoder references", () => {
+			const result = decodeField(
+				[{ c: { type: "Node", value: false, fields: [["children", 1]] } }, { a: 0 }],
+				[0, [[]]],
+			);
+			assertChunkCursorEquals(result, [
+				{
+					type: brand("Node"),
+					fields: {
+						children: [{ type: brand("Node") }],
+					},
+				},
+			]);
+		});
+
+		it("supports mutually recursive decoder references", () => {
+			const result = decodeField(
+				[
+					{ c: { type: "First", value: false, fields: [["children", 1]] } },
+					{ a: 2 },
+					{ c: { type: "Second", value: false, fields: [["children", 3]] } },
+					{ a: 0 },
+				],
+				[0, [[[]]]],
+			);
+			assertChunkCursorEquals(result, [
+				{
+					type: brand("First"),
+					fields: {
+						children: [
+							{
+								type: brand("Second"),
+								fields: {
+									children: [{ type: brand("First") }],
+								},
+							},
+						],
+					},
+				},
+			]);
+		});
+
+		it("terminates plan analysis of fixed recursive shapes", () => {
+			assert.equal(
+				decodeField(
+					[
+						{ a: 1 },
+						{ c: { type: "Recursive", value: false, fields: [["child", 2]] } },
+						{ b: { length: 1, shape: 1 } },
+					],
+					[0, []],
+				),
+				emptyChunk,
+			);
+		});
+
+		it("bounds shape expansion for large fixed child counts", () => {
+			assert.equal(
+				decodeField(
+					[
+						{ a: 1 },
+						{ c: { type: "Large", value: false, fields: [["children", 2]] } },
+						{ b: { length: 1_000_000_000, shape: 3 } },
+						{ c: { type: "Empty", value: false } },
+					],
+					[0, []],
+				),
+				emptyChunk,
+			);
+		});
+
+		for (const uniform of [false, true]) {
+			it(`validates nested-array framing with uniform decoding: ${uniform}`, () => {
+				const shapes: EncodedChunkShape[] = [
+					{ a: 1 },
+					{ c: { type: "Leaf", value: uniform ? true : [42] } },
+				];
+				for (const data of [-1, 0.5, Number.POSITIVE_INFINITY, "invalid", true, {}]) {
+					assert.throws(() => decodeField(shapes, [0, data]));
+				}
+				assert.equal(decodeField(shapes, [0, 0]), emptyChunk);
+				assert.equal(decodeField(shapes, [0, []]), emptyChunk);
+			});
+		}
+
+		it("rejects malformed uniform data", () => {
+			const shapes: EncodedChunkShape[] = [{ a: 1 }, { c: { type: "number", value: true } }];
+			assert.throws(() => decodeField(shapes, [0, [{}]]));
+			assert.throws(() => decodeField(shapes, [0, 2]), /expected data/);
+			assert.throws(
+				() =>
+					decodeField(
+						[
+							{ a: 1 },
+							{ c: { type: "Pair", value: false, fields: [["children", 2]] } },
+							{ b: { length: 2, shape: 3 } },
+							{ c: { type: "number", value: true } },
+						],
+						[0, [1, 2, 3]],
+					),
+				/incomplete uniform chunk data/,
+			);
+		});
+	});
+
 	describe("decode", () => {
 		// Smoke test for top level decode function.
 		// All real functionality should be tested in more specific tests.
@@ -205,7 +838,10 @@ describe("chunkDecoding", () => {
 					originatorId: SessionId;
 				} {
 					const foreignSession = createSessionId();
-					const foreignCompressor = createIdCompressor(foreignSession);
+					const foreignCompressor = createIdCompressor(
+						foreignSession,
+						SerializationVersion.V3,
+					);
 					const sessionSpaceId = foreignCompressor.generateCompressedId();
 					const opSpaceId = foreignCompressor.normalizeToOpSpace(sessionSpaceId);
 					return { opSpaceId, originatorId: foreignSession };
@@ -283,7 +919,10 @@ describe("chunkDecoding", () => {
 
 				it("produces different UUIDs for different op-space ids", () => {
 					const foreignSession = createSessionId();
-					const foreignCompressor = createIdCompressor(foreignSession);
+					const foreignCompressor = createIdCompressor(
+						foreignSession,
+						SerializationVersion.V3,
+					);
 					const opSpaceA = foreignCompressor.normalizeToOpSpace(
 						foreignCompressor.generateCompressedId(),
 					);
@@ -405,7 +1044,7 @@ describe("chunkDecoding", () => {
 			const basic = new BasicChunk(brand("foo"), new Map());
 			const decoders = [makeLoggingDecoder(log, basic)];
 			const stream: StreamCursor = { data: [[]], offset: 0 };
-			const result = decoder.decode(decoders, stream);
+			const result = decodeWith(decoder, decoders, stream);
 			assert.deepEqual(log, []);
 			assert.equal(result, emptyChunk);
 			assertRefCount(basic, 1);
@@ -417,7 +1056,7 @@ describe("chunkDecoding", () => {
 			const basic = new BasicChunk(brand("foo"), new Map());
 			const decoders = [makeLoggingDecoder(log, basic)];
 			const stream = { data: [0], offset: 0 };
-			const result = decoder.decode(decoders, stream);
+			const result = decodeWith(decoder, decoders, stream);
 			assert.deepEqual(log, []);
 			assert.equal(result, emptyChunk);
 			assertRefCount(basic, 1);
@@ -429,7 +1068,7 @@ describe("chunkDecoding", () => {
 			const basic = new BasicChunk(brand("foo"), new Map());
 			const decoders = [makeLoggingDecoder(log, basic)];
 			const stream = { data: [["a", "b"]], offset: 0 };
-			const result = decoder.decode(decoders, stream);
+			const result = decodeWith(decoder, decoders, stream);
 			assert.deepEqual(log, ["a", "b"]);
 			assert(result instanceof SequenceChunk);
 			assert(compareArrays(result.subChunks, [basic, basic]));
@@ -442,7 +1081,7 @@ describe("chunkDecoding", () => {
 			const basic = new BasicChunk(brand("foo"), new Map());
 			const decoders = [makeLoggingDecoder(log, basic, "X")];
 			const stream = { data: [2], offset: 0 };
-			const result = decoder.decode(decoders, stream);
+			const result = decodeWith(decoder, decoders, stream);
 			assert.deepEqual(log, ["X", "X"]);
 			assert(result instanceof SequenceChunk);
 			assert(compareArrays(result.subChunks, [basic, basic]));
@@ -457,7 +1096,7 @@ describe("chunkDecoding", () => {
 			const basic = new BasicChunk(brand("foo"), new Map());
 			const decoders = [makeLoggingDecoder(log, basic)];
 			const stream = { data: ["unused data"], offset: 0 };
-			const result = decoder.decode(decoders, stream);
+			const result = decodeWith(decoder, decoders, stream);
 			assert.equal(stream.offset, 0);
 			assert.deepEqual(log, []);
 			assert.equal(result, emptyChunk);
@@ -470,7 +1109,7 @@ describe("chunkDecoding", () => {
 			const basic = new BasicChunk(brand("foo"), new Map());
 			const decoders = [makeLoggingDecoder(log, basic)];
 			const stream = { data: ["a", "b"], offset: 0 };
-			const result = decoder.decode(decoders, stream);
+			const result = decodeWith(decoder, decoders, stream);
 			assert.deepEqual(log, ["a", "b"]);
 			assert(result instanceof SequenceChunk);
 			assert(compareArrays(result.subChunks, [basic, basic]));
@@ -479,14 +1118,15 @@ describe("chunkDecoding", () => {
 	});
 
 	it("anyDecoder", () => {
+		const anyDecoder = new AnyDecoder();
 		const log: string[] = [];
 		const basic0 = new BasicChunk(brand("0"), new Map());
 		const basic1 = new BasicChunk(brand("1"), new Map());
 		const decoders = [makeLoggingDecoder(log, basic0), makeLoggingDecoder(log, basic1)];
 		const stream = { data: [0, "a", 0, "b", 1, "c"], offset: 0 };
-		assert.equal(anyDecoder.decode(decoders, stream), basic0);
-		assert.equal(anyDecoder.decode(decoders, stream), basic0);
-		assert.equal(anyDecoder.decode(decoders, stream), basic1);
+		assert.equal(decodeWith(anyDecoder, decoders, stream), basic0);
+		assert.equal(decodeWith(anyDecoder, decoders, stream), basic0);
+		assert.equal(decodeWith(anyDecoder, decoders, stream), basic1);
 		assert.deepEqual(log, ["a", "b", "c"]);
 	});
 
@@ -506,7 +1146,7 @@ describe("chunkDecoding", () => {
 				cache,
 			);
 			const stream = { data: ["foo"], offset: 0 };
-			const result = decoder.decode([], stream);
+			const result = decodeWith(decoder, [], stream);
 			assertChunkCursorEquals(result, [{ type: brand("foo") }]);
 		});
 
@@ -526,7 +1166,7 @@ describe("chunkDecoding", () => {
 				cache,
 			);
 			const stream = { data: [], offset: 0 };
-			const result = decoder.decode([], stream);
+			const result = decodeWith(decoder, [], stream);
 			assertChunkCursorEquals(result, [{ type: brand("baz") }]);
 		});
 
@@ -549,7 +1189,7 @@ describe("chunkDecoding", () => {
 				cache,
 			);
 			const stream = { data: [compressedId], offset: 0 };
-			const result = decoder.decode([], stream);
+			const result = decodeWith(decoder, [], stream);
 			assertChunkCursorEquals(result, [{ type: brand("identifier"), value: stableId }]);
 		});
 
@@ -574,7 +1214,7 @@ describe("chunkDecoding", () => {
 				data: ["type", true, "value", ["a", "l1", 0, "l2"], ["c", "g1", 1, "g2", "e", "g3"]],
 				offset: 0,
 			};
-			const result = decoder.decode(decoders, stream);
+			const result = decodeWith(decoder, decoders, stream);
 			assertChunkCursorEquals(result, [
 				{
 					type: brand("type"),
@@ -610,7 +1250,7 @@ describe("chunkDecoding", () => {
 				data: ["type", "l1", "g1"],
 				offset: 0,
 			};
-			const result = decoder.decode(decoders, stream);
+			const result = decodeWith(decoder, decoders, stream);
 			assertChunkCursorEquals(result, [
 				{
 					type: brand("type"),
@@ -643,7 +1283,7 @@ describe("chunkDecoding", () => {
 			const context = makeContext([], shapes);
 			const decoder = new SpecializedNodeDecoder({ base: 0, fields: [] }, context);
 			const stream = { data: [], offset: 0 };
-			const result = decoder.decode([], stream);
+			const result = decodeWith(decoder, [], stream);
 			assertChunkCursorEquals(result, [{ type: brand("MyNode") }]);
 			assert.equal(stream.offset, 0);
 		});
@@ -674,7 +1314,7 @@ describe("chunkDecoding", () => {
 
 			// Only size=12 is in the stream; bold contributes no tokens (constant).
 			const stream = { data: [12], offset: 0 };
-			const result = decoder.decode(decoders, stream);
+			const result = decodeWith(decoder, decoders, stream);
 
 			assertChunkCursorEquals(result, [
 				{
@@ -702,7 +1342,7 @@ describe("chunkDecoding", () => {
 			const decoder = new SpecializedNodeDecoder({ base: 0, fields: [["b", 2]] }, context);
 
 			const stream = { data: [99], offset: 0 };
-			const result = decoder.decode(decoders, stream);
+			const result = decodeWith(decoder, decoders, stream);
 
 			assertChunkCursorEquals(result, [
 				{
@@ -749,7 +1389,7 @@ describe("chunkDecoding", () => {
 
 			// Both fields are now constant — stream is empty.
 			const stream = { data: [], offset: 0 };
-			const result = decoder.decode(decoders, stream);
+			const result = decodeWith(decoder, decoders, stream);
 
 			assertChunkCursorEquals(result, [
 				{
@@ -796,7 +1436,7 @@ describe("chunkDecoding", () => {
 			);
 
 			const stream = { data: [10, 20], offset: 0 };
-			const result = decoder.decode(decoders, stream);
+			const result = decodeWith(decoder, decoders, stream);
 
 			assertChunkCursorEquals(result, [
 				{
@@ -832,7 +1472,7 @@ describe("chunkDecoding", () => {
 			);
 
 			const stream = { data: [10, 20, 30], offset: 0 };
-			const result = decoder.decode(decoders, stream);
+			const result = decodeWith(decoder, decoders, stream);
 
 			assertChunkCursorEquals(result, [
 				{
@@ -885,7 +1525,7 @@ describe("chunkDecoding", () => {
 			);
 
 			const stream = { data: [10, 20, 30, 40], offset: 0 };
-			const result = decoder.decode(decoders, stream);
+			const result = decodeWith(decoder, decoders, stream);
 
 			// a (override → shape 2 "after") reads 10
 			// b (override → shape 2 "after") reads 20
@@ -941,7 +1581,7 @@ describe("chunkDecoding", () => {
 			);
 
 			const stream = { data: [10, 20, 30], offset: 0 };
-			const result = decoder.decode(decoders, stream);
+			const result = decodeWith(decoder, decoders, stream);
 
 			// a (base, shape 1) reads 10 → "before".
 			// x (inner-added, outer overrode to shape 2) reads 20 → "after".
@@ -969,7 +1609,7 @@ describe("chunkDecoding", () => {
 			const decoder = new SpecializedNodeDecoder({ base: 0, value: ["bold"] }, context);
 
 			const stream = { data: [], offset: 0 };
-			const result = decoder.decode([], stream);
+			const result = decodeWith(decoder, [], stream);
 
 			assertChunkCursorEquals(result, [{ type: brand("FormatNode"), value: "bold" }]);
 			assert.equal(stream.offset, 0);
@@ -986,7 +1626,7 @@ describe("chunkDecoding", () => {
 			const decoder = new SpecializedNodeDecoder({ base: 0, value: false }, context);
 
 			const stream = { data: [], offset: 0 };
-			const result = decoder.decode([], stream);
+			const result = decodeWith(decoder, [], stream);
 
 			assertChunkCursorEquals(result, [{ type: brand("FormatNode") }]);
 			assert.equal(stream.offset, 0);
@@ -1009,7 +1649,7 @@ describe("chunkDecoding", () => {
 			});
 			const decoder = new SpecializedNodeDecoder(overrides, context);
 			const stream = { data: [false], offset: 0 };
-			const result = decoder.decode([], stream);
+			const result = decodeWith(decoder, [], stream);
 			assertChunkCursorEquals(result, [{ type: brand("MyNode") }]);
 			assert.equal(stream.offset, 1);
 		});
@@ -1027,7 +1667,7 @@ describe("chunkDecoding", () => {
 			const decoder = new SpecializedNodeDecoder({ base: 0, extraFields: 1 }, context);
 
 			const stream = { data: [["x", 99]], offset: 0 };
-			const result = decoder.decode(decoders, stream);
+			const result = decodeWith(decoder, decoders, stream);
 
 			assertChunkCursorEquals(result, [
 				{
@@ -1053,7 +1693,7 @@ describe("chunkDecoding", () => {
 			});
 			const decoder = new SpecializedNodeDecoder(overrides, context);
 			const stream = { data: [], offset: 0 };
-			const result = decoder.decode([], stream);
+			const result = decodeWith(decoder, [], stream);
 			assertChunkCursorEquals(result, [{ type: brand("MyNode") }]);
 			assert.equal(stream.offset, 0);
 		});
@@ -1079,7 +1719,7 @@ describe("chunkDecoding", () => {
 
 			// Stream layout: a's value (10), then the extraFields nested array (one pair k=7).
 			const stream = { data: [10, ["k", 7]], offset: 0 };
-			const result = decoder.decode(decoders, stream);
+			const result = decodeWith(decoder, decoders, stream);
 
 			assertChunkCursorEquals(result, [
 				{
@@ -1212,7 +1852,7 @@ describe("chunkDecoding", () => {
 			//
 			// `f` is part of the vTextExperimental format, so the batch is tagged with that
 			// version to match the on-the-wire contract.
-			const batch = {
+			const batch: EncodedFieldBatchVTextExperimental = {
 				version: FieldBatchFormatVersion.vTextExperimental,
 				identifiers: [],
 				shapes: [
@@ -1222,7 +1862,7 @@ describe("chunkDecoding", () => {
 					{ f: { base: 0, fields: [["bold", 2]] } },
 				],
 				data: [[3]],
-			} as unknown as EncodedFieldBatchV1OrV2;
+			};
 
 			const result = decode(batch, idDecodingContext);
 
@@ -1619,7 +2259,7 @@ describe("chunkDecoding", () => {
 		const fieldBatchVersion = brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v2);
 
 		function createMockIncrementalDecoder(
-			chunksMap: Map<ChunkReferenceId, EncodedFieldBatchV1OrV2>,
+			chunksMap: Map<ChunkReferenceId, EncodedFieldBatchAnyVersion>,
 		): IncrementalDecoder {
 			return {
 				decodeIncrementalChunk: (referenceId, chunkDecoder) => {
@@ -1633,7 +2273,7 @@ describe("chunkDecoding", () => {
 		function createMockEncodedIdentifierBatch(
 			nodeIdentifier: TreeNodeSchemaIdentifier,
 			value: TreeValue,
-		): EncodedFieldBatchV1OrV2 {
+		): EncodedFieldBatchAnyVersion {
 			const shape: EncodedNodeShape = {
 				type: nodeIdentifier,
 				value: SpecialField.Identifier,
@@ -1653,13 +2293,13 @@ describe("chunkDecoding", () => {
 
 		it("empty", () => {
 			const referenceId = brand<ChunkReferenceId>(0);
-			const emptyBatch: EncodedFieldBatchV1OrV2 = {
+			const emptyBatch: EncodedFieldBatchAnyVersion = {
 				version: fieldBatchVersion,
 				identifiers: [],
 				shapes: [{ a: 0 }],
 				data: [[0, []]],
 			};
-			const chunksMap = new Map<ChunkReferenceId, EncodedFieldBatchV1OrV2>();
+			const chunksMap = new Map<ChunkReferenceId, EncodedFieldBatchAnyVersion>();
 			chunksMap.set(referenceId, emptyBatch);
 
 			const mockIncrementalDecoder = createMockIncrementalDecoder(chunksMap);
@@ -1667,7 +2307,7 @@ describe("chunkDecoding", () => {
 			const decoder = new IncrementalChunkDecoder(cache);
 			const stream = { data: [referenceId], offset: 0 };
 
-			const result = decoder.decode([], stream);
+			const result = decodeWith(decoder, [], stream);
 			assert.equal(result, emptyChunk);
 		});
 
@@ -1675,11 +2315,11 @@ describe("chunkDecoding", () => {
 			const referenceId = brand<ChunkReferenceId>(1);
 			const compressedId = testIdCompressor.generateCompressedId();
 			const nodeIdentifier: TreeNodeSchemaIdentifier = brand("identifier");
-			const batch: EncodedFieldBatchV1OrV2 = createMockEncodedIdentifierBatch(
+			const batch: EncodedFieldBatchAnyVersion = createMockEncodedIdentifierBatch(
 				nodeIdentifier,
 				compressedId,
 			);
-			const chunksMap = new Map<ChunkReferenceId, EncodedFieldBatchV1OrV2>();
+			const chunksMap = new Map<ChunkReferenceId, EncodedFieldBatchAnyVersion>();
 
 			chunksMap.set(referenceId, batch);
 			const mockIncrementalDecoder = createMockIncrementalDecoder(chunksMap);
@@ -1687,7 +2327,7 @@ describe("chunkDecoding", () => {
 			const decoder = new IncrementalChunkDecoder(cache);
 			const stream = { data: [referenceId], offset: 0 };
 
-			const result = decoder.decode([], stream);
+			const result = decodeWith(decoder, [], stream);
 			const expectedResult = new BasicChunk(
 				nodeIdentifier,
 				new Map(),
@@ -1701,7 +2341,7 @@ describe("chunkDecoding", () => {
 			const referenceId2 = brand<ChunkReferenceId>(2);
 			const nodeIdentifier: TreeNodeSchemaIdentifier = brand("identifier");
 			// The encoded incremental chunk contains a nested array with another incremental chunk.
-			const batch1: EncodedFieldBatchV1OrV2 = {
+			const batch1: EncodedFieldBatchAnyVersion = {
 				version: fieldBatchVersion,
 				identifiers: [],
 				shapes: [
@@ -1716,12 +2356,12 @@ describe("chunkDecoding", () => {
 			};
 
 			const compressedId2 = testIdCompressor.generateCompressedId();
-			const batch2: EncodedFieldBatchV1OrV2 = createMockEncodedIdentifierBatch(
+			const batch2: EncodedFieldBatchAnyVersion = createMockEncodedIdentifierBatch(
 				nodeIdentifier,
 				compressedId2,
 			);
 
-			const chunksMap = new Map<ChunkReferenceId, EncodedFieldBatchV1OrV2>();
+			const chunksMap = new Map<ChunkReferenceId, EncodedFieldBatchAnyVersion>();
 			chunksMap.set(referenceId1, batch1);
 			chunksMap.set(referenceId2, batch2);
 
@@ -1730,7 +2370,7 @@ describe("chunkDecoding", () => {
 			const decoder = new IncrementalChunkDecoder(cache);
 			const stream = { data: [referenceId1], offset: 0 };
 
-			const result = decoder.decode([], stream);
+			const result = decodeWith(decoder, [], stream);
 			const expectedResult = new BasicChunk(
 				nodeIdentifier,
 				new Map(),
@@ -1751,7 +2391,7 @@ describe("chunkDecoding", () => {
 			const stream = { data: [42], offset: 0 };
 
 			assert.throws(
-				() => decoder.decode([], stream),
+				() => decodeWith(decoder, [], stream),
 				validateAssertionError(
 					"incremental decoder not available for incremental field decoding",
 				),
@@ -1760,13 +2400,13 @@ describe("chunkDecoding", () => {
 
 		it("fails for unsupported FieldBatchFormatVersion.v1", () => {
 			const referenceId = brand<ChunkReferenceId>(0);
-			const emptyBatch: EncodedFieldBatchV1OrV2 = {
+			const emptyBatch: EncodedFieldBatchAnyVersion = {
 				version: brand(FieldBatchFormatVersion.v1),
 				identifiers: [],
 				shapes: [{ a: 0 }],
 				data: [[0, []]],
 			};
-			const chunksMap = new Map<ChunkReferenceId, EncodedFieldBatchV1OrV2>();
+			const chunksMap = new Map<ChunkReferenceId, EncodedFieldBatchAnyVersion>();
 			chunksMap.set(referenceId, emptyBatch);
 
 			const mockIncrementalDecoder = createMockIncrementalDecoder(chunksMap);
@@ -1775,7 +2415,7 @@ describe("chunkDecoding", () => {
 			const stream = { data: [referenceId], offset: 0 };
 
 			assert.throws(
-				() => decoder.decode([], stream),
+				() => decodeWith(decoder, [], stream),
 				validateAssertionError(/Unsupported FieldBatchFormatVersion/),
 			);
 		});

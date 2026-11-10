@@ -9,6 +9,7 @@ If you want the `SharedTree` to treat a set of changes atomically, then you can 
 Using a transaction guarantees that (if applied) all of the changes will be applied together synchronously and no other changes (either from this client or from a remote client) can be interleaved with those changes.
 Note that the Fluid Framework guarantees this already for any sequence of changes that are submitted synchronously.
 However, using a transaction has the following additional implications:
+
 -   If [reverted](./undo-redo.mdx) (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
 -   It is also more efficient for SharedTree to process and transmit a large number of changes as a transaction rather than as changes submitted separately.
 -   It is possible to specify constraints on a transaction so that the transaction will be ignored if one or more of these constraints are not met.
@@ -72,6 +73,7 @@ typedView.runTransaction(/* ... */);
 ```
 
 ### The `transaction` Callback Function
+
 The callback function passed to runTransaction implements the transaction logic.
 It can optionally return a status object indicating success or failure, and include a user-defined value.
 
@@ -175,7 +177,6 @@ This means that, on the client where the transaction is created, the transaction
 On other clients, the transaction's constraints are fully settled by the time the transaction is applied, so these clients will only ever experience the transaction in its final state.
 
 :::
-
 
 ### Specifying Constraints
 

@@ -6,20 +6,15 @@
 import { strict as assert } from "node:assert";
 
 import { Tree, TreeViewConfiguration } from "@fluidframework/tree";
-import {
-	independentView,
-	FormattedTextDefault,
-	FormattedText,
-} from "@fluidframework/tree/internal";
-import DeltaPackage from "quill-delta";
+import { independentView, FormattedText } from "@fluidframework/tree/alpha";
 
+import { FormattedTextDefault } from "../formatted/index.js";
 import {
 	applyQuillDeltaToTree,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../formatted/quillFormattedView.js";
-
-const Delta = DeltaPackage.default;
-type Delta = DeltaPackage.default;
+// eslint-disable-next-line import-x/no-internal-modules
+import { Delta } from "../formatted/quillAttributeUtils.js";
 
 /**
  * Build a fresh, independent (unhydrated) `FormattedTextDefault.Tree` initialized from `initial`.

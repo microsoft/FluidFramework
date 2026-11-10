@@ -3,21 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "@sinclair/typebox";
-import type { ObjectOptions, Static } from "@sinclair/typebox";
+import * as Type from "typebox/type";
+import type { TObjectOptions, Static } from "typebox";
 
 import { type ChangesetLocalId, RevisionTagSchema, schemaFormatV1 } from "../../core/index.js";
 import {
 	type JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlySchema,
-	brandedNumberType,
+	brandedIntegerType,
 } from "../../util/index.js";
 
-const noAdditionalProps: ObjectOptions = { additionalProperties: false };
+const noAdditionalProps: TObjectOptions = { additionalProperties: false };
 
-export const ChangesetLocalIdSchema = brandedNumberType<ChangesetLocalId>({
-	multipleOf: 1,
-});
+export const ChangesetLocalIdSchema = brandedIntegerType<ChangesetLocalId>();
 
 export const EncodedChangeAtomId = Type.Union([
 	Type.Tuple([ChangesetLocalIdSchema, RevisionTagSchema]),
@@ -79,7 +77,7 @@ export type EncodedNodeChangeset = Static<typeof EncodedNodeChangeset>;
 export const EncodedRevisionInfo = Type.Object(
 	{
 		revision: Type.Readonly(RevisionTagSchema),
-		rollbackOf: Type.ReadonlyOptional(RevisionTagSchema),
+		rollbackOf: Type.Readonly(Type.Optional(RevisionTagSchema)),
 	},
 	noAdditionalProps,
 );
@@ -89,7 +87,7 @@ export type EncodedRevisionInfo = Static<typeof EncodedRevisionInfo>;
 /**
  * Index of field in an EncodedFieldBatch.
  */
-export const EncodedTreeIndex = Type.Number({ multipleOf: 1, minimum: 0 });
+export const EncodedTreeIndex = Type.Integer({ minimum: 0 });
 
 export const CommitBuilds = Type.Array(
 	Type.Tuple([
@@ -128,7 +126,7 @@ export const EncodedModularChangesetV1 = Type.Object(
 	{
 		maxId: Type.Optional(ChangesetLocalIdSchema),
 		changes: EncodedFieldChangeMap,
-		revisions: Type.ReadonlyOptional(Type.Array(EncodedRevisionInfo)),
+		revisions: Type.Readonly(Type.Optional(Type.Array(EncodedRevisionInfo))),
 		// TODO#8574: separating `builds` and `refreshers` here means that we encode their `EncodedBuilds.trees` separately.
 		// This can lead to a less efficient wire representation because of duplicated schema/shape information.
 		builds: Type.Optional(EncodedBuilds),
@@ -136,7 +134,7 @@ export const EncodedModularChangesetV1 = Type.Object(
 		/**
 		 * The number of constraints within this changeset that are violated.
 		 */
-		violations: Type.Optional(Type.Number({ minimum: 0, multipleOf: 1 })),
+		violations: Type.Optional(Type.Integer({ minimum: 0 })),
 	},
 	noAdditionalProps,
 );

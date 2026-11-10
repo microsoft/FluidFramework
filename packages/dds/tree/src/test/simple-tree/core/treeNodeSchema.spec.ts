@@ -45,7 +45,7 @@ import type {
 		2 | 3 | undefined
 	>;
 	type Combo = S1 | S2;
-	// Ensure that two schema with different TConstructorExtra behave contravariantly
+	// Ensure that two schemas with different TConstructorExtra behave contravariantly
 	type Extra =
 		Combo extends TreeNodeSchemaClass<string, NodeKind, TreeNode, 0, false, unknown, infer R>
 			? R

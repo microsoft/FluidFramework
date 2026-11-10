@@ -26,13 +26,13 @@ const config = {
 	// Current version of the site.
 	// Served under `/docs`.
 	currentVersion: {
-		version: "2",
-		label: "v2",
+		version: "3",
+		label: "v3",
 		// Designates this version of the docs as the "current" version, and therefore the default version to display.
 		current: true,
 		apiDocs: {
-			inputPath: path.resolve(downloadedDocModelsDirectoryPath, "v2"),
-			manifestPath: path.resolve(apiLinkManifestsPath, "v2.json"),
+			inputPath: path.resolve(downloadedDocModelsDirectoryPath, "v3"),
+			manifestPath: path.resolve(apiLinkManifestsPath, "v3.json"),
 			outputPath: path.resolve(currentDocsPath, "api"),
 			uriRoot: "/docs/api",
 		},
@@ -41,6 +41,18 @@ const config = {
 	// Other site versions to include in the build.
 	// Served under `/docs/<path>`.
 	otherVersions: [
+		{
+			version: "2",
+			label: "v2",
+			path: "v2",
+			apiDocs: {
+				inputPath: path.resolve(downloadedDocModelsDirectoryPath, "v2"),
+				manifestPath: path.resolve(apiLinkManifestsPath, "v2.json"),
+				outputPath: path.resolve(versionedDocsPath, "version-2", "api"),
+				uriRoot: "/docs/v2/api",
+			},
+			maintained: true,
+		},
 		{
 			version: "1",
 			label: "v1",

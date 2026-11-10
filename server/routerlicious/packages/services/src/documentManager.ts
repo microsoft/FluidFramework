@@ -11,6 +11,7 @@ import type {
 	ITenantManager,
 	IDocumentStaticProperties,
 	ICache,
+	IReadDocumentOptions,
 } from "@fluidframework/server-services-core";
 import {
 	Lumberjack,
@@ -38,10 +39,14 @@ export class DocumentManager implements IDocumentManager {
 		}
 	}
 
-	// eslint-disable-next-line @rushstack/no-new-null
-	public async readDocument(tenantId: string, documentId: string): Promise<IDocument | null> {
+	/* eslint-disable @rushstack/no-new-null */
+	public async readDocument(
+		tenantId: string,
+		documentId: string,
+		options?: IReadDocumentOptions,
+	): Promise<IDocument | null> {
 		// Retrieve the document
-		const restWrapper = await this.getBasicRestWrapper(tenantId, documentId);
+		const restWrapper = await this.getBasicRestWrapper(tenantId, documentId, options);
 		const document: IDocument = await restWrapper.get<IDocument>(
 			`/documents/${tenantId}/${documentId}`,
 		);
@@ -51,6 +56,7 @@ export class DocumentManager implements IDocumentManager {
 
 		return document;
 	}
+	/* eslint-enable @rushstack/no-new-null */
 
 	public async readStaticProperties(
 		tenantId: string,
@@ -132,22 +138,32 @@ export class DocumentManager implements IDocumentManager {
 		return staticProps;
 	}
 
-	private async getBasicRestWrapper(tenantId: string, documentId: string) {
+	private async getBasicRestWrapper(
+		tenantId: string,
+		documentId: string,
+		options?: IReadDocumentOptions,
+	) {
 		const scopes = [ScopeType.DocRead];
-		const accessToken = await this.tenantManager.signToken(tenantId, documentId, scopes);
+		const usesProvidedAccessToken = options?.accessToken !== undefined;
+		const accessToken = usesProvidedAccessToken
+			? options.accessToken
+			: await this.tenantManager.signToken(tenantId, documentId, scopes);
 		const getDefaultHeaders = () => {
 			return {
 				Authorization: `Basic ${accessToken}`,
 			};
 		};
 
-		const refreshTokenIfNeeded = getRefreshTokenIfNeededCallback(
-			this.tenantManager,
-			documentId,
-			tenantId,
-			scopes,
-			"documentManager",
-		);
+		const refreshTokenIfNeeded = usesProvidedAccessToken
+			? undefined
+			: getRefreshTokenIfNeededCallback(
+					this.tenantManager,
+					documentId,
+					tenantId,
+					scopes,
+					"documentManager",
+			  );
+		const refreshDefaultHeaders = usesProvidedAccessToken ? undefined : getDefaultHeaders;
 
 		const restWrapper = new BasicRestWrapper(
 			this.internalAlfredUrl,
@@ -157,7 +173,7 @@ export class DocumentManager implements IDocumentManager {
 			getDefaultHeaders(),
 			undefined /* Axios */,
 			undefined /* refreshDefaultQueryString */,
-			getDefaultHeaders /* refreshDefaultHeaders */,
+			refreshDefaultHeaders,
 			() => getGlobalTelemetryContext().getProperties().correlationId /* getCorrelationId */,
 			() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
 			refreshTokenIfNeeded /* refreshTokenIfNeeded */,

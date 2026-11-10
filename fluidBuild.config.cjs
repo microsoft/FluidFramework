@@ -566,6 +566,9 @@ module.exports = {
 				".*/eslint.*.mts",
 			],
 			"no-js-file-extensions": [
+				// Test coverage for loading .js as ESM based on the package type.
+				"^build-tools/packages/build-tools/src/test/data/webpack/webpack.config.js$",
+
 				// PropertyDDS uses .js files which should be renamed eventually.
 				"experimental/PropertyDDS/.*",
 				"azure/packages/azure-local-service/index.js",
@@ -592,6 +595,7 @@ module.exports = {
 				// Mocha configs are okay to match package.json (help migrate to simple ESM all the time)
 				// (Just under client packages for now)
 				"^packages/.+/.mocharc.js$",
+				"^examples/utils/webpack-fluid-loader/.mocharc.js$",
 
 				// Avoids MIME-type issues in the browser.
 				"website/static/trusted-types-policy.js",

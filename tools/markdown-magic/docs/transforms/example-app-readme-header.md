@@ -10,14 +10,26 @@ Use `example-app-readme-header` to generate the standard section at the start of
 | `headingLevel`    | integer | Inferred         | Context heading level for all generated sections.       |
 | `gettingStarted`  | boolean | `true`           | Include the getting-started section.                    |
 | `usesTinylicious` | boolean | `true`           | Include the Tinylicious setup steps.                    |
+| `serviceClient`   | boolean | `false`          | Include the unified ServiceClient setup steps. Tinylicious mode also requires `usesTinylicious`. |
 
-If `gettingStarted` is `false`, the transform generates no content. `usesTinylicious` has no effect when `gettingStarted` is `false`.
+If `gettingStarted` is `false`, the transform generates no content. `usesTinylicious` and `serviceClient` have no effect when `gettingStarted` is `false`.
 
-## Example
+## Examples
+
+### Markdown
 
 The following marker generates setup instructions without Tinylicious steps:
 
 ```markdown
 <!-- markdown-magic:begin {"transform":"example-app-readme-header","usesTinylicious":false,"headingLevel":2} -->
 <!-- markdown-magic:end -->
+```
+
+### MDX
+
+For an MDX document, use MDX comments:
+
+```mdx
+{/* markdown-magic:begin {"transform":"example-app-readme-header","usesTinylicious":false,"headingLevel":2} */}
+{/* markdown-magic:end */}
 ```

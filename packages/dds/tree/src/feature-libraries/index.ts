@@ -95,9 +95,11 @@ export {
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
 	isNeverTree,
+	DefaultAtomIdAliasAllocator,
 	DefaultRevisionReplacer,
 	ModularChangeFormatVersion,
 	minimizeModularChangeset,
+	isModularChangesetValid,
 } from "./modular-schema/index.js";
 
 export { mapRootChanges } from "./deltaUtils.js";
@@ -213,6 +215,7 @@ export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";
 export {
 	type KeyFinder,
 	AnchorTreeIndex,
+	KeyFinderDependencyScope,
 	hasElement,
 	type TreeIndex,
 	type TreeIndexNodes,

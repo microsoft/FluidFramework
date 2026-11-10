@@ -35,9 +35,6 @@ export namespace SetUnsampledTelemetry {
 	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<MessageData> {
-		/**
-		 * {@inheritDoc IDevtoolsMessage."type"}
-		 */
 		type: typeof MessageType;
 	}
 

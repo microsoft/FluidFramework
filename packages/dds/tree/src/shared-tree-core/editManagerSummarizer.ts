@@ -12,6 +12,7 @@ import type {
 	ITelemetryContext,
 	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import type { IJsonCodec } from "../codec/index.js";
@@ -83,7 +84,7 @@ export class EditManagerSummarizer<TChangeset, TChangeProcessingContext>
 			SummaryData<TChangeset>,
 			JsonCompatibleReadOnly,
 			JsonCompatibleReadOnly,
-			EditManagerEncodingContext,
+			EditManagerEncodingContext<TChangeset>,
 			EditManagerDecodingContext
 		>,
 		private readonly idCompressor: IIdCompressor,
@@ -106,12 +107,14 @@ export class EditManagerSummarizer<TChangeset, TChangeProcessingContext>
 		trackState?: boolean;
 		telemetryContext?: ITelemetryContext;
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		builder: SummaryTreeBuilder;
 	}): void {
 		const { stringify, builder } = props;
-		const context: EditManagerEncodingContext = {
+		const context: EditManagerEncodingContext<TChangeset> = {
 			idCompressor: this.idCompressor,
 			schema: this.schemaAndPolicy,
+			hasSchemaChange: (change) => this.editManager.changeFamily.hasSchemaChange(change),
 			isSummary: true,
 		};
 		const jsonCompatible = this.codec.encode(this.editManager.getSummaryData(), context);

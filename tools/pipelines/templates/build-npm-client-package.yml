@@ -13,7 +13,6 @@
 #   downstream test pipelines.
 # - Runs tests in dedicated jobs (coverage + per-task fan-out) rather than only
 #   inline in the main build job.
-# - Builds and publishes the devtools browser extension artifact.
 # - Includes client-specific telemetry and artifact shaping used by internal
 #   CI and follow-on workflows.
 #
@@ -207,9 +206,9 @@ extends:
               # Install all dependencies, not just the root ones
               dependencyInstallCommand: pnpm install --frozen-lockfile
 
-      # Install / Build / Test Stage
+      # Build Stage
       - stage: build
-        displayName: Build Stage
+        displayName: Build
         dependsOn: [] # this stage doesn't depend on preceding stage
         jobs:
           # Job - Build
@@ -515,30 +514,6 @@ extends:
                       exit -1;
                     fi
 
-              # Devtools
-              - task: Bash@3
-                displayName: Inject devtools telemetry logger token
-                inputs:
-                  targetType: 'inline'
-                  script: |
-                    set -eu -o pipefail
-                    echo Generating .env
-                    echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/tools/devtools/devtools-browser-extension/.env
-
-              - task: Npm@1
-                displayName: Build devtools
-                inputs:
-                  command: 'custom'
-                  workingDir: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/tools/devtools/devtools-browser-extension/
-                  customCommand: 'run webpack'
-
-              - task: 1ES.PublishPipelineArtifact@1
-                displayName: Publish Artifact - Devtools Browser Extension
-                inputs:
-                  targetPath: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/tools/devtools/devtools-browser-extension/dist/bundle/'
-                  artifactName: 'devtools-extension-bundle_attempt-$(System.JobAttempt)'
-                  publishLocation: 'pipeline'
-
             templateContext:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)
               outputs:
@@ -591,9 +566,14 @@ extends:
                       sbomEnabled: false
                       publishLocation: pipeline
 
+      # Verification Stage
+      - stage: verification
+        displayName: Verification
+        dependsOn:
+          - build
+        jobs:
           - job: Coverage_tests
             displayName: "Coverage tests"
-            dependsOn: build
             variables:
               - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                 - name: targetBranchName
@@ -608,7 +588,7 @@ extends:
               - name: ONEES_ENFORCED_CODEQL_ENABLED
                 value: 'false'
               - name: COMMIT_SHA
-                value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+                value: $[ stageDependencies.build.build.outputs['setCommitSHA.COMMIT_SHA'] ]
 
             steps:
               # Setup
@@ -766,7 +746,6 @@ extends:
           - ${{ each test in parameters.taskTest }}:
             - job: Test_${{ test.jobName }}
               displayName: "Run Task Test ${{ test.jobName }}"
-              dependsOn: build
               variables:
                 - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                   - name: targetBranchName
@@ -781,7 +760,7 @@ extends:
                 - name: ONEES_ENFORCED_CODEQL_ENABLED
                   value: 'false'
                 - name: COMMIT_SHA
-                  value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+                  value: $[ stageDependencies.build.build.outputs['setCommitSHA.COMMIT_SHA'] ]
               steps:
                 # Setup
                 - checkout: self
@@ -911,7 +890,11 @@ extends:
         - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
           parameters:
             dependsOn:
-              - build
+              # This also depends on build stage transitively.
+              - verification
+            # Run when verification skipped to be sure to pick up build stage telemetry
+            # (including when build failure causes verification to be skipped).
+            runOnSkippedDependencies: true
             telemetryDescription: 'stage_timing'
             telemetry_upload_steps:
               - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
@@ -921,7 +904,7 @@ extends:
                   pipelineIdentifierForTelemetry: BuildClient
 
       # Upload bundle size telemetry in a separate stage that only depends on the build stage,
-      # so it isn't blocked by publish stage failures. Only runs on the internal project where
+      # so it isn't blocked by verification stage failures. Only runs on the internal project where
       # ff_pipeline_host is available.
       - ${{ if and(eq(parameters.telemetry, true), eq(parameters.taskBundleAnalysis, true), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal')) }}:
         - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self

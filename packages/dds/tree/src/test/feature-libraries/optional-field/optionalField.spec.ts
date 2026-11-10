@@ -14,10 +14,11 @@ import {
 	makeDetachedNodeId,
 	tagChange,
 } from "../../../core/index.js";
-import type {
-	CrossFieldManager,
-	NodeId,
-	RelevantRemovedRootsFromChild,
+import {
+	DefaultAtomIdAliasAllocator,
+	type CrossFieldManager,
+	type NodeId,
+	type RelevantRemovedRootsFromChild,
 } from "../../../feature-libraries/index.js";
 import type {
 	ChildChangeInfo,
@@ -41,12 +42,7 @@ import type {
 	OptionalChangeset,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
-import {
-	brand,
-	fakeIdAllocator,
-	idAllocatorFromMaxId,
-	type RangeQueryResult,
-} from "../../../util/index.js";
+import { brand, fakeIdAllocator, type RangeQueryResult } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
 import {
@@ -351,7 +347,7 @@ describe("optionalField", () => {
 				return optionalChangeRebaser.invert(
 					change.change,
 					false,
-					idAllocatorFromMaxId(),
+					new DefaultAtomIdAliasAllocator(),
 					mintRevisionTag(),
 					failCrossFieldManager,
 					defaultRevisionMetadataFromChanges([change]),
@@ -361,7 +357,7 @@ describe("optionalField", () => {
 				return optionalChangeRebaser.invert(
 					change.change,
 					true,
-					idAllocatorFromMaxId(),
+					new DefaultAtomIdAliasAllocator(),
 					mintRevisionTag(),
 					failCrossFieldManager,
 					defaultRevisionMetadataFromChanges([change]),
@@ -542,7 +538,7 @@ describe("optionalField", () => {
 					optionalChangeRebaser.invert(
 						deletion.change,
 						false,
-						idAllocatorFromMaxId(),
+						new DefaultAtomIdAliasAllocator(),
 						tag2,
 						failCrossFieldManager,
 						defaultRevisionMetadataFromChanges([deletion]),
@@ -816,7 +812,7 @@ describe("optionalField", () => {
 				const restore = optionalChangeRebaser.invert(
 					clear.change,
 					false,
-					idAllocatorFromMaxId(),
+					new DefaultAtomIdAliasAllocator(),
 					mintRevisionTag(),
 					failCrossFieldManager,
 					defaultRevisionMetadataFromChanges([clear]),
@@ -882,7 +878,7 @@ describe("optionalField", () => {
 					optionalChangeRebaser.invert(
 						clear.change,
 						false,
-						idAllocatorFromMaxId(),
+						new DefaultAtomIdAliasAllocator(),
 						mintRevisionTag(),
 						failCrossFieldManager,
 						defaultRevisionMetadataFromChanges([clear]),

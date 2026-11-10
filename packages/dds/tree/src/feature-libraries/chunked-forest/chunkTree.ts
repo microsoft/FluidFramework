@@ -14,6 +14,7 @@ import {
 	ObjectNodeStoredSchema,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
+	type TreeStoredSchema,
 	type TreeStoredSchemaSubscription,
 	type TreeValue,
 	type Value,
@@ -25,7 +26,13 @@ import {
 	type SchemaAndPolicy,
 	type SchemaPolicy,
 } from "../../core/index.js";
-import { assertNonNegativeSafeInteger, getOrCreate } from "../../util/index.js";
+import {
+	assertNonNegativeSafeInteger,
+	getOrCreate,
+	type IndexRange,
+	replaceArrayRange,
+	validateIndexRange,
+} from "../../util/index.js";
 import { isStableNodeIdentifier } from "../node-identifier/index.js";
 
 import { BasicChunk } from "./basicChunk.js";
@@ -54,10 +61,14 @@ export function makeTreeChunker(
 		defaultChunkPolicy.sequenceChunkInlineThreshold,
 		defaultChunkPolicy.uniformChunkNodeCount,
 		defaultChunkPolicy.uniformChunkNodeCountDynamicTargetMax,
-		(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
+		(
+			type: TreeNodeSchemaIdentifier,
+			shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
+			chunkerSchema: TreeStoredSchema,
+		) =>
 			tryShapeFromNodeSchema(
 				{
-					schema,
+					schema: chunkerSchema,
 					policy,
 					shouldEncodeIncrementally,
 					shapes,
@@ -102,6 +113,15 @@ export const polymorphic = new Polymorphic();
  */
 export type ShapeInfo = TreeShape | Polymorphic;
 
+/**
+ * A stateful chunking policy that derives and caches tree shapes from stored schema.
+ *
+ * @remarks
+ * Shape information is valid only for the current contents of {@link schema}.
+ * The first cache miss registers one schema-change callback.
+ * When the schema changes, the callback clears the complete cache and unregisters itself.
+ * A later cache miss registers a new callback for the new schema version.
+ */
 export class Chunker implements IChunker {
 	/**
 	 * Cache for information about possible shapes for types.
@@ -110,19 +130,51 @@ export class Chunker implements IChunker {
 	 */
 	private readonly typeShapes: Map<TreeNodeSchemaIdentifier, ShapeInfo> = new Map();
 
+	/**
+	 * Unregisters the schema-change callback for the current cache contents.
+	 *
+	 * This is `undefined` while the cache is empty and no invalidation callback is needed.
+	 * At most one callback is registered at a time.
+	 */
 	private unregisterSchemaCallback: (() => void) | undefined;
 
 	public constructor(
+		/**
+		 * The stored schema from which this chunker derives shape information.
+		 *
+		 * Changes to this schema invalidate all cached shape information.
+		 */
 		public readonly schema: TreeStoredSchemaSubscription,
+		/**
+		 * The schema policy used to interpret {@link schema} when deriving chunk shapes.
+		 */
 		public readonly policy: SchemaPolicy,
 		public readonly sequenceChunkSplitThreshold: number,
 		public readonly sequenceChunkInlineThreshold: number,
 		public readonly uniformChunkNodeCount: number,
 		public readonly uniformChunkNodeCountDynamicTargetMax: number,
-		// eslint-disable-next-line @typescript-eslint/no-shadow
-		private readonly tryShapeFromNodeSchema: (
+		/**
+		 * Derives shape information, which the chunker caches for `type`.
+		 *
+		 * The function can also cache shape information for dependencies that it examines.
+		 * All entries must be derived only from `chunkerSchema`, because the complete map is
+		 * retained until that schema changes.
+		 */
+		private readonly tryShapeWithSchema: (
+			/**
+			 * The node schema identifier for which to derive shape information.
+			 */
 			type: TreeNodeSchemaIdentifier,
+			/**
+			 * The cache for the current schema version.
+			 * The function can add results for other examined types.
+			 */
 			shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
+			/**
+			 * The stored schema whose current contents apply to all entries in `shapes`.
+			 * The chunker, not this function, monitors the schema for changes.
+			 */
+			chunkerSchema: TreeStoredSchema,
 		) => ShapeInfo,
 	) {}
 
@@ -136,19 +188,36 @@ export class Chunker implements IChunker {
 			this.sequenceChunkInlineThreshold,
 			this.uniformChunkNodeCount,
 			this.uniformChunkNodeCountDynamicTargetMax,
-			this.tryShapeFromNodeSchema,
+			this.tryShapeWithSchema,
 		);
 	}
 
 	public shapeFromSchema(schema: TreeNodeSchemaIdentifier): ShapeInfo {
 		const cached = this.typeShapes.get(schema);
 		if (cached !== undefined) {
+			debugAssert(
+				() =>
+					this.unregisterSchemaCallback !== undefined ||
+					"Must not hit cache when invalidation is not set up",
+			);
 			return cached;
 		}
-		this.unregisterSchemaCallback = this.schema.events.on("afterSchemaChange", () =>
+		// This is done after the hot path (cache hit case above) as an optimization:
+		// it should always already be set in the cache hit case, so checking it here instead of above avoids a redundant check.
+		this.unregisterSchemaCallback ??= this.schema.events.on("afterSchemaChange", () =>
 			this.schemaChanged(),
 		);
-		return this.tryShapeFromNodeSchema(schema, this.typeShapes);
+		const result = this.tryShapeWithSchema(schema, this.typeShapes, this.schema);
+		// tryShapeWithSchema may have added this item to the cache:
+		// if so, it should be the same as the returned result.
+		debugAssert(
+			() =>
+				!this.typeShapes.has(schema) ||
+				this.typeShapes.get(schema) === result ||
+				"Returned shape does not match cached shape",
+		);
+		this.typeShapes.set(schema, result);
+		return result;
 	}
 
 	public dispose(): void {
@@ -168,6 +237,7 @@ export class Chunker implements IChunker {
 /**
  * Get a TreeChunk for the current node (and its children) of cursor.
  * This will copy if needed, but add refs to existing chunks which hold the data.
+ * Borrows the cursor's content and returns one owned reference, including when reusing a chunk.
  *
  * @param cursor - cursor in nodes mode
  */
@@ -178,6 +248,7 @@ export function chunkTree(cursor: ITreeCursorSynchronous, policy: ChunkCompresso
 /**
  * Get a TreeChunk[] for the current field (and its children) of cursor.
  * This will copy if needed, but add refs to existing chunks which hold the data.
+ * Borrows the cursor's content and returns one owned reference per array entry.
  */
 export function chunkField(
 	cursor: ITreeCursorSynchronous,
@@ -206,7 +277,7 @@ export function chunkFieldSingle(
 /**
  * Create a single TreeChunk from an array of TreeChunks.
  * @remarks
- * This takes ownership of the provided TreeChunk references, and returns an owned referenced.
+ * Takes ownership of one reference per array entry and returns one owned reference.
  */
 export function combineChunks(chunks: TreeChunk[]): TreeChunk {
 	if (chunks.length === 1) {
@@ -218,6 +289,7 @@ export function combineChunks(chunks: TreeChunk[]): TreeChunk {
 /**
  * Get a BasicChunk for the current node (and its children) of cursor.
  * This will copy if needed, and add refs to existing chunks which hold the data.
+ * Borrows the cursor's content and returns one owned reference.
  */
 export function basicChunkTree(
 	cursor: ITreeCursorSynchronous,
@@ -226,7 +298,7 @@ export function basicChunkTree(
 	// symbol based fast path to check for BasicChunk:
 	// return existing chunk with a increased ref count if possible.
 	const chunk = tryGetChunk(cursor);
-	if (chunk instanceof BasicChunk) {
+	if (chunk instanceof BasicChunk && policy.shouldRechunk?.(chunk) !== true) {
 		chunk.referenceAdded();
 		return chunk;
 	}
@@ -292,7 +364,7 @@ export interface FieldSchemaWithContext {
  *
  * @remarks
  * The determination here is conservative. `shouldEncodeIncrementally` is used to split up shapes so incrementally
- * encoded schema are not part of larger shapes. It also does not tolerate optional or sequence fields, nor does it
+ * encoded schemas are not part of larger shapes. It also does not tolerate optional or sequence fields, nor does it
  * optimize for patterns of specific values.
  */
 export function tryShapeFromNodeSchema(
@@ -414,7 +486,12 @@ export interface ChunkPolicy {
 	readonly sequenceChunkInlineThreshold: number;
 
 	/**
-	 * Maximum total nodes to put in a UniformChunk.
+	 * Maximum total nodes in a {@link UniformChunk} newly constructed by {@link chunkRange}.
+	 *
+	 * @remarks
+	 * This is a chunking heuristic, not an invariant on all uniform chunks.
+	 * Existing chunks can be reused without enforcing this limit.
+	 * Uniform decoding can also produce larger chunks by repeating a supported tree shape, deferring splitting until editing requires it.
 	 */
 	readonly uniformChunkNodeCount: number;
 
@@ -428,8 +505,8 @@ export interface ChunkPolicy {
 	 * is split exactly. This bounds N splits inside an M-sized chunk at the cost of producing a
 	 * few extra intermediate chunks.
 	 *
-	 * Future merge/extend logic for adjacent small chunks could use the same value as the
-	 * upper bound it tries to stay under, so dynamic chunk sizes settle around this target.
+	 * Also caps chunks merged by {@link coalesceUniformChunks}, so dynamic chunk sizes
+	 * settle around this target.
 	 *
 	 * Independent of {@link ChunkPolicy.uniformChunkNodeCount}, which only bounds the size of
 	 * chunks produced by the initial chunking pass.
@@ -445,6 +522,15 @@ export interface ChunkPolicy {
 export interface ChunkCompressor {
 	readonly policy: ChunkPolicy;
 	/**
+	 * Whether to traverse an existing non-uniform chunk to optimize its descendants instead of reusing the subtree.
+	 * The callback borrows the chunk without taking ownership of a reference.
+	 * Returning `false` preserves the chunk's identity and skips its descendants.
+	 * When omitted, existing chunks can be reused without traversal.
+	 * Uniform chunks are reused without calling this callback.
+	 * Traversal costs are proportional to the content outside reused subtrees.
+	 */
+	readonly shouldRechunk?: (chunk: TreeChunk) => boolean;
+	/**
 	 * If the idCompressor is provided, {@link UniformChunk}s with identifiers will be encoded for its in-memory representation.
 	 * @remarks
 	 * This compression applies to {@link UniformChunk}s when {@link TreeShape.mayContainCompressedIds} is set.
@@ -453,15 +539,40 @@ export interface ChunkCompressor {
 	readonly idCompressor: IIdCompressor | undefined;
 }
 
+/**
+ * Rechunks the current node's fields, returning one owned BasicChunk reference.
+ * Preserves an existing BasicChunk's identity when its child references are unchanged so incremental summary tracking remains valid.
+ * In that case, releases the temporary child references acquired during traversal and returns a new reference to the existing parent.
+ * Otherwise, transfers the child references to a new parent.
+ */
 function newBasicChunkTree(
 	cursor: ITreeCursorSynchronous,
 	policy: ChunkCompressor,
 ): BasicChunk {
-	return new BasicChunk(
-		cursor.type,
-		new Map(mapCursorFields(cursor, () => [cursor.getFieldKey(), chunkField(cursor, policy)])),
-		cursor.value,
+	const existing = tryGetChunk(cursor);
+	const fields = new Map(
+		mapCursorFields(cursor, () => [cursor.getFieldKey(), chunkField(cursor, policy)]),
 	);
+	if (
+		existing instanceof BasicChunk &&
+		existing.fields.size === fields.size &&
+		[...fields].every(([key, children]) => {
+			const previous = existing.fields.get(key);
+			return (
+				previous?.length === children.length &&
+				children.every((child, index) => child === previous[index])
+			);
+		})
+	) {
+		for (const children of fields.values()) {
+			for (const child of children) {
+				child.referenceRemoved();
+			}
+		}
+		existing.referenceAdded();
+		return existing;
+	}
+	return new BasicChunk(cursor.type, fields, cursor.value);
 }
 
 /**
@@ -498,7 +609,10 @@ export function chunkRange(
 			const chunkLength = cursor.chunkLength;
 			if (chunkLength <= remaining) {
 				const chunk = tryGetChunk(cursor);
-				if (chunk !== undefined) {
+				if (
+					chunk !== undefined &&
+					(chunk instanceof UniformChunk || chunkCompressor.shouldRechunk?.(chunk) !== true)
+				) {
 					if (
 						chunk instanceof SequenceChunk &&
 						chunk.subChunks.length <= chunkCompressor.policy.sequenceChunkInlineThreshold
@@ -525,10 +639,12 @@ export function chunkRange(
 
 		if (!reusedChunk) {
 			assert(cursor.mode === CursorLocationType.Nodes, 0x580 /* should be in nodes */);
-			// TODO: if provided, use schema to consider using UniformChunks
 			const type = cursor.type;
 			const shape = chunkCompressor.policy.shapeFromSchema(type);
-			if (shape instanceof TreeShape) {
+			if (
+				shape instanceof TreeShape &&
+				shape.positions.length <= chunkCompressor.policy.uniformChunkNodeCount
+			) {
 				const nodesPerTopLevelNode = shape.positions.length;
 				const maxTopLevelLength = Math.max(
 					1,
@@ -555,7 +671,9 @@ export function chunkRange(
 		}
 	}
 
-	// TODO: maybe make a pass over output to coalesce UniformChunks and/or convert other formats to UniformChunks where possible.
+	// TODO: Consider coalescing adjacent small, same-shape UniformChunks reused by the fast path
+	// when their combined size fits within the applicable chunk size limit.
+	// Newly converted runs are already packed by uniformChunkFromCursor.
 
 	// If output is large, group it into a tree of sequence chunks.
 	while (output.length > chunkCompressor.policy.sequenceChunkSplitThreshold) {
@@ -631,14 +749,143 @@ export function splitFieldAtIndex(
 		cursor.firstNode();
 		const before = chunkRange(cursor, policy, splitPoint, false);
 		const after = chunkRange(cursor, policy, total - splitPoint, true);
-		// TODO: this could fail for really long chunks being split (due to argument count limits).
-		chunks.splice(chunkIndex, 1, ...before, ...after);
+		replaceArrayRange(chunks, chunkIndex, chunkIndex + 1, [...before, ...after]);
 		// The spliced-out slot held a ref to the original chunk. The two new chunks come with
 		// their own refs from chunkRange, so the slot's ref to the original needs to be released.
 		chunk.referenceRemoved();
 	}
 	assert(remaining === 0, 0xcf9 /* nodeIndex exceeds total node count in field */);
 	return chunks.length;
+}
+
+/**
+ * Coalesce adjacent small same-shape {@link UniformChunk}s into larger {@link UniformChunk}s.
+ *
+ * @param chunks - The chunks array, modified in place.
+ * @param policy - The {@link ChunkPolicy} supplying the per-chunk cap.
+ * @param range - Half-open `[start, end)` sub-range of `chunks` (by chunk index) to consider for
+ * merging. Defaults to the whole array. `end` must not exceed `chunks.length`.
+ *
+ * @remarks
+ * Size capped at {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax} top-level nodes per chunk.
+ * @privateRemarks
+ * Walks the range from left to right, attempting to merge each chunk with its left neighbor via
+ * {@link tryCoalesceUniformChunks}. Performs at most one in-place `splice` on `chunks`. Non-mergeable
+ * chunks are passed through unchanged.
+ *
+ * The per-chunk cap ({@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax}) intentionally
+ * matches the threshold {@link splitFieldAtIndex} uses when bisecting a chunk: if coalescing
+ * produced chunks larger than that threshold, a subsequent split would immediately re-divide
+ * them, so matching the two keeps repeated split/coalesce cycles from oscillating.
+ */
+export function coalesceUniformChunks(
+	chunks: TreeChunk[],
+	policy: ChunkPolicy,
+	range?: IndexRange,
+): void {
+	const rangeStart = range?.start ?? 0;
+	const rangeEnd = range?.end ?? chunks.length;
+	validateIndexRange(rangeStart, rangeEnd, chunks, "coalesceUniformChunks");
+	if (rangeEnd - rangeStart < 2) {
+		// Zero and 1 chunks are common cases, so as an optimization we return early as there is never anything to do for them.
+		return;
+	}
+
+	// Updating `chunks` as we go could incur a lot of overhead if there are a lot of chunks after the location we are editing,
+	// so we instead build up this separate array which is spliced over the selected range.
+	// As we traverse, ownership of the chunks (tracked via the refcounts) is moved to this array.
+	const result: TreeChunk[] = [chunks[rangeStart] ?? oob()];
+	let mutated = false;
+	for (let chunkIndex = rangeStart + 1; chunkIndex < rangeEnd; chunkIndex++) {
+		const current = chunks[chunkIndex] ?? oob();
+		const previous = result.at(-1) ?? oob();
+		const coalesced = tryCoalesceUniformChunks(previous, current, policy);
+		if (coalesced === undefined) {
+			result.push(current);
+		} else {
+			result[result.length - 1] = coalesced;
+			mutated = true;
+		}
+	}
+
+	if (mutated) {
+		replaceArrayRange(chunks, rangeStart, rangeEnd, result);
+	}
+}
+
+/**
+ * Attempts to combine two adjacent {@link UniformChunk}s into a single {@link UniformChunk}.
+ *
+ * @remarks
+ * Skips if either input is not a {@link UniformChunk}, the {@link TreeShape}s differ, or the
+ * combined `topLevelLength` would exceed
+ * {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax}.
+ *
+ * Asserts that the two inputs do not carry different non-undefined
+ * {@link UniformChunk.idCompressor}s: that case would silently produce a merged chunk whose
+ * compressed-id values decompress to incorrect strings under the surviving compressor.
+ *
+ * Ref-count contract: on success the caller transfers one ref each on `left` and `right` to this
+ * function and receives one ref on the returned chunk (which may be `left` itself when `left` was
+ * not shared). On failure (`undefined`), the caller's refs on `left` and `right` are unchanged.
+ *
+ * When `left.isShared()` returns false (refcount === 1), the merged chunk reuses `left`: its
+ * values array is extended in place and its shape is updated. This avoids allocating an O(n²)
+ * total of value bytes when merging a run of `n` small chunks together.
+ *
+ * @returns The merged chunk on success, or `undefined` when the pair is not mergeable.
+ */
+export function tryCoalesceUniformChunks(
+	left: TreeChunk,
+	right: TreeChunk,
+	policy: ChunkPolicy,
+): UniformChunk | undefined {
+	if (!(left instanceof UniformChunk) || !(right instanceof UniformChunk)) {
+		return undefined;
+	}
+	const leftTreeShape = left.shape.treeShape;
+	const rightTreeShape = right.shape.treeShape;
+	if (!leftTreeShape.equals(rightTreeShape)) {
+		return undefined;
+	}
+	// Documents the invariant that all chunks in a single ChunkedForest share its idCompressor.
+	// If this assertion ever fires it means a caller mixed chunks from different forests; merging
+	// them would silently decompress one side's compressed-id values to the wrong strings.
+	const leftCompressor = left.idCompressor;
+	const rightCompressor = right.idCompressor;
+	assert(
+		leftCompressor === undefined ||
+			rightCompressor === undefined ||
+			leftCompressor === rightCompressor,
+		0xd50 /* tryCoalesceUniformChunks: left and right carry different idCompressors */,
+	);
+	const combinedTopLevel = left.topLevelLength + right.topLevelLength;
+	// Don't merge if the result would exceed the per-chunk node cap: this keeps chunks from
+	// growing unbounded and matches the threshold {@link splitFieldAtIndex} bisects at, so a
+	// merged chunk won't just be re-split on the next edit.
+	if (combinedTopLevel > policy.uniformChunkNodeCountDynamicTargetMax) {
+		return undefined;
+	}
+
+	if (!left.isShared()) {
+		// In-place: grow `left` to absorb `right`. `left`'s sole array-slot ref is preserved
+		// and returned; `right`'s slot ref is released.
+		left.values.push(...right.values);
+		left.shape = leftTreeShape.withTopLevelLength(combinedTopLevel);
+		left.idCompressor ??= rightCompressor;
+		right.referenceRemoved();
+		return left;
+	}
+
+	// Left is shared: build a fresh merged chunk and release the two inputs.
+	const merged = new UniformChunk(
+		leftTreeShape.withTopLevelLength(combinedTopLevel),
+		[...left.values, ...right.values],
+		leftCompressor ?? rightCompressor,
+	);
+	left.referenceRemoved();
+	right.referenceRemoved();
+	return merged;
 }
 
 /**

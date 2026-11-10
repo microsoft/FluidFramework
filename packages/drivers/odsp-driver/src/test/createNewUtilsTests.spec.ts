@@ -38,7 +38,7 @@ import {
 	getOdspResolvedUrl,
 } from "../odspUtils.js";
 
-import { mockFetchOk, mockFetchOKIf } from "./mockFetch.js";
+import { mockFetchOk, mockFetchOkAndGetUrl, mockFetchOKIf } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
@@ -707,6 +707,72 @@ describe("Create New Utils Tests", () => {
 					siteUrl: "https://mock.url/siteUrl",
 				},
 				"Values should be equal",
+			);
+		});
+	});
+
+	describe("Creates the file in the requested folder", () => {
+		const parentFolderId = "01VUXKMZBAWJETO47NOFDJ6F4ALDI23UL5";
+		const driveUrl = `https://microsoft.sharepoint-df.com/_api/v2.1/drives/${driveId}`;
+
+		const createFileAndGetUrl = async (
+			fileInfo: INewFileInfo,
+			summary: ISummaryTree | undefined,
+		): Promise<string> => {
+			const { url } = await useCreateNewModule(createChildLogger(), async (module) =>
+				mockFetchOkAndGetUrl(
+					async () =>
+						module.createNewFluidFile(
+							async (_options) => "token",
+							fileInfo,
+							createChildLogger(),
+							summary,
+							epochTracker,
+							fileEntry,
+							false /* createNewCaching */,
+							false /* forceAccessTokenViaAuthorizationHeader */,
+						),
+					{ itemId: "itemId1", id: "Summary handle" },
+					{ "x-fluid-epoch": "epoch1" },
+				),
+			);
+			return url;
+		};
+
+		it("Should post the summary to the folder at the file path", async () => {
+			assert.strictEqual(
+				await createFileAndGetUrl(newFileParams, createSummary()),
+				`${driveUrl}/items/root:%2F${filePath}/filename:/opStream/snapshots/snapshot`,
+			);
+		});
+
+		it("Should post the summary to the folder with the parent folder ID", async () => {
+			assert.strictEqual(
+				await createFileAndGetUrl(
+					{ type: "New", driveId, siteUrl, parentFolderId, filename: "filename" },
+					createSummary(),
+				),
+				`${driveUrl}/items/${parentFolderId}:/filename:/opStream/snapshots/snapshot`,
+			);
+		});
+
+		it("Should create an empty file in the folder with the parent folder ID", async () => {
+			assert.strictEqual(
+				await createFileAndGetUrl(
+					{ type: "New", driveId, siteUrl, parentFolderId, filename: "filename" },
+					undefined,
+				),
+				`${driveUrl}/items/${parentFolderId}:/filename.tmp:/content?@name.conflictBehavior=rename&select=id,name,parentReference`,
+			);
+		});
+
+		it("Should encode the parent folder ID as a single path segment", async () => {
+			assert.strictEqual(
+				await createFileAndGetUrl(
+					{ type: "New", driveId, siteUrl, parentFolderId: "id/../x?y", filename: "filename" },
+					createSummary(),
+				),
+				`${driveUrl}/items/id%2F..%2Fx%3Fy:/filename:/opStream/snapshots/snapshot`,
 			);
 		});
 	});

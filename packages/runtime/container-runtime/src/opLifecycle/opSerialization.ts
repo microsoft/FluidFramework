@@ -12,6 +12,11 @@ import {
 	isFluidHandle,
 	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
+import {
+	DataCorruptionError,
+	extractSafePropertiesFromMessage,
+	wrapError,
+} from "@fluidframework/telemetry-utils/internal";
 
 import type { LocalContainerRuntimeMessage } from "../messageTypes.js";
 
@@ -28,7 +33,20 @@ export function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMes
 	// This should become unconditional once Loader LTS reaches 2.4 or later.
 	// There will be a long time of needing both cases, until LTS advances to that point.
 	if (typeof mutableMessage.contents === "string" && mutableMessage.contents !== "") {
-		mutableMessage.contents = JSON.parse(mutableMessage.contents);
+		let deserializedContents: unknown;
+		try {
+			deserializedContents = JSON.parse(mutableMessage.contents);
+		} catch (error) {
+			throw wrapError(
+				error,
+				(message) =>
+					new DataCorruptionError(message, {
+						dataProcessingCodepath: "ensureContentsDeserialized",
+						...extractSafePropertiesFromMessage(mutableMessage),
+					}),
+			);
+		}
+		mutableMessage.contents = deserializedContents;
 	}
 }
 

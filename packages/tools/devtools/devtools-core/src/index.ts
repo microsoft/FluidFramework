@@ -31,7 +31,10 @@ export type {
 } from "./CommonInterfaces.js";
 export { EditType } from "./CommonInterfaces.js";
 export { ContainerStateChangeKind } from "./Container.js";
-export type { ContainerDevtoolsProps } from "./ContainerDevtools.js";
+export type {
+	ContainerDevtoolsProps,
+	FluidContainerDevtoolsProps,
+} from "./ContainerDevtools.js";
 export type { ContainerRuntimeProps } from "./ContainerRuntimeDevtools.js";
 export type { ContainerStateMetadata } from "./ContainerMetadata.js";
 export type {
@@ -54,10 +57,14 @@ export type {
 } from "./data-visualization/index.js";
 export { VisualNodeKind } from "./data-visualization/index.js";
 export type { ContainerDevtoolsFeatureFlags, DevtoolsFeatureFlags } from "./Features.js";
-export type { IFluidDevtools } from "./IFluidDevtools.js";
+export type { FluidDevtoolsAlpha, IFluidDevtools } from "./IFluidDevtools.js";
 export { createDevtoolsLogger, type IDevtoolsLogger } from "./DevtoolsLogger.js";
 export type { FluidDevtoolsProps } from "./FluidDevtools.js";
-export { initializeDevtools, tryGetFluidDevtools } from "./FluidDevtools.js";
+export {
+	initializeDevtools,
+	initializeDevtoolsAlpha,
+	tryGetFluidDevtools,
+} from "./FluidDevtools.js";
 export type {
 	AudienceChangeLogEntry,
 	ConnectionStateChangeLogEntry,

@@ -12,7 +12,11 @@
  *   checkpoint, correcting a date, or adjusting a future estimate), since step 7
  *   regenerates the `CompatibilityCheckpoints.md` table from that file
  *
- *   pnpm -r --filter @fluid-private/test-version-utils run update-compat-versions
+ * Before running this script, make sure the repo is sufficiently built by executing:
+ *   `pnpm exec fluid-build --task build:esm /test-version-utils$`
+ *
+ * Running the update script:
+ *   `pnpm -r --filter @fluid-private/test-version-utils run update-compat-versions`
  *
  * The script:
  *   1. Reads the current package version from `src/packageVersion.ts`.
@@ -189,7 +193,7 @@ function removeStaleVersionDirs(workspaceDir: string, keepVersions: Set<string>)
 
 function pnpmInstallWorkspace(workspaceDir: string): void {
 	console.log(`\nRunning pnpm install in ${path.relative(pkgRoot, workspaceDir)} ...`);
-	execSync(`pnpm install --no-frozen-lockfile`, {
+	execSync(`pnpm --config.minimum-release-age=10080 install --no-frozen-lockfile`, {
 		cwd: workspaceDir,
 		env: { ...process.env, NODE_OPTIONS: "" },
 		stdio: "inherit",

@@ -38,6 +38,7 @@ import {
 	type ITenantCustomDataExternal,
 	type ISimplifiedCustomDataRetriever,
 	type ICreateGitServiceArgs,
+	type IDocumentAccessProof,
 } from "../services";
 import { Constants, parseToken } from "../utils";
 
@@ -66,13 +67,13 @@ type SummaryOwnershipOutcome =
 	| "notFound"
 	| "identityMismatch"
 	| "scheduledDeletion"
-	| "initialReplay"
 	| "dependencyError";
 
-export interface IValidateInitialSummaryUploadArgs {
-	tenantId: string;
-	authorization: string | undefined;
-	documentManager: IDocumentManager;
+export interface ISummaryOwnershipTelemetryDetails {
+	source?: "localEphemeral" | "alfred";
+	localOutcome?: "active" | "deleted" | "miss" | "expired" | "malformed" | "dependencyError";
+	fallbackReason?: "cleanMiss" | "localDependencyError";
+	activationOutcome?: "created" | "alreadyActive" | "deleted" | "writeError";
 }
 
 export interface IValidateSummaryDocumentArgs {
@@ -83,6 +84,9 @@ export interface IValidateSummaryDocumentArgs {
 	routeType: SummaryRouteType;
 	ephemeralDocumentTTLSec: number;
 	ignoreEphemeralFlag?: boolean;
+	reuseCustomerAccessToken?: boolean;
+	telemetryDetails?: ISummaryOwnershipTelemetryDetails;
+	logAllowedOutcome?: boolean;
 }
 
 function getEphemeralContainerCacheKey(tenantId: string, documentId: string): string {
@@ -272,28 +276,32 @@ async function checkAndCacheIsEphemeral({
 const ownershipEventName = "HistorianSummaryDocumentOwnershipValidation";
 const documentUnavailableMessage = "Document is deleted and cannot be accessed.";
 
-function getTokenDocumentId(tenantId: string, authorization: string | undefined): string {
+export function getTokenDocumentIdentity(
+	tenantId: string,
+	authorization: string | undefined,
+): { accessToken: string; documentId: string } {
 	if (!authorization) {
 		throw new NetworkError(403, "Authorization header is missing.");
 	}
-	const token = parseToken(tenantId, authorization);
-	if (!token) {
+	const accessToken = parseToken(tenantId, authorization);
+	if (!accessToken) {
 		throw new NetworkError(403, "Authorization token is missing.");
 	}
-	const documentId = (decode(token) as ITokenClaims).documentId;
+	const documentId = (decode(accessToken) as ITokenClaims).documentId;
 	if (containsPathTraversal(documentId)) {
 		throw new NetworkError(400, `Invalid document id: ${documentId}`);
 	}
-	return documentId;
+	return { accessToken, documentId };
 }
 
-function logOwnershipOutcome(
+export function logOwnershipOutcome(
 	tenantId: string,
 	documentId: string,
 	operation: SummaryOperation,
 	routeType: SummaryRouteType,
 	outcome: SummaryOwnershipOutcome,
 	error?: unknown,
+	details?: ISummaryOwnershipTelemetryDetails,
 ): void {
 	const properties = {
 		[BaseTelemetryProperties.tenantId]: tenantId,
@@ -303,6 +311,14 @@ function logOwnershipOutcome(
 		operation,
 		routeType,
 		outcome,
+		...(details?.source === undefined ? {} : { source: details.source }),
+		...(details?.localOutcome === undefined ? {} : { localOutcome: details.localOutcome }),
+		...(details?.fallbackReason === undefined
+			? {}
+			: { fallbackReason: details.fallbackReason }),
+		...(details?.activationOutcome === undefined
+			? {}
+			: { activationOutcome: details.activationOutcome }),
 		...(error === undefined
 			? {}
 			: {
@@ -317,14 +333,15 @@ function logOwnershipOutcome(
 	}
 }
 
-function denyDocumentAccess(
+export function denyDocumentAccess(
 	tenantId: string,
 	documentId: string,
 	operation: SummaryOperation,
 	routeType: SummaryRouteType,
 	outcome: Exclude<SummaryOwnershipOutcome, "allowed" | "dependencyError">,
+	details?: ISummaryOwnershipTelemetryDetails,
 ): never {
-	logOwnershipOutcome(tenantId, documentId, operation, routeType, outcome);
+	logOwnershipOutcome(tenantId, documentId, operation, routeType, outcome, undefined, details);
 	throw new NetworkError(404, documentUnavailableMessage);
 }
 
@@ -334,6 +351,7 @@ function validateAlfredDocumentResponse(
 	documentId: string,
 	operation: SummaryOperation,
 	routeType: SummaryRouteType,
+	telemetryDetails?: ISummaryOwnershipTelemetryDetails,
 ): void {
 	if (
 		typeof document !== "object" ||
@@ -348,51 +366,17 @@ function validateAlfredDocumentResponse(
 		(document.storageName != null && typeof document.storageName !== "string")
 	) {
 		const error = new NetworkError(502, "Invalid document response from Alfred.");
-		logOwnershipOutcome(tenantId, documentId, operation, routeType, "dependencyError", error);
-		throw error;
-	}
-}
-
-export async function validateInitialSummaryUpload({
-	tenantId,
-	authorization,
-	documentManager,
-}: IValidateInitialSummaryUploadArgs): Promise<void> {
-	const documentId = getTokenDocumentId(tenantId, authorization);
-	let document: IDocument | null;
-	try {
-		document = await runWithRetry(
-			async () => documentManager.readDocument(tenantId, documentId),
-			"utils.validateInitialSummaryUpload.readDocument",
-			3,
-			1000,
-			getLumberBaseProperties(documentId, tenantId),
-			undefined,
-			shouldRetryNetworkError,
-		);
-	} catch (error) {
-		if (error instanceof NetworkError && error.code === 404) {
-			logOwnershipOutcome(tenantId, documentId, "post", "notApplicable", "allowed");
-			return;
-		}
 		logOwnershipOutcome(
 			tenantId,
 			documentId,
-			"post",
-			"notApplicable",
+			operation,
+			routeType,
 			"dependencyError",
 			error,
+			telemetryDetails,
 		);
 		throw error;
 	}
-
-	if (document === null) {
-		logOwnershipOutcome(tenantId, documentId, "post", "notApplicable", "allowed");
-		return;
-	}
-
-	validateAlfredDocumentResponse(document, tenantId, documentId, "post", "notApplicable");
-	return denyDocumentAccess(tenantId, documentId, "post", "notApplicable", "initialReplay");
 }
 
 export async function validateSummaryDocument({
@@ -403,12 +387,21 @@ export async function validateSummaryDocument({
 	routeType,
 	ephemeralDocumentTTLSec,
 	ignoreEphemeralFlag = false,
+	reuseCustomerAccessToken = false,
+	telemetryDetails,
+	logAllowedOutcome = true,
 }: IValidateSummaryDocumentArgs): Promise<IDocument> {
-	const documentId = getTokenDocumentId(tenantId, authorization);
+	const { accessToken, documentId } = getTokenDocumentIdentity(tenantId, authorization);
+	const readDocument = reuseCustomerAccessToken
+		? async () =>
+				documentManager.readDocument(tenantId, documentId, {
+					accessToken,
+				})
+		: async () => documentManager.readDocument(tenantId, documentId);
 	let document: IDocument | null;
 	try {
 		document = await runWithRetry(
-			async () => documentManager.readDocument(tenantId, documentId),
+			readDocument,
 			"utils.validateSummaryDocument.readDocument",
 			3,
 			1000,
@@ -418,40 +411,108 @@ export async function validateSummaryDocument({
 		);
 	} catch (error) {
 		if (error instanceof NetworkError && error.code === 404) {
-			return denyDocumentAccess(tenantId, documentId, operation, routeType, "notFound");
+			return denyDocumentAccess(
+				tenantId,
+				documentId,
+				operation,
+				routeType,
+				"notFound",
+				telemetryDetails,
+			);
 		}
-		logOwnershipOutcome(tenantId, documentId, operation, routeType, "dependencyError", error);
+		logOwnershipOutcome(
+			tenantId,
+			documentId,
+			operation,
+			routeType,
+			"dependencyError",
+			error,
+			telemetryDetails,
+		);
 		throw error;
 	}
 
 	if (document === null) {
-		return denyDocumentAccess(tenantId, documentId, operation, routeType, "notFound");
+		return denyDocumentAccess(
+			tenantId,
+			documentId,
+			operation,
+			routeType,
+			"notFound",
+			telemetryDetails,
+		);
 	}
-	validateAlfredDocumentResponse(document, tenantId, documentId, operation, routeType);
+	validateAlfredDocumentResponse(
+		document,
+		tenantId,
+		documentId,
+		operation,
+		routeType,
+		telemetryDetails,
+	);
 	if (document.tenantId !== tenantId || document.documentId !== documentId) {
-		return denyDocumentAccess(tenantId, documentId, operation, routeType, "identityMismatch");
+		return denyDocumentAccess(
+			tenantId,
+			documentId,
+			operation,
+			routeType,
+			"identityMismatch",
+			telemetryDetails,
+		);
 	}
 	if (document.scheduledDeletionTime !== undefined) {
-		return denyDocumentAccess(tenantId, documentId, operation, routeType, "scheduledDeletion");
+		return denyDocumentAccess(
+			tenantId,
+			documentId,
+			operation,
+			routeType,
+			"scheduledDeletion",
+			telemetryDetails,
+		);
 	}
 	if (
 		!ignoreEphemeralFlag &&
 		document.isEphemeralContainer === true &&
 		Date.now() > document.createTime + ephemeralDocumentTTLSec * 1000
 	) {
-		return denyDocumentAccess(tenantId, documentId, operation, routeType, "notFound");
+		return denyDocumentAccess(
+			tenantId,
+			documentId,
+			operation,
+			routeType,
+			"notFound",
+			telemetryDetails,
+		);
 	}
 
-	logOwnershipOutcome(tenantId, documentId, operation, routeType, "allowed");
+	if (logAllowedOutcome) {
+		logOwnershipOutcome(
+			document.tenantId,
+			document.documentId,
+			operation,
+			routeType,
+			"allowed",
+			undefined,
+			telemetryDetails ?? { source: "alfred" },
+		);
+	}
 	return document;
 }
 
-export async function createGitService(createArgs: ICreateGitServiceArgs): Promise<RestGitService> {
+export interface ICreateGitServiceResult {
+	service: RestGitService;
+	accessProof?: IDocumentAccessProof;
+}
+
+export async function createGitServiceWithAccess(
+	createArgs: ICreateGitServiceArgs,
+): Promise<ICreateGitServiceResult> {
 	const {
 		config,
 		tenantId,
 		authorization,
 		tenantService,
+		authenticatedTenantDetails,
 		storageNameRetriever,
 		documentManager,
 		cache,
@@ -462,14 +523,73 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		ephemeralDocumentTTLSec,
 		simplifiedCustomDataRetriever,
 		postEphemeralContainerChecker,
+		accessOperation,
+		containerTypeHint: explicitContainerTypeHint,
+		existingAccessProof,
+		trustedCreateContext,
+		documentAccessAuthorizer,
+		summaryAccessContext,
 	} = createArgs;
-	const documentId = getTokenDocumentId(tenantId, authorization);
-	const token = parseToken(tenantId, authorization);
-	if (!token) {
-		throw new NetworkError(403, "Authorization token is missing.");
-	}
+	const { accessToken, documentId: tokenDocumentId } = getTokenDocumentIdentity(
+		tenantId,
+		authorization,
+	);
+	const details =
+		authenticatedTenantDetails ??
+		(await tenantService.getTenant(tenantId, accessToken, allowDisabledTenant ?? false));
 
-	const details = await tenantService.getTenant(tenantId, token, allowDisabledTenant ?? false);
+	if (documentAccessAuthorizer !== undefined && accessOperation === undefined) {
+		throw new NetworkError(
+			500,
+			"Document access operation is required when an authorizer is configured.",
+		);
+	}
+	const isEphemeralHint = isEphemeralContainer ?? summaryAccessContext?.isEphemeralContainer;
+	const containerTypeHint =
+		explicitContainerTypeHint ??
+		(isEphemeralHint === undefined ? undefined : isEphemeralHint ? "ephemeral" : "durable");
+	const accessProof =
+		accessOperation === undefined || documentAccessAuthorizer === undefined
+			? undefined
+			: await documentAccessAuthorizer.authorize({
+					tenantId,
+					documentId: tokenDocumentId,
+					operation: accessOperation,
+					containerTypeHint,
+					trustedCreateContext,
+					existingProof: existingAccessProof,
+			  });
+	if (
+		documentAccessAuthorizer !== undefined &&
+		(accessProof === undefined ||
+			accessProof.tenantId !== tenantId ||
+			accessProof.documentId !== tokenDocumentId ||
+			accessProof.operation !== accessOperation ||
+			accessProof.lifecycleVersion.length === 0 ||
+			accessProof.state !== (accessOperation === "create" ? "pending" : "active") ||
+			(accessProof.containerType !== "ephemeral" &&
+				accessProof.containerType !== "durable") ||
+			(accessProof.containerType === "ephemeral" &&
+				(!Number.isSafeInteger(accessProof.ephemeralCreateTime) ||
+					accessProof.ephemeralCreateTime < 0)) ||
+			(accessProof.source === "ec-lifecycle-redis" &&
+				accessProof.containerType !== "ephemeral") ||
+			((accessProof.source === "dc-v1-metadata" || accessProof.source === "dc-v2-metadata") &&
+				accessProof.containerType !== "durable") ||
+			(trustedCreateContext !== undefined &&
+				(accessProof.lifecycleVersion !== trustedCreateContext.lifecycleVersion ||
+					accessProof.containerType !== trustedCreateContext.containerType ||
+					accessProof.ephemeralCreateTime !==
+						trustedCreateContext.ephemeralCreateTime)) ||
+			(accessProof.physicalContainerName === undefined) !==
+				(accessProof.layoutVersion === undefined) ||
+			(accessProof.physicalContainerName !== undefined &&
+				accessProof.storageAccountName === undefined))
+	) {
+		throw new NetworkError(500, "Document access authorizer returned an invalid proof.");
+	}
+	const documentId = accessProof?.documentId ?? tokenDocumentId;
+
 	const customData: ITenantCustomDataExternal = details.customData;
 	const simplifiedCustomData = simplifiedCustomDataRetriever?.get(customData);
 	const writeToExternalStorage = !!customData?.externalStorageData;
@@ -478,22 +598,26 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 	const maxCacheableSummarySize: number =
 		config.get("restGitService:maxCacheableSummarySize") ?? 1_000_000_000; // default: 1gb
 
-	const isEphemeral = ignoreEphemeralFlag
-		? false
-		: await checkAndCacheIsEphemeral({
-				documentId,
-				tenantId,
-				documentManager,
-				ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
-				isEphemeralContainerOverride: isEphemeralContainer,
-				cache,
-		  });
+	const isEphemeral =
+		accessProof !== undefined
+			? accessProof.containerType === "ephemeral"
+			: summaryAccessContext?.isEphemeralContainer ??
+			  (ignoreEphemeralFlag
+					? false
+					: await checkAndCacheIsEphemeral({
+							documentId,
+							tenantId,
+							documentManager,
+							ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
+							isEphemeralContainerOverride: isEphemeralContainer,
+							cache,
+					  }));
 	if (isEphemeral) {
 		Lumberjack.info(`Document is ephemeral.`, getLumberBaseProperties(documentId, tenantId));
 	}
 
 	let postIsEphemeral: boolean = isEphemeral;
-	if (postEphemeralContainerChecker !== undefined) {
+	if (accessProof === undefined && postEphemeralContainerChecker !== undefined) {
 		postIsEphemeral = await postEphemeralContainerChecker.postEphemeralContainerCheck(
 			tenantId,
 			documentId,
@@ -502,22 +626,44 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		);
 	}
 
-	const calculatedStorageName =
-		initialUpload && storageName
-			? storageName
-			: (await storageNameRetriever?.get(tenantId, documentId)) ?? customData?.storageName;
-	return new RestGitService(
-		details.storage,
-		writeToExternalStorage,
-		tenantId,
-		documentId,
-		cache,
-		calculatedStorageName,
-		storageUrl,
-		postIsEphemeral,
-		maxCacheableSummarySize,
-		simplifiedCustomData,
-	);
+	let calculatedStorageName: string | undefined;
+	if (accessProof?.storageAccountName !== undefined) {
+		calculatedStorageName = accessProof.storageAccountName;
+	} else if (accessProof?.containerType === "ephemeral") {
+		calculatedStorageName = undefined;
+	} else if (initialUpload && storageName && documentAccessAuthorizer === undefined) {
+		calculatedStorageName = storageName;
+	} else if (summaryAccessContext?.isEphemeralContainer === true) {
+		// FRS EC summaries use RedisFS, selected by the ephemeral flag. Azure Blob storageName
+		// applies only to durable containers. Calling the retriever for a local EC hit would
+		// reintroduce the Alfred/Riddler lookup that the summary access fast path avoids.
+		calculatedStorageName = undefined;
+	} else {
+		calculatedStorageName =
+			summaryAccessContext?.storageName ??
+			(await storageNameRetriever?.get(tenantId, documentId)) ??
+			customData?.storageName;
+	}
+	return {
+		service: new RestGitService(
+			details.storage,
+			writeToExternalStorage,
+			tenantId,
+			documentId,
+			cache,
+			calculatedStorageName,
+			storageUrl,
+			postIsEphemeral,
+			maxCacheableSummarySize,
+			simplifiedCustomData,
+			accessProof,
+		),
+		accessProof,
+	};
+}
+
+export async function createGitService(createArgs: ICreateGitServiceArgs): Promise<RestGitService> {
+	return (await createGitServiceWithAccess(createArgs)).service;
 }
 
 /**

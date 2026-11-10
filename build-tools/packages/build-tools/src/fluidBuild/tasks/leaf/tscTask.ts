@@ -34,13 +34,62 @@ interface ITsBuildInfo {
 			| string
 			| { version: string; affectsGlobalScope?: true; impliedFormat?: number }
 		)[];
-		affectedFilesPendingEmit?: any[];
-		emitDiagnosticsPerFile?: any[];
-		semanticDiagnosticsPerFile?: any[];
-		changeFileSet?: number[];
-		options: any;
+		affectedFilesPendingEmit?: unknown[] | undefined;
+		emitDiagnosticsPerFile?: unknown[] | undefined;
+		semanticDiagnosticsPerFile?: unknown[] | undefined;
+		changeFileSet?: number[] | undefined;
+		/**
+		 * The compiler options that tsc serialized into the build info. Typed as the oldest
+		 * supported TypeScript version's options so that it can be passed to the version agnostic
+		 * helpers on {@link TscUtil}.
+		 */
+		options: ts54Types.CompilerOptions;
 	};
 	version: string;
+}
+
+/**
+ * A JSON object as parsed from a tsbuildinfo file.
+ */
+type RawJsonObject = Record<string, unknown>;
+
+function isRawJsonObject(value: unknown): value is RawJsonObject {
+	return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isFileInfo(
+	value: unknown,
+): value is string | { version: string; affectsGlobalScope?: true; impliedFormat?: number } {
+	if (typeof value === "string") {
+		return true;
+	}
+	return isRawJsonObject(value) && typeof value["version"] === "string";
+}
+
+function isOptionalArray(value: unknown): value is unknown[] | undefined {
+	return value === undefined || Array.isArray(value);
+}
+
+function isNumberArray(value: unknown): value is number[] {
+	return Array.isArray(value) && value.every((item) => typeof item === "number");
+}
+
+function isBuildInfoProgram(value: unknown): value is ITsBuildInfo["program"] {
+	if (!isRawJsonObject(value)) {
+		return false;
+	}
+
+	return (
+		Array.isArray(value["fileNames"]) &&
+		value["fileNames"].every((item) => typeof item === "string") &&
+		Array.isArray(value["fileInfos"]) &&
+		value["fileInfos"].every(isFileInfo) &&
+		isRawJsonObject(value["options"]) &&
+		isOptionalArray(value["affectedFilesPendingEmit"]) &&
+		isOptionalArray(value["emitDiagnosticsPerFile"]) &&
+		isOptionalArray(value["semanticDiagnosticsPerFile"]) &&
+		(value["changeFileSet"] === undefined || isNumberArray(value["changeFileSet"]))
+	);
 }
 
 /**
@@ -50,13 +99,17 @@ interface ITsBuildInfo {
  * places the same keys at the top level. This function detects which format is present
  * and returns a unified structure, or `undefined` if the input is not recognizable.
  */
-export function normalizeTsBuildInfo(raw: any): ITsBuildInfo | undefined {
+export function normalizeTsBuildInfo(raw: unknown): ITsBuildInfo | undefined {
+	if (!isRawJsonObject(raw)) {
+		return undefined;
+	}
 	// TS5 format: { program: { fileNames, fileInfos, options, ... }, version }
-	if (raw.program?.fileNames && raw.program?.fileInfos && raw.program?.options) {
-		return raw as ITsBuildInfo;
+	const program = raw["program"];
+	if (isBuildInfoProgram(program) && typeof raw["version"] === "string") {
+		return { program, version: raw["version"] };
 	}
 	// TS6 format: { fileNames, fileInfos, options, ..., version }
-	if (raw.fileNames && raw.fileInfos && raw.options) {
+	if (isBuildInfoProgram(raw) && typeof raw["version"] === "string") {
 		return {
 			program: {
 				fileNames: raw.fileNames,
@@ -67,7 +120,7 @@ export function normalizeTsBuildInfo(raw: any): ITsBuildInfo | undefined {
 				semanticDiagnosticsPerFile: raw.semanticDiagnosticsPerFile,
 				changeFileSet: raw.changeFileSet,
 			},
-			version: raw.version,
+			version: raw["version"],
 		};
 	}
 	return undefined;
@@ -236,8 +289,12 @@ export class TscTask extends LeafTask {
 
 				// Remove files that we have built before
 				configFileNames.delete(tscUtils.getCanonicalFileName(path.normalize(fullPath)));
-			} catch (e: any) {
-				this.traceTrigger(`exception generating hash for ${fileName}\n\t${e.stack}`);
+			} catch (e) {
+				this.traceTrigger(
+					`exception generating hash for ${fileName}\n\t${
+						e instanceof Error ? (e.stack ?? e.message) : String(e)
+					}`,
+				);
 				return false;
 			}
 		}
@@ -403,7 +460,7 @@ export class TscTask extends LeafTask {
 			const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
 			if (tsBuildInfoFileFullPath && existsSync(tsBuildInfoFileFullPath)) {
 				try {
-					const raw = JSON.parse(await readFile(tsBuildInfoFileFullPath, "utf8"));
+					const raw: unknown = JSON.parse(await readFile(tsBuildInfoFileFullPath, "utf8"));
 					const normalized = normalizeTsBuildInfo(raw);
 					if (normalized) {
 						this._tsBuildInfo = normalized;

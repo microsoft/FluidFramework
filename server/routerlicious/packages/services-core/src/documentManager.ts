@@ -6,6 +6,18 @@
 import type { IDocument, IDocumentStaticProperties } from "./document";
 
 /**
+ * Options for reading a document.
+ *
+ * @internal
+ */
+export interface IReadDocumentOptions {
+	/**
+	 * An existing access token to use for the Alfred request instead of minting an internal token.
+	 */
+	accessToken?: string;
+}
+
+/**
  * @internal
  */
 export interface IDocumentManager {
@@ -14,10 +26,14 @@ export interface IDocumentManager {
 	 *
 	 * @param tenantId - The tenant ID for the tenant that owns the document
 	 * @param documentId - The document ID for the document to be read
+	 * @param options - Optional settings for the document read
 	 * @returns - An IDocument object containing properties with the document's data
 	 */
-	// eslint-disable-next-line @rushstack/no-new-null
-	readDocument(tenantId: string, documentId: string): Promise<IDocument | null>;
+	readDocument(
+		tenantId: string,
+		documentId: string,
+		options?: IReadDocumentOptions,
+	): Promise<IDocument | null>; // eslint-disable-line @rushstack/no-new-null
 
 	/**
 	 * Reads only the static data for a specific document, using a cache of the data to do so potentially faster than readDocument.

@@ -12,6 +12,7 @@ import {
 	gcTombstoneBlobKey,
 	gcTreeKey,
 } from "@fluidframework/runtime-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import { SummaryTreeBuilder, mergeStats } from "@fluidframework/runtime-utils/internal";
 
 import type { IRefreshSummaryResult } from "../summary/index.js";
@@ -167,6 +168,7 @@ export class GCSummaryStateTracker {
 		serializedDeletedNodes: string | undefined,
 		trackState: boolean,
 	): ISummaryTreeWithStats {
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const builder = new SummaryTreeBuilder();
 
 		// If the GC state hasn't changed, write a summary handle, else write a summary blob for it.

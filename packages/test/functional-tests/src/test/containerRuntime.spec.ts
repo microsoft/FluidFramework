@@ -147,6 +147,7 @@ describe("Container Runtime", () => {
 					new ConnectionManager(
 						() => service,
 						() => false,
+						() => false,
 						client as IClient,
 						false,
 						createChildLogger({ namespace: "fluid:testConnectionManager" }),
@@ -359,6 +360,7 @@ describe("Container Runtime", () => {
 				(props: IConnectionManagerFactoryArgs) =>
 					new ConnectionManager(
 						() => service2,
+						() => false,
 						() => false,
 						client as IClient,
 						true,

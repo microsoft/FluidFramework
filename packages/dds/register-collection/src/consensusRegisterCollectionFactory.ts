@@ -11,7 +11,6 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
-// eslint-disable-next-line import-x/no-deprecated -- Internal usage of deprecated class in factory
 import { ConsensusRegisterCollection as ConsensusRegisterCollectionClass } from "./consensusRegisterCollection.js";
 import type { IConsensusRegisterCollection } from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
@@ -42,23 +41,18 @@ export class ConsensusRegisterCollectionFactory
 		return ConsensusRegisterCollectionFactory.Attributes;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-	 */
 	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<IConsensusRegisterCollection> {
-		// eslint-disable-next-line import-x/no-deprecated -- Internal usage of deprecated class
 		const collection = new ConsensusRegisterCollectionClass(id, runtime, attributes);
 		await collection.load(services);
 		return collection;
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string): IConsensusRegisterCollection {
-		// eslint-disable-next-line import-x/no-deprecated -- Internal usage of deprecated class
 		const collection = new ConsensusRegisterCollectionClass(
 			id,
 			document,

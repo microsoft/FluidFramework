@@ -7,8 +7,12 @@ import { strict as assert } from "node:assert";
 
 import type { FormatValidator } from "../../../codec/index.js";
 import { ValueSchema } from "../../../core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { createSchemaUpgrade, Unchanged } from "../../../simple-tree/core/index.js";
+import {
+	createSchemaUpgrade,
+	getTreeNodeSchemaPrivateData,
+	Unchanged,
+	// eslint-disable-next-line import-x/no-internal-modules -- Inspect discovery without adding package APIs.
+} from "../../../simple-tree/core/index.js";
 import {
 	decodeSchemaCompatibilitySnapshot,
 	FieldKind,
@@ -32,7 +36,7 @@ import { transformSimpleSchema } from "../../../simple-tree/toStoredSchema.js";
 import type { Mutable } from "../../../util/index.js";
 import { ajvValidator } from "../../codec/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
-import { HasUnknownOptionalFields } from "../../testTrees.js";
+import { AllowsUnknownOptionalFields } from "../../testTrees.js";
 
 const simpleString: SimpleLeafNodeSchema<SchemaType.View> = {
 	leafKind: ValueSchema.String,
@@ -82,6 +86,70 @@ function copySimpleTreeSchemaWithoutMetadata(simpleTree: SimpleTreeSchema): Simp
 
 describe("getSimpleSchema", () => {
 	useSnapshotDirectory("get-simple-schema");
+
+	it("reuses recursive graph discovery while returning fresh schema structures", () => {
+		const sf = new SchemaFactoryAlpha("simpleSchemaReuse");
+		class A extends sf.objectRecursive("A", {
+			child: sf.optionalRecursive([() => B]),
+		}) {}
+		class B extends sf.objectRecursive("B", {
+			child: sf.optionalRecursive([() => A]),
+			value: sf.stagedOptional(sf.number),
+		}) {}
+		const expected = transformSimpleSchema(createTreeSchema(A), Unchanged);
+		let reads = 0;
+		for (const node of [A, B]) {
+			const data = getTreeNodeSchemaPrivateData(node);
+			const types = data.childAllowedTypes;
+			Object.defineProperty(data, "childAllowedTypes", {
+				get() {
+					reads++;
+					return types;
+				},
+			});
+		}
+		const first = getSimpleSchema(A);
+		const afterDiscovery = reads;
+		assert(afterDiscovery > 0);
+		const second = getSimpleSchema(A);
+		getSimpleSchema(B);
+		assert.equal(reads, afterDiscovery);
+		assert.deepEqual(first, expected);
+		assert.deepEqual(second, expected);
+		assert.notStrictEqual(first, second);
+		assert.notStrictEqual(first.root, second.root);
+		assert.notStrictEqual(first.definitions, second.definitions);
+		for (const [identifier, node] of first.definitions) {
+			assert.notStrictEqual(node, second.definitions.get(identifier));
+		}
+		assert(first.definitions instanceof Map);
+		first.definitions.clear();
+		assert.deepEqual(getSimpleSchema(A), expected);
+	});
+
+	it("encodes snapshot definitions independently of insertion order and locale", () => {
+		const sf = new SchemaFactoryAlpha("snapshotOrdering");
+		class Lower extends sf.object("a", {}) {}
+		class Upper extends sf.object("Z", {}) {}
+		class Accented extends sf.object("\u00E4", {}) {}
+		const schema = createTreeSchema([Accented, Lower, Upper]);
+		const expectedOrder = [Upper.identifier, Lower.identifier, Accented.identifier];
+		const forward = encodeSchemaCompatibilitySnapshot(schema);
+		const reverse = encodeSchemaCompatibilitySnapshot({
+			root: schema.root,
+			definitions: new Map([...schema.definitions].reverse()),
+		});
+
+		assert.deepEqual(
+			[...decodeSchemaCompatibilitySnapshot(forward, formatValidator).definitions.keys()],
+			expectedOrder,
+		);
+		assert.deepEqual(
+			[...decodeSchemaCompatibilitySnapshot(reverse, formatValidator).definitions.keys()],
+			expectedOrder,
+		);
+		assert.equal(JSON.stringify(forward), JSON.stringify(reverse));
+	});
 
 	describe("Field Schema", () => {
 		const schemaFactory = new SchemaFactory("test");
@@ -372,7 +440,7 @@ describe("getSimpleSchema", () => {
 							kind: NodeKind.Object,
 							metadata: { custom: undefined, description: undefined },
 							persistedMetadata: undefined,
-							allowUnknownOptionalFields: false,
+							allowUnknownOptionalFields: true,
 							fields: new Map<string, SimpleObjectFieldSchema>([
 								[
 									"foo",
@@ -448,7 +516,7 @@ describe("getSimpleSchema", () => {
 							kind: NodeKind.Object,
 							metadata: { custom: undefined, description: undefined },
 							persistedMetadata: undefined,
-							allowUnknownOptionalFields: false,
+							allowUnknownOptionalFields: true,
 							fields: new Map([
 								[
 									"id",
@@ -512,7 +580,7 @@ describe("getSimpleSchema", () => {
 							kind: NodeKind.Object,
 							metadata: { custom: undefined, description: undefined },
 							persistedMetadata: undefined,
-							allowUnknownOptionalFields: false,
+							allowUnknownOptionalFields: true,
 							fields: new Map([
 								[
 									"foo",
@@ -577,7 +645,7 @@ describe("getSimpleSchema", () => {
 							kind: NodeKind.Object,
 							metadata: { custom: undefined, description: undefined },
 							persistedMetadata: undefined,
-							allowUnknownOptionalFields: false,
+							allowUnknownOptionalFields: true,
 							fields: new Map([
 								[
 									"foo",
@@ -660,7 +728,7 @@ describe("getSimpleSchema", () => {
 	});
 
 	describe("With allowUnknownOptionalFields in object schema", () => {
-		const schema = HasUnknownOptionalFields;
+		const schema = AllowsUnknownOptionalFields;
 
 		it("Should preserve allowUnknownOptionalFields when converting to SimpleTreeSchema", () => {
 			const expected: SimpleTreeSchema = {

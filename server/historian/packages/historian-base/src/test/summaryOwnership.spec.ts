@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import {
+	BasicRestWrapper,
 	generateToken,
 	getAuthorizationTokenFromCredentials,
 	NetworkError,
@@ -16,22 +17,20 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as nconf from "nconf";
 import * as sinon from "sinon";
 
-import {
-	createGitService,
-	validateInitialSummaryUpload,
-	validateSummaryDocument,
-} from "../routes/utils";
+import { createGitService, validateSummaryDocument } from "../routes/utils";
+import type { IDocumentAccessProof } from "../services";
 import { TestCache, TestDocumentManager, TestTenantService } from "./utils";
 
 const tenantId = "tenant/a";
 const documentId = "shared:id";
+const accessToken = generateToken(tenantId, documentId, "tenant-key", [
+	ScopeType.DocRead,
+	ScopeType.DocWrite,
+	ScopeType.SummaryWrite,
+]);
 const authorization = getAuthorizationTokenFromCredentials({
 	user: tenantId,
-	password: generateToken(tenantId, documentId, "tenant-key", [
-		ScopeType.DocRead,
-		ScopeType.DocWrite,
-		ScopeType.SummaryWrite,
-	]),
+	password: accessToken,
 });
 const activeDocument: IDocument = {
 	version: "1.0",
@@ -73,150 +72,23 @@ describe("summary ownership", function () {
 		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
 	});
 
-	describe("initial summary bootstrap", () => {
-		it("permits bootstrap when the fresh Alfred lookup returns null", async () => {
-			const documentManager = new TestDocumentManager();
-			const readDocument = sandbox.stub(documentManager, "readDocument").resolves(null);
-			const info = sandbox.spy(Lumberjack, "info");
+	it("forwards the customer access token when reuse is enabled", async () => {
+		const documentManager = new TestDocumentManager();
+		const readDocument = sandbox.stub(documentManager, "readDocument").resolves(activeDocument);
 
-			await validateInitialSummaryUpload({
-				tenantId,
-				authorization,
-				documentManager,
-			});
-
-			sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
-			sinon.assert.calledWithMatch(
-				info,
-				"HistorianSummaryDocumentOwnershipValidation",
-				sinon.match({
-					tenantId,
-					documentId,
-					operation: "post",
-					routeType: "notApplicable",
-					outcome: "allowed",
-				}),
-			);
+		const result = await validateSummaryDocument({
+			tenantId,
+			authorization,
+			documentManager,
+			operation: "get",
+			routeType: "latest",
+			ephemeralDocumentTTLSec: 24 * 60 * 60,
+			reuseCustomerAccessToken: true,
 		});
 
-		it("permits bootstrap when Alfred returns a direct 404", async () => {
-			const clock = sandbox.useFakeTimers();
-			const documentManager = new TestDocumentManager();
-			const readDocument = sandbox
-				.stub(documentManager, "readDocument")
-				.rejects(new NetworkError(404, "Alfred document not found"));
-			const info = sandbox.spy(Lumberjack, "info");
-
-			const validation = validateInitialSummaryUpload({
-				tenantId,
-				authorization,
-				documentManager,
-			});
-			await clock.runAllAsync();
-			await validation;
-
-			sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
-			sinon.assert.calledWithMatch(
-				info,
-				"HistorianSummaryDocumentOwnershipValidation",
-				sinon.match({ operation: "post", outcome: "allowed" }),
-			);
-		});
-
-		for (const testCase of [
-			{ name: "active", document: activeDocument },
-			{
-				name: "scheduled-for-deletion",
-				document: {
-					...activeDocument,
-					scheduledDeletionTime: "2026-07-31T18:00:00.000Z",
-				},
-			},
-		]) {
-			it(`rejects an ${testCase.name} document as an initial replay`, async () => {
-				const documentManager = new TestDocumentManager();
-				sandbox.stub(documentManager, "readDocument").resolves(testCase.document);
-				const info = sandbox.spy(Lumberjack, "info");
-
-				await assert.rejects(
-					validateInitialSummaryUpload({
-						tenantId,
-						authorization,
-						documentManager,
-					}),
-					(error: unknown) =>
-						error instanceof NetworkError &&
-						error.code === 404 &&
-						error.message === "Document is deleted and cannot be accessed.",
-				);
-				sinon.assert.calledWithMatch(
-					info,
-					"HistorianSummaryDocumentOwnershipValidation",
-					sinon.match({
-						operation: "post",
-						routeType: "notApplicable",
-						outcome: "initialReplay",
-					}),
-				);
-			});
-		}
-
-		it("propagates Alfred dependency failures", async () => {
-			const clock = sandbox.useFakeTimers();
-			const dependencyError = new NetworkError(503, "Alfred unavailable", true, false);
-			const documentManager = new TestDocumentManager();
-			const readDocument = sandbox
-				.stub(documentManager, "readDocument")
-				.rejects(dependencyError);
-			const logError = sandbox.spy(Lumberjack, "error");
-
-			const rejection = assert.rejects(
-				validateInitialSummaryUpload({
-					tenantId,
-					authorization,
-					documentManager,
-				}),
-				(error) => error === dependencyError,
-			);
-			await clock.runAllAsync();
-			await rejection;
-
-			sinon.assert.callCount(readDocument, 4);
-			sinon.assert.calledWithMatch(
-				logError,
-				"HistorianSummaryDocumentOwnershipValidation",
-				sinon.match({
-					operation: "post",
-					outcome: "dependencyError",
-					dependencyStatus: 503,
-				}),
-			);
-		});
-
-		it("rejects a malformed successful Alfred response as a dependency error", async () => {
-			const documentManager = new TestDocumentManager();
-			sandbox.stub(documentManager, "readDocument").resolves({
-				...activeDocument,
-				createTime: Number.NaN,
-			});
-			const logError = sandbox.spy(Lumberjack, "error");
-
-			await assert.rejects(
-				validateInitialSummaryUpload({
-					tenantId,
-					authorization,
-					documentManager,
-				}),
-				(error: unknown) =>
-					error instanceof NetworkError &&
-					error.code === 502 &&
-					error.message === "Invalid document response from Alfred.",
-			);
-			sinon.assert.calledWithMatch(
-				logError,
-				"HistorianSummaryDocumentOwnershipValidation",
-				sinon.match({ operation: "post", outcome: "dependencyError" }),
-			);
+		assert.strictEqual(result, activeDocument);
+		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId, {
+			accessToken,
 		});
 	});
 
@@ -243,7 +115,9 @@ describe("summary ownership", function () {
 	]) {
 		it(`returns the same 404 for ${testCase.name}`, async () => {
 			const documentManager = new TestDocumentManager();
-			sandbox.stub(documentManager, "readDocument").resolves(testCase.document);
+			const readDocument = sandbox
+				.stub(documentManager, "readDocument")
+				.resolves(testCase.document);
 			const info = sandbox.spy(Lumberjack, "info");
 
 			await assert.rejects(
@@ -254,12 +128,16 @@ describe("summary ownership", function () {
 					operation: "get",
 					routeType: "sha",
 					ephemeralDocumentTTLSec: 24 * 60 * 60,
+					reuseCustomerAccessToken: true,
 				}),
 				(error: unknown) =>
 					error instanceof NetworkError &&
 					error.code === 404 &&
 					error.message === "Document is deleted and cannot be accessed.",
 			);
+			sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId, {
+				accessToken,
+			});
 			sinon.assert.calledWithMatch(
 				info,
 				"HistorianSummaryDocumentOwnershipValidation",
@@ -291,6 +169,7 @@ describe("summary ownership", function () {
 				operation: "post",
 				routeType: "notApplicable",
 				ephemeralDocumentTTLSec: 1,
+				reuseCustomerAccessToken: true,
 			}),
 			(error: NetworkError) => error.code === 404,
 		);
@@ -386,12 +265,16 @@ describe("summary ownership", function () {
 					operation: "delete",
 					routeType: "notApplicable",
 					ephemeralDocumentTTLSec: 24 * 60 * 60,
+					reuseCustomerAccessToken: true,
 				}),
 				(error) => error === testCase.error,
 			);
 			await clock.runAllAsync();
 			await rejection;
 			sinon.assert.callCount(readDocument, testCase.expectedCallCount);
+			sinon.assert.alwaysCalledWithExactly(readDocument, tenantId, documentId, {
+				accessToken,
+			});
 			sinon.assert.calledWithMatch(
 				logError,
 				"HistorianSummaryDocumentOwnershipValidation",
@@ -421,6 +304,7 @@ describe("summary ownership", function () {
 				operation: "get",
 				routeType: "latest",
 				ephemeralDocumentTTLSec: 24 * 60 * 60,
+				reuseCustomerAccessToken: true,
 			}),
 			(error: unknown) =>
 				error instanceof NetworkError &&
@@ -429,7 +313,9 @@ describe("summary ownership", function () {
 		);
 		await clock.runAllAsync();
 		await rejection;
-		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
+		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId, {
+			accessToken,
+		});
 		sinon.assert.calledWithMatch(
 			info,
 			"HistorianSummaryDocumentOwnershipValidation",
@@ -457,6 +343,7 @@ describe("summary ownership", function () {
 				operation: "get",
 				routeType: "latest",
 				ephemeralDocumentTTLSec: 24 * 60 * 60,
+				reuseCustomerAccessToken: true,
 			}),
 			(error: unknown) =>
 				error instanceof NetworkError &&
@@ -474,6 +361,37 @@ describe("summary ownership", function () {
 			}),
 		);
 	});
+
+	for (const statusCode of [401, 403]) {
+		it(`does not retry or change credentials after an Alfred ${statusCode}`, async () => {
+			const dependencyError = new NetworkError(
+				statusCode,
+				"Alfred rejected customer token",
+				false,
+				true,
+			);
+			const documentManager = new TestDocumentManager();
+			const readDocument = sandbox
+				.stub(documentManager, "readDocument")
+				.rejects(dependencyError);
+
+			await assert.rejects(
+				validateSummaryDocument({
+					tenantId,
+					authorization,
+					documentManager,
+					operation: "get",
+					routeType: "latest",
+					ephemeralDocumentTTLSec: 24 * 60 * 60,
+					reuseCustomerAccessToken: true,
+				}),
+				(error) => error === dependencyError,
+			);
+			sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId, {
+				accessToken,
+			});
+		});
+	}
 
 	it("treats an ephemeral document as durable when the flag is ignored", async () => {
 		const cache = new TestCache();
@@ -502,6 +420,7 @@ describe("summary ownership", function () {
 			cache,
 			ephemeralDocumentTTLSec: 24 * 60 * 60,
 			postEphemeralContainerChecker: { postEphemeralContainerCheck },
+			accessOperation: "read",
 		});
 
 		sinon.assert.calledOnceWithMatch(
@@ -512,6 +431,367 @@ describe("summary ownership", function () {
 			sinon.match.object,
 		);
 		sinon.assert.notCalled(cacheSet);
+	});
+
+	it("authorizes a lifecycle-derived proof before using it", async () => {
+		const proof: IDocumentAccessProof = {
+			tenantId,
+			documentId,
+			operation: "read",
+			source: "ec-lifecycle-redis",
+			containerType: "ephemeral",
+			ephemeralCreateTime: activeDocument.createTime,
+			lifecycleVersion: "generation-1",
+			state: "active",
+		};
+		const authorizer = {
+			authorize: sandbox.stub().resolves(proof),
+		};
+
+		await createGitService({
+			config: new nconf.Provider({}).defaults({
+				ignoreEphemeralFlag: true,
+				storageUrl: "http://localhost",
+			}),
+			tenantId,
+			authorization,
+			tenantService: new TestTenantService(),
+			documentManager: new TestDocumentManager(),
+			accessOperation: "read",
+			existingAccessProof: proof,
+			documentAccessAuthorizer: authorizer,
+		});
+
+		sinon.assert.calledOnceWithExactly(authorizer.authorize, {
+			tenantId,
+			documentId,
+			operation: "read",
+			containerTypeHint: undefined,
+			trustedCreateContext: undefined,
+			existingProof: proof,
+		});
+	});
+
+	it("uses the authorized durable container type instead of legacy ephemeral signals", async () => {
+		const postEphemeralContainerCheck = sandbox.stub().resolves(true);
+		const info = sandbox.spy(Lumberjack, "info");
+
+		await createGitService({
+			config: new nconf.Provider({}).defaults({
+				ignoreEphemeralFlag: false,
+				storageUrl: "http://localhost",
+			}),
+			tenantId,
+			authorization,
+			tenantService: new TestTenantService(),
+			documentManager: new TestDocumentManager(),
+			isEphemeralContainer: true,
+			postEphemeralContainerChecker: { postEphemeralContainerCheck },
+			accessOperation: "read",
+			documentAccessAuthorizer: {
+				authorize: sandbox.stub().resolves({
+					tenantId,
+					documentId,
+					operation: "read",
+					source: "dc-v2-metadata",
+					containerType: "durable",
+					storageAccountName: "document-storage",
+					physicalContainerName:
+						"pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+					layoutVersion: "v2",
+					lifecycleVersion: "generation-1",
+					state: "active",
+				}),
+			},
+		});
+
+		sinon.assert.notCalled(postEphemeralContainerCheck);
+		const creationEvent = info
+			.getCalls()
+			.find(
+				(call) =>
+					typeof call.args[0] === "string" &&
+					call.args[0].startsWith("Created RestGitService:"),
+			);
+		assert.ok(creationEvent);
+		assert.match(creationEvent.args[0], /"Is-Ephemeral-Container":false/);
+	});
+
+	it("keeps legacy summary cache identity when no authorizer is configured", async () => {
+		const summary = {
+			id: "summary-1",
+			trees: [],
+			blobs: [],
+		};
+		sandbox.stub(BasicRestWrapper.prototype, "get").resolves(summary);
+		const cache = new TestCache();
+		const proof: IDocumentAccessProof = {
+			tenantId,
+			documentId,
+			operation: "read",
+			source: "ec-lifecycle-redis",
+			containerType: "ephemeral",
+			ephemeralCreateTime: activeDocument.createTime,
+			lifecycleVersion: "generation-1",
+			state: "active",
+		};
+
+		const service = await createGitService({
+			config: new nconf.Provider({}).defaults({
+				ignoreEphemeralFlag: false,
+				storageUrl: "http://localhost",
+			}),
+			tenantId,
+			authorization,
+			tenantService: new TestTenantService(),
+			documentManager: new TestDocumentManager(),
+			cache,
+			accessOperation: "read",
+			existingAccessProof: proof,
+			summaryAccessContext: {
+				tenantId,
+				documentId,
+				isEphemeralContainer: true,
+				createTime: activeDocument.createTime,
+				source: "localEphemeral",
+				accessProof: proof,
+			},
+		});
+
+		await service.getSummary("latest", false);
+
+		assert.deepStrictEqual(
+			await cache.get(`${tenantId}:${documentId}:summary:container`),
+			summary,
+		);
+	});
+
+	it("authenticates before document authorization or storage access", async () => {
+		const authenticationFailure = new NetworkError(403, "Invalid token.");
+		const tenantService = new TestTenantService();
+		const getTenant = sandbox.stub(tenantService, "getTenant").rejects(authenticationFailure);
+		const documentManager = new TestDocumentManager();
+		const readStaticProperties = sandbox.spy(documentManager, "readStaticProperties");
+		const authorize = sandbox.stub().resolves({
+			tenantId,
+			documentId,
+			operation: "read",
+			source: "dc-v2-metadata",
+			storageAccountName: "document-storage",
+			physicalContainerName: "pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			layoutVersion: "v2",
+			lifecycleVersion: "generation-1",
+			state: "active",
+		});
+
+		await assert.rejects(
+			createGitService({
+				config: new nconf.Provider({}).defaults({
+					ignoreEphemeralFlag: false,
+					storageUrl: "http://localhost",
+				}),
+				tenantId,
+				authorization,
+				tenantService,
+				documentManager,
+				accessOperation: "read",
+				documentAccessAuthorizer: {
+					authorize,
+				},
+			}),
+			(error: unknown) => error === authenticationFailure,
+		);
+
+		sinon.assert.calledOnce(getTenant);
+		sinon.assert.notCalled(authorize);
+		sinon.assert.notCalled(readStaticProperties);
+	});
+
+	it("rejects a proof that does not exactly match the authorized request", async () => {
+		const tenantService = new TestTenantService();
+		const getTenant = sandbox.spy(tenantService, "getTenant");
+
+		await assert.rejects(
+			createGitService({
+				config: new nconf.Provider({}).defaults({
+					ignoreEphemeralFlag: true,
+					storageUrl: "http://localhost",
+				}),
+				tenantId,
+				authorization,
+				tenantService,
+				documentManager: new TestDocumentManager(),
+				accessOperation: "read",
+				documentAccessAuthorizer: {
+					authorize: sandbox.stub().resolves({
+						tenantId: "other-tenant",
+						documentId,
+						operation: "read",
+						source: "dc-v2-metadata",
+						storageAccountName: "document-storage",
+						physicalContainerName:
+							"pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						layoutVersion: "v2",
+						lifecycleVersion: "generation-1",
+						state: "active",
+					}),
+				},
+			}),
+			/Document access authorizer returned an invalid proof/,
+		);
+
+		sinon.assert.calledOnce(getTenant);
+	});
+
+	for (const testCase of [
+		{
+			name: "active initial-create state",
+			accessOperation: "create" as const,
+			trustedCreateContext: {
+				tenantId,
+				documentId,
+				lifecycleVersion: "generation-1",
+				expiresAtMs: Date.now() + 60_000,
+			},
+			proof: {
+				tenantId,
+				documentId,
+				operation: "create",
+				source: "trusted-create",
+				lifecycleVersion: "generation-1",
+				state: "active",
+			},
+		},
+		{
+			name: "pending read state",
+			accessOperation: "read" as const,
+			trustedCreateContext: undefined,
+			proof: {
+				tenantId,
+				documentId,
+				operation: "read",
+				source: "dc-v2-metadata",
+				lifecycleVersion: "generation-1",
+				state: "pending",
+			},
+		},
+		{
+			name: "missing authoritative container type",
+			accessOperation: "read" as const,
+			trustedCreateContext: undefined,
+			proof: {
+				tenantId,
+				documentId,
+				operation: "read",
+				source: "alfred-fallback",
+				lifecycleVersion: "generation-1",
+				state: "active",
+			},
+		},
+		{
+			name: "mismatched initial-create generation",
+			accessOperation: "create" as const,
+			trustedCreateContext: {
+				tenantId,
+				documentId,
+				containerType: "durable" as const,
+				lifecycleVersion: "generation-1",
+				expiresAtMs: Date.now() + 60_000,
+			},
+			proof: {
+				tenantId,
+				documentId,
+				operation: "create",
+				source: "trusted-create",
+				containerType: "durable" as const,
+				lifecycleVersion: "generation-2",
+				state: "pending",
+			},
+		},
+	]) {
+		it(`rejects ${testCase.name}`, async () => {
+			const tenantService = new TestTenantService();
+			const getTenant = sandbox.spy(tenantService, "getTenant");
+
+			await assert.rejects(
+				createGitService({
+					config: new nconf.Provider({}).defaults({
+						ignoreEphemeralFlag: true,
+						storageUrl: "http://localhost",
+					}),
+					tenantId,
+					authorization,
+					tenantService,
+					documentManager: new TestDocumentManager(),
+					accessOperation: testCase.accessOperation,
+					trustedCreateContext: testCase.trustedCreateContext,
+					documentAccessAuthorizer: {
+						authorize: sandbox.stub().resolves(testCase.proof),
+					},
+				}),
+				/Document access authorizer returned an invalid proof/,
+			);
+
+			sinon.assert.calledOnce(getTenant);
+		});
+	}
+
+	it("uses proof storage instead of caller, retriever, or tenant-default routing", async () => {
+		const tenantService = new TestTenantService();
+		const tenant = await tenantService.getTenant(tenantId, accessToken);
+		sandbox.stub(tenantService, "getTenant").resolves({
+			...tenant,
+			customData: { storageName: "tenant-default-storage" },
+		});
+		const storageNameRetriever = {
+			get: sandbox.stub().resolves("retrieved-storage"),
+		};
+		const info = sandbox.spy(Lumberjack, "info");
+
+		await createGitService({
+			config: new nconf.Provider({}).defaults({
+				ignoreEphemeralFlag: true,
+				storageUrl: "http://localhost",
+			}),
+			tenantId,
+			authorization,
+			tenantService,
+			storageNameRetriever,
+			documentManager: new TestDocumentManager(),
+			initialUpload: true,
+			storageName: "caller-storage",
+			accessOperation: "create",
+			documentAccessAuthorizer: {
+				authorize: sandbox.stub().resolves({
+					tenantId,
+					documentId,
+					operation: "create",
+					source: "trusted-create",
+					containerType: "durable",
+					storageAccountName: "authorized-storage",
+					physicalContainerName:
+						"pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+					layoutVersion: "v2",
+					lifecycleVersion: "generation-1",
+					state: "pending",
+				}),
+			},
+		});
+
+		sinon.assert.notCalled(storageNameRetriever.get);
+		const creationEvent = info
+			.getCalls()
+			.find(
+				(call) =>
+					typeof call.args[0] === "string" &&
+					call.args[0].startsWith("Created RestGitService:"),
+			);
+		assert.ok(creationEvent);
+		assert.match(creationEvent.args[0], /"Storage-Name":"authorized-storage"/);
+		assert.doesNotMatch(
+			creationEvent.args[0],
+			/caller-storage|retrieved-storage|tenant-default-storage/,
+		);
 	});
 
 	it("emits structured allowed ownership telemetry", async () => {
@@ -537,8 +817,18 @@ describe("summary ownership", function () {
 				operation: "get",
 				routeType: "sha",
 				outcome: "allowed",
+				source: "alfred",
 			}),
 		);
+		const allowedEvents = info.getCalls().filter((call) => {
+			const properties = call.args[1];
+			return (
+				call.args[0] === "HistorianSummaryDocumentOwnershipValidation" &&
+				!(properties instanceof Map) &&
+				properties?.outcome === "allowed"
+			);
+		});
+		assert.strictEqual(allowedEvents.length, 1);
 	});
 
 	it("does not collide ephemeral cache entries for duplicate document IDs", async () => {
@@ -574,6 +864,7 @@ describe("summary ownership", function () {
 				documentManager,
 				cache,
 				ephemeralDocumentTTLSec: 24 * 60 * 60,
+				accessOperation: "read",
 			});
 		}
 
@@ -613,6 +904,7 @@ describe("summary ownership", function () {
 			documentManager,
 			cache,
 			ephemeralDocumentTTLSec: 24 * 60 * 60,
+			accessOperation: "read",
 		});
 
 		sinon.assert.calledWith(cacheGet, "isEphemeralContainer:tenant-a:shared%3Aid");

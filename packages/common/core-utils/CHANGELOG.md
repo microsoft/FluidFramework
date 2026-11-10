@@ -1,5 +1,53 @@
 # @fluidframework/core-utils
 
+## 3.12.0
+
+Dependency updates only.
+
+## 3.11.0
+
+Dependency updates only.
+
+## 3.10.0
+
+### Minor Changes
+
+- Remove the deprecated beta assert API ([#28624](https://github.com/microsoft/FluidFramework/pull/28624)) [950732d9363](https://github.com/microsoft/FluidFramework/commit/950732d93636e12c4325d75f86aa4a14ce63939b)
+
+  The deprecated `assert` API is removed from `@fluidframework/core-utils`.
+  No replacement API is offered.
+  Use an assertion utility appropriate for your application or throw an `Error` directly.
+
+  See [the removal tracking issue](https://github.com/microsoft/FluidFramework/issues/28084) for context.
+
+## 3.7.0
+
+Dependency updates only.
+
+## 3.6.0
+
+Dependency updates only.
+
+## 3.5.0
+
+Dependency updates only.
+
+## 3.4.0
+
+Dependency updates only.
+
+## 3.3.0
+
+Dependency updates only.
+
+## 3.2.0
+
+Dependency updates only.
+
+## 3.1.0
+
+Dependency updates only.
+
 ## 3.0.0
 
 ### Minor Changes

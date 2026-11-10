@@ -1,0 +1,732 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { strict as assert } from "node:assert";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import {
+	asyncGeneratorFromArray,
+	done,
+	FuzzTestMinimizer,
+	takeAsync,
+	type SaveInfo,
+} from "@fluid-private/stochastic-test-utils";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type {
+	IChannelAttributes,
+	Serializable,
+} from "@fluidframework/datastore-definitions/internal";
+import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+import execa from "execa";
+
+import type { Client } from "../clientLoading.js";
+import { DDSFuzzHandle } from "../ddsFuzzHandle.js";
+import {
+	createDDSFuzzSuite,
+	defaultDDSFuzzSuiteOptions,
+	mixinAttach,
+	mixinNewClient,
+	mixinStashedClient,
+	replayTest,
+	runTestForSeed,
+	type DDSFuzzHarnessEvents,
+	type DDSFuzzModel,
+	type DDSFuzzSuiteOptions,
+	type DDSFuzzTestState,
+	type HarnessOperation,
+} from "../ddsFuzzHarness.js";
+import { isChannelFactory } from "../index.js";
+import {
+	createSquashFuzzSuite,
+	type SquashFuzzModel,
+	type SquashFuzzTestState,
+} from "../squashFuzzHarness.js";
+
+import { baseModel, type Operation, SharedNothingFactory } from "./sharedNothing.js";
+import { _dirname } from "./dirname.cjs";
+
+interface Configuration {
+	version: "current" | "previous";
+	options: { enabled: boolean };
+}
+
+type State = DDSFuzzTestState<SharedNothingFactory, Configuration>;
+type TestOperation = Operation | HarnessOperation<Configuration>;
+type Model = DDSFuzzModel<SharedNothingFactory, TestOperation, State>;
+
+class ConfiguredFactory extends SharedNothingFactory {
+	public constructor(private readonly configuration: Configuration) {
+		super();
+	}
+
+	public override get attributes(): IChannelAttributes {
+		return {
+			...super.attributes,
+			packageVersion: JSON.stringify(this.configuration),
+		};
+	}
+}
+
+function createModel(): Model {
+	return {
+		workloadName: baseModel.workloadName,
+		minimizationTransforms: [],
+		factory: {
+			generateClientConfiguration: (random, { clientId, isSummarizer }) => ({
+				version: isSummarizer || clientId === "B" ? "previous" : "current",
+				options: { enabled: random.bool() },
+			}),
+			getFactory: (configuration) => new ConfiguredFactory(configuration),
+		},
+		generatorFactory: () => takeAsync(3, async () => ({ type: "noop" })),
+		reducer: () => {},
+		validateConsistency: () => {},
+	};
+}
+
+function assertConfigurationApplied(client: Client<SharedNothingFactory>): void {
+	assert(client.channel.attributes.packageVersion !== undefined);
+	assert.deepEqual(
+		JSON.parse(client.channel.attributes.packageVersion),
+		client.clientConfiguration,
+	);
+}
+
+describe("DDS fuzz client configuration", () => {
+	describe("isChannelFactory", () => {
+		it("narrows a direct factory to its original channel factory type", () => {
+			const factory = new SharedNothingFactory();
+			const model: Model = { ...createModel(), factory };
+			assert(isChannelFactory(model.factory));
+			const narrowed: SharedNothingFactory = model.factory;
+			assert.equal(narrowed, factory);
+		});
+
+		it("identifies configuration providers without invoking their callbacks", () => {
+			const model: Model = {
+				...createModel(),
+				factory: {
+					generateClientConfiguration: () => assert.fail("Must not generate configuration."),
+					getFactory: () => assert.fail("Must not resolve a factory."),
+				},
+			};
+			assert.equal(isChannelFactory(model.factory), false);
+		});
+	});
+
+	let directory: string;
+	let operationsFile: string;
+	let saveInfo: SaveInfo;
+	let options: DDSFuzzSuiteOptions;
+
+	beforeEach(() => {
+		directory = mkdtempSync(join(tmpdir(), "dds-client-configuration-"));
+		operationsFile = join(directory, "operations.json");
+		saveInfo = {
+			saveOnSuccess: { path: operationsFile },
+			saveOnFailure: { path: operationsFile },
+			saveFluidOps: false,
+		};
+		options = {
+			...defaultDDSFuzzSuiteOptions,
+			detachedStartOptions: { numOpsBeforeAttach: 0 },
+			emitter: new TypedEventEmitter<DDSFuzzHarnessEvents>(),
+		};
+	});
+
+	describe("configured fuzz suites", () => {
+		const model = createModel();
+		model.validateConsistency = (a, b) => {
+			assertConfigurationApplied(a);
+			assertConfigurationApplied(b);
+		};
+		const suiteOptions: Partial<DDSFuzzSuiteOptions> = {
+			defaultTestCount: 1,
+			saveFailures: false,
+			detachedStartOptions: { numOpsBeforeAttach: 1, rehydrateDisabled: true },
+			clientJoinOptions: { maxNumberOfClients: 4, clientAddProbability: 1 },
+		};
+		createDDSFuzzSuite(model, {
+			...suiteOptions,
+			emitter: new TypedEventEmitter<DDSFuzzHarnessEvents>(),
+		});
+
+		const squashModel: SquashFuzzModel<
+			SharedNothingFactory,
+			TestOperation,
+			SquashFuzzTestState<SharedNothingFactory, Configuration>
+		> = {
+			...model,
+			workloadName: "configured squash",
+			reducer: () => {},
+			exitingStagingModeGeneratorFactory: () => () => done,
+			validatePoisonedContentRemoved: () => {},
+		};
+		createSquashFuzzSuite(squashModel, {
+			...suiteOptions,
+			emitter: new TypedEventEmitter<DDSFuzzHarnessEvents>(),
+		});
+	});
+
+	afterEach(() => {
+		rmSync(directory, { recursive: true });
+	});
+
+	function readOperations(): TestOperation[] {
+		return JSON.parse(readFileSync(operationsFile, "utf8")) as TestOperation[];
+	}
+
+	it("replays configured clients from the beginning on each retry", async function () {
+		this.timeout(15000);
+		const result = await execa(
+			"npm",
+			[
+				"exec",
+				"mocha",
+				"--silent",
+				"--",
+				"--config",
+				join(_dirname, "../../.mocharc.harnessTests.cjs"),
+				join(_dirname, "ddsSuiteCases/clientConfigurationReplay.js"),
+			],
+			{
+				env: { FLUID_TEST_VERBOSE: undefined, SILENT_TEST_OUTPUT: "1" },
+			},
+		);
+		const report = JSON.parse(result.stdout) as {
+			stats: { passes: number; failures: number };
+			tests: { currentRetry: number }[];
+		};
+		assert.equal(report.stats.passes, 1);
+		assert.equal(report.stats.failures, 0);
+		assert.equal(report.tests[0].currentRetry, 2);
+	});
+
+	it("records and applies configuration for initial clients, the summarizer, and later joins", async () => {
+		options.clientJoinOptions = {
+			maxNumberOfClients: 4,
+			clientAddProbability: 1,
+		};
+		const created: Client<SharedNothingFactory>[] = [];
+		options.emitter.on("clientCreate", (client) => {
+			assert(client.clientConfiguration !== undefined);
+			created.push(client);
+		});
+		const model = mixinNewClient(createModel(), options);
+		const state = await runTestForSeed(model, options, 0, saveInfo);
+		assert.equal(state.clients.length, 4);
+		assert.equal(created.length, 5);
+		for (const client of created) {
+			assertConfigurationApplied(client);
+		}
+		assert.equal(state.summarizerClient.clientConfiguration?.version, "previous");
+		assert.equal(state.clients[0].clientConfiguration?.version, "current");
+
+		const operations = readOperations();
+		const initialization = operations[0];
+		assert(initialization.type === "initialize");
+		assert.equal(initialization.initialClient.clientId, "summarizer");
+		assert.deepEqual(
+			[initialization.initialClient, ...initialization.clients].map(
+				(client) => client.clientConfiguration,
+			),
+			created.slice(0, 4).map((client) => client.clientConfiguration),
+		);
+		const add = operations.find((operation) => operation.type === "addClient");
+		assert(add !== undefined);
+		assert.equal(add.addedClientId, "D");
+		assert.deepEqual(add.clientConfiguration, state.clients[3].clientConfiguration);
+	});
+
+	it("replays recorded choices without generating configurations again", async () => {
+		options.clientJoinOptions = {
+			maxNumberOfClients: 4,
+			clientAddProbability: 1,
+		};
+		const model = mixinNewClient(createModel(), options);
+		assert(!isChannelFactory(model.factory));
+		const original = await runTestForSeed(model, options, 0, saveInfo);
+		const operations = readOperations();
+		let replayed: DDSFuzzTestState<SharedNothingFactory> | undefined;
+		options.emitter.on("testEnd", (state) => {
+			replayed = state;
+		});
+		await replayTest(
+			{
+				...model,
+				factory: {
+					...model.factory,
+					generateClientConfiguration: () =>
+						assert.fail("Replay must not generate client configurations."),
+				},
+			},
+			999,
+			asyncGeneratorFromArray(operations),
+			undefined,
+			options,
+		);
+		assert(replayed !== undefined);
+		assert.deepEqual(
+			replayed.clients.map((client) => client.clientConfiguration),
+			original.clients.map((client) => client.clientConfiguration),
+		);
+		assert.deepEqual(
+			replayed.summarizerClient.clientConfiguration,
+			original.summarizerClient.clientConfiguration,
+		);
+	});
+
+	for (const configured of [false, true]) {
+		it(`raises testStart after client creation and before the workload, configured ${configured}`, async () => {
+			const events: string[] = [];
+			options.emitter.on("clientCreate", (client) => {
+				events.push(client.channel.id);
+			});
+			options.emitter.on("testStart", (state) => {
+				assert.equal(state.clients.length, 3);
+				events.push("testStart");
+			});
+			const model = createModel();
+			if (!configured) {
+				model.factory = new SharedNothingFactory();
+			}
+			const generatorFactory = model.generatorFactory;
+			model.generatorFactory = () => {
+				assert.deepEqual(events, ["summarizer", "A", "B", "C", "testStart"]);
+				events.push("generatorFactory");
+				return generatorFactory();
+			};
+			await runTestForSeed(model, options, 0, saveInfo);
+			assert.equal(readOperations()[0].type, "initialize");
+		});
+	}
+
+	it("restores testStart randomness on replay without generating configurations", async () => {
+		options.numberOfClients = 28;
+		options.clientJoinOptions = {
+			maxNumberOfClients: 28,
+			clientAddProbability: 0,
+			stashableClientProbability: 0.5,
+		};
+		const observed: number[] = [];
+		options.emitter.on("testStart", (state) => {
+			observed.push(state.random.integer(0, Number.MAX_SAFE_INTEGER));
+		});
+		const model = createModel();
+		assert(!isChannelFactory(model.factory));
+		const originalGenerate = model.factory.generateClientConfiguration;
+		model.factory.generateClientConfiguration = (random, context) => {
+			for (let i = 0; i < 10; i++) {
+				random.integer(0, 100);
+			}
+			return originalGenerate(random, context);
+		};
+		await runTestForSeed(model, options, 42, saveInfo);
+		model.factory.generateClientConfiguration = () =>
+			assert.fail("Do not regenerate configurations.");
+		await replayTest(model, 42, asyncGeneratorFromArray(readOperations()), undefined, options);
+		assert.equal(observed.length, 2);
+		assert.equal(observed[0], observed[1]);
+	});
+
+	it("records stable UUID client names and configurations in both seed modes", async () => {
+		options.numberOfClients = 27;
+		options.clientJoinOptions = { maxNumberOfClients: 28, clientAddProbability: 1 };
+		for (const forceGlobalSeed of [false, true]) {
+			for (const numOpsBeforeAttach of [0, 1]) {
+				if (forceGlobalSeed) {
+					options.forceGlobalSeed = true;
+				} else {
+					delete options.forceGlobalSeed;
+				}
+				options.detachedStartOptions = { numOpsBeforeAttach, rehydrateDisabled: true };
+				const model = mixinAttach(mixinNewClient(createModel(), options), options);
+				const original = await runTestForSeed(model, options, 0, saveInfo);
+				const operations = readOperations();
+				await runTestForSeed(model, options, 0, saveInfo);
+				assert.deepEqual(readOperations(), operations);
+				const replayed = await runTestForSeed(
+					model,
+					options,
+					999,
+					undefined,
+					asyncGeneratorFromArray(operations),
+				);
+				const describeClients = (state: State): [string, Configuration | undefined][] =>
+					state.clients.map((client) => [client.channel.id, client.clientConfiguration]);
+				assert.equal(original.clients.length, 28);
+				assert.equal(original.clients[26].channel.id.length, 36);
+				assert.deepEqual(describeClients(replayed), describeClients(original));
+			}
+		}
+	});
+
+	it("records configuration before a factory fails during initialization", async () => {
+		const model = createModel();
+		assert(!isChannelFactory(model.factory));
+		model.factory.getFactory = () => {
+			throw new Error("Configured factory failed.");
+		};
+		await assert.rejects(
+			runTestForSeed(model, options, 0, saveInfo),
+			/Configured factory failed/,
+		);
+		const operations = readOperations();
+		assert.equal(operations.length, 1);
+		assert.equal(operations[0].type, "initialize");
+		await assert.rejects(
+			replayTest(model, 0, asyncGeneratorFromArray(operations), undefined, options),
+			/Configured factory failed/,
+		);
+	});
+
+	it("records attachment clients and preserves the detached client's configuration on rehydration", async () => {
+		options.detachedStartOptions = {
+			numOpsBeforeAttach: 1,
+			attachingBeforeRehydrateDisable: true,
+		};
+		const created: Client<SharedNothingFactory>[] = [];
+		const generated: string[] = [];
+		options.emitter.on("clientCreate", (client) => created.push(client));
+		const base = createModel();
+		assert(!isChannelFactory(base.factory));
+		const factory = base.factory;
+		const model = mixinAttach(
+			{
+				...base,
+				factory: {
+					...factory,
+					generateClientConfiguration: (random, context) => {
+						generated.push(context.clientId);
+						return factory.generateClientConfiguration(random, context);
+					},
+				},
+			},
+			options,
+		);
+		await runTestForSeed(model, options, 0, saveInfo);
+		assert.deepEqual(generated, ["A", "summarizer", "B", "C"]);
+		assert.deepEqual(
+			created.map((client) => client.channel.id),
+			["A", "A", "summarizer", "B", "C"],
+		);
+		assert.deepEqual(created[0].clientConfiguration, created[1].clientConfiguration);
+		for (const client of created) {
+			assertConfigurationApplied(client);
+		}
+		const operations = readOperations();
+		const attach = operations.find((operation) => operation.type === "attach");
+		assert(attach?.clients !== undefined);
+		assert.deepEqual(
+			attach.clients.map((client) => client.clientConfiguration),
+			created.slice(2).map((client) => client.clientConfiguration),
+		);
+		generated.length = 0;
+		created.length = 0;
+		await replayTest(model, 123, asyncGeneratorFromArray(operations), undefined, options);
+		assert.deepEqual(generated, []);
+		for (const client of created) {
+			assertConfigurationApplied(client);
+		}
+	});
+
+	it("preserves configuration when restoring a stashed client under a new name", async () => {
+		options.numberOfClients = 1;
+		options.clientJoinOptions = {
+			maxNumberOfClients: 1,
+			clientAddProbability: 0,
+			stashableClientProbability: 1,
+		};
+		const created: Client<SharedNothingFactory>[] = [];
+		options.emitter.on("clientCreate", (client) => created.push(client));
+		const model = mixinStashedClient(
+			{
+				...createModel(),
+				generatorFactory: () =>
+					asyncGeneratorFromArray<TestOperation, State>([
+						{ type: "noop" },
+						{ type: "stashClient", existingClientId: "A", newClientId: "A_1" },
+					]),
+			},
+			options,
+		);
+		const state = await runTestForSeed(model, options, 0, saveInfo);
+		assert.equal(state.clients[0].channel.id, "A_1");
+		assert.equal(created.length, 3);
+		assert.deepEqual(created[1].clientConfiguration, created[2].clientConfiguration);
+		assertConfigurationApplied(state.clients[0]);
+		await replayTest(
+			model,
+			123,
+			asyncGeneratorFromArray(readOperations()),
+			undefined,
+			options,
+		);
+		assert.deepEqual(created[4].clientConfiguration, created[5].clientConfiguration);
+	});
+
+	it("retains initialization and required client choices during minimization", async () => {
+		options.clientJoinOptions = { maxNumberOfClients: 4, clientAddProbability: 1 };
+		const model = mixinNewClient(
+			{
+				...createModel(),
+				reducer: (state: State) => {
+					if (state.clients.some((client) => client.channel.id === "D")) {
+						throw new Error("Failure requiring configured client D.");
+					}
+				},
+			},
+			options,
+		);
+		await assert.rejects(runTestForSeed(model, options, 0, saveInfo), /configured client D/);
+		const operations = readOperations();
+		const originalOperations = structuredClone(operations);
+		const minimizer = new FuzzTestMinimizer(
+			undefined,
+			operations,
+			saveInfo,
+			async (generator) => replayTest(model, 0, generator, undefined, options),
+			0,
+		);
+		const minimized = await minimizer.minimize();
+		assert.equal(minimized[0].type, "initialize");
+		assert(minimized.some((operation) => operation.type === "addClient"));
+		assert.deepEqual(minimized, originalOperations);
+	});
+
+	it("rejects replay without the required initialization", async () => {
+		await assert.rejects(
+			replayTest(
+				createModel(),
+				0,
+				asyncGeneratorFromArray([{ type: "noop" }]),
+				undefined,
+				options,
+			),
+			/Missing recorded clientConfiguration/,
+		);
+		await assert.rejects(
+			replayTest(createModel(), 0, asyncGeneratorFromArray([]), undefined, options),
+			/Missing recorded clientConfiguration/,
+		);
+	});
+
+	it("rejects missing configuration instead of generating a replacement", async () => {
+		options.clientJoinOptions = { maxNumberOfClients: 4, clientAddProbability: 1 };
+		const model = mixinNewClient(createModel(), options);
+		await runTestForSeed(model, options, 0, saveInfo);
+		const operations = readOperations();
+		const add = operations.find((operation) => operation.type === "addClient");
+		assert(add !== undefined);
+		delete add.clientConfiguration;
+		await assert.rejects(
+			replayTest(model, 0, asyncGeneratorFromArray(operations), undefined, options),
+			/Missing recorded clientConfiguration/,
+		);
+	});
+
+	for (const configured of [false, true]) {
+		it(`rejects attachment without recorded clients, configured ${configured}`, async () => {
+			options.detachedStartOptions = { numOpsBeforeAttach: 1, rehydrateDisabled: true };
+			const base = createModel();
+			if (!configured) {
+				base.factory = new SharedNothingFactory();
+			}
+			const model = mixinAttach(base, options);
+			await runTestForSeed(model, options, 0, saveInfo);
+			const operations = readOperations();
+			const attach = operations.find((operation) => operation.type === "attach");
+			assert(attach !== undefined);
+			// @ts-expect-error Simulate a recording that omits the required client descriptors.
+			delete attach.clients;
+			await assert.rejects(
+				replayTest(model, 0, asyncGeneratorFromArray(operations), undefined, options),
+				/Attach operations require recorded client initializations/,
+			);
+		});
+	}
+
+	type JsonConfiguration = Exclude<Serializable<unknown>, undefined>;
+	const configurations: JsonConfiguration[] = [
+		// JSON null is a supported configuration, unlike undefined.
+		// eslint-disable-next-line unicorn/no-null
+		null,
+		false,
+		0,
+		"previous",
+		["previous", 1],
+	];
+	for (const clientConfiguration of configurations) {
+		it(`preserves consumer-owned JSON: ${JSON.stringify(clientConfiguration)}`, async () => {
+			options.detachedStartOptions = { numOpsBeforeAttach: 1, rehydrateDisabled: true };
+			options.clientJoinOptions = { maxNumberOfClients: 4, clientAddProbability: 1 };
+			type JsonOperation = Operation | HarnessOperation<JsonConfiguration>;
+			const base: DDSFuzzModel<
+				SharedNothingFactory,
+				JsonOperation,
+				DDSFuzzTestState<SharedNothingFactory, JsonConfiguration>
+			> = {
+				...baseModel,
+				minimizationTransforms: [],
+				factory: {
+					generateClientConfiguration: () => clientConfiguration,
+					getFactory: (recorded) => {
+						assert.deepEqual(recorded, clientConfiguration);
+						return new SharedNothingFactory();
+					},
+				},
+				reducer: () => {},
+				generatorFactory: () => takeAsync(3, baseModel.generatorFactory()),
+			};
+			const model = mixinAttach(mixinNewClient(base, options), options);
+			const state = await runTestForSeed(model, options, 0, saveInfo);
+			assert.equal(state.clients.length, 4);
+			for (const client of [state.summarizerClient, ...state.clients]) {
+				assert.deepEqual(client.clientConfiguration, clientConfiguration);
+			}
+			const operations = JSON.parse(readFileSync(operationsFile, "utf8")) as JsonOperation[];
+			await replayTest(model, 0, asyncGeneratorFromArray(operations), undefined, options);
+		});
+	}
+
+	for (const numOpsBeforeAttach of [0, 1]) {
+		it(`uses the operation serializer for configuration handles, detached ops ${numOpsBeforeAttach}`, async () => {
+			interface HandleConfiguration {
+				handle: IFluidHandle;
+			}
+			interface HandleOperation {
+				type: "noop";
+				handle: IFluidHandle;
+			}
+			type HandleState = DDSFuzzTestState<SharedNothingFactory, HandleConfiguration>;
+			type HandleTestOperation = HandleOperation | HarnessOperation<HandleConfiguration>;
+			const handle = new DDSFuzzHandle(
+				"configuration",
+				new MockFluidDataStoreRuntime({ id: "configuration-source" }),
+			);
+			const resolvedHandles: IFluidHandle[] = [];
+			const recordHandle = (value: IFluidHandle): void => {
+				assert(isFluidHandle(value));
+				assert.notEqual(value, handle);
+				assert.equal(toFluidHandleInternal(value).absolutePath, handle.absolutePath);
+				resolvedHandles.push(value);
+			};
+			options.detachedStartOptions = {
+				numOpsBeforeAttach,
+				attachingBeforeRehydrateDisable: true,
+			};
+			options.clientJoinOptions = { maxNumberOfClients: 4, clientAddProbability: 1 };
+			const base: DDSFuzzModel<SharedNothingFactory, HandleTestOperation, HandleState> = {
+				workloadName: "configuration handles",
+				factory: {
+					generateClientConfiguration: () => ({ handle }),
+					getFactory: (configuration) => {
+						recordHandle(configuration.handle);
+						return new SharedNothingFactory();
+					},
+				},
+				generatorFactory: () => takeAsync(3, async () => ({ type: "noop", handle })),
+				reducer: (_, operation) => {
+					assert(operation.type === "noop");
+					recordHandle(operation.handle);
+				},
+				validateConsistency: () => {},
+			};
+			const model = mixinAttach(mixinNewClient(base, options), options);
+			const state = await runTestForSeed(model, options, 0, saveInfo);
+			assert.equal(state.clients.length, 4);
+			for (const client of [state.summarizerClient, ...state.clients]) {
+				assert(client.clientConfiguration !== undefined);
+				recordHandle(client.clientConfiguration.handle);
+			}
+			const operations = JSON.parse(
+				readFileSync(operationsFile, "utf8"),
+			) as HandleTestOperation[];
+			const encodedHandle = { type: "__fluid_handle__", url: handle.absolutePath };
+			for (const operation of operations) {
+				switch (operation.type) {
+					case "initialize": {
+						for (const client of [operation.initialClient, ...operation.clients]) {
+							assert.deepEqual(client.clientConfiguration, { handle: encodedHandle });
+						}
+						break;
+					}
+					case "attach": {
+						for (const client of operation.clients) {
+							assert.deepEqual(client.clientConfiguration, { handle: encodedHandle });
+						}
+						break;
+					}
+					case "addClient": {
+						assert.deepEqual(operation.clientConfiguration, { handle: encodedHandle });
+						break;
+					}
+					case "noop": {
+						assert.deepEqual(operation.handle, encodedHandle);
+						break;
+					}
+					default: {
+						break;
+					}
+				}
+			}
+			assert(!isChannelFactory(model.factory));
+			model.factory.generateClientConfiguration = () =>
+				assert.fail("Replay must use saved handles.");
+			await replayTest(model, 0, asyncGeneratorFromArray(operations), undefined, options);
+			for (const resolved of resolvedHandles) {
+				assert.equal(await resolved.get(), handle.absolutePath);
+			}
+		});
+	}
+
+	it("records unconfigured initialization as a seeded harness operation", async () => {
+		const model = {
+			...baseModel,
+			generatorFactory: () => takeAsync(1, baseModel.generatorFactory()),
+		};
+		const state = await runTestForSeed(model, options, 0, saveInfo);
+		for (const client of [state.summarizerClient, ...state.clients]) {
+			assert(!("clientConfiguration" in client));
+		}
+		const operations = readOperations();
+		for (const operation of operations) {
+			assert("seed" in operation && typeof operation.seed === "number");
+		}
+		const withoutSeeds = operations.map(
+			({ seed: _, ...operation }: TestOperation & { seed?: number }) => operation,
+		);
+		assert.deepEqual(withoutSeeds, [
+			{
+				type: "initialize",
+				initialClient: { clientId: "summarizer", canBeStashed: false },
+				clients: ["A", "B", "C"].map((clientId) => ({ clientId, canBeStashed: false })),
+			},
+			{ type: "noop" },
+		]);
+		await replayTest(
+			model,
+			0,
+			asyncGeneratorFromArray(
+				operations.filter(
+					(operation) => operation.type === "initialize" || operation.type === "noop",
+				),
+			),
+			undefined,
+			options,
+		);
+		await replayTest(
+			model,
+			0,
+			asyncGeneratorFromArray(operations.filter((operation) => operation.type === "noop")),
+			undefined,
+			options,
+		);
+	});
+});

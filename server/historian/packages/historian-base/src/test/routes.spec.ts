@@ -13,6 +13,7 @@ import type { IDocument } from "@fluidframework/server-services-core";
 import { Lumberjack, TestEngine1 } from "@fluidframework/server-services-telemetry";
 import { configureGlobalTelemetryContext } from "@fluidframework/server-services-utils";
 import * as historianApp from "../app";
+import type { IDocumentAccessAuthorizer, ITrustedCreateContextResolver } from "../services";
 import { RestGitService } from "../services";
 import { TestTenantService, TestCache, TestDocumentManager } from "./utils";
 import { Constants } from "../utils";
@@ -32,15 +33,30 @@ const documentId = "testDocumentId";
 const tenantKey = "testTenantKey";
 const testUrl = "http://localhost/historian";
 const defaultCache = new TestCache();
-const defaultProvider = new nconf.Provider({}).defaults({
-	auth: {
-		maxTokenLifetimeSec: 1000000,
-		enableTokenExpiration: true,
-	},
-	logger: {
-		morganFormat: "json",
-	},
-});
+const createTestProvider = (
+	reuseCustomerAccessTokenForSummaryOwnership = false,
+	ignoreEphemeralFlag = true,
+	alfredEnforcesServerGeneratedDocumentId = false,
+): nconf.Provider => {
+	const provider = new nconf.Provider({}).defaults({
+		...(alfredEnforcesServerGeneratedDocumentId
+			? { alfredEnforcesServerGeneratedDocumentId: true }
+			: {}),
+		auth: {
+			maxTokenLifetimeSec: 1000000,
+			enableTokenExpiration: true,
+		},
+		ignoreEphemeralFlag,
+		logger: {
+			morganFormat: "json",
+		},
+		restGitService: {
+			reuseCustomerAccessTokenForSummaryOwnership,
+		},
+	});
+	return provider;
+};
+const defaultProvider = createTestProvider();
 const defaultTenantService = new TestTenantService();
 
 const lumberjackEngine = new TestEngine1();
@@ -1287,13 +1303,14 @@ describe("routes", () => {
 
 describe("summary ownership routes", () => {
 	const sandbox = sinon.createSandbox();
+	const accessToken = generateToken(tenantId, documentId, tenantKey, [
+		ScopeType.DocRead,
+		ScopeType.DocWrite,
+		ScopeType.SummaryWrite,
+	]);
 	const authorization = getAuthorizationTokenFromCredentials({
 		user: tenantId,
-		password: generateToken(tenantId, documentId, tenantKey, [
-			ScopeType.DocRead,
-			ScopeType.DocWrite,
-			ScopeType.SummaryWrite,
-		]),
+		password: accessToken,
 	});
 	const activeDocument = {
 		version: "1.0",
@@ -1318,14 +1335,11 @@ describe("summary ownership routes", () => {
 	let storageNameRetrieverGet: sinon.SinonStub;
 	let superTest: request.SuperTest<request.Test>;
 
-	beforeEach(() => {
-		configureGlobalTelemetryContext();
-		documentManager = new TestDocumentManager();
-		cache = new TestCache();
-		readStaticProperties = sandbox
-			.stub(documentManager, "readStaticProperties")
-			.resolves(activeDocument);
-		storageNameRetrieverGet = sandbox.stub().resolves("legacy-storage");
+	const createSummaryOwnershipSuperTest = (
+		config: nconf.Provider,
+		documentAccessAuthorizer?: IDocumentAccessAuthorizer,
+		trustedCreateContextResolver?: ITrustedCreateContextResolver,
+	): request.SuperTest<request.Test> => {
 		const throttlers = new Map<string, TestThrottler>([
 			[Constants.generalRestCallThrottleIdPrefix, new TestThrottler(1000)],
 			[Constants.createSummaryThrottleIdPrefix, new TestThrottler(1000)],
@@ -1335,9 +1349,9 @@ describe("summary ownership routes", () => {
 			[Constants.createSummaryThrottleIdPrefix, new TestThrottler(1000)],
 			[Constants.getSummaryThrottleIdPrefix, new TestThrottler(1000)],
 		]);
-		superTest = request(
+		return request(
 			historianApp.create(
-				defaultProvider,
+				config,
 				defaultTenantService,
 				{ get: storageNameRetrieverGet },
 				throttlers,
@@ -1348,8 +1362,24 @@ describe("summary ownership routes", () => {
 				undefined,
 				undefined,
 				24 * 60 * 60,
+				undefined,
+				undefined,
+				undefined,
+				documentAccessAuthorizer,
+				trustedCreateContextResolver,
 			),
 		);
+	};
+
+	beforeEach(() => {
+		configureGlobalTelemetryContext();
+		documentManager = new TestDocumentManager();
+		cache = new TestCache();
+		readStaticProperties = sandbox
+			.stub(documentManager, "readStaticProperties")
+			.resolves(activeDocument);
+		storageNameRetrieverGet = sandbox.stub().resolves("legacy-storage");
+		superTest = createSummaryOwnershipSuperTest(defaultProvider);
 	});
 
 	afterEach(() => sandbox.restore());
@@ -1428,7 +1458,155 @@ describe("summary ownership routes", () => {
 		);
 	});
 
-	it("preserves legacy storage routing after fresh validation", async () => {
+	it("serves repeated local EC GETs with a string Alfred endpoint", async () => {
+		const config = createTestProvider(false, false);
+		config.use("memory");
+		config.set("alfred", testUrl);
+		config.set("alfredEnforcesServerGeneratedDocumentId", true);
+		superTest = createSummaryOwnershipSuperTest(config);
+		const createTime = Date.now();
+		await cache.activateSummaryAccessIfNotDeleted(
+			tenantId,
+			documentId,
+			createTime,
+			createTime + 24 * 60 * 60 * 1000,
+		);
+		const tenant = await defaultTenantService.getTenant(tenantId, accessToken);
+		sandbox.stub(defaultTenantService, "getTenant").resolves({
+			...tenant,
+			customData: { storageName: "durable-custom-data-storage" },
+		});
+		const readDocument = sandbox.spy(documentManager, "readDocument");
+		const info = sandbox.spy(Lumberjack, "info");
+		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary").resolves({
+			id: sha,
+			trees: [],
+			blobs: [],
+		});
+
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(200);
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/${sha}`)
+			.set("Authorization", authorization)
+			.expect(200);
+
+		sinon.assert.notCalled(readDocument);
+		sinon.assert.notCalled(storageNameRetrieverGet);
+		sinon.assert.calledTwice(getSummary);
+		const creationEvents = info
+			.getCalls()
+			.filter(
+				(call) =>
+					typeof call.args[0] === "string" &&
+					call.args[0].startsWith("Created RestGitService:"),
+			);
+		assert.strictEqual(creationEvents.length, 2);
+		for (const event of creationEvents) {
+			assert.doesNotMatch(event.args[0], /Storage-Name|durable-custom-data-storage/);
+		}
+	});
+
+	it("does not enable local EC access from the Alfred service config namespace", async () => {
+		const config = createTestProvider(false, false);
+		config.use("memory");
+		config.set("alfred", {
+			enforceServerGeneratedDocumentId: true,
+		});
+		superTest = createSummaryOwnershipSuperTest(config);
+		const createTime = Date.now();
+		await cache.activateSummaryAccessIfNotDeleted(
+			tenantId,
+			documentId,
+			createTime,
+			createTime + 24 * 60 * 60 * 1000,
+		);
+		const readDocument = sandbox.stub(documentManager, "readDocument").resolves({
+			...activeDocument,
+			createTime,
+			isEphemeralContainer: true,
+		});
+		sandbox.stub(RestGitService.prototype, "getSummary").resolves({
+			id: sha,
+			trees: [],
+			blobs: [],
+		});
+
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(200);
+
+		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
+	});
+
+	it("uses Alfred authorization without durable storage routing for an EC", async () => {
+		superTest = createSummaryOwnershipSuperTest(createTestProvider(false, false));
+		const createTime = Date.now();
+		await cache.activateSummaryAccessIfNotDeleted(
+			tenantId,
+			documentId,
+			createTime,
+			createTime + 24 * 60 * 60 * 1000,
+		);
+		const readDocument = sandbox.stub(documentManager, "readDocument").resolves({
+			...activeDocument,
+			createTime,
+			isEphemeralContainer: true,
+		});
+		const info = sandbox.spy(Lumberjack, "info");
+		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary").resolves({
+			id: sha,
+			trees: [],
+			blobs: [],
+		});
+
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(200);
+
+		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
+		sinon.assert.calledOnce(getSummary);
+		const creationEvent = info
+			.getCalls()
+			.find(
+				(call) =>
+					typeof call.args[0] === "string" &&
+					call.args[0].startsWith("Created RestGitService:"),
+			);
+		assert.ok(creationEvent);
+		assert.doesNotMatch(creationEvent.args[0], /Storage-Name/);
+	});
+
+	it("denies deleted EC access before serving a cached latest summary", async () => {
+		superTest = createSummaryOwnershipSuperTest(createTestProvider(false, false, true));
+		await cache.set(`${tenantId}:${documentId}:summary:container`, {
+			id: "cached-deleted-summary",
+			trees: [],
+			blobs: [],
+		});
+		await cache.markSummaryAccessDeleted(
+			tenantId,
+			documentId,
+			activeDocument.createTime,
+			activeDocument.createTime + 24 * 60 * 60 * 1000,
+		);
+		const readDocument = sandbox.stub(documentManager, "readDocument").resolves(activeDocument);
+		const getSummary = sandbox.spy(RestGitService.prototype, "getSummary");
+
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(404);
+
+		sinon.assert.notCalled(readDocument);
+		sinon.assert.notCalled(getSummary);
+	});
+
+	it("uses the Alfred context without secondary static or storage-name lookup", async () => {
 		const readDocument = sandbox.stub(documentManager, "readDocument").resolves(activeDocument);
 		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary").resolves({
 			id: sha,
@@ -1442,10 +1620,155 @@ describe("summary ownership routes", () => {
 			.expect(200);
 
 		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
-		sinon.assert.calledOnceWithExactly(readStaticProperties, tenantId, documentId);
+		sinon.assert.notCalled(readStaticProperties);
+		sinon.assert.notCalled(storageNameRetrieverGet);
+		sinon.assert.calledOnce(getSummary);
+	});
+
+	it("uses the configured authorizer to resolve durable Alfred storage routing", async () => {
+		const authorize = sandbox.stub().resolves({
+			tenantId,
+			documentId,
+			operation: "read",
+			source: "dc-v2-metadata",
+			containerType: "durable",
+			storageAccountName: "authorized-storage",
+			physicalContainerName: "pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			layoutVersion: "v2",
+			lifecycleVersion: "generation-1",
+			state: "active",
+		});
+		superTest = createSummaryOwnershipSuperTest(createTestProvider(), { authorize });
+		const readDocument = sandbox
+			.stub(documentManager, "readDocument")
+			.rejects(new Error("legacy summary ownership lookup must not run"));
+		const info = sandbox.spy(Lumberjack, "info");
+		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary").resolves({
+			id: sha,
+			trees: [],
+			blobs: [],
+		});
+
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(200);
+
+		sinon.assert.calledOnceWithMatch(authorize, {
+			tenantId,
+			documentId,
+			operation: "read",
+			containerTypeHint: "ephemeral",
+		});
+		sinon.assert.notCalled(readDocument);
+		sinon.assert.notCalled(storageNameRetrieverGet);
+		sinon.assert.calledOnce(getSummary);
+		const creationEvent = info
+			.getCalls()
+			.find(
+				(call) =>
+					typeof call.args[0] === "string" &&
+					call.args[0].startsWith("Created RestGitService:"),
+			);
+		assert.ok(creationEvent);
+		assert.match(creationEvent.args[0], /"Storage-Name":"authorized-storage"/);
+	});
+
+	it("preserves EC tombstone ordering without legacy ownership lookup", async () => {
+		const createTime = activeDocument.createTime;
+		const authorize = sandbox.stub().resolves({
+			tenantId,
+			documentId,
+			operation: "delete",
+			source: "ec-lifecycle-redis",
+			containerType: "ephemeral",
+			ephemeralCreateTime: createTime,
+			lifecycleVersion: "generation-1",
+			state: "active",
+		});
+		superTest = createSummaryOwnershipSuperTest(createTestProvider(false, false, true), {
+			authorize,
+		});
+		const readDocument = sandbox
+			.stub(documentManager, "readDocument")
+			.rejects(new Error("legacy summary ownership lookup must not run"));
+		const events: string[] = [];
+		sandbox.stub(cache, "markSummaryAccessDeleted").callsFake(async () => {
+			events.push("markDeleted");
+		});
+		sandbox.stub(RestGitService.prototype, "deleteSummary").callsFake(async () => {
+			events.push("deleteSummary");
+			return true;
+		});
+
+		await superTest
+			.delete(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.set("Soft-Delete", "true")
+			.expect(200);
+
+		sinon.assert.notCalled(readDocument);
+		sinon.assert.calledOnceWithMatch(authorize, {
+			tenantId,
+			documentId,
+			operation: "delete",
+			containerTypeHint: "ephemeral",
+		});
+		assert.deepStrictEqual(events, ["markDeleted", "deleteSummary"]);
+	});
+
+	it("skips durable storage lookup for an authorized ephemeral summary", async () => {
+		const createTime = activeDocument.createTime;
+		const authorize = sandbox.stub().resolves({
+			tenantId,
+			documentId,
+			operation: "read",
+			source: "ec-lifecycle-redis",
+			containerType: "ephemeral",
+			ephemeralCreateTime: createTime,
+			lifecycleVersion: String(createTime),
+			state: "active",
+		});
+		superTest = createSummaryOwnershipSuperTest(createTestProvider(false, false, true), {
+			authorize,
+		});
+		storageNameRetrieverGet.rejects(
+			new Error("durable storage lookup must not run for an ephemeral proof"),
+		);
+		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary").resolves({
+			id: sha,
+			trees: [],
+			blobs: [],
+		});
+
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(200);
+
+		sinon.assert.notCalled(storageNameRetrieverGet);
+		sinon.assert.calledOnce(getSummary);
+	});
+
+	it("normalizes an Alfred storageName null before trusted fallback", async () => {
+		const readDocument = sandbox.stub(documentManager, "readDocument").resolves({
+			...activeDocument,
+			storageName: null,
+		});
+		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary").resolves({
+			id: sha,
+			trees: [],
+			blobs: [],
+		});
+
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(200);
+
+		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
 		sinon.assert.calledOnceWithExactly(storageNameRetrieverGet, tenantId, documentId);
-		assert.ok(readDocument.calledBefore(readStaticProperties));
-		assert.ok(readStaticProperties.calledBefore(getSummary));
+		sinon.assert.calledOnce(getSummary);
 	});
 
 	it("cannot serve cached latest after scheduled deletion", async () => {
@@ -1489,6 +1812,48 @@ describe("summary ownership routes", () => {
 		sinon.assert.notCalled(deleteSummary);
 	});
 
+	it("marks EC access deleted before calling GitRest", async () => {
+		superTest = createSummaryOwnershipSuperTest(createTestProvider(false, false, true));
+		const events: string[] = [];
+		sandbox.stub(documentManager, "readDocument").resolves({
+			...activeDocument,
+			isEphemeralContainer: true,
+		});
+		sandbox.stub(cache, "markSummaryAccessDeleted").callsFake(async () => {
+			events.push("markDeleted");
+		});
+		sandbox.stub(RestGitService.prototype, "deleteSummary").callsFake(async () => {
+			events.push("deleteSummary");
+			return true;
+		});
+
+		await superTest
+			.delete(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.set("Soft-Delete", "true")
+			.expect(200);
+
+		assert.deepStrictEqual(events, ["markDeleted", "deleteSummary"]);
+	});
+
+	it("does not call GitRest when deleted-state persistence fails", async () => {
+		superTest = createSummaryOwnershipSuperTest(createTestProvider(false, false, true));
+		sandbox.stub(documentManager, "readDocument").resolves({
+			...activeDocument,
+			isEphemeralContainer: true,
+		});
+		sandbox.stub(cache, "markSummaryAccessDeleted").rejects(new Error("redis unavailable"));
+		const deleteSummary = sandbox.stub(RestGitService.prototype, "deleteSummary");
+
+		await superTest
+			.delete(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.set("Soft-Delete", "true")
+			.expect(503);
+
+		sinon.assert.notCalled(deleteSummary);
+	});
+
 	it("requires ownership for non-initial POST and ignores caller routing metadata", async () => {
 		sandbox.stub(documentManager, "readDocument").resolves(null);
 		const createSummary = sandbox.stub(RestGitService.prototype, "createSummary");
@@ -1518,19 +1883,13 @@ describe("summary ownership routes", () => {
 		sinon.assert.notCalled(createSummary);
 	});
 
-	it("permits initial upload only after a fresh missing-document result", async () => {
-		const events: string[] = [];
-		const readDocument = sandbox.stub(documentManager, "readDocument").callsFake(async () => {
-			events.push("readDocument");
-			return null;
-		});
+	it("preserves the POST-only initial exemption without reading the document", async () => {
+		superTest = createSummaryOwnershipSuperTest(createTestProvider(true));
+		const readDocument = sandbox.spy(documentManager, "readDocument");
 		const info = sandbox.spy(Lumberjack, "info");
 		const createSummary = sandbox
 			.stub(RestGitService.prototype, "createSummary")
-			.callsFake(async () => {
-				events.push("createSummary");
-				return { id: sha };
-			});
+			.resolves({ id: sha });
 
 		await superTest
 			.post(`/repos/${tenantId}/git/summaries`)
@@ -1542,9 +1901,8 @@ describe("summary ownership routes", () => {
 			.send({ type: "container", trees: [], blobs: [] })
 			.expect(201);
 
-		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
+		sinon.assert.notCalled(readDocument);
 		sinon.assert.calledOnce(createSummary);
-		assert.deepStrictEqual(events, ["readDocument", "createSummary"]);
 		sinon.assert.calledWithMatch(
 			info,
 			"HistorianInitialSummaryUploadExemption",
@@ -1557,6 +1915,238 @@ describe("summary ownership routes", () => {
 				outcome: "exempted",
 			}),
 		);
+	});
+
+	it("rejects initial=true without a resolved trusted context", async () => {
+		const authorize = sandbox.stub().resolves({
+			tenantId,
+			documentId,
+			operation: "create",
+			source: "trusted-create",
+			lifecycleVersion: "generation-1",
+			state: "pending",
+		});
+		const resolve = sandbox.stub();
+		superTest = createSummaryOwnershipSuperTest(
+			createTestProvider(true),
+			{ authorize },
+			{ resolve },
+		);
+		const createSummary = sandbox.stub(RestGitService.prototype, "createSummary");
+
+		await superTest
+			.post(`/repos/${tenantId}/git/summaries`)
+			.query({
+				"initial": "true",
+				"Fluid-Create-Context": "untrusted-query-token",
+			})
+			.set("Authorization", authorization)
+			.send({
+				type: "container",
+				trees: [],
+				blobs: [],
+				fluidCreateContext: "untrusted-body-token",
+			})
+			.expect(404);
+
+		sinon.assert.notCalled(resolve);
+		sinon.assert.notCalled(authorize);
+		sinon.assert.notCalled(createSummary);
+	});
+
+	it("authenticates before resolving a trusted initial creation context", async () => {
+		const authenticationFailure = new NetworkError(403, "Invalid token.");
+		sandbox.stub(defaultTenantService, "getTenant").rejects(authenticationFailure);
+		const resolve = sandbox.stub().resolves({
+			tenantId,
+			documentId,
+			containerType: "durable",
+			lifecycleVersion: "generation-1",
+			expiresAtMs: Date.now() + 60_000,
+		});
+		const authorize = sandbox.stub();
+		superTest = createSummaryOwnershipSuperTest(
+			createTestProvider(true),
+			{ authorize },
+			{ resolve },
+		);
+
+		await superTest
+			.post(`/repos/${tenantId}/git/summaries`)
+			.query({ initial: "true" })
+			.set("Authorization", authorization)
+			.set("Fluid-Create-Context", "opaque-create-token")
+			.send({ type: "container", trees: [], blobs: [] })
+			.expect(403);
+
+		sinon.assert.notCalled(resolve);
+		sinon.assert.notCalled(authorize);
+	});
+
+	for (const testCase of [
+		{
+			name: "invalid",
+			resolve: () => Promise.reject(new Error("invalid context")),
+		},
+		{
+			name: "expired",
+			resolve: () =>
+				Promise.resolve({
+					tenantId,
+					documentId,
+					lifecycleVersion: "generation-1",
+					expiresAtMs: Date.now() - 1,
+				}),
+		},
+		{
+			name: "tenant-mismatched",
+			resolve: () =>
+				Promise.resolve({
+					tenantId: "other-tenant",
+					documentId,
+					lifecycleVersion: "generation-1",
+					expiresAtMs: Date.now() + 60_000,
+				}),
+		},
+		{
+			name: "document-mismatched",
+			resolve: () =>
+				Promise.resolve({
+					tenantId,
+					documentId: "other-document",
+					lifecycleVersion: "generation-1",
+					expiresAtMs: Date.now() + 60_000,
+				}),
+		},
+	] as const) {
+		it(`returns the same denial for ${testCase.name} trusted creation context`, async () => {
+			const authorize = sandbox.stub();
+			const resolve = sandbox.stub().callsFake(testCase.resolve);
+			superTest = createSummaryOwnershipSuperTest(
+				createTestProvider(true),
+				{ authorize },
+				{ resolve },
+			);
+			const createSummary = sandbox.stub(RestGitService.prototype, "createSummary");
+
+			await superTest
+				.post(`/repos/${tenantId}/git/summaries`)
+				.query({ initial: "true" })
+				.set("Authorization", authorization)
+				.set("Fluid-Create-Context", "opaque-create-token")
+				.send({ type: "container", trees: [], blobs: [] })
+				.expect(404)
+				.expect((response) => {
+					assert.strictEqual(
+						response.body,
+						"Document is deleted and cannot be accessed.",
+					);
+				});
+
+			sinon.assert.notCalled(authorize);
+			sinon.assert.notCalled(createSummary);
+		});
+	}
+
+	it("resolves and authorizes the trusted initial creation context", async () => {
+		const getTenant = sandbox.spy(defaultTenantService, "getTenant");
+		const trustedCreateContext = {
+			tenantId,
+			documentId,
+			containerType: "ephemeral" as const,
+			ephemeralCreateTime: activeDocument.createTime,
+			lifecycleVersion: "generation-1",
+			expiresAtMs: Date.now() + 60_000,
+		};
+		const resolve = sandbox.stub().resolves(trustedCreateContext);
+		const authorize = sandbox.stub().resolves({
+			tenantId,
+			documentId,
+			operation: "create",
+			source: "trusted-create",
+			containerType: "ephemeral",
+			ephemeralCreateTime: activeDocument.createTime,
+			lifecycleVersion: "generation-1",
+			state: "pending",
+		});
+		superTest = createSummaryOwnershipSuperTest(
+			createTestProvider(true, false),
+			{ authorize },
+			{ resolve },
+		);
+		const createSummary = sandbox
+			.stub(RestGitService.prototype, "createSummary")
+			.resolves({ id: sha });
+
+		await superTest
+			.post(`/repos/${tenantId}/git/summaries`)
+			.query({ initial: "true" })
+			.set("Authorization", authorization)
+			.set("Fluid-Create-Context", "opaque-create-token")
+			.set(Constants.IsEphemeralContainer, "true")
+			.send({ type: "container", trees: [], blobs: [] })
+			.expect(201);
+
+		sinon.assert.calledOnce(getTenant);
+		sinon.assert.callOrder(getTenant, resolve, authorize);
+		sinon.assert.calledOnceWithExactly(resolve, {
+			tenantId,
+			documentId,
+			opaqueToken: "opaque-create-token",
+			containerTypeHint: "ephemeral",
+		});
+		sinon.assert.calledOnceWithMatch(authorize, {
+			tenantId,
+			documentId,
+			operation: "create",
+			containerTypeHint: "ephemeral",
+			trustedCreateContext,
+		});
+		sinon.assert.calledOnce(createSummary);
+	});
+
+	it("forwards the customer access token on protected summary routes when enabled", async () => {
+		superTest = createSummaryOwnershipSuperTest(createTestProvider(true));
+		const readDocument = sandbox.stub(documentManager, "readDocument").resolves(activeDocument);
+		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary").resolves({
+			id: sha,
+			trees: [],
+			blobs: [],
+		});
+		const createSummary = sandbox
+			.stub(RestGitService.prototype, "createSummary")
+			.resolves({ id: sha });
+		const deleteSummary = sandbox
+			.stub(RestGitService.prototype, "deleteSummary")
+			.resolves(true);
+
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(200);
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/${sha}`)
+			.set("Authorization", authorization)
+			.expect(200);
+		await superTest
+			.post(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.send({ type: "container", trees: [], blobs: [] })
+			.expect(201);
+		await superTest
+			.delete(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.set("Soft-Delete", "true")
+			.expect(200);
+
+		sinon.assert.callCount(readDocument, 4);
+		sinon.assert.alwaysCalledWithExactly(readDocument, tenantId, documentId, {
+			accessToken,
+		});
+		assert.ok(readDocument.getCall(0).calledBefore(getSummary.getCall(0)));
+		assert.ok(readDocument.getCall(1).calledBefore(getSummary.getCall(1)));
+		assert.ok(readDocument.getCall(2).calledBefore(createSummary.getCall(0)));
+		assert.ok(readDocument.getCall(3).calledBefore(deleteSummary.getCall(0)));
 	});
 
 	it("allows a normal summary after initial creation while denying a cross-tenant document", async () => {
@@ -1591,7 +2181,7 @@ describe("summary ownership routes", () => {
 			.send({ type: "container", trees: [], blobs: [] })
 			.expect(404);
 
-		sinon.assert.callCount(readDocument, 3);
+		sinon.assert.calledTwice(readDocument);
 		sinon.assert.calledTwice(createSummary);
 	});
 
@@ -1615,71 +2205,6 @@ describe("summary ownership routes", () => {
 			"HistorianSummaryDocumentOwnershipValidation",
 			sinon.match({ operation: "post", outcome: "dependencyError" }),
 		);
-	});
-
-	for (const testCase of [
-		{ name: "active", document: activeDocument },
-		{
-			name: "scheduled-for-deletion",
-			document: {
-				...activeDocument,
-				scheduledDeletionTime: "2026-07-31T18:00:00.000Z",
-			},
-		},
-	]) {
-		it(`rejects initial replay for an ${testCase.name} document before storage`, async () => {
-			const readDocument = sandbox
-				.stub(documentManager, "readDocument")
-				.resolves(testCase.document);
-			const createSummary = sandbox.stub(RestGitService.prototype, "createSummary");
-			const getTenant = sandbox.spy(defaultTenantService, "getTenant");
-
-			await superTest
-				.post(`/repos/${tenantId}/git/summaries`)
-				.query({ initial: "true" })
-				.set("Authorization", authorization)
-				.set("StorageName", "initial-storage")
-				.send({ type: "container", trees: [], blobs: [] })
-				.expect(404);
-
-			sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
-			sinon.assert.notCalled(createSummary);
-			sinon.assert.notCalled(getTenant);
-		});
-	}
-
-	it("fails initial upload closed when Alfred is unavailable", async () => {
-		const clock = sandbox.useFakeTimers({ toFake: ["setTimeout"] });
-		const readDocument = sandbox
-			.stub(documentManager, "readDocument")
-			.rejects(new NetworkError(503, "Alfred unavailable", true, false));
-		const createSummary = sandbox.stub(RestGitService.prototype, "createSummary");
-		const waitForCallCount = async (expectedCallCount: number): Promise<void> => {
-			while (readDocument.callCount < expectedCallCount) {
-				await new Promise<void>((resolve) => {
-					setImmediate(resolve);
-				});
-			}
-		};
-
-		const responsePromise = superTest
-			.post(`/repos/${tenantId}/git/summaries`)
-			.query({ initial: "true" })
-			.set("Authorization", authorization)
-			.send({ type: "container", trees: [], blobs: [] })
-			.expect(503)
-			.then();
-		await waitForCallCount(1);
-		await clock.tickAsync(1000);
-		await waitForCallCount(2);
-		await clock.tickAsync(2000);
-		await waitForCallCount(3);
-		await clock.tickAsync(4000);
-		await waitForCallCount(4);
-		await clock.tickAsync(8000);
-		await responsePromise;
-
-		sinon.assert.notCalled(createSummary);
 	});
 
 	it("creates no positive attacker mappings after ownership denial", async () => {
@@ -1729,7 +2254,7 @@ describe("summary ownership routes", () => {
 		sinon.assert.notCalled(getSummary);
 	});
 
-	it("validates ownership before GET, POST, and DELETE service calls", async () => {
+	it("bypasses ownership only for initial POST while protecting existing-document routes", async () => {
 		const events: string[] = [];
 		sandbox.stub(documentManager, "readDocument").callsFake(async () => {
 			events.push("readDocument");
@@ -1749,6 +2274,12 @@ describe("summary ownership routes", () => {
 		});
 
 		await superTest
+			.post(`/repos/${tenantId}/git/summaries`)
+			.query({ initial: "true" })
+			.set("Authorization", authorization)
+			.send({ type: "container", trees: [], blobs: [] })
+			.expect(201);
+		await superTest
 			.get(`/repos/${tenantId}/git/summaries/${sha}`)
 			.set("Authorization", authorization)
 			.expect(200);
@@ -1764,6 +2295,7 @@ describe("summary ownership routes", () => {
 			.expect(200);
 
 		assert.deepStrictEqual(events, [
+			"createSummary",
 			"readDocument",
 			"getSummary",
 			"readDocument",
