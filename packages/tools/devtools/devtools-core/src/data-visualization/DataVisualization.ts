@@ -17,7 +17,7 @@ import type {
 // eslint-disable-next-line import-x/no-deprecated
 import type { IProvideFluidHandle } from "@fluidframework/core-interfaces/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
-import type { ISharedObject, SharedObject } from "@fluidframework/shared-object-base/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 import type { FluidObjectId } from "../CommonInterfaces.js";
 import { getKeyForFluidObject } from "../FluidObjectKey.js";
@@ -607,9 +607,9 @@ export async function visualizeChildData(
  */
 function isSharedObject(value: unknown): value is ISharedObject {
 	return (
-		(value as SharedObject).id !== undefined &&
-		(value as SharedObject).attributes?.type !== undefined &&
-		(value as SharedObject).on !== undefined
+		(value as ISharedObject).id !== undefined &&
+		(value as ISharedObject).attributes?.type !== undefined &&
+		(value as ISharedObject).on !== undefined
 	);
 }
 

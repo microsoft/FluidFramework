@@ -9,10 +9,11 @@
 #   -p, --parameters <file> Deploy parameters file (default: azure/deploy.parameters.json)
 #   --skip-build      Don't provision/build/generate; deploy an existing <release-id> only
 #   --skip-deploy     Provision + generate the bundle only; don't deploy
+#   --skip-preflight  Skip Azure preflight checks (not local input validation)
 #   -h, --help        Show this help
 #
 # Environment:
-#   FLUID_DIR         Dedicated FluidFramework clone; required unless --skip-build.
+#   FLUID_DIR         Dedicated clone; defaults to fluidRepoDir in the parameters file.
 #   ACR_LOGIN_SERVER  If already set, its value is reused and the build registry is not provisioned.
 #   RELEASE_ID        Overridden by the positional [release-id]; defaults to today's UTC date.
 
@@ -31,10 +32,11 @@ Options:
   -p, --parameters <file> Deploy parameters file (default: azure/deploy.parameters.json)
   --skip-build      Don't provision/build/generate; deploy an existing <release-id> only
   --skip-deploy     Provision + generate the bundle only; don't deploy
+  --skip-preflight  Skip Azure preflight checks (not local input validation)
   -h, --help        Show this help
 
 Environment:
-  FLUID_DIR         Dedicated FluidFramework clone; required unless --skip-build.
+  FLUID_DIR         Dedicated clone; defaults to fluidRepoDir in the parameters file.
   ACR_LOGIN_SERVER  If already set, its value is reused and the build registry is not provisioned.
   RELEASE_ID        Overridden by the positional [release-id]; defaults to today's UTC date.
 EOF
@@ -46,17 +48,22 @@ RELEASE_ID="${RELEASE_ID:-}"
 PARAMETERS_FILE=""
 SKIP_BUILD=false
 SKIP_DEPLOY=false
+SKIP_PREFLIGHT=false
 positional=()
 while [ $# -gt 0 ]; do
   case "$1" in
-    -p|--parameters) PARAMETERS_FILE="${2:-}"; shift 2 ;;
+    -p|--parameters)
+      [ $# -ge 2 ] && [[ "$2" != -* ]] || fail "$1 requires a parameters file."
+      PARAMETERS_FILE="$2"; shift 2 ;;
     --skip-build) SKIP_BUILD=true; shift ;;
     --skip-deploy) SKIP_DEPLOY=true; shift ;;
+    --skip-preflight) SKIP_PREFLIGHT=true; shift ;;
     -h|--help)    usage; exit 0 ;;
     -*)           fail "unknown option '$1' (see --help)." ;;
     *)            positional+=("$1"); shift ;;
   esac
 done
+[ "${#positional[@]}" -le 2 ] || fail "expected a revision and optional release id (see --help)."
 [ "${#positional[@]}" -ge 1 ] && FLUID_REF="${positional[0]}"
 [ "${#positional[@]}" -ge 2 ] && RELEASE_ID="${positional[1]}"
 
@@ -75,8 +82,25 @@ if [ "$SKIP_BUILD" != true ] && [ -z "$FLUID_REF" ]; then
   fail "no revision given. Pass a FluidFramework tag or 40-char commit SHA (or use --skip-build to deploy only)."
 fi
 [ -f "$PARAMETERS_FILE" ] || fail "parameters file not found: $PARAMETERS_FILE (copy azure/deploy.parameters.example.json)."
+command -v jq >/dev/null 2>&1 || fail "jq is required."
+jq -e 'type == "object"' "$PARAMETERS_FILE" >/dev/null || fail "parameters file must contain a JSON object."
+case "$RELEASE_ID" in
+  ""|"."|".."|*"/"*|*"\\"*) fail "invalid release id '$RELEASE_ID'." ;;
+esac
+if [ "$SKIP_BUILD" != true ]; then
+  FLUID_DIR="${FLUID_DIR:-$(jq -r '.fluidRepoDir // empty' "$PARAMETERS_FILE")}"
+  validate_fluid_directory
+fi
 
 echo "=== create-and-deploy-release: release '$RELEASE_ID' (build=$([ "$SKIP_BUILD" = true ] && echo skip || echo yes), deploy=$([ "$SKIP_DEPLOY" = true ] && echo skip || echo yes)) ==="
+
+if [ "$SKIP_PREFLIGHT" = true ]; then
+  echo "WARNING: --skip-preflight bypasses Azure capacity, zone, name, and Helm checks." >&2
+elif [ "$SKIP_BUILD" != true ] && [ "$SKIP_DEPLOY" != true ]; then
+  echo ">>> Check deployment parameters before building images"
+  bash "$SELFHOST_ROOT/azure/preflight-check.sh" "$PARAMETERS_FILE" \
+    || fail "preflight failed before building; fix the parameters and rerun."
+fi
 
 # --- 1. Provision the build registry + 2. Generate the bundle ----------------
 if [ "$SKIP_BUILD" != true ]; then
@@ -104,7 +128,9 @@ if [ "$SKIP_DEPLOY" != true ]; then
   [ -f "$DEPLOY_SCRIPT" ] || fail "deploy script not found: $DEPLOY_SCRIPT"
   echo
   echo ">>> Deploy release to Azure"
-  "$DEPLOY_SCRIPT" "$RELEASE_ID" "$PARAMETERS_FILE"
+  deploy_args=("$RELEASE_ID" "$PARAMETERS_FILE")
+  [ "$SKIP_PREFLIGHT" != true ] || deploy_args+=(--skip-preflight)
+  "$DEPLOY_SCRIPT" "${deploy_args[@]}"
 fi
 
 echo

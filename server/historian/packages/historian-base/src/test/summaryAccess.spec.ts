@@ -97,6 +97,16 @@ describe("summary access resolver", () => {
 			createTime: activeDocument.createTime,
 			storageName: undefined,
 			source: "localEphemeral",
+			accessProof: {
+				tenantId,
+				documentId,
+				operation: "read",
+				source: "ec-lifecycle-redis",
+				containerType: "ephemeral",
+				ephemeralCreateTime: activeDocument.createTime,
+				lifecycleVersion: String(activeDocument.createTime),
+				state: "active",
+			},
 		});
 		sinon.assert.notCalled(readDocument);
 		sinon.assert.calledWithMatch(
@@ -149,6 +159,16 @@ describe("summary access resolver", () => {
 
 		assert.strictEqual(context.source, "alfred");
 		assert.strictEqual(context.isEphemeralContainer, true);
+		assert.deepStrictEqual(context.accessProof, {
+			tenantId,
+			documentId,
+			operation: "read",
+			source: "ec-lifecycle-redis",
+			containerType: "ephemeral",
+			ephemeralCreateTime: activeDocument.createTime,
+			lifecycleVersion: String(activeDocument.createTime),
+			state: "active",
+		});
 		sinon.assert.calledOnceWithExactly(
 			activate,
 			tenantId,

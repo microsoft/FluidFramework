@@ -1821,9 +1821,9 @@ describe("sharedTreeView", () => {
 			provider.synchronizeMessages();
 
 			// Only B's root rebases over A's edit. The independent fork retains its upgraded schema.
-			assert.equal(bView.compatibility.isEquivalent, false);
+			assert.equal(bView.compatibility.canView, false);
 			expectSchemaEqual(bView.checkout.storedSchema, toUpgradeSchema(oldSchema));
-			assert.equal(fork.compatibility.isEquivalent, true);
+			assert.equal(fork.compatibility.canView, true);
 			expectSchemaEqual(fork.checkout.storedSchema, toUpgradeSchema(newSchema));
 			assert.equal(fork.checkout.transaction.size, 0);
 			fork.root = new Added({ value: "fork data" });
@@ -2938,7 +2938,7 @@ describe("sharedTreeView", () => {
 			fork.root.insertAtEnd({ id: "A" });
 
 			// This hides the commit that inserted "A".
-			fork.checkout.mainBranch.setHead(view1.checkout.mainBranch.getHead());
+			fork.checkout.mainBranch.setHead(view1.checkout.mainBranch.getHead(), -1);
 
 			fork.root.removeAt(0);
 

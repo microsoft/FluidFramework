@@ -69,6 +69,7 @@ import {
 import {
 	GCDataBuilder,
 	RequestParser,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	SummaryTreeBuilder,
 	addBlobToSummary,
 	convertSnapshotTreeToSummaryTree,
@@ -379,13 +380,14 @@ export class FluidDataStoreRuntime
 	private readonly submitMessagesWithoutEncodingHandles: boolean;
 
 	/**
-	 * See IFluidDataStoreRuntimeInternalConfig.minVersionForCollab
-	 *
-	 * Note: this class doesn't declare that it implements IFluidDataStoreRuntimeInternalConfig,
-	 * and we keep this property as private, but consumers may optimistically cast
-	 * to the internal interface to access this property.
+	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidParentContext.minVersionForCollab}
 	 */
 	public readonly minVersionForCollab: OldestSupportedClientVersion;
+
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidParentContext.oldestSupportedClient}
+	 */
+	public readonly oldestSupportedClient?: OldestSupportedClientVersion;
 
 	/**
 	 * Create an instance of a DataStore runtime.
@@ -559,7 +561,9 @@ export class FluidDataStoreRuntime
 		this.localChangesTelemetryCount =
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
 
-		this.minVersionForCollab = this.dataStoreContext.minVersionForCollab;
+		this.oldestSupportedClient =
+			this.dataStoreContext.oldestSupportedClient ?? this.dataStoreContext.minVersionForCollab;
+		this.minVersionForCollab = this.oldestSupportedClient;
 	}
 
 	public get inStagingMode(): boolean {
@@ -1097,6 +1101,7 @@ export class FluidDataStoreRuntime
 		trackState: boolean = true,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats> {
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const summaryBuilder = new SummaryTreeBuilder();
 		await this.visitContextsDuringSummary(
 			async (contextId: string, context: IChannelContext) => {
@@ -1160,6 +1165,7 @@ export class FluidDataStoreRuntime
 	}
 
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const summaryBuilder = new SummaryTreeBuilder();
 		this.visitLocalBoundContextsDuringAttach(
 			(contextId: string, context: LocalChannelContextBase) => {

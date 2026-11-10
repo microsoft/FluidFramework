@@ -75,6 +75,9 @@ import type {
 /**
  * A map of string keys to tree objects.
  *
+ * @see {@link TreeMapNodeAlpha} for additional alpha APIs
+ * @see {@link (asAlpha:6)} to access alpha APIs on this node
+ *
  * @privateRemarks
  * Add support for `clear` once we have established merge semantics for it.
  *
@@ -158,17 +161,31 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 /**
  * {@link TreeMapNode} with FluidReadonlyMap-based iteration.
  *
+ * @typeParam TAllowedTypes - Schema for types which are allowed as values in this map.
+ * @typeParam TNode - Use Default: Do not specify. Type of values to read from the map.
+ * @typeParam TInsertable - Use Default: Do not specify. Type of values to write into the map.
+ *
  * @remarks
  * This is the same as {@link TreeMapNode} except that it extends FluidReadonlyMap
  * instead of the built-in `ReadonlyMap`, insulating against breaking changes
  * in TypeScript's standard library iterator types.
  *
+ * @see {@link (asAlpha:6)} to access these APIs on an existing {@link TreeMapNode}
+ *
  * @sealed @alpha
  */
-export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
-	extends FluidReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,
+export interface TreeMapNodeAlpha<
+	TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+	out TNode = TreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
+	in TInsertable = InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
+> extends FluidReadonlyMap<string, TNode>,
 		TreeNode,
-		Pick<TreeMapNode<T>, "set" | "delete"> {
+		Pick<TreeMapNode<TAllowedTypes>, "delete"> {
+	/**
+	 * {@inheritDoc TreeMapNode.set}
+	 */
+	set(key: string, value: TInsertable | undefined): void;
+
 	/**
 	 * Removes all elements from the map.
 	 * @remarks
@@ -237,10 +254,7 @@ export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllow
 	 * default when reading a missing entry, which is much less costly.
 	 * A more appropriate use of this API is when the value to be optionally inserted varies with the key.
 	 */
-	getOrInsert(
-		key: string,
-		fallbackValue: InsertableTreeNodeFromImplicitAllowedTypes<T>,
-	): TreeNodeFromImplicitAllowedTypes<T>;
+	getOrInsert(key: string, fallbackValue: TInsertable): TNode;
 
 	/**
 	 * Returns the value at `key`, first inserting the value produced by `callback` if this map has no entry for `key`.
@@ -262,10 +276,7 @@ export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllow
 	 * If `callback` throws, no edit is made and the error is propagated to the caller.
 	 * If `callback` sets an entry for `key` in this map, that entry is overwritten with the value `callback` returned.
 	 */
-	getOrInsertComputed(
-		key: string,
-		callback: (key: string) => InsertableTreeNodeFromImplicitAllowedTypes<T>,
-	): TreeNodeFromImplicitAllowedTypes<T>;
+	getOrInsertComputed(key: string, callback: (key: string) => TInsertable): TNode;
 }
 
 // TreeMapNode is invariant over schema type, so for this handler to work with all schemas, the only possible type for the schema is `any`.

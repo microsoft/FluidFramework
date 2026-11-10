@@ -4,7 +4,7 @@
  */
 
 import { assert, oob, fail } from "@fluidframework/core-utils/internal";
-import type { TAnySchema } from "@sinclair/typebox";
+import type { TSchema } from "typebox";
 
 import {
 	type ICodecOptions,
@@ -74,6 +74,7 @@ import {
 	type NodeId,
 } from "./modularChangeTypes.js";
 import {
+	areEquivalent,
 	fieldKindsFromConfiguration,
 	isChangesetValid,
 	nodeChangeFromId,
@@ -98,7 +99,7 @@ type FieldCodec = IJsonCodec<
 type FieldChangesetCodecs = Map<
 	FieldKindIdentifier,
 	{
-		compiledSchema?: SchemaValidationFunction<TAnySchema>;
+		compiledSchema?: SchemaValidationFunction<TSchema>;
 		codec: FieldCodec;
 	}
 >;
@@ -107,7 +108,7 @@ export function getFieldChangesetCodec(
 	fieldKind: FieldKindIdentifier,
 	fieldChangesetCodecs: FieldChangesetCodecs,
 ): {
-	compiledSchema?: SchemaValidationFunction<TAnySchema>;
+	compiledSchema?: SchemaValidationFunction<TSchema>;
 	codec: FieldCodec;
 } {
 	const entry = fieldChangesetCodecs.get(fieldKind);
@@ -473,7 +474,7 @@ export function encodeChange(
 	fieldChangesetCodecs: Map<
 		FieldKindIdentifier,
 		{
-			compiledSchema?: SchemaValidationFunction<TAnySchema>;
+			compiledSchema?: SchemaValidationFunction<TSchema>;
 			codec: FieldCodec;
 		}
 	>,
@@ -525,7 +526,7 @@ export function decodeChange(
 	fieldChangesetCodecs: Map<
 		FieldKindIdentifier,
 		{
-			compiledSchema?: SchemaValidationFunction<TAnySchema>;
+			compiledSchema?: SchemaValidationFunction<TSchema>;
 			codec: FieldCodec;
 		}
 	>,
@@ -602,7 +603,7 @@ export function getFieldChangesetCodecs(
 	codecOptions: ICodecOptions,
 ): Map<
 	FieldKindIdentifier,
-	{ compiledSchema?: SchemaValidationFunction<TAnySchema>; codec: FieldCodec }
+	{ compiledSchema?: SchemaValidationFunction<TSchema>; codec: FieldCodec }
 > {
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	const getMapEntry = ({ kind, formatVersion }: FieldKindConfigurationEntry) => {
@@ -622,7 +623,7 @@ export function getFieldChangesetCodecs(
 	const fieldChangesetCodecs: Map<
 		FieldKindIdentifier,
 		{
-			compiledSchema?: SchemaValidationFunction<TAnySchema>;
+			compiledSchema?: SchemaValidationFunction<TSchema>;
 			codec: FieldCodec;
 		}
 	> = new Map([
@@ -662,7 +663,7 @@ export function makeModularChangeCodecV1(
 			strictRebaseValidation("Malformed V1 encode input", () =>
 				isChangesetValid(change, fieldKindsFromConfiguration(fieldKinds)),
 			);
-			return encodeChange(
+			const encoded = encodeChange(
 				change,
 				context,
 				fieldChangesetCodecs,
@@ -670,6 +671,14 @@ export function makeModularChangeCodecV1(
 				fieldsCodec,
 				chunkCompressionStrategy,
 			);
+			cheapRebaseValidation("V1 encode output", (): true | string => {
+				const decoded = modularChangeCodec.decode(encoded, context);
+				return (
+					areEquivalent(change, decoded, fieldKindsFromConfiguration(fieldKinds)) ||
+					"does not match decode output"
+				);
+			});
+			return encoded;
 		},
 		decode: (encodedChange, context) => {
 			const decoded = decodeChange(

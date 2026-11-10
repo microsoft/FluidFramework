@@ -29,10 +29,10 @@ import {
 	type DeltaRoot,
 	type DeltaDetachedNodeId,
 	type ChangeEncodingContext,
-	type ChangeAtomIdMap,
 	Multiplicity,
 	type FieldUpPath,
 	type RevisionInfo,
+	RebaseValidation,
 } from "../../../core/index.js";
 import {
 	type FieldChangeHandler,
@@ -40,10 +40,7 @@ import {
 	type ModularChangeset,
 	FlexFieldKind,
 	type RelevantRemovedRootsFromChild,
-	defaultChunkPolicy,
 	type TreeChunk,
-	cursorForJsonableTreeField,
-	chunkFieldSingle,
 	fieldBatchCodecBuilder,
 	type NodeId,
 	type FieldKindConfiguration,
@@ -54,12 +51,14 @@ import {
 	type FieldChangeRebaser,
 	type FieldEditor,
 	type EditDescription,
-	jsonableTreeFromFieldCursor,
 	DefaultRevisionReplacer,
-	type ChangeAtomIdBTree,
 	fieldKindConfigurations,
 	newChangeAtomIdBTree,
 	ModularChangeFormatVersion,
+	chunkFieldSingle,
+	cursorForJsonableTreeField,
+	defaultChunkPolicy,
+	jsonableTreeFromFieldCursor,
 } from "../../../feature-libraries/index.js";
 import type {
 	EncodedModularChangesetV1,
@@ -76,22 +75,15 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { getChangeHandler } from "../../../feature-libraries/modular-schema/modularChangeUtils.js";
-import {
-	newCrossFieldKeyTable,
-	type CrossFieldKeyTable,
-	type FieldChangeMap,
-	type FieldId,
-	type NodeChangeset,
+import { normalizeChangeset } from "../../../feature-libraries/modular-schema/modularChangeUtils.js";
+import type {
+	NodeChangeset,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
-	type Mutable,
 	brand,
 	brandConst,
-	idAllocatorFromMaxId,
 	nestedMapFromFlatList,
-	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../../util/index.js";
 import { ajvValidator } from "../../codec/index.js";
@@ -1428,8 +1420,20 @@ describe("ModularChangeFamily", () => {
 
 	describe("Encoding", () => {
 		function assertEquivalent(change1: ModularChangeset, change2: ModularChangeset) {
-			const normalized1 = normalizeChangeset(change1);
-			const normalized2 = normalizeChangeset(change2);
+			const normalized1 = normalizeChangeset(
+				change1,
+				fieldKinds,
+				true,
+				false,
+				deepCloneChunkedTree,
+			);
+			const normalized2 = normalizeChangeset(
+				change2,
+				fieldKinds,
+				true,
+				false,
+				deepCloneChunkedTree,
+			);
 			assertEqual(normalized1, normalized2);
 		}
 
@@ -1440,6 +1444,36 @@ describe("ModularChangeFamily", () => {
 			revision: tag1,
 			idCompressor: testIdCompressor,
 		};
+		for (const version of family.codecs.getSupportedFormats()) {
+			describe(`revision metadata in version ${version}`, () => {
+				const jsonCodec = family.codecs.resolve(version);
+
+				it("preserves multiple revisions and rollback metadata without a context revision", () => {
+					const revisions: RevisionInfo[] = [
+						{ revision: tag1 },
+						{ revision: tag2, rollbackOf: tag1 },
+						{ revision: tag3 },
+					];
+					const change: ModularChangeset = { ...rootChange1a, revisions };
+					const untaggedContext: ChangeEncodingContext = { ...context, revision: undefined };
+					const encoded = jsonCodec.encode(change, untaggedContext);
+					const decoded = jsonCodec.decode(encoded, untaggedContext);
+					assert.deepEqual(decoded.revisions, revisions);
+					assertEquivalent(decoded, change);
+				});
+
+				it("encodes a revisionless changeset with cheap validation and decodes the context revision", () => {
+					RebaseValidation.runWithLevel(RebaseValidation.Level.Cheap, () => {
+						const change: ModularChangeset = { ...rootChange1a, revisions: undefined };
+						const encoded = jsonCodec.encode(change, context);
+						const decoded = jsonCodec.decode(encoded, context);
+						assert.deepEqual(decoded.revisions, [{ revision: tag1 }]);
+						assertEquivalent(decoded, { ...change, revisions: [{ revision: tag1 }] });
+					});
+				});
+			});
+		}
+
 		const encodingTestDataForAllVersions: EncodingTestData<
 			ModularChangeset,
 			EncodedModularChangesetV1,
@@ -1573,94 +1607,6 @@ function deepCloneChunkedTree(chunk: TreeChunk): TreeChunk {
 		idCompressor: testIdCompressor,
 	});
 	return clone;
-}
-
-function normalizeChangeset(change: ModularChangeset): ModularChangeset {
-	const idAllocator = idAllocatorFromMaxId();
-
-	const idRemappings: ChangeAtomIdMap<NodeId> = new Map();
-	const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newChangeAtomIdBTree();
-	const nodeToParent: ChangeAtomIdBTree<FieldId> = newChangeAtomIdBTree();
-	const crossFieldKeyTable: CrossFieldKeyTable = newCrossFieldKeyTable();
-
-	const remapNodeId = (nodeId: NodeId): NodeId => {
-		const newId = tryGetFromNestedMap(idRemappings, nodeId.revision, nodeId.localId);
-		assert(newId !== undefined, "Unknown node ID");
-		return newId;
-	};
-
-	const remapFieldId = (fieldId: FieldId): FieldId => {
-		return fieldId.nodeId === undefined
-			? fieldId
-			: { ...fieldId, nodeId: remapNodeId(fieldId.nodeId) };
-	};
-
-	const normalizeNodeChanges = (nodeId: NodeId): NodeId => {
-		const nodeChangeset = change.nodeChanges.get([nodeId.revision, nodeId.localId]);
-		assert(nodeChangeset !== undefined, "Unknown node ID");
-
-		const normalizedNodeChangeset: NodeChangeset = { ...nodeChangeset };
-		if (normalizedNodeChangeset.fieldChanges !== undefined) {
-			normalizedNodeChangeset.fieldChanges = normalizeFieldChanges(
-				normalizedNodeChangeset.fieldChanges,
-			);
-		}
-
-		const newId: NodeId = { localId: brand(idAllocator.allocate()) };
-		setInNestedMap(idRemappings, nodeId.revision, nodeId.localId, newId);
-		nodeChanges.set([newId.revision, newId.localId], normalizedNodeChangeset);
-
-		const parent = change.nodeToParent.get([nodeId.revision, nodeId.localId]);
-		assert(parent !== undefined, "Every node should have a parent");
-		const newParent = remapFieldId(parent);
-		nodeToParent.set([newId.revision, newId.localId], newParent);
-
-		return newId;
-	};
-
-	function normalizeFieldChanges(fields: FieldChangeMap): FieldChangeMap {
-		const normalizedFieldChanges: FieldChangeMap = new Map();
-
-		for (const [field, fieldChange] of fields) {
-			const changeHandler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
-
-			// TODO: This relies on field kinds calling prune child on all changes,
-			// while pruning is supposed to be an optimization which could be skipped.
-			normalizedFieldChanges.set(field, {
-				...fieldChange,
-				change: brand(changeHandler.rebaser.prune(fieldChange.change, normalizeNodeChanges)),
-			});
-
-			const crossFieldKeys = changeHandler.getCrossFieldKeys(fieldChange.change);
-			for (const { key, count } of crossFieldKeys) {
-				const prevId = change.crossFieldKeys.getFirst(key, count)?.value;
-				assert(prevId !== undefined, "Should be an entry for each cross-field key");
-				crossFieldKeyTable.set(key, count, remapFieldId(prevId));
-			}
-		}
-
-		return normalizedFieldChanges;
-	}
-
-	const fieldChanges = normalizeFieldChanges(change.fieldChanges);
-	assert(nodeChanges.size === change.nodeChanges.size);
-
-	const normal: Mutable<ModularChangeset> = {
-		...change,
-		nodeChanges,
-		fieldChanges,
-		nodeToParent,
-		crossFieldKeys: crossFieldKeyTable,
-	};
-
-	// The TreeChunk objects need to be deep cloned to avoid comparison issues on reference counting
-	if (change.builds !== undefined) {
-		normal.builds = brand(change.builds.mapValues(deepCloneChunkedTree));
-	}
-	if (change.refreshers !== undefined) {
-		normal.refreshers = brand(change.refreshers.mapValues(deepCloneChunkedTree));
-	}
-	return normal;
 }
 
 function inlineRevision(change: ModularChangeset, revision: RevisionTag): ModularChangeset {

@@ -20,6 +20,9 @@ tenant.
 
 ## Commands
 
+Prefer the [combined copy-data command](../README.md#command), which runs deployment preflight before tenant creation and document copy.
+Use the following commands only when troubleshooting this individual stage.
+
 Validate the configuration:
 
 ```bash
@@ -31,10 +34,6 @@ Create the new self-hosted tenants:
 ```bash
 node tenant-creation.mjs --execute
 ```
-
-When `tenant-admin` creates a tenant, it returns generated keys. This script
-immediately discards the response and never writes or logs the keys. Rotating
-the tenant keys is recommended.
 
 ## Next step
 

@@ -205,7 +205,13 @@ export interface IDataStore {
 /**
  * Controls for managing staged changes in staging mode.
  *
- * Provides methods to either commit or discard changes made while in staging mode.
+ * Provides methods to pause inbound operations and either commit or discard staged changes.
+ *
+ * @remarks
+ * Any inbound pause acquired through these controls is released when staging mode exits,
+ * even if committing or discarding changes throws.
+ * The pause is released before exit notifications are emitted.
+ * Pauses acquired by other code are not affected.
  *
  * @see {@link IContainerRuntimeBase.enterStagingMode}
  *
@@ -213,6 +219,45 @@ export interface IDataStore {
  * @sealed
  */
 export interface StageControls {
+	/**
+	 * Pauses processing of inbound operations while in staging mode.
+	 *
+	 * @remarks
+	 * Repeated calls while paused do not acquire additional pauses.
+	 * Operations continue to be received and queued, and inbound signals are not paused.
+	 * Call {@link StageControls.resumeInbound} to release this pause without exiting staging mode.
+	 *
+	 * While paused, this client's reference sequence number does not advance,
+	 * which holds back the minimum sequence number for all clients.
+	 * Keep pauses short.
+	 *
+	 * If the container reconnects while paused, it might not finish connecting until inbound processing resumes,
+	 * because connecting can require processing inbound operations, such as the container's own join operation.
+	 * Do not wait for the container to connect before resuming inbound processing or exiting staging mode.
+	 *
+	 * This is `undefined` if the container runtime does not support pausing inbound operations,
+	 * for example because it is an older version.
+	 * It is defined exactly when {@link StageControls.resumeInbound} is defined.
+	 *
+	 * @returns A promise that resolves when any ongoing inbound operation processing has stopped.
+	 * The promise rejects with a `UsageError` if these controls are no longer for the active staging session.
+	 */
+	readonly pauseInbound?: () => Promise<void>;
+	/**
+	 * Releases the inbound processing pause acquired through {@link StageControls.pauseInbound}
+	 * without exiting staging mode.
+	 *
+	 * @remarks
+	 * Has no effect if these controls have not paused inbound processing or have already resumed it.
+	 * Pauses acquired by other code are not affected.
+	 *
+	 * This is `undefined` if the container runtime does not support pausing inbound operations,
+	 * for example because it is an older version.
+	 * It is defined exactly when {@link StageControls.pauseInbound} is defined.
+	 *
+	 * @throws A `UsageError` if these controls are no longer for the active staging session.
+	 */
+	readonly resumeInbound?: () => void;
 	/**
 	 * Exit staging mode and commit to any changes made while in staging mode.
 	 * This will cause them to be sent to the ordering service, and subsequent changes
@@ -355,7 +400,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * - DDS rollback support may be incomplete — {@link StageControls.discardChanges} may throw for some DDS implementations.
 	 * - Squash-rebase semantics during {@link StageControls.commitChanges} are not yet fully specified.
 	 *
-	 * @returns Controls for committing or discarding staged changes.
+	 * @returns Controls for pausing inbound operations and committing or discarding staged changes.
 	 */
 	enterStagingMode(): StageControls;
 
@@ -590,6 +635,16 @@ export interface IFluidParentContext
 	 */
 	readonly isReadOnly?: () => boolean;
 	/**
+	 * Oldest Fluid Framework client version that must be able to process documents written by the runtime.
+	 *
+	 * @remarks
+	 * To keep these documents compatible with the specified client version, distributed data structures can use this value to select feature flags and formats.
+	 * As a result, an older version can limit available features and write formats.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.oldestSupportedClient}
+	 * for details about this compatibility setting.
+	 */
+	readonly oldestSupportedClient: OldestSupportedClientVersion;
+	/**
 	 * Oldest Fluid Framework client version that must be able to process documents written by the
 	 * runtime.
 	 * Consumed by {@link @fluidframework/container-runtime#FluidDataStoreContext}.
@@ -597,8 +652,12 @@ export interface IFluidParentContext
 	 * for more details.
 	 *
 	 * @remarks
-	 * The property name is retained while the cross-layer dual-property migration in
-	 * {@link https://github.com/microsoft/FluidFramework/issues/27851} is completed.
+	 * Both names remain available for consumers from different package versions.
+	 * New consumers use {@link IFluidParentContext.oldestSupportedClient}.
+	 *
+	 * @deprecated 3.10.0. Will be removed in a future release.
+	 * Use {@link IFluidParentContext.oldestSupportedClient} instead.
+	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
 	 */
 	readonly minVersionForCollab: OldestSupportedClientVersion;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
