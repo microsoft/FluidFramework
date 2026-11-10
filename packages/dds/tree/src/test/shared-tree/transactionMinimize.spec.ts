@@ -2262,6 +2262,7 @@ describe("transaction minimize post-processor", () => {
 	for (const minimize of [true, false]) {
 		/**
 		 * Attempts to inject a hidden property using a temporary schema change, then restores the original view schema.
+		 *
 		 * @remarks
 		 * Steps (root state shown after each):
 		 *
@@ -2270,7 +2271,7 @@ describe("transaction minimize post-processor", () => {
 		 * 2. set Box secret to "B❤️" -\> `[Box: { value: "A⌚", secret: "B❤️" }]`
 		 * 3. restore original view   -\> stored: `[Box: { value: "A⌚", secret: "B❤️" }]`, visible: `[Box: { value: "A⌚" }]`
 		 *
-		 * This restores the view schema, not the stored schema: the stored secret field remains allowed.
+		 * This restores the view schema, not the stored schema: the `secret` field remains permitted by the stored schema.
 		 * Its value is surviving document content, even though the restored view does not expose it.
 		 * This invariant is independent of minimization, which only operates on data edits and must preserve the document's final content.
 		 */
@@ -2339,6 +2340,7 @@ describe("transaction minimize post-processor", () => {
 
 		/**
 		 * Adds and clears a hidden property using a temporary schema change, then restores the original view schema.
+		 *
 		 * @remarks
 		 * Steps (root state shown after each):
 		 *
@@ -2348,7 +2350,7 @@ describe("transaction minimize post-processor", () => {
 		 * 3. clear Box secret        -\> `[Box: { value: "A⌚" }]`
 		 * 4. restore original view   -\> `[Box: { value: "A⌚" }]`
 		 *
-		 * The stored schema still permits secret, but its value no longer exists in the final document.
+		 * The stored schema still permits `secret`, but its value no longer exists in the final document.
 		 * Minimization must remove that transient value from the serialized change; without minimization it remains in the edit history.
 		 * Clearing the field, not hiding it through a different view, is what makes the value transient.
 		 */
