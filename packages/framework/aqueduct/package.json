@@ -121,7 +121,7 @@
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "catalog:buildTools",
-		"@fluidframework/aqueduct-previous": "npm:@fluidframework/aqueduct@3.7.0",
+		"@fluidframework/aqueduct-previous": "npm:@fluidframework/aqueduct@3.11.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
@@ -140,11 +140,7 @@
 		"typescript": "catalog:TypeScript"
 	},
 	"typeValidation": {
-		"broken": {
-			"Interface_IDataObjectProps": {
-				"forwardCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "legacy"
 	}
 }

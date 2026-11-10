@@ -30,9 +30,7 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * This only includes the "persisted" subset of schema information, which means the portion which gets included in documents.
  * It thus uses "persisted" keys, see {@link FieldProps.key}.
  *
- * If two schemas have identical "persisted" schema, then they are considered {@link SchemaCompatibilityStatus.isEquivalent|equivalent}.
- *
- * See also {@link comparePersistedSchema}.
+ * Use {@link comparePersistedSchema} to check whether your view schema can view or upgrade a document with this persisted schema.
  *
  * @example
  * An application could use this API to generate a `schema.json` file when it first releases,

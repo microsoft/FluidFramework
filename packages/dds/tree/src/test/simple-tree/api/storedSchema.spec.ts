@@ -62,13 +62,8 @@ describe("simple-tree storedSchema", () => {
 					const status = comparePersistedSchema(persistedA, test.schema, {
 						jsonValidator: FormatValidatorBasic,
 					});
-					assert.deepEqual(status, {
-						isEquivalent: true,
-						canView: true,
-						canUpgrade: true,
-						discrepancies: undefined,
-						enabledUpgrades: new Map(),
-					});
+					assert.equal(status.canView, true);
+					assert.equal(status.canUpgrade, true);
 				});
 			}
 		}

@@ -26,10 +26,17 @@ import type {
 	IConfigProviderBase,
 	IErrorBase,
 } from "@fluidframework/core-interfaces/internal";
+import {
+	MessageType,
+	type IClientJoin,
+	type ISequencedDocumentMessage,
+	type ISequencedDocumentSystemMessage,
+} from "@fluidframework/driver-definitions/internal";
 import type { SessionSpaceCompressedId } from "@fluidframework/id-compressor/internal";
 import { SharedMap } from "@fluidframework/map/internal";
 import type {
 	IContainerRuntimeBase,
+	IContainerRuntimeBaseInternal,
 	StageControlsInternal,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -45,7 +52,11 @@ import type { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { LoggingError, wrapError } from "@fluidframework/telemetry-utils/internal";
 import sinon from "sinon";
 
-import { defaultTestOldestSupportedClient } from "@fluidframework/test-utils/internal";
+import {
+	defaultTestOldestSupportedClient,
+	toIDeltaManagerFull,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 import { createLoader } from "./utils.js";
 
@@ -60,7 +71,8 @@ class DataObjectWithStagingMode extends DataObject {
 			? -1
 			: DataObjectWithStagingMode.instanceCount++;
 
-	private readonly containerRuntimeExp = this.context.containerRuntime;
+	private readonly containerRuntimeExp = this.context
+		.containerRuntime as IContainerRuntimeBaseInternal;
 	get DataObjectWithStagingMode(): this {
 		return this;
 	}
@@ -428,6 +440,47 @@ async function ensureConnected(client: Client): Promise<void> {
 	});
 }
 
+/**
+ * Waits for an inbound op matching the predicate to be queued by the client, and verifies that it is held unprocessed
+ * because the inbound queue is paused.
+ * @returns The sequence number of the held op.
+ */
+async function waitForHeldInboundOp(
+	client: Client,
+	predicate: (op: ISequencedDocumentMessage) => boolean,
+): Promise<number> {
+	const { deltaManager } = client.container;
+	const { inbound } = toIDeltaManagerFull(deltaManager);
+	const op =
+		inbound.toArray().find(predicate) ??
+		(await new Promise<ISequencedDocumentMessage>((resolve) => {
+			const onPush = (pushed: ISequencedDocumentMessage): void => {
+				if (predicate(pushed)) {
+					inbound.off("push", onPush);
+					resolve(pushed);
+				}
+			};
+			inbound.on("push", onPush);
+		}));
+
+	// Queued ops are processed asynchronously, so yield before checking that the op is still held.
+	await new Promise<void>((resolve) => setTimeout(resolve, 0));
+	assert.equal(inbound.paused, true, "Inbound queue should still be paused");
+	assert(
+		deltaManager.lastSequenceNumber < op.sequenceNumber,
+		"Inbound op should not be processed while paused",
+	);
+	return op.sequenceNumber;
+}
+
+function isJoinOpForClient(op: ISequencedDocumentMessage, clientId: string): boolean {
+	if (op.type !== MessageType.ClientJoin) {
+		return false;
+	}
+	const join = JSON.parse((op as ISequencedDocumentSystemMessage).data) as IClientJoin;
+	return join.clientId === clientId;
+}
+
 describe("Staging Mode", () => {
 	it("entering staging mode does not change the data model", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
@@ -476,6 +529,75 @@ describe("Staging Mode", () => {
 			"Staging mode client should have received remote change",
 		);
 	});
+
+	for (const exitMethod of ["commitChanges", "discardChanges"] as const) {
+		it(`${exitMethod} resumes inbound operations paused through stage controls`, async () => {
+			const deltaConnectionServer = LocalDeltaConnectionServer.create();
+			const clients = await createClients(deltaConnectionServer);
+			const controls = clients.original.dataObject.enterStagingMode();
+			await controls.pauseInbound();
+			clients.original.dataObject.makeEdit("staged");
+
+			clients.loaded.dataObject.makeEdit("while-paused");
+			const remoteSequenceNumber = await waitForSave([clients.loaded]);
+			await waitForHeldInboundOp(
+				clients.original,
+				(op) => op.sequenceNumber >= remoteSequenceNumber,
+			);
+			assert.equal(
+				hasEdit(clients.original, "while-paused"),
+				false,
+				"Queued remote changes should not be processed while paused",
+			);
+
+			controls[exitMethod]();
+			const savedSequenceNumber = await waitForSave(clients);
+			await catchUp(clients, Math.max(remoteSequenceNumber, savedSequenceNumber));
+
+			assertConsistent(clients, "Clients should converge after staging mode exits");
+			assert.equal(
+				hasEdit(clients.original, "staged"),
+				exitMethod === "commitChanges",
+				"Staged changes should only be retained when committed",
+			);
+		});
+
+		it(`${exitMethod} completes a reconnect waiting on paused inbound operations`, async () => {
+			const deltaConnectionServer = LocalDeltaConnectionServer.create();
+			const clients = await createClients(deltaConnectionServer);
+			const controls = clients.original.dataObject.enterStagingMode();
+			await controls.pauseInbound();
+			clients.original.dataObject.makeEdit("staged");
+
+			await ensureDisconnected(clients.original);
+			const { container } = clients.original;
+			const reconnectingClientId = new Promise<string>((resolve) => {
+				container.deltaManager.once("connect", (details) => resolve(details.clientId));
+			});
+			container.connect();
+			const clientId = await reconnectingClientId;
+
+			// Staged changes make the container dirty, so it reconnects in write mode and must process its own join op.
+			await waitForHeldInboundOp(clients.original, (op) => isJoinOpForClient(op, clientId));
+			assert.equal(
+				container.connectionState,
+				ConnectionState.CatchingUp,
+				"Reconnecting should not complete while inbound operations are paused",
+			);
+
+			controls[exitMethod]();
+			await waitForContainerConnection(container);
+			const savedSequenceNumber = await waitForSave(clients);
+			await catchUp(clients, savedSequenceNumber);
+
+			assertConsistent(clients, "Clients should converge after reconnecting");
+			assert.equal(
+				hasEdit(clients.loaded, "staged"),
+				exitMethod === "commitChanges",
+				"Staged changes should only be sent when committed",
+			);
+		});
+	}
 
 	it("commitChanges sends changes applied to other clients", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
