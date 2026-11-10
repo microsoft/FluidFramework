@@ -101,6 +101,9 @@ export {
 export {
 	UnhydratedFlexTreeField,
 	UnhydratedFlexTreeNode,
+	createUnhydratedFlexTreeNode,
+	UnhydratedGeneralNode,
+	UnhydratedObjectNode,
 	UnhydratedSequenceField,
 	UnhydratedContext,
 	createField,

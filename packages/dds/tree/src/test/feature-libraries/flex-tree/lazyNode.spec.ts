@@ -7,22 +7,50 @@
 
 import { strict as assert, fail } from "node:assert";
 
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
+import { asAlpha } from "../../../api.js";
 import {
 	type Anchor,
 	type AnchorNode,
+	CursorLocationType,
 	EmptyKey,
 	type FieldKey,
 	type ITreeSubscriptionCursor,
+	LeafNodeStoredSchema,
+	MapNodeStoredSchema,
 	type MapTree,
+	type Revertible,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
+	ValueSchema,
 	rootFieldKey,
 } from "../../../core/index.js";
 import { Context } from "../../../feature-libraries/flex-tree/context.js";
-import { LazyTreeNode } from "../../../feature-libraries/flex-tree/lazyNode.js";
+import {
+	LazyGeneralNode,
+	LazyObjectNode,
+	LazyTreeNode,
+} from "../../../feature-libraries/flex-tree/lazyNode.js";
+import {
+	AnchoredField,
+	getCachedField,
+	LazyField,
+} from "../../../feature-libraries/flex-tree/lazyField.js";
 import { withObservation } from "../../../feature-libraries/flex-tree/observer.js";
-import type { FlexTreeField, FlexTreeNode } from "../../../feature-libraries/index.js";
+import {
+	FieldKinds,
+	defaultSchemaPolicy,
+	cursorForMapTreeNode,
+	type FlexTreeField,
+	type FlexTreeNode,
+	flexTreeMarker,
+	MockNodeIdentifierManager,
+} from "../../../feature-libraries/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import {
 	SchemaFactory,
+	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 	getInnerNode,
 	toUpgradeSchema,
@@ -35,14 +63,13 @@ import {
 } from "../../../shared-tree/index.js";
 import { stringSchema } from "../../../simple-tree/leafNodeSchema.js";
 import { brand, disposeSymbol } from "../../../util/index.js";
-import { SharedTreeTestFactory, TestTreeProviderLite } from "../../utils.js";
+import {
+	checkoutWithContent,
+	SharedTreeTestFactory,
+	TestTreeProviderLite,
+} from "../../utils.js";
 
 import { readonlyTreeWithContent } from "./utils.js";
-
-/**
- * Test {@link LazyTreeNode} implementation.
- */
-class TestLazyTree extends LazyTreeNode {}
 
 /**
  * Creates an {@link Anchor} and an {@link AnchorNode} for the provided cursor's location.
@@ -62,6 +89,536 @@ describe("LazyNode", () => {
 		["ChunkedForest", ForestTypeOptimized],
 		["ObjectForest", ForestTypeReference],
 	] as const) {
+		it(`bounds forbidden-key storage on objects and leaves (${name})`, () => {
+			const sf = new SchemaFactory("forbidden-field-storage");
+			class Item extends sf.object("Item", { value: sf.number }) {}
+			const view = createIndependentTreeAlpha({ forest }).viewWith(
+				new TreeViewConfiguration({ schema: Item }),
+			);
+			view.initialize({ value: 1 });
+			const node = getInnerNode(view.root);
+			assert(node instanceof LazyObjectNode);
+			const declared = node.getBoxed(brand("value"));
+			assert(declared instanceof AnchoredField);
+			assert(declared instanceof LazyField);
+			const leaf = declared.boxedAt(0);
+			assert(leaf instanceof LazyTreeNode);
+			const resources = node.context.withAnchors.size;
+			const key: FieldKey = brand("missing");
+			const retained = [node.getBoxed(key), leaf.getBoxed(key)];
+			for (const field of retained) {
+				assert(field instanceof LazyField);
+				assert(!(field instanceof AnchoredField));
+				assert.equal(field.isFreed(), false);
+				assert.equal(Object.hasOwn(field, flexTreeMarker), false);
+				assert.equal(Object.hasOwn(field, "schema"), false);
+				assert.equal(Object.hasOwn(field, "length"), false);
+			}
+			for (const parent of [node, leaf]) {
+				for (let i = 0; i < 10_000; i++) {
+					const missing: FieldKey = brand(`missing-${i}`);
+					const field = parent.getBoxed(missing);
+					assert(field.is(FieldKinds.forbidden));
+					assert.equal(field.parent, parent);
+					assert.equal(field.length, 0);
+					assert.equal(field.boxedAt(-1), undefined);
+					assert.equal(getCachedField(parent, missing), undefined);
+				}
+			}
+			assert.equal(node.context.withAnchors.size, resources);
+			assert.equal(node.fieldCache?.size, 1);
+			assert.equal(leaf.fieldCache, undefined);
+			view.root.value = 2;
+			assert.equal(node.getBoxed(brand("value")), declared);
+			for (const [i, field] of retained.entries()) {
+				assert.equal(field.parent, i === 0 ? node : leaf);
+				assert.equal(field.length, 0);
+				assert.deepEqual([...field], []);
+				assert.equal(field.borrowCursor().getFieldLength(), 0);
+				assert.equal(field.getFieldPath().field, key);
+			}
+			const checkout = node.context.checkout;
+			view.dispose();
+			assert.equal(node.fieldCache, undefined);
+			for (const field of retained) {
+				assert(field instanceof LazyField);
+				assert.equal(field.isFreed(), true);
+				assert.throws(() => field.parent);
+				assert.equal(field.length, 0);
+				assert.equal(field.boxedAt(0), undefined);
+				assert.deepEqual([...field], []);
+				assert.throws(() => field.borrowCursor());
+				assert.throws(() => field.getFieldPath());
+			}
+			assert.equal(node.context.withAnchors.size, 0);
+			checkout.dispose();
+		});
+
+		it(`preserves reads and edits through cached declared fields (${name})`, () => {
+			const sf = new SchemaFactory("declared-field-cache");
+			class Item extends sf.object("Item", {
+				value: sf.number,
+				optional: sf.optional(sf.boolean),
+				id: sf.identifier,
+			}) {}
+			class Items extends sf.array("Items", Item) {}
+			const view = createIndependentTreeAlpha({ forest }).viewWith(
+				new TreeViewConfiguration({ schema: Items }),
+			);
+			view.initialize([{ value: 0, optional: false }]);
+			const item = view.root[0];
+			const node = getInnerNode(item);
+			assert(node instanceof LazyObjectNode);
+			assert.equal(item.value, 0);
+			assert.equal(item.optional, false);
+			assert.equal(typeof item.id, "string");
+			const key: FieldKey = brand("optional");
+			const field = node.getBoxed(key);
+			assert(field instanceof AnchoredField);
+			assert(field.is(FieldKinds.optional));
+			const resources = node.context.withAnchors.size;
+			for (const entity of node.context.withCursors) entity.prepareForEdit();
+			assert.equal(node.context.withCursors.size, 0);
+			let observations = 0;
+			withObservation(
+				{
+					observeNodeDeep: () => assert.fail("unexpected deep observation"),
+					observeNodeFields: () => assert.fail("unexpected fields observation"),
+					observeParentOf: () => assert.fail("unexpected parent observation"),
+					observeNodeField: (observed, observedKey) => {
+						assert.equal(observed, node);
+						assert.equal(observedKey, key);
+						observations++;
+					},
+				},
+				() => assert.equal(item.optional, false),
+			);
+			assert.equal(observations, 1);
+			assert(node.context.withCursors.has(node));
+			assert.equal(node.context.withCursors.size, 2);
+			assert.equal(node.context.withAnchors.size, resources);
+			field.editor.set(undefined, false);
+			assert.equal(item.optional, undefined);
+			assert.equal(node.tryGetField(key), undefined);
+			assert.equal(node.getBoxed(key), field);
+			item.optional = true;
+			assert.equal(field.content, true);
+			assert.equal(node.tryGetField(key), field);
+			const array = getInnerNode(view.root);
+			const sequence = array.getBoxed(EmptyKey);
+			assert(sequence instanceof AnchoredField);
+			assert(sequence.is(FieldKinds.sequence));
+			view.root.insertAtEnd({ value: 2 });
+			view.root.removeAt(0);
+			assert.equal(array.getBoxed(EmptyKey), sequence);
+			assert.equal(sequence.length, 1);
+			const checkout = node.context.checkout;
+			view.dispose();
+			assert.throws(() => field.content);
+			assert.throws(() => sequence.length);
+			checkout.dispose();
+		});
+
+		it(`preserves sequence-valued map semantics (${name})`, () => {
+			const mapType: TreeNodeSchemaIdentifier = brand("sequence-map");
+			const numberType: TreeNodeSchemaIdentifier = brand("sequence-number");
+			const number = (value: number): MapTree => ({
+				type: numberType,
+				value,
+				fields: new Map(),
+			});
+			const key: FieldKey = brand("key");
+			const checkout = checkoutWithContent(
+				{
+					schema: {
+						rootFieldSchema: {
+							kind: FieldKinds.required.identifier,
+							types: new Set([mapType]),
+							persistedMetadata: undefined,
+						},
+						nodeSchema: new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>([
+							[
+								mapType,
+								new MapNodeStoredSchema({
+									kind: FieldKinds.sequence.identifier,
+									types: new Set([numberType]),
+									persistedMetadata: undefined,
+								}),
+							],
+							[numberType, new LeafNodeStoredSchema(ValueSchema.Number)],
+						]),
+					},
+					initialTree: cursorForMapTreeNode<MapTree>({
+						type: mapType,
+						fields: new Map([[key, [number(1), number(2)]]]),
+					}),
+				},
+				{ forestType: forest },
+			);
+			const context = new Context(
+				defaultSchemaPolicy,
+				checkout,
+				new MockNodeIdentifierManager(),
+			);
+			const node = context.root.boxedAt(0);
+			assert(node instanceof LazyTreeNode);
+			assert(node instanceof LazyGeneralNode);
+			const field = node.getBoxed(key);
+			assert(field.is(FieldKinds.sequence));
+			assert.equal(field.length, 2);
+			assert.equal(field.at(-1), 2);
+			assert.equal(node.getFirstFieldChild(key), 1);
+			assert.equal(field.boxedAt(1)?.parentField.parent, field);
+			field.editor.remove(0, 2);
+			assert.equal(field.length, 0);
+			assert.equal(node.tryGetField(key), undefined);
+			field.editor.insert(0, [number(3), number(4)]);
+			assert.equal(field.length, 2);
+			assert.equal(field.at(0), 3);
+			assert.equal(field.at(1), 4);
+			const missing = node.getBoxed(brand("missing"));
+			assert(missing.is(FieldKinds.sequence));
+			assert.equal(missing.length, 0);
+			missing.editor.insert(0, [number(5)]);
+			assert.equal(missing.at(0), 5);
+			context[disposeSymbol]();
+			assert.throws(() => field.length);
+			checkout.dispose();
+		});
+
+		it(`avoids forbidden-field navigation but validates resource access in a broken forest (${name})`, () => {
+			const sf = new SchemaFactory("forbidden-broken-forest");
+			class Item extends sf.object("Item", { value: sf.number }) {}
+			const view = createIndependentTreeAlpha({ forest }).viewWith(
+				new TreeViewConfiguration({ schema: Item }),
+			);
+			view.initialize({ value: 1 });
+			const node = getInnerNode(view.root);
+			assert(node instanceof LazyTreeNode);
+			const field = node.getBoxed(brand("missing"));
+			const breaker = node.context.checkout.forest.breaker;
+			assert.throws(() => breaker.break(new Error("test break")), /test break/);
+			assert.equal(field.length, 0);
+			node.prepareForEdit();
+			assert.equal(field.length, 0);
+			for (const index of [0, -1, 1, Number.NaN, Number.POSITIVE_INFINITY]) {
+				assert.equal(field.boxedAt(index), undefined);
+			}
+			assert.deepEqual([...field], []);
+			assert.equal(node.context.withCursors.has(node), false);
+			assert.throws(() => field.parent, /invalid state/);
+			assert.throws(() => field.borrowCursor(), /invalid state/);
+			assert.throws(() => field.getFieldPath(), /invalid state/);
+			assert.throws(() => node.getBoxed(brand("missing")), /invalid state/);
+			breaker.clearError();
+			const checkout = node.context.checkout;
+			view.dispose();
+			checkout.dispose();
+		});
+
+		it(`invalidates retained forbidden fields when schema adds a field (${name})`, () => {
+			const sf = new SchemaFactory("forbidden-schema-invalidation");
+			class Before extends sf.object("Item", { value: sf.number }) {}
+			const replacement = new SchemaFactory("forbidden-schema-invalidation");
+			class After extends replacement.object("Item", {
+				value: replacement.number,
+				added: replacement.optional(replacement.number),
+			}) {}
+			const tree = createIndependentTreeAlpha({ forest });
+			const view = tree.viewWith(new TreeViewConfiguration({ schema: Before }));
+			view.initialize({ value: 1 });
+			const node = getInnerNode(view.root);
+			assert(node instanceof LazyTreeNode);
+			const key: FieldKey = brand("added");
+			const field = node.getBoxed(key);
+			assert(field.is(FieldKinds.forbidden));
+			const checkout = node.context.checkout;
+			checkout.updateSchema(toUpgradeSchema(After));
+			assert.equal(field.length, 0);
+			assert.equal(field.boxedAt(0), undefined);
+			assert.deepEqual([...field], []);
+			assert.throws(() => field.parent);
+			assert.throws(() => node.getBoxed(key));
+			view.dispose();
+			const upgraded = tree.viewWith(new TreeViewConfiguration({ schema: After }));
+			const updated = getInnerNode(upgraded.root);
+			assert(updated.getBoxed(key).is(FieldKinds.optional));
+			upgraded.root.added = 2;
+			assert.equal(updated.getFirstFieldChild(key), 2);
+			upgraded.dispose();
+			checkout.dispose();
+		});
+
+		it(`caches empty declared fields for objects and arrays but not maps, records or leaves (${name})`, () => {
+			const sf = new SchemaFactoryAlpha("storage-policy");
+			class Values extends sf.map("Values", sf.number) {}
+			class Record extends sf.record("Record", sf.number) {}
+			class Items extends sf.array("Items", sf.number) {}
+			class Root extends sf.object("Root", { map: Values, record: Record, items: Items }) {}
+			const view = createIndependentTreeAlpha({ forest }).viewWith(
+				new TreeViewConfiguration({ schema: Root }),
+			);
+			view.initialize({ map: { key: 1 }, record: { key: 1 }, items: [1] });
+			const root = view.root;
+			assert(getInnerNode(root.map) instanceof LazyGeneralNode);
+			assert(getInnerNode(root.record) instanceof LazyGeneralNode);
+			assert(!(getInnerNode(root.map) instanceof LazyObjectNode));
+			assert(!(getInnerNode(root.record) instanceof LazyObjectNode));
+			assert(getInnerNode(root) instanceof LazyObjectNode);
+			assert(getInnerNode(root.items) instanceof LazyObjectNode);
+			const map = getInnerNode(root.map);
+			const leaf = map.getBoxed(brand("key")).boxedAt(0);
+			assert(leaf instanceof LazyGeneralNode);
+			assert.equal(leaf.fieldCache, undefined);
+			const checkout = leaf.context.checkout;
+			view.dispose();
+			checkout.dispose();
+		});
+
+		it(`reads map leaves without FlexTree field instances or leaf anchors (${name})`, () => {
+			const sf = new SchemaFactory("unboxed-map");
+			class Values extends sf.map("Values", [sf.number, sf.string, sf.boolean, sf.null]) {}
+			const view = createIndependentTreeAlpha({ forest }).viewWith(
+				new TreeViewConfiguration({ schema: Values }),
+			);
+			view.initialize({ number: 1, string: "", boolean: false, null: null });
+			const map = view.root;
+			const node = getInnerNode(map);
+			assert(node instanceof LazyGeneralNode);
+			const resources = node.context.withAnchors.size;
+			const expected = [
+				["number", 1],
+				["string", ""],
+				["boolean", false],
+				["null", null],
+			];
+			assert.deepEqual([...map.entries()], expected);
+			assert.deepEqual([...map.values()], [1, "", false, null]);
+			const visited: unknown[] = [];
+			// eslint-disable-next-line unicorn/no-array-for-each -- Testing the map API.
+			map.forEach((value, key) => visited.push([key, value]));
+			assert.deepEqual(visited, expected);
+			for (const [key, value] of expected) {
+				assert(typeof key === "string");
+				assert.equal(map.get(key), value);
+				assert.equal(getCachedField(node, brand(key)), undefined);
+			}
+			let observations = 0;
+			withObservation(
+				{
+					observeNodeDeep: () => assert.fail("unexpected deep observation"),
+					observeNodeFields: () => assert.fail("unexpected fields observation"),
+					observeParentOf: () => assert.fail("unexpected parent observation"),
+					observeNodeField: (observed, key) => {
+						assert.equal(observed, node);
+						assert.equal(key, "missing");
+						observations++;
+					},
+				},
+				() => assert.equal(map.get("missing"), undefined),
+			);
+			assert.equal(observations, 1);
+			assert.equal(node.context.withAnchors.size, resources);
+			assert.equal(node.fieldCache, undefined);
+			const checkout = node.context.checkout;
+			view.dispose();
+			assert.throws(() => node.getFirstFieldChild(brand("number")));
+			checkout.dispose();
+		});
+
+		it(`does not retain empty map fields across key churn (${name})`, () => {
+			const sf = new SchemaFactory("bounded-map");
+			class Values extends sf.map("Values", sf.number) {}
+			const view = createIndependentTreeAlpha({ forest }).viewWith(
+				new TreeViewConfiguration({ schema: Values }),
+			);
+			view.initialize({});
+			const map = view.root;
+			const node = getInnerNode(map);
+			assert(node instanceof LazyTreeNode);
+			const resources = node.context.withAnchors.size;
+			for (let i = 0; i < 256; i++) {
+				const key = `key-${i}`;
+				assert.equal(map.get(key), undefined);
+				assert.equal(node.getBoxed(brand(key)).length, 0);
+				assert.equal(getCachedField(node, brand(key)), undefined);
+				assert.equal(node.fieldCache === undefined, true);
+				map.delete(key);
+				map.set(key, undefined);
+				map.set(key, i);
+				const field = node.getBoxed(brand(key));
+				assert.equal(node.getBoxed(brand(key)), field);
+				assert.equal(getCachedField(node, brand(key)), field);
+				assert.equal(node.fieldCache?.size, 1);
+				map.delete(key);
+				assert.equal(field.length, 0);
+				assert.equal(getCachedField(node, brand(key)), undefined);
+				assert.equal(node.fieldCache === undefined, true);
+				assert.equal(node.context.withAnchors.size, resources);
+			}
+			assert.equal(map.size, 0);
+			const checkout = node.context.checkout;
+			view.dispose();
+			checkout.dispose();
+		});
+
+		it(`keeps evicted map field references usable (${name})`, () => {
+			const sf = new SchemaFactory("retained-map-field");
+			class Item extends sf.object("Item", { value: sf.number }) {}
+			class Values extends sf.map("Values", Item) {}
+			const view = createIndependentTreeAlpha({ forest }).viewWith(
+				new TreeViewConfiguration({ schema: Values }),
+			);
+			view.initialize({ key: { value: 1 } });
+			const map = view.root;
+			const node = getInnerNode(map);
+			assert(node instanceof LazyTreeNode);
+			const field = node.getBoxed(brand("key"));
+			assert(field.is(FieldKinds.optional));
+			const original = map.get("key");
+			assert(original !== undefined);
+			assert.equal(Tree.parent(original), map);
+			assert.equal(Tree.key(original), "key");
+			map.delete("key");
+			assert.equal(field.content, undefined);
+			assert.equal(field.parent, node);
+			assert.equal(getCachedField(node, brand("key")), undefined);
+			map.set("key", { value: 2 });
+			assert.notEqual(node.getBoxed(brand("key")), field);
+			const replacement = map.get("key");
+			assert(replacement !== undefined);
+			assert.equal(field.boxedAt(0), getInnerNode(replacement));
+			assert.equal(field.borrowCursor().getFieldLength(), 1);
+			field.editor.set(undefined, false);
+			assert.equal(map.has("key"), false);
+			const checkout = node.context.checkout;
+			view.dispose();
+			assert.throws(() => field.parent);
+			assert.throws(() => field.content);
+			assert.throws(() => field.editor.set(undefined, true));
+			checkout.dispose();
+		});
+
+		it(`preserves map field indexing, iteration and cursor positions across eviction (${name})`, () => {
+			const sf = new SchemaFactory("map-field-contract");
+			class Values extends sf.map("Values", sf.number) {}
+			const view = createIndependentTreeAlpha({ forest }).viewWith(
+				new TreeViewConfiguration({ schema: Values }),
+			);
+			view.initialize({});
+			const map = view.root;
+			const node = getInnerNode(map);
+			assert(node instanceof LazyGeneralNode);
+			const key: FieldKey = brand("key");
+			const field = node.getBoxed(key);
+			assert(field.is(FieldKinds.optional));
+			const checkContent = (value: number | undefined): void => {
+				const child = field.boxedAt(0);
+				const children = child === undefined ? [] : [child];
+				assert.equal(field.content, value);
+				assert.equal(field.length, value === undefined ? 0 : 1);
+				for (const index of [0, -1, 1, -2, 0.5, -0.5, Number.NaN, Infinity, -Infinity]) {
+					assert.equal(field.boxedAt(index), children.at(index));
+				}
+				assert.deepEqual([...field], children);
+				const cursor = field.borrowCursor();
+				assert.equal(cursor.mode, CursorLocationType.Fields);
+				assert.equal(cursor.getFieldKey(), key);
+				assert.equal(cursor.getFieldLength(), children.length);
+				if (value !== undefined) {
+					cursor.enterNode(0);
+					assert.equal(cursor.value, value);
+					cursor.exitNode();
+				}
+				assert.equal(node.cursor.mode, CursorLocationType.Nodes);
+			};
+			checkContent(undefined);
+			map.set(key, 0);
+			checkContent(0);
+			map.delete(key);
+			checkContent(undefined);
+			map.set(key, 1);
+			assert.notEqual(node.getBoxed(key), field);
+			checkContent(1);
+			const checkout = node.context.checkout;
+			view.dispose();
+			assert.throws(
+				() => field.borrowCursor(),
+				validateAssertionError("Cannot access a freed FlexTree entity"),
+			);
+			checkout.dispose();
+		});
+
+		it(`evicts map fields after merge and undo (${name})`, () => {
+			const sf = new SchemaFactory("map-field-merge");
+			class Values extends sf.map("Values", sf.number) {}
+			const view = createIndependentTreeAlpha({ forest }).viewWith(
+				new TreeViewConfiguration({ schema: Values }),
+			);
+			view.initialize({ key: 1 });
+			const map = view.root;
+			const node = getInnerNode(map);
+			assert(node instanceof LazyTreeNode);
+			const key: FieldKey = brand("key");
+			const field = node.getBoxed(key);
+			const fork = asAlpha(view).fork();
+			fork.root.delete("key");
+			asAlpha(view).merge(fork);
+			assert.equal(getCachedField(node, key), undefined);
+			assert.equal(field.length, 0);
+			let undo: Revertible | undefined;
+			const off = asAlpha(view).events.on("changed", (metadata) => {
+				assert(metadata.getRevertible !== undefined);
+				undo = metadata.getRevertible();
+			});
+			map.set("key", 2);
+			off();
+			const replacement = node.getBoxed(key);
+			assert.equal(getCachedField(node, key), replacement);
+			assert(undo !== undefined);
+			undo.revert();
+			assert.equal(map.size, 0);
+			assert.equal(getCachedField(node, key), undefined);
+			assert.equal(replacement.length, 0);
+			const checkout = node.context.checkout;
+			view.dispose();
+			checkout.dispose();
+		});
+
+		it(`evicts cached fields after a remote map clear (${name})`, () => {
+			const sf = new SchemaFactory("remote-map-field");
+			class Values extends sf.map("Values", sf.number) {}
+			const config = new TreeViewConfiguration({ schema: Values });
+			const provider = new TestTreeProviderLite(
+				2,
+				new SharedTreeTestFactory(() => {}, undefined, { forest }),
+			);
+			const [sourceTree, targetTree] = provider.trees;
+			assert(sourceTree !== undefined && targetTree !== undefined);
+			const source = sourceTree.viewWith(config);
+			source.initialize(
+				Object.fromEntries(Array.from({ length: 64 }, (_, i) => [`key-${i}`, i])),
+			);
+			provider.synchronizeMessages();
+			const target = targetTree.viewWith(config);
+			const node = getInnerNode(target.root);
+			assert(node instanceof LazyTreeNode);
+			const retained = [...target.root.keys()].map((key) => {
+				const field = node.getBoxed(brand(key));
+				assert.equal(getCachedField(node, brand(key)), field);
+				return field;
+			});
+			asAlpha(source.root).clear();
+			provider.synchronizeMessages();
+			assert.equal(target.root.size, 0);
+			for (const field of retained) {
+				assert.equal(getCachedField(node, field.key), undefined);
+				assert.equal(field.length, 0);
+			}
+			source.dispose();
+			target.dispose();
+		});
+
 		it(`cached parents follow moves and removal without cursor recovery (${name})`, () => {
 			const sf = new SchemaFactory("cached-parents");
 			class Item extends sf.object("Item", { value: sf.number }) {}
@@ -120,7 +677,11 @@ describe("LazyNode", () => {
 			const node = getInnerNode(view.root);
 			assert(node instanceof LazyTreeNode);
 			const key: FieldKey = brand("value");
+			assert.equal(node.fieldCache === undefined, true);
 			const field = node.getBoxed(key);
+			const cache = node.fieldCache;
+			assert(cache !== undefined);
+			assert.equal(cache.get(key), field);
 			for (const entity of node.context.withCursors) entity.prepareForEdit();
 			let observations = 0;
 			withObservation(
@@ -144,11 +705,90 @@ describe("LazyNode", () => {
 			view.root.value = undefined;
 			assert.equal(node.getBoxed(key), field);
 			assert.equal(node.tryGetField(key), undefined);
+			assert.equal(node.fieldCache, cache);
+			assert.equal(cache.size, 1);
 			const checkout = node.context.checkout;
 			view.dispose();
+			assert.equal(node.fieldCache, undefined);
 			assert.throws(() => node.getBoxed(key));
 			checkout.dispose();
 		});
+
+		it(`validates edits consistently for owned and borrowed fields (${name})`, () => {
+			const sf = new SchemaFactory("shared-field-editing");
+			class Values extends sf.map("Values", sf.number) {}
+			class Item extends sf.object("Item", { map: Values, value: sf.optional(sf.number) }) {}
+			class Items extends sf.array("Items", Item) {}
+			const view = createIndependentTreeAlpha({ forest }).viewWith(
+				new TreeViewConfiguration({ schema: Items }),
+			);
+			view.initialize([{ map: { key: 1 }, value: 1 }]);
+			const item = view.root[0];
+			const node = getInnerNode(item);
+			assert(node instanceof LazyTreeNode);
+			const fields = [
+				node.getBoxed(brand("value")),
+				getInnerNode(item.map).getBoxed(brand("key")),
+			].map((field) => {
+				assert(field.is(FieldKinds.optional));
+				return field;
+			});
+			for (const field of fields) {
+				field.editor.set(undefined, false);
+				assert.equal(field.length, 0);
+			}
+			view.root.removeAt(0);
+			for (const field of fields) {
+				assert.throws(
+					() => field.editor.set(undefined, true),
+					/Editing only allowed on fields with TreeStatus.InDocument status/,
+				);
+			}
+			const checkout = node.context.checkout;
+			view.dispose();
+			for (const field of fields) {
+				assert.throws(
+					() => field.editor.set(undefined, true),
+					/Editing only allowed on fields with TreeStatus.InDocument status/,
+				);
+			}
+			checkout.dispose();
+		});
+
+		for (const compatible of [true, false]) {
+			it(`invalidates node-owned map caches after ${compatible ? "compatible" : "incompatible"} schema replacement (${name})`, () => {
+				const sf = new SchemaFactory("schema-dependent-cache");
+				class Values extends sf.map("Values", sf.number) {}
+				const view = createIndependentTreeAlpha({ forest }).viewWith(
+					new TreeViewConfiguration({ schema: Values }),
+				);
+				view.initialize({ key: 1 });
+				const map = view.root;
+				const node = getInnerNode(map);
+				assert(node instanceof LazyGeneralNode);
+				const key: FieldKey = brand("key");
+				const field = node.getBoxed(key);
+				assert.equal(node.fieldCache?.get(key), field);
+				const checkout = node.context.checkout;
+				checkout.updateSchema(toUpgradeSchema(compatible ? Values : [Values, sf.string]));
+				assert.equal(node.fieldCache, undefined);
+				assert.throws(() => node.getBoxed(key));
+				assert.throws(() => field.length);
+				assert.throws(() => map.get("key"));
+				assert.equal(view.compatibility.canView, compatible);
+				if (!compatible) {
+					checkout.updateSchema(toUpgradeSchema(Values), true);
+				}
+				const replacement = getInnerNode(view.root);
+				assert(replacement instanceof LazyGeneralNode);
+				assert.notEqual(replacement, node);
+				assert.notEqual(replacement.getBoxed(key), field);
+				assert.equal(view.root.get("key"), 1);
+				view.dispose();
+				assert.equal(replacement.fieldCache, undefined);
+				checkout.dispose();
+			});
+		}
 
 		for (const compatible of [true, false]) {
 			it(`invalidates cached fields after ${compatible ? "compatible" : "incompatible"} schema replacement (${name})`, () => {
@@ -178,6 +818,44 @@ describe("LazyNode", () => {
 				assert.equal(view.root.value, 1);
 				view.dispose();
 				checkout.dispose();
+			});
+		}
+
+		for (const kind of ["map", "record"] as const) {
+			it(`invalidates node-owned ${kind} caches after a remote schema change (${name})`, () => {
+				const sf = new SchemaFactoryAlpha("remote-schema-dependent-cache");
+				class MapValues extends sf.map("Map", sf.number) {}
+				class RecordValues extends sf.record("Record", sf.number) {}
+				const config = new TreeViewConfiguration({ schema: [MapValues, RecordValues] });
+				const provider = new TestTreeProviderLite(
+					2,
+					new SharedTreeTestFactory(() => {}, undefined, { forest }),
+				);
+				const [sourceTree, targetTree] = provider.trees;
+				assert(sourceTree !== undefined && targetTree !== undefined);
+				const source = sourceTree.viewWith(config);
+				source.initialize(
+					kind === "map" ? new MapValues({ key: 1 }) : new RecordValues({ key: 1 }),
+				);
+				provider.synchronizeMessages();
+				const target = targetTree.viewWith(config);
+				const node = getInnerNode(target.root);
+				assert(node instanceof LazyGeneralNode);
+				const key: FieldKey = brand("key");
+				const field = node.getBoxed(key);
+				assert.equal(node.fieldCache?.get(key), field);
+				const sourceNode = getInnerNode(source.root);
+				assert(sourceNode instanceof LazyGeneralNode);
+				sourceNode.context.checkout.updateSchema(
+					toUpgradeSchema([MapValues, RecordValues, sf.string]),
+				);
+				provider.synchronizeMessages();
+				assert.equal(target.compatibility.canView, false);
+				assert.equal(node.fieldCache, undefined);
+				assert.throws(() => node.getBoxed(key));
+				assert.throws(() => field.length);
+				source.dispose();
+				target.dispose();
 			});
 		}
 
@@ -272,7 +950,7 @@ describe("LazyNode", () => {
 
 			const { anchor, anchorNode } = createAnchors(context, cursor);
 
-			const node = new TestLazyTree(
+			const node = new LazyGeneralNode(
 				context,
 				brand(ParentNode.identifier),
 				cursor,
@@ -292,7 +970,7 @@ describe("LazyNode", () => {
 				});
 				cursor.enterNode(0);
 				const { anchor, anchorNode } = createAnchors(context, cursor);
-				const node = new TestLazyTree(
+				const node = new LazyGeneralNode(
 					context,
 					brand(JsonAsTree.JsonObject.identifier),
 					cursor,
@@ -308,7 +986,7 @@ describe("LazyNode", () => {
 				});
 				cursor.enterNode(0);
 				const { anchor, anchorNode } = createAnchors(context, cursor);
-				const node = new TestLazyTree(
+				const node = new LazyGeneralNode(
 					context,
 					brand(JsonAsTree.JsonObject.identifier),
 					cursor,
@@ -328,7 +1006,7 @@ describe("LazyNode", () => {
 
 			const { anchor, anchorNode } = createAnchors(context, cursor);
 
-			const node = new LazyTreeNode(
+			const node = new LazyGeneralNode(
 				context,
 				brand(stringSchema.identifier),
 				cursor,

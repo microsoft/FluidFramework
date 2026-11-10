@@ -18,7 +18,8 @@ import {
 	typeSchemaSymbol,
 	type InternalTreeNode,
 	type TreeNodeSchema,
-	UnhydratedFlexTreeNode,
+	UnhydratedGeneralNode,
+	type UnhydratedFlexTreeNode,
 	type TreeNodeSchemaInitializedData,
 	privateDataSymbol,
 	CompatibilityLevel,
@@ -42,7 +43,7 @@ import { brand, getOrCreate } from "../../util/index.js";
 
 // Node initialization exercises getTreeNodeSchemaInitializedData; context caching is covered in createContext.spec.ts.
 describe("TreeNodeValid", () => {
-	class MockFlexNode extends UnhydratedFlexTreeNode {
+	class MockFlexNode extends UnhydratedGeneralNode {
 		public constructor(public readonly simpleSchema: TreeNodeSchema) {
 			super(
 				{ type: brand(simpleSchema.identifier) },

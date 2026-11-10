@@ -21,7 +21,7 @@ import { type IDisposable, disposeSymbol } from "../../util/index.js";
 import type { NodeIdentifierManager } from "../node-identifier/index.js";
 
 import type { FlexTreeField } from "./flexTreeTypes.js";
-import type { LazyEntity } from "./lazyEntity.js";
+import type { AnchoredEntity } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";
 
 /**
@@ -96,11 +96,27 @@ export const ContextSlot = anchorSlot<Context>();
  * A {@link FlexTreeContext} which is used to manage the cursors and anchors within the FlexTrees:
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  *
- * This context and the trees it produces observe the kinds of fields from the schema
+ * Schema changes and FlexTree entity lifetime:
+ *
+ * {@link Context.schema} reflects stored-schema changes, but existing node and field instances retain schema-dependent state.
+ * This context does not subscribe to those changes; callers currently {@link Context.clear | clear} or dispose it after every change, before further access.
+ *
+ * Future work to support retaining instances across a schema change would require either:
+ *
+ * - Removing schema-dependent FlexTree node and field specialization, and invalidating or refreshing cached schema-dependent state.
+ * - Retaining instances only for schema changes that preserve their existing behavior and cached state.
  */
 export class Context implements FlexTreeHydratedContext, IDisposable {
-	public readonly withCursors: Set<LazyEntity> = new Set();
-	public readonly withAnchors: Set<LazyEntity> = new Set();
+	/**
+	 * Persistent resource owners with live cursors.
+	 * Nodes register themselves; anchored fields register their resource component.
+	 */
+	public readonly withCursors: Set<AnchoredEntity> = new Set();
+	/**
+	 * Navigation-resource owners registered for disposal, including those with cleared cursors.
+	 * Fields that borrow their parent's resources are not registered separately.
+	 */
+	public readonly withAnchors: Set<AnchoredEntity> = new Set();
 
 	/**
 	 * Callbacks to run when disposing.
