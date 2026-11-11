@@ -19,7 +19,10 @@ import type {
 	JsonCompatibleReadOnly,
 	ReadableField,
 } from "@fluidframework/tree/alpha";
-import { createIndependentTreeAlpha, minimize } from "@fluidframework/tree/alpha";
+import {
+	createIndependentTreeAlpha,
+	minimize as minimizeChange,
+} from "@fluidframework/tree/alpha";
 
 import {
 	SchematizingSimpleTreeView,
@@ -143,8 +146,8 @@ const SketchyBoxArraySchemaConfig = {
 	enableSchemaValidation: true,
 } as const;
 
-/** Transaction parameters that request {@link minimize | minimization} of the resulting change. */
-const minimizeParams = { postProcessor: minimize } as const;
+/** Transaction parameters that request {@link minimizeChange | minimization} of the resulting change. */
+const minimizeParams = { postProcessor: minimizeChange } as const;
 
 type ViewableTreeAlpha = ReturnType<typeof createIndependentTreeAlpha>;
 
@@ -258,8 +261,8 @@ function runScenario<
 	scenario: TransactionScenario<TSchema, TApplyReturn>,
 	{
 		validateConsistency = false,
-		doNotMinimize = false,
-	}: { validateConsistency?: boolean; doNotMinimize?: boolean } = {},
+		minimize = true,
+	}: { validateConsistency?: boolean; minimize?: boolean } = {},
 ): {
 	tree: ViewableTreeAlpha;
 	view: TApplyReturn extends SchematizingSimpleTreeView<ImplicitFieldSchema>
@@ -282,7 +285,7 @@ function runScenario<
 	});
 	const result = view.runTransaction(
 		() => ({ value: scenario.apply(view.root, tree, view) }),
-		doNotMinimize ? undefined : minimizeParams,
+		minimize ? minimizeParams : undefined,
 	);
 	unsubscribe();
 	assert(changeJson !== undefined, "expected a change to be produced by the transaction");
@@ -309,9 +312,7 @@ function runScenario<
 	// Presence of surviving marker should be consistent regardless of minimize use.
 	// So assert within runScenario helper to test minimize expectations and also
 	// to catch any test configuration errors where the expectation is not set.
-	const survivingAssertionPreface = doNotMinimize
-		? "This is a test configuration error: "
-		: "";
+	const survivingAssertionPreface = minimize ? "" : "This is a test configuration error: ";
 	if (scenario.expectSurvivingMarker === true) {
 		assert.match(
 			stringifiedChange,
@@ -2164,7 +2165,7 @@ describe("transaction minimize post-processor", () => {
 		for (const [scenarioName, scenario] of Object.entries(arrayScenarios)) {
 			it(`for ${beautifyScenarioName(scenarioName)}`, () => {
 				const { tree: unminimizedTree, view: unminimizedView } = runScenario(scenario, {
-					doNotMinimize: true,
+					minimize: false,
 				});
 				const { tree: minimizedTree } = runScenario(scenario, {
 					validateConsistency: true,
@@ -2181,7 +2182,7 @@ describe("transaction minimize post-processor", () => {
 		for (const [scenarioName, scenario] of Object.entries(objectScenarios)) {
 			it(`for ${beautifyScenarioName(scenarioName)}`, () => {
 				const { tree: unminimizedTree, view: unminimizedView } = runScenario(scenario, {
-					doNotMinimize: true,
+					minimize: false,
 				});
 				const { tree: minimizedTree } = runScenario(scenario, {
 					validateConsistency: true,
@@ -2198,7 +2199,7 @@ describe("transaction minimize post-processor", () => {
 		for (const [scenarioName, scenario] of Object.entries(parallelObjectScenarios)) {
 			it(`for ${beautifyScenarioName(scenarioName)}`, () => {
 				const { tree: unminimizedTree, view: unminimizedView } = runScenario(scenario, {
-					doNotMinimize: true,
+					minimize: false,
 				});
 				const { tree: minimizedTree } = runScenario(scenario, {
 					validateConsistency: true,
@@ -2217,7 +2218,7 @@ describe("transaction minimize post-processor", () => {
 		)) {
 			it(`for ${beautifyScenarioName(scenarioName)}`, () => {
 				const { tree: unminimizedTree, view: unminimizedView } = runScenario(scenario, {
-					doNotMinimize: true,
+					minimize: false,
 				});
 				const { tree: minimizedTree } = runScenario(scenario, {
 					validateConsistency: true,
@@ -2238,7 +2239,7 @@ describe("transaction minimize post-processor", () => {
 					for (const [scenarioName, scenario] of Object.entries(scenarios)) {
 						it(scenarioName, () => {
 							const { tree: unminimizedTree, view: unminimizedView } = runScenario(scenario, {
-								doNotMinimize: true,
+								minimize: false,
 							});
 							const { tree: minimizedTree } = runScenario(scenario, {
 								validateConsistency: true,
@@ -2257,64 +2258,65 @@ describe("transaction minimize post-processor", () => {
 		});
 	});
 
-	/**
-	 * Attempts to inject a hidden property using temporary schema change, then reverts to the original schema.
-	 * @remarks
-	 * Steps (root state shown after each):
-	 *
-	 * 0. initial                 -\> `[Box: { value: "A⌚" }]`
-	 * 1. upgrade schema          -\> `[Box: { value: "A⌚" }]`
-	 * 2. set Box secret to "B☠️" -\> `[Box: { value: "A⌚", secret: "B☠️" }]`
-	 * 3. downgrade schema        -\> stored: `[Box: { value: "A⌚", secret: "B☠️" }]  visible: { value: "A⌚" }`
-	 *
-	 * This invariant is independent of minimization, but is critical behavior for
-	 * minimization criteria as minimize only operates on data edits.
-	 */
-	it("temporary schema change throws restoring schema", () => {
-		let scenarioStuffHiddenSecretInBoxReachedSchemaRollback = false;
+	// Restoring the original view hides the optional field without removing its stored schema or content.
+	// Minimization must preserve that content even though the final view does not expose it.
+	for (const minimize of [true, false]) {
+		it(`preserves unknown optional fields when restoring the original view schema (minimize: ${minimize})`, () => {
+			const {
+				tree: updatedTree,
+				view,
+				stringifiedChange,
+			} = runScenario(
+				{
+					schema: BoxArray,
+					initialContent: [new Box({ value: "A⌚" })],
+					apply: (_root, tree, view1) => {
+						view1.dispose();
 
-		assert.throws(() => {
-			const { view } = runScenario({
-				schema: BoxArray,
-				initialContent: [new Box({ value: "A⌚" })],
-				apply: (_root, tree, view1) => {
-					// Force dispose view to permit upgrade
-					view1.dispose();
+						// Add and populate an optional field before rolling back the application schema.
+						const view2 = tree.viewWith(
+							new TreeViewConfiguration(SketchyBoxArraySchemaConfig),
+						);
+						view2.upgradeSchema();
+						view2.root[0].secret = "B❤️";
+						view2.dispose();
 
-					// Update schema which now allows Boxes with secrets in root array.
-					const view2 = tree.viewWith(new TreeViewConfiguration(SketchyBoxArraySchemaConfig));
-					view2.upgradeSchema();
+						// The original view permits unknown optional fields, so this upgrade retains the secret.
+						const view3 = tree.viewWith(
+							new TreeViewConfiguration({
+								schema: BoxArray,
+								enableSchemaValidation: true,
+							}),
+						);
+						assert(view3 instanceof SchematizingSimpleTreeView);
+						assert(view3.compatibility.canView);
+						assert(view3.compatibility.canUpgrade);
+						view3.upgradeSchema();
 
-					view2.root[0].secret = "B☠️";
-					view2.dispose();
-
-					// Restore schema which does now allows Boxes with secrets in root array.
-					const view3 = tree.viewWith(
-						new TreeViewConfiguration({
-							schema: BoxArray,
-							enableSchemaValidation: true,
-						}),
-					);
-					assert(view3 instanceof SchematizingSimpleTreeView);
-					scenarioStuffHiddenSecretInBoxReachedSchemaRollback = true;
-					view3.upgradeSchema();
-
-					return view3;
+						return view3;
+					},
+					expectSurvivingMarker: true,
+				} as const satisfies BoxArrayScenario,
+				{
+					minimize,
+					validateConsistency: true,
 				},
-				expectSurvivingMarker: false,
-			} as const satisfies BoxArrayScenario);
-			assert.equal(
-				// @ts-expect-error -- Property 'secret' does not exist on type 'Box'.
-				view.root[0].secret,
-				"B☠️",
 			);
-		}, /Existing stored schema cannot be upgraded/);
+			assert.equal(view.root[0].value, "A⌚");
+			assert.equal("secret" in view.root[0], false);
+			assert.match(stringifiedChange, /B❤️/);
+			view.dispose();
 
-		assert(
-			scenarioStuffHiddenSecretInBoxReachedSchemaRollback,
-			"scenario did not reach schema rollback step",
-		);
-	});
+			// Restoring the field declaration exposes the retained content without another upgrade.
+			const restoredView = updatedTree.viewWith(
+				new TreeViewConfiguration(SketchyBoxArraySchemaConfig),
+			);
+			assert(restoredView.compatibility.canView);
+			assert.equal(restoredView.root[0].value, "A⌚");
+			assert.equal(restoredView.root[0].secret, "B❤️");
+			restoredView.dispose();
+		});
+	}
 
 	// These tests assert that the squashed change carries no extraneous information about nodes that are not
 	// present in the final document.
@@ -2692,7 +2694,7 @@ describe("transaction minimize post-processor", () => {
 			scenarioName: string,
 		): void {
 			const { tree: unminimizedTree, view: unminimizedView } = runScenario(scenario, {
-				doNotMinimize: true,
+				minimize: false,
 			});
 			const { tree: minimizedTree, view: minimizedView } = runScenario(scenario, {
 				validateConsistency: true,

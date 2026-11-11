@@ -11,7 +11,11 @@ Understanding which types of schema changes are safe versus breaking is crucial 
 Writing a test using <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">`snapshotSchemaCompatibility`</ApiLink> is highly recommended to ensure any schema changes maintain your compatibility requirements.
 Knowledge of the details below will still be needed to design schemas such that the required future changes can be compatible, and to understand any errors detected by the test.
 
+The tables below distinguish two directions of compatibility: [backward compatibility](./index.mdx#backwards-compatibility) (BC) lets a later view use earlier documents, while [forward compatibility](./index.mdx#forwards-compatibility) (FC) lets an earlier view use later documents.
+Where viewing requires a schema upgrade, the explanation identifies that extra step; compatibility does not necessarily mean the document can be used as-is.
+
 All the examples below are modifying this schema:
+
 ```typescript
 class Note extends factory.object("Note", {
     id: factory.string,
@@ -22,6 +26,7 @@ class Note extends factory.object("Note", {
 
 ## Compatible Changes
 
+
 The following changes are [backwards compatible](./index.mdx#backwards-compatibility).
 However, it's important that applications carefully review whether the change is [forwards compatible](./index.mdx#forwards-compatibility) inherently or if a [staged rollout](./index.mdx#staged-rollouts) is necessary.
 
@@ -29,7 +34,7 @@ However, it's important that applications carefully review whether the change is
 
 BC | FC
 ---| ---
-✅ | ❌
+✅ | ✅ if the **older view's object schema** allows unknown optional fields\*
 
 ```typescript
 class Note extends factory.object("Note", {
@@ -40,8 +45,11 @@ class Note extends factory.object("Note", {
 }) {}
 ```
 
-To ensure [forwards compatibility](./index.mdx#understanding-compatibility), use <ApiLink package="fluid-framework" api="ObjectSchemaOptions.allowUnknownOptionalFields">`allowUnknownOptionalFields`</ApiLink> to handle new optional fields added by newer clients.
-Note that this needs to already be set on the old clients before the field is added.
+:::caution
+The table's forwards-compatibility result depends on the older clients, not just the new declaration shown above.
+Those clients must already enable <ApiLink package="fluid-framework" api="ObjectSchemaOptions.allowUnknownOptionalFields">`allowUnknownOptionalFields`</ApiLink> to tolerate the added field.
+Although the option now defaults to `true`, check the settings and library versions of deployed clients before relying on that default.
+
 If it's not already set, then adding a new optional field at the same time as enabling `allowUnknownOptionalFields` is not forwards compatible, since old clients without `allowUnknownOptionalFields` will reject the unknown field.
 In that case, a [staged rollout](./index.mdx#staged-rollouts) is needed: first release a version that enables `allowUnknownOptionalFields`, then add the new field in a subsequent release.
 
@@ -53,6 +61,33 @@ class Note extends factory.object("Note", {
     // Existing optional fields
 }, { allowUnknownOptionalFields: true }) {}
 ```
+:::
+
+### Removing Optional Fields from a View
+
+BC | FC
+---| ---
+✅ if the **newer view's object schema** allows unknown optional fields\* | ✅
+
+```typescript
+// Remove the optional `color` field from application code.
+// This does not remove it from existing stored documents.
+class Note extends factory.object("Note", {
+    id: factory.string,
+    text: factory.string,
+    // color: factory.optional([factory.string, factory.number]), // REMOVED
+}) {}
+```
+
+On an existing document, the reduced view treats `color` as an unknown optional field.
+It can still read and edit `id` and `text`, and later compatible upgrades retain `color` with its allowed types, referenced node definitions, and data.
+Removing the view declaration therefore does not erase historical data or reduce document storage.
+
+In contrast, a new document initialized with the reduced view has no `color` field in its stored schema.
+An older client that declares `color` must upgrade that document before using its view, so a rollout must support both immediate viewing and viewing after an upgrade.
+
+If a later release restores a compatible declaration with the same stored key, retained `color` data becomes accessible again.
+This does not permit reusing the key for an incompatible field; see the [rollback example and data-loss warnings](./index.mdx#removing-optional-fields-and-rolling-back-code).
 
 ### Making Required Fields Optional
 
@@ -89,12 +124,14 @@ See [Rolling Out New Allowed Types](./allowed-types-rollout.mdx) for details.
 
 ## Incompatible Changes
 
-These changes are not supported because they would otherwise make newer clients unable to open older documents and older clients unable to open newer documents.
+The following changes remove assumptions that existing clients or documents rely on.
+An upgrade can add permissions to the stored schema, but it cannot teach a view to handle a value or missing field that the view no longer supports.
+For that reason, preserving existing content in an upgrade candidate is not enough to make these changes compatible.
 
-### Removing Fields
+### Removing Required Fields
 
 ```typescript
-// Breaking: Removing field
+// Breaking: Removing a required field
 class Note extends factory.object("Note", {
     id: factory.string,
     // text: factory.string, // REMOVED
@@ -123,8 +160,9 @@ class Note extends factory.object("Note", {
 Backward compatibility: this change prevents newer clients from opening documents created with the old schema,
 because those documents may not have the `color` field, which such clients are expecting to be populated.
 
-Forward compatibility: this change prevents older clients from opening documents created with the new schema,
-because those documents will require the `color` field on new `Note` instances, which such clients are not guaranteed to write and expect to be able to clear.
+Forward compatibility: an older view still permits clearing `color`, so it cannot use a document whose stored schema requires that field.
+It may be able to upgrade the document to make `color` optional again, but this does not solve the new view's inability to read historical documents where `color` is absent.
+The change is therefore not safe for a rollout that must continue to support those documents.
 
 ### Changing Field Types
 
@@ -140,8 +178,9 @@ class Note extends factory.object("Note", {
 Backward compatibility: this change prevents newer clients from opening documents created with the old schema,
 because those documents will use the `string` type for the `id` field, which such clients read and write as `number`.
 
-Forward compatibility: this change prevents older clients from opening documents created with the new schema,
-because those documents will use the `number` type for the `id` field, which such clients read and write as `string`.
+Forward compatibility: older clients expect string `id` values and cannot read the numbers permitted by the new document schema.
+An upgrade that retained both types would preserve existing content, but the older view would still lack number support.
+The upgrade must therefore be rejected rather than treating the larger type set as proof of compatibility.
 
 ### Removing Allowed Types
 
@@ -157,8 +196,9 @@ class Note extends factory.object("Note", {
 Backward compatibility: this change prevents newer clients from opening documents created with the old schema,
 because those documents can use the `number` type for the `color` field, which such clients read and write as `string`.
 
-Forward compatibility: this change prevents older clients from opening documents created with the new schema,
-because those documents will only use the `string` type for the `id` field, which such clients can write as `number`.
+Forward compatibility: the older view still allows writing numbers to `color`, so it must upgrade a new string-only document before using it.
+Restoring number support can be safe for that older view, but the resulting document is no longer compatible with the narrowed, string-only view.
+The ability to perform that upgrade therefore does not make the two application versions compatible collaborators.
 
 ## See Also
 

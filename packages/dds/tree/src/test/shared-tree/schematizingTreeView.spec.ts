@@ -38,6 +38,7 @@ import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTre
 import {
 	SchemaFactory,
 	SchemaFactoryAlpha,
+	type SchemaCompatibilityStatusAlpha,
 	TreeViewConfiguration,
 	type ImplicitFieldSchema,
 	type InsertableField,
@@ -604,13 +605,16 @@ describe("SchematizingSimpleTreeView", () => {
 			new MockNodeIdentifierManager(),
 		);
 
-		// The unknown optional address field does not block viewing, but an upgrade cannot remove it.
+		// The unknown optional address field permits viewing and is retained by upgrades.
 		assert.equal(viewSpecific.compatibility.canView, true);
-		assert.equal(viewSpecific.compatibility.canUpgrade, false);
+		assert.equal(viewSpecific.compatibility.canUpgrade, true);
 
 		// The document is already initialized, and there are no differences that prevent viewing.
 		assert.equal(viewSpecific.compatibility.canInitialize, false);
 		assert.equal(viewSpecific.compatibility.discrepancies, undefined);
+		assert.deepEqual(viewSpecific.compatibility.retainedUnknownOptionalFields, [
+			{ nodeType: PersonSpecific.identifier, fieldKey: "address" },
+		]);
 
 		assert.equal(Object.keys(viewSpecific.root).length, 2);
 		assert.equal(Object.entries(viewSpecific.root).length, 2);
@@ -671,13 +675,16 @@ describe("SchematizingSimpleTreeView", () => {
 			new MockNodeIdentifierManager(),
 		);
 
-		// Unknown optional fields permit viewing and moving people, but an upgrade cannot remove address.
+		// Unknown optional fields permit viewing and moving people, and upgrades retain address.
 		assert.equal(viewSpecific.compatibility.canView, true);
-		assert.equal(viewSpecific.compatibility.canUpgrade, false);
+		assert.equal(viewSpecific.compatibility.canUpgrade, true);
 
 		// The document is already initialized, and the unknown field does not prevent viewing.
 		assert.equal(viewSpecific.compatibility.canInitialize, false);
 		assert.equal(viewSpecific.compatibility.discrepancies, undefined);
+		assert.deepEqual(viewSpecific.compatibility.retainedUnknownOptionalFields, [
+			{ nodeType: PersonSpecific.identifier, fieldKey: "address" },
+		]);
 
 		viewSpecific.root.moveRangeToEnd(0, 1);
 
@@ -707,6 +714,124 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(viewGeneralized.root[1].name, "Alice");
 		assert.equal(viewGeneralized.root[1].age, 42);
 		assert.equal(viewGeneralized.root[1].address, "123 Main St");
+	});
+
+	describe("retainedUnknownOptionalFields", () => {
+		it("keeps the report after an upgrade and omits it when the application declares the field again", () => {
+			const factory = new SchemaFactory("taskRetentionReport");
+			class Before extends factory.object("Task", {
+				title: factory.string,
+				notes: factory.optional(factory.string),
+			}) {}
+
+			// Retire notes and add approval, requiring a composed upgrade of the existing document.
+			class After extends factory.object("Task", {
+				title: factory.string,
+				isApproved: factory.optional(factory.boolean),
+			}) {}
+
+			// Restore notes alongside approval so neither field is unknown to this view.
+			class Restored extends factory.object("Task", {
+				title: factory.string,
+				notes: factory.optional(factory.string),
+				isApproved: factory.optional(factory.boolean),
+			}) {}
+			const provider = new TestTreeProviderLite(2);
+			const [documentTree, readerTree] = provider.trees;
+			const creator = documentTree.viewWith(new TreeViewConfiguration({ schema: Before }));
+			creator.initialize({ title: "Prepare release", notes: "Ask the reviewer" });
+			provider.synchronizeMessages();
+			const reader = asAlpha(
+				readerTree.viewWith(new TreeViewConfiguration({ schema: After })),
+			);
+			const expected = [{ nodeType: After.identifier, fieldKey: "notes" }];
+
+			// The informational report is available even before the approval field has been added.
+			assert.equal(reader.compatibility.canView, false);
+			assert.equal(reader.compatibility.canUpgrade, true);
+			assert.deepEqual(reader.compatibility.retainedUnknownOptionalFields, expected);
+			assert.notEqual(reader.compatibility.discrepancies, undefined);
+			reader.upgradeSchema();
+			provider.synchronizeMessages();
+
+			// Adding approval resolves viewing blockers, not the intentional omission of notes.
+			assert.deepEqual(reader.compatibility.retainedUnknownOptionalFields, expected);
+			assert.equal(reader.compatibility.discrepancies, undefined);
+			assert.equal(reader.compatibility.canView, true);
+			assert.equal("notes" in reader.root, false);
+			reader.root.isApproved = true;
+			provider.synchronizeMessages();
+			assert.equal(creator.root.notes, "Ask the reviewer");
+			reader.dispose();
+
+			const restored = asAlpha(
+				readerTree.viewWith(new TreeViewConfiguration({ schema: Restored })),
+			);
+			assert.equal("retainedUnknownOptionalFields" in restored.compatibility, false);
+			assert.equal(restored.root.notes, "Ask the reviewer");
+			assert.equal(restored.root.isApproved, true);
+		});
+
+		it("refreshes the report when a remote client adds optional fields while keeping the older view compatible", () => {
+			const factory = new SchemaFactory("remoteRetentionReport");
+			class Before extends factory.object("Task", { title: factory.string }) {}
+
+			// Add two optional fields in the newer version; the older client must retain both even when their values are absent.
+			class After extends factory.object("Task", {
+				title: factory.string,
+				notes: factory.optional(factory.string),
+				isApproved: factory.optional(factory.boolean),
+			}) {}
+			const provider = new TestTreeProviderLite(2);
+			const [olderTree, newerTree] = provider.trees;
+			const older = asAlpha(olderTree.viewWith(new TreeViewConfiguration({ schema: Before })));
+			assert.equal("retainedUnknownOptionalFields" in older.compatibility, false);
+			older.initialize({ title: "Prepare release" });
+			provider.synchronizeMessages();
+			assert.equal("retainedUnknownOptionalFields" in older.compatibility, false);
+			const newer = newerTree.viewWith(new TreeViewConfiguration({ schema: After }));
+			const expected = [
+				{ nodeType: Before.identifier, fieldKey: "isApproved" },
+				{ nodeType: Before.identifier, fieldKey: "notes" },
+			];
+			const reports: SchemaCompatibilityStatusAlpha["retainedUnknownOptionalFields"][] = [];
+			const unsubscribe = older.events.on("schemaChanged", () => {
+				reports.push(older.compatibility.retainedUnknownOptionalFields);
+			});
+			try {
+				newer.upgradeSchema();
+				provider.synchronizeMessages();
+
+				// The schema-change callback must observe the refreshed, sorted report, not a stale cached status.
+				assert.deepEqual(reports, [expected]);
+				assert.deepEqual(older.compatibility.retainedUnknownOptionalFields, expected);
+				assert.equal(older.compatibility.canView, true);
+				assert.equal(older.compatibility.discrepancies, undefined);
+				assert.equal(older.root.title, "Prepare release");
+				assert.equal(newer.root.notes, undefined);
+
+				// Retention is schema-based: writing data does not alter the report or require another schema event.
+				newer.root.notes = "Review pending";
+				provider.synchronizeMessages();
+				assert.deepEqual(reports, [expected]);
+				older.root.title = "Ready for review";
+				provider.synchronizeMessages();
+				assert.equal(newer.root.title, "Ready for review");
+				assert.equal(newer.root.notes, "Review pending");
+
+				// A preserving no-op upgrade keeps the report and emits no operation or schema-change event.
+				const sequenceNumber = provider.sequenceNumber;
+				const rootBeforeNoOp = older.root;
+				older.upgradeSchema();
+				provider.synchronizeMessages();
+				assert.equal(provider.sequenceNumber, sequenceNumber);
+				assert.deepEqual(reports, [expected]);
+				assert.equal(older.root, rootBeforeNoOp);
+				assert.deepEqual(older.compatibility.retainedUnknownOptionalFields, expected);
+			} finally {
+				unsubscribe();
+			}
+		});
 	});
 
 	describe("unknownFieldSchemas", () => {
@@ -1439,7 +1564,6 @@ describe("SchematizingSimpleTreeView", () => {
 				assert.equal(viewB.root.content, 43);
 				// ...but then is rolled back after sequencing because the child node was removed by Tree A.
 				provider.synchronizeMessages();
-				assert.equal(viewB.root.content, 42);
 				assert.equal(viewB.root.content, 42);
 			});
 

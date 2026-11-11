@@ -5,8 +5,15 @@
 
 import { strict as assert } from "node:assert";
 
-import { asAlpha } from "../api.js";
+import { asAlpha, asBeta } from "../api.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Verify alpha entrypoint availability.
+import type { SchemaCompatibilityStatusAlpha } from "../entrypoints/alpha.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Verify public entrypoint exclusion.
+import type * as PublicApi from "../entrypoints/public.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Verify beta entrypoint exclusion.
+import type * as BetaApi from "../entrypoints/beta.js";
 import {
+	allowUnused,
 	SchemaFactory,
 	type ImplicitAllowedTypes,
 	type TreeArrayNode,
@@ -14,10 +21,12 @@ import {
 	type TreeMapNode,
 	type TreeMapNodeAlpha,
 	typeSchemaSymbol,
+	TreeViewConfiguration,
 } from "../simple-tree/index.js";
 import type { areSafelyAssignable, requireAssignableTo, requireTrue } from "../util/index.js";
 
 import { describeHydration } from "./simple-tree/index.js";
+import { TestTreeProviderLite } from "./utils.js";
 
 const sf = new SchemaFactory("api-conversion");
 
@@ -36,6 +45,40 @@ class NumberMap extends sf.map("NumberMap", sf.number) {
 }
 
 describe("asAlpha", () => {
+	it("exposes retained-field diagnostics only through the alpha compatibility type", () => {
+		class Task extends sf.object("Task", { title: sf.string }) {}
+		const provider = new TestTreeProviderLite(1);
+		const view = provider.trees[0].viewWith(new TreeViewConfiguration({ schema: Task }));
+		view.initialize({ title: "Review diagnostics" });
+		const alpha = asAlpha(view);
+		const compatibility: SchemaCompatibilityStatusAlpha = alpha.compatibility;
+		assert.equal(alpha, view);
+		assert.equal("retainedUnknownOptionalFields" in compatibility, false);
+
+		// Alpha status still satisfies the public and beta contracts, but those tiers do not expose its additional diagnostics.
+		type _publicBase = requireAssignableTo<
+			SchemaCompatibilityStatusAlpha,
+			PublicApi.SchemaCompatibilityStatus
+		>;
+		type _betaBase = requireAssignableTo<
+			SchemaCompatibilityStatusAlpha,
+			BetaApi.SchemaCompatibilityStatusBeta
+		>;
+		type _alphaStatus = requireTrue<
+			areSafelyAssignable<typeof alpha.compatibility, SchemaCompatibilityStatusAlpha>
+		>;
+		function _checkTierBoundaries(): void {
+			// @ts-expect-error Retention diagnostics are not on the public view status.
+			allowUnused(view.compatibility.retainedUnknownOptionalFields);
+			// @ts-expect-error Retention diagnostics are not on the beta view status.
+			allowUnused(asBeta(view).compatibility.retainedUnknownOptionalFields);
+			// @ts-expect-error The alpha status type is not exported from the public entrypoint.
+			type _publicExport = PublicApi.SchemaCompatibilityStatusAlpha;
+			// @ts-expect-error The alpha status type is not exported from the beta entrypoint.
+			type _betaExport = BetaApi.SchemaCompatibilityStatusAlpha;
+		}
+	});
+
 	describeHydration("ArrayNode", (init) => {
 		it("preserves customized array types and types the alpha methods", () => {
 			const node = init(Numbers, [1]);

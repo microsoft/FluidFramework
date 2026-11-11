@@ -15,29 +15,53 @@ import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js"
 import { NodeKind } from "../core/index.js";
 import { allowsRepoSuperset, defaultSchemaPolicy } from "../../feature-libraries/index.js";
 import { resolveStoredSchemaGenerationOptions } from "../toStoredSchema.js";
-import { toUpgradeSchema, type TreeSchema } from "../treeSchema.js";
+import { getSchemaUpgradeCandidate, type TreeSchema } from "../treeSchema.js";
 
 import {
 	getDiscrepanciesInAllowedContent,
 	type Discrepancy,
 	type UpgradeLocationCollector,
 } from "./discrepancies.js";
-import type { SchemaCompatibilityStatusBeta, SchemaDiscrepancy } from "./tree.js";
+import type { SchemaCompatibilityStatusAlpha, SchemaDiscrepancy } from "./tree.js";
 
 /**
- * Describes the discrepancies that prevent a view schema from viewing a stored schema as a
- * readonly array.
+ * Returns discrepancies that prevent the view from providing read/write access to documents using the stored schema.
+ * @remarks
+ * The returned set of discrepancies does not indicate whether an upgrade can make the document viewable.
+ *
+ * @param viewSchema - The view schema requesting access to the document.
+ * @param storedSchema - The stored schema to check against the view.
+ * @returns The viewing blockers, or `undefined` if `viewSchema` can view `storedSchema` as-is.
  */
-export function getSchemaIncompatibilityDetails(
+export function getViewBlockers(
 	viewSchema: TreeSchema,
-	stored: TreeStoredSchema,
+	storedSchema: TreeStoredSchema,
 ): readonly SchemaDiscrepancy[] | undefined {
-	const discrepancies = [...getDiscrepanciesInAllowedContent(viewSchema, stored)];
+	const discrepancies = [...getDiscrepanciesInAllowedContent(viewSchema, storedSchema)];
 	if (discrepancies.length === 0) {
 		return undefined;
 	}
 
 	return discrepancies.map(formatSchemaDiscrepancy);
+}
+
+/**
+ * Checks whether an upgrade candidate would enable the view to access the document.
+ *
+ * @param viewSchema - The view schema that must be able to use the document after the upgrade.
+ * @param storedSchema - The document's stored schema before the upgrade.
+ * @param candidate - The proposed stored schema after the upgrade.
+ * @returns Whether the candidate passes the default schema upgrade rules and has no viewing blockers.
+ */
+export function isSchemaUpgradeAllowed(
+	viewSchema: TreeSchema,
+	storedSchema: TreeStoredSchema,
+	candidate: TreeStoredSchema,
+): boolean {
+	return (
+		allowsRepoSuperset(defaultSchemaPolicy, storedSchema, candidate) &&
+		getViewBlockers(viewSchema, candidate) === undefined
+	);
 }
 
 function formatSchemaDiscrepancy(value: Discrepancy): SchemaDiscrepancy {
@@ -135,14 +159,12 @@ export function checkSchemaCompatibility(
 	viewSchema: TreeSchema,
 	stored: TreeStoredSchema,
 	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
-): Omit<SchemaCompatibilityStatusBeta, "canInitialize"> & {
+): Omit<SchemaCompatibilityStatusAlpha, "canInitialize"> & {
 	enabledUpgrades: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
 } {
 	// The public API surface assumes defaultSchemaPolicy
 	const policy = defaultSchemaPolicy;
 	const configuredPolicy = resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades);
-	const includeAlreadyEnabledUpgrades =
-		configuredPolicy.includeAlreadyEnabledUpgrades ?? false;
 
 	// Collect upgrade locations during the discrepancy walk (single pass).
 	const totalLocations = new Map<SchemaUpgrade, number>();
@@ -179,12 +201,14 @@ export function checkSchemaCompatibility(
 	const canView = discrepancies.length === 0;
 
 	const enabledUpgrades = computeUpgradeStatuses(totalLocations, enabledLocations);
-	const upgradePolicy = includeAlreadyEnabledUpgrades
-		? includeEnabledUpgrades(configuredPolicy, enabledUpgrades)
-		: configuredPolicy;
-	const wouldUpgradeTo = toUpgradeSchema(viewSchema.root, upgradePolicy);
+	const { schema: wouldUpgradeTo, retainedUnknownOptionalFields } = getSchemaUpgradeCandidate(
+		viewSchema,
+		stored,
+		configuredPolicy,
+	);
 
-	const canUpgrade = allowsRepoSuperset(policy, stored, wouldUpgradeTo);
+	// The upgrade must preserve existing permissions and allow this view to read and edit the resulting schema.
+	const canUpgrade = isSchemaUpgradeAllowed(viewSchema, stored, wouldUpgradeTo);
 
 	// If true, then upgrading has no effect on what can be stored in the document.
 	// TODO: This should likely be changed to indicate up a schema upgrade would be a no-op, including stored schema metadata.
@@ -196,22 +220,9 @@ export function checkSchemaCompatibility(
 		canUpgrade,
 		isEquivalent,
 		discrepancies: canView ? undefined : discrepancies,
+		// Don't include `retainedUnknownOptionalFields` property if there are none to report.
+		...(retainedUnknownOptionalFields.length === 0 ? {} : { retainedUnknownOptionalFields }),
 		enabledUpgrades,
-	};
-}
-
-function includeEnabledUpgrades(
-	configuredPolicy: StagedSchemaUpgradePolicy,
-	enabledUpgrades: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>,
-): StagedSchemaUpgradePolicy {
-	if (enabledUpgrades.size === 0) {
-		return configuredPolicy;
-	}
-	return {
-		includeStaged: (upgrade) =>
-			configuredPolicy.includeStaged(upgrade) || enabledUpgrades.has(upgrade),
-		includeStagedOptional: (upgrade) =>
-			configuredPolicy.includeStagedOptional(upgrade) || enabledUpgrades.has(upgrade),
 	};
 }
 

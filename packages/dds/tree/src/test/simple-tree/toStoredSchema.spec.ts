@@ -16,13 +16,12 @@ import {
 	encodeSchemaCompatibilitySnapshot,
 	normalizeFieldSchema,
 } from "../../simple-tree/index.js";
-import { createSchemaGraph } from "./schemaTestUtils.js";
+import { createSchemaGraph, getObjectNodeSchema, typeSet } from "./schemaTestUtils.js";
 
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	EmptyKey,
-	ObjectNodeStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchema,
 } from "../../core/index.js";
@@ -77,19 +76,6 @@ import {
 
 function getTestDocumentSchemaData(name: string): TreeStoredSchema {
 	return testDocuments.find((test) => test.name === name)?.schemaData ?? assert.fail();
-}
-
-function getObjectNodeSchema(
-	schema: TreeStoredSchema,
-	identifier: string,
-): ObjectNodeStoredSchema {
-	const node = schema.nodeSchema.get(brand(identifier)) ?? assert.fail();
-	assert(node instanceof ObjectNodeStoredSchema);
-	return node;
-}
-
-function typeSet(...identifiers: string[]): Set<TreeNodeSchemaIdentifier> {
-	return new Set(identifiers.map((identifier) => brand<TreeNodeSchemaIdentifier>(identifier)));
 }
 
 // Context identity, initialization order, and failed context construction are covered in createContext.spec.ts.
@@ -494,7 +480,6 @@ describe("toStoredSchema", () => {
 							assert.strictEqual(
 								toStoredSchema(root, {
 									...restrictivePolicy,
-									includeAlreadyEnabledUpgrades: true,
 								}),
 								permissive,
 							);

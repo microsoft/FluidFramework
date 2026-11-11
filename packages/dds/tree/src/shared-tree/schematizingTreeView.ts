@@ -33,12 +33,15 @@ import {
 import {
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatusBeta,
+	type SchemaCompatibilityStatusAlpha,
 	type TreeContextAlpha,
 	type TreeViewEvents,
 	tryGetTreeNodeForField,
 	setField,
 	normalizeFieldSchema,
 	checkSchemaCompatibility,
+	isSchemaUpgradeAllowed,
+	getSchemaUpgradeCandidate,
 	type InsertableContent,
 	type StagedSchemaUpgradePolicy,
 	type TreeViewConfiguration,
@@ -61,7 +64,6 @@ import {
 	tryDisposeTreeNode,
 	type TreeViewConfigurationAlpha,
 	toInitialSchema,
-	toUpgradeSchema,
 	type TreeBranchHistory,
 	type TreeLocationResolver,
 	type TreeLocation,
@@ -181,7 +183,7 @@ export class SchematizingSimpleTreeView<
 	/**
 	 * Undefined if and only if uninitialized or disposed.
 	 */
-	private currentCompatibility: SchemaCompatibilityStatusBeta | undefined;
+	private currentCompatibility: SchemaCompatibilityStatusAlpha | undefined;
 	/**
 	 * Cached map of upgrade statuses, computed alongside compatibility.
 	 * @remarks Undefined if and only if uninitialized or disposed.
@@ -399,10 +401,15 @@ export class SchematizingSimpleTreeView<
 	public upgradeSchema(): void {
 		this.ensureUndisposed();
 
-		const upgradePolicy = this.effectiveUpgradePolicy;
-		const newSchema = toUpgradeSchema(this.viewSchema.root, upgradePolicy);
+		const upgradePolicy = this.stagedUpgradePolicy;
 		const storedSchema = this.checkout.storedSchema.clone();
-		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
+		const newSchema = getSchemaUpgradeCandidate(
+			this.viewSchema,
+			storedSchema,
+			upgradePolicy,
+		).schema;
+
+		if (!isSchemaUpgradeAllowed(this.viewSchema, storedSchema, newSchema)) {
 			throw new UsageError(
 				"Existing stored schema cannot be upgraded to the requested schema (see TreeView.compatibility.canUpgrade).",
 			);
@@ -439,28 +446,6 @@ export class SchematizingSimpleTreeView<
 			this.failDisposed();
 		}
 		return this.currentEnabledUpgrades.get(upgrade) ?? "disabled";
-	}
-
-	private get effectiveUpgradePolicy(): StagedSchemaUpgradePolicy {
-		const configuredPolicy = this.stagedUpgradePolicy;
-		if (configuredPolicy.includeAlreadyEnabledUpgrades !== true) {
-			return configuredPolicy;
-		}
-		const enabledUpgrades = this.currentEnabledUpgrades;
-		assert(
-			enabledUpgrades !== undefined,
-			0xd3e /* Enabled upgrades must be available for an active view */,
-		);
-		if (enabledUpgrades.size === 0) {
-			return configuredPolicy;
-		}
-
-		return {
-			includeStaged: (upgrade) =>
-				configuredPolicy.includeStaged(upgrade) || enabledUpgrades.has(upgrade),
-			includeStagedOptional: (upgrade) =>
-				configuredPolicy.includeStagedOptional(upgrade) || enabledUpgrades.has(upgrade),
-		};
 	}
 
 	/**
@@ -615,7 +600,7 @@ export class SchematizingSimpleTreeView<
 	/**
 	 * Computes the current schema compatibility status and updates the cached enabled upgrades.
 	 */
-	private computeCompatibility(): SchemaCompatibilityStatusBeta {
+	private computeCompatibility(): SchemaCompatibilityStatusAlpha {
 		const { enabledUpgrades, ...compatibility } = checkSchemaCompatibility(
 			this.viewSchema,
 			this.checkout.storedSchema,
@@ -669,7 +654,7 @@ export class SchematizingSimpleTreeView<
 		return this.currentUnknownFieldSchemas;
 	}
 
-	public get compatibility(): SchemaCompatibilityStatusBeta {
+	public get compatibility(): SchemaCompatibilityStatusAlpha {
 		if (!this.currentCompatibility) {
 			this.failDisposed();
 		}

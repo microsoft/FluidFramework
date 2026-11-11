@@ -9,24 +9,33 @@ import { validateUsageError } from "@fluidframework/test-runtime-utils/internal"
 
 import {
 	getTreeNodeSchemaPrivateData,
+	StagedSchemaUpgradePolicy,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
-import { normalizeFieldSchema, SchemaFactoryAlpha } from "../../simple-tree/index.js";
+import {
+	type ImplicitFieldSchema,
+	normalizeFieldSchema,
+	SchemaFactoryAlpha,
+} from "../../simple-tree/index.js";
 import {
 	hasCachedRootSchemaDerivedDataForTesting,
 	hasCachedSchemaComponentForTesting,
 	createTreeSchema,
+	getSchemaUpgradeCandidate,
 	getRootSchemaDerivedData,
 	SchemaComponent,
+	type SchemaUpgradeCandidate,
+	toInitialSchema,
 	type TransitiveSchemaInfo,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/treeSchema.js";
-import { oneFromIterable } from "../../util/index.js";
+import { brand, oneFromIterable } from "../../util/index.js";
 import { getStagedSchemaUpgrades, testSchema } from "../testTrees.js";
-import { createSchemaGraph } from "./schemaTestUtils.js";
+import { expectSchemaEqual } from "../utils.js";
+import { createSchemaGraph, getObjectNodeSchema } from "./schemaTestUtils.js";
 
 // Configuration-specific validation is covered in api/configuration.spec.ts.
-// Stored conversion and context integration are covered in toStoredSchema.spec.ts and createContext.spec.ts.
+// View-only stored conversion and context integration are covered in toStoredSchema.spec.ts and createContext.spec.ts.
 describe("treeSchema", () => {
 	describe("createTreeSchema", () => {
 		it("builds independent graphs without populating component analysis", () => {
@@ -402,6 +411,638 @@ describe("treeSchema", () => {
 					}
 				});
 			}
+		});
+	});
+
+	describe("getSchemaUpgradeCandidate", () => {
+		/**
+		 * Verifies the complete candidate schema and its retained-field report without checking upgrade permission.
+		 *
+		 * @param actual - The candidate returned by the builder.
+		 * @param expected - The expected stored schema and retained-field locations in report order.
+		 */
+		function expectUpgradeCandidate(
+			actual: SchemaUpgradeCandidate,
+			expected: SchemaUpgradeCandidate,
+		): void {
+			expectSchemaEqual(actual.schema, expected.schema);
+			assert.deepEqual(
+				actual.retainedUnknownOptionalFields,
+				expected.retainedUnknownOptionalFields,
+			);
+		}
+
+		const schemaFactory = new SchemaFactoryAlpha("upgradeTarget");
+
+		// Reuse stored identifiers to model different application versions.
+		// Each view contains only one declaration for each identifier.
+
+		it("returns an equivalent target and no retained fields when the schemas match", () => {
+			class Task extends schemaFactory.object("Task", { title: schemaFactory.string }) {}
+			const viewSchema = createTreeSchema(Task);
+			const storedSchema = toInitialSchema(Task);
+			const result = getSchemaUpgradeCandidate(
+				viewSchema,
+				storedSchema,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+
+			expectUpgradeCandidate(result, {
+				schema: storedSchema,
+				// Every stored field is declared by the view, so there are no unknown optional fields to retain.
+				retainedUnknownOptionalFields: [],
+			});
+		});
+
+		for (const location of ["root", "array", "map"] as const) {
+			it(`composes stored allowed types without changing cached view-only schemas (${location})`, () => {
+				const priorities = [schemaFactory.number, schemaFactory.string] as const;
+				const stagedUnassigned = schemaFactory.staged(schemaFactory.null);
+				const unassignedUpgrade = stagedUnassigned.metadata.stagedSchemaUpgrade;
+				assert(unassignedUpgrade !== undefined);
+				const stagedPriorities = schemaFactory.types([
+					schemaFactory.number,
+					schemaFactory.staged(schemaFactory.string),
+					stagedUnassigned,
+				]);
+				const before: ImplicitFieldSchema =
+					location === "root"
+						? stagedPriorities
+						: location === "array"
+							? schemaFactory.array("Priorities", stagedPriorities)
+							: schemaFactory.map("Priorities", stagedPriorities);
+
+				// Fully enable string priorities in the later schema, without shipping the staged `null` alternative.
+				const after: ImplicitFieldSchema =
+					location === "root"
+						? priorities
+						: location === "array"
+							? schemaFactory.array("Priorities", priorities)
+							: schemaFactory.map("Priorities", priorities);
+
+				const policy = StagedSchemaUpgradePolicy.enabledStagedUpgrades(unassignedUpgrade);
+
+				// The older view enables `null` while opening a newer document; its candidate must also retain stored strings.
+				const expectedTypes = [schemaFactory.number, schemaFactory.string, schemaFactory.null];
+				const expectedCandidate: ImplicitFieldSchema =
+					location === "root"
+						? expectedTypes
+						: location === "array"
+							? schemaFactory.array("Priorities", expectedTypes)
+							: schemaFactory.map("Priorities", expectedTypes);
+
+				// The older view's own conversion includes numbers and the selected `null` type, but not its disabled staged string type.
+				// Do not use the cached conversion itself as the expectation: an accidental mutation would change both.
+				const freshTypes = [schemaFactory.number, schemaFactory.null];
+				const expectedFresh: ImplicitFieldSchema =
+					location === "root"
+						? freshTypes
+						: location === "array"
+							? schemaFactory.array("Priorities", freshTypes)
+							: schemaFactory.map("Priorities", freshTypes);
+				const stored = toInitialSchema(after);
+				const storedSnapshot = structuredClone(stored);
+				const fresh = toInitialSchema(before, policy);
+				const result = getSchemaUpgradeCandidate(createTreeSchema(before), stored, policy);
+
+				expectUpgradeCandidate(result, {
+					schema: toInitialSchema(expectedCandidate),
+					retainedUnknownOptionalFields: [],
+				});
+				assert.deepEqual(structuredClone(stored), storedSnapshot);
+
+				// Neither the cached conversion nor a candidate for another document may inherit these stored string permissions.
+				expectSchemaEqual(toInitialSchema(before, policy), toInitialSchema(expectedFresh));
+				expectUpgradeCandidate(
+					getSchemaUpgradeCandidate(createTreeSchema(before), fresh, policy),
+					{
+						schema: toInitialSchema(expectedFresh),
+						retainedUnknownOptionalFields: [],
+					},
+				);
+			});
+		}
+
+		it("composes object fields by stored key without enabling other fields that share their tokens", () => {
+			const stagedString = schemaFactory.staged(schemaFactory.string);
+			const stagedPriorities = schemaFactory.types([schemaFactory.number, stagedString]);
+			const stagedHours = schemaFactory.stagedOptional(schemaFactory.number);
+			class Before extends schemaFactory.object("Task", {
+				priority: schemaFactory.required(stagedPriorities, {
+					key: "primaryPriority",
+					persistedMetadata: { label: "Earlier priority label" },
+				}),
+				fallbackPriority: stagedPriorities,
+				primaryHours: stagedHours,
+				fallbackHours: stagedHours,
+			}) {}
+
+			// Fully enable the primary fields' staged changes, leave fallback fields numeric and required, and rename the property.
+			// Keep the primary field's stored key while updating its metadata.
+			class After extends schemaFactory.object("Task", {
+				primaryPriority: schemaFactory.required([schemaFactory.number, schemaFactory.string], {
+					persistedMetadata: { label: "Later priority label" },
+				}),
+				fallbackPriority: schemaFactory.number,
+				primaryHours: schemaFactory.optional(schemaFactory.number),
+				fallbackHours: schemaFactory.number,
+			}) {}
+
+			// The older view retains the newer document's primary permissions, using the older view's field metadata.
+			// Sharing the staged tokens does not add either permission to the fallback fields.
+			class Expected extends schemaFactory.object("Task", {
+				primaryPriority: schemaFactory.required([schemaFactory.number, schemaFactory.string], {
+					persistedMetadata: { label: "Earlier priority label" },
+				}),
+				fallbackPriority: schemaFactory.number,
+				primaryHours: schemaFactory.optional(schemaFactory.number),
+				fallbackHours: schemaFactory.number,
+			}) {}
+			const stored = toInitialSchema(After);
+			const storedSnapshot = structuredClone(stored);
+			const cachedSnapshot = structuredClone(toInitialSchema(Before));
+			const result = getSchemaUpgradeCandidate(
+				createTreeSchema(Before),
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+
+			expectUpgradeCandidate(result, {
+				schema: toInitialSchema(Expected),
+				retainedUnknownOptionalFields: [],
+			});
+
+			// Compare independent data snapshots so mutations to shared field maps, type sets, or metadata cannot pass unnoticed.
+			assert.deepEqual(structuredClone(stored), storedSnapshot);
+			assert.deepEqual(structuredClone(toInitialSchema(Before)), cachedSnapshot);
+		});
+
+		it("retains stored allowed types omitted from a declared field's view types", () => {
+			class Before extends schemaFactory.object("Task", {
+				priority: [schemaFactory.number, schemaFactory.string],
+			}) {}
+
+			// Drop string priorities from the application declaration without staging them.
+			class After extends schemaFactory.object("Task", {
+				priority: schemaFactory.number,
+			}) {}
+			const stored = toInitialSchema(Before);
+			const result = getSchemaUpgradeCandidate(
+				createTreeSchema(After),
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+
+			// Candidate construction preserves strings even though the view does not declare them.
+			// Deciding whether that candidate is usable belongs to the compatibility layer.
+			expectUpgradeCandidate(result, {
+				schema: stored,
+				retainedUnknownOptionalFields: [],
+			});
+		});
+
+		it("uses the view's candidate when its stored node kind differs", () => {
+			class Before extends schemaFactory.object("TaskLabels", {
+				owner: schemaFactory.optional(schemaFactory.string),
+			}) {}
+
+			// Replace a fixed set of label fields with arbitrary string-valued entries under the same stored identifier.
+			class After extends schemaFactory.map("TaskLabels", schemaFactory.string) {}
+			const result = getSchemaUpgradeCandidate(
+				createTreeSchema(After),
+				toInitialSchema(Before),
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+
+			// Object fields are not composed into a map definition; the candidate keeps the map representation selected by the view.
+			expectUpgradeCandidate(result, {
+				schema: toInitialSchema(After),
+				retainedUnknownOptionalFields: [],
+			});
+		});
+
+		it("preserves an optional root when the view stages optionality", () => {
+			class Task extends schemaFactory.object("Task", { title: schemaFactory.string }) {}
+			const before = schemaFactory.stagedOptional(Task);
+
+			// Fully enable optionality so documents created by the later schema can have an empty root.
+			const after = schemaFactory.optional(Task);
+			const stored = toInitialSchema(after);
+			const result = getSchemaUpgradeCandidate(
+				createTreeSchema(before),
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+
+			// The older view's restrictive candidate retains the newer document's permission to omit the root.
+			expectUpgradeCandidate(result, {
+				schema: stored,
+				retainedUnknownOptionalFields: [],
+			});
+			expectSchemaEqual(toInitialSchema(before), toInitialSchema(Task));
+		});
+
+		it("retains recursive definitions referenced only by an already-enabled staged root type", () => {
+			class Task extends schemaFactory.objectRecursive("Task", {
+				title: schemaFactory.string,
+				next: schemaFactory.optionalRecursive([() => Task]),
+			}) {}
+			const before = schemaFactory.types([schemaFactory.string, schemaFactory.staged(Task)]);
+
+			// Fully enable structured tasks alongside plain task titles in the later schema.
+			const after = [schemaFactory.string, Task] as const;
+			const stored = toInitialSchema(after);
+			const result = getSchemaUpgradeCandidate(
+				createTreeSchema(before),
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+
+			// The older view must retain the newer document's `Task` definition and recursive references.
+			expectUpgradeCandidate(result, {
+				schema: stored,
+				retainedUnknownOptionalFields: [],
+			});
+			assert(!toInitialSchema(before).nodeSchema.has(brand(Task.identifier)));
+		});
+
+		it("retains an omitted optional field and its metadata without replacing view metadata", () => {
+			const estimatedHours = schemaFactory.optional(schemaFactory.number, {
+				persistedMetadata: { unit: "hours" },
+			});
+			class Before extends schemaFactory.objectAlpha(
+				"Task",
+				{ title: schemaFactory.string, estimatedHours },
+				{ persistedMetadata: { description: "Task with effort estimates" } },
+			) {}
+
+			// Remove `estimatedHours` and update the task description to reflect the retired estimation feature.
+			class After extends schemaFactory.objectAlpha(
+				"Task",
+				{ title: schemaFactory.string },
+				{ persistedMetadata: { description: "Task without effort estimates" } },
+			) {}
+
+			// Retain `estimatedHours` and its units, but use `After`'s current task description.
+			class Expected extends schemaFactory.objectAlpha(
+				"Task",
+				{ title: schemaFactory.string, estimatedHours },
+				{ persistedMetadata: { description: "Task without effort estimates" } },
+			) {}
+			const stored = toInitialSchema(Before);
+			const result = getSchemaUpgradeCandidate(
+				createTreeSchema(After),
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+
+			expectUpgradeCandidate(result, {
+				schema: toInitialSchema(Expected),
+				retainedUnknownOptionalFields: [
+					{ nodeType: brand(After.identifier), fieldKey: brand("estimatedHours") },
+				],
+			});
+
+			const retained = getObjectNodeSchema(result.schema, After.identifier);
+			assert.deepEqual(retained.getFieldSchema(brand("estimatedHours")).persistedMetadata, {
+				unit: "hours",
+			});
+		});
+
+		// Each version introduces a type the other view does not know.
+		// The candidate must contain both fields and both complete node definitions.
+		describe("mutually unknown node types", () => {
+			class Reminder extends schemaFactory.objectAlpha(
+				"Reminder",
+				{ message: schemaFactory.string },
+				{ persistedMetadata: { feature: "reminders" } },
+			) {}
+			class TaskWithReminder extends schemaFactory.object("Task", {
+				reminder: schemaFactory.optional(Reminder),
+			}) {}
+
+			// Scheduling introduces a distinct node type, not a new definition of `Reminder`.
+			class Schedule extends schemaFactory.object("Schedule", {
+				durationMinutes: schemaFactory.number,
+			}) {}
+
+			// Replace `reminder?: Reminder` with `schedule?: Schedule` while keeping the stored `Task` identifier.
+			class TaskWithSchedule extends schemaFactory.object("Task", {
+				schedule: schemaFactory.optional(Schedule),
+			}) {}
+
+			// Either upgrade direction adds the view's field while retaining the other stored field.
+			// The target therefore includes both `reminder` and `schedule`, along with both node types.
+			class TaskWithBothFeatures extends schemaFactory.object("Task", {
+				reminder: schemaFactory.optional(Reminder),
+				schedule: schemaFactory.optional(Schedule),
+			}) {}
+
+			// Each row retains the original version's field and type while adding the other version's field.
+			for (const [original, view, retainedKey] of [
+				[TaskWithReminder, TaskWithSchedule, "reminder"],
+				[TaskWithSchedule, TaskWithReminder, "schedule"],
+			] as const) {
+				it(`retains ${retainedKey} and its node type while adding the other field`, () => {
+					const stored = toInitialSchema(original);
+					const result = getSchemaUpgradeCandidate(
+						createTreeSchema(view),
+						stored,
+						StagedSchemaUpgradePolicy.restrictive,
+					);
+					expectUpgradeCandidate(result, {
+						schema: toInitialSchema(TaskWithBothFeatures),
+						retainedUnknownOptionalFields: [
+							{ nodeType: brand(view.identifier), fieldKey: brand(retainedKey) },
+						],
+					});
+				});
+			}
+		});
+
+		it("retains recursive definitions reached through unknown map and array fields", () => {
+			class ChecklistStep extends schemaFactory.objectRecursive("ChecklistStep", {
+				instruction: schemaFactory.string,
+				next: schemaFactory.optionalRecursive([() => ChecklistStep]),
+			}) {}
+			class Checklist extends schemaFactory.array("Checklist", ChecklistStep) {}
+			class ChecklistsByCategory extends schemaFactory.map(
+				"ChecklistsByCategory",
+				Checklist,
+			) {}
+			class Before extends schemaFactory.object("Task", {
+				checklists: schemaFactory.optional(ChecklistsByCategory),
+			}) {}
+
+			// Replace categorized checklists with effort estimates, removing all view references to the checklist types.
+			class After extends schemaFactory.object("Task", {
+				estimatedHours: schemaFactory.optional(schemaFactory.number),
+			}) {}
+
+			// Add `estimatedHours` while retaining `checklists` and all definitions needed to interpret them.
+			class Expected extends schemaFactory.object("Task", {
+				checklists: schemaFactory.optional(ChecklistsByCategory),
+				estimatedHours: schemaFactory.optional(schemaFactory.number),
+			}) {}
+			const stored = toInitialSchema(Before);
+			const result = getSchemaUpgradeCandidate(
+				createTreeSchema(After),
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+
+			// `After` declares none of `ChecklistsByCategory`, `Checklist`, or `ChecklistStep`.
+			// Following the retained `checklists` field must include the map, array, and item definitions.
+			// `ChecklistStep.next` refers back to `ChecklistStep`; that reference must not cause an endless loop.
+			expectUpgradeCandidate(result, {
+				schema: toInitialSchema(Expected),
+				retainedUnknownOptionalFields: [
+					{ nodeType: brand(After.identifier), fieldKey: brand("checklists") },
+				],
+			});
+		});
+
+		it("uses stored keys when deciding whether a field was removed", () => {
+			class Before extends schemaFactory.object("Task", {
+				notes: schemaFactory.optional(schemaFactory.string),
+			}) {}
+
+			// Rename the property `notes` to `comments`, keeping its stored key `notes` and optional string type.
+			class After extends schemaFactory.object("Task", {
+				comments: schemaFactory.optional(schemaFactory.string, { key: "notes" }),
+			}) {}
+			const stored = toInitialSchema(Before);
+			const result = getSchemaUpgradeCandidate(
+				createTreeSchema(After),
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+
+			// `comments` still declares the stored field `notes`; this is a property rename, not field removal.
+			expectUpgradeCandidate(result, {
+				schema: stored,
+				retainedUnknownOptionalFields: [],
+			});
+		});
+
+		it("retains a stored key that matches the property name of another declared field", () => {
+			class Before extends schemaFactory.object("Task", {
+				completionPercent: schemaFactory.required(schemaFactory.number, { key: "progress" }),
+				previousCompletionPercent: schemaFactory.optional(schemaFactory.number, {
+					// This field is stored as `completionPercent`, while the property with that name is stored as `progress`.
+					key: "completionPercent",
+				}),
+			}) {}
+
+			// Remove `previousCompletionPercent` (stored key `completionPercent`), but keep the current progress field.
+			class After extends schemaFactory.object("Task", {
+				completionPercent: schemaFactory.required(schemaFactory.number, { key: "progress" }),
+			}) {}
+			const stored = toInitialSchema(Before);
+			const result = getSchemaUpgradeCandidate(
+				createTreeSchema(After),
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+
+			// `After`'s property `completionPercent` uses stored key `progress`.
+			// Stored key `completionPercent` is therefore still unknown despite matching a current property name.
+			expectUpgradeCandidate(result, {
+				schema: stored,
+				retainedUnknownOptionalFields: [
+					{ nodeType: brand(After.identifier), fieldKey: brand("completionPercent") },
+				],
+			});
+		});
+
+		it("reports each retained schema field once in a stable order", () => {
+			class MemberBefore extends schemaFactory.object("Member", {
+				workdayStartHour: schemaFactory.optional(schemaFactory.number),
+				workdayEndHour: schemaFactory.optional(schemaFactory.number),
+			}) {}
+			class Before extends schemaFactory.object("Task", {
+				assignee: MemberBefore,
+				reviewer: MemberBefore,
+				archiveReason: schemaFactory.optional(schemaFactory.string),
+			}) {}
+
+			// Retire work-hour tracking without changing the stored `Member` identifier.
+			class MemberAfter extends schemaFactory.object("Member", {}) {}
+
+			// Remove `archiveReason` and use `MemberAfter` for both `assignee` and `reviewer`.
+			class After extends schemaFactory.object("Task", {
+				assignee: MemberAfter,
+				reviewer: MemberAfter,
+			}) {}
+			const stored = toInitialSchema(Before);
+			const view = createTreeSchema(After);
+			const result = getSchemaUpgradeCandidate(
+				view,
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+
+			// Both `assignee` and `reviewer` use `Member`, but each retained `Member` field must appear only once.
+			// Sort by node identifier and stored key, not by declaration or traversal order.
+			expectUpgradeCandidate(result, {
+				schema: stored,
+				retainedUnknownOptionalFields: [
+					{ nodeType: brand(MemberAfter.identifier), fieldKey: brand("workdayEndHour") },
+					{ nodeType: brand(MemberAfter.identifier), fieldKey: brand("workdayStartHour") },
+					{ nodeType: brand(After.identifier), fieldKey: brand("archiveReason") },
+				],
+			});
+		});
+
+		it("does not retain an optional field when the view explicitly disables unknown fields", () => {
+			class Before extends schemaFactory.object("Task", {
+				estimatedHours: schemaFactory.optional(schemaFactory.number),
+			}) {}
+
+			// Remove `estimatedHours` and explicitly disable the unknown optional field support used by `Before`.
+			class Strict extends schemaFactory.object(
+				"Task",
+				{},
+				{ allowUnknownOptionalFields: false },
+			) {}
+			const stored = toInitialSchema(Before);
+			const result = getSchemaUpgradeCandidate(
+				createTreeSchema(Strict),
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+
+			// Because `Strict` rejects unknown optional fields, the candidate must omit `estimatedHours`.
+			expectUpgradeCandidate(result, {
+				schema: toInitialSchema(Strict),
+				retainedUnknownOptionalFields: [],
+			});
+		});
+
+		it("does not retain an omitted required field", () => {
+			class Before extends schemaFactory.object("Task", { priority: schemaFactory.number }) {}
+
+			// Remove the required `priority` field, leaving the view object empty.
+			class After extends schemaFactory.object("Task", {}) {}
+			const stored = toInitialSchema(Before);
+			const result = getSchemaUpgradeCandidate(
+				createTreeSchema(After),
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+
+			// Only optional fields can be retained as unknown fields, so the candidate omits the required `priority` field.
+			expectUpgradeCandidate(result, {
+				schema: toInitialSchema(After),
+				retainedUnknownOptionalFields: [],
+			});
+		});
+
+		it("uses a compatible current declaration of a staged-only referenced type", () => {
+			class OldEstimate extends schemaFactory.object("EffortEstimate", {
+				hours: schemaFactory.number,
+			}) {}
+			class Before extends schemaFactory.object("Task", {
+				detailedEstimate: schemaFactory.optional(OldEstimate),
+				estimate: schemaFactory.optional(schemaFactory.number),
+			}) {}
+
+			// Add an approval flag to `OldEstimate`, preserving its stored identifier and numeric `hours`.
+			class NewEstimate extends schemaFactory.object("EffortEstimate", {
+				hours: schemaFactory.number,
+				isApproved: schemaFactory.optional(schemaFactory.boolean),
+			}) {}
+
+			// Remove `detailedEstimate`.
+			// `estimate` still accepts numbers; it accepts `NewEstimate` only if the staged change is enabled.
+			class After extends schemaFactory.object("Task", {
+				estimate: schemaFactory.optional(
+					schemaFactory.types([schemaFactory.number, schemaFactory.staged(NewEstimate)]),
+				),
+			}) {}
+
+			// The retained `detailedEstimate` field still refers to `EffortEstimate`, so use the view's `NewEstimate` definition.
+			// The staged change is disabled for `estimate`, so that field still accepts only numbers.
+			class Expected extends schemaFactory.object("Task", {
+				detailedEstimate: schemaFactory.optional(NewEstimate),
+				estimate: schemaFactory.optional(schemaFactory.number),
+			}) {}
+			const view = createTreeSchema(After);
+			const stored = toInitialSchema(Before);
+
+			// With the staged change disabled, `estimate` accepts only numbers, so ordinary conversion omits `EffortEstimate`.
+			// The complete view still includes `NewEstimate`, which declares that identifier.
+			assert(view.definitions.has(NewEstimate.identifier));
+			assert(!toInitialSchema(After).nodeSchema.has(brand(NewEstimate.identifier)));
+
+			const result = getSchemaUpgradeCandidate(
+				view,
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+			expectUpgradeCandidate(result, {
+				schema: toInitialSchema(Expected),
+				retainedUnknownOptionalFields: [
+					{ nodeType: brand(After.identifier), fieldKey: brand("detailedEstimate") },
+				],
+			});
+		});
+
+		it("keeps the view's required root while retaining omitted optional fields", () => {
+			class Before extends schemaFactory.object("Task", {
+				notes: schemaFactory.optional(schemaFactory.string),
+			}) {}
+
+			const stored = toInitialSchema(schemaFactory.optional(Before));
+
+			// Remove `notes` from the view.
+			class After extends schemaFactory.object("Task", {}) {}
+
+			// Using `After` directly as the root makes the previously optional root required.
+			const view = createTreeSchema(After);
+
+			const result = getSchemaUpgradeCandidate(
+				view,
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+
+			// The candidate retains `notes` but uses the required root from the view.
+			// Converting `Before` as a required root describes that complete expected candidate.
+			expectUpgradeCandidate(result, {
+				schema: toInitialSchema(Before),
+				retainedUnknownOptionalFields: [
+					{ nodeType: brand(After.identifier), fieldKey: brand("notes") },
+				],
+			});
+		});
+
+		/**
+		 * 1. Declare optional `assignment` with an empty set of allowed types.
+		 * 2. Remove `assignment` from the view.
+		 * The upgrade target must retain the stored field declaration even though it cannot contain a value.
+		 */
+		it("retains an optional field with no allowed types", () => {
+			class Before extends schemaFactory.object("Task", {
+				assignment: schemaFactory.optional([]), // No value is permitted.
+			}) {}
+
+			// Remove `assignment` from the view without changing the stored `Task` identifier.
+			class After extends schemaFactory.object("Task", {}) {}
+			const stored = toInitialSchema(Before);
+			const result = getSchemaUpgradeCandidate(
+				createTreeSchema(After),
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+
+			// The expected target is the original stored schema: `assignment` remains declared even though no value can be stored in it.
+			expectUpgradeCandidate(result, {
+				schema: stored,
+				retainedUnknownOptionalFields: [
+					{ nodeType: brand(After.identifier), fieldKey: brand("assignment") },
+				],
+			});
 		});
 	});
 });
