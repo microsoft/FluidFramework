@@ -338,11 +338,13 @@ describe("SummarizerNodeWithGC Tests", () => {
 		function createRoot({
 			changeSeq = 1,
 			refSeq,
+			ddsGCEnabled = false,
 			...config
 		}: Partial<
 			ISummarizerNodeConfig & {
 				changeSeq: number;
 				refSeq: number;
+				ddsGCEnabled: boolean;
 			}
 		> = {}) {
 			rootNode = createRootSummarizerNodeWithGC(
@@ -351,6 +353,9 @@ describe("SummarizerNodeWithGC Tests", () => {
 				changeSeq,
 				refSeq,
 				config,
+				undefined /* getGCDataFn */,
+				undefined /* getBaseGCDetailsFn */,
+				ddsGCEnabled,
 			);
 		}
 
@@ -540,5 +545,44 @@ describe("SummarizerNodeWithGC Tests", () => {
 				"The child node's latest summary path is incorrect",
 			);
 		});
+
+		for (const ddsGCEnabled of [false, true]) {
+			it(`inherits absent child routes during a summary with DDS GC ${ddsGCEnabled}`, () => {
+				createRoot({ refSeq: 0, ddsGCEnabled });
+				createMid({ type: CreateSummarizerNodeSource.FromSummary });
+				rootNode.startSummary(1, logger, 0);
+				rootNode.updateUsedRoutes(["", `/${nodeIds.midId}`]);
+				midNode?.updateUsedRoutes([""]);
+
+				createLeaf({ type: CreateSummarizerNodeSource.FromSummary });
+				assert(leafNode !== undefined);
+				assert.equal(leafNode.isReferenced(), !ddsGCEnabled);
+			});
+
+			it(`inherits absent child routes in pending summaries with DDS GC ${ddsGCEnabled}`, async () => {
+				createRoot({ refSeq: 0, ddsGCEnabled });
+				createMid({ type: CreateSummarizerNodeSource.FromSummary });
+				rootNode.startSummary(1, logger, 0);
+				rootNode.updateUsedRoutes(["", `/${nodeIds.midId}`]);
+				midNode?.updateUsedRoutes([""]);
+				await rootNode.summarize(false);
+				await midNode?.summarize(false);
+				rootNode.completeSummary("pending-summary");
+
+				createLeaf({ type: CreateSummarizerNodeSource.FromSummary });
+				assert(leafNode !== undefined);
+				const refreshed = await rootNode.refreshLatestSummary("pending-summary", 1);
+				assert(refreshed.isSummaryTracked);
+
+				rootNode.startSummary(2, logger, 1);
+				leafNode.updateUsedRoutes(ddsGCEnabled ? [] : [""]);
+				const result = await leafNode.summarize(false);
+				assert.equal(
+					result.summary.type,
+					SummaryType.Handle,
+					"The child should reuse the acknowledged summary when its routes are unchanged",
+				);
+			});
+		}
 	});
 });

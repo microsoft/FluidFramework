@@ -5,7 +5,11 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat, type ITestDataObject } from "@fluid-private/test-version-utils";
+import {
+	describeCompat,
+	type ITestDataObject,
+	TestDataObjectType,
+} from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import type { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import {
@@ -250,6 +254,74 @@ describeCompat("GC DDS collection", "NoCompat", function (getTestObjectProvider,
 			/deleted/,
 		);
 	});
+
+	for (const ddsGCEnabled of [false, true]) {
+		it(`preserves DDS reference state when its owner realizes after GC with DDS GC ${ddsGCEnabled}`, async () => {
+			const testConfig: ITestContainerConfig = {
+				runtimeOptions: {
+					...config.runtimeOptions,
+					gcOptions: {
+						...config.runtimeOptions?.gcOptions,
+						enableDDSGC: ddsGCEnabled ? true : undefined,
+					},
+				},
+			};
+			const container = await provider.makeTestContainer(testConfig);
+			const root = await getContainerEntryPointBackCompat<ITestDataObject>(container);
+			const ownerChannel =
+				await root._context.containerRuntime.createDataStore(TestDataObjectType);
+			const owner = (await ownerChannel.entryPoint.get()) as ITestDataObject;
+			const anonymous = SharedMap.create(owner._runtime);
+			const named = SharedMap.create(owner._runtime, "named");
+			named.bindToContext();
+			root._root.set("owner", owner.handle);
+			root._root.set("anonymous", anonymous.handle);
+			await provider.ensureSynchronized();
+
+			const summarizerConfig = {
+				runtimeOptions: { gcOptions: testConfig.runtimeOptions?.gcOptions },
+			};
+			const first = await createSummarizer(provider, container, summarizerConfig);
+			const { summaryVersion } = await summarizeNow(first.summarizer);
+			first.container.close();
+			const second = await createSummarizer(
+				provider,
+				container,
+				summarizerConfig,
+				summaryVersion,
+			);
+
+			// Only the root receives an op, leaving the owner's cached GC graph reusable.
+			root._root.delete("anonymous");
+			await provider.ensureSynchronized();
+			const { summaryTree } = await summarizeNow(second.summarizer);
+			const state = getGCStateFromSummary(summaryTree);
+			assert(state !== undefined);
+			const ddsState = state.gcNodes[`/${owner._context.id}/${anonymous.id}`];
+			assert.equal(ddsState.unreferencedTimestampMs !== undefined, ddsGCEnabled);
+			const dataStores = summaryTree.tree[channelsTreeName];
+			assert(dataStores.type === SummaryType.Tree);
+			const ownerSummary = dataStores.tree[owner._context.id];
+			if (ddsGCEnabled) {
+				assert(ownerSummary.type === SummaryType.Tree);
+				const channels = ownerSummary.tree[channelsTreeName];
+				assert(channels.type === SummaryType.Tree);
+				const anonymousSummary = channels.tree[anonymous.id];
+				assert(anonymousSummary.type === SummaryType.Tree);
+				assert.equal(anonymousSummary.unreferenced, true);
+				const namedSummary = channels.tree[named.id];
+				assert(namedSummary.type === SummaryType.Tree);
+				assert.equal(namedSummary.unreferenced, undefined);
+			} else {
+				assert(ownerSummary.type === SummaryType.Handle);
+			}
+
+			const unchanged = await summarizeNow(second.summarizer);
+			const unchangedDataStores = unchanged.summaryTree.tree[channelsTreeName];
+			assert(unchangedDataStores.type === SummaryType.Tree);
+			assert.equal(unchangedDataStores.tree[owner._context.id].type, SummaryType.Handle);
+		});
+	}
 
 	for (const createWhileOffline of [false, true]) {
 		it(`preserves DDS roots through pending state with pending attach ${createWhileOffline}`, async () => {

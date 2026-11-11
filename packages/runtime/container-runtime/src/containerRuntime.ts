@@ -2186,6 +2186,7 @@ export class ContainerRuntime
 			async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
 			// Function to get the GC details from the base snapshot we loaded from.
 			async () => this.garbageCollector.getBaseGCDetails(),
+			this.garbageCollector.getMetadata().ddsGCEnabled === true,
 		);
 
 		const parentContext = formParentContext<IFluidRootParentContextPrivate>(this, {

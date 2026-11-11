@@ -105,6 +105,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		 * A unique id of this node to be logged when sending telemetry.
 		 */
 		telemetryId?: string,
+		private readonly ddsGCEnabled: boolean = false,
 	) {
 		super(
 			logger,
@@ -385,6 +386,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			getGCDataFn,
 			getChildBaseGCDetailsFn,
 			createDetails.telemetryNodeId,
+			this.ddsGCEnabled,
 		);
 
 		// There may be additional state that has to be updated in this child. For example, if a summary is being
@@ -407,6 +409,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	protected maybeUpdateChildState(child: SummarizerNodeWithGC, id: string): void {
 		super.maybeUpdateChildState(child, id);
 
+		// Legacy documents implicitly reference DDSs even when their routes are absent.
+		const defaultChildUsedRoutes = this.ddsGCEnabled ? [] : [""];
+
 		// If GC has run on this node and summarization isn't complete, this.wipSerializedUsedRoutes will be defined.
 		// In that case, update the used routes of the child node. This can happen in scenarios where a data store
 		// doesn't have any ops but its reference state changed. So, it gets realized during summarize after GC ran
@@ -419,7 +424,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			if (this.wipChildNodesUsedRoutes === undefined) {
 				this.wipChildNodesUsedRoutes = unpackChildNodesUsedRoutes(this.usedRoutes);
 			}
-			child.updateUsedRoutes(this.wipChildNodesUsedRoutes.get(id) ?? [""]);
+			child.updateUsedRoutes(this.wipChildNodesUsedRoutes.get(id) ?? defaultChildUsedRoutes);
 		}
 
 		// In case we have pending summaries on the parent, let's initialize it on the child.
@@ -429,7 +434,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 				const childNodeUsedRoutes = unpackChildNodesUsedRoutes(
 					JSON.parse(pendingSummaryWithGC.serializedUsedRoutes) as string[],
 				);
-				const newSerializedRoutes = childNodeUsedRoutes.get(id) ?? [""];
+				const newSerializedRoutes = childNodeUsedRoutes.get(id) ?? defaultChildUsedRoutes;
 				const childPendingSummaryInfo = {
 					...pendingSummaryWithGC,
 					serializedUsedRoutes: JSON.stringify(newSerializedRoutes),
@@ -511,6 +516,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
  * @param config - Configure behavior of summarizer node
  * @param getGCDataFn - Function to get the GC data of this node
  * @param baseGCDetailsP - Function to get the initial GC details of this node
+ * @param ddsGCEnabled - Whether absent child used routes indicate an unreferenced DDS.
  */
 export const createRootSummarizerNodeWithGC = (
 	logger: ITelemetryBaseLogger,
@@ -520,6 +526,7 @@ export const createRootSummarizerNodeWithGC = (
 	config: ISummarizerNodeConfigWithGC = {},
 	getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 	getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
+	ddsGCEnabled: boolean = false,
 ): IRootSummarizerNodeWithGC =>
 	new SummarizerNodeWithGC(
 		logger,
@@ -532,4 +539,5 @@ export const createRootSummarizerNodeWithGC = (
 		getGCDataFn,
 		getBaseGCDetailsFn,
 		"" /* telemetryId */,
+		ddsGCEnabled,
 	);
