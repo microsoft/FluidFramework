@@ -676,6 +676,20 @@ function encodeMarkEffectV2(
 	const type = mark.type;
 	switch (type) {
 		case "Attach": {
+			if (mark.detachId !== undefined) {
+				assert(
+					mark.cellId === undefined,
+					"Marks with a detach ID should always represent a pin",
+				);
+
+				return {
+					insert: {
+						revision: encodeRevision(mark.detachId.revision),
+						id: mark.detachId.localId,
+					},
+				};
+			}
+
 			const attachId = getAttachedRootId(mark);
 			const rootInputId = context.getInputRootId(attachId, mark.count).value ?? attachId;
 			const isMove = context.isDetachId(rootInputId, mark.count).value;
