@@ -103,6 +103,10 @@ import {
 	type ViewableTree,
 	type UntypedTreeView,
 	type UntypedTreeViewAlpha,
+	type TreeHistoryCompaction,
+	type CanCompactCommit,
+	type CompactionResult,
+	type RevisionPreservationResult,
 	type VerboseTree,
 	type VoidTransactionCallbackStatusAlpha,
 	type TransactionCallbackStatusAlpha,
@@ -721,6 +725,7 @@ export abstract class CheckoutBase implements ITreeCheckout {
 	readonly #events = createEmitter<CheckoutEvents>();
 	public events: Listenable<CheckoutEvents> = this.#events;
 	private _branchHistory?: DefaultTreeBranchHistory;
+	private _historyCompaction?: TreeHistoryCompaction;
 	private _locations?: DefaultTreeLocationResolver;
 	private locationRevisionSource?: () => LocationRevisionSource;
 
@@ -864,6 +869,23 @@ export abstract class CheckoutBase implements ITreeCheckout {
 			);
 		}
 		return this._branchHistory;
+	}
+
+	public get historyCompaction(): TreeHistoryCompaction {
+		this._historyCompaction ??= {
+			requestCompaction: async (
+				canCompactCommit: CanCompactCommit,
+			): Promise<CompactionResult> => {
+				throw new UsageError("historyCompaction.requestCompaction is not yet implemented.");
+			},
+			setRevisionPreserved: async (
+				revision: string,
+				isPreserved: boolean,
+			): Promise<RevisionPreservationResult> => {
+				throw new UsageError("historyCompaction.setRevisionPreserved is not yet implemented.");
+			},
+		};
+		return this._historyCompaction;
 	}
 
 	public get locations(): DefaultTreeLocationResolver {
@@ -1794,6 +1816,7 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		this.branch = branch;
 		this._branchHistory?.dispose();
 		this._branchHistory = undefined;
+		this._historyCompaction = undefined;
 		this.disposeLocations();
 		this.locationRevisionSource = undefined;
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
@@ -2041,6 +2064,7 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		this.#events.emit("dispose");
 		this._branchHistory?.dispose();
 		this._branchHistory = undefined;
+		this._historyCompaction = undefined;
 		this.disposeLocations();
 	}
 

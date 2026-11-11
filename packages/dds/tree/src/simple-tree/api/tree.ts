@@ -42,6 +42,7 @@ import type { SimpleTreeSchema } from "../simpleSchema.js";
 import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
 import type { TreeViewConfiguration } from "./configuration.js";
+import type { TreeHistoryCompaction } from "./historyCompaction.js";
 import type { TreeLocationResolver } from "./locations.js";
 import type { StagedUpgradeStatus } from "./schemaCompatibilityTester.js";
 import type {
@@ -584,6 +585,11 @@ export interface UntypedTreeViewAlpha
 	 * APIs for querying the history of the branch being viewed.
 	 */
 	readonly branchHistory: TreeBranchHistory;
+
+	/**
+	 * APIs for application-guided compaction of the branch's retained sequenced history.
+	 */
+	readonly historyCompaction: TreeHistoryCompaction;
 
 	/**
 	 * Captures node selections and sequence gaps, and resolves them into this view's current local state.

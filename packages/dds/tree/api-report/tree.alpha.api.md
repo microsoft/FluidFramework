@@ -178,6 +178,12 @@ export function asAlpha<TAllowedTypes extends ImplicitAllowedTypes>(node: TreeMa
 // @beta
 export function asBeta<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewBeta<TSchema>;
 
+// @alpha @input
+export type CanCompactCommit = (candidate: {
+    readonly before: TreeBranchCommitMetadata;
+    readonly after: TreeBranchCommitMetadata;
+}) => boolean;
+
 // @alpha @sealed
 export interface CapturedTreeLocation extends ErasedType<"@fluidframework/tree.CapturedTreeLocation"> {
 }
@@ -241,6 +247,12 @@ export enum CommitOutcome {
 
 // @alpha
 export type CommitRevision = string;
+
+// @alpha @sealed
+export interface CompactionResult {
+    readonly removedCount: number;
+    readonly status: "applied" | "noEligibleHistory" | "deferred";
+}
 
 // @alpha
 export function comparePersistedSchema(persisted: JsonCompatible, view: ImplicitFieldSchema, options: ICodecOptions): Omit<SchemaCompatibilityStatus, "canInitialize">;
@@ -1277,6 +1289,12 @@ export interface RevertToOptionsAlpha {
     readonly customMetadata?: JsonCompatibleReadOnlyObject;
 }
 
+// @alpha @sealed
+export interface RevisionPreservationResult {
+    readonly isPreserved: boolean;
+    readonly revision: CommitRevision;
+}
+
 // @public
 export const rollback: unique symbol;
 
@@ -2148,6 +2166,12 @@ export interface TreeGapCaptureOptions {
 }
 
 // @alpha @sealed
+export interface TreeHistoryCompaction {
+    requestCompaction(canCompactCommit: CanCompactCommit): Promise<CompactionResult>;
+    setRevisionPreserved(revision: string, isPreserved: boolean): Promise<RevisionPreservationResult>;
+}
+
+// @alpha @sealed
 export interface TreeIdentifierUtils {
     (node: TreeNode): string | undefined;
     create(view: UntypedTreeView): string;
@@ -2443,6 +2467,7 @@ export interface UntypedTreeViewAlpha extends Omit<UntypedTreeView, "runTransact
     // (undocumented)
     fork(): UntypedTreeViewAlpha;
     hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
+    readonly historyCompaction: TreeHistoryCompaction;
     isMissingEditsFrom(view: UntypedTreeView): boolean;
     readonly locations: TreeLocationResolver;
     revertTo(revision: CommitRevision, options?: RevertToOptionsAlpha): void;
