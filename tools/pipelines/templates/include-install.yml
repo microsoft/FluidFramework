@@ -47,7 +47,7 @@ steps:
 
   - ${{ if parameters.installAllPlatforms }}:
     - task: Bash@3
-      displayName: Save dependencies for all platforms
+      displayName: Save dependencies to artifact feed for all platforms
       retryCountOnTaskFailure: 4
       inputs:
         targetType: 'inline'
