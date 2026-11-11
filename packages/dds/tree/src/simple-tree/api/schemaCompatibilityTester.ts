@@ -32,7 +32,7 @@ import {
 import type {
 	SchemaCompatibilityStatusBeta,
 	CompatibilityResult,
-	SchemaIncompatibility,
+	SchemaViewIncompatibility,
 	SchemaUpgradeIncompatibility,
 } from "./tree.js";
 
@@ -43,7 +43,7 @@ import type {
 export function getSchemaIncompatibilityDetails(
 	viewSchema: TreeSchema,
 	stored: TreeStoredSchema,
-): readonly SchemaIncompatibility[] | undefined {
+): readonly SchemaViewIncompatibility[] | undefined {
 	const discrepancies = [...getDiscrepanciesInAllowedContent(viewSchema, stored)];
 	if (discrepancies.length === 0) {
 		return undefined;
@@ -52,13 +52,13 @@ export function getSchemaIncompatibilityDetails(
 	return discrepancies.map((discrepancy) => formatSchemaDiscrepancy(discrepancy));
 }
 
-function formatSchemaDiscrepancy(value: Discrepancy): SchemaIncompatibility;
+function formatSchemaDiscrepancy(value: Discrepancy): SchemaViewIncompatibility;
 function formatSchemaDiscrepancy(
 	value: StoredSchemaUpgradeDiscrepancy,
 ): SchemaUpgradeIncompatibility;
 function formatSchemaDiscrepancy(
 	value: Discrepancy | StoredSchemaUpgradeDiscrepancy,
-): SchemaIncompatibility | SchemaUpgradeIncompatibility {
+): SchemaViewIncompatibility | SchemaUpgradeIncompatibility {
 	switch (value.mismatch) {
 		case "allowedTypes": {
 			const comparison =
@@ -146,7 +146,7 @@ export function getSchemaUpgradeIncompatibilityDetails(
 
 function formatDiscrepancyLocation(
 	value: StoredSchemaDiscrepancyLocation,
-): Extract<SchemaIncompatibility, { mismatch: "fieldKind" }>["location"] {
+): Extract<SchemaViewIncompatibility, { mismatch: "fieldKind" }>["location"] {
 	return value.identifier === undefined
 		? "root"
 		: { nodeType: value.identifier, fieldKey: value.fieldKey };
@@ -229,7 +229,7 @@ export function checkSchemaCompatibility(
 	// - fields with more allowed types in the stored schema than in the view schema have out-of-schema "unknown content" adapters
 	// Complete the full walk even after finding an incompatibility so discrepancy details and
 	// staged-upgrade status contain all available information for debugging.
-	const discrepancies: SchemaIncompatibility[] = [];
+	const discrepancies: SchemaViewIncompatibility[] = [];
 	for (const discrepancy of getDiscrepanciesInAllowedContent(
 		viewSchema,
 		stored,
@@ -255,7 +255,7 @@ export function checkSchemaCompatibility(
 	const isEquivalent =
 		canView && canUpgrade && allowsRepoSuperset(policy, wouldUpgradeTo, stored);
 
-	const view: CompatibilityResult<SchemaIncompatibility> = canView
+	const view: CompatibilityResult<SchemaViewIncompatibility> = canView
 		? { isCompatible: true }
 		: { isCompatible: false, incompatibilities: discrepancies };
 	let upgradeResult: CompatibilityResult<SchemaUpgradeIncompatibility>;

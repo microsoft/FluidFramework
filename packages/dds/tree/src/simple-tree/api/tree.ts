@@ -1054,21 +1054,21 @@ export type SchemaDiscrepancy =
  * The proposed schema includes the view's effective staged-upgrade policy.
  * Allowed-type arrays contain identifiers present on only one side of the comparison.
  * Proposed-only types provide context; removing stored types is what blocks the upgrade.
- * The common mismatch shapes match {@link SchemaIncompatibility}, with `view` replaced by `proposed`
+ * The common mismatch shapes match {@link SchemaViewIncompatibility}, with `view` replaced by `proposed`
  * and without viewing-specific staging annotations.
  *
  * @sealed @beta
  */
 export type SchemaUpgradeIncompatibility =
 	| {
-			[Incompatibility in SchemaIncompatibility as Incompatibility["mismatch"]]: Omit<
+			[Incompatibility in SchemaViewIncompatibility as Incompatibility["mismatch"]]: Omit<
 				Incompatibility,
 				"view" | "stagedView" | "viewIsStagedOptional"
 			> & {
 				/** The constraints in the proposed stored schema. */
 				readonly proposed: Incompatibility["view"];
 			};
-	  }[SchemaIncompatibility["mismatch"]]
+	  }[SchemaViewIncompatibility["mismatch"]]
 	| {
 			/** A constructible stored node definition is absent from the proposed schema. */
 			readonly mismatch: "missingNodeSchema";
@@ -1090,7 +1090,7 @@ export type SchemaUpgradeIncompatibility =
  *
  * @sealed @beta
  */
-export type SchemaIncompatibility = SchemaDiscrepancy;
+export type SchemaViewIncompatibility = SchemaDiscrepancy;
 
 /**
  * Whether a schema operation is permitted, including its blocking incompatibilities when it is not.
@@ -1161,7 +1161,7 @@ export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus
 	 * }
 	 * ```
 	 */
-	readonly view: CompatibilityResult<SchemaIncompatibility>;
+	readonly view: CompatibilityResult<SchemaViewIncompatibility>;
 
 	/**
 	 * Whether the proposed stored schema is a permitted upgrade, and any incompatibilities that prevent upgrading.

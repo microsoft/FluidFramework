@@ -591,7 +591,7 @@ export interface SchemaCompatibilityStatus {
 export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus {
     readonly discrepancies: readonly SchemaDiscrepancy[] | undefined;
     readonly upgrade: CompatibilityResult<SchemaUpgradeIncompatibility>;
-    readonly view: CompatibilityResult<SchemaIncompatibility>;
+    readonly view: CompatibilityResult<SchemaViewIncompatibility>;
 }
 
 // @beta @sealed
@@ -688,9 +688,6 @@ export interface SchemaFactoryOptions {
 // @public @system
 const schemaIdentifierBrand: unique symbol;
 
-// @beta @sealed
-export type SchemaIncompatibility = SchemaDiscrepancy;
-
 // @public @sealed @system
 export interface SchemaStatics {
     readonly boolean: LeafSchema<"boolean", boolean>;
@@ -727,16 +724,19 @@ export class SchemaUpgrade {
 
 // @beta @sealed
 export type SchemaUpgradeIncompatibility = {
-    [Incompatibility in SchemaIncompatibility as Incompatibility["mismatch"]]: Omit<Incompatibility, "view" | "stagedView" | "viewIsStagedOptional"> & {
+    [Incompatibility in SchemaViewIncompatibility as Incompatibility["mismatch"]]: Omit<Incompatibility, "view" | "stagedView" | "viewIsStagedOptional"> & {
         readonly proposed: Incompatibility["view"];
     };
-}[SchemaIncompatibility["mismatch"]] | {
+}[SchemaViewIncompatibility["mismatch"]] | {
     readonly mismatch: "missingNodeSchema";
     readonly nodeType: string;
 } | {
     readonly mismatch: "uninhabitableNodeSchema";
     readonly nodeType: string;
 };
+
+// @beta @sealed
+export type SchemaViewIncompatibility = SchemaDiscrepancy;
 
 // @public @system
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;

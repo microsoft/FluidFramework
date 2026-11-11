@@ -84,7 +84,7 @@ export {
 	type SchemaCompatibilityStatus,
 	type SchemaCompatibilityStatusBeta,
 	type CompatibilityResult,
-	type SchemaIncompatibility,
+	type SchemaViewIncompatibility,
 	type SchemaUpgradeIncompatibility,
 	type SchemaDiscrepancy,
 	type ITreeConfigurationOptions,

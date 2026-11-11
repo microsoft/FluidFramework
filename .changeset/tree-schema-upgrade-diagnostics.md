@@ -14,7 +14,7 @@ The existing `canView`, `canUpgrade`, `discrepancies`, and `SchemaDiscrepancy` A
 Check `compatibility.view.isCompatible` before accessing the tree root and `compatibility.upgrade.isCompatible` before requesting a schema upgrade.
 These results are independent: viewing can be permitted even when upgrading is blocked, and an allowed upgrade does not mean an upgrade is needed.
 When an operation is blocked, read its `incompatibilities` to find the schema constraints that prevent it.
-`SchemaIncompatibility` describes viewing failures and is equivalent to the existing `SchemaDiscrepancy` type.
+`SchemaViewIncompatibility` describes viewing failures and is equivalent to the existing `SchemaDiscrepancy` type.
 `SchemaUpgradeIncompatibility` describes upgrade failures.
 
 Upgrade details compare the existing stored schema with the proposed stored schema after applying the staged-upgrade policy.

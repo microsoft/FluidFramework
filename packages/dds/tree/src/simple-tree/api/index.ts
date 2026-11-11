@@ -24,7 +24,7 @@ export type {
 	SchemaCompatibilityStatus,
 	SchemaCompatibilityStatusBeta,
 	CompatibilityResult,
-	SchemaIncompatibility,
+	SchemaViewIncompatibility,
 	SchemaUpgradeIncompatibility,
 	SchemaDiscrepancy,
 	TreeViewAlpha,

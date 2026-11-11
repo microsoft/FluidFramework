@@ -24,7 +24,7 @@ import {
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
 	type CompatibilityResult,
-	type SchemaIncompatibility,
+	type SchemaViewIncompatibility,
 	type SchemaUpgradeIncompatibility,
 	type SchemaUpgrade,
 	type StagedUpgradeStatus,
@@ -215,7 +215,7 @@ describe("getSchemaIncompatibilityDetails", () => {
 
 describe("checkSchemaCompatibility", () => {
 	it("narrows incompatibilities using isCompatible", () => {
-		const checkResult = (result: CompatibilityResult<SchemaIncompatibility>): void => {
+		const checkResult = (result: CompatibilityResult<SchemaViewIncompatibility>): void => {
 			if (result.isCompatible) {
 				allowUnused<
 					requireTrue<areSafelyAssignable<typeof result, { readonly isCompatible: true }>>
@@ -225,7 +225,7 @@ describe("checkSchemaCompatibility", () => {
 					requireTrue<
 						areSafelyAssignable<
 							typeof result.incompatibilities,
-							readonly SchemaIncompatibility[]
+							readonly SchemaViewIncompatibility[]
 						>
 					>
 				>();
