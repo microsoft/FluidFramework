@@ -13,4 +13,5 @@ The function does not validate that type or change the container's root-discover
 
 For applications with other root-discovery conventions, `fluidContainerFromLegacy` exposes an attached legacy container and an application-selected root value through the alpha container API.
 It preserves the original container and root without adding persisted objects.
+Pass the service-facing reload ID explicitly; a driver's resolved URL ID may instead be an internal identifier such as an ODSP document hash.
 Factories used for alpha creation must already be registered in the existing runtime.

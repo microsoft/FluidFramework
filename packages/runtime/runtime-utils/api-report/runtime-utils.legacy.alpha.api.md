@@ -26,7 +26,7 @@ export const create404Response: (request: IRequest) => IResponse;
 export function dataStoreKindFromFactory<T = unknown>(factory: IFluidDataStoreFactory): DataStoreKind<T>;
 
 // @alpha @legacy
-export function fluidContainerFromLegacy<T>(container: IContainer, data: T, registry: DataStoreRegistry): FluidContainerAttached<T>;
+export function fluidContainerFromLegacy<T>(container: IContainer, data: T, registry: DataStoreRegistry, id: string): FluidContainerAttached<T>;
 
 // @beta @legacy
 export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {

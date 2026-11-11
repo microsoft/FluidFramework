@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { AttachState, type IContainer } from "@fluidframework/container-definitions/internal";
 
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type {
@@ -16,8 +17,58 @@ import type {
 import {
 	dataStoreKindFromFactory,
 	DataStoreKindImplementation,
+	fluidContainerFromLegacy,
 } from "../serviceClientBase.js";
 import { convertRegistry } from "../serviceClientUtils.js";
+
+describe("fluidContainerFromLegacy", () => {
+	it("uses the service reload ID rather than the resolved URL hash", () => {
+		let closed = false;
+		const container: Partial<IContainer> = {
+			attachState: AttachState.Attached,
+			resolvedUrl: {
+				type: "fluid",
+				id: "hashed-document-id",
+				url: "https://example.com/hashed-document-id",
+				tokens: {},
+				endpoints: {},
+			},
+			close: () => {
+				closed = true;
+			},
+		};
+		const data = { value: 42 };
+		const adopted = fluidContainerFromLegacy(
+			container as IContainer,
+			data,
+			async () => {
+				throw new Error("No factory lookup expected");
+			},
+			"service-item-id",
+		);
+		assert.equal(adopted.id, "service-item-id");
+		assert.equal(adopted.data, data);
+		assert.equal(container.resolvedUrl?.id, "hashed-document-id");
+		adopted.close();
+		assert(closed);
+	});
+
+	it("rejects detached containers even when a reload ID is supplied", () => {
+		const container: Partial<IContainer> = { attachState: AttachState.Detached };
+		assert.throws(
+			() =>
+				fluidContainerFromLegacy(
+					container as IContainer,
+					undefined,
+					async () => {
+						throw new Error("No factory lookup expected");
+					},
+					"service-item-id",
+				),
+			/The legacy container must be attached/,
+		);
+	});
+});
 
 describe("dataStoreKindFromFactory", () => {
 	it("delegates native leaf hosting to the owning runtime", async () => {

@@ -438,7 +438,8 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		const containerFactory = new LegacyCreatingFactory("application-root");
 		const container = await provider.createContainer(containerFactory);
 		const legacy = (await container.getEntryPoint()) as ISharedMap;
-		const alpha = fluidContainerFromLegacy(container, legacy, kinds);
+		const alpha = fluidContainerFromLegacy(container, legacy, kinds, provider.documentId);
+		assert.equal(alpha.id, provider.documentId);
 		assert.equal(alpha.data, legacy);
 		const child = await alpha.createDataStore(kind);
 		child.set("value", 42);

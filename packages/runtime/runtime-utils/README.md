@@ -52,7 +52,9 @@ Different factories with the same type identifier remain different kinds.
 
 The factory bridge does not change container root discovery.
 ServiceClient currently expects the `root` data-store alias.
-For other conventions, use the existing legacy loader and root-discovery code, then call `fluidContainerFromLegacy(container, data, registry)` from the same legacy-alpha entrypoint.
+For other conventions, use the existing legacy loader and root-discovery code, then call `fluidContainerFromLegacy(container, data, registry, id)` from the same legacy-alpha entrypoint.
+Supply the service-facing ID used to reopen the document, not necessarily `container.resolvedUrl.id`.
+For example, ODSP reloads by item ID, whereas the resolved URL ID is a document hash.
 This exposes an attached legacy container through the alpha container API without changing its root or persisted structure.
 The registry must identify factories already registered in the legacy runtime; it does not install new factories in that runtime.
 Closing this alpha view also closes the original container.

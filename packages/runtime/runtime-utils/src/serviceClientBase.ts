@@ -303,12 +303,15 @@ export abstract class ServiceContainerBase<TData, TOptions = unknown>
  * Register the same factories in `registry` and the existing container runtime before using
  * {@link @fluidframework/driver-definitions#DataStoreCreator.createDataStore}.
  * Closing the returned container closes the original container.
- * The returned ID is the original container's resolved URL ID.
+ * The caller supplies the ID used to reopen the document with its service.
+ * This need not equal `container.resolvedUrl.id`: for example, ODSP uses an item ID
+ * to reopen a document, while its resolved URL ID is a hash.
  * @param container - The attached legacy container.
  * @param data - The application-facing root value selected using legacy APIs.
  * @param registry - Kinds whose factories are registered in the existing runtime.
+ * @param id - The service-facing ID used to reopen this document.
  * @returns An alpha view of the same attached container.
- * @throws If the container is not attached or has no resolved URL.
+ * @throws If the container is not attached.
  * @legacy
  * @alpha
  */
@@ -316,11 +319,12 @@ export function fluidContainerFromLegacy<T>(
 	container: IContainer,
 	data: T,
 	registry: DataStoreRegistry,
+	id: string,
 ): FluidContainerAttached<T> {
-	if (container.attachState !== AttachState.Attached || container.resolvedUrl === undefined) {
-		throw new UsageError("The legacy container must be attached and have a resolved URL");
+	if (container.attachState !== AttachState.Attached) {
+		throw new UsageError("The legacy container must be attached");
 	}
-	return new LegacyServiceContainer(registry, container, data, container.resolvedUrl.id);
+	return new LegacyServiceContainer(registry, container, data, id);
 }
 
 class LegacyServiceContainer<T> extends ServiceContainerBase<T> {
