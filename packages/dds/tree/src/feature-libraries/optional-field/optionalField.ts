@@ -65,7 +65,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		if (detachId !== undefined) {
 			const attachIdForInverse = isRollback
 				? detachId
-				: makeChangeAtomId(detachId.localId, revision);
+				: nodeManager.getInvertedMoveId(detachId);
 
 			nodeManager.invertDetach(detachId, 1, change.childChange);
 
