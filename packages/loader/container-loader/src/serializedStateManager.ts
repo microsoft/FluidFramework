@@ -77,9 +77,11 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	 */
 	attached: true;
 	/**
-	 * Indicates that blob payloads are omitted and must be read from live storage.
+	 * Indicates that all blob payloads are omitted and must be read from live storage.
 	 *
-	 * Undefined for existing and self-contained pending state.
+	 * Undefined for inline captures, structural captures that omit attachment payloads,
+	 * and legacy pending state. An undefined marker does not guarantee that all
+	 * payloads are present; missing payloads still require live storage when read.
 	 */
 	blobContentsMode?: "reference";
 	/**

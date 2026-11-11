@@ -700,7 +700,7 @@ describe("captureFullContainerState", () => {
 				urlResolver,
 				documentServiceFactory: recordingFactory,
 				request: { url },
-				includeAttachmentBlobs: false,
+				blobCaptureMode: "structural",
 			});
 			const capturedState: {
 				baseSnapshot: ISnapshotTree;
@@ -765,22 +765,30 @@ describe("captureFullContainerState", () => {
 			}
 			assert.deepStrictEqual(new Set(replayReads), attachmentIds);
 
-			const referenceState: {
-				snapshotBlobs: Record<string, string>;
-				attachmentBlobContents?: Record<string, string>;
-				blobContentsMode?: "reference";
-			} = JSON.parse(
-				await captureFullContainerState({
-					urlResolver,
-					documentServiceFactory,
-					request: { url },
-					blobCaptureMode: "reference",
-					includeAttachmentBlobs: false,
-				}),
-			);
-			assert.deepStrictEqual(referenceState.snapshotBlobs, {});
-			assert.strictEqual(referenceState.attachmentBlobContents, undefined);
-			assert.strictEqual(referenceState.blobContentsMode, "reference");
+			const offlineContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				pendingLocalState,
+			});
+			containers.push(offlineContainer);
+			const offlineEntryPoint: FluidObject<TestFluidObject> =
+				await offlineContainer.getEntryPoint();
+			assert(offlineEntryPoint.ITestFluidObject !== undefined);
+			const offlineRoot = offlineEntryPoint.ITestFluidObject.root;
+			assert.strictEqual(offlineRoot.get("snapshotValue"), "before attach");
+			assert.strictEqual(offlineRoot.get("postSnapshotValue"), "after attach");
+			for (const key of ["snapshotBlob", "postSnapshotBlob"]) {
+				const handle: unknown = offlineRoot.get(key);
+				assert(isFluidHandle(handle));
+				await assert.rejects(
+					async () => handle.get(),
+					(error: Error) => {
+						// Handle resolution wraps the storage UsageError in a response exception.
+						assert.match(error.message, /blob payload was not captured/);
+						assert.match(error.message, /online form/);
+						return true;
+					},
+				);
+			}
 		} finally {
 			for (const loadedContainer of containers) {
 				loadedContainer.close();

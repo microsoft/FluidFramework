@@ -1,23 +1,25 @@
 ---
 "@fluidframework/container-loader": minor
-"__section": feature
+"__section": legacy
 ---
 Capture structural container state without attachment payloads
 
-`captureFullContainerState` accepts `includeAttachmentBlobs: false` to omit attachment bytes while retaining structural snapshot contents, attachment references, and saved operations.
+`captureFullContainerState` accepts `blobCaptureMode: "structural"` to omit attachment bytes while retaining structural snapshot contents, attachment references, and saved operations.
 The option applies to attachments in the base snapshot and attachments introduced by later operations.
-The default remains `true`.
+The default remains `"inline"`, which captures structural and eligible attachment payloads.
 
 ```typescript
 const pendingLocalState = await captureFullContainerState({
 	urlResolver,
 	documentServiceFactory,
 	request,
-	includeAttachmentBlobs: false,
+	blobCaptureMode: "structural",
 });
 ```
 
 Resuming structural state does not require historical structural blobs from storage.
-Reading an omitted attachment requires live storage and depends on that attachment remaining available.
+Offline structural loading can succeed, but dereferencing an omitted attachment later fails.
+The storage layer throws `UsageError`, which handle resolution may wrap.
+Reading an omitted attachment requires the online form of `loadFrozenContainerFromPendingState` with live driver wiring (or `loadExistingContainer`) and depends on that attachment remaining available.
 This option does not change retention or garbage collection.
-`blobCaptureMode: "reference"` continues to omit both structural and attachment payloads regardless of this option.
+`blobCaptureMode: "reference"` continues to omit both structural and attachment payloads.

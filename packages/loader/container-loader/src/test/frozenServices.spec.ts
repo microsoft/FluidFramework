@@ -273,14 +273,7 @@ describe("FrozenDocumentService disposal", () => {
 });
 
 describe("FrozenDocumentStorageService readBlob (no inner factory)", () => {
-	// Offline frozen loads pass `undefined` for the inner factory. The
-	// previous handler threw a raw `Error("Operations are not supported…")`,
-	// which bypassed the package's UsageError contract and did not name the
-	// missing precondition (pending state produced by
-	// `captureFullContainerState`, which inlines attachment blobs). Verify
-	// both: the error type so callers can detect misuse uniformly, and the
-	// message so the diagnostic points at the right API.
-	it("rejects readBlob with a UsageError that names captureFullContainerState", async () => {
+	it("rejects missing offline payloads with actionable capture and online-read guidance", async () => {
 		const factory = new FrozenDocumentServiceFactory(true);
 		const service = await factory.createDocumentService(fakeUrl);
 		const storage = await service.connectToStorage();
@@ -291,10 +284,12 @@ describe("FrozenDocumentStorageService readBlob (no inner factory)", () => {
 				"UsageError",
 				"Expected a UsageError, not a generic Error — frozen storage misuse must surface uniformly",
 			);
+			assert.match(error.message, /blob payload was not captured/);
+			assert.match(error.message, /captureFullContainerState.*blobCaptureMode: "inline"/);
+			assert.match(error.message, /"structural" omits attachments/);
 			assert.match(
 				error.message,
-				/captureFullContainerState/,
-				"Expected the error message to name the missing precondition (captureFullContainerState inlines attachment blobs)",
+				/online form of `loadFrozenContainerFromPendingState` with live driver wiring/,
 			);
 			return true;
 		});

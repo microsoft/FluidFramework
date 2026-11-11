@@ -174,12 +174,15 @@ const frozenDocumentStorageServiceHandler = (): never => {
  * that hit this path are exercising a fully-offline frozen load whose pending
  * state omits a required structural or attachment blob. A generic "operation
  * not supported" is technically true but unhelpful; this message names the
- * missing precondition and the API mode that satisfies it.
+ * missing payload and the offline-capture or online-read remedies.
  */
 const frozenReadBlobOfflineHandler = async (): Promise<never> => {
 	throw new UsageError(
 		"Attempted to read a blob from a frozen-loaded container without a live storage service. " +
-			"Fully-offline frozen loads must use pending state produced by `captureFullContainerState` with the default inline blob capture mode.",
+			"The blob payload was not captured. Use `captureFullContainerState` with " +
+			'blobCaptureMode: "inline" to capture eligible payloads; "structural" omits attachments ' +
+			'and "reference" omits all blob payloads. To read omitted blobs, use the online form ' +
+			"of `loadFrozenContainerFromPendingState` with live driver wiring.",
 	);
 };
 
