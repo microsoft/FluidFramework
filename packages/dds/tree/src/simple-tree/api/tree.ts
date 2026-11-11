@@ -1326,7 +1326,8 @@ export interface SchemaCompatibilityStatus {
 	 * If {@link SchemaCompatibilityStatus.canView} is `false`, you must apply the permitted upgrade before accessing the document through this view.
 	 *
 	 * To determine whether the upgrade is safe, this check considers a target built from the existing stored schema and the view's requested additions.
-	 * The {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy} selects new staged permissions, while existing allowed types and supported optionality are retained at their stored locations.
+	 * The {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy} chooses which staged upgrades to enable.
+	 * The target also retains existing allowed types and supported optionality at their stored locations, independently of that policy.
 	 *
 	 * Object views that allow {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields} can also omit stored optional fields without preventing later upgrades.
 	 * The target retains those fields and the node definitions they require, rather than deleting content the reduced view cannot see.
