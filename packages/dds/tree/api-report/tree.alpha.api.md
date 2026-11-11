@@ -2257,7 +2257,7 @@ export interface TreeGapCaptureOptions {
 // @alpha @sealed
 export interface TreeHistoryCompaction {
     requestCompaction(canCompactCommit: CanCompactCommit): Promise<CompactionResult>;
-    setRevisionPreserved(revision: string, isPreserved: boolean): Promise<RevisionPreservationResult>;
+    setRevisionPreserved(revision: CommitRevision, isPreserved: boolean): Promise<RevisionPreservationResult>;
 }
 
 // @alpha @sealed
