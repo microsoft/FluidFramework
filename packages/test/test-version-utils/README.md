@@ -189,6 +189,12 @@ The script (`scripts/updateCompatVersions.ts`) does the following:
 Commit all files produced by the script: `generated-versions.cjs`, per-version `package.json` files, and
 `compat-workspaces/full/pnpm-lock.yaml`.
 
+### Adding pinned versions for specific tests
+
+When a test needs a pinned version outside the generated version range, add that version to `compat-workspaces/explicit-versions.mjs`.
+Include a comment indicating which test needs the version and why.
+Then re-run `update-compat-versions` and commit the changes.
+
 ## Implementation notes
 
 Legacy packages are installed in a committed pnpm sub-workspace at `compat-workspaces/full/`.
