@@ -90,7 +90,7 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 		state.containerRuntimeFactory.processAllMessages();
 		for (const client of [...state.clients, state.summarizerClient]) {
 			const view = viewFromState(state, client);
-			assert.equal(view.compatibility.isEquivalent, true);
+			assert.equal(view.compatibility.canView, true);
 			expectSchemaEqual(toInitialSchema(view.config.schema), view.checkout.storedSchema);
 			validateFuzzTreeConsistency(state.clients[0], client);
 		}
@@ -128,7 +128,7 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 			applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
 			assert.equal(state.transactionViews?.has(state.client.channel) ?? false, false);
 			assert.equal(viewFromState(state).checkout, checkout);
-			assert.equal(viewFromState(state).compatibility.isEquivalent, true);
+			assert.equal(viewFromState(state).compatibility.canView, true);
 			applySchemaOp(state, { type: "schemaChange", contents: { type: "secondUpgrade" } });
 			assert.equal(viewFromState(state).checkout, checkout);
 		},
@@ -167,7 +167,7 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 		assert.equal(originalRemoteView.disposed, true);
 		assert.equal(remoteView.checkout, originalRemoteView.checkout);
 		assert.equal(remoteView.checkout.disposed, false);
-		assert.equal(remoteView.compatibility.isEquivalent, true);
+		assert.equal(remoteView.compatibility.canView, true);
 		validateFuzzTreeConsistency(state.clients[0], state.clients[1]);
 	});
 
@@ -222,7 +222,7 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 			assert.equal(fork.disposed, false);
 			assert.equal(fork.checkout.disposed, false);
 			assert.equal(fork.branchHistory.getHead()?.revision, head);
-			assert.equal(viewFromState(state).compatibility.isEquivalent, true);
+			assert.equal(viewFromState(state).compatibility.canView, true);
 		},
 	);
 
@@ -236,7 +236,7 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 			const fork = viewFromState(state, state.client, 0);
 			applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
 			assert.equal(viewFromState(state, state.client, 0), fork);
-			assert.equal(fork.compatibility.isEquivalent, true);
+			assert.equal(fork.compatibility.canView, true);
 			const generate = makeTreeEditGenerator({
 				set: 1,
 				fieldSelection: { optional: 1, required: 1, sequence: 0, recurse: 1 },
@@ -276,7 +276,7 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 			assert.equal(checkout.disposed, false);
 			assert.equal(viewFromState(state).checkout, checkout);
 			assert.equal(viewFromState(state).root, undefined);
-			assert.equal(viewFromState(state).compatibility.isEquivalent, true);
+			assert.equal(viewFromState(state).compatibility.canView, true);
 		},
 	);
 

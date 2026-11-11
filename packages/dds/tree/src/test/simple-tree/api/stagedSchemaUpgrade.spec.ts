@@ -232,7 +232,7 @@ describe("staged allowed type upgrade", () => {
 		const viewMigrated = treeMigrated.viewWith(
 			new TreeViewConfiguration({ schema: fullyMigratedSchema }),
 		);
-		assert.equal(viewMigrated.compatibility.isEquivalent, true);
+		assert.equal(viewMigrated.compatibility.canView, true);
 		viewMigrated.upgradeSchema();
 		assert.equal(viewMigrated.root, "test");
 	});
@@ -337,12 +337,9 @@ describe("staged allowed type upgrade", () => {
 			new TreeViewConfigurationAlpha({ schema: baseSchema }),
 			stored,
 		);
-		assert.deepEqual(compatibility, {
-			canView: false,
-			canUpgrade: true,
-			isEquivalent: false,
-			enabledUpgrades: new Map(),
-		});
+		assert.equal(compatibility.canView, false);
+		assert.equal(compatibility.canUpgrade, true);
+		assert.deepEqual(compatibility.enabledUpgrades, new Map());
 
 		checkStagedRolloutCompatibility({
 			baseSchema,
@@ -492,7 +489,7 @@ describe("staged optional upgrade", () => {
 		const viewOptional = treeOptional.viewWith(
 			new TreeViewConfiguration({ schema: optionalSchema }),
 		);
-		assert.equal(viewOptional.compatibility.isEquivalent, true);
+		assert.equal(viewOptional.compatibility.canView, true);
 		viewOptional.upgradeSchema();
 		assert.equal(viewOptional.root, undefined);
 	});
@@ -646,25 +643,24 @@ function checkStagedRolloutCompatibility({
 	const stored = new TestSchemaRepository(defaultSchemaPolicy, toUpgradeSchema(baseSchema));
 	const expectCompatibility = (
 		schema: ImplicitFieldSchema,
-		expected: Omit<
-			ReturnType<typeof checkSchemaCompatibility>,
-			"enabledUpgrades" | "discrepancies"
-		> & {
+		expected: Pick<ReturnType<typeof checkSchemaCompatibility>, "canView" | "canUpgrade"> & {
 			enabledUpgrades?: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
 		},
 	): void => {
-		const { discrepancies: _discrepancies, ...compatibility } = checkSchemaCompatibility(
+		const { canView, canUpgrade, enabledUpgrades } = checkSchemaCompatibility(
 			new TreeViewConfigurationAlpha({ schema }),
 			stored,
 		);
-		assert.deepEqual(compatibility, { enabledUpgrades: new Map(), ...expected });
+		assert.deepEqual(
+			{ canView, canUpgrade, enabledUpgrades },
+			{ enabledUpgrades: new Map(), ...expected },
+		);
 	};
 
-	// baseSchema is equivalent to the initial stored schema.
+	// baseSchema can view the initial stored schema.
 	expectCompatibility(baseSchema, {
 		canView: true,
 		canUpgrade: true,
-		isEquivalent: true,
 	});
 
 	// stagedSchema can view baseSchema and its default upgrade remains a no-op because the
@@ -672,24 +668,20 @@ function checkStagedRolloutCompatibility({
 	expectCompatibility(stagedSchema, {
 		canView: true,
 		canUpgrade: true,
-		isEquivalent: true,
 	});
 	expectCompatibility(fullyMigratedSchema, {
 		canView: false,
 		canUpgrade: true,
-		isEquivalent: false,
 	});
 
 	assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(stagedSchema).rootFieldSchema));
 	expectCompatibility(baseSchema, {
 		canView: true,
 		canUpgrade: true,
-		isEquivalent: true,
 	});
 	expectCompatibility(stagedSchema, {
 		canView: true,
 		canUpgrade: true,
-		isEquivalent: true,
 	});
 
 	// fullyMigratedSchema represents the code-cleanup state where the staged marker has been removed.
@@ -697,7 +689,6 @@ function checkStagedRolloutCompatibility({
 	expectCompatibility(fullyMigratedSchema, {
 		canView: false,
 		canUpgrade: true,
-		isEquivalent: false,
 	});
 
 	assert(
@@ -713,19 +704,16 @@ function checkStagedRolloutCompatibility({
 	expectCompatibility(baseSchema, {
 		canView: false,
 		canUpgrade: false,
-		isEquivalent: false,
 	});
 
 	// stagedSchema excludes the already enabled upgrade by default.
 	expectCompatibility(stagedSchema, {
 		canView: true,
 		canUpgrade: false,
-		isEquivalent: false,
 		enabledUpgrades: new Map([[upgrade, "enabled"]]),
 	});
 	expectCompatibility(fullyMigratedSchema, {
 		canView: true,
 		canUpgrade: true,
-		isEquivalent: true,
 	});
 }

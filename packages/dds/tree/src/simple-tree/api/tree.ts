@@ -895,7 +895,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 * - update only a specific change (add an optional field, or apply a staged upgrade)
 	 * - update persistedMetadata or not
 	 *
-	 * As persisted metadata becomes more supported, how it interacts with isEquivalent and upgradeSchema should be clarified:
+	 * As persisted metadata becomes more supported, how it interacts with `upgradeSchema` should be clarified:
 	 * for now the docs are being left somewhat vague to allow flexibility in this area.
 	 */
 	upgradeSchema(): void;
@@ -1061,7 +1061,7 @@ export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus
 	 * When present, the list is nonempty and explains why accessing {@link TreeView.root} throws.
 	 *
 	 * It does not report all schema differences nor discrepancies that would prevent
-	 * {@link SchemaCompatibilityStatus.canUpgrade} or {@link SchemaCompatibilityStatus.isEquivalent}.
+	 * {@link SchemaCompatibilityStatus.canUpgrade}.
 	 *
 	 * Entries may include non-blocking staging context in addition to the constraint that prevents viewing.
 	 *
@@ -1212,6 +1212,17 @@ export interface SchemaCompatibilityStatus {
 	 * A `false` value does not by itself mean that viewing or upgrading will throw.
 	 * Check {@link SchemaCompatibilityStatus.canView} before accessing {@link TreeView.root},
 	 * and {@link SchemaCompatibilityStatus.canUpgrade} before calling {@link TreeView.upgradeSchema}.
+	 *
+	 * @deprecated
+	 * This property isn't needed as a part of application flows for loading a document.
+	 * Use {@link SchemaCompatibilityStatus.canView} to determine if a document can be viewed as-is.
+	 * Use {@link SchemaCompatibilityStatus.canUpgrade} to determine if the stored schema can be upgraded to match the view schema, when the document is not viewable as-is.
+	 *
+	 * When diagnosing schema incompatibility issues, use {@link SchemaCompatibilityStatusBeta.discrepancies} to get detailed information about the incompatibilities.
+	 *
+	 * No direct replacement APIs are intended for this property.
+	 * It will be removed in a version 4.0.0.
+	 * See {@link https://github.com/microsoft/FluidFramework/issues/28660} for more details.
 	 */
 	readonly isEquivalent: boolean;
 
@@ -1221,14 +1232,13 @@ export interface SchemaCompatibilityStatus {
 	 * @remarks
 	 * If false, accessing {@link TreeView.root} throws.
 	 *
-	 * If the view schema does not opt into supporting any additional cases, then `canView` is only true when `isEquivalent` is also true.
-	 * The view schema can however opt into supporting additional cases, and thus can also view documents with stored schema which would be equivalent, except for the following discrepancies:
+	 * The view schema can opt into supporting differences from the stored schema, including:
 	 *
-	 * - An object node with {@link ObjectSchemaOptions.allowUnknownOptionalFields} to set to true that has additional optional fields in the stored schema beyond those mentioned in its view schema.
+	 * - An object node with {@link ObjectSchemaOptions.allowUnknownOptionalFields} set to true that has additional optional fields in the stored schema beyond those mentioned in its view schema.
 	 *
 	 * - An additional type allowed at a location in the stored schema where it is {@link SchemaStaticsBeta.staged | staged} in the view schema.
 	 *
-	 * In these cases `canUpgrade` and `isEquivalent` will be false.
+	 * These differences can permit viewing even when {@link SchemaCompatibilityStatus.canUpgrade} is false.
 	 *
 	 * When the set of documents allowed by the view schema is a strict superset of those allowed by the stored schema,
 	 * `canView` is false because writes to the document using the view schema could make the document violate its stored schema.

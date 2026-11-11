@@ -1406,7 +1406,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		} else {
 			assert(
 				sourceField instanceof UnhydratedSequenceField,
-				"Expected an unhydrated source field after validating move contexts",
+				0xda6 /* Expected an unhydrated source field after validating move contexts */,
 			);
 			assert(
 				destinationField instanceof UnhydratedSequenceField,

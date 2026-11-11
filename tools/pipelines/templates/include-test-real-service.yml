@@ -127,9 +127,6 @@ parameters:
 - name: gitrestImageTag
   type: string
   default: 'latest'
-- name: gitsshImageTag
-  type: string
-  default: 'latest'
 
 stages:
 - stage: ${{ parameters.stageId }}
@@ -281,7 +278,6 @@ stages:
               ALFRED_IMAGE_TAG: ${{ parameters.alfredImageTag }}
               HISTORIAN_IMAGE_TAG: ${{ parameters.historianImageTag }}
               GITREST_IMAGE_TAG: ${{ parameters.gitrestImageTag }}
-              GITSSH_IMAGE_TAG: ${{ parameters.gitsshImageTag }}
           - task: Bash@3
             displayName: 'Wait for services to be ready'
             inputs:
