@@ -55,14 +55,14 @@ describe("Schema Evolution Examples", () => {
 	/**
 	 * Verifies that an explicit schema upgrade makes no observable change.
 	 *
-	 * @typeParam TSchema - The root schema of the view being checked.
-	 * @param provider - Connects the clients and processes any operations submitted by the upgrade.
-	 * @param view - A readable view whose upgrade is expected to succeed without changing the document.
-	 *
 	 * @remarks
 	 * The helper requests an upgrade and synchronizes the clients to check both local and sequenced effects.
 	 * No schema-change event or sequenced operation should result, and the root object should remain unchanged.
 	 * Synchronize pending operations before calling it so an earlier edit cannot be mistaken for an effect of this upgrade.
+	 *
+	 * @typeParam TSchema - The root schema of the view being checked.
+	 * @param provider - Connects the clients and processes any operations submitted by the upgrade.
+	 * @param view - A readable view whose upgrade is expected to succeed without changing the document.
 	 */
 	function verifyNoOpUpgrade<TSchema extends ImplicitFieldSchema>(
 		provider: TestTreeProviderLite,
@@ -95,13 +95,13 @@ describe("Schema Evolution Examples", () => {
 	/**
 	 * Verifies that an incompatible view cannot upgrade any local or synchronized document state.
 	 *
-	 * @typeParam TSchema - The incompatible view's root schema.
-	 * @param provider - Synchronized clients with no pending operations.
-	 * @param view - The view whose upgrade must be rejected.
-	 *
 	 * @remarks
 	 * To verify that rejection preserves the entire document, this captures stored data independently of the view, including unknown fields.
 	 * The rejected call also breaks the requesting view, so neither that view nor its checkout's public APIs may be used afterward.
+	 *
+	 * @typeParam TSchema - The incompatible view's root schema.
+	 * @param provider - Synchronized clients with no pending operations.
+	 * @param view - The view whose upgrade must be rejected.
 	 */
 	function verifyRejectedUpgrade<TSchema extends ImplicitFieldSchema>(
 		provider: TestTreeProviderLite,
@@ -401,8 +401,6 @@ describe("Schema Evolution Examples", () => {
 		/**
 		 * Verifies visible field values and shared title edits through two views of the same document.
 		 *
-		 * @param options - The participating views, their synchronization provider, and their expected field values.
-		 *
 		 * @remarks
 		 * Start with synchronized, readable and writable views whose titles both equal `initialTitle`.
 		 * For each view, supply all other exported fields in its expected field map.
@@ -411,6 +409,8 @@ describe("Schema Evolution Examples", () => {
 		 * This function changes the title to `"Edited by reader"`, then to `"Edited by creator"`.
 		 * After each edit, it checks the receiving view's exported data.
 		 * The view must have the new title and unchanged values for its other visible fields.
+		 *
+		 * @param options - The participating views, their synchronization provider, and their expected field values.
 		 */
 		function verifyReadWrite(options: VerifyReadWriteOptions): void {
 			const { provider, creator, reader } = options;
@@ -418,13 +418,13 @@ describe("Schema Evolution Examples", () => {
 			/**
 			 * Checks that a view exports the expected title and other field values.
 			 *
-			 * @param participant - The view and its expected fields, excluding `title`.
-			 * @param title - The expected shared title.
-			 *
 			 * @remarks
 			 * The view must permit reading its root.
 			 * The expected fields describe the complete export except for `title`.
 			 * This comparison does not inspect data in unknown fields omitted by the export.
+			 *
+			 * @param participant - The view and its expected fields, excluding `title`.
+			 * @param title - The expected shared title.
 			 */
 			function verifyVisibleFields(participant: ViewWithExpectedFields, title: string): void {
 				// TODO: we have planned functionality to include unknown fields in the exported data.
@@ -439,14 +439,14 @@ describe("Schema Evolution Examples", () => {
 			/**
 			 * Checks that fields expected only by one view are not exposed by the other view.
 			 *
-			 * @param source - The view whose expected fields supply the keys to check.
-			 * @param target - The view that must not expose keys absent from its expected fields.
-			 * @param targetName - The target view's name to include in assertion failures.
-			 *
 			 * @remarks
 			 * The target view must permit reading its root.
 			 * A key present only in the source's expected fields is treated as unknown to the target.
 			 * Do not omit a known but empty target field from its expected fields if the source lists that key.
+			 *
+			 * @param source - The view whose expected fields supply the keys to check.
+			 * @param target - The view that must not expose keys absent from its expected fields.
+			 * @param targetName - The target view's name to include in assertion failures.
 			 */
 			function verifyUnknownFields(
 				source: ViewWithExpectedFields,
@@ -471,14 +471,14 @@ describe("Schema Evolution Examples", () => {
 			/**
 			 * Edits the title, synchronizes clients, and checks the receiving view's data.
 			 *
-			 * @param sender - The view that writes the new title.
-			 * @param recipient - The view that must receive the title and retain its other field values.
-			 * @param title - The new shared title.
-			 *
 			 * @remarks
 			 * Both views must permit read/write access to the same document.
 			 * This helper uses the enclosing synchronization provider to deliver the edit.
 			 * It leaves the document with the new title.
+			 *
+			 * @param sender - The view that writes the new title.
+			 * @param recipient - The view that must receive the title and retain its other field values.
+			 * @param title - The new shared title.
 			 */
 			function verifyTitleEdit(
 				sender: ViewWithExpectedFields,

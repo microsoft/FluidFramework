@@ -16,7 +16,6 @@ export interface ObjectSchemaOptions {
 	/**
 	 * Allow nodes typed with this object node schema to contain optional fields that are not present in the schema declaration.
 	 *
-	 * @defaultValue `true`
 	 * @remarks
 	 * When you add optional fields to an application schema, older application versions may still need to collaborate on the same documents.
 	 * Enabling this option on the older object schema lets its views tolerate the additional optional fields introduced by newer clients.
@@ -54,6 +53,8 @@ export interface ObjectSchemaOptions {
 	 * but {@link Unhydrated} nodes produced by {@link TreeNode} constructors, insertable content, and {@link (TreeAlpha:interface).importVerbose | importVerbose} do not.
 	 * Exporting those fields therefore does not guarantee that importing the result will preserve them.
 	 * To detect whether a node contains unknown-field data that an operation could lose, use {@link (TreeAlpha:interface).hasUnknownChildren}.
+	 *
+	 * @defaultValue `true`
 	 */
 	readonly allowUnknownOptionalFields?: boolean;
 }

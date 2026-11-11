@@ -91,9 +91,6 @@ export interface StagedSchemaUpgradePolicyFactory {
 	/**
 	 * Creates options that introduce only the specified staged schema upgrades.
 	 *
-	 * @param upgrades - The staged schema upgrades to enable.
-	 * @returns Options that introduce only the specified upgrades.
-	 *
 	 * @remarks
 	 * Use the selected tokens to control which parts of a staged rollout this client may enable.
 	 * In a new document, the corresponding staged types are included and staged-optional fields become optional; unselected changes remain disabled.
@@ -102,6 +99,9 @@ export interface StagedSchemaUpgradePolicyFactory {
 	 * An upgrade preserves those permissions while adding the selected changes.
 	 *
 	 * Passing no tokens selects no new staged changes and is equivalent to {@link StagedSchemaUpgradePolicyFactory.restrictive}.
+	 *
+	 * @param upgrades - The staged schema upgrades to enable.
+	 * @returns Options that introduce only the specified upgrades.
 	 */
 	enabledStagedUpgrades(...upgrades: SchemaUpgrade[]): StagedSchemaUpgradePolicy;
 }

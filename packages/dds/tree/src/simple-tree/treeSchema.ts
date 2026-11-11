@@ -614,15 +614,15 @@ function composeMapNodeSchema(
 /**
  * Preserves stored field permissions while adding those selected by the view's configured policy.
  *
+ * @remarks
+ * Keeping an existing type prevents the candidate from narrowing the field, but does not give the view support for that type.
+ * Callers must therefore validate the complete candidate before applying it rather than treating field composition as approval.
+ *
  * @param candidate - The field produced by converting the view with the configured policy.
  * @param stored - The existing field at the same stored location.
  * @param viewField - The root or object view field, used to determine whether it supports missing content.
  *
  * @returns The original candidate if unchanged, or a new field retaining the existing permissions and candidate metadata.
- *
- * @remarks
- * Keeping an existing type prevents the candidate from narrowing the field, but does not give the view support for that type.
- * Callers must therefore validate the complete candidate before applying it rather than treating field composition as approval.
  */
 function composeFieldSchema(
 	candidate: TreeFieldStoredSchema,
