@@ -12,6 +12,7 @@ import {
 	type FieldKey,
 	type FieldKindIdentifier,
 	type ITreeSubscriptionCursor,
+	LeafNodeStoredSchema,
 	type TreeNavigationResult,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
@@ -97,6 +98,19 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 		return true;
 	}
 
+	/**
+	 * The {@link LazyTreeNode} already created for the node anchored at `anchorNode`, if there is one and it is not a leaf.
+	 * @remarks
+	 * Reading a leaf gives its value, which is read with a cursor.
+	 */
+	public static cachedNonLeaf(anchorNode: AnchorNode | undefined): LazyTreeNode | undefined {
+		const cached = anchorNode?.slots.get(flexTreeSlot);
+		return cached instanceof LazyTreeNode &&
+			!(cached.storedSchema instanceof LeafNodeStoredSchema)
+			? cached
+			: undefined;
+	}
+
 	protected override tryMoveCursorToAnchor(
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
@@ -136,12 +150,21 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 	public tryGetField(fieldKey: FieldKey): FlexTreeField | undefined {
 		currentObserver?.observeNodeField(this, fieldKey);
 
+		const cached = getCachedField(this, fieldKey);
+		if (cached !== undefined) {
+			this.ensureValidForAccess();
+			// A field in which a node is anchored is not empty, so this needs no cursor at this node.
+			if (this.anchorNode.childIfAnchored(fieldKey, 0) !== undefined) {
+				return cached;
+			}
+		}
+
 		const schema = this.storedSchema.getFieldSchema(fieldKey);
 		return inCursorField(this.cursor, fieldKey, (cursor) => {
 			if (cursor.getFieldLength() === 0) {
 				return undefined;
 			}
-			return getCachedField(this, fieldKey) ?? makeField(this.context, schema.kind, cursor);
+			return cached ?? makeField(this.context, schema.kind, cursor);
 		});
 	}
 

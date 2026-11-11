@@ -52,7 +52,7 @@ import {
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
 import { LazyEntity } from "./lazyEntity.js";
-import { type LazyTreeNode, getOrCreateHydratedFlexTreeNode } from "./lazyNode.js";
+import { LazyTreeNode, getOrCreateHydratedFlexTreeNode } from "./lazyNode.js";
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
 
 /**
@@ -221,8 +221,29 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 	}
 
 	public atIndex(index: number): FlexTreeUnknownUnboxed {
+		const cached = this.cachedNonLeafChild(index);
+		if (cached !== undefined) {
+			return cached;
+		}
 		return inCursorNode(this.cursor, index, (cursor) =>
 			unboxedFlexNode(this.context, cursor, this.anchor),
+		);
+	}
+
+	/**
+	 * The {@link LazyTreeNode} already created for the node at `index`, if there is one and it is not a leaf.
+	 * @remarks
+	 * Such a node is found through the anchors, so reading it needs no cursor at this field.
+	 */
+	protected cachedNonLeafChild(index: number): LazyTreeNode | undefined {
+		if (this.anchor.parent === undefined) {
+			return undefined;
+		}
+		this.ensureValidForAccess();
+		return LazyTreeNode.cachedNonLeaf(
+			this.context.checkout.forest.anchors
+				.locate(this.anchor.parent)
+				?.childIfAnchored(this.key, index),
 		);
 	}
 
@@ -432,7 +453,7 @@ export class LazyOptionalField extends LazyField implements FlexTreeOptionalFiel
 	}
 
 	public get content(): FlexTreeUnknownUnboxed | undefined {
-		return this.length === 0 ? undefined : this.atIndex(0);
+		return this.cachedNonLeafChild(0) ?? (this.length === 0 ? undefined : this.atIndex(0));
 	}
 }
 
