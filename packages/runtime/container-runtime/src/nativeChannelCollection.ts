@@ -170,7 +170,7 @@ export class NativeChannelCollection
 		) {
 			throw new UsageError("Nested data stores require oldestSupportedClient >= 3.12.0");
 		}
-		const childId = id ?? `_${this.createDataStoreId()}`;
+		const childId = id ?? this.createDataStoreId("_");
 		if (
 			childId.length === 0 ||
 			childId.includes("/") ||

@@ -738,12 +738,14 @@ export class ChannelCollection
 	 * user expected some other data store (that would receive alias later).
 	 * Please note that above mentioned functions have the implementation they have (allowing #2) due to #1.
 	 */
-	protected createDataStoreId(): string {
+	private nextDetachedDataStoreId = 0;
+
+	protected createDataStoreId(prefix = ""): string {
 		/**
 		 * Return uuid if short-ids are explicitly disabled via feature flags.
 		 */
 		if (this.mc.config.getBoolean("Fluid.Runtime.DisableShortIds") === true) {
-			return uuid();
+			return `${prefix}${uuid()}`;
 		} else {
 			// We use three non-overlapping namespaces:
 			// - detached state: even numbers
@@ -751,14 +753,22 @@ export class ChannelCollection
 			// - uuids
 			// In first two cases we will encode result as strings in more compact form.
 			if (this.parentContext.attachState === AttachState.Detached) {
-				// container is detached, only one client observes content,  no way to hit collisions with other clients.
-				return encodeCompactIdToString(2 * this.contexts.size);
+				// Detached snapshots omit unbound contexts, so restored IDs need not be dense.
+				this.nextDetachedDataStoreId = Math.max(
+					this.nextDetachedDataStoreId,
+					this.contexts.size,
+				);
+				let candidate: string;
+				do {
+					candidate = `${prefix}${encodeCompactIdToString(2 * this.nextDetachedDataStoreId++)}`;
+				} while (this.contexts.has(candidate) || this.aliasMap.has(candidate));
+				return candidate;
 			}
 			const id = this.parentContext.containerRuntime.generateDocumentUniqueId();
 			if (typeof id === "number") {
-				return encodeCompactIdToString(2 * id + 1);
+				return `${prefix}${encodeCompactIdToString(2 * id + 1)}`;
 			}
-			return id;
+			return `${prefix}${id}`;
 		}
 	}
 

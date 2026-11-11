@@ -181,6 +181,52 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 		return (await (await collection.getDataStoreEntryPoint("root")).get()) as ISharedMap;
 	}
 
+	it("allocates unused IDs after detached rehydration omits an earlier child", async () => {
+		const detached = await provider.createDetachedContainer(runtimeFactory);
+		const parent = (await detached.getEntryPoint()) as IFluidDataStoreChannelCollection;
+		const root = await getRoot(parent);
+		await parent.createDataStore(leafFactory);
+		const retained = await parent.createDataStore(leafFactory);
+		const retainedMap = (await retained.entryPoint.get()) as ISharedMap;
+		retainedMap.set("value", 42);
+		root.set("retained", retained.entryPoint);
+		// Reserve the next count-derived candidate as an alias as well.
+		assert.equal(await retained.trySetAlias("_6"), "Success");
+		const retainedPath = toFluidHandleInternal(retained.entryPoint).absolutePath;
+		const snapshot = detached.serialize();
+		detached.close();
+
+		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
+		const rehydrated = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
+		const restoredParent =
+			(await rehydrated.getEntryPoint()) as IFluidDataStoreChannelCollection;
+		const restoredRoot = await getRoot(restoredParent);
+		const paths = new Set([retainedPath]);
+		for (let i = 0; i < 3; i++) {
+			const child = await restoredParent.createDataStore(leafFactory);
+			const path = toFluidHandleInternal(child.entryPoint).absolutePath;
+			assert(!paths.has(path), "Generated IDs must not reuse restored or newly allocated IDs");
+			paths.add(path);
+			restoredRoot.set(`child-${i}`, child.entryPoint);
+		}
+		const alias = await restoredParent.getDataStoreEntryPoint("_6");
+		assert.equal(toFluidHandleInternal(alias).absolutePath, retainedPath);
+		await provider.attachDetachedContainer(rehydrated);
+		await provider.ensureSynchronized();
+		const remote = await provider.loadContainer(runtimeFactory);
+		const remoteRoot = await getRoot(
+			(await remote.getEntryPoint()) as IFluidDataStoreChannelCollection,
+		);
+		const handle = remoteRoot.get<IFluidHandle<ISharedMap>>("retained");
+		assert(handle !== undefined);
+		assert.equal((await handle.get()).get("value"), 42);
+		for (let i = 0; i < 3; i++) {
+			const childHandle = remoteRoot.get<IFluidHandle<ISharedMap>>(`child-${i}`);
+			assert(childHandle !== undefined);
+			await childHandle.get();
+		}
+	});
+
 	it("aliases a child during initialization before the containing runtime is bound", async () => {
 		let containerRuntime: IContainerRuntimeBase | undefined;
 		const initializingFactory: IFluidDataStoreFactory & {

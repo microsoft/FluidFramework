@@ -51,6 +51,7 @@ Storing a descendant's handle attaches the required ancestors.
 If a child becomes visible during its containing store's initialization, ancestor visibility is deferred until that store's runtime is bound and its entry point has finished initialization.
 Nested aliases are persisted in the collection's `.aliases` blob.
 New explicit child IDs cannot use `.aliases` or the `_` prefix reserved for generated IDs.
+Detached ID allocation checks restored child IDs and aliases rather than assuming that a snapshot contains a dense sequence of IDs.
 Existing legacy child names remain loadable, but a legacy `.aliases` child prevents adding alias metadata that would overwrite it.
 That blob is omitted when there are no aliases.
 Existing DDS slots have their original `.attributes` and payload, not a synthetic data-store envelope.
