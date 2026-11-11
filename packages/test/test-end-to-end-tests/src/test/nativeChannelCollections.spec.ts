@@ -267,6 +267,7 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 		await provider.ensureSynchronized();
 		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
 		const { summarizer } = await createSummarizerCore(container, loader);
+		await provider.ensureSynchronized();
 		const { summaryVersion } = await summarizeNow(summarizer);
 		const reloaded = await provider.loadContainer(runtimeFactory, undefined, {
 			[LoaderHeader.version]: summaryVersion,
@@ -297,6 +298,7 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 		await provider.ensureSynchronized();
 		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
 		const { summarizer } = await createSummarizerCore(container, loader);
+		await provider.ensureSynchronized();
 		await summarizeNow(summarizer);
 		assert(summarizerCollection !== undefined);
 		const summaryRoot = await getRoot(summarizerCollection);
@@ -388,6 +390,7 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 
 		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
 		const { summarizer } = await createSummarizerCore(container, loader);
+		await provider.ensureSynchronized();
 		const { summaryVersion } = await summarizeNow(summarizer);
 		const remote = await provider.loadContainer(runtimeFactory, undefined, {
 			[LoaderHeader.version]: summaryVersion,
@@ -730,6 +733,7 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 					},
 				);
 				const { summarizer } = await createSummarizerCore(container, loader);
+				await provider.ensureSynchronized();
 				let summary = await summarizeNow(summarizer);
 				const retained = getGCStateFromSummary(summary.summaryTree);
 				assert(retained !== undefined);

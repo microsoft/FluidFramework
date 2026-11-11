@@ -194,7 +194,7 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
-		provider = getTestObjectProvider();
+		provider = getTestObjectProvider({ syncSummarizer: true });
 	});
 
 	async function alphaFactory(
@@ -307,6 +307,7 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		await provider.ensureSynchronized();
 		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
 		const { summarizer } = await createSummarizerCore(modern, loader);
+		await provider.ensureSynchronized();
 		const { summaryVersion } = await summarizeNow(summarizer);
 		const reloaded = await provider.loadContainer(legacyFactory, undefined, {
 			[LoaderHeader.version]: summaryVersion,
@@ -376,6 +377,7 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		await provider.ensureSynchronized();
 		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
 		const { summarizer } = await createSummarizerCore(container, loader);
+		await provider.ensureSynchronized();
 		const { summaryVersion, summaryTree } = await summarizeNow(summarizer);
 		const channels: SummaryObject | undefined = summaryTree.tree[".channels"];
 		assert(channels?.type === SummaryType.Tree);
@@ -527,6 +529,7 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 					: await alphaFactory(writer === "generalized" ? async () => modernKind : kinds);
 			const loader = provider.createLoader([[provider.defaultCodeDetails, summaryFactory]]);
 			const { summarizer } = await createSummarizerCore(container, loader);
+			await provider.ensureSynchronized();
 			const { summaryVersion } = await summarizeNow(summarizer);
 			const readerFactory =
 				writer === "legacy" ? await alphaFactory(async () => modernKind) : legacyFactory;

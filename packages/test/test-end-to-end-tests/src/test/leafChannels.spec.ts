@@ -65,7 +65,7 @@ describeCompat("Native leaf channels", "NoCompat", (getTestObjectProvider, apis)
 
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
-		provider = getTestObjectProvider();
+		provider = getTestObjectProvider({ syncSummarizer: true });
 	});
 
 	async function getMap(container: IContainer): Promise<ISharedMap> {
@@ -151,6 +151,7 @@ describeCompat("Native leaf channels", "NoCompat", (getTestObjectProvider, apis)
 		await provider.ensureSynchronized();
 		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
 		const { summarizer } = await createSummarizerCore(container, loader);
+		await provider.ensureSynchronized();
 		const { summaryTree, summaryVersion } = await summarizeNow(summarizer);
 		const channels: SummaryObject | undefined = summaryTree.tree[".channels"];
 		assert(channels?.type === SummaryType.Tree);

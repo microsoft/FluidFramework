@@ -115,6 +115,7 @@ describeCompat("Native incremental summaries", "NoCompat", (getProvider, apis) =
 			await provider.ensureSynchronized();
 			const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
 			const { summarizer } = await createSummarizerCore(container, loader);
+			await provider.ensureSynchronized();
 			await summarizeNow(summarizer);
 			// Establish incremental chunks, then verify successive summaries reuse them.
 			for (let version = 1; version <= 3; version++) {
