@@ -43,6 +43,7 @@ Read the **@fluidframework/runtime-utils** API documentation at <https://fluidfr
 Import `dataStoreKindFromFactory` from `@fluidframework/runtime-utils/legacy/alpha` to use an existing data-store factory as an alpha `DataStoreKind`.
 Pass the resulting kind to ServiceClient creation/loading APIs or register it in a data-store registry.
 The bridge preserves the original factory identity, its child registry, entry point, and document format.
+Factories can create registered child data stores during initialization.
 It does not add a persisted hosting object or change named channels.
 
 The generic type argument describes the factory's entry point.

@@ -307,6 +307,111 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		assert(SharedMap.is(await childHandle.get()));
 	});
 
+	it("creates registered children during legacy factory initialization", async () => {
+		const childFactory = {
+			type: "initializing-child",
+			get IFluidDataStoreFactory() {
+				return this;
+			},
+			async instantiateDataStore(context, existing) {
+				return factory.instantiateDataStore(context, existing);
+			},
+			createDataStore(context: IFluidDataStoreContext) {
+				const runtime = new FluidDataStoreRuntime(
+					context,
+					new Map([[mapFactory.type, mapFactory]]),
+					false,
+					async () => map,
+				);
+				const map = SharedMap.create(runtime, "application-selected-root");
+				map.bindToContext();
+				return { runtime, map };
+			},
+		} satisfies IFluidDataStoreFactory;
+		const childRegistry: IFluidDataStoreRegistry = {
+			get IFluidDataStoreRegistry() {
+				return this;
+			},
+			getSync(type) {
+				return type === childFactory.type ? childFactory : undefined;
+			},
+			async get(type) {
+				return this.getSync?.(type);
+			},
+		};
+		const parentFactory: IFluidDataStoreFactory & {
+			IFluidDataStoreRegistry: IFluidDataStoreRegistry;
+		} = {
+			type: "initializing-parent",
+			IFluidDataStoreRegistry: childRegistry,
+			get IFluidDataStoreFactory() {
+				return this;
+			},
+			async instantiateDataStore(context, existing) {
+				const runtime = await factory.instantiateDataStore(context, existing);
+				if (!existing) {
+					assert(context.createChildDataStore !== undefined);
+					const child = context.createChildDataStore(childFactory);
+					child.map.set("value", 42);
+					const initializedRoot = (await runtime.entryPoint.get()) as ISharedMap;
+					initializedRoot.set("child", child.map.handle);
+				}
+				return runtime;
+			},
+		};
+		const parentKind = dataStoreKindFromFactory<ISharedMap>(parentFactory);
+		const parentKinds: DataStoreRegistry = async () => parentKind;
+		const runtimeFactory = await alphaFactory(parentKinds, parentKind);
+		const container = await provider.createContainer(runtimeFactory);
+		const root = (await container.getEntryPoint()) as ISharedMap;
+		const alpha = fluidContainerFromLegacy(container, root, parentKinds, provider.documentId);
+		const additional = await alpha.createDataStore(parentKind);
+		assert.equal(additional.handle.isAttached, false);
+		root.set("additional", additional.handle);
+		await provider.ensureSynchronized();
+
+		const remote = await provider.loadContainer(runtimeFactory);
+		await provider.ensureSynchronized();
+		const remoteRoot = (await remote.getEntryPoint()) as ISharedMap;
+		const additionalHandle = remoteRoot.get<IFluidHandle<ISharedMap>>("additional");
+		assert(additionalHandle !== undefined);
+		const remoteAdditional = await additionalHandle.get();
+		const childHandle = remoteAdditional.get<IFluidHandle<ISharedMap>>("child");
+		assert(childHandle !== undefined);
+		const remoteChild = await childHandle.get();
+		assert.equal(remoteChild.get("value"), 42);
+		remoteChild.set("value", 43);
+		await provider.ensureSynchronized();
+		const localChildHandle = additional.get<IFluidHandle<ISharedMap>>("child");
+		assert(localChildHandle !== undefined);
+		assert.equal((await localChildHandle.get()).get("value"), 43);
+	});
+
+	it("rejects an adopted registry with a different factory for the same type", async () => {
+		const container = await provider.createContainer(new LegacyCreatingFactory());
+		const root = (await container.getEntryPoint()) as ISharedMap;
+		const conflictingFactory: IFluidDataStoreFactory = {
+			type: factory.type,
+			get IFluidDataStoreFactory() {
+				return this;
+			},
+			async instantiateDataStore() {
+				assert.fail("A conflicting factory must not be instantiated");
+			},
+		};
+		const conflictingKind = dataStoreKindFromFactory<ISharedMap>(conflictingFactory);
+		const alpha = fluidContainerFromLegacy(
+			container,
+			root,
+			async () => conflictingKind,
+			provider.documentId,
+		);
+		await assert.rejects(
+			alpha.createDataStore(conflictingKind),
+			/The data-store kind does not match the factory registered in the container runtime/,
+		);
+	});
+
 	it("loads an alpha-created document through legacy APIs", async () => {
 		const alpha = await client.createContainer(kind);
 		assert(alpha instanceof TestServiceContainer);

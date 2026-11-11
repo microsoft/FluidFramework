@@ -6,6 +6,7 @@ Use legacy data-store factories with alpha ServiceClient APIs
 
 The new `dataStoreKindFromFactory` function in `@fluidframework/runtime-utils/legacy/alpha` lets you use an existing data-store factory as an alpha `DataStoreKind`.
 It preserves the original factory, child registry, entry point, and persisted representation without adding persisted objects.
+This includes factories that create registered child data stores during initialization.
 Repeated calls with the same factory return the same kind.
 Supply the factory's entry-point type as the generic type argument when needed.
 The function does not validate that type or change the container's root-discovery convention.

@@ -22,6 +22,7 @@ import type {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
+	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -260,12 +261,20 @@ export abstract class ServiceContainerBase<TData, TOptions = unknown>
 	public async createDataStore<T>(key: DataStoreKey<T>): Promise<T> {
 		const kind = await lookupInRegistry(this.registry, key);
 		DataStoreKindImplementation.narrowGeneric(kind);
-		const containerRuntime = this.getRuntime();
-
-		// TODO: There should probably be a higher level more type safe way to do this.
-		const context = containerRuntime.createDetachedDataStore([kind.type]);
-		const channel = await kind.instantiateDataStore(context, false);
-		const dataStore = await context.attachRuntime(kind, channel);
+		const containerRuntime: IContainerRuntimeBase & Partial<IProvideFluidDataStoreRegistry> =
+			this.getRuntime();
+		const registry = containerRuntime.IFluidDataStoreRegistry;
+		if (registry === undefined) {
+			throw new UsageError("The container runtime does not expose a data-store registry");
+		}
+		const registered = registry.getSync?.(kind.type) ?? (await registry.get(kind.type));
+		if (registered?.IFluidDataStoreFactory !== kind.IFluidDataStoreFactory) {
+			throw new UsageError(
+				"The data-store kind does not match the factory registered in the container runtime",
+			);
+		}
+		// Normal creation initializes the context's child registry before invoking the factory.
+		const dataStore = await containerRuntime.createDataStore(kind.type);
 		const entryPoint = await dataStore.entryPoint.get();
 		// The data store's entry point type is erased at the registry boundary;
 		// the DataStoreKind<T> used to create it guarantees the entry point is a T.
