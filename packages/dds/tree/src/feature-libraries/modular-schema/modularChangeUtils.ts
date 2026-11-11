@@ -649,6 +649,13 @@ export function normalizeFieldId(
 		: { ...fieldId, nodeId: normalizeNodeId(fieldId.nodeId, nodeAliases) };
 }
 
+export function normalizeFieldIdOpt(
+	fieldId: FieldId | undefined,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
+): FieldId | undefined {
+	return fieldId === undefined ? undefined : normalizeFieldId(fieldId, nodeAliases);
+}
+
 export function getFieldsForCrossFieldKey(
 	changeset: ModularChangeset,
 	key: CrossFieldKey,
