@@ -44,12 +44,12 @@ import { v4 as uuid } from "uuid";
 
 import {
 	captureReferencedAttachmentBlobs,
+	excludedAttachmentBlobLocalIds,
 	extractBlobAttachReferences,
 	inlineAttachmentBlobsByReference,
 	parseGcSnapshotData,
-	readReferencedSnapshotBlobs,
+	readStructuralSnapshotBlobs,
 	snapshotHasLoadingGroups,
-	unreferencedAttachmentBlobLocalIds,
 	type IBlobAttachReference,
 	type IGcSnapshotData,
 } from "./captureReferencedContents.js";
@@ -542,7 +542,7 @@ export interface ICaptureFullContainerStateProps {
  * be handed to {@link loadExistingContainer} as `pendingLocalState`.
  *
  * By default, the output contains the latest snapshot, inlined contents of every
- * structural snapshot blob, inlined contents of every referenced attachment blob
+ * structural snapshot blob, inlined contents of every eligible attachment blob
  * keyed by storage id, and all ops with sequence numbers after the base
  * snapshot's sequence number through the point observed when the delta stream
  * connects. The same DeltaManager catch-up path used by container loading
@@ -558,9 +558,11 @@ export interface ICaptureFullContainerStateProps {
  * still present in the snapshot. Saved or future ops can reference these stores
  * again, so their contents must be retained just as they are in a live session.
  * The snapshot's `unreferenced` flags remain metadata, not capture filters.
- * Attachment blobs that GC has marked unreferenced, tombstoned, or deleted are
- * skipped. When the snapshot has no GC tree (GC disabled or pre-GC document),
- * attachment filtering is not applied.
+ * Unreferenced attachment blobs are also retained, since referencing their
+ * owning data store again does not produce a new BlobAttach op.
+ * Attachment blobs that GC has tombstoned or deleted are skipped.
+ * When the snapshot has no GC tree (GC disabled or pre-GC document), attachment
+ * filtering is not applied.
  *
  * Blob reads on load hit the `ContainerStorageAdapter` cache populated from
  * the captured `snapshotBlobs` map, so a frozen loader can serve the full
@@ -700,7 +702,7 @@ export async function captureFullContainerState({
 		if (blobCaptureMode === "inline") {
 			gcData = await parseGcSnapshotData(baseSnapshot, storage);
 			[snapshotBlobs, attachmentBlobContents] = await Promise.all([
-				readReferencedSnapshotBlobs(snapshot, storage), // utf8 encoded
+				readStructuralSnapshotBlobs(snapshot, storage), // utf8 encoded
 				captureReferencedAttachmentBlobs(baseSnapshot, storage, gcData), // base64 encoded
 			]);
 		}
@@ -735,7 +737,7 @@ export async function captureFullContainerState({
 			const added = await inlineAttachmentBlobsByReference(
 				postSnapshotBlobReferences,
 				storage,
-				unreferencedAttachmentBlobLocalIds(gcData),
+				excludedAttachmentBlobLocalIds(gcData),
 				attachmentBlobContents,
 			);
 			Object.assign(attachmentBlobContents, added);
