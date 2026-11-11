@@ -180,8 +180,11 @@ export abstract class LazyTreeNode
 
 	/**
 	 * Gets or creates a field at the supplied cursor's location.
-	 * The cursor must be in a field of this node, and the caller must validate this node's lifetime.
+	 *
 	 * @param cursor - A cursor in this node's forest, positioned on the requested field.
+	 * Must be in a field of this node.
+	 * Before calling, the caller must validate access through this node's {@link LazyTreeNode.cursor | cursor getter} or {@link LazyTreeNode.ensureValidForAccess}, propagating any failure.
+	 * Implementations may rely on that validation.
 	 * @param createField - Creates a field which owns its navigation resources.
 	 * Called only on a cache miss for a field that needs its own resources; the result must match the cursor's field and stored schema.
 	 * Implementations whose fields borrow this node's resources do not call this factory.
