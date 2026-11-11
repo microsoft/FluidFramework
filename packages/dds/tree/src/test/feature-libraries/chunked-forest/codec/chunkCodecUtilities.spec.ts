@@ -9,6 +9,7 @@ import { DiscriminatedUnionDispatcher } from "../../../../codec/index.js";
 import {
 	Counter,
 	getChecked,
+	getFullyChecked,
 	jsonMinimizingFilter,
 	readStream,
 	readStreamNumber,
@@ -161,11 +162,43 @@ describe("chunkEncodingUtilities", () => {
 	});
 
 	it("getChecked", () => {
-		assert.throws(() => getChecked([], 0));
-		assert.equal(getChecked([1], 0), 1);
-		assert.throws(() => getChecked([1], 1));
-		assert.throws(() => getChecked([undefined], 0));
-		assert.equal(getChecked([null], 0), null);
+		const data = [0, false, "", null, 17];
+		for (const [index, value] of data.entries()) {
+			assert.equal(getChecked(data, index), value);
+		}
+		for (const index of [-1, data.length, 0.5, Number.NaN, Infinity, -Infinity]) {
+			assert.throws(() => getChecked(data, index), /missing array entry/);
+		}
+		const sparse: number[] = [];
+		sparse.length = 1;
+		for (const missing of [[], [undefined], sparse]) {
+			assert.throws(() => getChecked(missing, 0), /missing array entry/);
+		}
+	});
+
+	it("getFullyChecked", () => {
+		const data = [0, false, "", null, 17];
+		for (const [index, value] of data.entries()) {
+			assert.equal(getFullyChecked(data, index), value);
+		}
+		for (const index of [-1, data.length]) {
+			assert.throws(() => getFullyChecked(data, index), /missing array entry/);
+		}
+		const sparse: number[] = [];
+		sparse.length = 1;
+		for (const missing of [[], [undefined], sparse]) {
+			assert.throws(() => getFullyChecked(missing, 0), /missing array entry/);
+		}
+		for (const index of [0.5, Number.NaN, Infinity, -Infinity]) {
+			assert.throws(() => getFullyChecked(data, index), /invalid array index/);
+		}
+		for (const index of ["0", "length", "map", {}, null, undefined, true]) {
+			assert.throws(
+				// @ts-expect-error Serialized data can violate the index type.
+				() => getFullyChecked(data, index),
+				/invalid array index/,
+			);
+		}
 	});
 
 	it("reads null values through stream helpers", () => {

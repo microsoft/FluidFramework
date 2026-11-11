@@ -25,7 +25,6 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
 function assertAttributionMatches(
@@ -95,7 +94,7 @@ describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider, 
 	});
 
 	const sharedCellFromContainer = async (container: IContainer): Promise<ISharedCell> => {
-		const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		return dataObject.getSharedObject<ISharedCell>(cellId);
 	};
 
