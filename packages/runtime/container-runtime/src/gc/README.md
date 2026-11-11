@@ -33,6 +33,8 @@ Applications must still deploy supporting code before enabling the setting and e
 The container runtime advertises `providesChannelGC` across the layer boundary.
 Enabled documents require every data store channel to advertise `supportsChannelDeletion` and implement the internal deletion hook.
 DDS-less channels such as the runtime attributor advertise this support explicitly; missing compatibility details do not exempt a channel from the check.
+Custom `IFluidDataStoreChannel` implementations that are not built on `FluidDataStoreRuntime` are rejected when their data store loads in enabled documents.
+The required deletion capability and hook are internal contracts, not supported public extension points for custom channels.
 
 DDSs created with an explicit ID are roots relative to their owning data store.
 Their summaries and attach snapshots contain an empty `.gcRoot` blob.

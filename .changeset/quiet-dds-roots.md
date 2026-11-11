@@ -15,6 +15,7 @@ An unreachable data store can still be collected together with its named DDSs.
 Runtime attribution remains supported when independent DDS collection is enabled.
 
 All clients opening an enabled document must include supporting container and data store runtimes from the same Fluid Framework version.
+Custom `IFluidDataStoreChannel` implementations that are not built on `FluidDataStoreRuntime` are rejected when their data store loads in enabled documents.
 The document schema records the capability so older schema-aware runtimes reject enabled documents.
 Deploy supporting code to every client before creating enabled documents and prevent older code from opening them afterward.
 Production enablement also requires validation of nested unreferenced summaries with the storage service and pending-state continuation for unreferenced content.
