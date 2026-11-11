@@ -134,7 +134,7 @@ describe("join-session throttle coordination", () => {
 			const logger = new MockLogger();
 			const stream = createStream(resolvedUrl, cache, logger);
 			await assert.rejects(join(stream), { errorType: "throttlingError" });
-			assert.equal(clock.countTimers(), 0, "the failed join does not schedule a retry");
+			assert.equal(clock.countTimers(), 1, "only metadata cleanup is scheduled");
 			const next = join(
 				freshStream ? createStream(resolvedUrl, cache, logger) : stream,
 				refresh,
@@ -250,24 +250,27 @@ describe("join-session throttle coordination", () => {
 
 	it("waits through long deadlines without overflowing setTimeout", async () => {
 		const maximumTimerDelayMs = 2 ** 31 - 1;
+		const timeoutSpy = spy(globalThis, "setTimeout");
 		await assert.rejects(
 			cache.sessionJoinCache.addOrGet("document", async () => {
 				throw createOdspNetworkError("throttle", 429, (maximumTimerDelayMs + 1000) / 1000);
 			}),
 		);
-		const timeoutSpy = spy(globalThis, "setTimeout");
 		let completed = false;
 		const waiting = cache.sessionJoinCache.addOrGet("document", async () => {
 			completed = true;
 			return { entryTime: Date.now(), joinSessionResponse: response };
 		});
 		await clock.tickAsync(0);
-		assert.equal(timeoutSpy.firstCall.args[1], maximumTimerDelayMs);
+		assert.deepEqual(
+			timeoutSpy.getCalls().map((call) => call.args[1]),
+			[maximumTimerDelayMs, maximumTimerDelayMs],
+		);
 		await clock.tickAsync(maximumTimerDelayMs);
 		assert.equal(completed, false);
 		assert.deepEqual(
 			timeoutSpy.getCalls().map((call) => call.args[1]),
-			[maximumTimerDelayMs, 1000],
+			[maximumTimerDelayMs, maximumTimerDelayMs, 1000, 1000],
 		);
 		await clock.tickAsync(1000);
 		await waiting;
@@ -316,7 +319,7 @@ describe("join-session throttle coordination", () => {
 		assert.equal(fetchStub.callCount, 2);
 	});
 
-	it("stores the delayed promise immediately and does not use deadline cleanup timers", async () => {
+	it("stores the delayed promise immediately and shares one waiting timer", async () => {
 		const key = getJoinSessionCacheKey(resolvedUrl);
 		await assert.rejects(
 			cache.sessionJoinCache.addOrGet(key, async () => {
@@ -325,7 +328,7 @@ describe("join-session throttle coordination", () => {
 		);
 		assert.equal(cache.sessionJoinCache.get(key), undefined);
 		assert.equal(cache.sessionJoinCache.has(key), false);
-		assert.equal(clock.countTimers(), 0, "a deadline alone does not need a timer");
+		assert.equal(clock.countTimers(), 1, "metadata cleanup does not retry the request");
 		let requests = 0;
 		const execute = async (): Promise<{
 			entryTime: number;
@@ -342,7 +345,11 @@ describe("join-session throttle coordination", () => {
 		assert.equal(cache.sessionJoinCache.get(key), cached);
 		await clock.tickAsync(119999);
 		assert.equal(requests, 0);
-		assert.equal(clock.countTimers(), 1, "coalesced callers share one waiting timer");
+		assert.equal(
+			clock.countTimers(),
+			2,
+			"coalesced callers share one waiting timer in addition to metadata cleanup",
+		);
 		await clock.tickAsync(1);
 		await Promise.all([first, second]);
 		assert.equal(requests, 1);
@@ -437,7 +444,118 @@ describe("join-session throttle coordination", () => {
 		assert.equal(typeof throttles[1].throttleGateId, "string");
 		assert.notEqual(throttles[0].throttleGateId, throttles[1].throttleGateId);
 		assert.equal(throttles[1].throttleDeadline, 240000);
+		assert.equal(clock.countTimers(), 1);
+	});
+
+	it("cleans abandoned throttle metadata without retrying and restarts cleanup for later failures", async () => {
+		const stream = createStream();
+		await assert.rejects(join(stream));
+		stream.dispose();
+		const cachedResponse = { entryTime: Date.now(), joinSessionResponse: response };
+		cache.sessionJoinCache.addValue("unrelated", cachedResponse);
+		await clock.tickAsync(120000);
+		assert.equal(fetchStub.callCount, 1, "cleanup must not retry an abandoned request");
+		assert.equal(clock.countTimers(), 0, "cleanup stops after all deadlines expire");
+		assert.equal(await cache.sessionJoinCache.get("unrelated"), cachedResponse);
+
+		// Moving the clock back exposes metadata retained after cleanup without inspecting the map.
+		clock.setSystemTime(0);
+		let requests = 0;
+		const next = cache.sessionJoinCache.addOrGet(
+			getJoinSessionCacheKey(resolvedUrl),
+			async () => {
+				requests++;
+				return cachedResponse;
+			},
+		);
+		await clock.tickAsync(0);
+		assert.equal(requests, 1, "cleanup removed the abandoned document's deadline");
+		await next;
+		await assert.rejects(
+			cache.sessionJoinCache.addOrGet("later", async () => {
+				throw createOdspNetworkError("throttle", 429, 2);
+			}),
+		);
+		assert.equal(clock.countTimers(), 1, "a new throttle restarts cleanup");
+		await clock.tickAsync(2000);
 		assert.equal(clock.countTimers(), 0);
+	});
+
+	it("shares one cleanup timer and waits for the latest deadline before clearing metadata", async () => {
+		const timeoutSpy = spy(globalThis, "setTimeout");
+		const documents = [
+			["first", 1],
+			["middle", 3],
+			["last", 5],
+		] as const;
+		for (const [key, seconds] of documents) {
+			await assert.rejects(
+				cache.sessionJoinCache.addOrGet(key, async () => {
+					throw createOdspNetworkError("throttle", 429, seconds);
+				}),
+			);
+		}
+		assert.equal(clock.countTimers(), 1);
+		assert.equal(timeoutSpy.callCount, 1, "new deadlines do not reschedule cleanup");
+		await clock.tickAsync(1000);
+		assert.deepEqual(
+			timeoutSpy.getCalls().map((call) => call.args[1]),
+			[1000, 4000],
+			"cleanup wakes again at the latest deadline, not the next individual expiration",
+		);
+		await clock.tickAsync(3999);
+		assert.equal(clock.countTimers(), 1);
+		await clock.tickAsync(1);
+		assert.equal(clock.countTimers(), 0);
+		assert.equal(timeoutSpy.callCount, 2);
+
+		// None of these documents was accessed between its rejection and the final cleanup.
+		clock.setSystemTime(0);
+		let requests = 0;
+		const next = documents.map(async ([key]) =>
+			cache.sessionJoinCache.addOrGet(key, async () => {
+				requests++;
+				return { entryTime: Date.now(), joinSessionResponse: response };
+			}),
+		);
+		await clock.tickAsync(0);
+		assert.equal(requests, documents.length, "cleanup removes every expired deadline");
+		await Promise.all(next);
+	});
+
+	it("chunks long cleanup delays without overflowing setTimeout", async () => {
+		const maximumTimerDelayMs = 2 ** 31 - 1;
+		const timeoutSpy = spy(globalThis, "setTimeout");
+		await assert.rejects(
+			cache.sessionJoinCache.addOrGet("document", async () => {
+				throw createOdspNetworkError("throttle", 429, (maximumTimerDelayMs + 1000) / 1000);
+			}),
+		);
+		assert.equal(timeoutSpy.callCount, 1, "an abandoned deadline schedules cleanup");
+		assert.equal(timeoutSpy.firstCall.args[1], maximumTimerDelayMs);
+		assert.equal(
+			timeoutSpy.firstCall.returnValue.hasRef(),
+			false,
+			"metadata cleanup must not keep Node.js alive",
+		);
+		await clock.tickAsync(maximumTimerDelayMs);
+		assert.deepEqual(
+			timeoutSpy.getCalls().map((call) => call.args[1]),
+			[maximumTimerDelayMs, 1000],
+		);
+		await clock.tickAsync(999);
+		assert.equal(clock.countTimers(), 1);
+		await clock.tickAsync(1);
+		assert.equal(clock.countTimers(), 0);
+		clock.setSystemTime(0);
+		let requested = false;
+		const next = cache.sessionJoinCache.addOrGet("document", async () => {
+			requested = true;
+			return { entryTime: Date.now(), joinSessionResponse: response };
+		});
+		await clock.tickAsync(0);
+		assert.equal(requested, true, "the final timer chunk clears the abandoned deadline");
+		await next;
 	});
 
 	it("rechecks an extended deadline when the shared waiting timer wakes", async () => {

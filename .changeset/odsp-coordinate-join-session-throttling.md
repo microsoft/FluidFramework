@@ -2,11 +2,12 @@
 "@fluidframework/odsp-driver": minor
 "__section": fix
 ---
-Preserve server throttle delays across failed join-session attempts
+Avoid repeated session requests before a server throttle delay expires
 
-With the driver's built-in non-persistent cache, reconnects and session refreshes retain the server's Retry-After deadline after a join-session request fails.
-New requests share a promise that waits for the deadline before fetching, without delaying unrelated documents or independently scoped client caches.
-The exported promise-cache API remains unchanged.
-Consumer-supplied plain `PromiseCache` instances retain their previous behavior without Retry-After coordination.
+After a session request received HTTP 429 (Too Many Requests), subsequent connection attempts or session refreshes could send another request before the server's requested delay expired.
+These early requests could trigger further throttling and delay connection recovery.
+With the driver's default cache, subsequent attempts for the same document wait for the remaining `Retry-After` delay and share a session request.
+Other documents and clients with separate caches are not delayed.
 
-This change does not prevent a request that already passed its throttle check from starting if an overlapping, invalidated request subsequently establishes a new deadline.
+Applications that supply a plain `PromiseCache` instead of the driver's default cache retain their previous behavior.
+Requests already in progress when another request receives a throttle response are not delayed by this fix.

@@ -20,7 +20,6 @@ interface JoinSessionResult {
 interface JoinSessionThrottle {
 	/**
 	 * Earliest request time, in milliseconds since the Unix epoch.
-	 * Expiration is checked on access, not maintained by cleanup timers.
 	 */
 	deadline: number;
 	/**
@@ -44,6 +43,7 @@ const maximumTimerDelayMs = 2 ** 31 - 1;
  */
 export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
 	private readonly throttles = new Map<string, JoinSessionThrottle>();
+	private throttleCleanupTimer: ReturnType<typeof setTimeout> | undefined;
 
 	/**
 	 * Invalidates a promise without discarding an active server deadline.
@@ -86,6 +86,42 @@ export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
 		const throttle = this.throttles.get(key);
 		if (throttle !== undefined && throttle.deadline <= Date.now()) {
 			this.throttles.delete(key);
+			if (this.throttles.size === 0 && this.throttleCleanupTimer !== undefined) {
+				clearTimeout(this.throttleCleanupTimer);
+				this.throttleCleanupTimer = undefined;
+			}
+		}
+	}
+
+	/**
+	 * Reclaims abandoned metadata once all current deadlines have expired.
+	 * New deadlines do not reschedule an existing timer; each wake checks the latest deadline.
+	 * Continuous throttling can defer this batch cleanup, while access still prunes expired entries.
+	 */
+	private scheduleThrottleCleanup(): void {
+		if (this.throttleCleanupTimer !== undefined) {
+			return;
+		}
+		let latestDeadline = Date.now();
+		for (const throttle of this.throttles.values()) {
+			latestDeadline = Math.max(latestDeadline, throttle.deadline);
+		}
+		const remainingMs = latestDeadline - Date.now();
+		if (remainingMs <= 0) {
+			this.throttles.clear();
+			return;
+		}
+		this.throttleCleanupTimer = setTimeout(
+			() => {
+				this.throttleCleanupTimer = undefined;
+				this.scheduleThrottleCleanup();
+			},
+			Math.min(remainingMs, maximumTimerDelayMs),
+		);
+		// Metadata cleanup must not keep a Node.js process alive.
+		const timer = this.throttleCleanupTimer as number | { unref(): void };
+		if (typeof timer !== "number") {
+			timer.unref();
 		}
 	}
 
@@ -124,6 +160,7 @@ export class JoinSessionCache extends PromiseCache<string, JoinSessionResult> {
 		}
 		const throttle = { deadline, gateId: existing?.gateId ?? uuid() };
 		this.throttles.set(key, throttle);
+		this.scheduleThrottleCleanup();
 		telemetry?.logger.sendTelemetryEvent(
 			{
 				eventName: "JoinSessionThrottle",
