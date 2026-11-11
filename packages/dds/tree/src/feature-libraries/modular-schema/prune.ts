@@ -34,6 +34,7 @@ import {
 	newFieldIdKeyBTree,
 	nodeChangeFromId,
 	normalizeFieldId,
+	normalizeNodeId,
 	tryRemoveDetachLocation,
 	type FieldIdKey,
 } from "./modularChangeUtils.js";
@@ -84,11 +85,14 @@ export function pruneChangeset(
 		fieldKinds,
 	);
 
+	prunedChangeset.nodeAliases = pruneNodeAliases(prunedChangeset);
+
 	strictRebaseValidation("Malformed prune output", () =>
 		isChangesetValid(prunedChangeset, fieldKinds),
 	);
 	return prunedChangeset;
 }
+
 function pruneFieldMap(
 	changeset: FieldChangeMap | undefined,
 	parentId: NodeId | undefined,
@@ -301,4 +305,18 @@ function getFieldToRootChanges(
 	}
 
 	return fields;
+}
+
+function pruneNodeAliases(changeset: ModularChangeset): ChangeAtomIdBTree<NodeId> {
+	const shouldKeepAlias = (
+		aliasFrom: readonly [RevisionTag | undefined, ChangesetLocalId],
+		aliasTo: NodeId,
+	): boolean =>
+		getFromChangeAtomIdMap(
+			changeset.nodeChanges,
+			normalizeNodeId(aliasTo, changeset.nodeAliases),
+		) !== undefined;
+
+	const prunedAliases = changeset.nodeAliases.filter(shouldKeepAlias);
+	return prunedAliases;
 }
