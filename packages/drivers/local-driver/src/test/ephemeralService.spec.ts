@@ -4,8 +4,18 @@
  */
 
 import { strict as assert } from "node:assert";
+import { mock } from "node:test";
 
-import { makeStubDataStoreKind } from "@fluidframework/shared-object-base/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import type { IFluidLoadable } from "@fluidframework/core-interfaces";
+import {
+	createSingleBlobSummary,
+	defineDataStore,
+	makeSharedObjectKind,
+	makeStubDataStoreKind,
+	sharedObjectRegistryFromIterable,
+	type SharedKernel,
+} from "@fluidframework/shared-object-base/internal";
 
 import {
 	cleanupEphemeralService,
@@ -30,6 +40,7 @@ describe("EphemeralService", () => {
 		return service;
 	}
 	afterEach(async () => {
+		mock.restoreAll();
 		for (const service of services.splice(0)) {
 			await service.close();
 		}
@@ -51,6 +62,73 @@ describe("EphemeralService", () => {
 	});
 
 	describe("LocalServiceClient", () => {
+		for (const phase of ["create", "load"] as const) {
+			it(`releases resources when its entry point fails during ${phase}`, async () => {
+				const events: string[] = [];
+				const service = newService();
+				const client = service.newClient({
+					...options,
+					logger: { send: (event) => events.push(event.eventName) },
+				});
+				const createKernel = (): { kernel: SharedKernel; view: object } => ({
+					kernel: {
+						summarizeCore: () => createSingleBlobSummary("header", "{}"),
+						onDisconnect: () => {},
+						reSubmitCore: () => {},
+						applyStashedOp: () => {},
+						processMessagesCore: () => {},
+					},
+					view: {},
+				});
+				const sharedObject = makeSharedObjectKind<IFluidLoadable>({
+					type: "failing-entry-point-root",
+					attributes: { type: "failing-entry-point-root", snapshotFormatVersion: "1" },
+					telemetryContextPrefix: "test_entry_point_",
+					factory: {
+						create: createKernel,
+						loadCore: async () => createKernel(),
+					},
+				});
+				const error = new Error("Application view failed");
+				let fail = phase === "create";
+				const kind = defineDataStore({
+					type: "failing-entry-point",
+					registry: sharedObjectRegistryFromIterable([sharedObject]),
+					instantiateFirstTime: async (creator) => creator.createSharedObject(sharedObject),
+					async view(root) {
+						if (fail) {
+							throw error;
+						}
+						return root;
+					},
+				});
+				let id: string | undefined;
+				if (phase === "load") {
+					const container = await client.createAttachedContainer(kind);
+					id = container.id;
+					await service.synchronize();
+					fail = true;
+				}
+				events.length = 0;
+				const dispose = mock.method(ContainerRuntime.prototype, "dispose");
+				await assert.rejects(
+					id === undefined ? client.createContainer(kind) : client.loadContainer(id, kind),
+					/Application view failed/,
+				);
+				if (phase === "create") {
+					assert.equal(dispose.mock.callCount(), 1, "The failed runtime must be disposed");
+				}
+				assert.equal(
+					events.filter(
+						(event) =>
+							event ===
+							`fluid:telemetry:Container:Container${phase === "load" ? "Close" : "Dispose"}`,
+					).length,
+					1,
+				);
+			});
+		}
+
 		it("forwards telemetry from created and loaded containers to the configured logger", async () => {
 			const events: string[] = [];
 			const client = newService().newClient({
