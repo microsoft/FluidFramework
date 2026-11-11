@@ -54,14 +54,14 @@ describe("Schema Evolution Examples", () => {
 	/**
 	 * Verifies that an explicit schema upgrade makes no observable change.
 	 *
-	 * @typeParam TSchema - The root schema of the view being checked.
-	 * @param provider - Connects the clients and processes any operations submitted by the upgrade.
-	 * @param view - A readable view whose upgrade is expected to succeed without changing the document.
-	 *
 	 * @remarks
 	 * The helper requests an upgrade and synchronizes the clients to check both local and sequenced effects.
 	 * No schema-change event or sequenced operation should result, and the root object should remain unchanged.
 	 * Synchronize pending operations before calling it so an earlier edit cannot be mistaken for an effect of this upgrade.
+	 *
+	 * @typeParam TSchema - The root schema of the view being checked.
+	 * @param provider - Connects the clients and processes any operations submitted by the upgrade.
+	 * @param view - A readable view whose upgrade is expected to succeed without changing the document.
 	 */
 	function verifyNoOpUpgrade<TSchema extends ImplicitFieldSchema>(
 		provider: TestTreeProviderLite,
@@ -94,13 +94,13 @@ describe("Schema Evolution Examples", () => {
 	/**
 	 * Verifies that an incompatible view cannot upgrade any local or synchronized document state.
 	 *
-	 * @typeParam TSchema - The incompatible view's root schema.
-	 * @param provider - Synchronized clients with no pending operations.
-	 * @param view - The view whose upgrade must be rejected.
-	 *
 	 * @remarks
 	 * To verify that rejection preserves the entire document, this captures stored data independently of the view, including unknown fields.
 	 * The rejected call also breaks the requesting view, so neither that view nor its checkout's public APIs may be used afterward.
+	 *
+	 * @typeParam TSchema - The incompatible view's root schema.
+	 * @param provider - Synchronized clients with no pending operations.
+	 * @param view - The view whose upgrade must be rejected.
 	 */
 	function verifyRejectedUpgrade<TSchema extends ImplicitFieldSchema>(
 		provider: TestTreeProviderLite,
