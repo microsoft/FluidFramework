@@ -433,5 +433,7 @@ export { Sandboxing } from "./sandboxing/index.js";
 export {
 	identifySchemaAlpha,
 	identifySchemaWithHashAlpha,
+	type IdentifySchemaOptions,
+	type IdentifySchemaWithHashOptions,
 	type SchemaIdentity,
 } from "./simple-tree/index.js";

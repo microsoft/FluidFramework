@@ -79,6 +79,18 @@ export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.Sch
 }
 
 /**
+ * Options for {@link identifySchemaAlpha}.
+ *
+ * @alpha @input
+ */
+export interface IdentifySchemaOptions {
+	/**
+	 * Specifies the versions to store on {@link SchemaIdentity.schemaVersion}.
+	 */
+	readonly schemaVersion?: SchemaVersionMap | number;
+}
+
+/**
  * Creates a schema identity with optional application-defined versions and no hashing.
  *
  * @param options - The application-defined versions.
@@ -95,14 +107,7 @@ export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.Sch
  *
  * @alpha
  */
-export function identifySchemaAlpha(
-	options: {
-		/**
-		 * Specifies the versions to store on {@link SchemaIdentity.schemaVersion}.
-		 */
-		readonly schemaVersion?: SchemaVersionMap | number;
-	} = {},
-): SchemaIdentity {
+export function identifySchemaAlpha(options: IdentifySchemaOptions = {}): SchemaIdentity {
 	return new SchemaIdentityInternal(undefined, undefined, options.schemaVersion);
 }
 

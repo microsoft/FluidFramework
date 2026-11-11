@@ -23,20 +23,47 @@ import type { FullSchemaPolicy } from "./fieldKind.js";
 import { isNeverField, isNeverTree } from "./isNeverTree.js";
 
 /**
+ * Selects the rules used to compare allowed schema content.
+ *
+ * @remarks
+ * Neither mode compares schema versions.
+ * Use {@link allowsSchemaUpgrade} to also enforce schema version rules.
+ */
+export enum SchemaComparisonMode {
+	/**
+	 * Requires field-kind changes to be listed in {@link FieldKindOptions.allowMonotonicUpgradeFrom}.
+	 * These rules prevent cycles of schema upgrades, including changes between field kinds that allow the same content.
+	 * This is the default mode and does not require a schema version increase.
+	 */
+	Monotonic,
+
+	/**
+	 * Compares allowed content without enforcing monotonic field-kind upgrade rules.
+	 * Field-kind changes are checked with {@link allowsMultiplicitySuperset}, and fields with no valid content are treated as subsets of all fields.
+	 * This can allow changes between distinct schemas that allow the same content, including their inverse.
+	 *
+	 * {@link allowsSchemaUpgrade} uses this mode only when both schema version maps are present,
+	 * {@link ifSchemaVersionsDecrease} returns false, and {@link areSchemaVersionsEqual} returns false.
+	 * A version increase or a new library identifier then prevents the inverse upgrade.
+	 */
+	ContentOnly,
+}
+
+/**
  * Returns true iff `superset` is a superset of `original`.
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  *
  * `undefined` TreeNodeStoredSchema means the schema is not present (and thus treated as a NeverTree).
  *
- * @param enforceAdditiveOnlySchemaUpgrades - Applies additive-only upgrade rules when `true`.
+ * @param comparisonMode - The content comparison rules. Defaults to {@link SchemaComparisonMode.Monotonic}.
  */
 export function allowsTreeSuperset(
 	policy: FullSchemaPolicy,
 	originalData: TreeStoredSchema,
 	original: TreeNodeStoredSchema | undefined,
 	superset: TreeNodeStoredSchema | undefined,
-	enforceAdditiveOnlySchemaUpgrades: boolean = true,
+	comparisonMode: SchemaComparisonMode = SchemaComparisonMode.Monotonic,
 ): boolean {
 	if (isNeverTree(policy, originalData, original)) {
 		return true;
@@ -73,7 +100,7 @@ export function allowsTreeSuperset(
 				originalData,
 				original.mapFields,
 				superset.mapFields,
-				enforceAdditiveOnlySchemaUpgrades,
+				comparisonMode,
 			);
 		}
 		return false;
@@ -83,13 +110,7 @@ export function allowsTreeSuperset(
 	if (superset instanceof MapNodeStoredSchema) {
 		for (const [_key, field] of original.objectNodeFields) {
 			if (
-				!allowsFieldSuperset(
-					policy,
-					originalData,
-					field,
-					superset.mapFields,
-					enforceAdditiveOnlySchemaUpgrades,
-				)
+				!allowsFieldSuperset(policy, originalData, field, superset.mapFields, comparisonMode)
 			) {
 				return false;
 			}
@@ -108,7 +129,7 @@ export function allowsTreeSuperset(
 				original.objectNodeFields.get(originalField) ??
 					fail(0xb17 /* missing expected field */),
 				storedEmptyFieldSchema,
-				enforceAdditiveOnlySchemaUpgrades,
+				comparisonMode,
 			),
 		bExtra: (supersetField) =>
 			allowsFieldSuperset(
@@ -117,7 +138,7 @@ export function allowsTreeSuperset(
 				storedEmptyFieldSchema,
 				superset.objectNodeFields.get(supersetField) ??
 					fail(0xb18 /* missing expected field */),
-				enforceAdditiveOnlySchemaUpgrades,
+				comparisonMode,
 			),
 		same: (sameField) =>
 			allowsFieldSuperset(
@@ -125,7 +146,7 @@ export function allowsTreeSuperset(
 				originalData,
 				original.objectNodeFields.get(sameField) ?? fail(0xb19 /* missing expected field */),
 				superset.objectNodeFields.get(sameField) ?? fail(0xb1a /* missing expected field */),
-				enforceAdditiveOnlySchemaUpgrades,
+				comparisonMode,
 			),
 	});
 }
@@ -147,12 +168,11 @@ export function allowsValueSuperset(
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  *
- * @param enforceAdditiveOnlySchemaUpgrades - If true, only allow changes of field kinds which are explicitly listed in {@link FieldKindOptions.allowMonotonicUpgradeFrom}.
- * This prevents this function from considering two different schemas as equivalent, preventing upgrades which would allow their inverse.
- * This prevents infinite upgrade loops where two clients could keep upgrading between two schemas.
+ * @param comparisonMode - The content comparison rules. Defaults to {@link SchemaComparisonMode.Monotonic}.
  *
  * @remarks
- * True if a client should be able to {@link TreeView.upgradeSchema} from a field schema using this field kind and `originalTypes` to `superset`.
+ * Schema versions are not checked here.
+ * Use {@link allowsSchemaUpgrade} to determine whether a schema upgrade is allowed.
  *
  * @privateRemarks
  * See also {@link FieldKindOptions.allowMonotonicUpgradeFrom} for constraints on the implementation.
@@ -162,9 +182,12 @@ export function allowsFieldSuperset(
 	originalData: TreeStoredSchema,
 	original: TreeFieldStoredSchema,
 	superset: TreeFieldStoredSchema,
-	enforceAdditiveOnlySchemaUpgrades: boolean = true,
+	comparisonMode: SchemaComparisonMode = SchemaComparisonMode.Monotonic,
 ): boolean {
-	if (!enforceAdditiveOnlySchemaUpgrades && isNeverField(policy, originalData, original)) {
+	if (
+		comparisonMode === SchemaComparisonMode.ContentOnly &&
+		isNeverField(policy, originalData, original)
+	) {
 		return true;
 	}
 
@@ -178,7 +201,7 @@ export function allowsFieldSuperset(
 
 	const supersetKind = policy.fieldKinds.get(superset.kind) ?? fail(0xb1b /* missing kind */);
 
-	if (enforceAdditiveOnlySchemaUpgrades) {
+	if (comparisonMode === SchemaComparisonMode.Monotonic) {
 		return supersetKind.options.allowMonotonicUpgradeFrom.has(original.kind);
 	} else {
 		const originalKind =
@@ -213,13 +236,13 @@ export function allowsTreeSchemaIdentifierSuperset(
  * however if any extra fields and fields with unconstrained types are reachable,
  * it would have to compare everything anyway.
  *
- * @param enforceAdditiveOnlySchemaUpgrades - Applies additive-only upgrade rules when `true`.
+ * @param comparisonMode - The content comparison rules. Defaults to {@link SchemaComparisonMode.Monotonic}.
  */
 export function allowsRepoSuperset(
 	policy: FullSchemaPolicy,
 	original: TreeStoredSchema,
 	superset: TreeStoredSchema,
-	enforceAdditiveOnlySchemaUpgrades: boolean = true,
+	comparisonMode: SchemaComparisonMode = SchemaComparisonMode.Monotonic,
 ): boolean {
 	{
 		if (
@@ -228,7 +251,7 @@ export function allowsRepoSuperset(
 				original,
 				original.rootFieldSchema,
 				superset.rootFieldSchema,
-				enforceAdditiveOnlySchemaUpgrades,
+				comparisonMode,
 			)
 		) {
 			return false;
@@ -244,7 +267,7 @@ export function allowsRepoSuperset(
 				original,
 				schema,
 				superset.nodeSchema.get(key),
-				enforceAdditiveOnlySchemaUpgrades,
+				comparisonMode,
 			)
 		) {
 			return false;
@@ -257,6 +280,12 @@ export function allowsRepoSuperset(
 
 /**
  * Returns whether `original` can be upgraded to `updated`.
+ *
+ * @remarks
+ * Rejects removed or decreased schema versions, as checked by {@link ifSchemaVersionsDecrease}.
+ * Changes allowed by {@link SchemaComparisonMode.Monotonic} do not require a version increase.
+ * Other content-preserving changes use {@link SchemaComparisonMode.ContentOnly} and require both version maps to be present and different.
+ * With no removed or decreased versions, this means at least one version increases or a library identifier is added.
  */
 export function allowsSchemaUpgrade(
 	policy: FullSchemaPolicy,
@@ -276,7 +305,7 @@ export function allowsSchemaUpgrade(
 		original.schemaVersion !== undefined &&
 		updated.schemaVersion !== undefined &&
 		!areSchemaVersionsEqual(original.schemaVersion, updated.schemaVersion) &&
-		allowsRepoSuperset(policy, original, updated, false)
+		allowsRepoSuperset(policy, original, updated, SchemaComparisonMode.ContentOnly)
 	);
 }
 

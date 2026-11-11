@@ -22,9 +22,11 @@ import {
 } from "../../../core/index.js";
 import { FieldKinds, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 import {
+	SchemaComparisonMode,
 	allowsFieldSuperset,
 	allowsMultiplicitySuperset,
 	allowsRepoSuperset,
+	allowsSchemaUpgrade,
 	allowsTreeSchemaIdentifierSuperset,
 	allowsTreeSuperset,
 	allowsValueSuperset,
@@ -154,7 +156,7 @@ describe("Schema Comparison", () => {
 		const identifierField = fieldSchema(FieldKinds.identifier, [emptyTree.name]);
 		const sequenceField = fieldSchema(FieldKinds.sequence, [emptyTree.name]);
 		const compare = (a: TreeFieldStoredSchema, b: TreeFieldStoredSchema): boolean =>
-			allowsFieldSuperset(defaultSchemaPolicy, repo, a, b, false);
+			allowsFieldSuperset(defaultSchemaPolicy, repo, a, b, SchemaComparisonMode.ContentOnly);
 		testOrder(compare, [neverField, storedEmptyFieldSchema, fieldOptionalEmptyTree]);
 		testOrder(compare, [neverField, fieldRequiredEmptyTree]);
 		testOrder(compare, [fieldRequiredEmptyTree, fieldOptionalEmptyTree, sequenceField]);
@@ -183,6 +185,130 @@ describe("Schema Comparison", () => {
 				[identifierField, fieldRequiredEmptyTree],
 			],
 		);
+	});
+
+	describe("allowsSchemaUpgrade version gating", () => {
+		const versionCases: {
+			name: string;
+			original: TreeStoredSchema["schemaVersion"];
+			updated: TreeStoredSchema["schemaVersion"];
+			monotonic: boolean;
+			contentOnly: boolean;
+		}[] = [
+			{
+				name: "absent versions",
+				original: undefined,
+				updated: undefined,
+				monotonic: true,
+				contentOnly: false,
+			},
+			{
+				name: "added version map",
+				original: undefined,
+				updated: { library: 1 },
+				monotonic: true,
+				contentOnly: false,
+			},
+			{
+				name: "empty version maps",
+				original: {},
+				updated: {},
+				monotonic: true,
+				contentOnly: false,
+			},
+			{
+				name: "equal versions",
+				original: { library: 1 },
+				updated: { library: 1 },
+				monotonic: true,
+				contentOnly: false,
+			},
+			{
+				name: "increased version",
+				original: { library: 1 },
+				updated: { library: 2 },
+				monotonic: true,
+				contentOnly: true,
+			},
+			{
+				name: "added library identifier",
+				original: { library: 1 },
+				updated: { library: 1, other: 1 },
+				monotonic: true,
+				contentOnly: true,
+			},
+			{
+				name: "decreased version",
+				original: { library: 2 },
+				updated: { library: 1 },
+				monotonic: false,
+				contentOnly: false,
+			},
+			{
+				name: "removed library identifier despite another increase",
+				original: { library: 1, other: 1 },
+				updated: { library: 2 },
+				monotonic: false,
+				contentOnly: false,
+			},
+			{
+				name: "decreased version despite another increase",
+				original: { library: 1, other: 2 },
+				updated: { library: 2, other: 1 },
+				monotonic: false,
+				contentOnly: false,
+			},
+			{
+				name: "removed version map",
+				original: { library: 1 },
+				updated: undefined,
+				monotonic: false,
+				contentOnly: false,
+			},
+		];
+
+		for (const { name, original, updated, monotonic, contentOnly } of versionCases) {
+			it(name, () => {
+				const stored: TreeStoredSchema = {
+					rootFieldSchema: fieldRequiredEmptyTree,
+					nodeSchema: new Map([[emptyTree.name, emptyTree.schema]]),
+					schemaVersion: original,
+				};
+				const update = (rootFieldSchema: TreeFieldStoredSchema): TreeStoredSchema => ({
+					rootFieldSchema,
+					nodeSchema: stored.nodeSchema,
+					schemaVersion: updated,
+				});
+				assert.equal(
+					allowsSchemaUpgrade(defaultSchemaPolicy, stored, update(fieldOptionalEmptyTree)),
+					monotonic,
+				);
+				assert.equal(
+					allowsSchemaUpgrade(
+						defaultSchemaPolicy,
+						stored,
+						update(fieldSchema(FieldKinds.identifier, [emptyTree.name])),
+					),
+					contentOnly,
+				);
+			});
+		}
+
+		it("rejects content narrowing even with an increased version", () => {
+			const stored: TreeStoredSchema = {
+				rootFieldSchema: fieldOptionalEmptyTree,
+				nodeSchema: new Map([[emptyTree.name, emptyTree.schema]]),
+				schemaVersion: { library: 1 },
+			};
+			assert.equal(
+				allowsSchemaUpgrade(defaultSchemaPolicy, stored, {
+					...stored,
+					rootFieldSchema: fieldRequiredEmptyTree,
+					schemaVersion: { library: 2 },
+				}),
+				false,
+			);
+		});
 	});
 
 	it("allowsFieldSuperset-monotonic", () => {

@@ -78,6 +78,8 @@ export {
 	computeSchemaHash,
 	identifySchemaAlpha,
 	identifySchemaWithHashAlpha,
+	type IdentifySchemaOptions,
+	type IdentifySchemaWithHashOptions,
 	type SchemaIdentity,
 	SchemaIdentityInternal,
 	type ITreeViewConfiguration,

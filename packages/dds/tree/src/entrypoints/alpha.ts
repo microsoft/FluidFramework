@@ -220,6 +220,8 @@ export {
 	ICodecOptions, 
 	ITreeAlpha, 
 	ITreeViewConfigurationAlpha, 
+	IdentifySchemaOptions,
+	IdentifySchemaWithHashOptions,
 	IncrementalEncodingPolicy, 
 	IndependentViewOptions, 
 	IndependentViewTelemetryOptions, 

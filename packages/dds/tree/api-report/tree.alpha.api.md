@@ -691,15 +691,20 @@ export interface ICodecOptions {
 export type IdentifierIndex = TreeIndex<string, TreeNode>;
 
 // @alpha
-export function identifySchemaAlpha(options?: {
+export function identifySchemaAlpha(options?: IdentifySchemaOptions): SchemaIdentity;
+
+// @alpha @input
+export interface IdentifySchemaOptions {
     readonly schemaVersion?: SchemaVersionMap | number;
-}): SchemaIdentity;
+}
 
 // @alpha
-export function identifySchemaWithHashAlpha(options?: {
+export function identifySchemaWithHashAlpha(options?: IdentifySchemaWithHashOptions): SchemaIdentity;
+
+// @alpha @input
+export interface IdentifySchemaWithHashOptions extends IdentifySchemaOptions {
     readonly expectedHash?: string;
-    readonly schemaVersion?: SchemaVersionMap | number;
-}): SchemaIdentity;
+}
 
 // @public
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;

@@ -7,12 +7,36 @@ import { strict as assert } from "node:assert";
 
 import {
 	computeSchemaHash,
+	identifySchemaWithHashAlpha,
+	type IdentifySchemaWithHashOptions,
 	SchemaFactoryAlpha,
+	SchemaIdentityInternal,
 	StagedSchemaUpgradePolicy,
 } from "../../../simple-tree/index.js";
 
 describe("schema hash functions", () => {
 	const sf = new SchemaFactoryAlpha("test");
+
+	it("accepts hash options with optional application versions", () => {
+		const expectedHash = computeSchemaHash(sf.string);
+		const options: IdentifySchemaWithHashOptions[] = [
+			{},
+			{ expectedHash },
+			{ schemaVersion: 1 },
+			{ expectedHash, schemaVersion: { test: 2 } },
+		];
+		for (const option of options) {
+			const identity = SchemaIdentityInternal.extract(identifySchemaWithHashAlpha(option));
+			assert.equal(identity.expectedHash, option.expectedHash);
+			assert.equal(identity.schemaHasher, computeSchemaHash);
+			assert.deepEqual(
+				identity.schemaVersion,
+				typeof option.schemaVersion === "number"
+					? { schemaVersion: option.schemaVersion }
+					: option.schemaVersion,
+			);
+		}
+	});
 
 	it("ignores allowed-type and object-key order", () => {
 		const first = new SchemaFactoryAlpha("test");

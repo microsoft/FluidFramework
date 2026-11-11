@@ -22,6 +22,7 @@ import {
 } from "../../../simple-tree/api/configuration.js";
 import {
 	type TreeNodeSchema,
+	type IdentifySchemaOptions,
 	identifySchemaAlpha,
 	SchemaFactory,
 	SchemaFactoryAlpha,
@@ -453,7 +454,8 @@ describe("simple-tree configuration", () => {
 	});
 
 	it("normalizes a single version using the schemaVersion identifier", () => {
-		const identity = identifySchemaAlpha({ schemaVersion: 1 });
+		const options: IdentifySchemaOptions = { schemaVersion: 1 };
+		const identity = identifySchemaAlpha(options);
 		const config = new TreeViewConfigurationAlpha({ schema: [], schemaIdentity: identity });
 		assert.deepEqual(identity.schemaVersion, { schemaVersion: 1 });
 		assert.equal(config.schemaVersion, identity.schemaVersion);

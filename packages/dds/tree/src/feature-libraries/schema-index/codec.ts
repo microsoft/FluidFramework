@@ -23,6 +23,11 @@ import { Format as FormatV1 } from "./formatV1.js";
 import { Format as FormatV2 } from "./formatV2.js";
 import { Format as FormatV3 } from "./formatV3.js";
 
+/**
+ * Encodes stored schema without persisted metadata or application-defined versions.
+ * @param repo - The stored schema to encode.
+ * @returns The V1 representation.
+ */
 function encodeRepoV1(repo: TreeStoredSchema): FormatV1 {
 	const nodeSchema = encodeNodeSchema(repo, (schema) => schema.encodeV1());
 	const rootFieldSchema = encodeFieldSchemaV1(repo.rootFieldSchema);
@@ -33,6 +38,11 @@ function encodeRepoV1(repo: TreeStoredSchema): FormatV1 {
 	};
 }
 
+/**
+ * Encodes stored schema with persisted metadata, but without application-defined versions.
+ * @param repo - The stored schema to encode.
+ * @returns The V2 representation.
+ */
 function encodeRepoV2(repo: TreeStoredSchema): FormatV2 {
 	const nodeSchema = encodeNodeSchema(repo, (schema) => schema.encodeV2());
 	const rootFieldSchema = encodeFieldSchemaV2(repo.rootFieldSchema);
@@ -43,7 +53,13 @@ function encodeRepoV2(repo: TreeStoredSchema): FormatV2 {
 	};
 }
 
+/**
+ * Encodes stored schema with persisted metadata and optional application-defined versions.
+ * @param repo - The stored schema to encode.
+ * @returns The experimental V3 representation.
+ */
 function encodeRepoV3(repo: TreeStoredSchema): FormatV3 {
+	// V3 reuses V2's node and field formats, changing only the discriminator and version map.
 	const { nodes, root } = encodeRepoV2(repo);
 	return {
 		version: SchemaFormatVersion.v3Experimental,
@@ -52,6 +68,7 @@ function encodeRepoV3(repo: TreeStoredSchema): FormatV3 {
 		...(repo.schemaVersion === undefined
 			? {}
 			: {
+					// Sort pairs so insertion order does not affect the persisted representation.
 					schemaVersion: Object.entries(repo.schemaVersion).sort(([a], [b]) =>
 						compareStrings(a, b),
 					),
@@ -83,6 +100,11 @@ function encodeNodeSchema<TFormat>(
 	return nodeSchema;
 }
 
+/**
+ * Decodes V1 schema without persisted metadata or application-defined versions.
+ * @param f - The encoded schema.
+ * @returns The stored schema.
+ */
 function decodeV1(f: FormatV1): TreeStoredSchema {
 	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
 	for (const [key, schema] of Object.entries(f.nodes)) {
@@ -97,6 +119,11 @@ function decodeV1(f: FormatV1): TreeStoredSchema {
 	};
 }
 
+/**
+ * Decodes V2 schema, including persisted metadata but no application-defined versions.
+ * @param f - The encoded schema.
+ * @returns The stored schema.
+ */
 function decodeV2(f: FormatV2): TreeStoredSchema {
 	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
 	for (const [key, schema] of Object.entries(f.nodes)) {
@@ -111,12 +138,19 @@ function decodeV2(f: FormatV2): TreeStoredSchema {
 	};
 }
 
+/**
+ * Decodes experimental V3 schema, including optional application-defined versions.
+ * @param f - The encoded schema.
+ * @returns The stored schema with a frozen version map when present.
+ * @throws A usage error if versions are not non-negative safe integers or identifiers are not sorted and unique.
+ */
 function decodeV3(f: FormatV3): TreeStoredSchema {
 	if (f.schemaVersion === undefined) {
 		return decodeV2({ version: SchemaFormatVersion.v2, nodes: f.nodes, root: f.root });
 	}
 	let previous: string | undefined;
 	const entries: [string, number][] = [];
+	// Validate values and canonical ordering beyond the structural format checks.
 	for (const [libraryId, version] of f.schemaVersion) {
 		if (!Number.isSafeInteger(version) || version < 0) {
 			throw new UsageError("Stored schema versions must be non-negative safe integers.");
@@ -131,6 +165,7 @@ function decodeV3(f: FormatV3): TreeStoredSchema {
 	}
 	return {
 		...decodeV2({ version: SchemaFormatVersion.v2, nodes: f.nodes, root: f.root }),
+		// Preserve the distinction between an omitted map and an explicitly empty one.
 		schemaVersion: Object.freeze(Object.fromEntries(entries)),
 	};
 }

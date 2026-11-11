@@ -13,6 +13,12 @@ const noAdditionalProps: TObjectOptions = { additionalProperties: false };
 
 /**
  * Defines an experimental stored schema format with application-defined versions.
+ *
+ * @remarks
+ * Uses the same node and root field formats as V2, but changes the version discriminator to `"schemaVersion"`.
+ * Adds an optional `schemaVersion` array of library identifier and version pairs, sorted by identifier with no duplicates.
+ * Versions must be non-negative safe integers; the decoder validates this constraint and the entry order.
+ * An omitted array means no application-defined versions, while an empty array preserves an explicitly empty version map.
  */
 export const Format = Type.Object(
 	{

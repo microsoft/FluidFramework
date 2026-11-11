@@ -4,6 +4,7 @@
  */
 
 export {
+	SchemaComparisonMode,
 	allowsRepoSuperset,
 	allowsSchemaUpgrade,
 	areSchemaVersionsEqual,

@@ -13,9 +13,14 @@ export {
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 } from "./configuration.js";
-export { computeSchemaHash, identifySchemaWithHashAlpha } from "./schemaHash.js";
+export {
+	computeSchemaHash,
+	identifySchemaWithHashAlpha,
+	type IdentifySchemaWithHashOptions,
+} from "./schemaHash.js";
 export {
 	identifySchemaAlpha,
+	type IdentifySchemaOptions,
 	type SchemaIdentity,
 	SchemaIdentityInternal,
 } from "./schemaIdentity.js";

@@ -14,7 +14,6 @@ import {
 	ObjectNodeStoredSchema,
 	type TreeFieldStoredSchema,
 	type TreeNodeStoredSchema,
-	type SchemaVersionMap,
 } from "../../core/index.js";
 import {
 	compareStrings,
@@ -25,7 +24,29 @@ import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js"
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import { toInitialSchema } from "../treeSchema.js";
 
-import { SchemaIdentityInternal, type SchemaIdentity } from "./schemaIdentity.js";
+import {
+	SchemaIdentityInternal,
+	type IdentifySchemaOptions,
+	type SchemaIdentity,
+} from "./schemaIdentity.js";
+
+/**
+ * Options for {@link identifySchemaWithHashAlpha}.
+ *
+ * @alpha @input
+ */
+export interface IdentifySchemaWithHashOptions extends IdentifySchemaOptions {
+	/**
+	 * An optional hash used to detect unintended schema changes.
+	 * @remarks
+	 * The hash uses the view schema and configured staged upgrade policy, independent of the document.
+	 * View construction throws a UsageError containing the expected and actual hashes if they differ.
+	 * If the schema change is intentional, update this value with the actual hash from the error.
+	 * When versions are configured, the error also suggests increasing the relevant version.
+	 * Omit this value to enable telemetry without a construction check.
+	 */
+	readonly expectedHash?: string;
+}
 
 /**
  * Enables schema hash telemetry and optional checks when constructing a view.
@@ -45,22 +66,7 @@ import { SchemaIdentityInternal, type SchemaIdentity } from "./schemaIdentity.js
  * @alpha
  */
 export function identifySchemaWithHashAlpha(
-	options: {
-		/**
-		 * An optional hash used to detect unintended schema changes.
-		 * @remarks
-		 * The hash uses the view schema and configured staged upgrade policy, independent of the document.
-		 * View construction throws a UsageError containing the expected and actual hashes if they differ.
-		 * If the schema change is intentional, update this value with the actual hash from the error.
-		 * When versions are configured, the error also suggests increasing the relevant version.
-		 * Omit this value to enable telemetry without a construction check.
-		 */
-		readonly expectedHash?: string;
-		/**
-		 * Specifies the versions to store on {@link SchemaIdentity.schemaVersion}.
-		 */
-		readonly schemaVersion?: SchemaVersionMap | number;
-	} = {},
+	options: IdentifySchemaWithHashOptions = {},
 ): SchemaIdentity {
 	return new SchemaIdentityInternal(
 		options.expectedHash,
