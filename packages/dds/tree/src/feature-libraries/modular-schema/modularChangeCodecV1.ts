@@ -935,9 +935,10 @@ export function decodeChange(
 	if (decodedRevInfos !== undefined) {
 		decoded.revisions = decodedRevInfos;
 	}
-	if (encodedChange.maxId !== undefined) {
-		decoded.maxId = encodedChange.maxId;
-	}
 
+	const maxId = idAllocator.getMaxId();
+	if (maxId >= 0) {
+		decoded.maxId = brand(maxId);
+	}
 	return decoded;
 }

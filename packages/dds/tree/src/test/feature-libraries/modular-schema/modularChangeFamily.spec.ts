@@ -1341,6 +1341,16 @@ describe("ModularChangeFamily", () => {
 			describe(`revision metadata in version ${version}`, () => {
 				const jsonCodec = family.codecs.resolve(version);
 
+				it("maxId accounts for IDs allocated during decoding", () => {
+					const change = inlineRevision(rootChange1a, tag1);
+					const encoded = jsonCodec.encode(change, context);
+					const decoded = jsonCodec.decode(encoded, context);
+					assert(decoded.maxId !== undefined);
+					for (const [[, localId]] of decoded.nodeChanges.entries()) {
+						assert(localId <= decoded.maxId, "Decoded node ID exceeds maxId");
+					}
+				});
+
 				it("preserves multiple revisions and rollback metadata without a context revision", () => {
 					const revisions: RevisionInfo[] = [
 						{ revision: tag1 },
