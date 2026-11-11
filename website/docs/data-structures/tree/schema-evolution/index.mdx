@@ -8,8 +8,8 @@ import { ApiLink, PackageLink } from "@site/src/components/shortLinks";
 # Schema Evolution
 
 As your application (or library) grows and evolves, you may need to modify the structure of your [SharedTree](../index.mdx) data.
-SharedTree makes it possible to update your [schemas](../schema-definition/index.mdx) while preserving existing documents and supporting other deployed application versions (see [understanding compatibility](#understanding-compatibility)).
-Write a test using <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">`snapshotSchemaCompatibility`</ApiLink> to verify the compatibility you require.
+SharedTree makes it possible to update your [schemas](../schema-definition/index.mdx) in ways that allow an app to load or upgrade documents created or edited by earlier versions of the app (see [understanding compatibility](./index.mdx#understanding-compatibility)).
+To ensure such changes to maintain the ability to open existing documents and collaborate with other deployed application versions, write a test using <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">`snapshotSchemaCompatibility`</ApiLink>.
 
 :::note
 For detailed information about which types of changes are safe versus breaking, see [types of schema changes](./types-of-changes.mdx).
@@ -39,9 +39,8 @@ The stored schema can grow over time but cannot shrink.
 Upgrades must continue to permit all content allowed by the existing stored schema.
 
 **3. Field Key Stability**
-Stored field keys identify fields independently of their property names in application code.
-You can therefore rename a property while keeping its stored key to continue accessing the same field.
-Conversely, reusing that key with an incompatible definition still changes the existing field; it does not create a new field or bypass compatibility checks.
+Field keys on object nodes are permanent once introduced.
+Therefore, a field key on an object node in the stored schema can never be changed/reused/repurposed.
 
 ### Why These Constraints?
 
@@ -69,16 +68,15 @@ Such a change might be backwards compatible, forwards compatible, or neither or 
 
 #### Backwards Compatibility
 
-A change to the view schema is **backwards compatible** if the new view can read and edit documents created with the earlier schema, either directly or after a permitted [upgrade](#schema-upgrade-process).
-An upgrade preserves existing content, but adding new permissions can affect whether other clients can use the document.
+A change to the view schema is **backwards compatible** if the *new view schema* is compatible with the *old stored schema*.
+In practice, this means that the new version of the application will be able to [upgrade](./index.mdx#schema-upgrade-process) documents to the new schema (note that the process of upgrading might affect forwards compatibility - see below).
 
 If a change is made that is not backwards compatible, then existing documents will "break", that is, they can no longer be loaded by the application.
 
 #### Forwards Compatibility
 
-A change to the view schema is **forwards compatible** if the earlier view can read and edit documents created or upgraded with the later schema, either directly or after a permitted upgrade.
-An upgrade requested by an older client follows the same rules as one requested by a newer client: it must preserve existing permissions and produce a schema the requesting view supports.
-It is therefore not a downgrade of the document, even though the requesting application code is older.
+A change to the view schema is **forwards compatible** if an *old view schema* is compatible with the *new stored schema* that results from the upgrade.
+In practice, the older version of the application must be able to "view" the new document after it has been upgraded.
 
 If a change is made that is backwards compatible, but not forwards compatible, then old versions of the application will "break" when trying to load newer/upgraded documents.
 To prevent this, the application can employ a [staged rollout](./index.mdx#staged-rollouts).
@@ -91,7 +89,7 @@ To prevent this, the application can employ a [staged rollout](./index.mdx#stage
 | ✅                    | ✅                   | Normal          |
 
 **Examples:**
-- Adding an optional field to an object when the older view already allows unknown optional fields.
+- Adding an optional field when compatibility flag is enabled
 
 #### 🌶 Spicy
 | Backwards Compatible | Forwards Compatible | Rollout Process |
