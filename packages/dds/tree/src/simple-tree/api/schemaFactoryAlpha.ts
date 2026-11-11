@@ -147,9 +147,6 @@ export interface SchemaStaticsAlpha {
 	 *
 	 * @remarks
 	 * Use this to incrementally migrate a required field to optional without a coordinated deployment.
-	 * The view can handle the field being present or absent, but the document's stored schema determines whether the field may be left empty.
-	 *
-	 * Enabling this staged upgrade makes the stored field optional, permitting it to be absent or cleared.
 	 *
 	 * With the default upgrade policy, the migration path is:
 	 *
