@@ -19,7 +19,6 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	toIDeltaManagerFull,
-	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
 describeCompat(
@@ -74,8 +73,8 @@ describeCompat(
 			container1 = await provider.makeTestContainer(configWithFeatureGates);
 			container2 = await provider.loadTestContainer(configWithFeatureGates);
 
-			dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
-			dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+			dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+			dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 
 			sharedMap1 = await dataObject1.getSharedObject<ISharedMap>(mapId);
 			sharedMap2 = await dataObject2.getSharedObject<ISharedMap>(mapId);

@@ -16,7 +16,6 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
 const counterId = "counterKey";
@@ -73,9 +72,9 @@ describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider, apis) => {
 
 	// Get all three data stores
 	beforeEach("Get data stores", async () => {
-		dataStore1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
-		dataStore2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
-		dataStore3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
+		dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
+		dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 	});
 
 	// Get all three counters
@@ -237,8 +236,8 @@ describeCompat(
 				},
 			};
 			container = await provider.makeTestContainer(configWithFeatureGates);
-			dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
-			dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+			dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 			sharedCounter = await dataStore.getSharedObject<SharedCounter>(counterId);
 			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
 			incrementedEvents = [];

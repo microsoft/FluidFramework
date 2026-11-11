@@ -22,7 +22,16 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { TreeViewConfiguration, type ImplicitFieldSchema } from "../../simple-tree/index.js";
+import {
+	ForestTypeOptimized,
+	ForestTypeReference,
+	type SharedTreeOptions,
+} from "../../shared-tree/index.js";
+import {
+	SchemaFactory,
+	TreeViewConfiguration,
+	type ImplicitFieldSchema,
+} from "../../simple-tree/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContentTyped } from "../feature-libraries/flex-tree/utils.js";
@@ -116,8 +125,9 @@ describe("Summary benchmarks", () => {
 			title: string,
 			content: TreeSimpleContentTyped<T>,
 			type: BenchmarkType,
+			options: SharedTreeOptions = {},
 		) {
-			const factory = configuredSharedTree({}).getFactory();
+			const factory = configuredSharedTree(options).getFactory();
 			benchmarkIt({
 				title,
 				type,
@@ -170,6 +180,29 @@ describe("Summary benchmarks", () => {
 					schema: WideRoot,
 				},
 				type,
+			);
+		}
+
+		const schemaFactory = new SchemaFactory("summary-field-arrays");
+		class Row extends schemaFactory.object("Row", {
+			a: schemaFactory.optional(schemaFactory.number),
+			b: schemaFactory.optional(schemaFactory.number),
+			c: schemaFactory.optional(schemaFactory.number),
+			d: schemaFactory.optional(schemaFactory.number),
+		}) {}
+		class Rows extends schemaFactory.array("Rows", Row) {}
+		for (const [name, forest] of [
+			["ObjectForest", ForestTypeReference],
+			["ChunkedForest", ForestTypeOptimized],
+		] as const) {
+			runSummaryBenchmark(
+				`singleton-heavy objects using ${name}`,
+				{
+					schema: Rows,
+					initialTree: Array.from({ length: 2000 }, () => ({ a: 1, b: 2, c: 3, d: 4 })),
+				},
+				BenchmarkType.Measurement,
+				{ forest },
 			);
 		}
 	});

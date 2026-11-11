@@ -19,6 +19,7 @@ import {
 	brandedSlot,
 	getOrAddEmptyToMap,
 	getOrCreate,
+	replaceArrayRange,
 } from "../../util/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
@@ -604,8 +605,7 @@ export class AnchorSet implements AnchorLocator {
 				count,
 			);
 
-			// TODO: this will fail for very large numbers of anchors due to argument limits.
-			field.splice(numberBeforeCouple, 0, ...coupleInfo.nodes);
+			replaceArrayRange(field, numberBeforeCouple, numberBeforeCouple, coupleInfo.nodes);
 		}
 
 		destinationPath.removeRef();
