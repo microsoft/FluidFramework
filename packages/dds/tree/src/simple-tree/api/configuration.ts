@@ -167,7 +167,6 @@ export interface ITreeViewConfigurationAlpha<
 	 *
 	 * @remarks
 	 * Use this policy to control which staged upgrades this client may enable, for example based on a feature flag.
-	 * Upgrades preserve changes already enabled at their existing locations, even when this policy does not select them.
 	 *
 	 * See {@link SchemaStaticsBeta.staged} and {@link SchemaStaticsAlpha.stagedOptional} for what enabling each kind of upgrade permits.
 	 *
