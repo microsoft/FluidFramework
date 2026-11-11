@@ -946,7 +946,7 @@ describe("SchematizingSimpleTreeView", () => {
 					error.message,
 					"TreeView.root is unavailable because the view schema is incompatible with the stored schema. The stored schema can be upgraded; call TreeView.upgradeSchema() before reading or writing TreeView.root.",
 				);
-				assert.deepEqual(error.getTelemetryProperties().schemaIncompatibilityDetails, {
+				assert.deepEqual(error.getTelemetryProperties().schemaViewIncompatibilityDetails, {
 					tag: TelemetryDataTag.SchemaArtifact,
 					value: JSON.stringify([
 						{
@@ -999,7 +999,7 @@ describe("SchematizingSimpleTreeView", () => {
 					error.message,
 					"TreeView.root is unavailable because the view schema is incompatible with the stored schema. The schemas cannot be upgraded automatically. Use a compatible view schema or explicitly migrate the document schema and data.",
 				);
-				assert.deepEqual(error.getTelemetryProperties().schemaIncompatibilityDetails, {
+				assert.deepEqual(error.getTelemetryProperties().schemaViewIncompatibilityDetails, {
 					tag: TelemetryDataTag.SchemaArtifact,
 					value: JSON.stringify([
 						{
@@ -1171,7 +1171,7 @@ describe("SchematizingSimpleTreeView", () => {
 				error.message,
 				"TreeView.root is unavailable because the view schema is incompatible with the stored schema. The schemas cannot be upgraded automatically. Use a compatible view schema or explicitly migrate the document schema and data.",
 			);
-			assert.deepEqual(error.getTelemetryProperties().schemaIncompatibilityDetails, {
+			assert.deepEqual(error.getTelemetryProperties().schemaViewIncompatibilityDetails, {
 				tag: TelemetryDataTag.SchemaArtifact,
 				value: JSON.stringify([
 					{

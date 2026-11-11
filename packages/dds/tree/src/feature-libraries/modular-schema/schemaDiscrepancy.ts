@@ -25,7 +25,9 @@ export interface StoredSchemaDiscrepancyLocation {
 /**
  * A failed stored-schema upgrade constraint, before formatting for an application.
  */
-export type StoredSchemaUpgradeDiscrepancy =
+export type StoredSchemaUpgradeDiscrepancy = {
+	readonly operation: "upgrade";
+} & (
 	| (StoredSchemaDiscrepancyLocation &
 			(
 				| {
@@ -54,4 +56,5 @@ export type StoredSchemaUpgradeDiscrepancy =
 	| {
 			readonly mismatch: "missingNodeSchema" | "uninhabitableNodeSchema";
 			readonly identifier: TreeNodeSchemaIdentifier;
-	  };
+	  }
+);

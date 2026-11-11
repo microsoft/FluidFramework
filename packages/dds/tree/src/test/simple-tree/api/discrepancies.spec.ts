@@ -78,6 +78,7 @@ describe("Schema Discrepancies", () => {
 				{
 					identifier: testTreeNodeIdentifier,
 					mismatch: "nodeKind",
+					operation: "view",
 					view: NodeKind.Object,
 					stored: MapNodeStoredSchema,
 				},
@@ -95,6 +96,7 @@ describe("Schema Discrepancies", () => {
 				{
 					identifier: testTreeNodeIdentifier,
 					mismatch: "nodeKind",
+					operation: "view",
 					view: NodeKind.Object,
 					stored: LeafNodeStoredSchema,
 				},
@@ -122,6 +124,7 @@ describe("Schema Discrepancies", () => {
 				{
 					identifier: testTreeNodeIdentifier,
 					mismatch: "nodeKind",
+					operation: "view",
 					view: NodeKind.Map,
 					stored: ObjectNodeStoredSchema,
 				},
@@ -160,6 +163,7 @@ describe("Schema Discrepancies", () => {
 					identifier: undefined,
 					fieldKey: undefined,
 					mismatch: "fieldKind",
+					operation: "view",
 					view: "Optional",
 					stored: "Value",
 				},
@@ -167,6 +171,7 @@ describe("Schema Discrepancies", () => {
 					identifier: testTreeNodeIdentifier,
 					fieldKey: undefined,
 					mismatch: "allowedTypes",
+					operation: "view",
 					view: [],
 					stored: [SchemaFactory.string.identifier],
 				},
@@ -185,6 +190,7 @@ describe("Schema Discrepancies", () => {
 					identifier: testTreeNodeIdentifier,
 					fieldKey: undefined,
 					mismatch: "allowedTypes",
+					operation: "view",
 					view: [
 						{ metadata: {}, type: SchemaFactory.number },
 						{ metadata: {}, type: SchemaFactory.string },
@@ -226,6 +232,7 @@ describe("Schema Discrepancies", () => {
 					fieldKey: undefined,
 					identifier: undefined,
 					mismatch: "allowedTypes",
+					operation: "view",
 					stored: ["schema discrepancies.tree2"],
 					view: [
 						{
@@ -249,6 +256,7 @@ describe("Schema Discrepancies", () => {
 					fieldKey: undefined,
 					identifier: undefined,
 					mismatch: "allowedTypes",
+					operation: "view",
 					stored: ["schema discrepancies.tree2"],
 					view: [
 						{
@@ -287,6 +295,7 @@ describe("Schema Discrepancies", () => {
 					fieldKey: "x",
 					identifier: testTreeNodeIdentifier,
 					mismatch: "allowedTypes",
+					operation: "view",
 					view: [{ metadata: {}, type: SchemaFactory.number }],
 					stored: [SchemaFactory.string.identifier],
 				},
@@ -294,6 +303,7 @@ describe("Schema Discrepancies", () => {
 					fieldKey: "x",
 					identifier: testTreeNodeIdentifier,
 					mismatch: "fieldKind",
+					operation: "view",
 					view: "Value",
 					stored: "Optional",
 				},
@@ -326,6 +336,7 @@ describe("Schema Discrepancies", () => {
 				{
 					identifier: numberName,
 					mismatch: "valueSchema",
+					operation: "view",
 					view: ValueSchema.Number,
 					stored: ValueSchema.Boolean,
 				},
@@ -386,6 +397,7 @@ describe("Schema Discrepancies", () => {
 						fieldKey: undefined,
 						identifier: undefined,
 						mismatch: "allowedTypes",
+						operation: "view",
 						stored: [],
 						view: [
 							{
@@ -398,6 +410,7 @@ describe("Schema Discrepancies", () => {
 						fieldKey: undefined,
 						identifier: undefined,
 						mismatch: "fieldKind",
+						operation: "view",
 						view: "Value",
 						stored: "Forbidden",
 					},
@@ -416,6 +429,7 @@ describe("Schema Discrepancies", () => {
 						fieldKey: undefined,
 						identifier: undefined,
 						mismatch: "allowedTypes",
+						operation: "view",
 						stored: [],
 						view: [
 							{
@@ -428,6 +442,7 @@ describe("Schema Discrepancies", () => {
 						fieldKey: undefined,
 						identifier: undefined,
 						mismatch: "fieldKind",
+						operation: "view",
 						view: "Value",
 						stored: forbiddenFieldKindIdentifier,
 					},
@@ -435,6 +450,7 @@ describe("Schema Discrepancies", () => {
 						identifier: "schema discrepancies.tree",
 						fieldKey: "x",
 						mismatch: "fieldKind",
+						operation: "view",
 						view: "Optional",
 						stored: forbiddenFieldKindIdentifier,
 					},
@@ -453,6 +469,7 @@ describe("Schema Discrepancies", () => {
 						fieldKey: undefined,
 						identifier: undefined,
 						mismatch: "allowedTypes",
+						operation: "view",
 						stored: [],
 						view: [
 							{
@@ -465,6 +482,7 @@ describe("Schema Discrepancies", () => {
 						fieldKey: undefined,
 						identifier: undefined,
 						mismatch: "fieldKind",
+						operation: "view",
 						view: "Value",
 						stored: forbiddenFieldKindIdentifier,
 					},
@@ -472,6 +490,7 @@ describe("Schema Discrepancies", () => {
 						identifier: "schema discrepancies.tree",
 						fieldKey: "x",
 						mismatch: "allowedTypes",
+						operation: "view",
 						view: [{ metadata: {}, type: SchemaFactory.number }],
 						stored: [],
 					},
@@ -479,6 +498,7 @@ describe("Schema Discrepancies", () => {
 						identifier: "schema discrepancies.tree",
 						fieldKey: "x",
 						mismatch: "fieldKind",
+						operation: "view",
 						view: "Optional",
 						stored: "Forbidden",
 					},

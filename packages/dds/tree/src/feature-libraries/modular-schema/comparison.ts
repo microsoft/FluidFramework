@@ -55,6 +55,7 @@ export function allowsTreeSuperset(
 	}
 	if (isNeverTree(policy, originalData, superset)) {
 		diagnostics?.discrepancies.push({
+			operation: "upgrade",
 			mismatch: superset === undefined ? "missingNodeSchema" : "uninhabitableNodeSchema",
 			identifier: diagnostics.identifier,
 		});
@@ -67,6 +68,7 @@ export function allowsTreeSuperset(
 			const leafCompatible = allowsValueSuperset(original.leafValue, superset.leafValue);
 			if (!leafCompatible && diagnostics !== undefined) {
 				diagnostics.discrepancies.push({
+					operation: "upgrade",
 					mismatch: "valueSchema",
 					identifier: diagnostics.identifier,
 					stored: original.leafValue,
@@ -148,6 +150,7 @@ function reportNodeKindMismatch(
 	diagnostics: NodeComparisonDiagnostics | undefined,
 ): false {
 	diagnostics?.discrepancies.push({
+		operation: "upgrade",
 		mismatch: "nodeKind",
 		identifier: diagnostics.identifier,
 		stored: original,
@@ -201,6 +204,7 @@ export function allowsFieldSuperset(
 			return false;
 		}
 		diagnostics.discrepancies.push({
+			operation: "upgrade",
 			mismatch: "allowedTypes",
 			identifier: diagnostics.identifier,
 			fieldKey: diagnostics.fieldKey,
@@ -223,6 +227,7 @@ export function allowsFieldSuperset(
 			);
 	if (!kindCompatible && diagnostics !== undefined) {
 		diagnostics.discrepancies.push({
+			operation: "upgrade",
 			mismatch: "fieldKind",
 			identifier: diagnostics.identifier,
 			fieldKey: diagnostics.fieldKey,

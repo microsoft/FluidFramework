@@ -36,22 +36,6 @@ import type {
 	SchemaUpgradeIncompatibility,
 } from "./tree.js";
 
-/**
- * Describes the discrepancies that prevent a view schema from viewing a stored schema as a
- * readonly array.
- */
-export function getSchemaIncompatibilityDetails(
-	viewSchema: TreeSchema,
-	stored: TreeStoredSchema,
-): readonly SchemaViewIncompatibility[] | undefined {
-	const discrepancies = [...getDiscrepanciesInAllowedContent(viewSchema, stored)];
-	if (discrepancies.length === 0) {
-		return undefined;
-	}
-
-	return discrepancies.map((discrepancy) => formatSchemaDiscrepancy(discrepancy));
-}
-
 function formatSchemaDiscrepancy(value: Discrepancy): SchemaViewIncompatibility;
 function formatSchemaDiscrepancy(
 	value: StoredSchemaUpgradeDiscrepancy,
@@ -62,7 +46,7 @@ function formatSchemaDiscrepancy(
 	switch (value.mismatch) {
 		case "allowedTypes": {
 			const comparison =
-				"proposed" in value
+				value.operation === "upgrade"
 					? {
 							proposed: [...value.proposed].filter((type) => !value.stored.has(type)).sort(),
 							stored: [...value.stored].filter((type) => !value.proposed.has(type)).sort(),
@@ -89,7 +73,7 @@ function formatSchemaDiscrepancy(
 			return {
 				mismatch: value.mismatch,
 				location: formatDiscrepancyLocation(value),
-				...("proposed" in value
+				...(value.operation === "upgrade"
 					? { proposed: value.proposed, stored: value.stored }
 					: {
 							view: value.view,
@@ -104,7 +88,7 @@ function formatSchemaDiscrepancy(
 			return {
 				mismatch: value.mismatch,
 				nodeType: value.identifier,
-				...("proposed" in value
+				...(value.operation === "upgrade"
 					? { proposed: formatValueSchema(value.proposed) }
 					: { view: formatValueSchema(value.view) }),
 				stored: formatValueSchema(value.stored),
@@ -114,7 +98,7 @@ function formatSchemaDiscrepancy(
 			return {
 				mismatch: value.mismatch,
 				nodeType: value.identifier,
-				...("proposed" in value
+				...(value.operation === "upgrade"
 					? { proposed: getStoredNodeKind(value.proposed) }
 					: { view: NodeKind[value.view] }),
 				stored: getStoredNodeKind(value.stored),
@@ -133,7 +117,7 @@ function formatSchemaDiscrepancy(
 /**
  * Reports every constraint that prevents upgrading `stored` to `proposed`.
  */
-export function getSchemaUpgradeIncompatibilityDetails(
+function getSchemaUpgradeIncompatibilityDetails(
 	stored: TreeStoredSchema,
 	proposed: TreeStoredSchema,
 ): readonly SchemaUpgradeIncompatibility[] | undefined {

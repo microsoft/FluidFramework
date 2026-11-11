@@ -155,7 +155,7 @@ function throwIfSchemaIsIncompatible(compatibility: SchemaCompatibilityStatusBet
 	throw new UsageError(
 		`TreeView.root is unavailable because the view schema is incompatible with the stored schema. ${resolution}`,
 		tagSchemaArtifacts({
-			schemaIncompatibilityDetails: JSON.stringify(compatibility.view.incompatibilities),
+			schemaViewIncompatibilityDetails: JSON.stringify(compatibility.view.incompatibilities),
 			schemaUpgradeIncompatibilityDetails: compatibility.upgrade.isCompatible
 				? undefined
 				: JSON.stringify(compatibility.upgrade.incompatibilities),

@@ -1061,14 +1061,90 @@ export type SchemaDiscrepancy =
  */
 export type SchemaUpgradeIncompatibility =
 	| {
-			[Incompatibility in SchemaViewIncompatibility as Incompatibility["mismatch"]]: Omit<
-				Incompatibility,
-				"view" | "stagedView" | "viewIsStagedOptional"
-			> & {
-				/** The constraints in the proposed stored schema. */
-				readonly proposed: Incompatibility["view"];
-			};
-	  }[SchemaViewIncompatibility["mismatch"]]
+			/**
+			 * A field's proposed allowed types do not include all its stored allowed types.
+			 */
+			readonly mismatch: "allowedTypes";
+			/**
+			 * The root field, or the containing node identifier and stored field key.
+			 * The field key is undefined for a map's implicit field.
+			 */
+			readonly location:
+				| "root"
+				| {
+						readonly nodeType: string;
+						readonly fieldKey: string | undefined;
+				  };
+			/**
+			 * Node type identifiers allowed only by the proposed schema.
+			 */
+			readonly proposed: readonly string[];
+			/**
+			 * Node type identifiers allowed only by the stored schema.
+			 * Removing these types prevents the upgrade.
+			 */
+			readonly stored: readonly string[];
+	  }
+	| {
+			/**
+			 * The transition from the stored field kind to the proposed kind is not permitted.
+			 */
+			readonly mismatch: "fieldKind";
+			/**
+			 * The root field, or the containing node identifier and stored field key.
+			 * The field key is undefined for a map's implicit field.
+			 */
+			readonly location:
+				| "root"
+				| {
+						readonly nodeType: string;
+						readonly fieldKey: string | undefined;
+				  };
+			/**
+			 * The proposed field kind.
+			 */
+			readonly proposed: string;
+			/**
+			 * The stored field kind.
+			 */
+			readonly stored: string;
+	  }
+	| {
+			/**
+			 * A leaf node's proposed value schema is incompatible with its stored value schema.
+			 */
+			readonly mismatch: "valueSchema";
+			/**
+			 * The leaf node schema identifier.
+			 */
+			readonly nodeType: string;
+			/**
+			 * The proposed value schema, or undefined when it does not constrain values.
+			 */
+			readonly proposed: string | undefined;
+			/**
+			 * The stored value schema, or undefined when it does not constrain values.
+			 */
+			readonly stored: string | undefined;
+	  }
+	| {
+			/**
+			 * The proposed node kind is incompatible with the stored node kind.
+			 */
+			readonly mismatch: "nodeKind";
+			/**
+			 * The node schema identifier.
+			 */
+			readonly nodeType: string;
+			/**
+			 * The proposed node kind.
+			 */
+			readonly proposed: string;
+			/**
+			 * The stored node kind.
+			 */
+			readonly stored: string;
+	  }
 	| {
 			/** A constructible stored node definition is absent from the proposed schema. */
 			readonly mismatch: "missingNodeSchema";

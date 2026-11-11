@@ -19,8 +19,6 @@ import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-librar
 import { LeafNodeSchema } from "../../../simple-tree/leafNodeSchema.js";
 import {
 	checkSchemaCompatibility,
-	getSchemaIncompatibilityDetails,
-	getSchemaUpgradeIncompatibilityDetails,
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
 	type CompatibilityResult,
@@ -89,54 +87,51 @@ function expectCompatibility(
 	return compatibility;
 }
 
-describe("getSchemaIncompatibilityDetails", () => {
-	it("returns undefined for compatible schema", () => {
+describe("checkSchemaCompatibility viewing incompatibilities", () => {
+	it("omits incompatibilities for compatible schema", () => {
 		const schema = new TreeViewConfigurationAlpha({ schema: factory.number });
-		assert.equal(
-			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(factory.number)),
-			undefined,
-		);
+		assert.deepEqual(checkSchemaCompatibility(schema, toUpgradeSchema(factory.number)).view, {
+			isCompatible: true,
+		});
 	});
 
 	it("formats an allowed types discrepancy", () => {
 		const schema = new TreeViewConfigurationAlpha({ schema: factory.string });
-		assert.deepEqual(
-			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(factory.number)),
-			[
-				{
-					mismatch: "allowedTypes",
-					location: "root",
-					view: [factory.string.identifier],
-					stored: [factory.number.identifier],
-				},
-			],
-		);
+		const { view } = checkSchemaCompatibility(schema, toUpgradeSchema(factory.number));
+		assert(!view.isCompatible);
+		assert.deepEqual(view.incompatibilities, [
+			{
+				mismatch: "allowedTypes",
+				location: "root",
+				view: [factory.string.identifier],
+				stored: [factory.number.identifier],
+			},
+		]);
 	});
 
 	it("formats all discrepancies", () => {
 		const schema = new TreeViewConfigurationAlpha({
 			schema: factory.optional(factory.string),
 		});
-		assert.deepEqual(
-			getSchemaIncompatibilityDetails(
-				schema,
-				toUpgradeSchema(factory.required(factory.number)),
-			),
-			[
-				{
-					mismatch: "allowedTypes",
-					location: "root",
-					view: [factory.string.identifier],
-					stored: [factory.number.identifier],
-				},
-				{
-					mismatch: "fieldKind",
-					location: "root",
-					view: "Optional",
-					stored: "Value",
-				},
-			],
+		const { view } = checkSchemaCompatibility(
+			schema,
+			toUpgradeSchema(factory.required(factory.number)),
 		);
+		assert(!view.isCompatible);
+		assert.deepEqual(view.incompatibilities, [
+			{
+				mismatch: "allowedTypes",
+				location: "root",
+				view: [factory.string.identifier],
+				stored: [factory.number.identifier],
+			},
+			{
+				mismatch: "fieldKind",
+				location: "root",
+				view: "Optional",
+				stored: "Value",
+			},
+		]);
 	});
 
 	it("formats a value schema discrepancy", () => {
@@ -144,7 +139,9 @@ describe("getSchemaIncompatibilityDetails", () => {
 		const viewLeaf = new LeafNodeSchema(identifier, ValueSchema.Number);
 		const storedLeaf = new LeafNodeSchema(identifier, ValueSchema.String);
 		const schema = new TreeViewConfigurationAlpha({ schema: viewLeaf });
-		assert.deepEqual(getSchemaIncompatibilityDetails(schema, toUpgradeSchema(storedLeaf)), [
+		const { view } = checkSchemaCompatibility(schema, toUpgradeSchema(storedLeaf));
+		assert(!view.isCompatible);
+		assert.deepEqual(view.incompatibilities, [
 			{
 				mismatch: "valueSchema",
 				nodeType: identifier,
@@ -158,7 +155,9 @@ describe("getSchemaIncompatibilityDetails", () => {
 		class ViewNode extends factory.object("nodeKind", {}) {}
 		class StoredNode extends factory.map("nodeKind", []) {}
 		const schema = new TreeViewConfigurationAlpha({ schema: ViewNode });
-		assert.deepEqual(getSchemaIncompatibilityDetails(schema, toUpgradeSchema(StoredNode)), [
+		const { view } = checkSchemaCompatibility(schema, toUpgradeSchema(StoredNode));
+		assert(!view.isCompatible);
+		assert.deepEqual(view.incompatibilities, [
 			{
 				mismatch: "nodeKind",
 				nodeType: ViewNode.identifier,
@@ -177,7 +176,9 @@ describe("getSchemaIncompatibilityDetails", () => {
 		}) {}
 		const schema = new TreeViewConfigurationAlpha({ schema: ViewNode });
 
-		assert.deepEqual(getSchemaIncompatibilityDetails(schema, toUpgradeSchema(StoredNode)), [
+		const { view } = checkSchemaCompatibility(schema, toUpgradeSchema(StoredNode));
+		assert(!view.isCompatible);
+		assert.deepEqual(view.incompatibilities, [
 			{
 				mismatch: "allowedTypes",
 				location: {
@@ -198,7 +199,9 @@ describe("getSchemaIncompatibilityDetails", () => {
 		class StoredNode extends factory.objectAlpha("stagedOptionalDetails", {}) {}
 		const schema = new TreeViewConfigurationAlpha({ schema: ViewNode });
 
-		assert.deepEqual(getSchemaIncompatibilityDetails(schema, toUpgradeSchema(StoredNode)), [
+		const { view } = checkSchemaCompatibility(schema, toUpgradeSchema(StoredNode));
+		assert(!view.isCompatible);
+		assert.deepEqual(view.incompatibilities, [
 			{
 				mismatch: "fieldKind",
 				location: {
@@ -1397,7 +1400,7 @@ describe("checkSchemaCompatibility", () => {
 	});
 });
 
-describe("getSchemaUpgradeIncompatibilityDetails", () => {
+describe("checkSchemaCompatibility upgrade incompatibilities", () => {
 	it("preserves discriminated value types without viewing-specific properties", () => {
 		interface ExpectedValues {
 			allowedTypes: readonly string[];
@@ -1439,14 +1442,12 @@ describe("getSchemaUpgradeIncompatibilityDetails", () => {
 		>();
 	});
 
-	it("returns undefined for an allowed upgrade", () => {
-		assert.equal(
-			getSchemaUpgradeIncompatibilityDetails(
-				toUpgradeSchema(factory.number),
-				toUpgradeSchema([factory.number, factory.string]),
-			),
-			undefined,
+	it("omits incompatibilities for an allowed upgrade", () => {
+		const { upgrade } = checkSchemaCompatibility(
+			new TreeViewConfigurationAlpha({ schema: [factory.number, factory.string] }),
+			toUpgradeSchema(factory.number),
 		);
+		assert.deepEqual(upgrade, { isCompatible: true });
 	});
 
 	it("reports an uninhabitable proposed node definition", () => {
@@ -1454,18 +1455,17 @@ describe("getSchemaUpgradeIncompatibilityDetails", () => {
 		class Proposed extends factory.object("diagnostics.Uninhabitable", {
 			value: factory.required([]),
 		}) {}
-		assert.deepEqual(
-			getSchemaUpgradeIncompatibilityDetails(
-				toUpgradeSchema(Stored),
-				toUpgradeSchema(Proposed),
-			),
-			[
-				{
-					mismatch: "uninhabitableNodeSchema",
-					nodeType: Stored.identifier,
-				},
-			],
+		const { upgrade } = checkSchemaCompatibility(
+			new TreeViewConfigurationAlpha({ schema: Proposed }),
+			toUpgradeSchema(Stored),
 		);
+		assert(!upgrade.isCompatible);
+		assert.deepEqual(upgrade.incompatibilities, [
+			{
+				mismatch: "uninhabitableNodeSchema",
+				nodeType: Stored.identifier,
+			},
+		]);
 	});
 });
 

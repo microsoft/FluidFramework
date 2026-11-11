@@ -727,10 +727,32 @@ export class SchemaUpgrade {
 
 // @beta @sealed
 export type SchemaUpgradeIncompatibility = {
-    [Incompatibility in SchemaViewIncompatibility as Incompatibility["mismatch"]]: Omit<Incompatibility, "view" | "stagedView" | "viewIsStagedOptional"> & {
-        readonly proposed: Incompatibility["view"];
+    readonly mismatch: "allowedTypes";
+    readonly location: "root" | {
+        readonly nodeType: string;
+        readonly fieldKey: string | undefined;
     };
-}[SchemaViewIncompatibility["mismatch"]] | {
+    readonly proposed: readonly string[];
+    readonly stored: readonly string[];
+} | {
+    readonly mismatch: "fieldKind";
+    readonly location: "root" | {
+        readonly nodeType: string;
+        readonly fieldKey: string | undefined;
+    };
+    readonly proposed: string;
+    readonly stored: string;
+} | {
+    readonly mismatch: "valueSchema";
+    readonly nodeType: string;
+    readonly proposed: string | undefined;
+    readonly stored: string | undefined;
+} | {
+    readonly mismatch: "nodeKind";
+    readonly nodeType: string;
+    readonly proposed: string;
+    readonly stored: string;
+} | {
     readonly mismatch: "missingNodeSchema";
     readonly nodeType: string;
 } | {

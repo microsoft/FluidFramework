@@ -89,6 +89,7 @@ export type FieldDiscrepancy =
  * Information about where a field discrepancy is located within a collection of schemas.
  */
 export interface FieldDiscrepancyLocation extends StoredSchemaDiscrepancyLocation {
+	readonly operation: "view";
 	/**
 	 * Whether the view field is a staged optional field.
 	 * Omitted when false.
@@ -136,6 +137,7 @@ export interface FieldKindDiscrepancy extends FieldDiscrepancyLocation {
  * Differences in the `ValueSchema` of two `LeafNodeStoredSchema` objects.
  */
 export interface ValueSchemaDiscrepancy {
+	readonly operation: "view";
 	identifier: TreeNodeSchemaIdentifier;
 	mismatch: "valueSchema";
 	view: ValueSchema | undefined;
@@ -148,6 +150,7 @@ export interface ValueSchemaDiscrepancy {
  * Includes when stored object schemas are expected to be compatible with an array node schema.
  */
 export interface NodeKindDiscrepancy {
+	readonly operation: "view";
 	identifier: TreeNodeSchemaIdentifier;
 	mismatch: "nodeKind";
 	view: NodeKind;
@@ -236,6 +239,7 @@ function* getNodeDiscrepancies(
 ): Iterable<Discrepancy> {
 	if (!doesNodeKindMatchStoredNodeKind(view.kind, getStoredNodeSchemaType(stored))) {
 		yield {
+			operation: "view",
 			identifier,
 			mismatch: "nodeKind",
 			view: view.kind,
@@ -267,6 +271,7 @@ function* getNodeDiscrepancies(
 			const arrayStoredSchema = tryStoredSchemaAsArray(stored);
 			if (arrayStoredSchema === undefined) {
 				yield {
+					operation: "view",
 					identifier,
 					mismatch: "nodeKind",
 					view: NodeKind.Array,
@@ -326,6 +331,7 @@ function* getNodeDiscrepancies(
 			const storedValue = (stored as LeafNodeStoredSchema).leafValue;
 			if (viewValue !== storedValue) {
 				yield {
+					operation: "view",
 					identifier,
 					mismatch: "valueSchema",
 					view: viewValue,
@@ -429,6 +435,7 @@ function* getFieldDiscrepancies(
 		!(view.isStagedOptional !== false && stored.kind === FieldKinds.required.identifier)
 	) {
 		yield {
+			operation: "view",
 			identifier,
 			fieldKey,
 			mismatch: "fieldKind",
@@ -474,6 +481,7 @@ function* getAllowedTypeDiscrepancies(
 	const discrepancies = findExtraAllowedTypes(view, stored);
 	if (discrepancies.view.length > 0 || discrepancies.stored.length > 0) {
 		yield {
+			operation: "view",
 			...discrepancies,
 			identifier,
 			fieldKey,
@@ -524,6 +532,7 @@ function* computeObjectNodeDiscrepancies(
 				convertFieldKind.get(fieldSchema.kind) ??
 				fail(0xbf0 /* A conversion from a FieldKind to a FlexFieldKind should exist */);
 			yield {
+				operation: "view",
 				identifier,
 				fieldKey,
 				mismatch: "fieldKind",
@@ -560,6 +569,7 @@ function* computeObjectNodeDiscrepancies(
 			(!view.allowUnknownOptionalFields || schema.kind !== FieldKinds.optional.identifier)
 		) {
 			yield {
+				operation: "view",
 				identifier,
 				fieldKey,
 				mismatch: "fieldKind",

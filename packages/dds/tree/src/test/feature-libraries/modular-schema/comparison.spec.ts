@@ -272,6 +272,9 @@ describe("Schema Comparison", () => {
 			const discrepancies: StoredSchemaUpgradeDiscrepancy[] = [];
 			assert.equal(allowsRepoSuperset(defaultSchemaPolicy, a, b, discrepancies), compatible);
 			assert.equal(discrepancies.length === 0, compatible);
+			for (const discrepancy of discrepancies) {
+				assert.equal(discrepancy.operation, "upgrade");
+			}
 			return compatible;
 		};
 
