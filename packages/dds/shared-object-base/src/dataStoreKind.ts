@@ -44,22 +44,26 @@ import type { ISharedObject } from "./types.js";
  * Concurrent and subsequent lookups share the loaded kind or the loader's rejection.
  * Type identifiers must match exactly; aliases are not resolved.
  * This helper does not replace {@link sharedObjectRegistryFromIterable}, which registers shared object kinds.
+ * @typeParam T - The output type shared by the registered kinds.
+ * Inferred for homogeneous entries; specify a common type or union for heterogeneous entries.
  * @param entries - Kinds, or type identifiers and their lazy loaders.
  * @returns A registry that loads each lazy entry at most once.
  * @throws A usage error if the entries contain duplicate type identifiers.
  * The returned registry rejects lookups for unknown types or loaders that return a kind with a different type.
  * @alpha
  */
-export function dataStoreRegistryFromIterable(
-	entries: Iterable<DataStoreKind | { type: string; kind: () => Promise<DataStoreKind> }>,
-): DataStoreRegistry {
-	const map = new Map<string, () => Promise<DataStoreKind>>();
+export function dataStoreRegistryFromIterable<T = unknown>(
+	entries: Iterable<
+		DataStoreKind<T> | { type: string; kind: () => Promise<DataStoreKind<T>> }
+	>,
+): DataStoreRegistry<T> {
+	const map = new Map<string, () => Promise<DataStoreKind<T>>>();
 	for (const entry of entries) {
 		if (map.has(entry.type)) {
 			throw new UsageError(`Duplicate data store type: ${entry.type}`);
 		}
 		// Cache the in-flight promise, including rejection, before invoking the loader.
-		let loaded: Promise<DataStoreKind> | undefined;
+		let loaded: Promise<DataStoreKind<T>> | undefined;
 		map.set(
 			entry.type,
 			async () =>

@@ -395,10 +395,10 @@ export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutp
 export type DataStoreRegistry<out T = unknown> = Registry<Promise<DataStoreKind<T>>>;
 
 // @alpha
-export function dataStoreRegistryFromIterable(entries: Iterable<DataStoreKind | {
+export function dataStoreRegistryFromIterable<T = unknown>(entries: Iterable<DataStoreKind<T> | {
     type: string;
-    kind: () => Promise<DataStoreKind>;
-}>): DataStoreRegistry;
+    kind: () => Promise<DataStoreKind<T>>;
+}>): DataStoreRegistry<T>;
 
 // @alpha
 export function decodeSchemaCompatibilitySnapshot(encodedSchema: JsonCompatibleReadOnly, validator?: FormatValidator): SimpleTreeSchema;
