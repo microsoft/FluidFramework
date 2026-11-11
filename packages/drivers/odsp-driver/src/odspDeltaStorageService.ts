@@ -56,8 +56,9 @@ export class OdspDeltaStorageService {
 			// Thus it needs to be done before we call getAuthHeader() to reduce extra calls
 			const url = this.buildUrl(from, to);
 			const method = "POST";
+			// The service authenticates the GET inside the multipart POST.
 			const authHeader = await this.getAuthHeader(
-				{ ...options, request: { url, method } },
+				{ ...options, request: { url, method: "GET" } },
 				"DeltaStorage",
 			);
 

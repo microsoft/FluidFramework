@@ -7,7 +7,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { stringToBuffer } from "@fluid-internal/client-utils";
+import { fromUtf8ToBase64, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	DriverErrorTypes,
 	type ISnapshot,
@@ -46,6 +46,7 @@ import {
 	type INewFileInfo,
 	type IOdspResponse,
 	createCacheSnapshotKey,
+	getWithRetryForTokenRefresh,
 } from "../odspUtils.js";
 
 import {
@@ -98,7 +99,7 @@ describe("Snapshot download authorization", () => {
 			ReturnType<InstrumentedStorageTokenFetcher>
 		>().callsFake(async (options) => {
 			assert(options.request !== undefined);
-			return `AT_POP ${options.request.method} ${options.request.url}`;
+			return `MSAuth1.0 popToken="${options.request.method} ${options.request.url}", type="AT_POP"`;
 		});
 	});
 
@@ -129,7 +130,7 @@ describe("Snapshot download authorization", () => {
 			assert(typeof url === "string" && options !== undefined);
 			assert.deepEqual(getAuthHeader.firstCall.args[0].request, {
 				url,
-				method: "POST",
+				method: "GET",
 			});
 			assert.equal(options.method, "POST");
 			assert.equal(new URL(url).searchParams.get("ump"), "1");
@@ -154,7 +155,7 @@ describe("Snapshot download authorization", () => {
 	}
 
 	for (const useEpochTracker of [false, true]) {
-		it(`authorizes the actual non-bearer GET with epoch tracker ${useEpochTracker}`, async () => {
+		it(`authorizes the multipart GET once with epoch tracker ${useEpochTracker}`, async () => {
 			resolved.shareLinkInfo = {
 				sharingLinkToRedeem: sharingLink,
 				isRedemptionNonDurable: useEpochTracker,
@@ -180,53 +181,92 @@ describe("Snapshot download authorization", () => {
 			);
 
 			assert(fetchStub.calledOnce);
+			assert(getAuthHeader.calledOnce);
 			const [url, options] = fetchStub.firstCall.args;
 			assert(typeof url === "string" && options !== undefined);
-			assert.equal(options.method, "GET");
-			assert.equal(options.body, undefined);
+			assert.equal(options.method, "POST");
+			assert(typeof options.body === "string");
 			assert.equal(options.signal, controller.signal);
 			assert.equal(result.requestUrl, url);
 			const parsedUrl = new URL(url);
-			assert.equal(parsedUrl.searchParams.has("ump"), false);
+			assert.equal(parsedUrl.searchParams.get("ump"), "1");
 			assert.equal(parsedUrl.searchParams.get("blobs"), "2");
 			assert.equal(parsedUrl.searchParams.get("deltas"), "1");
 			assert.equal(parsedUrl.searchParams.get("groupId"), "group-a,group b");
 			assert.equal(parsedUrl.searchParams.has("timeout"), false);
-			assert(getAuthHeader.calledTwice);
-			assert.deepEqual(getAuthHeader.secondCall.args[0], {
+			assert.deepEqual(getAuthHeader.firstCall.args[0], {
 				...tokenFetchOptions,
 				request: { url, method: "GET" },
 			});
 
 			const headers = new Headers(options.headers);
-			assert.equal(headers.get("authorization"), `AT_POP GET ${url}`);
-			assert.equal(headers.has("content-type"), false);
+			assert.equal(headers.has("authorization"), false);
+			assert.match(headers.get("content-type") ?? "", /^multipart\/form-data;boundary=/);
 			assert.equal(headers.has("x-http-method-override"), false);
-			assert.equal(headers.get("sl"), sharingLink);
-			assert.equal(
-				headers.get("prefer"),
-				useEpochTracker ? "manualredirect, nonDurableRedeem" : "manualredirect",
-			);
-			assert.equal(headers.get(ClpCompliantAppHeader.isClpCompliantApp), "true");
+			for (const entry of [
+				`Authorization: MSAuth1.0 popToken="GET ${url}", type="AT_POP"`,
+				"X-HTTP-Method-Override: GET",
+				`sl: ${sharingLink}`,
+				`prefer: ${useEpochTracker ? "manualredirect, nonDurableRedeem" : "manualredirect"}`,
+				`${ClpCompliantAppHeader.isClpCompliantApp}: true`,
+			]) {
+				assert(options.body.includes(entry), `Multipart body should contain ${entry}`);
+			}
 			assert.equal(headers.get("x-agent-id"), "snapshot-agent");
 			assert.equal(
 				headers.get("accept"),
 				`${useEpochTracker ? "" : "application/json, "}application/ms-fluid; v=${currentReadVersion}`,
 			);
 			if (useEpochTracker) {
-				assert.equal(headers.get("x-fluid-epoch"), "epoch1");
-				assert(headers.get("x-requeststats")?.includes("snapshot-test"));
+				assert(options.body.includes("x-fluid-epoch: epoch1"));
+				assert(options.body.includes("snapshot-test"));
 			}
 		});
 	}
 
+	it("refreshes GET-bound authorization only once on a claims challenge", async () => {
+		const claims = '{"access_token":{"auth_time":{"essential":true}}}';
+		const tenantId = "test-tenant";
+		fetchStub.onFirstCall().resolves(
+			new Response(undefined, {
+				status: 401,
+				headers: {
+					"www-authenticate": `Bearer realm="${tenantId}", error="insufficient_claims", claims="${fromUtf8ToBase64(claims)}"`,
+				},
+			}),
+		);
+
+		await getWithRetryForTokenRefresh(async (options) =>
+			downloadSnapshot(resolved, getAuthHeader, options, undefined, { blobs: 2 }),
+		);
+
+		assert(fetchStub.calledTwice);
+		assert(getAuthHeader.calledTwice);
+		assert.equal(getAuthHeader.firstCall.args[0].refresh, false);
+		assert.equal(getAuthHeader.secondCall.args[0].refresh, true);
+		assert.equal(getAuthHeader.secondCall.args[0].claims, claims);
+		assert.equal(getAuthHeader.secondCall.args[0].tenantId, tenantId);
+		for (const [index, call] of getAuthHeader.getCalls().entries()) {
+			const [url, options] = fetchStub.getCall(index).args;
+			assert(typeof url === "string" && options !== undefined);
+			assert.deepEqual(call.args[0].request, { url, method: "GET" });
+			assert.equal(options.method, "POST");
+			assert.equal(new URL(url).searchParams.get("ump"), "1");
+			assert(typeof options.body === "string");
+			assert(
+				options.body.includes(`Authorization: MSAuth1.0 popToken="GET ${url}", type="AT_POP"`),
+			);
+		}
+	});
+
 	it("does not send a request if authorization for the GET fails", async () => {
 		const error = new Error("Could not authorize the snapshot GET");
-		getAuthHeader.onSecondCall().rejects(error);
+		getAuthHeader.rejects(error);
 		await assert.rejects(
 			downloadSnapshot(resolved, getAuthHeader, { refresh: false }, undefined, undefined),
 			(candidate: unknown) => candidate === error,
 		);
+		assert(getAuthHeader.calledOnce);
 		assert(fetchStub.notCalled);
 	});
 });

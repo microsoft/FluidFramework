@@ -52,9 +52,12 @@ export interface TokenFetchOptions {
 	tenantId?: string;
 
 	/**
-	 * Request that will be made using the fetched token.
-	 * - url: full request url, including query params
-	 * - method: method type
+	 * Request details used to bind the fetched token to the request authenticated by the service.
+	 * - url: full request URL, including query parameters.
+	 * - method: effective method authenticated by the service.
+	 *
+	 * For multipart requests with an HTTP method override, the method is the overridden method, not the outer POST method.
+	 * The URL still includes all query parameters, including `ump=1`.
 	 * Request info may be encoded into the returned token that the receiver can use to validate that caller is allowed to make specific call.
 	 */
 	readonly request?: { url: string; method: "GET" | "POST" | "PATCH" | "DELETE" | "PUT" };
