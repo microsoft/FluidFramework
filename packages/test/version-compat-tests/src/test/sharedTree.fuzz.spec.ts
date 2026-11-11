@@ -6,16 +6,8 @@
 import { ensureVersionLoaded, getDataRuntimeApi } from "@fluid-private/test-version-utils";
 import { createCompatFuzzSuite } from "@fluidframework/tree/internal/test";
 
-// This is ideally 3.11, but so long as there are multiple versions using
-// same version of `@sinclair/typebox` (v0.34.49 here), the exception:
-// `TypeSystemDuplicateTypeKind [Error]: Duplicate type kind 'Sandbox.RegisteredBufferPlaceholder' detected`
-// will arise.
-// If 3.7 is dropped from `packages/test/test-version-utils/compat-workspaces/generated-versions.cjs`,
-// change this to "3.11.0" and add
-// 	"3.11.0", // version-compat-tests/.../sharedTree.fuzz.spec.ts -- pre- ModularChangeFamily refactor
-// to `packages/test/test-version-utils/compat-workspaces/explicit-versions.mjs`.
-
-const versionForCompat = "3.7.0";
+// 3.12 is just before the ModularChangeFamily refactor.
+const versionForCompat = "3.12.0";
 
 await ensureVersionLoaded(versionForCompat, 0);
 
