@@ -24,9 +24,8 @@ When updating your schema, it's important to understand the difference between t
 - **Stored Schema**: The schema persisted with each document. It describes what type of tree can be stored in the document.
 
 When a document is first created, its stored schema is derived from the view schema and its configured staged-upgrade policy.
-Afterwards, it is immutable until explicitly [upgraded](./index.mdx#schema-upgrade-process).
-An upgrade composes the existing stored schema with the view's requested additions.
-It preserves existing permissions rather than replacing the stored schema with a copy of the view schema.
+Later changes to application code do not change that stored schema until a client explicitly [upgrades](./index.mdx#schema-upgrade-process) the document.
+The upgrade combines the view's requested additions with permissions already stored in the document.
 
 ### Stored Schema Invariants
 
@@ -39,13 +38,13 @@ Every node and field in the document is known to the stored schema.
 **2. Additive Only**
 The stored schema can grow over time but cannot shrink.
 Upgrades must continue to permit all content allowed by the existing stored schema.
-Omitted optional fields, their allowed types, and the node definitions they require remain stored even when the view no longer declares those fields.
-Removing an optional field from application code does not remove its data from existing documents.
+For example, when a view removes an optional field and allows unknown optional fields, upgrades retain that field, its allowed types, and the node definitions it needs.
+Removing the declaration therefore does not remove its data from existing documents.
 
 **3. Field Key Stability**
 Stored field keys identify fields independently of their property names in application code.
-Renaming a property while keeping its stored key refers to the same field.
-Reusing a key with an incompatible definition is not a new field and does not bypass compatibility checks.
+You can therefore rename a property while keeping its stored key to continue accessing the same field.
+Conversely, reusing that key with an incompatible definition still changes the existing field; it does not create a new field or bypass compatibility checks.
 
 ### Why These Constraints?
 
@@ -62,8 +61,8 @@ When you open a document, SharedTree compares your application's view schema wit
   Apply that target with <ApiLink package="fluid-framework" api="TreeView.upgradeSchema">`view.upgradeSchema()`</ApiLink>.
 - **Incompatible**: The view can neither read and edit the document nor upgrade it to a compatible target.
 
-They must be compatible or upgradeable in order for the application to work - otherwise, it cannot read or write data from/to the document.
-SharedTree will throw an assert if the application attempts to access the document's data with an incompatible view schema.
+To access the document's data, use a view that can already read and write it, or apply a permitted upgrade first.
+Accessing tree data through a view that is not compatible with the stored schema throws an error.
 
 Initially, a document's stored schema is created to match the view schema at the time of creation, and therefore the view schema is compatible with the stored schema.
 However, later on the application might change the view schema.
@@ -81,8 +80,8 @@ If a change is made that is not backwards compatible, then existing documents wi
 #### Forwards Compatibility
 
 A change to the view schema is **forwards compatible** if the earlier view can read and edit documents created or upgraded with the later schema, either directly or after a permitted upgrade.
-An older client can safely upgrade a newer document when the composed target preserves existing permissions and supports that older view.
-This does not downgrade the document nor remove newer fields and types.
+An upgrade requested by an older client follows the same rules as one requested by a newer client: it must preserve existing permissions and produce a schema the requesting view supports.
+It is therefore not a downgrade of the document, even though the requesting application code is older.
 
 If a change is made that is backwards compatible, but not forwards compatible, then old versions of the application will "break" when trying to load newer/upgraded documents.
 To prevent this, the application can employ a [staged rollout](./index.mdx#staged-rollouts).
@@ -95,7 +94,7 @@ To prevent this, the application can employ a [staged rollout](./index.mdx#stage
 | ✅                    | ✅                   | Normal          |
 
 **Examples:**
-- Adding an optional field from an object that allows unknown optional fields.
+- Adding an optional field to an object when the older view already allows unknown optional fields.
 - Removing an optional field from an object that allows unknown optional fields.
 
 #### 🌶 Spicy
@@ -124,13 +123,15 @@ Use <ApiLink package="fluid-framework" api="TreeView.compatibility">`TreeView.co
 Generally, the most important properties of the `compatibility` object to monitor are <ApiLink package="fluid-framework" api="SchemaCompatibilityStatus.canView">`canView`</ApiLink> and <ApiLink package="fluid-framework" api="SchemaCompatibilityStatus.canUpgrade">`canUpgrade`</ApiLink>.
 `canView` indicates that the view schema is [compatible](./index.mdx#schema-compatibility) with the stored schema while `canUpgrade` indicates that it is valid to [upgrade the schema](./index.mdx#schema-upgrade-process).
 
-`canUpgrade` does not mean that an upgrade is required.
-It checks that the proposed target preserves existing permissions and supports the requesting view after the upgrade, even if the view cannot access the current document.
+Use these flags together when opening a document: if `canView` is false but `canUpgrade` is true, apply the upgrade before accessing the view's data.
+A true `canUpgrade` means that it is possible to upgrade the schema in a way that preserves existing content and supports the requesting view; it does not necessarily mean that an upgrade is required or that calling `upgradeSchema()` will change the stored schema.
 
-Snapshot validation requires `canView || canUpgrade` in both directions for versions within `minVersionForCollaboration`.
-The current version must also be able to view or upgrade documents from historical snapshots outside that collaboration window.
-A passing test does not perform upgrades for your application: call `upgradeSchema()` when viewing requires it.
-The [snapshot helpers](./testing-schema-upgrades.mdx#checking-schema-compatibility-in-tests) currently assume restrictive staging rather than modeling every configured rollout policy.
+To check compatibility across releases, use snapshot validation in addition to document-loading checks.
+The current view must be able to use documents from every historical snapshot, either directly or after an upgrade.
+For historical versions within `minVersionForCollaboration`, the reverse must also hold: those views must be able to view or upgrade documents created with the current schema.
+
+Passing snapshot validation does not apply upgrades for your application or test every feature-flag configuration.
+The [snapshot helpers](./testing-schema-upgrades.mdx#checking-schema-compatibility-in-tests) currently assume restrictive staging, so supplement them with live-document tests for other policies and for code that calls `upgradeSchema()` when viewing requires it.
 
 ### Monitoring Remote Schema Changes
 
@@ -183,8 +184,9 @@ For detailed information about which types of changes are safe versus breaking, 
 
 ### Removing Optional Fields and Rolling Back Code
 
-You can omit an optional object field from an object that enables <ApiLink package="fluid-framework" api="ObjectSchemaOptions.allowUnknownOptionalFields">`allowUnknownOptionalFields`</ApiLink>.
-The option defaults to `true`; it can also be set at the factory or object level.
+Rolling back a release or retiring an experimental feature can leave documents containing fields that the application no longer declares.
+If the fields are optional, a view that enables <ApiLink package="fluid-framework" api="ObjectSchemaOptions.allowUnknownOptionalFields">`allowUnknownOptionalFields`</ApiLink> can treat them as unknown fields and continue to use the document.
+This option defaults to `true` and can be configured at the factory or object level.
 
 For example, consider an application with a `Task` object schema.
 
@@ -209,15 +211,22 @@ class Task extends factory.object("Task", {
 }) {}
 ```
 
-But later, the release containing the `Task` update is rolled back.
-Post-rollback clients will use the original `Task` schema without the `notes` field.
-These clients can still load and interact with documents that contain the `notes` field, even though their schema does not include it.
-But they cannot interact with that data through their view, as it is not part of their schema.
+If that release is later rolled back, clients return to the original `Task` declaration without `notes`.
+They can still read and edit `title` in documents that contain notes, but cannot access `notes` through their view's properties.
+Further compatible upgrades preserve the notes and their schema rather than replacing the document's schema with the reduced declaration.
+
+New documents created after the rollback have a different history: their stored schema has never included `notes`.
+A client that still declares the field must first upgrade such a document to permit it.
+The two histories therefore differ as follows:
 
 | Document history | Result |
 | --- | --- |
 | Created with notes, then opened by the reduced view | Notes remain stored and are treated as unknown optional fields. |
 | Created with the reduced view | The initial stored schema has no notes field. A client that declares notes must add its field schema through an upgrade before viewing. |
+
+Keeping unknown fields in the document does not make them visible to application code that copies a node's properties.
+When cloning nodes, use <ApiLink package="fluid-framework" api="(TreeBeta:interface).clone">`TreeBeta.clone()`</ApiLink> to preserve those fields rather than reconstructing nodes from visible properties.
+See <ApiLink package="fluid-framework" api="ObjectSchemaOptions.allowUnknownOptionalFields">`allowUnknownOptionalFields`</ApiLink> for related import and export limitations.
 
 :::caution
 
@@ -226,12 +235,11 @@ Removing the field from a view does not free that identifier for reuse with an i
 
 For example, suppose a later version of `Task` declares `notes: factory.optional(factory.array(factory.string))` using the same stored key as the original optional string field.
 That view cannot load or safely upgrade documents whose stored schema still permits the original string-valued `notes` field.
-This conflict exists even if the field is currently empty: compatibility depends on the stored schema, not just the current data.
-Otherwise, compatibility between clients could not be safely guaranteed.
+This conflict exists even if the field is currently empty, because the stored schema still permits strings that another client could write later.
 
 Use a different stored key for a different, incompatible field.
 
-Keep historical schema snapshots and use <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">`snapshotSchemaCompatibility`</ApiLink> tests to detect these conflicts before releasing a schema change.
+To detect such conflicts before releasing a schema change, keep historical schema snapshots and use <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">`snapshotSchemaCompatibility`</ApiLink> tests.
 
 :::
 

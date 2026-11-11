@@ -35,8 +35,9 @@ const mySchema = SchemaFactoryBeta.optional(SchemaFactoryBeta.types([
 ]));
 ```
 
-For documents that still permit only numbers, no new permission is introduced at this step: the default restrictive policy excludes <ApiLink package="fluid-framework" api="SchemaFactoryBeta.staged">`staged`</ApiLink> types from initialization and does not add them during upgrades.
-On those documents, `upgradeSchema()` is a no-op and strings cannot yet be written:
+Adding the staged string declaration changes what the application can understand, not what a numeric-only document permits.
+With the default restrictive policy, new documents still exclude strings, and <ApiLink package="fluid-framework" api="TreeView.upgradeSchema">`upgradeSchema()`</ApiLink> does not add them to existing numeric-only documents.
+On those documents the upgrade is therefore a no-op, and the following write remains invalid until Step 3:
 
 ```typescript
 // Assuming `view` is a TreeView configured with `mySchema`:
