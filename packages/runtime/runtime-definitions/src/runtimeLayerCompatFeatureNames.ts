@@ -17,3 +17,9 @@ export const encodeHandlesInContainerRuntime = "encodeHandlesInContainerRuntime"
  * @internal
  */
 export const notifiesReadOnlyState = "notifiesReadOnlyState";
+
+/**
+ * Independent DDS collection across the container-runtime / data-store boundary.
+ * @internal
+ */
+export const independentDDSGC = "independentDDSGC";

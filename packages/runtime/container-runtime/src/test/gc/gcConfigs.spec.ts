@@ -42,6 +42,7 @@ import {
 	runSessionExpiryKey,
 	stableGCVersion,
 	disableThrowOnTombstoneLoadKey,
+	enableDDSGCKey,
 } from "../../gc/index.js";
 import type { ContainerRuntimeGCMessage } from "../../messageTypes.js";
 import { pkgVersion } from "../../packageVersion.js";
@@ -174,18 +175,21 @@ describe("Garbage Collection configurations", () => {
 		});
 
 		it("persists opt-in when creating a document", () => {
-			gc = createGcWithPrivateMembers(undefined, { enableDDSGC: true });
+			configProvider.set(enableDDSGCKey, true);
+			gc = createGcWithPrivateMembers();
 			assert.equal(gc.configs.ddsGCEnabled, true);
 			assert.equal(gc.getMetadata().ddsGCEnabled, true);
 		});
 
 		it("cannot enable collection on an existing legacy document", () => {
-			gc = createGcWithPrivateMembers({ gcFeature: stableGCVersion }, { enableDDSGC: true });
+			configProvider.set(enableDDSGCKey, true);
+			gc = createGcWithPrivateMembers({ gcFeature: stableGCVersion });
 			assert.equal(gc.configs.ddsGCEnabled, false);
 			assert.equal(gc.getMetadata().ddsGCEnabled, undefined);
 		});
 
-		it("retains document opt-in when the loading client does not supply the option", () => {
+		it("retains document opt-in when the loading client disables the config", () => {
+			configProvider.set(enableDDSGCKey, false);
 			gc = createGcWithPrivateMembers({
 				gcFeature: stableGCVersion,
 				ddsGCEnabled: true,

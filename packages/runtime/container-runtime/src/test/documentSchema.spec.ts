@@ -134,6 +134,27 @@ describe("Runtime", () => {
 		testWrongConfig({ ...validConfig, runtime: { ...validConfig.runtime, foo: 5 } });
 	});
 
+	it("preserves the DDS collection capability when the creation gate is absent", () => {
+		const controller = createController({
+			...validConfig,
+			runtime: {
+				...validConfig.runtime,
+				explicitSchemaControl: true,
+				ddsGCEnabled: true,
+			},
+		});
+		assert.equal(controller.sessionSchema.runtime.ddsGCEnabled, true);
+		assert.equal(controller.summarizeDocumentSchema(0)?.runtime.ddsGCEnabled, true);
+		assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
+	});
+
+	it("rejects invalid DDS collection capability values", () => {
+		testWrongConfig({
+			...validConfig,
+			runtime: { ...validConfig.runtime, ddsGCEnabled: false as unknown as true },
+		});
+	});
+
 	it("disallowed versions", () => {
 		const controller = new DocumentsSchemaController(
 			true, // existing,

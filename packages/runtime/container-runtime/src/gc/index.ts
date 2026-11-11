@@ -4,7 +4,7 @@
  */
 
 export { GarbageCollector } from "./garbageCollection.js";
-export { computeTombstoneTimeout } from "./gcConfigs.js";
+export { computeTombstoneTimeout, getDDSGCEnabled } from "./gcConfigs.js";
 export {
 	nextGCVersion,
 	defaultInactiveTimeoutMs,
@@ -12,6 +12,7 @@ export {
 	defaultSessionExpiryDurationMs,
 	GCNodeType,
 	gcTestModeKey,
+	enableDDSGCKey,
 	gcGenerationOptionName,
 	type GCFeatureMatrix,
 	type GCVersion,

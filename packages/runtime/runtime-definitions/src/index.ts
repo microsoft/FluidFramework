@@ -72,6 +72,7 @@ export type {
 export {
 	encodeHandlesInContainerRuntime,
 	notifiesReadOnlyState,
+	independentDDSGC,
 } from "./runtimeLayerCompatFeatureNames.js";
 export type {
 	IVersionMarkResolver,

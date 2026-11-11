@@ -97,6 +97,27 @@ describe("Data Store Context Tests", () => {
 		});
 
 		describe("Initialization", () => {
+			it("rejects a data store runtime that does not advertise DDS GC support", async () => {
+				parentContext = {
+					...parentContext,
+					channelGC: {
+						isDeleted: () => false,
+						nodeUpdated: () => {},
+					},
+				};
+				const context = new LocalFluidDataStoreContext({
+					id: dataStoreId,
+					pkg: ["TestDataStore1"],
+					parentContext,
+					storage,
+					scope,
+					createSummarizerNodeFn,
+					makeLocallyVisibleFn,
+					snapshotTree: undefined,
+				});
+				await assert.rejects(context.realize(), /supporting data store runtime/);
+			});
+
 			it("rejects ids with forward slashes", async () => {
 				const invalidId = "beforeSlash/afterSlash";
 				const codeBlock = () =>

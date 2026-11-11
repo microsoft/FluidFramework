@@ -220,6 +220,7 @@ import { DeltaScheduler } from "./deltaScheduler.js";
 import {
 	GCNodeType,
 	GarbageCollector,
+	getDDSGCEnabled,
 	type IGCRuntimeOptions,
 	type IGCStats,
 	type IGarbageCollector,
@@ -1287,6 +1288,22 @@ export class ContainerRuntime
 			compressionOptions.minimumBatchSizeInBytes !== Number.POSITIVE_INFINITY &&
 			compressionOptions.compressionAlgorithm === "lz4";
 
+		const ddsGCEnabled = getDDSGCEnabled(mc.config, existing, metadata);
+		if (
+			existing &&
+			(metadata?.ddsGCEnabled === true) !==
+				(metadata?.documentSchema?.runtime.ddsGCEnabled === true)
+		) {
+			throw new DataCorruptionError("DDS GC metadata does not match document schema", {});
+		}
+		if (
+			ddsGCEnabled &&
+			!explicitSchemaControl &&
+			metadata?.documentSchema?.runtime.explicitSchemaControl !== true
+		) {
+			throw new UsageError("DDS GC requires explicitSchemaControl");
+		}
+
 		const documentSchemaController = new DocumentsSchemaController(
 			existing,
 			protocolSequenceNumber,
@@ -1297,6 +1314,7 @@ export class ContainerRuntime
 				idCompressorMode,
 				opGroupingEnabled: enableGroupedBatching,
 				createBlobPayloadPending,
+				ddsGCEnabled: ddsGCEnabled ? true : undefined,
 				disallowedVersions: [],
 			},
 			(schema) => {

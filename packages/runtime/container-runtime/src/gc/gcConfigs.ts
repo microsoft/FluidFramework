@@ -4,6 +4,7 @@
  */
 
 import {
+	type IConfigProvider,
 	type MonitoringContext,
 	UsageError,
 	validatePrecondition,
@@ -15,6 +16,7 @@ import {
 	type GCFeatureMatrix,
 	type GCVersion,
 	type IGCMetadata_Deprecated,
+	type IGCMetadata,
 	type IGCRuntimeOptions,
 	type IGarbageCollectorConfigs,
 	defaultInactiveTimeoutMs,
@@ -26,8 +28,23 @@ import {
 	oneDayMs,
 	runSessionExpiryKey,
 	disableThrowOnTombstoneLoadKey,
+	enableDDSGCKey,
 } from "./gcDefinitions.js";
 import { getGCVersion, getGCVersionInEffect, shouldAllowGcSweep } from "./gcHelpers.js";
+
+/**
+ * Reads the experimental opt-in only for new documents and preserves the persisted choice on load.
+ * @internal
+ */
+export function getDDSGCEnabled(
+	config: IConfigProvider,
+	existing: boolean,
+	metadata: IGCMetadata | undefined,
+): boolean {
+	return existing
+		? getGCVersion(metadata) !== 0 && metadata?.ddsGCEnabled === true
+		: config.getBoolean(enableDDSGCKey) === true;
+}
 
 /**
  * Generates configurations for the Garbage Collector that it uses to determine what to run and how.
@@ -148,11 +165,7 @@ export function generateGCConfigs(
 		!createParams.isSummarizerClient;
 
 	return {
-		ddsGCEnabled:
-			gcAllowed &&
-			(createParams.existing
-				? createParams.metadata?.ddsGCEnabled === true
-				: createParams.gcOptions.enableDDSGC === true),
+		ddsGCEnabled: getDDSGCEnabled(mc.config, createParams.existing, createParams.metadata),
 		gcAllowed, // For this document
 		sweepAllowed, // For this document
 		sweepEnabled, // For this session

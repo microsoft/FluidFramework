@@ -58,6 +58,10 @@ export const gcGenerationOptionName = "gcGeneration";
  */
 export const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 /**
+ * Experimental creation-only opt-in for independent DDS collection.
+ */
+export const enableDDSGCKey = "Fluid.GarbageCollection.EnableDDSGC";
+/**
  * Config key to expire a session after a set period of time. Defaults to true.
  */
 export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
@@ -529,17 +533,6 @@ export interface IGarbageCollectorCreateParams {
  * @legacy @beta
  */
 export interface IGCRuntimeOptions {
-	/**
-	 * Enables independent collection of anonymous DDSs in newly created documents.
-	 * DDSs created with an explicit ID remain roots of their owning data store.
-	 *
-	 * @remarks
-	 * Disabled by default and persisted for the document's lifetime.
-	 * Applications must deploy supporting runtime code to all clients before enabling this option.
-	 * This option does not enable DDS collection for existing documents.
-	 * Experimental: production use also requires storage-service validation and preservation of unreferenced content during pending-state capture.
-	 */
-	enableDDSGC?: true;
 	/**
 	 * Flag that if true, will enable the full Sweep Phase of garbage collection for this session,
 	 * where Tombstoned objects are permanently deleted from the container.

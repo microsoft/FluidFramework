@@ -73,7 +73,10 @@ import type {
 	ContainerExtensionId,
 	ContainerExtensionExpectations,
 } from "@fluidframework/runtime-definitions/internal";
-import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
+import {
+	channelsTreeName,
+	independentDDSGC,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
 	isSnapshotFetchRequiredForLoadingGroupId,
@@ -1039,6 +1042,14 @@ export abstract class FluidDataStoreContext
 			this.dispose.bind(this),
 			this.mc,
 		);
+		if (
+			this.channelGC !== undefined &&
+			maybeDataStoreCompatDetails.ILayerCompatDetails?.supportedFeatures.has(
+				independentDDSGC,
+			) !== true
+		) {
+			throw new UsageError("DDS GC requires a supporting data store runtime");
+		}
 		if (this.deletedChannelRoutes.size > 0) {
 			this.deleteChannels(channel, [...this.deletedChannelRoutes]);
 		}

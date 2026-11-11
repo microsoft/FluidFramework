@@ -547,6 +547,31 @@ describe("SummarizerNodeWithGC Tests", () => {
 		});
 
 		for (const ddsGCEnabled of [false, true]) {
+			it(`inherits absent data store routes during a summary with DDS GC ${ddsGCEnabled}`, () => {
+				createRoot({ refSeq: 0, ddsGCEnabled });
+				rootNode.startSummary(1, logger, 0);
+				rootNode.updateUsedRoutes([""]);
+				createMid({ type: CreateSummarizerNodeSource.FromSummary });
+				assert(midNode !== undefined);
+				assert.equal(midNode.isReferenced(), !ddsGCEnabled);
+			});
+
+			it(`inherits absent data store routes in pending summaries with DDS GC ${ddsGCEnabled}`, async () => {
+				createRoot({ refSeq: 0, ddsGCEnabled });
+				rootNode.startSummary(1, logger, 0);
+				rootNode.updateUsedRoutes([""]);
+				await rootNode.summarize(false);
+				rootNode.completeSummary("pending-owner-summary");
+				createMid({ type: CreateSummarizerNodeSource.FromSummary });
+				assert(midNode !== undefined);
+				const refreshed = await rootNode.refreshLatestSummary("pending-owner-summary", 1);
+				assert(refreshed.isSummaryTracked);
+				rootNode.startSummary(2, logger, 1);
+				midNode.updateUsedRoutes(ddsGCEnabled ? [] : [""]);
+				const result = await midNode.summarize(false);
+				assert.equal(result.summary.type, SummaryType.Handle);
+			});
+
 			it(`inherits absent child routes during a summary with DDS GC ${ddsGCEnabled}`, () => {
 				createRoot({ refSeq: 0, ddsGCEnabled });
 				createMid({ type: CreateSummarizerNodeSource.FromSummary });

@@ -409,7 +409,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	protected maybeUpdateChildState(child: SummarizerNodeWithGC, id: string): void {
 		super.maybeUpdateChildState(child, id);
 
-		// Legacy documents implicitly reference DDSs even when their routes are absent.
+		// Apply graph reachability at every level; legacy documents retain implicit DDS roots.
 		const defaultChildUsedRoutes = this.ddsGCEnabled ? [] : [""];
 
 		// If GC has run on this node and summarization isn't complete, this.wipSerializedUsedRoutes will be defined.
@@ -516,7 +516,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
  * @param config - Configure behavior of summarizer node
  * @param getGCDataFn - Function to get the GC data of this node
  * @param baseGCDetailsP - Function to get the initial GC details of this node
- * @param ddsGCEnabled - Whether absent child used routes indicate an unreferenced DDS.
+ * @param ddsGCEnabled - Whether absent child routes indicate unreferenced nodes at every level,
+ * rather than retaining the legacy implicit-reference default.
  */
 export const createRootSummarizerNodeWithGC = (
 	logger: ITelemetryBaseLogger,

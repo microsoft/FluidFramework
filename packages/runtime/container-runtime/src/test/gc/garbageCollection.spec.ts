@@ -364,6 +364,7 @@ describe("Garbage Collection Tests", () => {
 
 	describe("Tombstone and Sweep", () => {
 		it("sweeps an anonymous DDS independently of its live owner", async () => {
+			configProvider.set("Fluid.GarbageCollection.EnableDDSGC", true);
 			const ddsPath = `${nodes[0]}/dds`;
 			defaultGCData = {
 				gcNodes: {
@@ -373,7 +374,7 @@ describe("Garbage Collection Tests", () => {
 				},
 			};
 			gc = createGarbageCollector({
-				createParams: { gcOptions: { enableDDSGC: true, enableGCSweep: true } },
+				createParams: { gcOptions: { enableGCSweep: true } },
 			});
 			gc.runtime.getNodeType = (path) =>
 				path === ddsPath ? GCNodeType.SubDataStore : GCNodeType.DataStore;
@@ -394,12 +395,13 @@ describe("Garbage Collection Tests", () => {
 		});
 
 		it("omits DDS paths from a sweep message when their owner is also swept", async () => {
+			configProvider.set("Fluid.GarbageCollection.EnableDDSGC", true);
 			const ddsPath = `${nodes[0]}/dds`;
 			defaultGCData = {
 				gcNodes: { "/": [], [nodes[0]]: [], [ddsPath]: [nodes[0]] },
 			};
 			gc = createGarbageCollector({
-				createParams: { gcOptions: { enableDDSGC: true, enableGCSweep: true } },
+				createParams: { gcOptions: { enableGCSweep: true } },
 			});
 			gc.runtime.getNodeType = (path) =>
 				path === ddsPath ? GCNodeType.SubDataStore : GCNodeType.DataStore;
@@ -419,12 +421,13 @@ describe("Garbage Collection Tests", () => {
 		});
 
 		it("enforces DDS tombstones while respecting explicit allowTombstone requests", async () => {
+			configProvider.set("Fluid.GarbageCollection.EnableDDSGC", true);
 			const ddsPath = `${nodes[0]}/dds`;
 			defaultGCData = {
 				gcNodes: { "/": [nodes[0]], [nodes[0]]: [], [ddsPath]: [nodes[0]] },
 			};
 			gc = createGarbageCollector({
-				createParams: { gcOptions: { enableDDSGC: true, enableGCSweep: true } },
+				createParams: { gcOptions: { enableGCSweep: true } },
 				isSummarizerClient: false,
 			});
 			gc.runtime.getNodeType = (path) =>

@@ -63,6 +63,7 @@ import {
 	type IRuntimeMessagesContent,
 	notifiesReadOnlyState,
 	encodeHandlesInContainerRuntime,
+	independentDDSGC,
 	type IFluidDataStorePolicies,
 	type OldestSupportedClientVersion,
 	currentSummarizeStepPrefix,
@@ -127,6 +128,7 @@ type PickRequired<T extends Record<never, unknown>, K extends keyof T> = Omit<T,
 interface IFluidDataStoreContextFeaturesToTypes {
 	[encodeHandlesInContainerRuntime]: IFluidDataStoreContext; // No difference in typing with this feature
 	[notifiesReadOnlyState]: PickRequired<IFluidDataStoreContext, "isReadOnly">;
+	[independentDDSGC]: FluidDataStoreContextInternal;
 }
 
 function contextSupportsFeature<K extends keyof IFluidDataStoreContextFeaturesToTypes>(
@@ -459,9 +461,16 @@ export class FluidDataStoreRuntime
 		);
 		// We read this property here to avoid a compiler error (unused private member)
 		debugAssert(() => this.submitMessagesWithoutEncodingHandles !== undefined);
+		debugAssert(() => this.deleteSweepReadyNodes !== undefined);
 
 		this.id = dataStoreContext.id;
 		this.channelGC = (dataStoreContext as Partial<FluidDataStoreContextInternal>).channelGC;
+		if (
+			this.channelGC !== undefined &&
+			!contextSupportsFeature(dataStoreContext, independentDDSGC)
+		) {
+			throw new UsageError("DDS GC requires a supporting container runtime");
+		}
 		this.options = dataStoreContext.options;
 		this.deltaManagerInternal = dataStoreContext.deltaManager;
 		this.quorum = dataStoreContext.getQuorum();
@@ -684,10 +693,9 @@ export class FluidDataStoreRuntime
 	}
 
 	/**
-	 * Removes independently collected DDSs.
-	 * @param routes - DDS root paths relative to this data store.
+	 * {@inheritDoc @fluidframework/runtime-definitions#FluidDataStoreChannelInternal.deleteSweepReadyNodes}
 	 */
-	public deleteSweepReadyNodes(routes: readonly string[]): void {
+	private deleteSweepReadyNodes(routes: readonly string[]): void {
 		assert(this.channelGC !== undefined, "DDS collection must be enabled to delete channels");
 		for (const route of routes) {
 			const id = route.slice(1);
