@@ -9,7 +9,6 @@ import { ApiLink, PackageLink } from "@site/src/components/shortLinks";
 
 As your application (or library) grows and evolves, you may need to modify the structure of your [SharedTree](../index.mdx) data.
 SharedTree makes it possible to update your [schemas](../schema-definition/index.mdx) while preserving existing documents and supporting other deployed application versions (see [understanding compatibility](#understanding-compatibility)).
-Depending on the schema changes, either an older or a newer client may need to upgrade a document created with another version of the schema before using it.
 Write a test using <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">`snapshotSchemaCompatibility`</ApiLink> to verify the compatibility you require.
 
 :::note
@@ -39,8 +38,6 @@ Every node and field in the document is known to the stored schema.
 **2. Additive Only**
 The stored schema can grow over time but cannot shrink.
 Upgrades must continue to permit all content allowed by the existing stored schema.
-Omitted optional fields, their allowed types, and the node definitions they require remain stored even when the view no longer declares those fields.
-Removing an optional field from application code does not remove its data from existing documents.
 
 **3. Field Key Stability**
 Stored field keys identify fields independently of their property names in application code.
@@ -96,7 +93,6 @@ To prevent this, the application can employ a [staged rollout](./index.mdx#stage
 
 **Examples:**
 - Adding an optional field from an object that allows unknown optional fields.
-- Removing an optional field from an object that allows unknown optional fields.
 
 #### 🌶 Spicy
 | Backwards Compatible | Forwards Compatible | Rollout Process |
@@ -181,60 +177,6 @@ view.root.color = "#FF0000";
 ```
 
 For detailed information about which types of changes are safe versus breaking, see [Types of Schema Changes](./types-of-changes.mdx).
-
-### Removing Optional Fields and Rolling Back Code
-
-You can omit an optional object field from an object that enables <ApiLink package="fluid-framework" api="ObjectSchemaOptions.allowUnknownOptionalFields">`allowUnknownOptionalFields`</ApiLink>.
-The option defaults to `true`; it can also be set at the factory or object level.
-
-For example, consider an application with a `Task` object schema.
-
-```typescript
-import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
-
-const factory = new SchemaFactory("TaskApp");
-
-// Original application schema.
-class Task extends factory.object(
-    "Task",
-    { title: factory.string },
-) {}
-```
-
-A subsequent release adds an optional `notes` field to the `Task` schema.
-
-```typescript
-class Task extends factory.object("Task", {
-    title: factory.string,
-    notes: factory.optional(factory.string), // New
-}) {}
-```
-
-But later, the release containing the `Task` update is rolled back.
-Post-rollback clients will use the original `Task` schema without the `notes` field.
-These clients can still load and interact with documents that contain the `notes` field, even though their schema does not include it.
-But they cannot interact with that data through their view, as it is not part of their schema.
-
-| Document history | Result |
-| --- | --- |
-| Created with notes, then opened by the reduced view | Notes remain stored and are treated as unknown optional fields. |
-| Created with the reduced view | The initial stored schema has no notes field. A client that declares notes must add its field schema through an upgrade before viewing. |
-
-:::caution
-
-A field's stored identifier (its stored key) is permanent in existing documents.
-Removing the field from a view does not free that identifier for reuse with an incompatible definition.
-
-For example, suppose a later version of `Task` declares `notes: factory.optional(factory.array(factory.string))` using the same stored key as the original optional string field.
-That view cannot load or safely upgrade documents whose stored schema still permits the original string-valued `notes` field.
-This conflict exists even if the field is currently empty: compatibility depends on the stored schema, not just the current data.
-Otherwise, compatibility between clients could not be safely guaranteed.
-
-Use a different stored key for a different, incompatible field.
-
-Keep historical schema snapshots and use <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">`snapshotSchemaCompatibility`</ApiLink> tests to detect these conflicts before releasing a schema change.
-
-:::
 
 ### Staged Schema Upgrades
 

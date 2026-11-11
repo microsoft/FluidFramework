@@ -175,11 +175,10 @@ If no other permissions are added, verify that the upgrade leaves the stored sch
 
 Also test these combinations:
 
-- The earlier view adds its own optional field to a newer document while retaining fields that it does not declare.
 - A selected token enables a new type while another type, staged but not selected, is already permitted by the stored schema.
 - A shared token is enabled at only one of two fields; preservation leaves the other field unchanged until the policy explicitly enables it.
 - A remote schema change refreshes the other client's compatibility and staged-upgrade status.
-- A summary and reload preserve the composed stored schema and any data unknown to the reduced view.
+- A summary and reload preserve already-enabled types, optionality, and the data that uses those permissions.
 
 Check newly created documents separately.
 Permissions preserved from another document must not appear in a new document initialized with a restrictive policy.

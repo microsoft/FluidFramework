@@ -1200,14 +1200,11 @@ export interface SchemaCompatibilityStatus {
 	 * Differences that do not affect schema compatibility, such as {@link NodeSchemaOptionsAlpha.persistedMetadata}, do not affect this flag.
 	 *
 	 * This check compares the existing stored schema with the proposed upgrade target built from both the view and the existing stored schema.
-	 * The target retains stored optional fields omitted by view objects that allow {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields}.
 	 * The {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy} selects new permissions.
 	 * Already-enabled allowed types and supported optionality are retained at their existing locations, independently of that policy.
 	 *
 	 * Equivalence does not mean that initializing a new document with this view would produce the same stored schema.
 	 * It also does not mean that two application versions can view each other's documents.
-	 * For example, removing an optional field can permit a no-op upgrade of an older document,
-	 * while the older view needs to upgrade a fresh document created without that field before it can write to it.
 	 *
 	 * When true, {@link TreeView.upgradeSchema} makes no change to the stored schema.
 	 *
@@ -1282,9 +1279,6 @@ export interface SchemaCompatibilityStatus {
 	 * When adding optional fields to schema which previously were marked with {@link ObjectSchemaOptions.allowUnknownOptionalFields}
 	 * the schema upgrade (assuming no other changes are included) will allow the previous version to view.
 	 *
-	 * Object schemas in the view that allow unknown optional fields can omit stored optional fields and still perform further upgrades.
-	 * The upgrade retains those fields and the node definitions they require, preserving existing content.
-	 * New documents initialized with the view do not include the omitted fields.
 	 * This does not permit removing required fields, narrowing allowed types, or otherwise violating the schema upgrade rules.
 	 */
 	readonly canUpgrade: boolean;

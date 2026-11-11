@@ -62,34 +62,6 @@ class Note extends factory.object("Note", {
 ```
 :::
 
-### Removing Optional Fields from a View
-
-BC | FC
----| ---
-✅ if the **newer view's object schema** allows unknown optional fields\* | ✅ after an upgrade for newly created documents
-
-```typescript
-// Remove the optional `color` field from application code.
-// This does not remove it from existing stored documents.
-class Note extends factory.object("Note", {
-    id: factory.string,
-    text: factory.string,
-    // color: factory.optional([factory.string, factory.number]), // REMOVED
-}) {}
-```
-
-The reduced view treats `color` as an unknown optional field in existing documents.
-An upgrade retains its field schema, allowed types, referenced node definitions, and data.
-
-A new document initialized with the reduced view has no `color` field in its stored schema.
-An older client that declares `color` must upgrade that document before it can read and write through its view.
-The snapshot validator still requires historical clients within the collaboration window to view current documents without an upgrade.
-It therefore rejects this field removal while those older clients remain in that window, even though their runtime upgrade can be safe.
-
-Removing a feature from application code does not erase its historical data nor reduce document storage.
-Restoring a compatible declaration with the same stored key makes retained data accessible again.
-See the [rollback example and data-loss warnings](./index.mdx#removing-optional-fields-and-rolling-back-code).
-
 ### Making Required Fields Optional
 
 BC | FC

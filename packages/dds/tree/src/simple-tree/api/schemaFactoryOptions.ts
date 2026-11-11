@@ -15,18 +15,13 @@ import type { NodeSchemaMetadata } from "../core/index.js";
 export interface ObjectSchemaOptions {
 	/**
 	 * Allow nodes typed with this object node schema to contain optional fields that are not present in the schema declaration.
-	 * These fields can have been added by a newer application version or omitted from the view by a version that retires a feature.
+	 * Such nodes can come from imports or collaboration with clients that have added optional fields to the document's stored schema.
 	 *
 	 * @defaultValue `true`
 	 * @remarks
-	 * This option supports both adding optional fields and removing them from application schema declarations.
-	 * An older view can tolerate optional fields added by a newer application version.
-	 * A view that omits an optional field can also read and edit older documents that still contain it.
-	 * This supports user scenarios like rolling back application code or retiring an optional feature without deleting its stored data.
-	 *
-	 * When upgrading an existing document, SharedTree retains omitted optional fields and the node definitions they require.
-	 * The view can make later compatible schema upgrades without restoring those fields to its declarations.
-	 * The object type's stored identifier and the stored keys of its remaining fields must still identify the same schema.
+	 * This option supports staged rollout of optional fields.
+	 * An older view can read and edit a document containing optional fields added by a newer application version.
+	 * The additional fields are not exposed through the older view.
 	 * This option does not permit omitting required fields or reading unsupported types in fields that the view still declares.
 	 *
 	 * However, it does come with trade-offs that applications should weigh carefully when it comes to interactions between
