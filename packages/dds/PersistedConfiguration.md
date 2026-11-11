@@ -351,7 +351,6 @@ export interface ChannelConfigurationFacet<
 > {
     readonly current: ChannelConfigurationSnapshot<TConfig>;
     requestChange(next: TConfig): Promise<ConfigurationChangeResult<TConfig>>;
-    requestChangeLazy(next: TConfig): Promise<ConfigurationChangeResult<TConfig>>;
     on(event: "changed", listener: (change: ChannelConfigurationChange<TConfig>) => void): void;
     off(event: "changed", listener: (change: ChannelConfigurationChange<TConfig>) => void): void;
 }
@@ -374,8 +373,8 @@ including when grouped messages share a service sequence number.
 ### Requesting a configuration change
 
 `requestChange` captures the current revision and replacement values
-synchronously at invocation, before any asynchronous work. It validates locally, then flushes
-earlier deferred requests before submitting its own control op if the channel is attached.
+synchronously at invocation, before any asynchronous work.
+It validates locally, then submits its control op if the channel is attached.
 It never changes attached configuration optimistically.
 For an unattached channel, it replaces the authoritative state and synchronously notifies listeners
 before returning its promise, without submitting any op or waiting for a connection.
@@ -385,29 +384,8 @@ changes carry service sequence information.
 The controller does not read the runtime's message-size limit or add a detached size limit.
 Attached proposals use the normal submission path, including its message-size handling.
 
-`requestChangeLazy` performs the same validation and captures the same original revision, but an attached channel waits until its next fresh ordinary op or valid eager configuration request before submitting the proposal.
-Queued control ops are submitted in request order before the triggering submission.
-An ordinary op must first pass ordinary-message validation and handle preparation; an eager request must first capture its revision and pass configuration validation.
-Synchronous callbacks during this flush must not submit another ordinary op or request another configuration change.
-These attempts assert rather than allowing a nested submission to overtake the triggering op.
-The guard ends before submitting the ordinary op, so normal dirty-listener behavior outside the flush is unchanged.
-Other channels' edits, incoming ops, summaries, and replay of existing pending ops do not flush it.
-Unattached channels, including unpublished channels in attached datastores, still apply the change immediately.
-Do not await a lazy request before making the edit intended to trigger it: an idle channel may leave the promise pending indefinitely.
-
-Deferred intent does not dirty the channel, update attributes, or enter runtime pending-state storage.
-It is process-local and is lost across reload unless the caller requests it again.
-Multiple lazy requests retain invocation order and their original revisions; they are not coalesced or rebased when flushed.
-A later eager request retains its own captured revision: if an earlier lazy proposal applies, the eager proposal conflicts rather than overtaking it.
-Disposal rejects both deferred and submitted requests.
-Submission eligibility is checked again when flushing.
-If ordinary-message validation or handle preparation fails, the lazy request remains queued.
-If submitting a configuration request fails, the controller is disposed and all deferred and submitted requests reject with that error.
-A triggering edit throws or eager request rejects without submitting its own op.
-If the ordinary submission fails after the flush, already-submitted configuration requests retain their normal pending-op handling and are not submitted again on the next edit.
 Configuration requests made reentrantly during submission are unsupported.
-After submission, normal control-op acknowledgement, resubmission, stash, and rollback handling applies.
-Before submission, a lazy request is not part of runtime staging, so rolling back other ops does not cancel it.
+Normal control-op acknowledgement, resubmission, stash, and rollback handling applies.
 
 The shared mechanism, not the DDS, decides and reports `"applied"` or `"conflict"`. The returned
 snapshot is the state at processing that result; another change can occur before the caller's
@@ -457,7 +435,7 @@ protocol, not an async callback.
 
 A callback or receive-side validation failure is a fatal processing failure. Do not catch it and
 continue under either configuration. A local validation failure rejects the request without
-emitting an op. The getter exposes readonly state; changes must use `requestChange` or `requestChangeLazy`.
+emitting an op. The getter exposes readonly state; changes must use `requestChange`.
 
 ### Ordinary ops and configuration changes
 
@@ -532,19 +510,12 @@ Direct `SharedObject` subclasses are outside this integration and retain their e
 The guard does not inspect nested application data or impose a DDS payload schema.
 This reserved-key policy is part of kernel-based persisted configuration, not generic `SharedObject` dispatch.
 
-The layer has distinct ordinary and control submission entries.
-Controller proposals go directly to the control entry, never through `submitLocalMessage` or a subclass override of it.
-Both entries share the core's lower-level transport, which separates preparation from submission.
-For an attached ordinary op, marker validation precedes handle binding or encoding.
-Only after preparation succeeds does the layer flush deferred configuration requests, then submit the prepared ordinary op.
-The control entry uses the same transport without ordinary marker validation or a recursive bypass flag.
-The final submission still reaches the original delta connection, so real stashed-op capture and pending metadata remain intact.
-
-Replay still needs scoped state: a DDS stash, resubmission, squash, or rollback hook can submit ordinary ops.
-The layer suppresses lazy flushing through these calls, including incoming delivery or DDS callbacks nested inside replay.
-Nested replay scopes restore the previous state, so a nested call cannot enable flushing in an outer replay.
-Incoming delivery alone does not flush deferred requests, but a fresh edit from an ordinary `pre-op` or `op` callback outside replay still does.
-This is not a queue for detached edits; existing DDS state is included in the attach summary without trailing replay.
+Controller proposals use a dedicated control submission entry and never pass through the kernel's
+ordinary `submitLocalMessage` callback.
+Ordinary kernel operations retain the normal `SharedObject` submission path.
+Participating kernels validate the reserved marker before calling that path, so marker validation
+still precedes handle binding or encoding.
+Both paths reach the original delta connection, preserving real stashed-op capture and pending metadata.
 
 The core retains a narrow package-internal installation accessor, lifecycle notifications, and the ordinary hook adapters.
 The configuration layer receives attachment and closed-state checks,
@@ -756,9 +727,6 @@ The key scenarios are:
 | Scenario | Expected result |
 | --- | --- |
 | Two configuration proposals based on one revision | Exactly one wins, on every supporting client; loser never invokes the change callback. |
-| Lazy configuration request | Queued controls precede the next fresh ordinary op or valid eager request in request order, retaining their original revisions. Incoming ops, summaries, and replay do not flush them. |
-| Lazy request preparation/submission failure | Preparation failure leaves requests queued; a failed control submission disposes the controller, rejects all outstanding requests, and prevents the triggering submission. Already-submitted controls are not repeated if ordinary submission fails. |
-| Lazy request lifecycle and reentrancy | Deferred intent does not dirty or persist the channel; disposal rejects it. Unattached requests apply immediately. Reentrant configuration or ordinary submission during the flush asserts. |
 | Old data op before versus after a winning barrier | Delivered in both cases without configuration revision metadata; the current configuration reflects stream order and normal data-op events/acknowledgements are preserved. |
 | Identical replacement; A-to-B-to-A replacement | Each successful barrier has a distinct revision; returning to earlier values does not reset the configuration revision. |
 | Barrier and data ops in one grouped envelope | Preserve logical order and callback boundaries, including shared sequence numbers. |

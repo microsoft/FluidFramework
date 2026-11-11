@@ -31,6 +31,7 @@ import type {
 	ChannelConfiguration,
 	ChannelConfigurationFacet,
 } from "./channelConfiguration.js";
+import { verifyOrdinaryChannelMessage } from "./channelConfigurationFormat.js";
 import type { IFluidSerializer } from "./serializer.js";
 import {
 	createSharedObjectKindAlpha,
@@ -136,7 +137,7 @@ export interface SharedKernelConfiguration<TConfig extends ChannelConfiguration>
 	readonly configuration: ChannelConfigurationFacet<TConfig>;
 	readonly deltaHandler: Required<IDeltaHandler>;
 	readonly attributes: IChannelAttributes;
-	submitOrdinaryMessage(content: unknown, metadata: unknown): void;
+	verifyCanSubmit(): void;
 	completeInitialization(): void;
 	close(error: unknown): void;
 }
@@ -235,8 +236,14 @@ class SharedObjectFromKernel<
 		this.#kernelArgs = {
 			sharedObject: this,
 			serializer: this.serializer,
-			submitLocalMessage: (op, localOpMetadata) =>
-				this.submitLocalMessage(op, localOpMetadata),
+			submitLocalMessage: (op, localOpMetadata) => {
+				const configuration = this.#configuration;
+				if (configuration !== undefined) {
+					configuration.verifyCanSubmit();
+					verifyOrdinaryChannelMessage(op);
+				}
+				this.submitLocalMessage(op, localOpMetadata);
+			},
 			eventEmitter: this,
 			logger: extractTelemetryLoggerExt(this.logger),
 			idCompressor: runtime.idCompressor,
@@ -248,17 +255,6 @@ class SharedObjectFromKernel<
 				: { configuration: this.#configuration.configuration }),
 			oldestSupportedClient: minVersionForCollab,
 		};
-	}
-
-	protected override submitLocalMessage(
-		content: unknown,
-		localOpMetadata: unknown = undefined,
-	): void {
-		if (this.#configuration === undefined) {
-			super.submitLocalMessage(content, localOpMetadata);
-		} else {
-			this.#configuration.submitOrdinaryMessage(content, localOpMetadata);
-		}
 	}
 
 	protected override summarizeCore(

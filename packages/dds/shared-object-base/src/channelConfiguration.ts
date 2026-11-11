@@ -179,8 +179,6 @@ export interface ChannelConfigurationFacet<TConfig extends ChannelConfiguration>
 	 * Requests a full replacement of the configuration.
 	 * Requests are applied with first-write-wins semantics using the current revision
 	 * for compare-and-swap.
-	 * Attached requests flush earlier deferred requests before submitting, without rebasing
-	 * any request's captured revision.
 	 * Configuration requests made reentrantly during submission are unsupported.
 	 *
 	 * @param next - The complete set of configuration values.
@@ -188,33 +186,6 @@ export interface ChannelConfigurationFacet<TConfig extends ChannelConfiguration>
 	 * or the channel closes before the request completes.
 	 */
 	requestChange(next: TConfig): Promise<ConfigurationChangeResult<TConfig>>;
-
-	/**
-	 * Requests a full replacement, deferring attached submission until this channel next submits
-	 * a fresh ordinary op or makes a valid eager configuration request. The proposal precedes
-	 * that submission and uses the revision captured now, not the revision at submission.
-	 * Unattached changes apply immediately, as with requestChange.
-	 *
-	 * Deferred requests are process-local: they do not dirty the channel or appear in summaries
-	 * or stashed ops. Incoming configuration ops, resubmission, and stash replay do not flush them.
-	 * Multiple requests are not coalesced. Once submitted, normal acknowledgement, resubmission,
-	 * stash, and rollback handling applies.
-	 *
-	 * This API is useful for configuration updates that aren't particular about the exact timing
-	 * of their application, but still benefit from synchronization across clients. Lazily flushing
-	 * the configuration request change has the benefit that it avoids unnecessary edits to the channel.
-	 * Such unnecessary edits can cause problems with ODSP's representation of "file last edited"
-	 * or other data model listeners that may track edits to particular parts of the document.
-	 *
-	 * Synchronous callbacks during the flush must not submit another ordinary op or request
-	 * another configuration change.
-	 * Configuration requests made reentrantly during submission are unsupported.
-	 *
-	 * @param next - The complete set of configuration values. Omit a key to remove it.
-	 * @returns The applied or conflicting outcome. Remains pending while the channel is idle.
-	 * Rejects if validation or submission fails, or the channel closes before completion.
-	 */
-	requestChangeLazy(next: TConfig): Promise<ConfigurationChangeResult<TConfig>>;
 	/**
 	 * Registers a synchronous listener for accepted replacements.
 	 * Listeners must not submit channel ops or request another configuration change.
@@ -274,11 +245,6 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 	 * These should be resolved (either as applied or conflicted) upon ack when attached.
 	 */
 	readonly #pending = new Map<unknown, PendingChange<TConfig>>();
-	/**
-	 * Configuration changes made via {@link requestChangeLazy} which are pending submission.
-	 */
-	readonly #lazyRequests = new Map<unknown, ChannelConfigurationMessageV1>();
-	#flushingLazy = false;
 	#processing = false;
 
 	#disposed = false;
@@ -301,19 +267,7 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 	 * synchronously; attached changes complete only after their sequenced outcome.
 	 */
 	public async requestChange(next: TConfig): Promise<ConfigurationChangeResult<TConfig>> {
-		return this.#requestChange(next, false);
-	}
-
-	public async requestChangeLazy(next: TConfig): Promise<ConfigurationChangeResult<TConfig>> {
-		return this.#requestChange(next, true);
-	}
-
-	async #requestChange(
-		next: TConfig,
-		lazy: boolean,
-	): Promise<ConfigurationChangeResult<TConfig>> {
 		this.verifyCanSubmit();
-		this.#verifyNotFlushingLazy();
 		this.options.verifyCanChange();
 		const previous = this.#snapshot;
 		const values = next;
@@ -342,45 +296,11 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 				this.#processing = false;
 			}
 		}
-		if (!lazy) {
-			this.flushLazyRequests();
-		}
 		return new Promise<ConfigurationChangeResult<TConfig>>((resolve, reject) => {
 			const metadata = {};
 			this.#pending.set(metadata, { resolve, reject });
-			if (lazy) {
-				this.#lazyRequests.set(metadata, message);
-			} else {
-				this.#submitPendingChange(message, metadata);
-			}
+			this.#submitPendingChange(message, metadata);
 		});
-	}
-
-	/**
-	 * Flushes queued configuration requests before submitting the next ordinary op.
-	 * Reentrant submission during the flush is prohibited so a nested edit cannot overtake
-	 * the triggering op. Replay must not flush new intent into pending-op capture.
-	 */
-	public flushLazyRequests(): void {
-		this.verifyCanSubmit();
-		this.#verifyNotFlushingLazy();
-		this.#flushingLazy = true;
-		try {
-			for (const [metadata, message] of this.#lazyRequests) {
-				this.#lazyRequests.delete(metadata);
-				this.#submitPendingChange(message, metadata);
-			}
-		} finally {
-			this.#flushingLazy = false;
-		}
-		this.verifyCanSubmit();
-	}
-
-	#verifyNotFlushingLazy(): void {
-		assert(
-			!this.#flushingLazy,
-			"Cannot submit reentrantly while flushing lazy configuration changes",
-		);
 	}
 
 	#submitPendingChange(message: ChannelConfigurationMessageV1, metadata: unknown): void {
@@ -502,7 +422,6 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 			pending.reject(error);
 		}
 		this.#pending.clear();
-		this.#lazyRequests.clear();
 		this.#listeners.clear();
 	}
 

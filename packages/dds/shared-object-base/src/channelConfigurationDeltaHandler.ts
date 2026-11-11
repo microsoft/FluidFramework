@@ -19,7 +19,6 @@ import {
 import {
 	hasChannelConfigurationMarker,
 	parseChannelConfigurationMessage,
-	verifyOrdinaryChannelMessage,
 } from "./channelConfigurationFormat.js";
 import type { SharedObjectTransport } from "./sharedObject.js";
 import type { SharedObjectConfigurationOptions } from "./sharedObjectConfiguration.js";
@@ -82,8 +81,7 @@ function makeConfiguredKernelSupport<TConfig extends ChannelConfiguration>(
 		configuration: handler.controller,
 		deltaHandler: handler,
 		attributes: handler.attributes,
-		submitOrdinaryMessage: (content, metadata) =>
-			handler.submitOrdinaryMessage(content, metadata),
+		verifyCanSubmit: () => handler.verifyCanSubmit(),
 		completeInitialization: () => handler.completeInitialization(),
 		close: (error) => handler.close(error),
 	};
@@ -98,7 +96,6 @@ function makeConfiguredKernelSupport<TConfig extends ChannelConfiguration>(
 export class ChannelConfigurationDeltaHandler<TConfig extends ChannelConfiguration>
 	implements IDeltaHandler
 {
-	#suppressLazySubmission = false;
 	#initialized = false;
 	readonly #initializationKind: "create" | "load";
 	public readonly controller: ChannelConfigurationController<TConfig>;
@@ -130,7 +127,7 @@ export class ChannelConfigurationDeltaHandler<TConfig extends ChannelConfigurati
 						},
 			isAttached: () => transport.isAttached(),
 			verifyCanChange: () => {
-				this.#verifyCanSubmit();
+				this.verifyCanSubmit();
 				assert(
 					this.#initialized,
 					"Cannot change configuration during shared object initialization",
@@ -172,7 +169,7 @@ export class ChannelConfigurationDeltaHandler<TConfig extends ChannelConfigurati
 		this.#initialized = true;
 	}
 
-	#verifyCanSubmit(): void {
+	public verifyCanSubmit(): void {
 		this.transport.verifyNotClosed();
 		assert(!this.host.isDisposed(), "Cannot submit to a disposed configured channel");
 		assert(
@@ -182,20 +179,8 @@ export class ChannelConfigurationDeltaHandler<TConfig extends ChannelConfigurati
 		this.controller.verifyCanSubmit();
 	}
 
-	public submitOrdinaryMessage(content: unknown, metadata: unknown): void {
-		this.#verifyCanSubmit();
-		verifyOrdinaryChannelMessage(content);
-		if (this.transport.isAttached()) {
-			const prepared = this.transport.prepareMessage(content);
-			if (!this.#suppressLazySubmission) {
-				this.controller.flushLazyRequests();
-			}
-			this.transport.submitMessage(prepared, metadata);
-		}
-	}
-
 	#submitControlMessage(content: unknown, metadata: unknown): void {
-		this.#verifyCanSubmit();
+		this.verifyCanSubmit();
 		if (this.transport.isAttached()) {
 			this.transport.submitMessage(this.transport.prepareMessage(content), metadata);
 		}
@@ -253,13 +238,11 @@ export class ChannelConfigurationDeltaHandler<TConfig extends ChannelConfigurati
 	};
 
 	public readonly applyStashedOp = (content: unknown): void => {
-		this.#withoutLazySubmission(() => {
-			if (hasChannelConfigurationMarker(content)) {
-				this.controller.applyStashedOp(parseChannelConfigurationMessage(content));
-			} else {
-				this.ordinary.applyStashedOp(content);
-			}
-		});
+		if (hasChannelConfigurationMarker(content)) {
+			this.controller.applyStashedOp(parseChannelConfigurationMessage(content));
+		} else {
+			this.ordinary.applyStashedOp(content);
+		}
 	};
 
 	public readonly reSubmit = (
@@ -267,36 +250,21 @@ export class ChannelConfigurationDeltaHandler<TConfig extends ChannelConfigurati
 		metadata: unknown,
 		squash: boolean = false,
 	): void => {
-		this.#withoutLazySubmission(() => {
-			if (hasChannelConfigurationMarker(content)) {
-				this.controller.reSubmit(parseChannelConfigurationMessage(content), metadata);
-			} else {
-				this.ordinary.reSubmit(content, metadata, squash);
-			}
-		});
+		if (hasChannelConfigurationMarker(content)) {
+			this.controller.reSubmit(parseChannelConfigurationMessage(content), metadata);
+		} else {
+			this.ordinary.reSubmit(content, metadata, squash);
+		}
 	};
 
 	public readonly rollback = (content: unknown, metadata: unknown): void => {
-		this.#withoutLazySubmission(() => {
-			if (hasChannelConfigurationMarker(content)) {
-				parseChannelConfigurationMessage(content);
-				this.controller.rollback(metadata);
-			} else {
-				this.ordinary.rollback(content, metadata);
-			}
-		});
-	};
-
-	#withoutLazySubmission(action: () => void): void {
-		// DDS replay can submit ops, including from nested callbacks, without new configuration intent.
-		const wasSuppressed = this.#suppressLazySubmission;
-		this.#suppressLazySubmission = true;
-		try {
-			action();
-		} finally {
-			this.#suppressLazySubmission = wasSuppressed;
+		if (hasChannelConfigurationMarker(content)) {
+			parseChannelConfigurationMessage(content);
+			this.controller.rollback(metadata);
+		} else {
+			this.ordinary.rollback(content, metadata);
 		}
-	}
+	};
 
 	public close(error: unknown): void {
 		this.controller.dispose(error);
