@@ -152,7 +152,7 @@ export async function parseGcSnapshotData(
  *
  * The root-level `.blobs` subtree is special-cased: only its `.redirectTable`
  * blob is read, because attachment blob contents are captured separately via
- * {@link captureReferencedAttachmentBlobs}.
+ * {@link captureAttachmentBlobs}.
  */
 export async function readStructuralSnapshotBlobs(
 	snapshot: ISnapshot | ISnapshotTree,
@@ -174,7 +174,7 @@ export async function readStructuralSnapshotBlobs(
  * should be inlined, including those in unreferenced subtrees.
  * The root-level `.blobs` subtree is special-cased: only its
  * `.redirectTable` id is collected, because attachment blob contents are
- * captured separately via {@link captureReferencedAttachmentBlobs}.
+ * captured separately via {@link captureAttachmentBlobs}.
  */
 function collectStructuralBlobIds(
 	tree: ISnapshotTree,
@@ -211,8 +211,11 @@ function toTreeAndReader(
 }
 
 /**
- * Fetches attachment blob contents from a snapshot, excluding tombstoned
- * or deleted blobs. Unreferenced blobs are kept because saved or future ops
+ * Fetches attachment blob contents from a snapshot, excluding local IDs that
+ * are tombstoned or deleted. Storage-ID identity aliases remain eligible,
+ * including aliases of excluded local IDs: legacy handles may still use them.
+ * Excluding a local ID therefore does not guarantee its payload is omitted.
+ * Unreferenced blobs are kept because saved or future ops
  * can reference their owning data store again without a new BlobAttach op.
  * Blobs absent from the GC graph are also kept.
  * If `gcData` is `undefined`, every attachment blob is returned.
@@ -228,7 +231,7 @@ function toTreeAndReader(
  * two encodings on separate fields of the pending state so the load side
  * can decode each correctly.
  */
-export async function captureReferencedAttachmentBlobs(
+export async function captureAttachmentBlobs(
 	baseSnapshot: ISnapshotTree,
 	storage: Pick<IDocumentStorageService, "readBlob">,
 	gcData: IGcSnapshotData | undefined,

@@ -43,7 +43,7 @@ import {
 import { v4 as uuid } from "uuid";
 
 import {
-	captureReferencedAttachmentBlobs,
+	captureAttachmentBlobs,
 	excludedAttachmentBlobLocalIds,
 	extractBlobAttachReferences,
 	inlineAttachmentBlobsByReference,
@@ -560,7 +560,9 @@ export interface ICaptureFullContainerStateProps {
  * The snapshot's `unreferenced` flags remain metadata, not capture filters.
  * Unreferenced attachment blobs are also retained, since referencing their
  * owning data store again does not produce a new BlobAttach op.
- * Attachment blobs that GC has tombstoned or deleted are skipped.
+ * Tombstoned or deleted attachment local IDs are excluded, but eligible aliases
+ * can retain the same payload. Storage-ID identity aliases are kept for legacy
+ * handles, even when their non-identity aliases are excluded.
  * When the snapshot has no GC tree (GC disabled or pre-GC document), attachment
  * filtering is not applied.
  *
@@ -703,7 +705,7 @@ export async function captureFullContainerState({
 			gcData = await parseGcSnapshotData(baseSnapshot, storage);
 			[snapshotBlobs, attachmentBlobContents] = await Promise.all([
 				readStructuralSnapshotBlobs(snapshot, storage), // utf8 encoded
-				captureReferencedAttachmentBlobs(baseSnapshot, storage, gcData), // base64 encoded
+				captureAttachmentBlobs(baseSnapshot, storage, gcData), // base64 encoded
 			]);
 		}
 
@@ -725,7 +727,7 @@ export async function captureFullContainerState({
 		if (blobCaptureMode === "inline") {
 			for (const op of savedOps) {
 				// Blobs uploaded after the base snapshot are not in its
-				// `.blobs` redirect table, so `captureReferencedAttachmentBlobs`
+				// `.blobs` redirect table, so `captureAttachmentBlobs`
 				// did not see them. The wire-format BlobAttach op carries
 				// `(localId, storageId)` in its metadata; collect those here so
 				// we can backfill the bytes before sealing the artifact.

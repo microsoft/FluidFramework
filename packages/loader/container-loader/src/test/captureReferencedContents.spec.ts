@@ -13,7 +13,7 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 
 import {
-	captureReferencedAttachmentBlobs,
+	captureAttachmentBlobs,
 	excludedAttachmentBlobLocalIds,
 	extractBlobAttachReferences,
 	inlineAttachmentBlobsByReference,
@@ -44,7 +44,7 @@ function tree(partial: Partial<ISnapshotTree>): ISnapshotTree {
 
 /**
  * Encodes the same UTF-8 bytes the test storage shim returns for `content`,
- * matching the base64 output `captureReferencedAttachmentBlobs` produces.
+ * matching the base64 output `captureAttachmentBlobs` produces.
  */
 const toB64 = (content: string): string =>
 	bufferToString(stringToBuffer(content, "utf8"), "base64");
@@ -183,7 +183,7 @@ describe("captureReferencedContents", () => {
 		});
 	});
 
-	describe("captureReferencedAttachmentBlobs", () => {
+	describe("captureAttachmentBlobs", () => {
 		function attachmentsOnly(
 			table: [string, string][],
 			blobBytes: Record<string, string>,
@@ -204,11 +204,7 @@ describe("captureReferencedContents", () => {
 		}
 
 		it("returns {} when there is no .blobs subtree", async () => {
-			const result = await captureReferencedAttachmentBlobs(
-				tree({}),
-				mockStorage({}),
-				undefined,
-			);
+			const result = await captureAttachmentBlobs(tree({}), mockStorage({}), undefined);
 			assert.deepStrictEqual(result, {});
 		});
 
@@ -220,7 +216,7 @@ describe("captureReferencedContents", () => {
 				],
 				{ s1: "S1", s2: "S2" },
 			);
-			const result = await captureReferencedAttachmentBlobs(snapshot, storage, undefined);
+			const result = await captureAttachmentBlobs(snapshot, storage, undefined);
 			assert.deepStrictEqual(result, { s1: toB64("S1"), s2: toB64("S2") });
 		});
 
@@ -242,7 +238,7 @@ describe("captureReferencedContents", () => {
 				tombstones: undefined,
 				deletedNodes: undefined,
 			};
-			const result = await captureReferencedAttachmentBlobs(snapshot, storage, gcData);
+			const result = await captureAttachmentBlobs(snapshot, storage, gcData);
 			assert.deepStrictEqual(result, {
 				"keep-storage": toB64("K"),
 				"unref-storage": toB64("U"),
@@ -263,7 +259,7 @@ describe("captureReferencedContents", () => {
 				tombstones: ["/_blobs/tomb"],
 				deletedNodes: ["/_blobs/del"],
 			};
-			const result = await captureReferencedAttachmentBlobs(snapshot, storage, gcData);
+			const result = await captureAttachmentBlobs(snapshot, storage, gcData);
 			assert.deepStrictEqual(result, { "ok-storage": toB64("OK") });
 		});
 
@@ -281,7 +277,7 @@ describe("captureReferencedContents", () => {
 				tombstones: ["/_blobs/tomb"],
 				deletedNodes: ["/_blobs/del"],
 			};
-			const result = await captureReferencedAttachmentBlobs(snapshot, storage, gcData);
+			const result = await captureAttachmentBlobs(snapshot, storage, gcData);
 			assert.deepStrictEqual(
 				result,
 				{ "ok-storage": toB64("OK") },
@@ -298,7 +294,7 @@ describe("captureReferencedContents", () => {
 				tombstones: undefined,
 				deletedNodes: undefined,
 			};
-			const result = await captureReferencedAttachmentBlobs(snapshot, storage, gcData);
+			const result = await captureAttachmentBlobs(snapshot, storage, gcData);
 			assert.deepStrictEqual(
 				result,
 				{ "recent-storage": toB64("R") },
@@ -310,7 +306,7 @@ describe("captureReferencedContents", () => {
 			// Pre-redirect-table format: `.blobs` listed attachment storage ids
 			// directly under their own keys, so the redirect table entry is the
 			// identity mapping `(storageId, storageId)`. readRedirectTable
-			// reconstructs that mapping and captureReferencedAttachmentBlobs
+			// reconstructs that mapping and captureAttachmentBlobs
 			// must then read those blobs.
 			const snapshot = tree({
 				trees: {
@@ -320,7 +316,7 @@ describe("captureReferencedContents", () => {
 				},
 			});
 			const storage = mockStorage({ "legacy-storage-id": "LEGACY" });
-			const result = await captureReferencedAttachmentBlobs(snapshot, storage, undefined);
+			const result = await captureAttachmentBlobs(snapshot, storage, undefined);
 			assert.deepStrictEqual(result, { "legacy-storage-id": toB64("LEGACY") });
 		});
 
@@ -344,10 +340,41 @@ describe("captureReferencedContents", () => {
 				"modern-storage": "MODERN",
 				"legacy-storage-id": "LEGACY",
 			});
-			const result = await captureReferencedAttachmentBlobs(snapshot, storage, undefined);
+			const result = await captureAttachmentBlobs(snapshot, storage, undefined);
 			assert.deepStrictEqual(result, {
 				"modern-storage": toB64("MODERN"),
 				"legacy-storage-id": toB64("LEGACY"),
+			});
+		});
+
+		it("keeps storage-ID identity aliases when redirected local IDs are excluded", async () => {
+			const snapshot = tree({
+				trees: {
+					".blobs": tree({
+						blobs: {
+							".redirectTable": "rt",
+							"tomb-storage": "tomb-storage",
+							"del-storage": "del-storage",
+						},
+					}),
+				},
+			});
+			const storage = mockStorage({
+				rt: JSON.stringify([
+					["tomb-local", "tomb-storage"],
+					["del-local", "del-storage"],
+				]),
+				"tomb-storage": "LEGACY-TOMBSTONED-ALIAS",
+				"del-storage": "LEGACY-DELETED-ALIAS",
+			});
+			const result = await captureAttachmentBlobs(snapshot, storage, {
+				gcState: undefined,
+				tombstones: ["/_blobs/tomb-local"],
+				deletedNodes: ["/_blobs/del-local"],
+			});
+			assert.deepStrictEqual(result, {
+				"tomb-storage": toB64("LEGACY-TOMBSTONED-ALIAS"),
+				"del-storage": toB64("LEGACY-DELETED-ALIAS"),
 			});
 		});
 
@@ -370,7 +397,7 @@ describe("captureReferencedContents", () => {
 				tombstones: ["/dataStores/another"],
 				deletedNodes: ["/channels/x"],
 			};
-			const result = await captureReferencedAttachmentBlobs(snapshot, storage, gcData);
+			const result = await captureAttachmentBlobs(snapshot, storage, gcData);
 			assert.deepStrictEqual(
 				result,
 				{ "live-storage": toB64("LIVE") },
@@ -423,7 +450,7 @@ describe("captureReferencedContents", () => {
 
 			const gcData = await parseGcSnapshotData(snapshot, storage);
 			assert(gcData !== undefined, "snapshot has a gc subtree, so gcData must parse");
-			const result = await captureReferencedAttachmentBlobs(snapshot, storage, gcData);
+			const result = await captureAttachmentBlobs(snapshot, storage, gcData);
 
 			assert.deepStrictEqual(
 				result,
