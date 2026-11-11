@@ -31,7 +31,6 @@ import {
 	ITestObjectProvider,
 	createLoader,
 	createLoaderProps,
-	getContainerEntryPointBackCompat,
 	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
 
@@ -126,8 +125,7 @@ describeCompat(
 					);
 					containerResolvedUrl = initContainer.resolvedUrl;
 
-					const initDataObject =
-						await getContainerEntryPointBackCompat<ITestFluidObject>(initContainer);
+					const initDataObject = (await initContainer.getEntryPoint()) as ITestFluidObject;
 					for (let i = 0; i < maxOps; i++) {
 						initDataObject.root.set(i.toString(), i);
 					}
@@ -172,8 +170,7 @@ describeCompat(
 					});
 
 					// Force the container into write mode to ensure a summary will be created
-					const dataObject =
-						await getContainerEntryPointBackCompat<ITestFluidObject>(summaryContainer);
+					const dataObject = (await summaryContainer.getEntryPoint()) as ITestFluidObject;
 					dataObject.root.set("Force write", 0);
 
 					const summaryCollection = new SummaryCollection(
@@ -235,7 +232,7 @@ describeCompat(
 						request: { url: containerUrl },
 					});
 					const validationDataObject =
-						await getContainerEntryPointBackCompat<ITestFluidObject>(validationContainer);
+						(await validationContainer.getEntryPoint()) as ITestFluidObject;
 
 					const storageOnlyDsF = wrapObjectAndOverride<IDocumentServiceFactory>(
 						provider.documentServiceFactory,
@@ -323,7 +320,7 @@ describeCompat(
 						);
 
 						const storageOnlyDataObject =
-							await getContainerEntryPointBackCompat<ITestFluidObject>(storageOnlyContainer);
+							(await storageOnlyContainer.getEntryPoint()) as ITestFluidObject;
 						for (const key of validationDataObject.root.keys()) {
 							assert.strictEqual(
 								storageOnlyDataObject.root.get(key),

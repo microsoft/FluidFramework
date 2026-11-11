@@ -31,6 +31,7 @@ import {
 	type ShapeFromSchemaParameters,
 	type ShapeInfo,
 	basicOnlyChunkPolicy,
+	basicChunkTree,
 	chunkField,
 	chunkFieldSingle,
 	chunkRange,
@@ -39,6 +40,7 @@ import {
 	combineChunks,
 	defaultChunkPolicy,
 	insertValues,
+	makePolicy,
 	makeTreeChunker,
 	polymorphic,
 	splitFieldAtIndex,
@@ -567,6 +569,205 @@ describe("chunkTree", () => {
 			assert.equal(chunks.length, 1);
 			assert.equal(chunks[0], basicChunk);
 			assert(basicChunk.isShared());
+		});
+
+		it("deep rechunking converts basic chunks in a sequence using the initial size limit", () => {
+			const type = brand<TreeNodeSchemaIdentifier>(numberSchema.identifier);
+			const shape = new TreeShape(type, true, []);
+			const children = makeArray(5, (index) => new BasicChunk(type, new Map(), index));
+			const input = new SequenceChunk(children);
+			const policy = makePolicy({
+				shapeFromSchema: () => shape,
+				uniformChunkNodeCount: 2,
+				uniformChunkNodeCountDynamicTargetMax: 1,
+			});
+			const chunks = chunkField(input.cursor(), {
+				policy,
+				idCompressor: undefined,
+				shouldRechunk: () => true,
+			});
+			assert.deepEqual(
+				chunks.map((chunk) => chunk.topLevelLength),
+				[2, 2, 1],
+			);
+			const values = chunks.flatMap((chunk) => {
+				assert(chunk instanceof UniformChunk);
+				return chunk.values;
+			});
+			assert.deepEqual(values, [0, 1, 2, 3, 4]);
+			assert(!input.isShared());
+			for (const child of children) {
+				assert(!child.isShared());
+			}
+			for (const chunk of chunks) {
+				chunk.referenceRemoved();
+			}
+			input.referenceRemoved();
+		});
+
+		it("deep rechunking reaches uniform descendants of polymorphic parents", () => {
+			const type = brand<TreeNodeSchemaIdentifier>(numberSchema.identifier);
+			const shape = new TreeShape(type, true, []);
+			const key = brand<FieldKey>("children");
+			const input = new BasicChunk(
+				brand(JsonAsTree.JsonObject.identifier),
+				new Map([[key, [new BasicChunk(type, new Map(), 42)]]]),
+				undefined,
+			);
+			const policy = makePolicy({
+				shapeFromSchema: (nodeType) => (nodeType === type ? shape : polymorphic),
+			});
+			const reused = chunkField(input.cursor(), { policy, idCompressor: undefined });
+			assert.equal(reused[0], input);
+			input.referenceRemoved();
+			const chunks = chunkField(input.cursor(), {
+				policy,
+				idCompressor: undefined,
+				shouldRechunk: () => true,
+			});
+			const output = chunks[0];
+			assert(output instanceof BasicChunk);
+			assert.notEqual(output, input);
+			const child = output.fields.get(key)?.[0];
+			assert(child instanceof UniformChunk);
+			assert.deepEqual(child.values, [42]);
+			assert(input.fields.get(key)?.[0] instanceof BasicChunk);
+			assert(!input.isShared());
+			output.referenceRemoved();
+			input.referenceRemoved();
+		});
+
+		it("deep rechunking reuses existing uniform chunks without traversing them", () => {
+			const shape = new TreeShape(brand(numberSchema.identifier), true, []);
+			const input = new UniformChunk(shape.withTopLevelLength(2), [1, 2]);
+			const chunks = chunkField(input.cursor(), {
+				policy: makePolicy({
+					shapeFromSchema: () => assert.fail("Existing uniform chunks must be reused"),
+				}),
+				idCompressor: undefined,
+				shouldRechunk: () => true,
+			});
+			assert.equal(chunks[0], input);
+			assert(input.isShared());
+			chunks[0].referenceRemoved();
+			assert(!input.isShared());
+			input.referenceRemoved();
+		});
+
+		for (const method of ["chunkField", "basicChunkTree"] as const) {
+			it(`${method} preserves unchanged basic chunk identity and balances child references`, () => {
+				const shape = new TreeShape(brand(numberSchema.identifier), true, []);
+				const child = new UniformChunk(shape.withTopLevelLength(1), [42]);
+				const input = new BasicChunk(
+					brand(JsonAsTree.JsonObject.identifier),
+					new Map([[brand<FieldKey>("children"), [child]]]),
+				);
+				const compressor = {
+					policy: basicOnlyChunkPolicy,
+					idCompressor: undefined,
+					shouldRechunk: () => true,
+				};
+				const cursor = input.cursor();
+				if (method === "basicChunkTree") {
+					cursor.firstNode();
+				}
+				const output =
+					method === "basicChunkTree"
+						? basicChunkTree(cursor, compressor)
+						: chunkFieldSingle(cursor, compressor);
+				assert.equal(output, input);
+				assert(input.isShared());
+				assert(!child.isShared());
+				output.referenceRemoved();
+				assert(!input.isShared());
+				assert(!child.isUnreferenced());
+				input.referenceRemoved();
+				assert(child.isUnreferenced());
+			});
+		}
+
+		it("skips already-rechunked basic subtrees without acquiring extra child references", () => {
+			const parentType = brand<TreeNodeSchemaIdentifier>(JsonAsTree.JsonObject.identifier);
+			const child = new BasicChunk(brand(numberSchema.identifier), new Map(), 42);
+			const input = new BasicChunk(parentType, new Map([[brand<FieldKey>("child"), [child]]]));
+			const output = chunkFieldSingle(input.cursor(), {
+				policy: makePolicy({
+					shapeFromSchema: (type) => {
+						assert.equal(type, parentType, "Must not traverse the already-rechunked child");
+						return polymorphic;
+					},
+				}),
+				idCompressor: undefined,
+				shouldRechunk: (chunk) => chunk !== child,
+			});
+			assert.equal(output, input);
+			assert(!child.isShared());
+			output.referenceRemoved();
+			input.referenceRemoved();
+			assert(child.isUnreferenced());
+		});
+
+		it("initial chunking respects a zero uniform chunk size limit", () => {
+			const type = brand<TreeNodeSchemaIdentifier>(numberSchema.identifier);
+			const chunks = chunkField(cursorForJsonableTreeField([{ type, value: 42 }]), {
+				policy: makePolicy({
+					uniformChunkNodeCount: 0,
+					shapeFromSchema: () => new TreeShape(type, true, []),
+				}),
+				idCompressor: undefined,
+			});
+			assert(chunks[0] instanceof BasicChunk);
+			assertChunkCursorEquals(chunks[0], [{ type, value: 42 }]);
+			chunks[0].referenceRemoved();
+		});
+
+		it("initial chunking splits oversized shapes into smaller uniform descendants", () => {
+			const type = brand<TreeNodeSchemaIdentifier>(numberSchema.identifier);
+			const parentType = brand<TreeNodeSchemaIdentifier>(structValue.identifier);
+			const key = brand<FieldKey>("x");
+			const shape = new TreeShape(type, true, []);
+			const parentShape = new TreeShape(parentType, false, [[key, shape, 1]]);
+			const input: JsonableTree = {
+				type: parentType,
+				fields: { [key]: [{ type, value: 42 }] },
+			};
+			const policy = makePolicy({
+				uniformChunkNodeCount: 1,
+				shapeFromSchema: (nodeType) => (nodeType === type ? shape : parentShape),
+			});
+			const cursor = cursorForJsonableTreeField([input]);
+			cursor.firstNode();
+			const chunks = chunkRange(cursor, { policy, idCompressor: undefined }, 1, true);
+			assert.equal(cursor.mode, CursorLocationType.Nodes);
+			assert.equal(cursor.fieldIndex, 0);
+			const output = chunks[0];
+			assert(output instanceof BasicChunk);
+			const child = output.fields.get(key)?.[0];
+			assert(child instanceof UniformChunk);
+			assert.deepEqual(child.values, [42]);
+			output.referenceRemoved();
+		});
+
+		it("deep rechunking preserves a basic root when explicitly requested", () => {
+			const type = brand<TreeNodeSchemaIdentifier>(numberSchema.identifier);
+			const shape = new TreeShape(type, true, []);
+			const key = brand<FieldKey>("children");
+			const input = new BasicChunk(
+				brand(JsonAsTree.JsonObject.identifier),
+				new Map([[key, [new BasicChunk(type, new Map(), 42)]]]),
+				undefined,
+			);
+			const cursor = input.cursor();
+			cursor.firstNode();
+			const output = basicChunkTree(cursor, {
+				policy: makePolicy({ shapeFromSchema: () => shape }),
+				idCompressor: undefined,
+				shouldRechunk: () => true,
+			});
+			assert.notEqual(output, input);
+			assert(output.fields.get(key)?.[0] instanceof UniformChunk);
+			output.referenceRemoved();
+			input.referenceRemoved();
 		});
 
 		it("chunks 10 points into UniformChunks of topLevelLength 4 and reads values via the cursor", () => {

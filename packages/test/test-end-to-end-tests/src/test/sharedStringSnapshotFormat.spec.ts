@@ -16,7 +16,6 @@ import {
 	type ITestObjectProvider,
 	createSummarizer,
 	createTestConfigProvider,
-	getContainerEntryPointBackCompat,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -107,7 +106,7 @@ describeCompat("SharedString snapshot format", "NoCompat", (getTestObjectProvide
 		it(`retains ${initialFlag ? "flat" : "legacy"} selection and explicit overrides through summary reloads`, async () => {
 			let container = await provider.makeTestContainer(createConfig(undefined, initialFlag));
 			await waitForContainerConnection(container);
-			let dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+			let dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			let sharedString = await dataObject.getSharedObject<SharedString>(stringId);
 			let summaryVersion: string | undefined;
 			let previousFormat = initialFlag;
@@ -146,7 +145,7 @@ describeCompat("SharedString snapshot format", "NoCompat", (getTestObjectProvide
 				const loaded = await provider.loadTestContainer(createConfig(undefined), {
 					[LoaderHeader.version]: summary.summaryVersion,
 				});
-				const loadedObject = await getContainerEntryPointBackCompat<ITestFluidObject>(loaded);
+				const loadedObject = (await loaded.getEntryPoint()) as ITestFluidObject;
 				const loadedString = await loadedObject.getSharedObject<SharedString>(stringId);
 				assert.equal(loadedString.getText(), expectedText);
 				assert.equal("newMergeTreeSnapshotFormat" in loadedString.attributes, false);

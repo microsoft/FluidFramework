@@ -5,6 +5,16 @@
 
 import { test, expect, type BrowserContext, type Page } from "@playwright/test";
 
+const logBrowserErrors = (page: Page): void => {
+	// Startup errors caught by the app would otherwise only appear in the browser console.
+	page.on("console", (message) => {
+		if (message.type() === "error") {
+			console.error(message.text());
+		}
+	});
+	page.on("pageerror", (error) => console.error(error));
+};
+
 /* Disabled for common window["foo"] access. */
 /* eslint-disable @typescript-eslint/dot-notation */
 
@@ -28,12 +38,8 @@ const loadPresenceTrackerApp = async (page: Page, url: string): Promise<string> 
 	const waitFunction = idMatch
 		? (_hash: string) => window["fluidContainerId"] === _hash
 		: (_hash: string) => (window["fluidContainerId"] ?? "") !== "";
-	await page.waitForFunction(waitFunction, idMatch, { timeout: 1500 }).catch(async () => {
-		const after = await page.evaluate(() => `${window["fluidContainerId"]}`);
-		throw new Error(
-			`failed waiting for app load to id ${idMatch ? idMatch : '!== ""'} (after timeout=${after})`,
-		);
-	});
+	// Container initialization continues after the load event; use the test's timeout.
+	await page.waitForFunction(waitFunction, idMatch);
 
 	return page.evaluate(() => `${window["fluidSessionId"]}`);
 };
@@ -51,6 +57,7 @@ test.describe("presence-tracker", () => {
 		// Wait for the page to load first before running any tests giving a more generous timeout
 		// so this time isn't attributed to the first test.
 		page = await browser.newPage();
+		logBrowserErrors(page);
 		await loadPresenceTrackerApp(page, "/");
 	});
 
@@ -127,6 +134,7 @@ test.describe("presence-tracker", () => {
 			// Create a second browser context.
 			context2 = await browser.newContext();
 			page2 = await context2.newPage();
+			logBrowserErrors(page2);
 			// Prime the second browser context under long timeout.
 			// Use the "default" path to ensure an instance of app. At this
 			// point `page.url()` is effectively random, unlike in beforeEach.

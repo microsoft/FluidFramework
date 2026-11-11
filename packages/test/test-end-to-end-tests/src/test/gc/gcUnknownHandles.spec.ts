@@ -18,7 +18,6 @@ import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import { FluidHandleBase } from "@fluidframework/runtime-utils/internal";
 import {
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
@@ -93,12 +92,12 @@ describeCompat("GC unknown handles", "FullCompat", (getTestObjectProvider) => {
 		}
 
 		mainContainer = await provider.makeTestContainer(defaultGCConfig);
-		dataStoreA = await getContainerEntryPointBackCompat<ITestDataObject>(mainContainer);
+		dataStoreA = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
 
 		const summarizerContainer = await provider.loadTestContainer(defaultGCConfig);
 		const summarizerDataStoreA =
-			await getContainerEntryPointBackCompat<ITestDataObject>(summarizerContainer);
+			(await summarizerContainer.getEntryPoint()) as ITestDataObject;
 		summarizerRuntime = summarizerDataStoreA._context.containerRuntime as ContainerRuntime;
 		await waitForContainerConnection(summarizerContainer);
 	});

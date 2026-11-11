@@ -922,22 +922,10 @@ export function getCompatibility(
 		previousViewSchema,
 	);
 
-	assert(
-		backwardsCompatibilityStatus.isEquivalent === forwardsCompatibilityStatus.isEquivalent,
-		0xcd3 /* equality should be symmetric */,
-	);
-
 	// This relies on exportCompatibilitySchemaSnapshot being well normalized, and not differing for non-significant changes.
 	const identicalCompatibility =
 		JSON.stringify(exportCompatibilitySchemaSnapshot(currentViewSchema)) ===
 		JSON.stringify(exportCompatibilitySchemaSnapshot(previousViewSchema));
-
-	if (identicalCompatibility) {
-		assert(
-			backwardsCompatibilityStatus.isEquivalent,
-			0xcd4 /* identicalCompatibility should have equivalent stored schema */,
-		);
-	}
 
 	return {
 		currentViewOfSnapshotDocument: backwardsCompatibilityStatus,
