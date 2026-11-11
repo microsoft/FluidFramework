@@ -30,6 +30,7 @@ import {
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
+import type { ContainerSerializationOptions } from "./container.js";
 import {
 	getBlobContentsFromTree,
 	type ContainerStorageAdapter,
@@ -425,10 +426,23 @@ export class SerializedStateManager implements IDisposable {
 		runtime: Pick<IRuntime, "getPendingLocalState">,
 		resolvedUrl: IResolvedUrl,
 	): Promise<string> {
+		return this.serialize(clientId, runtime, resolvedUrl, { includeLocalChanges: true });
+	}
+
+	/**
+	 * Serializes a base snapshot and sequenced operations, optionally including local session state.
+	 */
+	public async serialize(
+		clientId: string | undefined,
+		runtime: Pick<IRuntime, "getPendingLocalState">,
+		resolvedUrl: IResolvedUrl,
+		options: ContainerSerializationOptions,
+	): Promise<string> {
 		this.verifyNotDisposed();
 		if (!this.offlineLoadEnabled) {
 			throw new UsageError("Can't get pending local state unless offline load is enabled");
 		}
+		const { includeLocalChanges } = options;
 
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
@@ -444,11 +458,17 @@ export class SerializedStateManager implements IDisposable {
 			},
 			async () => {
 				assert(this.snapshotInfo !== undefined, 0x8e5 /* no base data */);
-				const pendingRuntimeState = await runtime.getPendingLocalState({
-					notifyImminentClosure: false,
-					snapshotSequenceNumber: this.snapshotInfo.snapshotSequenceNumber,
-					sessionExpiryTimerStarted: this.snapshotInfo.snapshotFetchedTime,
-				});
+				const pendingRuntimeState = includeLocalChanges
+					? await runtime.getPendingLocalState({
+							notifyImminentClosure: false,
+							snapshotSequenceNumber: this.snapshotInfo.snapshotSequenceNumber,
+							sessionExpiryTimerStarted: this.snapshotInfo.snapshotFetchedTime,
+						})
+					: undefined;
+				// Keep the snapshot and trailing ops together while blob reads yield to incoming ops
+				// and snapshot refreshes.
+				const snapshotInfo = this.snapshotInfo;
+				const savedOps = [...this.processedOps];
 				// This conversion is required because ArrayBufferLike doesn't survive JSON.stringify
 				const loadedGroupIdSnapshots: Record<string, SerializedSnapshotInfo> = {};
 				let hasGroupIdSnapshots = false;
@@ -461,11 +481,11 @@ export class SerializedStateManager implements IDisposable {
 				}
 
 				const snapshotWithBlobs: SnapshotWithBlobs = isInstanceOfISnapshot(
-					this.snapshotInfo.snapshot,
+					snapshotInfo.snapshot,
 				)
-					? convertISnapshotToSnapshotWithBlobs(this.snapshotInfo.snapshot)
+					? convertISnapshotToSnapshotWithBlobs(snapshotInfo.snapshot)
 					: await convertSnapshotTreeToSnapshotWithBlobs(
-							this.snapshotInfo.snapshot,
+							snapshotInfo.snapshot,
 							this.storageAdapter,
 						);
 
@@ -474,9 +494,9 @@ export class SerializedStateManager implements IDisposable {
 					pendingRuntimeState,
 					...snapshotWithBlobs,
 					loadedGroupIdSnapshots: hasGroupIdSnapshots ? loadedGroupIdSnapshots : undefined,
-					savedOps: this.processedOps,
+					savedOps,
 					url: resolvedUrl.url,
-					clientId,
+					clientId: includeLocalChanges ? clientId : undefined,
 				};
 
 				return JSON.stringify(pendingState);

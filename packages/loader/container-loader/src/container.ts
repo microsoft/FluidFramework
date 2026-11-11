@@ -1206,6 +1206,30 @@ export class Container
 		return pendingState;
 	}
 
+	/**
+	 * {@inheritDoc ContainerAlpha.serializeV2}
+	 */
+	public async serializeV2(options: ContainerSerializationOptions): Promise<string> {
+		if (this.closed || this._disposed || this.attachState === AttachState.Attaching) {
+			throw new UsageError(
+				"Container must be detached or attached, open, and not disposed to use serializeV2.",
+			);
+		}
+		if (this.attachState === AttachState.Detached) {
+			return this.serialize();
+		}
+		assert(
+			this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
+			"Attached container must have a resolved Fluid URL",
+		);
+		return this.serializedStateManager.serialize(
+			this.clientId,
+			this.runtime,
+			this.resolvedUrl,
+			options,
+		);
+	}
+
 	public get attachState(): AttachState {
 		return this.attachmentData.state;
 	}
@@ -2691,12 +2715,28 @@ export class Container
 }
 
 /**
+ * Options for {@link ContainerAlpha.serializeV2}.
+ * @legacy @alpha
+ */
+export interface ContainerSerializationOptions {
+	/**
+	 * Whether to include pending local changes and the session state needed to replay them in an attached container.
+	 * When `false`, the result contains only sequenced state and can safely be used to load multiple containers.
+	 * When `true`, all restrictions documented on {@link IContainer.getPendingLocalState} apply.
+	 *
+	 * Changes made to detached containers are considered immediately acked,
+	 * thus the returned serialized state is unaffected by this option (and does not have those restrictions).
+	 */
+	readonly includeLocalChanges: boolean;
+}
+
+/**
  * IContainer interface that includes experimental features still under development.
  *
  * @remarks
  * For `getPendingLocalState`, prefer
  * {@link @fluidframework/container-definitions#IContainer.getPendingLocalState | IContainer.getPendingLocalState}
- * on the `@legacy @beta` surface. This interface is retained for callers that require the
+ * on the `@legacy @beta` surface. The `getPendingLocalState` redeclaration is retained for callers that require the
  * typed-required (non-optional) shape and will be removed in a future breaking release once
  * `IContainer.getPendingLocalState` is made required.
  *
@@ -2710,6 +2750,39 @@ export interface ContainerAlpha extends IContainer {
 	 * @returns serialized blob that can be passed to Loader.resolve()
 	 */
 	getPendingLocalState(): Promise<string>;
+
+	/**
+	 * Serialize an attached container or a detached draft for later loading.
+	 *
+	 * @param options - Controls whether to include unsequenced local changes in attached containers.
+	 * @returns An opaque serialized state string. Do not inspect or modify its contents.
+	 *
+	 * @remarks
+	 * The container must be open and not disposed. Serialization while attaching is not currently supported.
+	 * Violating these requirements throws `UsageError`.
+	 *
+	 * For detached containers, this method captures the full current state, regardless of `includeLocalChanges`.
+	 * The result can safely create multiple independent detached containers through
+	 * {@link @fluidframework/container-definitions#IHostLoader.rehydrateDetachedContainerFromSnapshot}
+	 * or `rehydrateDetachedContainer` from `@fluidframework/container-loader`.
+	 *
+	 * For attached containers, pending-state capture must be enabled when the container is created or loaded:
+	 * the client must be interactive, and the `Fluid.Container.enableOfflineFull` configuration flag
+	 * must not be `false` (the flag defaults to `true`).
+	 * Otherwise, this method throws `UsageError`.
+	 *
+	 * The serialized state can be used to load a new container using {@link ILoader.resolve} or `loadExistingContainer` from
+	 * `@fluidframework/container-loader`.
+	 * With `includeLocalChanges: false`, the result captures only sequenced state.
+	 * Unsequenced operations, pending attachment blobs, and session-specific runtime state are omitted.
+	 * The original container is not modified and can continue editing.
+	 * The result can safely load multiple independent instances of the same document, including
+	 * frozen containers at the captured state.
+	 *
+	 * With `includeLocalChanges: true`, this method has the same behavior and reuse restrictions as
+	 * {@link IContainer.getPendingLocalState}. Reusing such state can cause document corruption.
+	 */
+	serializeV2(options: ContainerSerializationOptions): Promise<string>;
 }
 
 /**

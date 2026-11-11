@@ -27,7 +27,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { Container } from "../container.js";
+import { asLegacyAlpha, Container } from "../container.js";
 import { Loader } from "../loader.js";
 import type { IPendingDetachedContainerState } from "../serializedStateManager.js";
 
@@ -45,6 +45,44 @@ const documentServiceFactoryFailProxy = failSometimeProxy<
 });
 
 describe("loader unit test", () => {
+	for (const includeLocalChanges of [true, false]) {
+		it(`serializeV2 captures detached drafts but rejects attaching containers, includeLocalChanges: ${includeLocalChanges}`, async () => {
+			const loader = new Loader({
+				codeLoader: createTestCodeLoaderProxy(),
+				documentServiceFactory: documentServiceFactoryFailProxy,
+				urlResolver: failProxy(),
+				configProvider: {
+					getRawConfig: (name): ConfigTypes => {
+						if (name === "Fluid.Container.DisableCloseOnAttachFailure") {
+							return true;
+						}
+						return name === "Fluid.Container.enableOfflineFull" ? false : undefined;
+					},
+				},
+			});
+			const detached = asLegacyAlpha(
+				await loader.createDetachedContainer({ package: "none" }),
+			);
+			const state = await detached.serializeV2({ includeLocalChanges });
+			const parsed = JSON.parse(state) as IPendingDetachedContainerState;
+			assert.equal(parsed.attached, false);
+			assert.equal(parsed.pendingRuntimeState, undefined);
+			const first = await loader.rehydrateDetachedContainerFromSnapshot(state);
+			const second = await loader.rehydrateDetachedContainerFromSnapshot(state);
+			assert.notEqual(first, second);
+			assert.equal(first.attachState, AttachState.Detached);
+			assert.equal(second.attachState, AttachState.Detached);
+			assert.doesNotThrow(() => detached.serialize());
+			await assert.rejects(detached.attach({ url: "none" }));
+			assert.equal(detached.attachState, AttachState.Attaching);
+			assert.equal(detached.closed, false);
+			await assert.rejects(
+				detached.serializeV2({ includeLocalChanges }),
+				/Container must be detached or attached, open, and not disposed/,
+			);
+		});
+	}
+
 	it("rehydrateDetachedContainerFromSnapshot with invalid format", async () => {
 		const loader = new Loader({
 			codeLoader: failProxy(),
