@@ -115,9 +115,7 @@ describe("EphemeralService", () => {
 					id === undefined ? client.createContainer(kind) : client.loadContainer(id, kind),
 					/Application view failed/,
 				);
-				if (phase === "create") {
-					assert.equal(dispose.mock.callCount(), 1, "The failed runtime must be disposed");
-				}
+				assert.equal(dispose.mock.callCount(), 1, "The failed runtime must be disposed");
 				assert.equal(
 					events.filter(
 						(event) =>

@@ -674,6 +674,7 @@ export class EphemeralServiceContainer<TData>
 		} catch (error) {
 			// Entry-point initialization can fail before the service starts tracking this container.
 			container.close();
+			container.dispose();
 			throw error;
 		}
 	}
@@ -707,6 +708,7 @@ export class EphemeralServiceContainer<TData>
 			);
 		} catch (error) {
 			containerInner.close();
+			containerInner.dispose();
 			throw error;
 		}
 		assert(
