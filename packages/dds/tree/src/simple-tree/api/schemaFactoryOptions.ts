@@ -14,7 +14,7 @@ import type { NodeSchemaMetadata } from "../core/index.js";
  */
 export interface ObjectSchemaOptions {
 	/**
-	 * Allow nodes typed with this object node schema to contain optional fields that are not present in the schema declaration.
+	 * Whether object nodes may contain optional fields not declared in this schema.
 	 *
 	 * @remarks
 	 * When you add optional fields to an application schema, older application versions may still need to collaborate on the same documents.
