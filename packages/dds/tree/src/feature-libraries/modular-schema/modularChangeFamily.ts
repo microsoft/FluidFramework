@@ -131,6 +131,7 @@ import {
 	debugOnlyChangesetValidator,
 	cloneRootTable,
 	newFieldIdKeyBTree,
+	normalizeFieldIdOpt,
 } from "./modularChangeUtils.js";
 import { invertModularChange } from "./invert.js";
 import { pruneChangeset } from "./prune.js";
@@ -1230,17 +1231,22 @@ export class ModularChangeFamily
 			).value;
 
 			if (attachField === undefined) {
-				const baseDetachLocation = table.baseChange.rootNodes.detachLocations.getFirst(
-					parentBase.root,
-					1,
-				).value;
+				const baseDetachLocation = normalizeFieldIdOpt(
+					table.baseChange.rootNodes.detachLocations.getFirst(parentBase.root, 1).value,
+					table.baseChange.nodeAliases,
+				);
+
+				const rebasedDetachLocation =
+					baseDetachLocation === undefined
+						? undefined
+						: rebasedFieldIdFromBaseId(table, baseDetachLocation);
 
 				assignRootChange(
 					table.rebasedRootNodes,
 					table.rebasedNodeToParent,
 					renamedRoot,
 					baseNodeId,
-					baseDetachLocation,
+					rebasedDetachLocation,
 					table.rebaseVersion,
 				);
 
