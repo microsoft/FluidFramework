@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { rootFieldKey, type UpPath } from "../../../core/index.js";
-import { TreeAlpha, TreeBeta } from "../../../shared-tree/index.js";
+import { TreeBeta } from "../../../shared-tree/index.js";
 import {
 	TEST_activeBufferCount,
 	getKernel,
@@ -24,7 +24,7 @@ import {
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
-import { getView } from "../../utils.js";
+import { TestTreeProviderLite, getView } from "../../utils.js";
 import { describeHydration, hydrate } from "../utils.js";
 
 describe("simple-tree proxies", () => {
@@ -148,7 +148,7 @@ describe("simple-tree proxies", () => {
 				if (this.members.includes(Leaf)) {
 					leafContexts.push(this);
 				}
-				return descriptor.get?.call(this);
+				return descriptor.get?.call(this) as unknown;
 			},
 		});
 		try {
@@ -167,9 +167,15 @@ describe("simple-tree proxies", () => {
 		}
 	});
 	it("a node created hydrated does not build definitions for its schema's component", () => {
-		const factory = new SchemaFactory("hydratedDefinitions");
-		class Leaf extends factory.object("leaf", { n: factory.number }) {}
-		class Root extends factory.object("root", { leaf: factory.optional(Leaf) }) {}
+		function makeSchema() {
+			const factory = new SchemaFactory("hydratedDefinitions");
+			class Leaf extends factory.object("leaf", { n: factory.number }) {}
+			class Root extends factory.object("root", { leaf: Leaf }) {}
+			return { Leaf, Root };
+		}
+		// The writer's classes create the content, so the reader's classes are first used to read it: hydrated.
+		const writer = makeSchema();
+		const reader = makeSchema();
 
 		const descriptor =
 			Object.getOwnPropertyDescriptor(SchemaComponent.prototype, "definitions") ??
@@ -178,20 +184,25 @@ describe("simple-tree proxies", () => {
 		Object.defineProperty(SchemaComponent.prototype, "definitions", {
 			...descriptor,
 			get(this: SchemaComponent) {
-				if (this.members.includes(Leaf)) {
+				if (this.members.includes(reader.Leaf)) {
 					leafDefinitions.push(this);
 				}
-				return descriptor.get?.call(this);
+				return descriptor.get?.call(this) as unknown;
 			},
 		});
 		try {
-			const view = getView(new TreeViewConfiguration({ schema: Root }));
-			view.initialize({});
-			// Verbose content is built in the tree without constructing a leaf, so reading it is the leaf class's first use.
-			TreeAlpha.setVerbose(view.root, "leaf", { type: Leaf.identifier, fields: { n: 1 } });
+			const provider = new TestTreeProviderLite(2);
+			const writerView = provider.trees[0].viewWith(
+				new TreeViewConfiguration({ schema: writer.Root }),
+			);
+			writerView.initialize(new writer.Root({ leaf: new writer.Leaf({ n: 1 }) }));
+			provider.synchronizeMessages();
+			// The reader's view schema, which includes the leaf's, is validated as a whole.
+			const readerView = provider.trees[1].viewWith(
+				new TreeViewConfiguration({ schema: reader.Root }),
+			);
 			leafDefinitions.length = 0;
-			// The view's schema, which includes the leaf's, was validated as a whole.
-			assert.equal(view.root.leaf?.n, 1);
+			assert.equal(readerView.root.leaf.n, 1);
 			assert.deepEqual(leafDefinitions, []);
 		} finally {
 			Object.defineProperty(SchemaComponent.prototype, "definitions", descriptor);
@@ -206,7 +217,7 @@ describe("simple-tree proxies", () => {
 		class Holder extends factory.object("holder", { a: A, b: B }) {}
 		assert.throws(
 			() => new Holder({ a: new A({ n: 1 }), b: new B({ s: "x" }) }),
-			(error: Error) => /identifier/.test(error.message),
+			(error: Error) => error.message.includes("identifier"),
 		);
 	});
 });
