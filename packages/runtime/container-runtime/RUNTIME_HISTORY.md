@@ -30,7 +30,9 @@ For eligible new documents, require `explicitSchemaControl: true` and publish bo
 Readers, writers, and summarizers must validate it before processing or summarizing the document; an unsupported runtime must fail rather than silently drop `.history`.
 Deployment saturation remains necessary, but is not the enforcement mechanism.
 
-For existing enabled documents, derive the session's history requirement from the persisted schema, not the session's desired features.
+Set `desiredSchema.runtime.runtimeHistory` from rollout policy only when `existing === false`.
+For loaded documents, inherit the persisted value, including absence; a rollout flag must not enable an existing non-enabled document.
+Reject schema-change ops that introduce or remove this creation-only marker.
 Preserve `runtimeHistory: true` in session, future, and summarized schemas using the sticky `TrueOrUndefinedMax` merge pattern already used for `explicitSchemaControl`, not ordinary opt-in feature intersection.
 Reject history-enabled schemas without `explicitSchemaControl: true`; never use legacy desired-schema serialization for them.
 
@@ -356,6 +358,7 @@ These are implementation and service validation requirements, not tests implemen
 - Verify unsupported readers/writers/summarizers reject the sticky document schema, rollout/UI kill switches preserve existing archives, and unsafe maintenance failure cannot publish a history-dropping summary.
   Load an enabled document with the rollout flag off and local feature options unset, including `explicitSchemaControl`; it must still extend history or fail before publication, never omit `.history` or its schema marker.
   Reject history-enabled schemas missing `explicitSchemaControl: true`, and verify rollout-disabled new documents remain unenabled.
+  Open an existing non-enabled document with rollout enabled and verify it stays non-enabled; reject schema-change ops that introduce or remove the marker.
   Test authorized disable/purge, stale and in-flight proposals, takeover, cache invalidation, no post-purge recovery from old op tails, fresh-epoch resumption, idle-file cleanup, and legal-hold/deletion-status handling.
   Validate compliance export covers the retained graph and privacy projections preserve replay.
 - Capture string-valued protocol proposals before in-place parsing, then replay them with joins/leaves and normal runtime ops.
