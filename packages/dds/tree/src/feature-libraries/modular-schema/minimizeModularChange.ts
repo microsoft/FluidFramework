@@ -38,7 +38,7 @@ import {
 import type { FlexFieldKind } from "./fieldKind.js";
 import { filterEdits } from "./filterEdits.js";
 import { invertModularChange } from "./invert.js";
-import { intoDelta } from "./modularChangeFamily.js";
+import { intoDelta } from "./modularChangeDelta.js";
 import type {
 	FieldChange,
 	FieldChangeMap,

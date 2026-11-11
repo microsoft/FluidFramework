@@ -67,7 +67,6 @@ import type {
 	FieldKindConfigurationEntry,
 } from "./fieldKindConfiguration.js";
 import { genericFieldKind } from "./genericFieldKind.js";
-import { newFieldIdKeyBTree } from "./modularChangeFamily.js";
 import type {
 	EncodedBuilds,
 	EncodedBuildsArray,
@@ -92,14 +91,15 @@ import {
 import {
 	type FieldIdKey,
 	addNodeRename,
-	areDeltaEquivalent,
 	fieldKindsFromConfiguration,
 	getFirstAttachField,
 	getFirstDetachField,
 	isChangesetValid,
+	newFieldIdKeyBTree,
 	newRootTable,
 	normalizeFieldId,
 } from "./modularChangeUtils.js";
+import { areDeltaEquivalent } from "./modularChangeDelta.js";
 
 type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,

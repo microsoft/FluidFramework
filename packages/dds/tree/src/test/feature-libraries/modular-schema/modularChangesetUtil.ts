@@ -38,13 +38,13 @@ import {
 	type NodeId,
 	type TreeChunk,
 } from "../../../feature-libraries/index.js";
-import {
-	cloneRootTable,
-	type RenameDescription,
+import type {
+	RenameDescription,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
 	addNodeRename,
+	cloneRootTable,
 	getChangeHandler,
 	newRootTable,
 	normalizeChangeset,
