@@ -14,6 +14,7 @@ import {
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
+	EmptyKey,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	type MapTree,
@@ -195,6 +196,7 @@ describe("FlexTree navigation benchmarks", () => {
 						"array edits",
 						"parent and key",
 						"cached field",
+						"sequence traversal",
 					] as const) {
 						benchmarkIt({
 							title: `depth ${depth} ${operation}`,
@@ -247,6 +249,15 @@ describe("FlexTree navigation benchmarks", () => {
 													assert.equal(inner.getBoxed(brand("value")), field);
 												};
 											}
+											case "sequence traversal": {
+												const sequence = getInnerNode(items).getBoxed(EmptyKey);
+												assert(sequence.is(FieldKinds.sequence));
+												return () => {
+													const values = sequence.map((child) => child);
+													assert.equal(values.length, 3);
+													assert.equal(values[1], 1);
+												};
+											}
 											default: {
 												unreachableCase(operation);
 											}
@@ -297,7 +308,12 @@ describe("FlexTree navigation benchmarks", () => {
 				];
 
 				for (const adapter of adapters) {
-					for (const operation of ["Read leaf", "Read missing", "Key churn"] as const) {
+					for (const operation of [
+						"Read leaf",
+						"Read missing",
+						"Box missing",
+						"Key churn",
+					] as const) {
 						benchmarkIt({
 							title: `${adapter.name} ${operation}`,
 							type: BenchmarkType.Measurement,
@@ -324,6 +340,13 @@ describe("FlexTree navigation benchmarks", () => {
 												}
 												case "Read missing": {
 													assert.equal(access.read("missing"), undefined);
+													break;
+												}
+												case "Box missing": {
+													assert.equal(
+														getInnerNode(access.node).getBoxed(brand("missing")).length,
+														0,
+													);
 													break;
 												}
 												case "Key churn": {

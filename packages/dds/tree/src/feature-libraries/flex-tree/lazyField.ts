@@ -198,6 +198,59 @@ function getEditor(context: Context): IDefaultEditBuilder<ITreeCursorSynchronous
 }
 
 /**
+ * Creates an optional-field editor that validates and resolves the field's path on each edit.
+ */
+function makeOptionalFieldEditor(
+	field: LazyField,
+): OptionalFieldEditBuilder<ExclusiveMapTree> {
+	return {
+		set: (newContent, wasEmpty) => {
+			const path = field.getFieldPathForEditing();
+			getEditor(field.context)
+				.optionalField(path)
+				.set(
+					newContent === undefined ? undefined : cursorForMapTreeField([newContent]),
+					wasEmpty,
+				);
+		},
+	};
+}
+
+/**
+ * Creates a single-child editor that validates and resolves the field's path on each edit.
+ */
+function makeValueFieldEditor(field: LazyField): ValueFieldEditBuilder<FlexibleNodeContent> {
+	return {
+		set: (newContent) => {
+			const path = field.getFieldPathForEditing();
+			getEditor(field.context)
+				.valueField(path)
+				.set(cursorForMapTreeField([newContent]));
+		},
+	};
+}
+
+/**
+ * Creates a sequence editor that validates and resolves the field's path on each edit.
+ */
+function makeSequenceFieldEditor(
+	field: LazyField,
+): SequenceFieldEditBuilder<FlexibleFieldContent> {
+	return {
+		insert: (index, newContent) => {
+			const path = field.getFieldPathForEditing();
+			getEditor(field.context)
+				.sequenceField(path)
+				.insert(index, cursorForMapTreeField(newContent));
+		},
+		remove: (index, count) => {
+			const path = field.getFieldPathForEditing();
+			getEditor(field.context).sequenceField(path).remove(index, count);
+		},
+	};
+}
+
+/**
  * A hydrated field identified by a containing node and field key.
  * @remarks
  * This field owns no persistent cursor, anchor, event subscription, or context registration.
@@ -367,17 +420,7 @@ class NodeBackedOptionalField extends NodeBackedCursorField implements FlexTreeO
 	/**
 	 * Replaces or clears this field's content. The field must be in the document.
 	 */
-	public readonly editor: OptionalFieldEditBuilder<ExclusiveMapTree> = {
-		set: (newContent, wasEmpty) => {
-			const path = this.getFieldPathForEditing();
-			getEditor(this.context)
-				.optionalField(path)
-				.set(
-					newContent === undefined ? undefined : cursorForMapTreeField([newContent]),
-					wasEmpty,
-				);
-		},
-	};
+	public readonly editor = makeOptionalFieldEditor(this);
 }
 
 /**
@@ -412,14 +455,7 @@ class NodeBackedValueField extends NodeBackedCursorField implements FlexTreeRequ
 	/**
 	 * Replaces this field's child. The field must be in the document.
 	 */
-	public readonly editor: ValueFieldEditBuilder<FlexibleNodeContent> = {
-		set: (newContent) => {
-			const path = this.getFieldPathForEditing();
-			getEditor(this.context)
-				.valueField(path)
-				.set(cursorForMapTreeField([newContent]));
-		},
-	};
+	public readonly editor = makeValueFieldEditor(this);
 }
 
 /**
@@ -442,18 +478,7 @@ class NodeBackedSequenceField extends NodeBackedCursorField implements FlexTreeS
 		);
 	}
 
-	public readonly editor: SequenceFieldEditBuilder<FlexibleFieldContent> = {
-		insert: (index, newContent) => {
-			const path = this.getFieldPathForEditing();
-			getEditor(this.context)
-				.sequenceField(path)
-				.insert(index, cursorForMapTreeField(newContent));
-		},
-		remove: (index, count) => {
-			const path = this.getFieldPathForEditing();
-			getEditor(this.context).sequenceField(path).remove(index, count);
-		},
-	};
+	public readonly editor = makeSequenceFieldEditor(this);
 }
 
 /**
@@ -791,22 +816,7 @@ export class LazySequence extends AnchoredField implements FlexTreeSequenceField
 		return this.map((x) => x);
 	}
 
-	public editor: SequenceFieldEditBuilder<FlexibleFieldContent> = {
-		insert: (index, newContent) => {
-			this.#sequenceEditor().insert(index, cursorForMapTreeField(newContent));
-		},
-		remove: (index, count) => {
-			this.#sequenceEditor().remove(index, count);
-		},
-	};
-
-	/**
-	 * Gets a sequence editor at this field's current in-document path.
-	 */
-	#sequenceEditor(): SequenceFieldEditBuilder<ITreeCursorSynchronous> {
-		const fieldPath = this.getFieldPathForEditing();
-		return getEditor(this.context).sequenceField(fieldPath);
-	}
+	public editor = makeSequenceFieldEditor(this);
 }
 
 /**
@@ -817,20 +827,7 @@ export class LazySequence extends AnchoredField implements FlexTreeSequenceField
  * This implementation also supports detached fields, which have no containing node from which to borrow navigation resources.
  */
 export class LazyValueField extends AnchoredField implements FlexTreeRequiredField {
-	public editor: ValueFieldEditBuilder<FlexibleNodeContent> = {
-		set: (newContent) => {
-			this.#valueFieldEditor().set(cursorForMapTreeField([newContent]));
-		},
-	};
-
-	/**
-	 * Gets a single-child editor at this field's current in-document path.
-	 */
-	#valueFieldEditor(): ValueFieldEditBuilder<ITreeCursorSynchronous> {
-		const fieldPath = this.getFieldPathForEditing();
-		const fieldEditor = getEditor(this.context).valueField(fieldPath);
-		return fieldEditor;
-	}
+	public editor = makeValueFieldEditor(this);
 
 	public get content(): FlexTreeUnknownUnboxed {
 		return this.atIndex(0);
@@ -845,23 +842,7 @@ export class LazyValueField extends AnchoredField implements FlexTreeRequiredFie
  * This implementation also supports detached fields, which have no containing node from which to borrow navigation resources.
  */
 export class LazyOptionalField extends AnchoredField implements FlexTreeOptionalField {
-	public editor: OptionalFieldEditBuilder<ExclusiveMapTree> = {
-		set: (newContent, wasEmpty) => {
-			this.#optionalEditor().set(
-				newContent === undefined ? newContent : cursorForMapTreeField([newContent]),
-				wasEmpty,
-			);
-		},
-	};
-
-	/**
-	 * Gets an optional-field editor at this field's current in-document path.
-	 */
-	#optionalEditor(): OptionalFieldEditBuilder<ITreeCursorSynchronous> {
-		const fieldPath = this.getFieldPathForEditing();
-		const fieldEditor = getEditor(this.context).optionalField(fieldPath);
-		return fieldEditor;
-	}
+	public editor = makeOptionalFieldEditor(this);
 
 	public get content(): FlexTreeUnknownUnboxed | undefined {
 		return this.length === 0 ? undefined : this.atIndex(0);
@@ -885,19 +866,16 @@ type Builder = new (
  * Constructors for fields that own navigation resources, not all field implementations.
  * Use {@link makeField} to build fields; for fields within nodes, it delegates implementation selection and caching to the parent node.
  */
-const builderList: [FieldKindIdentifier, Builder][] = [
+const kindToClass: ReadonlyMap<FieldKindIdentifier, Builder> = new Map<
+	FieldKindIdentifier,
+	Builder
+>([
 	[FieldKinds.forbidden.identifier, LazyForbiddenField],
 	[FieldKinds.optional.identifier, LazyOptionalField],
 	[FieldKinds.sequence.identifier, LazySequence],
 	[FieldKinds.required.identifier, LazyValueField],
 	[FieldKinds.identifier.identifier, LazyValueField],
-];
-
-/**
- * Lookup for the resource-owning constructors in {@link builderList}.
- * Use {@link makeField} to build fields; for fields within nodes, it delegates implementation selection and caching to the parent node.
- */
-const kindToClass: ReadonlyMap<FieldKindIdentifier, Builder> = new Map(builderList);
+]);
 
 /**
  * Reads the first child of a field, unboxing leaf nodes.
