@@ -554,15 +554,16 @@ export interface ICaptureFullContainerStateProps {
  * omitted. Reference-only state requires live storage during load and cannot be
  * used with the fully offline form of {@link loadFrozenContainerFromPendingState}.
  *
- * Structural contents include unreferenced data stores and their DDSs that are
- * still present in the snapshot. Saved or future ops can reference these stores
- * again, so their contents must be retained just as they are in a live session.
+ * In `"inline"` mode, structural contents include unreferenced data stores and
+ * their DDSs that are still present in the snapshot. Saved or future ops can
+ * reference these stores again, so their contents must be retained just as they
+ * are in a live session.
  * The snapshot's `unreferenced` flags remain metadata, not capture filters.
  * Unreferenced attachment blobs are also retained, since referencing their
  * owning data store again does not produce a new BlobAttach op.
- * Tombstoned or deleted attachment local IDs are excluded, but eligible aliases
- * can retain the same payload. Storage-ID identity aliases are kept for legacy
- * handles, even when their non-identity aliases are excluded.
+ * Tombstoned or deleted attachment blobs are generally excluded, but their
+ * contents may still be captured when the same blob remains reachable another
+ * way, so do not rely on capture to remove them.
  * When the snapshot has no GC tree (GC disabled or pre-GC document), attachment
  * filtering is not applied.
  *
