@@ -101,7 +101,8 @@ const syntheticDetachedNodeId: DeltaDetachedNodeId = { minor: 0 };
 /**
  * Creates an unhydrated node with the implementation selected by its stored schema.
  * @param data - The node's type and value, consistent with the context's schema.
- * A defined value identifies a leaf, including falsy values and null.
+ * A value other than `undefined` identifies a leaf and selects a construction path that skips schema lookup.
+ * This includes `false`, `0`, `""`, and `null`, so the test must not rely on truthiness.
  * @param fields - The node's initial fields, whose ownership transfers to the new node.
  * The constructor assigns their parent to the new node, so they must not belong to another node.
  * Leaves must have no fields.

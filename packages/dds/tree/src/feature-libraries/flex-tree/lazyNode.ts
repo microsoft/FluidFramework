@@ -105,8 +105,7 @@ export abstract class LazyTreeNode
 	/**
 	 * Node-owned cache of field instances, read directly during field lookup.
 	 * @remarks
-	 * {@link LazyObjectNode} retains fields that own cursors and anchors until disposal.
-	 * This optimization caches only keys declared by the stored object schema.
+	 * {@link LazyObjectNode} caches fields that own cursors and anchors only for keys declared by its stored object schema, retaining them until disposal.
 	 * Undeclared object fields borrow the node's resources and are not cached.
 	 * {@link LazyGeneralNode} works for every stored schema and caches only populated fields,
 	 * evicting them when they become empty.
@@ -132,6 +131,8 @@ export abstract class LazyTreeNode
 	 * The new instance retains this schema rather than refreshing it after schema changes; see {@link Context} for invalidation requirements.
 	 * @remarks
 	 * Prefer {@link getOrCreateHydratedFlexTreeNode}, which reuses existing node instances and selects the schema-dependent implementation.
+	 * This constructor provides shared initialization for the node implementations created by that factory.
+	 * Direct subclass construction is useful when deliberately selecting an implementation, such as testing {@link LazyGeneralNode} with object schemas instead of using {@link LazyObjectNode}.
 	 */
 	public constructor(
 		context: Context,

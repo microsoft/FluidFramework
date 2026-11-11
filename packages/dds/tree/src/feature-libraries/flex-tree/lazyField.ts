@@ -152,7 +152,8 @@ export abstract class LazyField extends LazyEntity implements FlexTreeField {
 	 * {@inheritDoc FlexTreeField.getFieldPath}
 	 * @privateRemarks
 	 * Returns an anchor-derived path after validating the field's lifetime.
-	 * The path must not be retained across edits; detached fields have no parent node.
+	 * The path must not be retained across edits.
+	 * For detached fields, the returned path's `parent` is `undefined` because there is no containing node.
 	 */
 	public abstract getFieldPath(): { parent: AnchorNode | undefined; field: FieldKey };
 
@@ -343,8 +344,9 @@ export class UncachedForbiddenField extends NodeBackedField {
 abstract class NodeBackedCursorField extends NodeBackedField {
 	/**
 	 * Reads this field using the parent node's cursor, restoring "nodes" mode afterward.
-	 * @param read - A synchronous callback that must leave the cursor on this field,
-	 * must not retain it, and must not edit the tree or access this node through another API while it is borrowed.
+	 * @param read - A synchronous callback that reads from the supplied cursor, positioned on this field, and returns the result of the read.
+	 * It must leave the cursor on this field, must not retain it, and must not edit the tree or access this node through another API while it is borrowed.
+	 * @returns The result returned by `read`.
 	 */
 	protected withCursor<T>(read: (cursor: ITreeSubscriptionCursor) => T): T {
 		const cursor = this.parentNode.cursor;
@@ -424,14 +426,14 @@ class NodeBackedOptionalField extends NodeBackedCursorField implements FlexTreeO
 }
 
 /**
- * A required or identifier field that reads its single child using the containing node's cursor.
+ * A {@link FieldKinds.required | required} or {@link FieldKinds.identifier | identifier} field that reads its single child using the containing node's cursor.
  */
 class NodeBackedValueField extends NodeBackedCursorField implements FlexTreeRequiredField {
 	/**
 	 * Creates a single-child field that borrows its parent's navigation resources.
 	 * @param parent - The containing node.
 	 * @param key - The field key on that node.
-	 * @param kind - The required or identifier field kind, matching the parent's stored schema at `key`.
+	 * @param kind - The {@link FieldKinds.required | required} or {@link FieldKinds.identifier | identifier} field kind, matching the parent's stored schema at `key`.
 	 */
 	public constructor(
 		parent: LazyTreeNode,
@@ -518,7 +520,7 @@ export function makeNodeBackedField(
  * A hydrated field with its own persistent cursor, anchor, and disposal registration.
  * @remarks
  * Supports root fields as well as fields within nodes.
- * The optimization for stored object schemas caches these field instances for declared keys, including empty fields.
+ * {@link LazyObjectNode} caches these field instances for keys declared by its stored object schema, including empty fields.
  * This retains their navigation resources for repeated access.
  * Resource management is composed rather than inherited so all hydrated fields share {@link LazyField}.
  */
@@ -820,7 +822,7 @@ export class LazySequence extends AnchoredField implements FlexTreeSequenceField
 }
 
 /**
- * A required or identifier field with its own cursor and anchor.
+ * A {@link FieldKinds.required | required} or {@link FieldKinds.identifier | identifier} field with its own cursor and anchor.
  * @remarks
  * This is a specialized implementation of {@link NodeBackedValueField} for declared fields of object nodes:
  * {@link NodeBackedValueField} also supports these fields, but this implementation should have faster content access by retaining its own cursor.
