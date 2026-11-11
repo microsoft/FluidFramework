@@ -861,7 +861,29 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
  */
 export interface FluidDataStoreContextInternal
 	extends IFluidDataStoreContext,
-		ContainerExtensionProvider {}
+		ContainerExtensionProvider {
+	/**
+	 * Present only when the document was created with independent DDS collection enabled.
+	 */
+	readonly channelGC?: ChannelGC;
+}
+
+/**
+ * Connects DDS access to the container's existing GC enforcement.
+ * @internal
+ */
+export interface ChannelGC {
+	isDeleted(path: string): boolean;
+	nodeUpdated(path: string, reason: "Loaded" | "Changed", request?: IRequest): void;
+}
+
+/**
+ * Data store operations required by independent DDS collection.
+ * @internal
+ */
+export interface FluidDataStoreChannelInternal extends IFluidDataStoreChannel {
+	deleteSweepReadyNodes(routes: readonly string[]): void;
+}
 
 /**
  * @legacy @beta

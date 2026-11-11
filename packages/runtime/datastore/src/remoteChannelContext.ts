@@ -27,6 +27,7 @@ import { dataStoreLoadTelemetryProps } from "@fluidframework/runtime-utils/inter
 import {
 	createChildLogger,
 	DataProcessingError,
+	UsageError,
 	tagCodeArtifacts,
 	type TelemetryLoggerExt,
 	ThresholdCounter,
@@ -44,6 +45,7 @@ import type { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
 export class RemoteChannelContext implements IChannelContext {
 	private isLoaded = false;
+	private deleted = false;
 	/**
 	 * Tracks the messages for this channel that are sent while it's not loaded
 	 */
@@ -112,6 +114,7 @@ export class RemoteChannelContext implements IChannelContext {
 					attachMessageType,
 				);
 				channelType = attributes.type;
+				this.verifyNotDeleted();
 
 				const channel = await loadChannel(
 					runtime,
@@ -121,6 +124,7 @@ export class RemoteChannelContext implements IChannelContext {
 					this.subLogger,
 					this.id,
 				);
+				this.verifyNotDeleted();
 
 				assert(
 					this.pendingMessagesState !== undefined,
@@ -183,7 +187,24 @@ export class RemoteChannelContext implements IChannelContext {
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
 	public getChannel(): Promise<IChannel> {
+		this.verifyNotDeleted();
 		return this.channelP;
+	}
+
+	private verifyNotDeleted(): void {
+		if (this.deleted) {
+			throw new UsageError("Channel was deleted by garbage collection", {
+				channelId: this.id,
+			});
+		}
+	}
+
+	public delete(): void {
+		this.deleted = true;
+		this.pendingMessagesState = undefined;
+		if (this.isLoaded) {
+			this.services.deltaConnection.setConnectionState(false);
+		}
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string): void {
@@ -268,6 +289,10 @@ export class RemoteChannelContext implements IChannelContext {
 			telemetryContext,
 			incrementalSummaryContext,
 		);
+		if (!this.summarizerNode.isReferenced()) {
+			summarizeResult.summary.unreferenced = true;
+			summarizeResult.stats.unreferencedBlobSize = summarizeResult.stats.totalBlobSize;
+		}
 		return { ...summarizeResult, id: this.id };
 	}
 
@@ -293,12 +318,6 @@ export class RemoteChannelContext implements IChannelContext {
 	}
 
 	public updateUsedRoutes(usedRoutes: string[]): void {
-		/**
-		 * Currently, DDSes are always considered referenced and are not garbage collected. Update the summarizer node's
-		 * used routes to contain a route to this channel context.
-		 * Once we have GC at DDS level, this will be updated to use the passed usedRoutes. See -
-		 * https://github.com/microsoft/FluidFramework/issues/4611
-		 */
-		this.summarizerNode.updateUsedRoutes([""]);
+		this.summarizerNode.updateUsedRoutes(usedRoutes);
 	}
 }

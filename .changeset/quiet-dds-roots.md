@@ -1,0 +1,18 @@
+---
+"@fluidframework/container-runtime": minor
+"@fluidframework/datastore": minor
+"@fluidframework/runtime-definitions": minor
+"__section": feature
+"__includeInReleaseNotes": false
+---
+Add opt-in garbage collection for anonymous DDSs in new documents
+
+The experimental `gcOptions.enableDDSGC` option enables independent garbage collection of anonymous DDSs when creating a document.
+It is disabled by default, is persisted for the document's lifetime, and cannot upgrade existing documents.
+DDSs created with an explicit ID remain roots of their owning data store.
+DDSs created without an explicit ID remain alive through handle reachability rather than attachment alone.
+An unreachable data store can still be collected together with its named DDSs.
+
+All clients opening an enabled document must include supporting container and data store runtimes from the same Fluid Framework version.
+Deploy supporting code to every client before creating enabled documents and prevent older code from opening them afterward.
+Production enablement also requires validation of nested unreferenced summaries with the storage service and pending-state continuation for unreferenced content.

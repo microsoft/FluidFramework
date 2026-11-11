@@ -21,6 +21,8 @@ export type {
 	AliasResult,
 	CreateChildSummarizerNodeFn,
 	FluidDataStoreContextInternal,
+	ChannelGC,
+	FluidDataStoreChannelInternal,
 	IContainerRuntimeBase,
 	IContainerRuntimeBaseEvents,
 	IDataStore,

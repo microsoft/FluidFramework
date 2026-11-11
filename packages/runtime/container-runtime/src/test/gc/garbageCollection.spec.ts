@@ -363,6 +363,88 @@ describe("Garbage Collection Tests", () => {
 	});
 
 	describe("Tombstone and Sweep", () => {
+		it("sweeps an anonymous DDS independently of its live owner", async () => {
+			const ddsPath = `${nodes[0]}/dds`;
+			defaultGCData = {
+				gcNodes: {
+					"/": [nodes[0]],
+					[nodes[0]]: [],
+					[ddsPath]: [nodes[0]],
+				},
+			};
+			gc = createGarbageCollector({
+				createParams: { gcOptions: { enableDDSGC: true, enableGCSweep: true } },
+			});
+			gc.runtime.getNodeType = (path) =>
+				path === ddsPath ? GCNodeType.SubDataStore : GCNodeType.DataStore;
+			const submitted = spy(gc, "submitMessage");
+			await gc.collectGarbage({});
+			clock.tick(defaultTombstoneTimeoutMs + defaultSweepGracePeriodMs);
+			await gc.collectGarbage({});
+
+			const message = submitted.lastCall.args[0];
+			assert.deepEqual(message.contents, {
+				type: GarbageCollectionMessageType.Sweep,
+				deletedNodeIds: [ddsPath],
+			});
+			gc.processMessages([message.contents], Date.now(), false);
+			assert(gc.isNodeDeleted(ddsPath));
+			assert(!gc.isNodeDeleted(nodes[0]));
+			assert(defaultGCData.gcNodes[nodes[0]] !== undefined);
+		});
+
+		it("omits DDS paths from a sweep message when their owner is also swept", async () => {
+			const ddsPath = `${nodes[0]}/dds`;
+			defaultGCData = {
+				gcNodes: { "/": [], [nodes[0]]: [], [ddsPath]: [nodes[0]] },
+			};
+			gc = createGarbageCollector({
+				createParams: { gcOptions: { enableDDSGC: true, enableGCSweep: true } },
+			});
+			gc.runtime.getNodeType = (path) =>
+				path === ddsPath ? GCNodeType.SubDataStore : GCNodeType.DataStore;
+			const submitted = spy(gc, "submitMessage");
+			await gc.collectGarbage({});
+			clock.tick(defaultTombstoneTimeoutMs + defaultSweepGracePeriodMs);
+			await gc.collectGarbage({});
+
+			const message = submitted.lastCall.args[0];
+			assert.deepEqual(message.contents, {
+				type: GarbageCollectionMessageType.Sweep,
+				deletedNodeIds: [nodes[0]],
+			});
+			gc.processMessages([message.contents], Date.now(), false);
+			assert(gc.isNodeDeleted(ddsPath));
+			assert(gc.isNodeDeleted(nodes[0]));
+		});
+
+		it("enforces DDS tombstones while respecting explicit allowTombstone requests", async () => {
+			const ddsPath = `${nodes[0]}/dds`;
+			defaultGCData = {
+				gcNodes: { "/": [nodes[0]], [nodes[0]]: [], [ddsPath]: [nodes[0]] },
+			};
+			gc = createGarbageCollector({
+				createParams: { gcOptions: { enableDDSGC: true, enableGCSweep: true } },
+				isSummarizerClient: false,
+			});
+			gc.runtime.getNodeType = (path) =>
+				path === ddsPath ? GCNodeType.SubDataStore : GCNodeType.DataStore;
+			await gc.collectGarbage({});
+			clock.tick(defaultTombstoneTimeoutMs);
+			await gc.collectGarbage({});
+
+			const update = {
+				node: { type: GCNodeType.SubDataStore, path: ddsPath },
+				reason: "Loaded" as const,
+				timestampMs: Date.now(),
+			};
+			const garbageCollector = gc;
+			assert.throws(() => garbageCollector.nodeUpdated(update), { message: /tombstoned/ });
+			assert.doesNotThrow(() =>
+				garbageCollector.nodeUpdated({ ...update, headerData: { allowTombstone: true } }),
+			);
+		});
+
 		it("Tombstone then Delete", async () => {
 			// Simple starting reference graph - root and two nodes
 			defaultGCData.gcNodes["/"] = [nodes[0], nodes[1]];

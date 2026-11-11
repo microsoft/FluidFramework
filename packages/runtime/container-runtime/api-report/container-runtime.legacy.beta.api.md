@@ -158,6 +158,7 @@ export interface IFluidDataStoreAttributes2 extends OmitAttributesVersions<IFlui
 // @beta @legacy (undocumented)
 export interface IGCRuntimeOptions {
     [key: string]: any;
+    enableDDSGC?: true;
     enableGCSweep?: true;
     runFullGC?: boolean;
     sessionExpiryTimeoutMs?: number;

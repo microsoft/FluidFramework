@@ -134,6 +134,7 @@ import type {
 	IContainerRuntimeBaseInternal,
 	OldestSupportedClientVersion,
 	ContainerExtensionExpectations,
+	ChannelGC,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -4563,6 +4564,26 @@ export class ContainerRuntime
 		// Use the timestamp of the last message seen by this client as that is server generated. If no messages have
 		// been processed, use the timestamp of the message from the last summary.
 		return this.deltaManager.lastMessage?.timestamp ?? this.messageAtLastSummary?.timestamp;
+	}
+
+	/**
+	 * Connects data store runtimes to independent DDS collection.
+	 */
+	public get channelGC(): ChannelGC | undefined {
+		if (this.garbageCollector.getMetadata().ddsGCEnabled !== true) {
+			return undefined;
+		}
+		return {
+			isDeleted: (path) => this.garbageCollector.isNodeDeleted(path),
+			nodeUpdated: (path, reason, request) =>
+				this.garbageCollector.nodeUpdated({
+					node: { type: GCNodeType.SubDataStore, path },
+					reason,
+					timestampMs: this.getCurrentReferenceTimestampMs(),
+					request: request === undefined ? undefined : { ...request, url: path },
+					headerData: { allowTombstone: request?.headers?.allowTombstone === true },
+				}),
+		};
 	}
 
 	/**

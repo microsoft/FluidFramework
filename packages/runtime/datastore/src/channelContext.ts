@@ -33,9 +33,12 @@ import { ChannelStorageService } from "./channelStorageService.js";
 import type { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
 export const attributesBlobKey = ".attributes";
+export const channelRootBlobKey = ".gcRoot";
 
 export interface IChannelContext {
 	getChannel(): Promise<IChannel>;
+
+	delete(): void;
 
 	setConnectionState(connected: boolean, clientId?: string);
 

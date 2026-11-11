@@ -148,6 +148,11 @@ export function generateGCConfigs(
 		!createParams.isSummarizerClient;
 
 	return {
+		ddsGCEnabled:
+			gcAllowed &&
+			(createParams.existing
+				? createParams.metadata?.ddsGCEnabled === true
+				: createParams.gcOptions.enableDDSGC === true),
 		gcAllowed, // For this document
 		sweepAllowed, // For this document
 		sweepEnabled, // For this session

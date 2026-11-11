@@ -166,6 +166,35 @@ describe("Garbage Collection configurations", () => {
 		clock.restore();
 	});
 
+	describe("DDS collection", () => {
+		it("is disabled by default for new documents", () => {
+			gc = createGcWithPrivateMembers();
+			assert.equal(gc.configs.ddsGCEnabled, false);
+			assert.equal(gc.getMetadata().ddsGCEnabled, undefined);
+		});
+
+		it("persists opt-in when creating a document", () => {
+			gc = createGcWithPrivateMembers(undefined, { enableDDSGC: true });
+			assert.equal(gc.configs.ddsGCEnabled, true);
+			assert.equal(gc.getMetadata().ddsGCEnabled, true);
+		});
+
+		it("cannot enable collection on an existing legacy document", () => {
+			gc = createGcWithPrivateMembers({ gcFeature: stableGCVersion }, { enableDDSGC: true });
+			assert.equal(gc.configs.ddsGCEnabled, false);
+			assert.equal(gc.getMetadata().ddsGCEnabled, undefined);
+		});
+
+		it("retains document opt-in when the loading client does not supply the option", () => {
+			gc = createGcWithPrivateMembers({
+				gcFeature: stableGCVersion,
+				ddsGCEnabled: true,
+			});
+			assert.equal(gc.configs.ddsGCEnabled, true);
+			assert.equal(gc.getMetadata().ddsGCEnabled, true);
+		});
+	});
+
 	describe("Existing container", () => {
 		it("No metadata", () => {
 			gc = createGcWithPrivateMembers({});

@@ -49,6 +49,8 @@ import type {
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
 	FluidDataStoreContextInternal,
+	ChannelGC,
+	FluidDataStoreChannelInternal,
 	FluidDataStoreRegistryEntry,
 	IContainerRuntimeBase,
 	IDataStore,
@@ -330,6 +332,32 @@ export abstract class FluidDataStoreContext
 	 * @deprecated NOT SUPPORTED - hardcoded to return false since it's deprecated.
 	 */
 	public readonly gcTombstoneEnforcementAllowed: boolean = false;
+
+	public get channelGC(): ChannelGC | undefined {
+		return this.parentContext.channelGC;
+	}
+
+	private readonly deletedChannelRoutes = new Set<string>();
+
+	public deleteSweepReadyNodes(routes: readonly string[]): void {
+		for (const route of routes) {
+			this.deletedChannelRoutes.add(route);
+			this.summarizerNode.deleteChild(route.slice(1));
+		}
+		this.summarizerNode.invalidate(this.deltaManager.lastSequenceNumber);
+		if (this.channel !== undefined) {
+			this.deleteChannels(this.channel, routes);
+		}
+	}
+
+	private deleteChannels(channel: IFluidDataStoreChannel, routes: readonly string[]): void {
+		const gcChannel: Partial<FluidDataStoreChannelInternal> = channel;
+		assert(
+			gcChannel.deleteSweepReadyNodes !== undefined,
+			"DDS GC requires a data store runtime that supports channel deletion",
+		);
+		gcChannel.deleteSweepReadyNodes(routes);
+	}
 
 	/**
 	 * If true, this means that this data store context and its children have been removed from the runtime
@@ -1011,6 +1039,9 @@ export abstract class FluidDataStoreContext
 			this.dispose.bind(this),
 			this.mc,
 		);
+		if (this.deletedChannelRoutes.size > 0) {
+			this.deleteChannels(channel, [...this.deletedChannelRoutes]);
+		}
 
 		// And now mark the runtime active
 		this.loaded = true;

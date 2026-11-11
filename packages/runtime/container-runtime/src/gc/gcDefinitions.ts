@@ -131,6 +131,11 @@ export interface IGCMetadata_Deprecated {
  */
 export interface IGCMetadata {
 	/**
+	 * Enables independent DDS collection for the lifetime of a document.
+	 * Absent for documents created before opting in to DDS collection.
+	 */
+	readonly ddsGCEnabled?: true;
+	/**
 	 * The version of the GC code that was run to generate the GC data that is written in the summary.
 	 * If the persisted value doesn't match the current value in the code, saved GC data will be discarded and regenerated from scratch.
 	 * Also, used to determine whether GC is enabled for this container or not:
@@ -466,7 +471,7 @@ export interface IGCNodeUpdatedProps {
 	/**
 	 * Type and path of the updated node
 	 */
-	node: { type: (typeof GCNodeType)["DataStore" | "Blob"]; path: string };
+	node: { type: (typeof GCNodeType)["DataStore" | "SubDataStore" | "Blob"]; path: string };
 	/**
 	 * Whether the node (or a subpath) was loaded or changed.
 	 */
@@ -525,6 +530,17 @@ export interface IGarbageCollectorCreateParams {
  */
 export interface IGCRuntimeOptions {
 	/**
+	 * Enables independent collection of anonymous DDSs in newly created documents.
+	 * DDSs created with an explicit ID remain roots of their owning data store.
+	 *
+	 * @remarks
+	 * Disabled by default and persisted for the document's lifetime.
+	 * Applications must deploy supporting runtime code to all clients before enabling this option.
+	 * This option does not enable DDS collection for existing documents.
+	 * Experimental: production use also requires storage-service validation and preservation of unreferenced content during pending-state capture.
+	 */
+	enableDDSGC?: true;
+	/**
 	 * Flag that if true, will enable the full Sweep Phase of garbage collection for this session,
 	 * where Tombstoned objects are permanently deleted from the container.
 	 *
@@ -567,6 +583,10 @@ export interface IGCRuntimeOptions {
  * The configurations for Garbage Collector that determines what runs and how.
  */
 export interface IGarbageCollectorConfigs {
+	/**
+	 * Whether this document was created with independent DDS collection enabled.
+	 */
+	readonly ddsGCEnabled: boolean;
 	/**
 	 * Tracks if GC is allowed for this document. GC may not be allowed for old documents created pre-GC.
 	 * If GC is allowed for a document, it will always be enabled. It cannot be disabled per session.
