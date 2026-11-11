@@ -60,11 +60,9 @@ describe("Schema Evolution Examples", () => {
 	 * @param view - A readable view whose upgrade is expected to succeed without changing the document.
 	 *
 	 * @remarks
-	 * Synchronize all pending operations before calling this helper.
-	 * Otherwise, an earlier operation could advance the sequence number during this check.
-	 * The helper requests an upgrade and synchronizes the clients.
-	 * It verifies that no schema-change event occurs, no operation is sequenced, and the root object is unchanged.
-	 * Its temporary event listener is removed even if a check fails.
+	 * The helper requests an upgrade and synchronizes the clients to check both local and sequenced effects.
+	 * No schema-change event or sequenced operation should result, and the root object should remain unchanged.
+	 * Synchronize pending operations before calling it so an earlier edit cannot be mistaken for an effect of this upgrade.
 	 */
 	function verifyNoOpUpgrade<TSchema extends ImplicitFieldSchema>(
 		provider: TestTreeProviderLite,
@@ -102,8 +100,8 @@ describe("Schema Evolution Examples", () => {
 	 * @param view - The view whose upgrade must be rejected.
 	 *
 	 * @remarks
-	 * Captures stored data independently of the view so unknown fields are included.
-	 * The rejected call breaks the requesting view; do not use that view or its checkout's public APIs afterward.
+	 * To verify that rejection preserves the entire document, this captures stored data independently of the view, including unknown fields.
+	 * The rejected call also breaks the requesting view, so neither that view nor its checkout's public APIs may be used afterward.
 	 */
 	function verifyRejectedUpgrade<TSchema extends ImplicitFieldSchema>(
 		provider: TestTreeProviderLite,
@@ -406,10 +404,9 @@ describe("Schema Evolution Examples", () => {
 		 * @param options - The participating views, their synchronization provider, and their expected field values.
 		 *
 		 * @remarks
-		 * Both views must permit read/write access and be synchronized before this function is called.
-		 * Their titles must equal `initialTitle`.
-		 * Each expected field map must describe all other exported fields for its view.
-		 * A field listed in only one map must not be exposed as a property of the other view's root.
+		 * Start with synchronized, readable and writable views whose titles both equal `initialTitle`.
+		 * For each view, supply all other exported fields in its expected field map.
+		 * The maps also identify unknown fields: a field listed in only one map must not be exposed as a property of the other view's root.
 		 *
 		 * This function changes the title to `"Edited by reader"`, then to `"Edited by creator"`.
 		 * After each edit, it checks the receiving view's exported data.
@@ -1894,7 +1891,7 @@ describe("Schema Evolution Examples", () => {
 		 * V1 declares `Project.tasks` as an array of tasks, each with optional notes.
 		 * V2 removes `notes` from `Task` and adds an optional `isApproved` field, leaving `Project`'s own fields unchanged.
 		 *
-		 * The upgrade from V1 to V2must succeed only when `Task` allows unknown optional fields, independently of `Project`'s setting.
+		 * The upgrade from V1 to V2 must succeed only when `Task` allows unknown optional fields, independently of `Project`'s setting.
 		 * Verify that edits and newly inserted tasks preserve `notes` for older clients, and that rejected upgrades leave the document unchanged.
 		 */
 		describe("remove a field from objects below the root", () => {

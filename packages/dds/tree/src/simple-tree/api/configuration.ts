@@ -163,17 +163,13 @@ export interface ITreeViewConfigurationAlpha<
 	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
 > extends ITreeViewConfiguration<TSchema> {
 	/**
-	 * Policy selecting new staged permissions when initializing or upgrading a document.
+	 * Policy selecting staged schema upgrades to enable when initializing or upgrading a document.
 	 *
 	 * @remarks
-	 * When initializing a new document, this policy determines which staged allowed types are included and which staged-optional fields are optional.
-	 * Staged allowed types that are not enabled are excluded, and staged-optional fields that are not enabled remain required.
+	 * Use this policy to control which staged upgrades this client may enable, for example based on a feature flag.
+	 * Upgrades preserve changes already enabled at their existing locations, even when this policy does not select them.
 	 *
-	 * When upgrading an existing document, this policy selects newly enabled staged changes.
-	 * The upgrade also keeps each field's existing allowed types and keeps already-optional fields optional, even when the policy does not enable their tokens.
-	 *
-	 * If multiple fields share a staged-upgrade token, preserving an already-enabled change in one field does not enable it in the others.
-	 * Those fields change only if the configured policy enables the token.
+	 * See {@link SchemaStaticsBeta.staged} and {@link SchemaStaticsAlpha.stagedOptional} for what enabling each kind of upgrade permits.
 	 *
 	 * @defaultValue {@link StagedSchemaUpgradePolicyFactory.restrictive}
 	 *
