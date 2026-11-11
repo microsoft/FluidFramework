@@ -21,8 +21,13 @@ Import them from `@fluidframework/tree/alpha`.
 
 ## How It Works
 
-When you define a [staged schema upgrade](./index.mdx#staged-schema-upgrades) (using <ApiLink package="fluid-framework" api="SchemaFactoryBeta.staged">`staged()`</ApiLink> for allowed types or <ApiLink package="fluid-framework" api="SchemaFactoryAlpha.stagedOptional">`stagedOptional()`</ApiLink> for field optionality), the staged parts are excluded from stored schema by default.
-Upgrades of existing documents preserve allowed types and supported optionality already stored at each field, even when the policy does not enable their tokens.
+Defining a [staged schema upgrade](./index.mdx#staged-schema-upgrades) prepares the view to handle a change before the document permits it.
+Use <ApiLink package="fluid-framework" api="SchemaFactoryBeta.staged">`staged()`</ApiLink> to declare a future allowed type or <ApiLink package="fluid-framework" api="SchemaFactoryAlpha.stagedOptional">`stagedOptional()`</ApiLink> to prepare a required field to become optional.
+By default, new documents exclude those types and keep those fields required, so declaring the change does not enable it for writes.
+
+An existing document may already permit the change because another client enabled it.
+Upgrades preserve that document's enabled types and optionality, even when the current client's policy does not enable them.
+The policy therefore controls which new permissions a client may introduce, not which existing permissions it may remove.
 
 With `TreeViewConfigurationAlpha`, you can selectively enable specific staged upgrades at view construction time:
 
@@ -125,7 +130,8 @@ function openDocument(tree, featureFlags) {
 
 ### Step 3: Deploy and Enable
 
-1. **Deploy** the new code. With the feature flag **off**, new documents exclude `RgbColor`, and upgrading a document that does not yet allow it does not add it.
+1. **Deploy** the new code. With the feature flag **off**, clients understand `RgbColor` but do not introduce it into documents.
+    New documents exclude it, and upgrading an existing string-only document leaves it string-only.
 
 2. **Turn on the feature flag.** New views are constructed with `rgbUpgrade` enabled:
 
@@ -168,13 +174,11 @@ const config = new TreeViewConfiguration({ schema: Board });
 ## Understanding Irreversibility
 
 Once a document's stored schema has been upgraded, it cannot be downgraded.
-However, rolling back a feature flag is safe.
-With the feature flag rolled back, new documents and any documents that haven't been upgraded yet will not have the upgrade enabled.
-No opt-in is needed to preserve permissions in documents that were already upgraded.
-Calling `upgradeSchema()` retains their existing allowed types and optional fields while applying any other compatible additions.
+Turning the feature flag off must therefore stop new enablement rather than undo enablement in existing documents.
+With the flag off, this client's policy excludes `RgbColor` from new documents and does not add it to documents that still permit only strings.
+For a document that already permits `RgbColor`, however, `upgradeSchema()` retains that permission while applying any other compatible additions.
 
-Disabling the feature flag prevents this client's policy from introducing the staged change where it is not already enabled; other clients can still enable it.
-This means:
+This makes a feature-flag rollback safe only while the client retains the staged reading support:
 
 - **Clients running the staged code** (Step 1 and above) can still read, edit, and make compatible upgrades to already-upgraded documents.
 - **Clients running older code** (before the staged type was added) **cannot** open upgraded documents. This is why [client saturation](./index.mdx#staged-rollouts) of the staged code is important before enabling the flag.
@@ -183,14 +187,16 @@ Plan your rollout with this in mind: ensure that all active clients have the sta
 
 ### Partially Enabled Tokens
 
-If multiple fields share a token, a document may already permit the change at only some of them.
-For example, an earlier schema may have enabled string priorities at `primaryPriority`, while another schema also declares the same token at `fallbackPriority`.
-Preserving the first field's string support does not enable strings at the second field.
-To enable the remaining locations, select the token explicitly in the policy.
+A token can be used at more than one field, but a stored document may permit its change at only some of them.
+For example, suppose one application version enables string priorities at `primaryPriority`.
+A later version also uses that staged token at `fallbackPriority`, which still permits only numbers in the document.
+With a restrictive policy, upgrading preserves strings at `primaryPriority` without adding them at `fallbackPriority`.
+To introduce strings at the second field, explicitly select the token in the policy and apply the upgrade.
 
-The alpha <ApiLink package="fluid-framework" api="(TreeViewAlpha:interface).isStagedUpgradeEnabled" newApi>`isStagedUpgradeEnabled()`</ApiLink> query reports `"disabled"`, `"partial"`, or `"enabled"` relative to the locations declared by the view.
-Use `"enabled"` when application behavior requires every location associated with the token to support the change.
-Querying status does not perform an upgrade.
+To distinguish these states, the alpha <ApiLink package="fluid-framework" api="(TreeViewAlpha:interface).isStagedUpgradeEnabled" newApi>`isStagedUpgradeEnabled()`</ApiLink> query reports `"disabled"`, `"partial"`, or `"enabled"` across the locations declared by the view.
+The later view in this example reports `"partial"` until both fields permit strings.
+If your application requires the change at every such field, check for `"enabled"` rather than treating `"partial"` as sufficient.
+The query only reports the stored state; it does not perform the upgrade.
 
 ## Best Practices
 
@@ -204,12 +210,13 @@ Querying status does not perform an upgrade.
   Use [testing schema upgrades](./testing-schema-upgrades.mdx) to verify your code handles the upgraded schema correctly before turning on the flag in production.
 
 - **Use `snapshotSchemaCompatibility` tests.**
-    Write <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">`snapshotSchemaCompatibility`</ApiLink> tests to verify compatibility across all schema states in your rollout. Only use schema configurations in production that are covered by these tests.
+    Write <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">`snapshotSchemaCompatibility`</ApiLink> tests to verify compatibility across the view-schema versions in your rollout.
+    Supplement them with the stored-state tests described below.
 
 - **Test the stored states your rollout can produce.**
-  Compatibility snapshots compare versioned view schemas and currently assume restrictive staging.
-  They do not enumerate documents with different combinations of enabled or partially enabled tokens.
-  Add [live-document tests](./testing-schema-upgrades.mdx) for those states, including upgrades by clients whose flags are off.
+  Different feature-flag combinations can produce different stored permissions for the same view schema.
+  Compatibility snapshots currently assume restrictive staging, so they do not exercise every enabled or partially enabled state.
+  Cover those states with [live-document tests](./testing-schema-upgrades.mdx), including upgrades by clients whose flags are off.
 
 ## See Also
 

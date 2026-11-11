@@ -11,8 +11,8 @@ Understanding which types of schema changes are safe versus breaking is crucial 
 Writing a test using <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">`snapshotSchemaCompatibility`</ApiLink> is highly recommended to ensure any schema changes maintain your compatibility requirements.
 Knowledge of the details below will still be needed to design schemas such that the required future changes can be compatible, and to understand any errors detected by the test.
 
-In this guide, [backward compatibility](./index.mdx#backwards-compatibility) (BC) means that a later view can use earlier documents, and [forward compatibility](./index.mdx#forwards-compatibility) (FC) means that an earlier view can use later documents.
-Either direction may require a safe schema upgrade before viewing a document created from another version of the schema.
+The tables below distinguish two directions of compatibility: [backward compatibility](./index.mdx#backwards-compatibility) (BC) lets a later view use earlier documents, while [forward compatibility](./index.mdx#forwards-compatibility) (FC) lets an earlier view use later documents.
+Where viewing requires a schema upgrade, the explanation identifies that extra step; compatibility does not necessarily mean the document can be used as-is.
 
 All the examples below are modifying this schema:
 
@@ -46,8 +46,9 @@ class Note extends factory.object("Note", {
 ```
 
 :::caution
-To ensure forwards compatibility, older views must enable <ApiLink package="fluid-framework" api="ObjectSchemaOptions.allowUnknownOptionalFields">`allowUnknownOptionalFields`</ApiLink> to handle new optional fields.
-The option now defaults to `true`, but verify the settings and library versions used by deployed older clients.
+The table's forwards-compatibility result depends on the older clients, not just the new declaration shown above.
+Those clients must already enable <ApiLink package="fluid-framework" api="ObjectSchemaOptions.allowUnknownOptionalFields">`allowUnknownOptionalFields`</ApiLink> to tolerate the added field.
+Although the option now defaults to `true`, check the settings and library versions of deployed clients before relying on that default.
 
 If it's not already set, then adding a new optional field at the same time as enabling `allowUnknownOptionalFields` is not forwards compatible, since old clients without `allowUnknownOptionalFields` will reject the unknown field.
 In that case, a [staged rollout](./index.mdx#staged-rollouts) is needed: first release a version that enables `allowUnknownOptionalFields`, then add the new field in a subsequent release.
@@ -97,8 +98,9 @@ See [Rolling Out New Allowed Types](./allowed-types-rollout.mdx) for details.
 
 ## Incompatible Changes
 
-The following changes can make a view unable to read or edit content permitted by the document's stored schema.
-Composing a larger stored schema does not make an unsupported view compatible.
+The following changes remove assumptions that existing clients or documents rely on.
+An upgrade can add permissions to the stored schema, but it cannot teach a view to handle a value or missing field that the view no longer supports.
+For that reason, preserving existing content in an upgrade candidate is not enough to make these changes compatible.
 
 ### Removing Required Fields
 
@@ -132,9 +134,8 @@ class Note extends factory.object("Note", {
 Backward compatibility: this change prevents newer clients from opening documents created with the old schema,
 because those documents may not have the `color` field, which such clients are expecting to be populated.
 
-Forward compatibility: this change prevents older clients from opening documents created with the new schema,
-until an upgrade makes `color` optional again.
-Even if the older client can perform that upgrade, the required view cannot safely read historical documents that allow `color` to be absent.
+Forward compatibility: an older view still permits clearing `color`, so it cannot use a document whose stored schema requires that field.
+It may be able to upgrade the document to make `color` optional again, but this does not solve the new view's inability to read historical documents where `color` is absent.
 The change is therefore not safe for a rollout that must continue to support those documents.
 
 ### Changing Field Types
@@ -151,9 +152,9 @@ class Note extends factory.object("Note", {
 Backward compatibility: this change prevents newer clients from opening documents created with the old schema,
 because those documents will use the `string` type for the `id` field, which such clients read and write as `number`.
 
-Forward compatibility: this change prevents older clients from opening documents created with the new schema,
-because those documents permit the `number` type for `id`, which those clients do not support.
-Retaining both types in an upgrade candidate is not sufficient: the requesting view must support both.
+Forward compatibility: older clients expect string `id` values and cannot read the numbers permitted by the new document schema.
+An upgrade that retained both types would preserve existing content, but the older view would still lack number support.
+The upgrade must therefore be rejected rather than treating the larger type set as proof of compatibility.
 
 ### Removing Allowed Types
 
@@ -169,13 +170,9 @@ class Note extends factory.object("Note", {
 Backward compatibility: this change prevents newer clients from opening documents created with the old schema,
 because those documents can use the `number` type for the `color` field, which such clients read and write as `string`.
 
-Forward compatibility: this change prevents older clients from opening documents created with the new schema,
-until an upgrade restores the permission to write numbers to `color`.
-That upgrade can be safe for the older view, but it does not make the narrowed view compatible with existing documents that permit numbers.
-
-This differs from an earlier view that already declares the extra type as staged.
-A staged declaration provides support for that type; removing the declaration entirely does not.
-Compatibility depends on the stored schema, even when every current `color` value happens to be a string.
+Forward compatibility: the older view still allows writing numbers to `color`, so it must upgrade a new string-only document before using it.
+Restoring number support can be safe for that older view, but the resulting document is no longer compatible with the narrowed, string-only view.
+The ability to perform that upgrade therefore does not make the two application versions compatible collaborators.
 
 ## See Also
 
