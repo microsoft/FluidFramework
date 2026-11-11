@@ -1,5 +1,9 @@
 # @fluid-example/app-integration-external-views
 
+## 3.12.0
+
+Dependency updates only.
+
 ## 3.11.0
 
 Dependency updates only.

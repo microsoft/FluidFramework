@@ -98,27 +98,39 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 >({
 	a(shape: Constant, cache): ChunkDecoder {
 		return {
-			decode(decoders, stream): TreeChunk {
+			initialize(): void {},
+			decode(stream): TreeChunk {
 				return new TestChunk2(readStreamNumber(stream));
 			},
 		};
 	},
 	b(shape: StringShape, cache): ChunkDecoder {
 		return {
-			decode(decoders, stream): TreeChunk {
+			initialize(): void {},
+			decode(stream): TreeChunk {
 				return new TestChunk1(shape);
 			},
 		};
 	},
 });
 
-const rootDecoder: ChunkDecoder = {
-	decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
+/**
+ * Test decoder that dispatches using a shape index read from the stream.
+ */
+class RootDecoder implements ChunkDecoder {
+	/**
+	 * Batch-local decoder table supplied during initialization.
+	 */
+	private decoders!: readonly ChunkDecoder[];
+	public initialize(decoders: readonly ChunkDecoder[]): void {
+		this.decoders = decoders;
+	}
+	public decode(stream: StreamCursor): TreeChunk {
 		const shape = readStreamNumber(stream);
-		const decoder = getChecked(decoders, shape);
-		return decoder.decode(decoders, stream);
-	},
-};
+		const decoder = getChecked(this.decoders, shape);
+		return decoder.decode(stream);
+	}
+}
 
 const idDecodingContext = new IdDecodingContext({
 	idCompressor: testIdCompressor,
@@ -167,7 +179,7 @@ describe("chunkDecodingGeneric", () => {
 			idDecodingContext,
 			undefined /* incrementalDecoder */,
 		);
-		const chunks = decode(decoderLibrary, cache, encoded, rootDecoder);
+		const chunks = decode(decoderLibrary, cache, encoded, new RootDecoder());
 		assert(chunks.length === 1);
 		const chunk = chunks[0];
 		assert(chunk instanceof TestChunk2);
@@ -187,7 +199,7 @@ describe("chunkDecodingGeneric", () => {
 			idDecodingContext,
 			undefined /* incrementalDecoder */,
 		);
-		const chunks = decode(decoderLibrary, cache, encoded, rootDecoder);
+		const chunks = decode(decoderLibrary, cache, encoded, new RootDecoder());
 		assert(chunks.length === 1);
 		const chunk = chunks[0];
 		assert(chunk instanceof TestChunk1);

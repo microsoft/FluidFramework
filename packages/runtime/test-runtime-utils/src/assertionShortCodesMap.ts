@@ -1866,8 +1866,6 @@ export const shortCodeMap = {
 	"0xcd0": "The transaction commit should be rebased to the tip",
 	"0xcd1": "missing compatibilityMap entry",
 	"0xcd2": "there should have been an error for the snapshot being out of date",
-	"0xcd3": "equality should be symmetric",
-	"0xcd4": "identicalCompatibility should have equivalent stored schema",
 	"0xcd5": "destinationField should be unhydrated since we're in the else branch of isHydrated() check",
 	"0xcd6": "Expect coordinatorResult to be defined",
 	"0xcd7": "overlapsPos not supported on BaseSequenceInterval",
@@ -2017,7 +2015,6 @@ export const shortCodeMap = {
 	"0xd75": "Expected a map node.",
 	"0xd76": "Expected an object schema.",
 	"0xd77": "BranchCheckout cannot represent a shared branch",
-	"0xd78": "Rewinding requires a checkout that supports branch replacement",
 	"0xd79": "historyRetention must be a boolean or a nonnegative safe integer",
 	"0xd7a": "A sequence field must have a live parent anchor",
 	"0xd7b": "Unsupported schema node kind.",
@@ -2061,5 +2058,6 @@ export const shortCodeMap = {
 	"0xda2": "Expected a policy-dependent cache",
 	"0xda3": "Expected a validated root graph",
 	"0xda4": "Expected completed schema component",
-	"0xda5": "Incremental component visits require a component callback without node or allowed-type callbacks"
+	"0xda5": "Incremental component visits require a component callback without node or allowed-type callbacks",
+	"0xda6": "Expected an unhydrated source field after validating move contexts"
 };

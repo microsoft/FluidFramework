@@ -4,7 +4,7 @@ The `Signaler` is a DataObject that can be used to communicate transient data vi
 
 ## Usage
 
-User presence scenarios are well-suited for `Signaler`, as users are required to tell other users their own information and their past data is mostly irrelavant. Using `Signaler` over other distributed data structures in these scenarios is beneficial, as its usage does not result in the storage of data that is not useful in the long-term.
+User presence scenarios are well-suited for `Signaler`, as users are required to tell other users their own information and their past data is mostly irrelevant. Using `Signaler` over other distributed data structures in these scenarios is beneficial, as its usage does not result in the storage of data that is not useful in the long-term.
 
 ### Creation
 
@@ -60,11 +60,11 @@ this.signaler.onSignal(FocusTracker.focusRequestType, () => {
 });
 ```
 
-When there are a lot of connected clients, usage of this request pattern can lead to high signal costs incurred from large amounts of signals being submitted all at the same time. While this pattern is helpful when a client is in need of relevant information, to limit signal costs it would be beneficial to examine whether or not the requested data will be quickly avaiable from other events being listened to within the application. The mouse tracking in [PresenceTracker](https://github.com/microsoft/FluidFramework/tree/main/examples/apps/presence-tracker) is an example where a newly connecting client is not required to request a signal to receive every current mouse position on the document. Since mouse movements are frequent, the newly connecting client can simply wait to recieve other users mouse positions on their mousemove events.
+When there are a lot of connected clients, usage of this request pattern can lead to high signal costs incurred from large amounts of signals being submitted all at the same time. While this pattern is helpful when a client is in need of relevant information, to limit signal costs it would be beneficial to examine whether or not the requested data will be quickly available from other events being listened to within the application. The mouse tracking in [PresenceTracker](https://github.com/microsoft/FluidFramework/tree/main/examples/apps/presence-tracker) is an example where a newly connecting client is not required to request a signal to receive every current mouse position on the document. Since mouse movements are frequent, the newly connecting client can simply wait to receive other users mouse positions on their mousemove events.
 
 ### Grouping Signal Types
 
-Rather than submitting multiple signal types in response to one specific event, it is more cost-effective to create one seperate signal type for that particular event and listen to that single signal instead. For example, imagine an application using the `Signal Request` pattern where a newly connected client requests for the color, focus state, and currently selected object of every other connected client on the page. If you submit a signal for each type of data requested, it would look something like this:
+Rather than submitting multiple signal types in response to one specific event, it is more cost-effective to create one separate signal type for that particular event and listen to that single signal instead. For example, imagine an application using the `Signal Request` pattern where a newly connected client requests for the color, focus state, and currently selected object of every other connected client on the page. If you submit a signal for each type of data requested, it would look something like this:
 
 ```typescript
 container.on("connected", () => {
