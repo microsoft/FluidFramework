@@ -78,7 +78,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		if (change.valueReplace?.src !== undefined) {
 			const attachEntry = nodeManager.invertAttach(change.valueReplace.src, 1);
-			const detachIdForInverse = invertAttachId(change.valueReplace.src, revision, isRollback);
+			const detachIdForInverse = nodeManager.getInvertedMoveId(change.valueReplace.src);
 
 			if (attachEntry.value !== undefined) {
 				inverted.childChange = attachEntry.value;
@@ -582,14 +582,6 @@ function getCrossFieldKeys(change: OptionalChangeset): CrossFieldKeyRange[] {
 	}
 
 	return keys;
-}
-
-function invertAttachId(
-	attachId: ChangeAtomId,
-	revision: RevisionTag | undefined,
-	isRollback: boolean,
-): ChangeAtomId {
-	return isRollback ? attachId : makeChangeAtomId(attachId.localId, revision);
 }
 
 interface Optional
