@@ -29,9 +29,8 @@ import {
 	SharedTreeChange,
 	Tree,
 } from "../../shared-tree/index.js";
-import { toInitialSchema } from "../../simple-tree/index.js";
 import { nodeFlowCensusFromDelta } from "../nodeFlowCensusFromDelta.js";
-import { expectSchemaEqual, TestTreeProviderLite, validateViewConsistency } from "../utils.js";
+import { TestTreeProviderLite, validateViewConsistency } from "../utils.js";
 import { makeAnonChange, RebaseValidation } from "../../core/index.js";
 import {
 	compareStrings,
