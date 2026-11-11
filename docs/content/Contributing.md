@@ -19,6 +19,7 @@ Let's get started!
 - [Client Code](./Contributing/Client.md)
 - [Server Code](./Contributing/Server.md)
 - [Managing Dependencies](./Contributing/Managing-Dependencies.md)
+- [Dependency Setup and Authentication](./Contributing/Dependencies.md)
 
 ### Submitting changes
 
