@@ -4,7 +4,7 @@
  */
 
 import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
-import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
+import { defaultOldestSupportedClient } from "@fluidframework/runtime-utils/internal";
 
 /**
  * Canonical compatibility setting for generic runtime tests. Tests for a specific feature should
@@ -13,4 +13,4 @@ import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/intern
  * @internal
  */
 export const defaultTestOldestSupportedClient =
-	defaultMinVersionForCollab satisfies OldestSupportedClientVersion;
+	defaultOldestSupportedClient satisfies OldestSupportedClientVersion;

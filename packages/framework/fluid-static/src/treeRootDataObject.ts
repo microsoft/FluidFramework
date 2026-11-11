@@ -32,7 +32,7 @@ import type {
 import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { defaultRuntimeOptionsForMinVersion } from "./compatibilityConfiguration.js";
+import { defaultRuntimeOptionsForOldestSupportedClient } from "./compatibilityConfiguration.js";
 import type {
 	IRootDataObject,
 	IStaticEntryPoint,
@@ -143,7 +143,7 @@ class TreeContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		super({
 			registryEntries: [treeRootDataObjectFactory.registryEntry],
 			runtimeOptions: {
-				...defaultRuntimeOptionsForMinVersion(config.oldestSupportedClient),
+				...defaultRuntimeOptionsForOldestSupportedClient(config.oldestSupportedClient),
 				...config.runtimeOptions,
 			},
 			provideEntryPoint,

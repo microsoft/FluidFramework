@@ -109,7 +109,7 @@ export const createTestContainerRuntimeFactory = (
 					},
 				},
 			},
-			public minVersionForCollab: OldestSupportedClientVersion = defaultTestOldestSupportedClient,
+			public oldestSupportedClient: OldestSupportedClientVersion = defaultTestOldestSupportedClient,
 			// eslint-disable-next-line import-x/no-deprecated
 			public requestHandlers: RuntimeRequestHandler[] = [],
 		) {
@@ -220,8 +220,8 @@ export const createTestContainerRuntimeFactory = (
 						runtimeOptions: this.runtimeOptions,
 						containerScope: context.scope,
 						existing,
-						oldestSupportedClient: this.minVersionForCollab,
-						minVersionForCollab: this.minVersionForCollab,
+						oldestSupportedClient: this.oldestSupportedClient,
+						minVersionForCollab: this.oldestSupportedClient,
 					});
 				case 2:
 					return containerRuntimeCtor.loadRuntime({
@@ -232,7 +232,7 @@ export const createTestContainerRuntimeFactory = (
 						runtimeOptions: this.runtimeOptions,
 						containerScope: context.scope,
 						existing,
-						oldestSupportedClient: this.minVersionForCollab,
+						oldestSupportedClient: this.oldestSupportedClient,
 					});
 				default:
 					fail();

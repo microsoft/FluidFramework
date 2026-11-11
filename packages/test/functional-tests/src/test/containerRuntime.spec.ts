@@ -30,7 +30,7 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { defaultMinVersionForCollab as defaultTestOldestSupportedClient } from "@fluidframework/runtime-utils/internal";
+import { defaultOldestSupportedClient as defaultTestOldestSupportedClient } from "@fluidframework/runtime-utils/internal";
 import {
 	createChildLogger,
 	mixinMonitoringContext,
