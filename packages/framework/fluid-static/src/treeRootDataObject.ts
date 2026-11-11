@@ -30,7 +30,6 @@ import type {
 	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { defaultRuntimeOptionsForOldestSupportedClient } from "./compatibilityConfiguration.js";
 import type {
@@ -225,76 +224,9 @@ export function createTreeContainerRuntimeFactory(props: {
 	 * If not provided, only the default options for the given `oldestSupportedClient` will be used.
 	 */
 	readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
-}): IRuntimeFactory;
-
-/**
- * Creates an {@link @fluidframework/aqueduct#IRuntimeFactory} which constructs containers
- * with an entry point containing single tree-based root data object.
- *
- * @remarks
- * The entry point is opaque to caller.
- * The root data object's registry and shared objects are configured based on the provided
- * SharedTree and optionally data store registry.
- *
- * @deprecated 2.116.0. To be removed in 3.10.0. Pass `oldestSupportedClient` instead.
- * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
- *
- * @legacy @beta
- */
-export function createTreeContainerRuntimeFactory(props: {
-	/**
-	 * The schema for the container.
-	 */
-	readonly schema: TreeContainerSchema;
-
-	/**
-	 * Minimum Fluid Framework version required for collaboration as an
-	 * {@link @fluidframework/runtime-definitions#OldestSupportedClientVersion} SemVer string.
-	 */
-	readonly minVersionForCollaboration: OldestSupportedClientVersion;
-	/**
-	 * Optional registry of data stores to pass to the DataObject factory.
-	 * If not provided, one will be created based on the schema.
-	 */
-	readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
-	/**
-	 * Optional overrides for the container runtime options.
-	 * If not provided, only the default options for the given `minVersionForCollaboration` will be
-	 * used.
-	 */
-	readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
-}): IRuntimeFactory;
-
-// Implementation
-export function createTreeContainerRuntimeFactory(props: {
-	readonly schema: TreeContainerSchema;
-	readonly minVersionForCollaboration?: OldestSupportedClientVersion;
-	readonly oldestSupportedClient?: OldestSupportedClientVersion;
-	readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
-	readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
 }): IRuntimeFactory {
-	const {
-		minVersionForCollaboration,
-		oldestSupportedClient,
-		rootDataStoreRegistry,
-		runtimeOptionOverrides,
-		schema,
-	} = props;
-
-	const specifiedVersionOptions = [minVersionForCollaboration, oldestSupportedClient].filter(
-		(value) => value !== undefined,
-	).length;
-	if (specifiedVersionOptions !== 1) {
-		throw new UsageError(
-			"Specify exactly one of oldestSupportedClient or minVersionForCollaboration (deprecated).",
-		);
-	}
-
-	const resolvedOldestSupportedClient = oldestSupportedClient ?? minVersionForCollaboration;
-	assert(
-		resolvedOldestSupportedClient !== undefined,
-		0xd3d /* A supported client version must be defined */,
-	);
+	const { oldestSupportedClient, rootDataStoreRegistry, runtimeOptionOverrides, schema } =
+		props;
 
 	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 	const registry = rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
@@ -303,7 +235,7 @@ export function createTreeContainerRuntimeFactory(props: {
 		new TreeRootDataObjectFactory(sharedObjects, registry),
 		{
 			runtimeOptions: runtimeOptionOverrides,
-			oldestSupportedClient: resolvedOldestSupportedClient,
+			oldestSupportedClient,
 		},
 	);
 }
