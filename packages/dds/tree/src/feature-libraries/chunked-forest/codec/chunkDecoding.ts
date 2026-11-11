@@ -35,6 +35,7 @@ import {
 	type ChunkDecoder,
 	type StreamCursor,
 	getChecked,
+	getFullyChecked,
 	readStream,
 	readStreamBoolean,
 	readStreamNumber,
@@ -583,7 +584,7 @@ export class NestedArrayDecoder implements ChunkDecoder {
 	}
 
 	public initialize(decoders: readonly ChunkDecoder[]): void {
-		this.decoder = getChecked(decoders, this.shape);
+		this.decoder = getFullyChecked(decoders, this.shape);
 		const plan = getUniformDecodingPlan(this.decoder, decoders);
 		this.decodeArray =
 			plan === undefined
@@ -651,7 +652,7 @@ export class InlineArrayDecoder extends UniformShapeDecoder {
 	protected buildUniformDecodingPlan(
 		decoders: readonly ChunkDecoder[],
 	): UniformDecodingPlan | undefined {
-		const plan = getUniformDecodingPlan(getChecked(decoders, this.shape.shape), decoders);
+		const plan = getUniformDecodingPlan(getFullyChecked(decoders, this.shape.shape), decoders);
 		if (plan === undefined) {
 			return undefined;
 		}
@@ -675,7 +676,7 @@ export class InlineArrayDecoder extends UniformShapeDecoder {
 		};
 	}
 	public initialize(decoders: readonly ChunkDecoder[]): void {
-		this.decoder = getChecked(decoders, this.shape.shape);
+		this.decoder = getFullyChecked(decoders, this.shape.shape);
 		const plan = this.getUniformDecodingPlan(decoders);
 		this.decode =
 			plan === undefined
@@ -744,7 +745,7 @@ export class AnyDecoder implements ChunkDecoder {
 	}
 	public decode(stream: StreamCursor): TreeChunk {
 		const shapeIndex = readStreamNumber(stream);
-		const decoder = getChecked(this.decoders, shapeIndex);
+		const decoder = getFullyChecked(this.decoders, shapeIndex);
 		return decoder.decode(stream);
 	}
 }
@@ -762,6 +763,7 @@ function fieldDecoder(
 	key: FieldKey,
 	shape: number,
 ): BasicFieldDecoder {
+	// NodeDecoder's constructor validates fixed-field shape indices.
 	const decoder = getChecked(decoders, shape);
 	return (stream) => {
 		return [key, decoder.decode(stream)];
@@ -839,6 +841,7 @@ export class NodeDecoder extends UniformShapeDecoder {
 				return undefined;
 			}
 			keys.add(key);
+			// The constructor validates fixed-field shape indices.
 			const plan = getUniformDecodingPlan(getChecked(decoders, fieldShape), decoders);
 			if (plan === undefined) {
 				return undefined;
@@ -894,7 +897,7 @@ export class NodeDecoder extends UniformShapeDecoder {
 		this.extraFieldsDecoder =
 			this.shape.extraFields === undefined
 				? undefined
-				: getChecked(decoders, this.shape.extraFields);
+				: getFullyChecked(decoders, this.shape.extraFields);
 	}
 	public decode(stream: StreamCursor): TreeChunk {
 		const type: TreeNodeSchemaIdentifier =
