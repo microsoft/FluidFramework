@@ -102,7 +102,7 @@ impl Responses {
                                 protocol::StreamRole::Event,
                                 &protocol::Request::LoadCredit {
                                     content: false,
-                                    items: 1,
+                                    bytes: protocol::load_response_bytes(&response),
                                 },
                             )?)
                             .await
