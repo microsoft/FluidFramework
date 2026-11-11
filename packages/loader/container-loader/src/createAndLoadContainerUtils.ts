@@ -548,6 +548,11 @@ export interface ICaptureFullContainerStateProps {
 	 * payloads. This reduces the captured state size, but loading requires live
 	 * storage through {@link loadExistingContainer} or the online form of
 	 * {@link loadFrozenContainerFromPendingState}.
+	 *
+	 * `"inline"` and `"structural"` require the resolved URL to have the shape
+	 * `protocol://<string>/<tenantId>/<docId>?<querystring>` accepted by
+	 * `tryParseCompatibleResolvedUrl`; otherwise capture throws `UsageError`,
+	 * even if the state will be loaded online. Use `"reference"` for other URL shapes.
 	 */
 	readonly blobCaptureMode?: "inline" | "structural" | "reference" | undefined;
 }

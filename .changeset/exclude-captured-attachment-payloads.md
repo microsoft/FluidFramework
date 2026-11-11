@@ -20,8 +20,7 @@ const pendingLocalState = await captureFullContainerState({
 Resuming structural state does not require historical structural blobs from storage.
 Offline structural loading can succeed, but dereferencing an omitted attachment later fails.
 The storage layer throws `UsageError`, which handle resolution may wrap.
-Structural captures carry an internal omission-policy marker so offline attachment failures identify `blobCaptureMode: "structural"`.
-Unmarked legacy state retains generic missing-payload guidance; neither marker presence nor absence guarantees payload completeness.
+Offline reads of omitted attachments from newly captured structural state identify `blobCaptureMode: "structural"` in the error message.
 Reading an omitted attachment requires the online form of `loadFrozenContainerFromPendingState` with live driver wiring (or `loadExistingContainer`) and depends on that attachment remaining available.
 This option does not change retention or garbage collection.
 `blobCaptureMode: "reference"` continues to omit both structural and attachment payloads.
