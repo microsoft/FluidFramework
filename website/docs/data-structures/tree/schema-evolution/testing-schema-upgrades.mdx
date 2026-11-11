@@ -28,9 +28,10 @@ During the rollout, there are three schema states:
 Your Phase 1 code (the "staged" state) needs to handle documents created in the "upgraded" state.
 But how do you create such a document in a test?
 
-By default, initialization excludes staged types, and upgrades do not introduce them where they are not yet enabled.
-Upgrades preserve a type that the stored schema already permits.
-**Runtime schema upgrades** solve this by letting you explicitly enable staged upgrades at view construction time.
+Simply initializing a document with the staged schema does not produce that future state: the default policy still excludes `RgbColor`.
+Calling `upgradeSchema()` under that same policy does not add it either.
+To create the upgraded state for a test, use **runtime schema upgrades** to explicitly enable the token when constructing the view.
+You can then test whether a client whose flag is off can use that document and preserve its enabled type during later upgrades.
 
 ## Creating Test Documents with Future Schema
 
@@ -168,27 +169,28 @@ This is useful for verifying that each phase of your rollout maintains the expec
 
 ### Testing Staged Permission Preservation
 
-Use an earlier schema that stages a type and a later schema that fully enables it.
-Create the document with the later schema, then open it with the earlier client.
-Check that the earlier client can read and edit the stored values and that a restrictive upgrade preserves them.
-If no other permissions are added, verify that the upgrade leaves the stored schema unchanged and emits no schema-change event or operation.
+To verify that an earlier client preserves a completed rollout, define an earlier schema that stages a type and a later schema that fully enables it.
+Create a document with the later schema, then open it with the earlier client's restrictive policy.
+The earlier view should still read and edit the enabled values, and a call to `upgradeSchema()` must not remove that permission.
+If the view requests no other additions, verify that the call leaves the stored schema unchanged and emits no schema-change event or operation.
 
-Also test these combinations:
+Extend that scenario to cover the ways permissions can accumulate during a rollout:
 
 - A selected token enables a new type while another type, staged but not selected, is already permitted by the stored schema.
 - A shared token is enabled at only one of two fields; preservation leaves the other field unchanged until the policy explicitly enables it.
 - A remote schema change refreshes the other client's compatibility and staged-upgrade status.
-- A summary and reload preserve the enabled types and optionality.
+- A summary and reload preserve already-enabled types, optionality, and the data that uses those permissions.
 
-Check newly created documents separately.
-Permissions preserved from another document must not appear in a new document initialized with a restrictive policy.
+Also initialize a fresh document with the earlier view and restrictive policy.
+Unlike the upgraded document, it should still exclude the staged type: preserving a permission in one document must not enable it in another.
 
-The <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">snapshot validator</ApiLink> requires the current schema to be able to upgrade documents from every historical snapshot.
-Historical clients within the collaboration window must be able to view current documents without upgrading.
-A safe runtime upgrade by an older client does not satisfy this immediate-viewing requirement.
-Test the application code that calls `upgradeSchema()` when needed separately.
-Current snapshot helpers assume restrictive staging rather than honoring the configurations' staged-upgrade policies, and staged-optional round-tripping has known limitations.
-Use live-document tests for configured or partially enabled staged states; a view-schema snapshot alone does not represent every stored history.
+These live-document tests complement the <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">snapshot validator</ApiLink>, which checks a different set of conditions.
+It requires the current schema to be able to upgrade documents from every historical snapshot, while historical clients within the collaboration window must be able to view current documents without upgrading.
+A safe runtime upgrade by an older client does not satisfy that immediate-viewing requirement, so test any application flow that performs such an upgrade separately.
+
+Snapshots also describe view-schema versions rather than every possible stored history.
+The helpers currently assume restrictive staging instead of honoring configured upgrade policies, and they do not preserve staged optionality when reconstructing a schema.
+Use live-document tests to cover those limitations, including documents with partially enabled tokens.
 
 ## Tips
 

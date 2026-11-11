@@ -8,8 +8,8 @@ import { ApiLink, PackageLink } from "@site/src/components/shortLinks";
 # Schema Evolution
 
 As your application (or library) grows and evolves, you may need to modify the structure of your [SharedTree](../index.mdx) data.
-SharedTree makes it possible to update your [schemas](../schema-definition/index.mdx) in ways that allow an app to load or upgrade documents created or edited by earlier versions of the app (see [understanding compatibility](./index.mdx#understanding-compatibility)).
-To ensure such changes to maintain the ability to open existing documents and collaborate with other deployed application versions, write a test using <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">`snapshotSchemaCompatibility`</ApiLink>.
+SharedTree makes it possible to update your [schemas](../schema-definition/index.mdx) while preserving existing documents and supporting other deployed application versions (see [understanding compatibility](#understanding-compatibility)).
+Write a test using <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">`snapshotSchemaCompatibility`</ApiLink> to verify the compatibility you require.
 
 :::note
 For detailed information about which types of changes are safe versus breaking, see [types of schema changes](./types-of-changes.mdx).
@@ -22,8 +22,9 @@ When updating your schema, it's important to understand the difference between t
 - **View Schema**: The schema defined in your application code using <ApiLink package="fluid-framework" api="SchemaFactory" />
 - **Stored Schema**: The schema persisted with each document. It describes what type of tree can be stored in the document.
 
-When a document is first created, its stored schema is set using the given view schema.
-Afterwards, it is immutable until explicitly [upgraded](./index.mdx#schema-upgrade-process).
+When a document is first created, its stored schema is derived from the view schema and its configured staged-upgrade policy.
+Later changes to application code do not change that stored schema until a client explicitly [upgrades](./index.mdx#schema-upgrade-process) the document.
+The upgrade combines the view's requested additions with staged permissions already enabled in the document.
 
 ### Stored Schema Invariants
 
@@ -35,11 +36,12 @@ Every node and field in the document is known to the stored schema.
 
 **2. Additive Only**
 The stored schema can grow over time but cannot shrink.
-All nodes types present in the stored schema will exist forever, even if they stop being used by the view schema.
+Upgrades must continue to permit all content allowed by the existing stored schema.
 
 **3. Field Key Stability**
-Field keys on object nodes are permanent once introduced.
-Therefore, a field key on an object node in the stored schema can never be changed/reused/repurposed.
+Stored field keys identify fields independently of their property names in application code.
+You can therefore rename a property while keeping its stored key to continue accessing the same field.
+Conversely, reusing that key with an incompatible definition still changes the existing field; it does not create a new field or bypass compatibility checks.
 
 ### Why These Constraints?
 
@@ -51,12 +53,13 @@ Therefore, a Fluid application should be prepared to encounter any version of a 
 
 When you open a document, SharedTree compares your application's view schema with the document's stored schema to determine compatibility:
 
-- **Compatible**: Document can be opened and used normally
-- **Upgradeable**: Document can be upgraded to match your view schema using <ApiLink package="fluid-framework" api="TreeView.upgradeSchema">`view.upgradeSchema()`</ApiLink>
-- **Incompatible**: Document cannot be opened with or upgraded to match your current view schema
+- **Viewable**: The view can read and edit the document using its current stored schema.
+- **Upgradeable**: The view's requested additions can be combined with already-enabled staged permissions into a safe target that the view can read and edit.
+  Apply that target with <ApiLink package="fluid-framework" api="TreeView.upgradeSchema">`view.upgradeSchema()`</ApiLink>.
+- **Incompatible**: The view can neither read and edit the document nor upgrade it to a compatible target.
 
-They must be compatible or upgradeable in order for the application to work - otherwise, it cannot read or write data from/to the document.
-SharedTree will throw an assert if the application attempts to access the document's data with an incompatible view schema.
+To access the document's data, use a view that can already read and write it, or apply a permitted upgrade first.
+Accessing tree data through a view that is not compatible with the stored schema throws an error.
 
 Initially, a document's stored schema is created to match the view schema at the time of creation, and therefore the view schema is compatible with the stored schema.
 However, later on the application might change the view schema.
@@ -66,15 +69,16 @@ Such a change might be backwards compatible, forwards compatible, or neither or 
 
 #### Backwards Compatibility
 
-A change to the view schema is **backwards compatible** if the *new view schema* is compatible with the *old stored schema*.
-In practice, this means that the new version of the application will be able to [upgrade](./index.mdx#schema-upgrade-process) documents to the new schema (note that the process of upgrading might affect forwards compatibility - see below).
+A change to the view schema is **backwards compatible** if the new view can read and edit documents created with the earlier schema, either directly or after a permitted [upgrade](#schema-upgrade-process).
+An upgrade preserves existing content, but adding new permissions can affect whether other clients can use the document.
 
 If a change is made that is not backwards compatible, then existing documents will "break", that is, they can no longer be loaded by the application.
 
 #### Forwards Compatibility
 
-A change to the view schema is **forwards compatible** if an *old view schema* is compatible with the *new stored schema* that results from the upgrade.
-In practice, the older version of the application must be able to "view" the new document after it has been upgraded.
+A change to the view schema is **forwards compatible** if the earlier view can read and edit documents created or upgraded with the later schema, either directly or after a permitted upgrade.
+An upgrade requested by an older client follows the same rules as one requested by a newer client: it must preserve existing permissions and produce a schema the requesting view supports.
+It is therefore not a downgrade of the document, even though the requesting application code is older.
 
 If a change is made that is backwards compatible, but not forwards compatible, then old versions of the application will "break" when trying to load newer/upgraded documents.
 To prevent this, the application can employ a [staged rollout](./index.mdx#staged-rollouts).
@@ -87,7 +91,7 @@ To prevent this, the application can employ a [staged rollout](./index.mdx#stage
 | ✅                    | ✅                   | Normal          |
 
 **Examples:**
-- Adding an optional field when compatibility flag is enabled
+- Adding an optional field to an object when the older view already allows unknown optional fields.
 
 #### 🌶 Spicy
 | Backwards Compatible | Forwards Compatible | Rollout Process |
@@ -114,6 +118,19 @@ Use <ApiLink package="fluid-framework" api="TreeView.compatibility">`TreeView.co
 
 Generally, the most important properties of the `compatibility` object to monitor are <ApiLink package="fluid-framework" api="SchemaCompatibilityStatus.canView">`canView`</ApiLink> and <ApiLink package="fluid-framework" api="SchemaCompatibilityStatus.canUpgrade">`canUpgrade`</ApiLink>.
 `canView` indicates that the view schema is [compatible](./index.mdx#schema-compatibility) with the stored schema while `canUpgrade` indicates that it is valid to [upgrade the schema](./index.mdx#schema-upgrade-process).
+
+Use these flags together when opening a document: if `canView` is false but `canUpgrade` is true, apply the upgrade before accessing the view's data.
+A true `canUpgrade` means that it is possible to upgrade the schema in a way that preserves existing content and supports the requesting view; it does not necessarily mean that an upgrade is required or that calling `upgradeSchema()` will change the stored schema.
+
+Preserving enabled staged changes does not allow upgrades that omit existing optional fields from an object's view schema.
+A view that allows unknown optional fields can read such a document, but must declare those fields to upgrade it.
+
+To check compatibility across releases, use snapshot validation in addition to document-loading checks.
+The current schema must be able to upgrade documents from every historical snapshot, and historical schemas within `minVersionForCollaboration` must be able to view current documents without an upgrade.
+That second requirement is stricter than merely allowing an older client to upgrade a document.
+
+Passing snapshot validation does not apply upgrades for your application or test every feature-flag configuration.
+The [snapshot helpers](./testing-schema-upgrades.mdx#checking-schema-compatibility-in-tests) currently assume restrictive staging, so supplement them with live-document tests for other policies and for code that calls `upgradeSchema()` when viewing requires it.
 
 ### Monitoring Remote Schema Changes
 
