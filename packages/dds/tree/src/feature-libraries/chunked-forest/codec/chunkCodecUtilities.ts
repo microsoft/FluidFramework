@@ -122,6 +122,10 @@ export function getChecked<T>(data: readonly T[], index: number): T {
  * @remarks
  * Use this for indices from serialized data, which another user could control.
  * Valid data must contain an in-bounds integer index into an array without custom indexed properties.
+ *
+ * Does not guarantee rejection of custom integer-keyed properties (like `-1`):
+ * such checks are not needed to prevent problematic cases, like `__proto__` accessing objects outside the encoded data.
+ *
  * If an invalid index can result from application misuse, report a usage error at the API boundary instead of using this assertion.
  */
 export function getFullyChecked<T>(data: readonly T[], index: number): T {
