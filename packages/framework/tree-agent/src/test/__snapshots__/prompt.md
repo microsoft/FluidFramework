@@ -8,6 +8,24 @@ The JSON tree adheres to the following Typescript schema:
  */
 type _OpaqueHandle = unknown;
 
+// A test map - Note: this map has custom user-defined properties directly on it.
+type TestMap = Map<string, number> & {
+    // Readonly map metadata
+    readonly metadata: Readonly<Record<string, string | number>>;
+};
+
+interface TestArrayItem {
+    value: number;
+    readonly metadata: {
+        id: string;
+        tags: string[];
+    };
+    // Formats the number value with optional configuration
+    formatValue(radix: number, formatter?: (n: number) => string): Promise<string>;
+}
+
+type TestArray = TreeArray<(TestArrayItem | string), TestArrayItem>;
+
 interface Obj {
     map: TestMap;
     array: TestArray;
@@ -25,24 +43,6 @@ interface Obj {
         });
         items: TestArrayItem[];
     }>;
-}
-
-// A test map - Note: this map has custom user-defined properties directly on it.
-type TestMap = Map<string, number> & {
-    // Readonly map metadata
-    readonly metadata: Readonly<Record<string, string | number>>;
-};
-
-type TestArray = TreeArray<(TestArrayItem | string), TestArrayItem>;
-
-interface TestArrayItem {
-    value: number;
-    readonly metadata: {
-        id: string;
-        tags: string[];
-    };
-    // Formats the number value with optional configuration
-    formatValue(radix: number, formatter?: (n: number) => string): Promise<string>;
 }
 
 ```

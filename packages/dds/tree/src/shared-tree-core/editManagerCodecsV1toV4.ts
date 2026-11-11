@@ -45,7 +45,7 @@ export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 	version: EncodedEditManager<TChangeset>["version"],
 ): CodecAndSchema<
 	SummaryData<TChangeset>,
-	EditManagerEncodingContext,
+	EditManagerEncodingContext<TChangeset>,
 	EditManagerDecodingContext
 > {
 	const includeCustomMetadata = version >= EditManagerFormatVersion.v7;
@@ -56,13 +56,13 @@ export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 
 	const codec: CodecAndSchema<
 		SummaryData<TChangeset>,
-		EditManagerEncodingContext,
+		EditManagerEncodingContext<TChangeset>,
 		EditManagerDecodingContext
 	> = {
 		schema,
 		encode: (
 			data: SummaryData<TChangeset>,
-			context: EditManagerEncodingContext,
+			context: EditManagerEncodingContext<TChangeset>,
 		): EncodedEditManager<TChangeset> & Versioned & JsonCompatibleReadOnlyObject => {
 			const mainBranch = encodeSharedBranch(
 				changeCodec,

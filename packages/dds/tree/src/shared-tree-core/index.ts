@@ -9,10 +9,9 @@ export {
 	type SharedTreeBranchChange,
 	type SharedTreeBranchEvents,
 	type BranchId,
+	type BranchTrimState,
 	type BranchTrimmingEvents,
 } from "./branch.js";
-
-export { BranchCommitCounter } from "./branchCommitCounter.js";
 
 export {
 	type ChangeProcessor,
@@ -83,3 +82,9 @@ export {
 	MessageFormatVersion,
 	supportedMessageFormatVersions,
 } from "./messageFormat.js";
+
+export {
+	decodeCustomMetadataTree,
+	encodeCustomMetadataTree,
+} from "./customMetadataCodec.js";
+export { EncodedCustomMetadataTree } from "./customMetadataFormat.js";

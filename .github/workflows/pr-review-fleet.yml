@@ -30,6 +30,7 @@ on:
           - "1"
           - "3"
           - "5"
+          - "6"
         default: "3"
       reviewers:
         description: "JSON array of reviewer names (overrides reviewer_count when provided, e.g. [\"correctness\",\"security\"])"
@@ -108,7 +109,7 @@ jobs:
 
           # If an explicit reviewer list was provided (e.g. from the confirm workflow
           # after the user toggled checkboxes), use it directly. Otherwise fall back
-          # to taking the first REVIEWER_COUNT entries from the priority-ordered list.
+          # to taking the first REVIEWER_COUNT entries from the complete reviewer list.
           # `jq -c` is required: pretty-printed (multi-line) JSON written via plain
           # `echo key=value >> $GITHUB_OUTPUT` truncates at the first newline,
           # which would silently break `fromJson(needs.setup.outputs.reviewers)`.
@@ -116,7 +117,7 @@ jobs:
             REVIEWERS=$(echo "$INPUT_REVIEWERS" | jq -c .)
             REVIEWER_COUNT=$(echo "$REVIEWERS" | jq 'length')
           else
-            ALL='["correctness","security","api-compatibility","performance","testing"]'
+            ALL='["correctness","security","api-compatibility","performance","testing","documentation"]'
             REVIEWERS=$(echo "$ALL" | jq -c --argjson n "$REVIEWER_COUNT" '.[:$n]')
           fi
 
@@ -226,7 +227,7 @@ jobs:
 
           # Inject API conventions into the api-compatibility reviewer prompt
           if [ "$REVIEWER" = "api-compatibility" ]; then
-            CONVENTIONS_PATH=".claude/skills/review/api-conventions.md"
+            CONVENTIONS_PATH=".github/skills/review/api-conventions.md"
             CONVENTIONS=$(git show "origin/${BASE_REF}:${CONVENTIONS_PATH}" 2>/dev/null || echo "(api-conventions.md not found on base branch)")
             # Use awk to replace the placeholder since conventions contain special chars
             awk -v conv="$CONVENTIONS" '{gsub(/__API_CONVENTIONS__/, conv); print}' "$PROMPT_FILE" > "${PROMPT_FILE}.tmp"
@@ -248,7 +249,7 @@ jobs:
       - name: Run reviewer
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
-          COPILOT_MODEL: claude-sonnet-4-6
+          COPILOT_MODEL: gpt-6.1-sol
           PROMPT_FILE: ${{ steps.prompt.outputs.prompt_file }}
         timeout-minutes: 15
         run: |

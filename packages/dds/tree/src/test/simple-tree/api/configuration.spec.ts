@@ -5,10 +5,15 @@
 
 import { strict as assert } from "node:assert";
 
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { createIndependentTreeViewAlpha } from "../../../shared-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Inspect analysis reuse without adding public APIs.
+import { getTreeNodeSchemaPrivateData } from "../../../simple-tree/core/index.js";
 import {
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
@@ -20,10 +25,159 @@ import {
 	SchemaFactory,
 	SchemaFactoryAlpha,
 } from "../../../simple-tree/index.js";
+import {
+	getRootSchemaDerivedData,
+	hasCachedSchemaComponentForTesting,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/treeSchema.js";
 
 const schema = new SchemaFactory("com.example");
 
+// Component analysis itself is covered in ../treeSchema.spec.ts; these tests cover configuration validation and reuse.
 describe("simple-tree configuration", () => {
+	it("reuses completed analysis while revalidating each configuration", () => {
+		const sf = new SchemaFactoryAlpha("validationAndComponentDiscovery");
+		class Leaf extends sf.object("Leaf", { value: sf.number }) {}
+		class A extends sf.objectRecursive("A", {
+			child: sf.optionalRecursive([() => B]),
+			leaf: Leaf,
+		}) {}
+		class B extends sf.objectRecursive("B", {
+			child: sf.optionalRecursive([() => A]),
+		}) {}
+		const reads = new Map<TreeNodeSchema, number>();
+		for (const node of [A, B, Leaf]) {
+			const data = getTreeNodeSchemaPrivateData(node);
+			const types = data.childAllowedTypes;
+			Object.defineProperty(data, "childAllowedTypes", {
+				get() {
+					reads.set(node, (reads.get(node) ?? 0) + 1);
+					return types;
+				},
+			});
+		}
+		const config = new TreeViewConfigurationAlpha({ schema: A });
+		assert.equal(hasCachedSchemaComponentForTesting(A), true);
+		const components = getRootSchemaDerivedData(A).components;
+		const readsAfterFirst = new Map(reads);
+		const strict = new TreeViewConfigurationAlpha({ schema: A, preventAmbiguity: true });
+		for (const node of [A, B, Leaf]) {
+			assert.equal(reads.get(node), (readsAfterFirst.get(node) ?? assert.fail()) + 1);
+		}
+		assert.strictEqual(config.definitions, strict.definitions);
+		assert.strictEqual(components, getRootSchemaDerivedData(A).components);
+	});
+
+	it("finishes configuration validation before populating component caches", () => {
+		const sf = new SchemaFactoryAlpha("validationBeforeComponents");
+		class A extends sf.array("A", sf.number) {}
+		class B extends sf.array("B", sf.number) {}
+		class Root extends sf.object("Root", { value: [A, B] }) {}
+		assert.throws(
+			() => new TreeViewConfigurationAlpha({ schema: Root, preventAmbiguity: true }),
+			validateUsageError(/Ambiguous schema/),
+		);
+		for (const node of [Root, A, B]) {
+			assert.equal(hasCachedSchemaComponentForTesting(node), false);
+		}
+		new TreeViewConfigurationAlpha({ schema: Root, preventAmbiguity: false });
+		for (const node of [Root, A, B]) {
+			assert.equal(hasCachedSchemaComponentForTesting(node), true);
+		}
+		assert.throws(
+			() => new TreeViewConfigurationAlpha({ schema: Root, preventAmbiguity: true }),
+			validateUsageError(/Ambiguous schema/),
+		);
+	});
+
+	it("reports duplicate allowed types before evaluating later fields", () => {
+		const sf = new SchemaFactoryAlpha("validationOrder");
+		let laterEvaluations = 0;
+		class Root extends sf.objectRecursive("Root", {
+			duplicate: sf.optional([sf.number, sf.number]),
+			later: sf.optionalRecursive([
+				() => {
+					laterEvaluations++;
+					throw new Error("later evaluation");
+				},
+			]),
+		}) {}
+		for (let i = 0; i < 2; i++) {
+			assert.throws(
+				() => new TreeViewConfigurationAlpha({ schema: Root }),
+				validateUsageError(/Duplicate schema in allowed types/),
+			);
+			assert.equal(laterEvaluations, 0);
+			assert.equal(hasCachedSchemaComponentForTesting(Root), false);
+		}
+	});
+
+	for (const strictFirst of [false, true]) {
+		it(`preserves ambiguity-before-identifier validation phases (${strictFirst} first)`, () => {
+			const sf = new SchemaFactoryAlpha("validationPhases");
+			class A extends sf.array("Duplicate", sf.number) {}
+			class B extends sf.array("Duplicate", sf.number) {}
+			for (const preventAmbiguity of [strictFirst, !strictFirst]) {
+				assert.throws(
+					() => new TreeViewConfigurationAlpha({ schema: [A, B], preventAmbiguity }),
+					validateUsageError(
+						preventAmbiguity ? /Ambiguous schema/ : /Multiple schema encountered/,
+					),
+				);
+			}
+		});
+	}
+
+	for (const strictFirst of [false, true]) {
+		it(`validates cached unions with preventAmbiguity=${strictFirst} first`, () => {
+			const sf = new SchemaFactoryAlpha("cachedValidation");
+			class A extends sf.array("A", sf.number) {}
+			class B extends sf.array("B", sf.number) {}
+			const root = [A, B] as const;
+			getRootSchemaDerivedData(root);
+			for (const preventAmbiguity of [strictFirst, !strictFirst]) {
+				const create = () => new TreeViewConfiguration({ schema: root, preventAmbiguity });
+				if (preventAmbiguity) {
+					assert.throws(create, validateUsageError(/Ambiguous schema/));
+				} else {
+					create();
+				}
+			}
+			const duplicate = [A, A] as const;
+			getRootSchemaDerivedData(duplicate);
+			assert.throws(
+				() => new TreeViewConfiguration({ schema: duplicate }),
+				validateUsageError(/Duplicate schema in allowed types/),
+			);
+			class Parent extends sf.object("Parent", {
+				ambiguous: root,
+				invalid: duplicate,
+			}) {}
+			getRootSchemaDerivedData(Parent);
+			assert.throws(
+				() => new TreeViewConfiguration({ schema: Parent, preventAmbiguity: true }),
+				validateUsageError(/Duplicate schema in allowed types/),
+			);
+		});
+	}
+
+	it("supports construction before configurations and shares only reachable definitions", () => {
+		const sf = new SchemaFactoryAlpha("beforeConfiguration");
+		class Child extends sf.object("Child", {}) {}
+		const child = new Child({});
+		class A extends sf.object("A", { child: Child }) {}
+		class B extends sf.object("B", { child: Child }) {}
+		for (const root of [A, B]) {
+			const config = new TreeViewConfigurationAlpha({ schema: root });
+			assert.strictEqual(
+				config.definitions,
+				getRootSchemaDerivedData(root).treeSchema.definitions,
+			);
+			new root({ child: root === A ? child : new Child({}) });
+		}
+		assert.equal(getRootSchemaDerivedData(Child).treeSchema.definitions.size, 1);
+	});
+
 	it("preventAmbiguity", () => {
 		const config = new TreeViewConfiguration({
 			schema: [schema.array(schema.string), schema.array(schema.number)],
@@ -56,12 +210,12 @@ describe("simple-tree configuration", () => {
 		class Feet extends schemaFactory.object("Feet", { length: schemaFactory.number }) {}
 		class Meters extends schemaFactory.object("Meters", { length: schemaFactory.number }) {}
 		const config = new TreeViewConfiguration({
-			// This combination of schema is can lead to ambiguous cases, and would error if preventAmbiguity is true.
+			// This combination of schemas can lead to ambiguous cases, and would error if preventAmbiguity is true.
 			schema: [Feet, Meters],
 			preventAmbiguity: false,
 		});
 		const view = createIndependentTreeViewAlpha(config, {
-			idCompressor: createIdCompressor(),
+			idCompressor: createIdCompressor(SerializationVersion.V3),
 		});
 		// This is invalid since it is ambiguous which type of node is being constructed:
 		// view.initialize({ length: 5 });
@@ -79,12 +233,12 @@ describe("simple-tree configuration", () => {
 			meters: schemaFactory.required(schemaFactory.number, { key: "length" }),
 		}) {}
 		const config = new TreeViewConfiguration({
-			// This combination of schema is not ambiguous because `Feet` and `Meters` have different required keys.
+			// This combination of schemas is not ambiguous because `Feet` and `Meters` have different required keys.
 			schema: [Feet, Meters],
 			preventAmbiguity: true,
 		});
 		const view = createIndependentTreeViewAlpha(config, {
-			idCompressor: createIdCompressor(),
+			idCompressor: createIdCompressor(SerializationVersion.V3),
 		});
 		// This now works, since the field is sufficient to determine this is a `Meters` node.
 		view.initialize({ meters: 5 });

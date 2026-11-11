@@ -9,7 +9,7 @@ const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mochar
 
 const config = getFluidTestMochaConfig(__dirname);
 
-// Set up JSDOM before Quill is imported (Quill requires document at import time)
+// Set up a global JSDOM so tests can render the app
 config["node-option"].push("import=./lib/test/mochaHooks.js");
 
 module.exports = config;

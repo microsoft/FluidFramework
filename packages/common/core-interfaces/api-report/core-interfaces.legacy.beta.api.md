@@ -389,6 +389,7 @@ export interface ILayerIncompatibilityError extends IErrorBase {
     readonly actualDifferenceInMonths: number;
     readonly compatibilityRequirementsInMonths: number;
     readonly details: string;
+    // (undocumented)
     readonly errorType: typeof FluidErrorTypes.layerIncompatibilityError;
     readonly incompatibleLayer: string;
     readonly incompatibleLayerVersion: string;
@@ -485,6 +486,7 @@ export interface ITelemetryBaseProperties {
 
 // @beta @legacy
 export interface IThrottlingWarning extends IErrorBase {
+    // (undocumented)
     readonly errorType: typeof FluidErrorTypes.throttlingError;
     // (undocumented)
     readonly retryAfterSeconds: number;

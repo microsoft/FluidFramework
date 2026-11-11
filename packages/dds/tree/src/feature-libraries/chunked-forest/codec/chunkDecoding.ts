@@ -15,16 +15,21 @@ import type {
 	TreeNodeSchemaIdentifier,
 	Value,
 	TreeChunk,
+	TreeValue,
 } from "../../../core/index.js";
 import {
+	assertNonNegativeSafeInteger,
 	assertValidIndex,
 	brand,
 	decompressIdentifierIfNeeded,
 	type IdDecodingContext,
 } from "../../../util/index.js";
 import { BasicChunk } from "../basicChunk.js";
+import { defaultChunkPolicy } from "../chunkTree.js";
 import { emptyChunk } from "../emptyChunk.js";
 import { SequenceChunk } from "../sequenceChunk.js";
+import { TreeShape, UniformChunk, type ChunkShape, type FieldShape } from "../uniformChunk.js";
+import { assertAllowedValue } from "../../valueUtilities.js";
 
 import {
 	type ChunkDecoder,
@@ -45,9 +50,7 @@ import type { IncrementalDecoder } from "./codecs.js";
 import {
 	type EncodedAnyShape,
 	type EncodedChunkShape,
-	type EncodedChunkShapeV2,
-	type EncodedFieldBatchV1OrV2,
-	type EncodedFieldBatchV2,
+	type EncodedFieldBatchAnyVersion,
 	type EncodedIncrementalChunkShape,
 	type EncodedInlineArrayShape,
 	type EncodedNestedArrayShape,
@@ -63,15 +66,20 @@ import {
  * Decode `chunk` into a TreeChunk.
  */
 export function decode(
-	chunk: EncodedFieldBatchV1OrV2,
+	chunk: EncodedFieldBatchAnyVersion,
 	idDecodingContext: IdDecodingContext,
 	incrementalDecoder?: IncrementalDecoder,
 ): TreeChunk[] {
 	return genericDecode(
 		decoderLibrary,
-		new DecoderContext(chunk.identifiers, chunk.shapes, idDecodingContext, incrementalDecoder),
+		new DecoderContext<EncodedChunkShape>(
+			chunk.identifiers,
+			chunk.shapes,
+			idDecodingContext,
+			incrementalDecoder,
+		),
 		chunk,
-		anyDecoder,
+		new AnyDecoder(),
 	);
 }
 
@@ -186,20 +194,229 @@ function resolveOverride<T>(
 }
 
 /**
+ * A prepared decoding operation for a fixed unit of encoded tree data.
+ *
+ * @remarks
+ * {@link TreeShape} describes decoded structure and value positions, while this plan also describes how to read the encoded values.
+ * A {@link UniformChunk} contains those values; this plan can produce them without constructing intermediate child chunks.
+ *
+ * One execution consumes {@link UniformDecodingPlan.encodedSize} stream items and produces values for
+ * {@link UniformDecodingPlan.topLevelLength} top-level trees sharing {@link UniformDecodingPlan.treeShape}.
+ * {@link decodeUniform} executes repeated units and constructs a single chunk from the resulting flat values array.
+ *
+ * When {@link UniformDecodingPlan.valuesAreVerbatim} is true, {@link decodeUniform} reads the values directly instead of calling
+ * {@link UniformDecodingPlan.decodeValuesInto}.
+ * Otherwise, that method appends converted values into a caller-provided buffer.
+ *
+ * Uniform decoding deliberately allows a chunk's total node count to exceed the uniform chunk size limit in {@link defaultChunkPolicy}
+ * by repeating a supported tree shape.
+ * The size of an individual tree shape remains bounded during plan construction.
+ *
+ * This favors efficient decoding and compact storage of content that may remain unchanged.
+ * When the encoded representation permits, it also allows reuse of the complete values array.
+ * Splitting is deferred until an edit requires it,
+ * trading lower decoding costs and initial memory overhead for potentially higher first-edit costs and temporary allocations.
+ */
+interface UniformDecodingPlan {
+	/**
+	 * Shape shared by all top-level trees in this plan.
+	 */
+	readonly treeShape: TreeShape;
+	/**
+	 * Decompresses session-space identifiers retained in the decoded values.
+	 */
+	readonly idCompressor: IdDecodingContext["idCompressor"];
+	/**
+	 * Number of top-level trees produced by one execution of this plan.
+	 */
+	readonly topLevelLength: number;
+	/**
+	 * Number of stream items consumed by one execution of this plan.
+	 */
+	readonly encodedSize: number;
+	/**
+	 * Whether the encoded items already have the order and representation required by {@link UniformChunk.values}.
+	 *
+	 * @remarks
+	 * This describes representation compatibility, not ownership of a particular array.
+	 * {@link decodeUniform} can take ownership of a complete values array, including one read from a nested-array encoding,
+	 * or copy the relevant portion of a larger stream.
+	 * When false, it uses {@link UniformDecodingPlan.decodeValuesInto} to perform conversions such as identifier resolution.
+	 */
+	readonly valuesAreVerbatim: boolean;
+	/**
+	 * Decodes one unit of encoded data into a caller-provided flat values buffer without modifying this plan.
+	 *
+	 * @param stream - Encoded data to consume, advancing its offset by {@link UniformDecodingPlan.encodedSize}.
+	 * @param values - Buffer to append decoded values to, preserving existing entries.
+	 * Values follow the order required by {@link UniformDecodingPlan.treeShape}, repeated {@link UniformDecodingPlan.topLevelLength} times.
+	 *
+	 * @remarks
+	 * Resolves encoded identifiers to session-space identifiers or strings.
+	 * Child plans append into the same buffer, which {@link decodeUniform} passes to {@link UniformChunk} after all repetitions.
+	 * The verbatim path described by {@link UniformDecodingPlan.valuesAreVerbatim} bypasses this method.
+	 */
+	decodeValuesInto(stream: StreamCursor, values: TreeValue[]): void;
+}
+
+/**
+ * Shared shapes for built-in leaves, independent of decoding context.
+ * @remarks
+ * Matches `SchemaFactory.leaves`, which cannot be imported here due to layering.
+ * String shapes support compressed identifiers to match the schema-derived shapes used for local content.
+ * Exported for testing.
+ * This exists to help optimize decoding of leaves.
+ */
+export const builtInLeafChunkShapes: ReadonlyMap<TreeNodeSchemaIdentifier, ChunkShape> =
+	new Map(
+		["number", "string", "boolean", "null", "handle"].map((name) => {
+			const type = brand<TreeNodeSchemaIdentifier>(`com.fluidframework.leaf.${name}`);
+			return [type, new TreeShape(type, true, [], name === "string").withTopLevelLength(1)];
+		}),
+	);
+
+/**
+ * Caches a {@link UniformDecodingPlan} independently of decoder initialization order.
+ * A dependency encountered during its own analysis uses the general decoding path.
+ */
+abstract class UniformShapeDecoder implements ChunkDecoder {
+	/**
+	 * Whether plan analysis has started, preventing recursive analysis from following cycles.
+	 */
+	private planResolved = false;
+	/**
+	 * Cached plan, or `undefined` while analysis is in progress or when no uniform plan is supported.
+	 */
+	private plan?: UniformDecodingPlan;
+
+	/**
+	 * Returns the cached {@link UniformDecodingPlan}, computing it on first use.
+	 * Recursive requests made during analysis return `undefined` to select general decoding.
+	 *
+	 * @param decoders - Peer decoders for this batch, which might not have been initialized yet.
+	 */
+	public getUniformDecodingPlan(
+		decoders: readonly ChunkDecoder[],
+	): UniformDecodingPlan | undefined {
+		if (!this.planResolved) {
+			this.planResolved = true;
+			this.plan = this.buildUniformDecodingPlan(decoders);
+		}
+		return this.plan;
+	}
+
+	/**
+	 * Computes a {@link UniformDecodingPlan}, or returns `undefined` when the shape requires general decoding.
+	 *
+	 * @param decoders - Peer decoders for this batch, which might not have been initialized yet.
+	 * Use {@link UniformShapeDecoder.getUniformDecodingPlan} for cycle-safe dependency analysis.
+	 */
+	protected abstract buildUniformDecodingPlan(
+		decoders: readonly ChunkDecoder[],
+	): UniformDecodingPlan | undefined;
+	public abstract initialize(decoders: readonly ChunkDecoder[]): void;
+	public abstract decode(stream: StreamCursor): TreeChunk;
+}
+
+/**
+ * Requests a decoder's {@link UniformDecodingPlan}, or returns `undefined` if it does not support uniform decoding.
+ *
+ * @param decoders - Peer decoders for this batch, which might not have been initialized yet.
+ */
+function getUniformDecodingPlan(
+	decoder: ChunkDecoder,
+	decoders: readonly ChunkDecoder[],
+): UniformDecodingPlan | undefined {
+	return decoder instanceof UniformShapeDecoder
+		? decoder.getUniformDecodingPlan(decoders)
+		: undefined;
+}
+
+/**
+ * Executes a {@link UniformDecodingPlan} repeatedly and constructs one uniform chunk without intermediate child chunks.
+ *
+ * @param repetitions - Number of plan executions; zero produces {@link emptyChunk}.
+ * @param stream - Encoded data to consume, advancing its offset past all decoded units.
+ *
+ * @remarks
+ * When {@link UniformDecodingPlan.valuesAreVerbatim} is true, validates and takes ownership of the data array if the decoded units
+ * cover the complete array, or copies their values into a new array when decoding only part of the stream.
+ * In particular, {@link NestedArrayDecoder} provides a cursor over its nested values array, allowing that array to be reused directly.
+ * Otherwise, calls {@link UniformDecodingPlan.decodeValuesInto} for each unit to populate a new flat values array.
+ * The plan itself is not modified.
+ *
+ * The resulting chunk can exceed the uniform chunk size limit in {@link defaultChunkPolicy}.
+ * See {@link UniformDecodingPlan} for the size-policy rationale and editing tradeoffs.
+ */
+function decodeUniform(
+	plan: UniformDecodingPlan,
+	repetitions: number,
+	stream: StreamCursor,
+): TreeChunk {
+	const length = plan.topLevelLength * repetitions;
+	assertNonNegativeSafeInteger(length);
+	if (length === 0) {
+		return emptyChunk;
+	}
+	let values: TreeValue[];
+	const encodedSize = plan.encodedSize * repetitions;
+	assertNonNegativeSafeInteger(encodedSize);
+	assert(encodedSize <= stream.data.length - stream.offset, "incomplete uniform chunk data");
+	if (
+		plan.valuesAreVerbatim &&
+		stream.offset === 0 &&
+		encodedSize === stream.data.length &&
+		Array.isArray(stream.data)
+	) {
+		for (const value of stream.data) {
+			assertAllowedValue(value);
+		}
+		values = stream.data as TreeValue[];
+		stream.offset = stream.data.length;
+	} else {
+		values = [];
+		if (plan.valuesAreVerbatim) {
+			const endOffset = stream.offset + encodedSize;
+			while (stream.offset < endOffset) {
+				values.push(readStreamValue(stream));
+			}
+		} else {
+			for (let index = 0; index < repetitions; index++) {
+				plan.decodeValuesInto(stream, values);
+			}
+		}
+	}
+	return new UniformChunk(
+		plan.treeShape.withTopLevelLength(length),
+		values,
+		plan.idCompressor,
+	);
+}
+
+/**
  * Decoder for {@link EncodedSpecializedNodeShape}s.
  * Applies the specialization's field overrides to the resolved base node shape, then delegates
  * to a {@link NodeDecoder} built from the resulting shape.
  */
-export class SpecializedNodeDecoder implements ChunkDecoder {
+export class SpecializedNodeDecoder extends UniformShapeDecoder {
 	private readonly inner: NodeDecoder;
 	public constructor(
 		shape: EncodedSpecializedNodeShape,
 		context: DecoderContext<EncodedChunkShape>,
 	) {
+		super();
 		this.inner = new NodeDecoder(normalizeToNodeShape(shape, context), context);
 	}
-	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
-		return this.inner.decode(decoders, stream);
+	protected buildUniformDecodingPlan(
+		decoders: readonly ChunkDecoder[],
+	): UniformDecodingPlan | undefined {
+		return this.inner.getUniformDecodingPlan(decoders);
+	}
+	public initialize(decoders: readonly ChunkDecoder[]): void {
+		this.inner.initialize(decoders);
+	}
+	public decode(stream: StreamCursor): TreeChunk {
+		return this.inner.decode(stream);
 	}
 }
 
@@ -218,15 +435,18 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 		return new NodeDecoder(shape, context);
 	},
 	d(shape: EncodedAnyShape): ChunkDecoder {
-		return anyDecoder;
+		return new AnyDecoder();
 	},
 	e(
 		shape: EncodedIncrementalChunkShape,
-		context: DecoderContext<EncodedChunkShapeV2>,
+		context: DecoderContext<EncodedChunkShape>,
 	): ChunkDecoder {
 		return new IncrementalChunkDecoder(context);
 	},
-	f(shape: EncodedSpecializedNodeShape, context): ChunkDecoder {
+	f(
+		shape: EncodedSpecializedNodeShape,
+		context: DecoderContext<EncodedChunkShape>,
+	): ChunkDecoder {
 		return new SpecializedNodeDecoder(shape, context);
 	},
 });
@@ -250,31 +470,33 @@ export function readValue(
 			assert(shape.length === 1, 0x734 /* expected a single constant for value */);
 			return shape[0] as Value;
 		} else if (shape === SpecialField.Identifier) {
-			// This case is a special case handling the decoding of identifier fields.
-			const streamValue = readStream(stream);
-			assert(
-				typeof streamValue === "number" || typeof streamValue === "string",
-				0x997 /* identifier must be string or number. */,
+			return decompressIdentifierIfNeeded(
+				readIdentifierValue(stream, idDecodingContext),
+				idDecodingContext.idCompressor,
 			);
-			// Strings (StableId UUIDs, heal-synthesized v5 UUIDs, or arbitrary user
-			// identifier strings) are already in the stored form and pass through.
-			// Op-space compressed ids are resolved by the caller-supplied
-			// `resolveEncodedId`, which encapsulates the originator lookup, finalized-id
-			// normalization, and (for the forest summarizer's heal path) UUIDv5 synthesis.
-			const sessionIdOrString: SessionSpaceCompressedId | string =
-				typeof streamValue === "string"
-					? streamValue
-					: idDecodingContext.resolveEncodedId(streamValue as OpSpaceCompressedId);
-			// Performance:
-			// Currently, we just fully expand the identifier here rather than keeping it in the SessionSpaceCompressedId format.
-			// Avoiding this expansion, and keeping the in memory format using SessionSpaceCompressedId would be a good optimization for the future.
-			// Keeping this optimization possible is why `resolveEncodedId` doesn't simply return a string.
-			return decompressIdentifierIfNeeded(sessionIdOrString, idDecodingContext.idCompressor);
 		} else {
 			// EncodedCounter case:
 			unreachableCase(shape, "decoding values as deltas is not yet supported");
 		}
 	}
+}
+
+/**
+ * Reads an identifier value, preserving strings and resolving compressed identifiers to session space.
+ * Resolution and healing use {@link IdDecodingContext.resolveEncodedId}.
+ */
+function readIdentifierValue(
+	stream: StreamCursor,
+	idDecodingContext: IdDecodingContext,
+): SessionSpaceCompressedId | string {
+	const value = readStream(stream);
+	assert(
+		typeof value === "number" || typeof value === "string",
+		"identifier must be string or number",
+	);
+	return typeof value === "string"
+		? value
+		: idDecodingContext.resolveEncodedId(value as OpSpaceCompressedId);
 }
 
 /**
@@ -333,28 +555,80 @@ export function aggregateChunks(input: TreeChunk[]): TreeChunk {
  * Decoder for {@link EncodedNestedArrayShape}s.
  */
 export class NestedArrayDecoder implements ChunkDecoder {
-	public constructor(private readonly shape: EncodedNestedArrayShape) {}
-	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
-		const decoder = decoders[this.shape] ?? oob();
+	/**
+	 * Element decoder linked during initialization and used by general decoding.
+	 */
+	private decoder!: ChunkDecoder;
 
-		// TODO: uniform chunk fast path
+	public constructor(private readonly shape: EncodedNestedArrayShape) {}
+
+	/**
+	 * Decoding strategy selected by {@link NestedArrayDecoder.initialize} and called after {@link NestedArrayDecoder.decode} validates the input framing.
+	 * @remarks
+	 * A number specifies a positive repetition count for elements that consume no encoded data (see {@link EncodedNestedArrayShape}); an array contains the encoded element data.
+	 */
+	private decodeArray!: (data: number | StreamCursor["data"]) => TreeChunk;
+
+	public decode(stream: StreamCursor): TreeChunk {
+		const data = readStream(stream);
+		if (typeof data === "number") {
+			assertNonNegativeSafeInteger(data);
+			if (data === 0) {
+				return emptyChunk;
+			}
+		} else {
+			assert(Array.isArray(data), "expected nested array data");
+		}
+		return this.decodeArray(data);
+	}
+
+	public initialize(decoders: readonly ChunkDecoder[]): void {
+		this.decoder = getChecked(decoders, this.shape);
+		const plan = getUniformDecodingPlan(this.decoder, decoders);
+		this.decodeArray =
+			plan === undefined
+				? this.decodeGeneral.bind(this)
+				: (data) => {
+						if (typeof data === "number") {
+							assert(plan.encodedSize === 0, "expected data for nonempty uniform encoding");
+							return decodeUniform(plan, data, { data: [], offset: 0 });
+						}
+						if (data.length === 0) {
+							return emptyChunk;
+						}
+						assert(
+							plan.encodedSize > 0 && data.length % plan.encodedSize === 0,
+							"incomplete uniform chunk data",
+						);
+						return decodeUniform(plan, data.length / plan.encodedSize, {
+							data,
+							offset: 0,
+						});
+					};
+	}
+
+	/**
+	 * Decodes elements individually when their shape has no uniform plan.
+	 * @remarks
+	 * This can handle all cases, and is used as a fallback when no faster option is available.
+	 */
+	private decodeGeneral(data: number | StreamCursor["data"]): TreeChunk {
+		const decoder = this.decoder;
+
 		const chunks: TreeChunk[] = [];
 
-		const data = readStream(stream);
 		if (typeof data === "number") {
 			// This case means that the array contained only 0-sized items, and was thus encoded as the length of the array.
 			const inner = { data: [], offset: 0 };
 			for (let index = 0; index < data; index++) {
-				chunks.push(decoder.decode(decoders, inner));
+				chunks.push(decoder.decode(inner));
 			}
 		} else {
-			assert(
-				Array.isArray(data),
-				0x739 /* expected number of array for encoding of nested array */,
-			);
 			const inner = { data, offset: 0 };
 			while (inner.offset !== inner.data.length) {
-				chunks.push(decoder.decode(decoders, inner));
+				const previousOffset = inner.offset;
+				chunks.push(decoder.decode(inner));
+				assert(inner.offset > previousOffset, "nested array decoder must consume data");
 			}
 		}
 
@@ -365,14 +639,58 @@ export class NestedArrayDecoder implements ChunkDecoder {
 /**
  * Decoder for {@link EncodedInlineArrayShape}s.
  */
-export class InlineArrayDecoder implements ChunkDecoder {
-	public constructor(private readonly shape: EncodedInlineArrayShape) {}
-	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
+export class InlineArrayDecoder extends UniformShapeDecoder {
+	/**
+	 * Element decoder linked during initialization and used by general decoding.
+	 */
+	private decoder!: ChunkDecoder;
+	public constructor(private readonly shape: EncodedInlineArrayShape) {
+		super();
+	}
+	public decode!: (stream: StreamCursor) => TreeChunk;
+	protected buildUniformDecodingPlan(
+		decoders: readonly ChunkDecoder[],
+	): UniformDecodingPlan | undefined {
+		const plan = getUniformDecodingPlan(getChecked(decoders, this.shape.shape), decoders);
+		if (plan === undefined) {
+			return undefined;
+		}
 		const length = this.shape.length;
-		const decoder = decoders[this.shape.shape] ?? oob();
+		const topLevelLength = plan.topLevelLength * length;
+		const encodedSize = plan.encodedSize * length;
+		assertNonNegativeSafeInteger(length);
+		assertNonNegativeSafeInteger(topLevelLength);
+		assertNonNegativeSafeInteger(encodedSize);
+		return {
+			treeShape: plan.treeShape,
+			idCompressor: plan.idCompressor,
+			topLevelLength,
+			encodedSize,
+			valuesAreVerbatim: plan.valuesAreVerbatim,
+			decodeValuesInto(stream, values): void {
+				for (let index = 0; index < length; index++) {
+					plan.decodeValuesInto(stream, values);
+				}
+			},
+		};
+	}
+	public initialize(decoders: readonly ChunkDecoder[]): void {
+		this.decoder = getChecked(decoders, this.shape.shape);
+		const plan = this.getUniformDecodingPlan(decoders);
+		this.decode =
+			plan === undefined
+				? this.decodeGeneral.bind(this)
+				: (stream) => decodeUniform(plan, 1, stream);
+	}
+	/**
+	 * Decodes the fixed number of elements individually when their shape has no uniform plan.
+	 */
+	private decodeGeneral(stream: StreamCursor): TreeChunk {
+		const length = this.shape.length;
+		const decoder = this.decoder;
 		const chunks: TreeChunk[] = [];
 		for (let index = 0; index < length; index++) {
-			chunks.push(decoder.decode(decoders, stream));
+			chunks.push(decoder.decode(stream));
 		}
 		return aggregateChunks(chunks);
 	}
@@ -382,25 +700,26 @@ export class InlineArrayDecoder implements ChunkDecoder {
  * Decoder for {@link EncodedIncrementalChunkShape}s.
  */
 export class IncrementalChunkDecoder implements ChunkDecoder {
-	public constructor(private readonly context: DecoderContext<EncodedChunkShapeV2>) {}
-	public decode(_: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
+	public constructor(private readonly context: DecoderContext<EncodedChunkShape>) {}
+	public initialize(_decoders: readonly ChunkDecoder[]): void {}
+	public decode(stream: StreamCursor): TreeChunk {
 		assert(
 			this.context.incrementalDecoder !== undefined,
 			0xc27 /* incremental decoder not available for incremental field decoding */,
 		);
 
-		const chunkDecoder = (batch: EncodedFieldBatchV2): TreeChunk => {
+		const chunkDecoder = (batch: EncodedFieldBatchAnyVersion): TreeChunk => {
 			assert(
 				supportsIncrementalEncoding(batch.version),
 				0xc9f /* Unsupported FieldBatchFormatVersion for incremental chunks; must be v2 or higher */,
 			);
-			const context = new DecoderContext(
+			const context = new DecoderContext<EncodedChunkShape>(
 				batch.identifiers,
 				batch.shapes,
 				this.context.idDecodingContext,
 				this.context.incrementalDecoder,
 			);
-			const chunks = genericDecode(decoderLibrary, context, batch, anyDecoder);
+			const chunks = genericDecode(decoderLibrary, context, batch, new AnyDecoder());
 			return aggregateChunks(chunks);
 		};
 
@@ -415,57 +734,169 @@ export class IncrementalChunkDecoder implements ChunkDecoder {
 /**
  * Decoder for {@link EncodedAnyShape}s.
  */
-export const anyDecoder: ChunkDecoder = {
-	decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
+export class AnyDecoder implements ChunkDecoder {
+	/**
+	 * Batch-local decoder table indexed by shape indices read from the stream.
+	 */
+	private decoders!: readonly ChunkDecoder[];
+	public initialize(decoders: readonly ChunkDecoder[]): void {
+		this.decoders = decoders;
+	}
+	public decode(stream: StreamCursor): TreeChunk {
 		const shapeIndex = readStreamNumber(stream);
-		const decoder = getChecked(decoders, shapeIndex);
-		return decoder.decode(decoders, stream);
-	},
-};
+		const decoder = getChecked(this.decoders, shapeIndex);
+		return decoder.decode(stream);
+	}
+}
 
 /**
  * Decoder for field.
  */
-type BasicFieldDecoder = (
-	decoders: readonly ChunkDecoder[],
-	stream: StreamCursor,
-) => [FieldKey, TreeChunk];
+type BasicFieldDecoder = (stream: StreamCursor) => [FieldKey, TreeChunk];
 
 /**
  * Get a decoder for fields of a provided (via `shape` and `context`).
  */
 function fieldDecoder(
-	context: DecoderContext<EncodedChunkShape>,
+	decoders: readonly ChunkDecoder[],
 	key: FieldKey,
 	shape: number,
 ): BasicFieldDecoder {
-	assertValidIndex(shape, context.shapes);
-	return (decoders, stream) => {
-		const decoder = decoders[shape] ?? oob();
-		return [key, decoder.decode(decoders, stream)];
+	const decoder = getChecked(decoders, shape);
+	return (stream) => {
+		return [key, decoder.decode(stream)];
 	};
 }
 
 /**
  * Decoder for {@link EncodedNodeShape}s.
  */
-export class NodeDecoder implements ChunkDecoder {
+export class NodeDecoder extends UniformShapeDecoder {
 	private readonly type?: TreeNodeSchemaIdentifier;
-	private readonly fieldDecoders: readonly BasicFieldDecoder[];
+	/**
+	 * Cached shape for the direct, single-value leaf decoding strategy, when applicable.
+	 */
+	private readonly leafShape?: ChunkShape;
+	/**
+	 * Decoders for fixed fields, linked during initialization for the general node decoding strategy.
+	 */
+	private fieldDecoders!: readonly BasicFieldDecoder[];
+	/**
+	 * Decoder for fields whose keys are supplied by the stream, when the encoded shape allows them.
+	 */
+	private extraFieldsDecoder?: ChunkDecoder;
 	public constructor(
 		private readonly shape: EncodedNodeShape,
 		private readonly context: DecoderContext<EncodedChunkShape>,
 	) {
+		super();
 		this.type = shape.type === undefined ? undefined : context.identifier(shape.type);
+		for (const [, fieldShape] of shape.fields ?? []) {
+			assertValidIndex(fieldShape, context.shapes);
+		}
+		if (
+			this.type !== undefined &&
+			shape.value === true &&
+			(shape.fields?.length ?? 0) === 0 &&
+			shape.extraFields === undefined
+		) {
+			const chunkShape =
+				builtInLeafChunkShapes.get(this.type) ??
+				new TreeShape(this.type, true, []).withTopLevelLength(1);
+			this.leafShape = chunkShape;
+			this.decode = (stream): TreeChunk => {
+				const value = readStreamValue(stream);
+				return new UniformChunk(chunkShape, [value], context.idDecodingContext.idCompressor);
+			};
+		}
+	}
 
+	protected buildUniformDecodingPlan(
+		decoders: readonly ChunkDecoder[],
+	): UniformDecodingPlan | undefined {
+		if (this.type === undefined || this.shape.extraFields !== undefined) {
+			return undefined;
+		}
+		const valueShape = this.shape.value;
+		const compressedIdentifier = valueShape === SpecialField.Identifier;
+		if (
+			valueShape !== true &&
+			valueShape !== false &&
+			!(compressedIdentifier && this.type === "com.fluidframework.leaf.string")
+		) {
+			return undefined;
+		}
+		const hasValue = valueShape !== false;
+		const fields: FieldShape[] = [];
+		const plans: UniformDecodingPlan[] = [];
+		const keys = new Set<FieldKey>();
+		let nodeCount = 1;
+		let encodedSize = hasValue ? 1 : 0;
+		let valuesAreVerbatim = !compressedIdentifier;
+		for (const [encodedKey, fieldShape] of this.shape.fields ?? []) {
+			const key: FieldKey = this.context.identifier(encodedKey);
+			if (keys.has(key)) {
+				return undefined;
+			}
+			keys.add(key);
+			const plan = getUniformDecodingPlan(getChecked(decoders, fieldShape), decoders);
+			if (plan === undefined) {
+				return undefined;
+			}
+			if (plan.topLevelLength > 0) {
+				if (hasValue) {
+					return undefined;
+				}
+				nodeCount += plan.treeShape.positions.length * plan.topLevelLength;
+				// Bound individual shape metadata, not repetitions of that shape in a chunk.
+				// See UniformDecodingPlan for the size-policy rationale.
+				if (nodeCount > defaultChunkPolicy.uniformChunkNodeCount) {
+					return undefined;
+				}
+				fields.push([key, plan.treeShape, plan.topLevelLength]);
+			}
+			plans.push(plan);
+			encodedSize += plan.encodedSize;
+			valuesAreVerbatim &&= plan.valuesAreVerbatim;
+		}
+		const context = this.context.idDecodingContext;
+		return {
+			treeShape:
+				this.leafShape?.treeShape ??
+				new TreeShape(this.type, hasValue, fields, compressedIdentifier),
+			idCompressor: context.idCompressor,
+			topLevelLength: 1,
+			encodedSize,
+			valuesAreVerbatim,
+			decodeValuesInto(stream, values): void {
+				if (compressedIdentifier) {
+					values.push(readIdentifierValue(stream, context));
+				} else if (hasValue) {
+					values.push(readStreamValue(stream));
+				}
+				for (const plan of plans) {
+					plan.decodeValuesInto(stream, values);
+				}
+			},
+		};
+	}
+
+	public initialize(decoders: readonly ChunkDecoder[]): void {
+		if (this.leafShape !== undefined) {
+			return;
+		}
 		const fieldDecoders: BasicFieldDecoder[] = [];
-		for (const [fieldKey, fieldShape] of shape.fields ?? []) {
-			const key: FieldKey = context.identifier(fieldKey);
-			fieldDecoders.push(fieldDecoder(context, key, fieldShape));
+		for (const [fieldKey, fieldShape] of this.shape.fields ?? []) {
+			const key: FieldKey = this.context.identifier(fieldKey);
+			fieldDecoders.push(fieldDecoder(decoders, key, fieldShape));
 		}
 		this.fieldDecoders = fieldDecoders;
+		this.extraFieldsDecoder =
+			this.shape.extraFields === undefined
+				? undefined
+				: getChecked(decoders, this.shape.extraFields);
 	}
-	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
+	public decode(stream: StreamCursor): TreeChunk {
 		const type: TreeNodeSchemaIdentifier =
 			this.type ?? readStreamIdentifier(stream, this.context);
 		// TODO: Consider typechecking against stored schema in here somewhere.
@@ -485,16 +916,16 @@ export class NodeDecoder implements ChunkDecoder {
 		}
 
 		for (const decoder of this.fieldDecoders) {
-			const [key, content] = decoder(decoders, stream);
+			const [key, content] = decoder(stream);
 			addField(key, content);
 		}
 
-		if (this.shape.extraFields !== undefined) {
-			const decoder = decoders[this.shape.extraFields] ?? oob();
+		if (this.extraFieldsDecoder !== undefined) {
+			const decoder = this.extraFieldsDecoder;
 			const inner = readStreamStream(stream);
 			while (inner.offset !== inner.data.length) {
 				const key: FieldKey = readStreamIdentifier(inner, this.context);
-				addField(key, decoder.decode(decoders, inner));
+				addField(key, decoder.decode(inner));
 			}
 		}
 

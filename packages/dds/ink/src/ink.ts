@@ -18,6 +18,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	type IFluidSerializer,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	SharedObject,
 	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
@@ -107,6 +108,7 @@ const snapshotFileName = "header";
  * @sealed
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 export class Ink extends SharedObject<IInkEvents> implements IInk {
 	/**
 	 * Create a new Ink.
@@ -140,9 +142,6 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
 		super(id, runtime, attributes, "fluid_ink_");
 	}
 
-	/**
-	 * {@inheritDoc IInk.createStroke}
-	 */
 	public createStroke(pen: IPen): IInkStroke {
 		const createStrokeOperation: ICreateStrokeOperation = {
 			id: uuid(),
@@ -154,9 +153,6 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
 		return this.executeCreateStrokeOperation(createStrokeOperation);
 	}
 
-	/**
-	 * {@inheritDoc IInk.appendPointToStroke}
-	 */
 	public appendPointToStroke(point: IInkPoint, id: string): IInkStroke {
 		const stylusOperation: IStylusOperation = {
 			id,
@@ -167,9 +163,6 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
 		return this.executeStylusOperation(stylusOperation);
 	}
 
-	/**
-	 * {@inheritDoc IInk.clear}
-	 */
 	public clear(): void {
 		const clearOperation: IClearOperation = {
 			time: Date.now(),
@@ -179,31 +172,19 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
 		this.executeClearOperation(clearOperation);
 	}
 
-	/**
-	 * {@inheritDoc IInk.getStrokes}
-	 */
 	public getStrokes(): IInkStroke[] {
 		return this.inkData.getStrokes();
 	}
 
-	/**
-	 * {@inheritDoc IInk.getStroke}
-	 */
 	public getStroke(key: string): IInkStroke {
 		return this.inkData.getStroke(key);
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
-	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		const blobContent = JSON.stringify(this.inkData.getSerializable());
 		return createSingleBlobSummary(snapshotFileName, blobContent);
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const content = await readAndParse<ISerializableInk>(storage, snapshotFileName);
 		this.inkData = new InkData(content);
@@ -252,9 +233,6 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
-	 */
 	protected onDisconnect(): void {
 		return;
 	}

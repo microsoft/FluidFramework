@@ -41,18 +41,21 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 	version: EncodedEditManager<TChangeset>["version"],
 ): CodecAndSchema<
 	SummaryData<TChangeset>,
-	EditManagerEncodingContext,
+	EditManagerEncodingContext<TChangeset>,
 	EditManagerDecodingContext
 > {
 	const schema = EncodedEditManager(changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema);
 
 	const codec: CodecAndSchema<
 		SummaryData<TChangeset>,
-		EditManagerEncodingContext,
+		EditManagerEncodingContext<TChangeset>,
 		EditManagerDecodingContext
 	> = {
 		schema,
-		encode: (data: SummaryData<TChangeset>, context: EditManagerEncodingContext) => {
+		encode: (
+			data: SummaryData<TChangeset>,
+			context: EditManagerEncodingContext<TChangeset>,
+		) => {
 			const mainBranch = encodeSharedBranch(
 				changeCodec,
 				revisionTagCodec,

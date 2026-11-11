@@ -19,6 +19,8 @@ import {
 	type IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils/internal";
+import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
+import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Forces point-in-time snapshot reads to bypass caches while forwarding all other storage operations
@@ -41,6 +43,24 @@ class PointInTimeDocumentStorageService extends DocumentStorageServiceProxy {
 		scenarioName?: string,
 	): Promise<IVersion[]> {
 		return super.getVersions(versionId, count, scenarioName, FetchSource.noCache);
+	}
+}
+
+function annotateMissingOps(error: unknown): void {
+	if (!isFluidError(error)) {
+		return;
+	}
+
+	// Attach a stable Version Mark availability classification only when the driver error
+	// confirms that the required historical ops are unavailable.
+	const historyIsUnavailable =
+		error.errorType === OdspErrorTypes.cannotCatchUp ||
+		(error.errorType === OdspErrorTypes.genericNetworkError &&
+			error.getTelemetryProperties().opsFetchFailure === "tooManyRetries");
+	if (historyIsUnavailable) {
+		error.addTelemetryProperties({
+			versionMarkAvailabilityOutcome: "missingOps",
+		});
 	}
 }
 
@@ -102,14 +122,33 @@ export class OdspPointInTimeDocumentService
 		// The exclusive upper bound needed to include the target op itself.
 		const boundedTo = this.targetSequenceNumber + 1;
 		return {
-			fetchMessages: (from, to, abortSignal, cachedOnly, fetchReason) =>
-				liveDeltaStorage.fetchMessages(
-					from,
-					to === undefined ? boundedTo : Math.min(to, boundedTo),
-					abortSignal,
-					cachedOnly,
-					fetchReason,
-				),
+			fetchMessages: (from, to, abortSignal, cachedOnly, fetchReason) => {
+				try {
+					const stream = liveDeltaStorage.fetchMessages(
+						from,
+						to === undefined ? boundedTo : Math.min(to, boundedTo),
+						abortSignal,
+						cachedOnly,
+						fetchReason,
+					);
+					return {
+						read: async () => {
+							try {
+								return await stream.read();
+							} catch (error) {
+								// The bounded replay owns the conclusion that these specific failures mean
+								// the bridge to the target cannot be materialized. Preserve the driver's raw
+								// errorType while attaching the stable Version Mark availability outcome.
+								annotateMissingOps(error);
+								throw error;
+							}
+						},
+					};
+				} catch (error) {
+					annotateMissingOps(error);
+					throw error;
+				}
+			},
 		};
 	}
 

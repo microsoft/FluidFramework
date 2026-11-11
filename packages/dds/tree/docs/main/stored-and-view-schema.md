@@ -88,7 +88,7 @@ Once the migration is done, all code depending on the old schema can be deleted 
 -   support for creating data in that format when inserting it into the document
 -   the above mentioned test
 
-The two schema could be kept straight by calling them `*CompatibilitySchema` and `*Schema` respectively.
+The two schemas could be kept straight by calling them `*CompatibilitySchema` and `*Schema` respectively.
 
 It would also be possible to express the new one as a declarative upgrade to the old one (via a set of relaxations to parts of it), and then replace it with a normally coded one (not based on the old one) when deleting the old one.
 
@@ -309,7 +309,7 @@ Even if we can't make it work as a separate DDS, it should be implemented such t
 
 ## TypeScript Typing
 
-It is be possible to have an embedded DSL for schema declaration in the style of [typebox](https://www.npmjs.com/package/@sinclair/typebox) which produces both compile time types and runtime schema data.
+It is be possible to have an embedded DSL for schema declaration in the style of [TypeBox](https://www.npmjs.com/package/typebox) which produces both compile time types and runtime schema data.
 This allows for schema-aware APIs (for example for tree reading and editing) to be provided without code gen.
 
 It's possible to take this schema-aware static typing much further though (but it may not be useful to do so).

@@ -260,7 +260,7 @@ describe("ForestSummarizerCodec", () => {
 						} as unknown as FormatCommon,
 						decodeContext,
 					),
-				validateAssertionError("Data being decoded should validate"),
+				validateAssertionError(/Data being decoded should validate/),
 			);
 		});
 
@@ -276,7 +276,7 @@ describe("ForestSummarizerCodec", () => {
 						} as unknown as FormatCommon,
 						decodeContext,
 					),
-				validateAssertionError("Data being decoded should validate"),
+				validateAssertionError(/Data being decoded should validate/),
 			);
 		});
 	});

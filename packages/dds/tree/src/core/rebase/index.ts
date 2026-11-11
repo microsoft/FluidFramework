@@ -18,6 +18,7 @@ export {
 	type LocalChangeMetadata,
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
+	type ChangeMetadataBeta,
 	type LabelTree,
 	type CustomMetadataTree,
 	type TransactionLabels,
@@ -71,3 +72,9 @@ export {
 	isAncestor,
 	diffHistories,
 } from "./utils.js";
+export {
+	cheapRebaseValidation,
+	strictRebaseValidation,
+	RebaseValidation,
+	RebaseValidationLevel,
+} from "./rebaseValidation.js";

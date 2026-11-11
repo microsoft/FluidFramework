@@ -1,5 +1,63 @@
 # @fluidframework/test-runtime-utils
 
+## 3.12.0
+
+Dependency updates only.
+
+## 3.11.0
+
+Dependency updates only.
+
+## 3.10.0
+
+### Minor Changes
+
+- Add oldestSupportedClient across runtime layers ([#28537](https://github.com/microsoft/FluidFramework/pull/28537)) [9fc4c218519](https://github.com/microsoft/FluidFramework/commit/9fc4c218519eefdf4518d22517e122325f7a055d)
+
+  Runtime and data store contexts now expose the required `oldestSupportedClient` property beside `minVersionForCollab`.
+  Consumers can use `context.oldestSupportedClient` directly instead of `context.minVersionForCollab`.
+  The runtime retains its internal fallback for older contexts that expose only `minVersionForCollab`, so mixed-version packages remain supported.
+
+  `IFluidParentContext.minVersionForCollab` is deprecated in 3.10.0 and will be removed in a future release.
+  Use `IFluidParentContext.oldestSupportedClient` instead.
+
+  ```typescript
+  const oldestSupportedClient = context.oldestSupportedClient;
+  ```
+
+  The on-disk schema and telemetry property names do not change.
+  See [the migration issue](https://github.com/microsoft/FluidFramework/issues/27851) for more details.
+
+## 3.7.0
+
+Dependency updates only.
+
+## 3.6.0
+
+Dependency updates only.
+
+## 3.5.0
+
+Dependency updates only.
+
+## 3.4.0
+
+Dependency updates only.
+
+## 3.3.0
+
+### Minor Changes
+
+- Remove direct ID range finalization from mock runtime APIs ([#27559](https://github.com/microsoft/FluidFramework/pull/27559)) [bee7b1ad621](https://github.com/microsoft/FluidFramework/commit/bee7b1ad621413db8ce9bcb7424dec1ebbfb199f)
+
+  `MockContainerRuntime.finalizeIdRange` is now private.
+  Mock runtimes continue to finalize ID ranges automatically when processing allocation messages.
+  Derived mock runtimes that customize message processing can use the protected `maybeProcessIdAllocationMessage` method to process allocation messages without depending on internal ID compressor types.
+
+## 3.2.0
+
+Dependency updates only.
+
 ## 3.1.0
 
 Dependency updates only.

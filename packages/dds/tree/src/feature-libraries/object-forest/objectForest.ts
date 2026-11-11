@@ -47,6 +47,7 @@ import {
 	assertValidRange,
 	brand,
 	breakingMethod,
+	replaceArrayRange,
 	type Breakable,
 	type WithBreakable,
 } from "../../util/index.js";
@@ -284,8 +285,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 				);
 				assertValidIndex(destination, existingDestinationField, true);
 				const currentField = getOrCreateField(parent, key);
-				// TODO: this will fail for very large insertions due to argument limits.
-				currentField.splice(destination, 0, ...sourceField);
+				replaceArrayRange(currentField, destination, destination, sourceField);
 				this.forest.delete(source);
 			}
 			/**

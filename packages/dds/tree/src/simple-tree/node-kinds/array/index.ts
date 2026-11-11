@@ -6,6 +6,7 @@
 export {
 	arraySchema,
 	asIndex,
+	asIndexWithinBounds,
 	IterableTreeArrayContent,
 	TreeArrayNode,
 	type ReadonlyArrayNode,

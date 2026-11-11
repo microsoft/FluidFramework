@@ -190,6 +190,7 @@ export {
 	type LocalChangeMetadata,
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
+	type ChangeMetadataBeta,
 	type LabelTree,
 	type CustomMetadataTree,
 	type TransactionLabels,
@@ -235,6 +236,10 @@ export {
 	comparePartialChangesetLocalIds,
 	diffHistories,
 	type RevisionReplacer,
+	cheapRebaseValidation,
+	strictRebaseValidation,
+	RebaseValidation,
+	RebaseValidationLevel,
 } from "./rebase/index.js";
 
 export {

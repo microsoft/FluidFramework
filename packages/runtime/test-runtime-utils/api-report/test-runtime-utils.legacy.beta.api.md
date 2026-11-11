@@ -70,8 +70,6 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     dirty(): void;
     // (undocumented)
     protected readonly factory: MockContainerRuntimeFactory;
-    // (undocumented)
-    finalizeIdRange(range: IdCreationRange): void;
     flush(): void;
     flushSomeMessages(numMessages: number): void;
     // (undocumented)
@@ -351,6 +349,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     minVersionForCollab: OldestSupportedClientVersion;
     // (undocumented)
     off(event: string | symbol, listener: (...args: any[]) => void): this;
+    oldestSupportedClient: OldestSupportedClientVersion;
     // (undocumented)
     on(event: string | symbol, listener: (...args: any[]) => void): this;
     // (undocumented)
@@ -386,6 +385,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
         attachState?: AttachState;
         registry?: readonly IChannelFactory[];
         minVersionForCollab?: OldestSupportedClientVersion;
+        oldestSupportedClient?: OldestSupportedClientVersion;
         inStagingMode?: boolean;
         isDirty?: boolean;
     });
@@ -472,12 +472,12 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     readonly logger: ITelemetryBaseLogger;
     // (undocumented)
     makeVisibleAndAttachGraph(): void;
-    // (undocumented)
     readonly minVersionForCollab: OldestSupportedClientVersion;
     // (undocumented)
     notifyReadOnlyState(readonly: boolean): void;
     // (undocumented)
     get objectsRoutingContext(): IFluidHandleContext;
+    readonly oldestSupportedClient?: OldestSupportedClientVersion;
     // (undocumented)
     options: Record<string | number, any>;
     // (undocumented)

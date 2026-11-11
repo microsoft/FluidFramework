@@ -4,6 +4,12 @@
 
 ```ts
 
+// @beta @sealed @legacy
+export interface AcknowledgedSummary {
+    readonly referenceSequenceNumber: number;
+    readonly version: string;
+}
+
 // @beta @legacy
 export function captureFullContainerState(input: ICaptureFullContainerStateProps): Promise<string>;
 
@@ -124,6 +130,9 @@ export interface ILoadExistingContainerProps extends IContainerHostProps, IConta
     readonly request: IRequest;
 }
 
+// @beta @legacy @input
+export type ILoadSummarizerContainerProps = Omit<ILoadExistingContainerProps, "pendingLocalState">;
+
 // @beta @legacy
 export interface IParsedUrl {
     id: string;
@@ -170,6 +179,9 @@ export interface IScribeProtocolState {
 }
 
 // @beta @legacy
+export function loadAndSummarize(loadSummarizerContainerProps: ILoadSummarizerContainerProps): Promise<AcknowledgedSummary>;
+
+// @beta @legacy
 export function loadContainerToSequenceNumber(props: ILoadContainerToSequenceNumberProps): Promise<IContainer>;
 
 // @beta @legacy
@@ -195,6 +207,28 @@ export class Loader implements IHostLoader {
 export function loadExistingContainer(loadExistingContainerProps: ILoadExistingContainerProps): Promise<IContainer>;
 
 // @beta @legacy
+export function loadSummarizerContainerAndMakeSummary(loadSummarizerContainerProps: ILoadSummarizerContainerProps): Promise<LoadSummarizerSummaryResult>;
+
+// @beta @sealed @legacy
+export type LoadSummarizerSummaryResult = {
+    readonly success: true;
+    readonly summaryResults: OnDemandSummaryResults;
+} | {
+    readonly success: false;
+    readonly error: IErrorBase;
+};
+
+// @beta @sealed @legacy
+export interface OnDemandSummaryResults {
+    readonly summaryInfo: {
+        readonly stage?: SummaryStage;
+        readonly handle?: string;
+    };
+    readonly summaryOpBroadcasted: boolean;
+    readonly summarySubmitted: boolean;
+}
+
+// @beta @legacy
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
 
 // @beta @legacy
@@ -211,6 +245,9 @@ export function rehydrateDetachedContainer(rehydrateDetachedContainerProps: IReh
 
 // @beta @legacy
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
+
+// @beta @legacy
+export type SummaryStage = "base" | "generate" | "upload" | "submit" | "unknown";
 
 // @beta @legacy
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined;

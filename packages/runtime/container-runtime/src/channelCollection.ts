@@ -59,6 +59,7 @@ import {
 	GCDataBuilder,
 	RequestParser,
 	RuntimeHeaders,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	SummaryTreeBuilder,
 	addBlobToSummary,
 	convertSnapshotTreeToSummaryTree,
@@ -150,6 +151,7 @@ export interface IFluidParentContextPrivate
 	extends IFluidParentContext,
 		ContainerExtensionProvider {
 	readonly isReadOnly: () => boolean;
+	readonly oldestSupportedClient: OldestSupportedClientVersion;
 	readonly minVersionForCollab: OldestSupportedClientVersion;
 }
 
@@ -265,6 +267,7 @@ export function formParentContext<
 			return context.setChannelDirty(address);
 		},
 		minVersionForCollab: context.minVersionForCollab,
+		oldestSupportedClient: context.oldestSupportedClient,
 		getExtension: context.getExtension.bind(context),
 	};
 }
@@ -1289,6 +1292,7 @@ export class ChannelCollection
 	 * Create a summary. Used when attaching or serializing a detached container.
 	 */
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const builder = new SummaryTreeBuilder();
 		this.visitLocalBoundContextsDuringAttach(
 			(contextId: string, context: FluidDataStoreContext) => {
@@ -1414,6 +1418,7 @@ export class ChannelCollection
 		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats> {
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const summaryBuilder = new SummaryTreeBuilder();
 		await this.visitContextsDuringSummary(
 			async (contextId: string, context: FluidDataStoreContext) => {
@@ -1585,7 +1590,7 @@ export class ChannelCollection
 	}
 
 	/**
-	 * Called by GC to retrieve the package path of a data store node with the given path.
+	 * Returns the package path of the data store containing the given node without loading the data store.
 	 */
 	public async getDataStorePackagePath(
 		nodePath: string,

@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { Static, TSchema } from "@sinclair/typebox";
-// This export is documented as supported in typebox's documentation.
-// eslint-disable-next-line import-x/no-internal-modules
-import { TypeCompiler } from "@sinclair/typebox/compiler";
+import type { Static, TSchema } from "typebox";
+import { Build, type EvaluateResult } from "typebox/schema";
 
 import { toFormatValidator, type JsonValidator } from "../codec/index.js";
+import { getOrCreate } from "../util/index.js";
 
 /**
  * A {@link JsonValidator} implementation which uses TypeBox's JSON schema validator.
@@ -21,12 +20,18 @@ import { toFormatValidator, type JsonValidator } from "../codec/index.js";
  */
 const typeboxValidator: JsonValidator = {
 	compile: <Schema extends TSchema>(schema: Schema) => {
-		const compiledFormat = TypeCompiler.Compile(schema);
+		const compiledFormat = getOrCreate(cache, schema, (key) => Build(key).Evaluate());
 		return {
 			check: (data): data is Static<Schema> => compiledFormat.Check(data),
 		};
 	},
 };
+
+/**
+ * Reuses compiled validators when codecs share a schema object, without retaining unused schemas.
+ * Schemas and compilation-affecting TypeBox settings must remain unchanged while cached validators are in use.
+ */
+const cache = new WeakMap<TSchema, EvaluateResult>();
 
 /**
  * A {@link FormatValidator} implementation which uses TypeBox's JSON schema validator.

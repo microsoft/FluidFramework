@@ -6,16 +6,46 @@
 import { strict as assert } from "node:assert";
 import { isDeepStrictEqual } from "node:util";
 
+import { StagedSchemaUpgradePolicy, type SchemaUpgrade } from "../simple-tree/index.js";
+import { createTreeSchema } from "../simple-tree/index.js";
 import {
-	StagedSchemaUpgradePolicy,
-	toStoredSchema,
-	type SchemaUpgrade,
-} from "../simple-tree/index.js";
+	simpleStoredSchemaToStoredSchema,
+	transformSimpleSchema,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../simple-tree/toStoredSchema.js";
 
-import { getStagedSchemaUpgrades, testSchema, testSimpleTrees } from "./testTrees.js";
+import {
+	getStagedSchemaUpgrades,
+	testDocuments,
+	testSchema,
+	testSimpleTrees,
+	testTrees,
+} from "./testTrees.js";
 import { compareSets } from "../util/index.js";
 
 describe("test tree catalogs", () => {
+	for (const [collectionName, testCases] of Object.entries({
+		testSchema,
+		testSimpleTrees,
+		testTrees,
+		testDocuments,
+	})) {
+		// Test case names are used in snapshot filenames, which must not collide on case-insensitive filesystems.
+		it(`${collectionName} has case-insensitively unique names`, () => {
+			const names = new Map<string, string>();
+			for (const testCase of testCases) {
+				const normalizedName = testCase.name.toLowerCase();
+				const existingName = names.get(normalizedName);
+				assert.equal(
+					existingName,
+					undefined,
+					`Test names "${existingName}" and "${testCase.name}" collide when normalized`,
+				);
+				names.set(normalizedName, testCase.name);
+			}
+		});
+	}
+
 	it("includes the schema for every simple tree", () => {
 		const schemas = new Set(testSchema.map((testCase) => testCase.schema));
 		// Check for duplicate schemas in the testSchema array.
@@ -27,7 +57,7 @@ describe("test tree catalogs", () => {
 	});
 
 	// Currently we expect every schema to have at least one test tree.
-	// If we ever add schema which can't have any valid trees
+	// If we ever add schemas which can't have any valid trees
 	// (like a recursive required field, or required field with no allowed types), this test will need to be updated to exclude those cases.
 	it("includes at least one simple tree for every schema", () => {
 		const treeSchemas = new Set(testSimpleTrees.map((tree) => tree.schema));
@@ -40,35 +70,37 @@ describe("test tree catalogs", () => {
 		}
 	});
 
+	// Production analysis, conversion-cache, and context behavior over this catalog are covered in
+	// simple-tree/treeSchema.spec.ts, simple-tree/toStoredSchema.spec.ts, and simple-tree/createContext.spec.ts.
 	describe("getStagedSchemaUpgrades on test schema", () => {
 		for (const testCase of testSchema) {
 			it(testCase.name, () => {
-				// Validate getStagedSchemaUpgrades against toStoredSchema.
+				// Reference conversions must bypass policy-key normalization and the stored-schema cache.
+				const treeSchema = createTreeSchema(testCase.schema);
 				const upgrades = getStagedSchemaUpgrades(testCase.schema);
-				const upgradesFromToStoredSchema = new Set<SchemaUpgrade>();
-				toStoredSchema(testCase.schema, {
+				const upgradesFromConversion = new Set<SchemaUpgrade>();
+				transformSimpleSchema(treeSchema, {
 					includeStaged(upgrade) {
-						upgradesFromToStoredSchema.add(upgrade);
+						upgradesFromConversion.add(upgrade);
 						return true;
 					},
 					includeStagedOptional(upgrade) {
-						upgradesFromToStoredSchema.add(upgrade);
+						upgradesFromConversion.add(upgrade);
 						return true;
 					},
 				});
-				assert(compareSets({ a: upgrades, b: upgradesFromToStoredSchema }));
+				assert(compareSets({ a: upgrades, b: upgradesFromConversion }));
+				assert.equal(upgrades.size > 0, testCase.hasStagedSchema === true);
 
-				// Sanity check: Convert the schema to stored schema using different staged schema policies and compare the results.
-				const restrictive = toStoredSchema(
-					testCase.schema,
-					StagedSchemaUpgradePolicy.restrictive,
+				const restrictive = simpleStoredSchemaToStoredSchema(
+					transformSimpleSchema(treeSchema, StagedSchemaUpgradePolicy.restrictive),
 				);
-				const permissive = toStoredSchema(
-					testCase.schema,
-					StagedSchemaUpgradePolicy.permissive,
+				const permissive = simpleStoredSchemaToStoredSchema(
+					transformSimpleSchema(treeSchema, StagedSchemaUpgradePolicy.permissive),
 				);
+				// Catalog staging must be observable; redundant staging need not change the stored schema in general.
 				const convertedHasStagedSchema = !isDeepStrictEqual(restrictive, permissive);
-				assert.equal(upgrades.size > 0, convertedHasStagedSchema);
+				assert.equal(convertedHasStagedSchema, testCase.hasStagedSchema === true);
 			});
 		}
 	});

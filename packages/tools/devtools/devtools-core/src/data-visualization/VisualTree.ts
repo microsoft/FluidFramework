@@ -112,9 +112,6 @@ export interface TreeNodeBase extends VisualNodeBase {
  * @internal
  */
 export interface VisualTreeNode extends TreeNodeBase {
-	/**
-	 * {@inheritDoc VisualNodeBase.nodeKind}
-	 */
 	nodeKind: VisualNodeKind.TreeNode;
 }
 
@@ -124,9 +121,6 @@ export interface VisualTreeNode extends TreeNodeBase {
  * @internal
  */
 export interface VisualValueNode extends ValueNodeBase {
-	/**
-	 * {@inheritDoc VisualNodeBase.nodeKind}
-	 */
 	nodeKind: VisualNodeKind.ValueNode;
 }
 
@@ -138,9 +132,6 @@ export interface VisualValueNode extends ValueNodeBase {
  * @internal
  */
 export interface UnknownObjectNode extends VisualNodeBase {
-	/**
-	 * {@inheritDoc VisualNodeBase.nodeKind}
-	 */
 	nodeKind: VisualNodeKind.UnknownObjectNode;
 }
 
@@ -167,9 +158,6 @@ export interface FluidObjectNodeBase extends VisualNodeBase {
  * @internal
  */
 export interface FluidObjectTreeNode extends TreeNodeBase, FluidObjectNodeBase {
-	/**
-	 * {@inheritDoc VisualNodeBase.nodeKind}
-	 */
 	nodeKind: VisualNodeKind.FluidTreeNode;
 }
 
@@ -184,9 +172,6 @@ export interface FluidObjectTreeNode extends TreeNodeBase, FluidObjectNodeBase {
  * @internal
  */
 export interface FluidObjectValueNode extends ValueNodeBase, FluidObjectNodeBase {
-	/**
-	 * {@inheritDoc VisualNodeBase.nodeKind}
-	 */
 	nodeKind: VisualNodeKind.FluidValueNode;
 }
 
@@ -198,9 +183,6 @@ export interface FluidObjectValueNode extends ValueNodeBase, FluidObjectNodeBase
  * @internal
  */
 export interface FluidUnknownObjectNode extends FluidObjectNodeBase {
-	/**
-	 * {@inheritDoc VisualNodeBase.nodeKind}
-	 */
 	nodeKind: VisualNodeKind.FluidUnknownObjectNode;
 }
 
@@ -217,9 +199,6 @@ export interface FluidHandleNode extends VisualNodeBase {
 	 */
 	fluidObjectId: string;
 
-	/**
-	 * {@inheritDoc VisualNodeBase.nodeKind}
-	 */
 	nodeKind: VisualNodeKind.FluidHandleNode;
 }
 

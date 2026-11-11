@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { performanceNow } from "@fluid-internal/client-utils";
 import type {
 	IVersionMarkResolver,
 	ResolveResult,
@@ -14,7 +15,10 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type {
+	ITelemetryGenericEventExt,
+	TelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 import type { InboundMessageResult } from "../opLifecycle/index.js";
 
@@ -59,7 +63,7 @@ export interface VersionMarkResolverRuntimeHooks {
 	 * decompress), so the history scan observes the same restored `batchId` — in particular for chunked
 	 * batches, whose id is stripped from the final chunk's wire metadata and restored only after
 	 * reassembly. A fresh unpacker is created per scan since it holds reassembly state. When absent, the
-	 * history scan cannot identify batches and reports `pending`/`unresolvable`.
+	 * history scan cannot identify batches and reports `pending`.
 	 */
 	readonly createHistoricalOpUnpacker?: () => (
 		op: ISequencedDocumentMessage,
@@ -120,7 +124,10 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 				sequenceNumberLowerBound: referenceSequenceNumber + 1,
 			};
 		}
-		this.hooks.logger.sendTelemetryEvent({ eventName: "Capture", kind: result.kind });
+		this.hooks.logger.sendTelemetryEvent({
+			eventName: "Capture",
+			kind: result.kind,
+		});
 		return result;
 	}
 
@@ -128,17 +135,31 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		batchId: string,
 		sequenceNumberLowerBound: number,
 	): Promise<ResolveResult> {
-		const startTime = Date.now();
+		const startTime = performanceNow();
 		// Track from here so inbound batches are recorded even without a prior capture/subscribe; otherwise
 		// a batch sequencing during the scan (or live, in the no-reader case) is skipped and unrecoverable.
 		this.tracking = true;
 		// Defaults cover the throw path (only the history scan can throw — e.g. an unpacker
-		// DataCorruptionError or the 0xd1c reader-contract assert): the Resolve event still fires via
-		// `finally`, with outcome "error".
+		// DataCorruptionError or the 0xd1c reader-contract assert), with outcome "error".
 		let path: "session" | "history" | "noReader" = "history";
 		let outcome: ResolveResult["kind"] | "error" = "error";
 		let resolvedSequenceNumber: number | undefined;
 		let resolvedReason: string | undefined;
+		let historyAttempted = false;
+		const createEvent = (): ITelemetryGenericEventExt => ({
+			eventName: "Resolve",
+			outcome,
+			path,
+			historyAttempted,
+			sequenceNumberLowerBound,
+			duration: performanceNow() - startTime,
+			...(resolvedSequenceNumber === undefined
+				? {}
+				: { sequenceNumber: resolvedSequenceNumber }),
+			...(resolvedReason === undefined ? {} : { reason: resolvedReason }),
+		});
+
+		let result: ResolveResult;
 		try {
 			// Fast path: batch sequenced live this session.
 			const resolvedBatch = this.sessionResolutionFor(batchId);
@@ -151,44 +172,40 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 					path = "noReader";
 					outcome = "pending";
 					resolvedReason = "historicalOpsUnavailable";
-					return { kind: "pending", reason: "historicalOpsUnavailable" };
-				}
-				// Otherwise scan history from the mark's reference point.
-				path = "history";
-				let result = await this.resolveFromHistory(reader, batchId, sequenceNumberLowerBound);
-				if (result.kind !== "resolved") {
-					// The batch may have sequenced live while the history scan was in progress. Prefer that
-					// authoritative in-session result over a stale history miss.
-					const liveResult = this.sessionResolutionFor(batchId);
-					if (liveResult !== undefined) {
-						path = "session";
-						result = { kind: "resolved", ...liveResult };
+					result = { kind: "pending", reason: "historicalOpsUnavailable" };
+				} else {
+					// Otherwise scan history from the mark's reference point.
+					path = "history";
+					historyAttempted = true;
+					result = await this.resolveFromHistory(reader, batchId, sequenceNumberLowerBound);
+					if (result.kind !== "resolved") {
+						// The batch may have sequenced live while the history scan was in progress. Prefer that
+						// authoritative in-session result over a stale history miss.
+						const liveResult = this.sessionResolutionFor(batchId);
+						if (liveResult !== undefined) {
+							path = "session";
+							result = { kind: "resolved", ...liveResult };
+						}
+					}
+					outcome = result.kind;
+					if (result.kind === "resolved") {
+						resolvedSequenceNumber = result.sequenceNumber;
+					} else {
+						resolvedReason = result.reason;
 					}
 				}
-				outcome = result.kind;
-				if (result.kind === "resolved") {
-					resolvedSequenceNumber = result.sequenceNumber;
-				} else {
-					resolvedReason = result.reason;
-				}
-				return result;
+			} else {
+				path = "session";
+				outcome = "resolved";
+				resolvedSequenceNumber = resolvedBatch.sequenceNumber;
+				result = { kind: "resolved", ...resolvedBatch };
 			}
-			path = "session";
-			outcome = "resolved";
-			resolvedSequenceNumber = resolvedBatch.sequenceNumber;
-			return { kind: "resolved", ...resolvedBatch };
-		} finally {
-			this.hooks.logger.sendTelemetryEvent({
-				eventName: "Resolve",
-				outcome,
-				path,
-				durationMs: Date.now() - startTime,
-				...(resolvedSequenceNumber === undefined
-					? {}
-					: { sequenceNumber: resolvedSequenceNumber }),
-				...(resolvedReason === undefined ? {} : { reason: resolvedReason }),
-			});
+		} catch (error) {
+			this.hooks.logger.sendErrorEvent(createEvent(), error);
+			throw error;
 		}
+		this.hooks.logger.sendTelemetryEvent(createEvent());
+		return result;
 	}
 
 	/**
@@ -198,7 +215,7 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 	 * {@link inboundVersionMarkUpdate} derives its batch identity, so virtualized batches resolve here too.
 	 * The injected historical unpacker owns virtualization details, including tolerating a requested range
 	 * that begins within an incomplete chunk stream. On a miss, {@link classifyMiss} distinguishes
-	 * `pending` (not sequenced yet) from `unresolvable` (ops trimmed).
+	 * diagnostic reasons for keeping the mark pending.
 	 */
 	private async resolveFromHistory(
 		reader: IHistoricalOpReader,
@@ -237,7 +254,7 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 					}
 				}
 			}
-			// Not found: distinguish "not sequenced yet" from "trimmed" via the tip and where the scan landed.
+			// Not found: keep the mark pending and report what the scan observed.
 			return this.classifyMiss(from, firstScannedSequenceNumber);
 		} finally {
 			// Cancel any in-flight fetch once we stop reading (found or exhausted).
@@ -246,14 +263,13 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 	}
 
 	/**
-	 * Classifies a history-scan miss as `pending` or `unresolvable`. See {@link resolveFromHistory}.
+	 * Classifies the diagnostic reason for a pending history-scan miss. See {@link resolveFromHistory}.
 	 */
 	private classifyMiss(
 		from: number,
 		firstScannedSequenceNumber: number | undefined,
 	): ResolveResult {
-		// Invariant: a reader must never return an op before the requested range start. If it does, the
-		// trim inference below is meaningless, so fail loudly rather than misclassify.
+		// Invariant: a reader must never return an op before the requested range start.
 		assert(
 			firstScannedSequenceNumber === undefined || firstScannedSequenceNumber >= from,
 			0xd1c /* historical op reader returned an op before the requested range start */,
@@ -264,14 +280,15 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 			return { kind: "pending", reason: "awaitingSequence" };
 		}
 		if (firstScannedSequenceNumber === undefined) {
-			// Empty read though ops should exist in `[from, tip]` → trimmed. ODSP-specific: a strict driver
-			// empties a `from`-misaligned trimmed range (validateMessages); a return-from-earliest driver
-			// would instead surface the trim via the `firstScannedSequenceNumber > from` branch below.
-			return { kind: "unresolvable", reason: "historyTrimmed" };
+			// An empty read is ambiguous: the range may have been trimmed, or a just-submitted batch may
+			// not be visible to the historical-op reader yet. Keep the mark pending so it can be retried or
+			// promoted when the batch sequences live.
+			return { kind: "pending", reason: "emptyHistoryRead" };
 		}
 		if (firstScannedSequenceNumber > from) {
-			// A trim gap at the anchor: the mark's ops (at/after its lower bound) are gone.
-			return { kind: "unresolvable", reason: "historyTrimmed" };
+			// The gap proves that some older ops are unavailable, but not that this batch sequenced among
+			// them. A disconnected or resubmitted batch can still sequence later.
+			return { kind: "pending", reason: "historyGapObserved" };
 		}
 		// Ops are present from the lower bound and the batch is not among them: not yet sequenced.
 		return { kind: "pending", reason: "awaitingSequence" };
@@ -318,7 +335,12 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 				// Isolate each app listener (like the container's EventEmitterWithErrorHandling): one throw
 				// must not abort op processing or starve the rest. Log and continue rather than fault the
 				// container — a missed promotion is recoverable via resolve()'s history scan.
-				this.hooks.logger.sendErrorEvent({ eventName: "VersionMarkListenerException" }, error);
+				this.hooks.logger.sendErrorEvent(
+					{
+						eventName: "ListenerException",
+					},
+					error,
+				);
 			}
 		}
 	}

@@ -19,7 +19,7 @@ import { currentVersion } from "../../../codec/index.js";
 
 export const runsPerBatch = 50;
 // TODO: Enable other types of ops.
-// AB#11436: Currently manually disposing the view when applying the schema op is causing a double dispose issue. Once this issue has been resolved, re-enable schema ops.
+// The generator excludes schema operations while the selected checkout has an active transaction.
 const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 	set: 3,
 	clear: 1,
@@ -31,7 +31,7 @@ const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 	commit: 1,
 	abort: 1,
 	fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
-	schema: 0,
+	schema: 1,
 	nodeConstraint: 3,
 	fork: 1,
 	merge: 1,

@@ -49,6 +49,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
+	SerializationVersion,
 	createIdCompressor,
 	toIdCompressorWithCore,
 	type IdCreationRange,
@@ -253,7 +254,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		return deltaConnection;
 	}
 
-	public finalizeIdRange(range: IdCreationRange): void {
+	private finalizeIdRange(range: IdCreationRange): void {
 		assert(
 			this.dataStoreRuntime.idCompressor !== undefined,
 			"Shouldn't try to finalize IdRanges without an IdCompressor",
@@ -877,6 +878,7 @@ export class MockFluidDataStoreRuntime
 		attachState?: AttachState;
 		registry?: readonly IChannelFactory[];
 		minVersionForCollab?: OldestSupportedClientVersion;
+		oldestSupportedClient?: OldestSupportedClientVersion;
 		inStagingMode?: boolean;
 		isDirty?: boolean;
 	}) {
@@ -894,7 +896,7 @@ export class MockFluidDataStoreRuntime
 			childLoggerProps.logger = logger;
 		}
 		this.logger = createChildLogger(childLoggerProps);
-		this.idCompressor = overrides?.idCompressor ?? createIdCompressor();
+		this.idCompressor = overrides?.idCompressor ?? createIdCompressor(SerializationVersion.V3);
 		this._attachState = overrides?.attachState ?? AttachState.Attached;
 
 		const registry = overrides?.registry;
@@ -902,7 +904,11 @@ export class MockFluidDataStoreRuntime
 			this.registry = new Map(registry.map((factory) => [factory.type, factory]));
 		}
 
-		this.minVersionForCollab = overrides?.minVersionForCollab ?? defaultMinVersionForCollab;
+		this.oldestSupportedClient =
+			overrides?.oldestSupportedClient ??
+			overrides?.minVersionForCollab ??
+			defaultMinVersionForCollab;
+		this.minVersionForCollab = this.oldestSupportedClient;
 		this.inStagingMode = overrides?.inStagingMode ?? false;
 		this.isDirty = overrides?.isDirty ?? false;
 	}
@@ -913,9 +919,14 @@ export class MockFluidDataStoreRuntime
 	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
 
 	/**
-	 * @see IFluidDataStoreRuntimeInternalConfig.minVersionForCollab
+	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidParentContext.minVersionForCollab}
 	 */
 	public readonly minVersionForCollab: OldestSupportedClientVersion;
+
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidParentContext.oldestSupportedClient}
+	 */
+	public readonly oldestSupportedClient?: OldestSupportedClientVersion;
 
 	public get IFluidHandleContext(): IFluidHandleContext {
 		return this;

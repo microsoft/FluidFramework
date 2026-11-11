@@ -45,14 +45,14 @@ Places we can store stored schema information:
 
     This forces all nodes of the same type to have the same schema: it's not contextual but easily handles open polymorphism (ex: a child that's allowed to be anything as long as it's in schema for its type).
 
--   In other schema: For example, a schema can apply specific schema to its children.
+-   In other schemas: For example, a schema can apply specific schema to its children.
 
     This allows for `contextual schema` (under one parent the same type might have different rules compared to under another parent).
 
 Note that it's possible to refer to schema in a way that's unambiguous, but code handling the data might not always have the schema.
 For example, document could refer to a schema by its hash, or name in an append only namespace.
 This can have interesting implications for updates to new schema (ex: one client adds data using a schema shipped as code that another client does not have).
-Some of the options do not have this issue (inline, central repository (assuming you are ok going down if it goes down and schema are not cached), and in stored data).
+Some of the options do not have this issue (inline, central repository (assuming you are ok going down if it goes down and schemas are not cached), and in stored data).
 
 # Options to Support
 
@@ -93,7 +93,7 @@ Even if we can't make it work as a separate DDS, it should be implemented such t
 
 ## TypeScript Typing
 
-It is be possible to have an embedded DSL for schema declaration in the style of [typebox](https://www.npmjs.com/package/@sinclair/typebox) which produces both compile time types and runtime schema data.
+It is be possible to have an embedded DSL for schema declaration in the style of [TypeBox](https://www.npmjs.com/package/typebox) which produces both compile time types and runtime schema data.
 This allows for schema-aware APIs (for example for tree reading and editing) to be provided without code gen.
 
 It's possible to take this schema-aware static typing much further though (but it may not be useful to do so).

@@ -22,6 +22,12 @@ functionality you need from this package.
 This package contains APIs and a CLI for working with semantic versioning version strings and ranges, especially those
 using [Fluid-specific version schemes.](./packages/version-tools/README.md#version-schemes)
 
+## Documenting build-tools changes
+
+Build-tools uses [conventional commits](../docs/content/Contributing/Commit-Message-Style.md) to generate changelogs, not changesets.
+Use a conventional-commit PR title and describe the user impact in the PR body.
+Update the relevant command or package documentation.
+
 ## Testing build-tools changes in the client release group
 
 It is very useful to test changes in build-tools against the client release group because the test coverage of

@@ -27,7 +27,7 @@ export type Unhydrated<T> = T;
 /**
  * A node type internal to `@fluidframework/tree`.
  * @remarks
- * This type is used in the construction of {@link TreeNode} as an implementation detail, but leaks into the public API due to how schema are implemented.
+ * This type is used in the construction of {@link TreeNode} as an implementation detail, but leaks into the public API due to how schemas are implemented.
  * @privateRemarks
  * A {@link FlexTreeNode}. Includes {@link RawTreeNode}s.
  * @sealed @public

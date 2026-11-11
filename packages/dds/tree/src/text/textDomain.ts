@@ -36,6 +36,8 @@ import type {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports, import-x/no-duplicates
 import type { NodeKind, TreeNodeSchema } from "../simple-tree/index.js";
 
+import { textLocationArray } from "./textLocationAdapter.js";
+
 /**
  * Enables expensive debug assertions for formatted text.
  */
@@ -62,11 +64,25 @@ export function expensiveInternalValidationAssert(condition: () => true | string
 const sf = new SchemaFactoryAlpha("com.fluidframework.text");
 
 class TextNode
-	extends sf.object("Text", {
-		content: SchemaFactory.required([() => StringArray], { key: EmptyKey }),
-	})
+	extends sf.object(
+		"Text",
+		{
+			content: SchemaFactory.required([() => StringArray], { key: EmptyKey }),
+		},
+		{ allowUnknownOptionalFields: false },
+	)
 	implements PlainText.Members, IExposedMethods
 {
+	/**
+	 * Exposes the current array-node representation of this text.
+	 * @remarks
+	 * Depending on this accessor also depends on text being represented by an array node.
+	 * Future text optimizations may change that representation, so such dependencies should generally be avoided.
+	 */
+	public get [textLocationArray](): TreeArrayNode {
+		return this.content;
+	}
+
 	public static [exposeMethodsSymbol](methods: ExposedMethods): void {
 		methods.exposeMethod(
 			TextNode,
@@ -92,6 +108,20 @@ class TextNode
 				},
 				["startIndex", tf.union([tf.number(), tf.undefined()])],
 				["endIndex", tf.union([tf.number(), tf.undefined()])],
+			),
+		);
+		methods.exposeMethod(
+			TextNode,
+			"moveRangeToIndex",
+			buildFunc(
+				{
+					description:
+						"Move a range of characters (Unicode code points) to a destination gap. sourceStart is inclusive and sourceEnd is exclusive. destinationGap is between characters before the move, not an index in the resulting text.",
+					returns: tf.void(),
+				},
+				["destinationGap", tf.number()],
+				["sourceStart", tf.number()],
+				["sourceEnd", tf.number()],
 			),
 		);
 		methods.exposeMethod(
@@ -134,6 +164,13 @@ class TextNode
 	}
 	public removeRange(index: number | undefined, end: number | undefined): void {
 		this.content.removeRange(index, end);
+	}
+	public moveRangeToIndex(
+		destinationGap: number,
+		sourceStart: number,
+		sourceEnd: number,
+	): void {
+		this.content.moveRangeToIndex(destinationGap, sourceStart, sourceEnd);
 	}
 	public characters(): Iterable<string> {
 		return this.content[Symbol.iterator]();
@@ -322,7 +359,7 @@ export function processCharactersChangedDelta(
  * The main challenges here are related to annotations, but some policies for what to do in the case of corrupt/invalid text should also be included.
  * There are quite a few ways invariants could break, including:
  * - concurrent edits without proper constraints.
- * - collaboration with clients using compatible schema with different constraints.
+ * - collaboration with clients using compatible schemas with different constraints.
  * - opening documents which contain invalid content (e.g. from older versions of the software, manual edits to the persisted format, or simply an existing corrupt case which was saved).
  * - a user inserting/constructing/importing invalid content.
  *
@@ -491,6 +528,32 @@ export namespace PlainText {
 		 * See {@link (TreeArrayNode:interface).removeRange} for more details on the behavior.
 		 */
 		removeRange(startIndex: number | undefined, endIndex: number | undefined): void;
+
+		/**
+		 * Moves the specified character range to `destinationGap`.
+		 * @param destinationGap - The location between existing characters to move the range to.
+		 * @param sourceStart - The starting index of the range to move, inclusive.
+		 * @param sourceEnd - The ending index of the range to move, exclusive.
+		 * @remarks
+		 * See {@link (TreeArrayNode:interface).(moveRangeToIndex:1)} for details about destination gap semantics.
+		 * @privateRemarks
+		 * `TreeArrayNode` exposes more move options than we expose here for a few reasons:
+		 *
+		 * 1. Single-character moves are not expected to be particularly useful for text,
+		 * so we only expose range moves.
+		 * We may want to reevaluate this for formatted text, where moving individual embedded items
+		 * may be useful.
+		 *
+		 * 2. The convenience APIs for moving to the start or end do not seem likely to be common
+		 * needs for text.
+		 * They also do not currently provide distinct merge semantics or additional expressiveness.
+		 *
+		 * 3. The overloads that support moving between different source nodes introduce additional
+		 * complications, such as whether to support moves between plain and formatted text,
+		 * between schemas with different embedded item types, or in combination with extrinsic ranges.
+		 * Since it is currently practical to defer that complexity, these overloads are not included.
+		 */
+		moveRangeToIndex(destinationGap: number, sourceStart: number, sourceEnd: number): void;
 
 		/**
 		 * Subscribe to shallow character-level changes on this text node — inserts and removes only.

@@ -20,6 +20,8 @@ import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-ut
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
+import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import type { FormatCommon } from "../../../feature-libraries/forest-summary/formatCommon.js";
 import {
 	ForestSummaryFormatVersion,
@@ -37,6 +39,8 @@ import {
 	FieldBatchFormatVersion,
 	ForestFormatVersion,
 	ForestSummarizer,
+	SchemaSummarizer,
+	schemaCodecBuilder,
 	TreeCompressionStrategy,
 	defaultSchemaPolicy,
 	type IncrementalEncodingPolicy,
@@ -62,6 +66,7 @@ import {
 	TreeViewConfigurationAlpha,
 	type ImplicitFieldSchema,
 	type InsertableField,
+	type ValidateRecursiveSchema,
 } from "../../../simple-tree/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
 import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
@@ -110,6 +115,12 @@ function createForestSummarizer(args: {
 		checkout,
 		forestSummarizer: new ForestSummarizer(
 			checkout.forest,
+			new SchemaSummarizer(
+				checkout.storedSchema,
+				{ getCurrentSeq: () => 0 },
+				schemaCodecBuilder.build(options),
+				minVersionForCollab,
+			),
 			encoderContext,
 			decoderContext,
 			options,
@@ -265,6 +276,7 @@ async function summarizeAndValidateIncrementality<TSchema extends ImplicitFieldS
 	// Validate that the forest can successfully load from the above summary.
 	const mockStorage = MockStorage.createFromSummary(summary.summary);
 	const { forestSummarizer: forestSummarizer2 } = createForestSummarizer({
+		initialContent: { schema: initialContent.schema, initialTree: fieldJsonCursor([]) },
 		encodeType: TreeCompressionStrategy.CompressedIncremental,
 		forestType: ForestTypeOptimized,
 		shouldEncodeIncrementally,
@@ -277,8 +289,8 @@ async function summarizeAndValidateIncrementality<TSchema extends ImplicitFieldS
 const sf = new SchemaFactoryAlpha("IncrementalSummarization");
 
 class ObjectNodeSchema extends sf.object("objectNodeSchema", {
-	foo: sf.types([{ type: sf.string, metadata: {} }], {
-		custom: { [incrementalSummaryHint]: true },
+	foo: sf.required(sf.types([sf.number, sf.staged(sf.string)]), {
+		summarizeIncrementally: true,
 	}),
 }) {}
 
@@ -312,13 +324,90 @@ class RecordNodeSchema extends sf.object("recordNodeSchema", {
 	fooRecord: FooRecord,
 }) {}
 
-const LeafNodeSchema = sf.required(
-	sf.types([{ type: sf.string, metadata: {} }], {
-		custom: { [incrementalSummaryHint]: true },
+class RecursiveNodeSchema extends sf.objectRecursive("recursiveNodeSchema", {
+	child: sf.requiredRecursive([sf.string, () => RecursiveNodeSchema], {
+		summarizeIncrementally: true,
 	}),
-);
+	optionalChild: sf.optionalRecursive([() => RecursiveNodeSchema], {
+		summarizeIncrementally: true,
+	}),
+	stagedChild: sf.stagedOptionalRecursive([() => RecursiveNodeSchema], {
+		summarizeIncrementally: true,
+	}),
+}) {}
+type _checkRecursiveNode = ValidateRecursiveSchema<typeof RecursiveNodeSchema>;
+
+class DirectRecursiveNodeSchema extends sf.objectRecursive("directRecursiveNodeSchema", {
+	child: sf.requiredRecursive([() => DirectRecursiveNodeSchema], {
+		summarizeIncrementally: true,
+	}),
+}) {}
+type _checkDirectRecursiveNode = ValidateRecursiveSchema<typeof DirectRecursiveNodeSchema>;
+
+const LeafNodeSchema = sf.required(sf.string, { summarizeIncrementally: true });
 
 describe("ForestSummarizer", () => {
+	it("loads nested incremental chunks with linear rechunking work", async () => {
+		const depth = 32;
+		let content = new RecursiveNodeSchema({ child: "end" });
+		for (let index = 1; index < depth; index++) {
+			content = new RecursiveNodeSchema({ child: content });
+		}
+		const schema = toStoredSchema(RecursiveNodeSchema, StagedSchemaUpgradePolicy.permissive);
+		const options = {
+			encodeType: TreeCompressionStrategy.CompressedIncremental,
+			forestType: ForestTypeOptimized,
+			shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(
+				new TreeViewConfigurationAlpha({ schema: RecursiveNodeSchema }),
+			),
+		};
+		const original = createForestSummarizer({
+			...options,
+			initialContent: {
+				schema,
+				initialTree: fieldCursorFromInsertable(RecursiveNodeSchema, content),
+			},
+		});
+		const summary = original.forestSummarizer.summarize({
+			stringify: JSON.stringify,
+			incrementalSummaryContext: {
+				summarySequenceNumber: 0,
+				latestSummarySequenceNumber: -1,
+				summaryPath: "",
+			},
+		});
+		const loaded = createForestSummarizer({
+			...options,
+			initialContent: { schema, initialTree: fieldJsonCursor([]) },
+		});
+		const forest = loaded.checkout.forest;
+		assert(forest instanceof ChunkedForest);
+		const shapeFromSchema = forest.chunker.shapeFromSchema.bind(forest.chunker);
+		let shapeLookups = 0;
+		forest.chunker.shapeFromSchema = (type) => {
+			shapeLookups++;
+			return shapeFromSchema(type);
+		};
+		await loaded.forestSummarizer.load(
+			MockStorage.createFromSummary(summary.summary),
+			JSON.parse,
+		);
+		assert(shapeLookups <= depth * 2, `Expected linear work, found ${shapeLookups} lookups`);
+		const nextSummary = loaded.forestSummarizer.summarize({
+			stringify: JSON.stringify,
+			incrementalSummaryContext: {
+				summarySequenceNumber: 1,
+				latestSummarySequenceNumber: 0,
+				summaryPath: "",
+			},
+		});
+		validateHandlesInForestSummary(nextSummary.summary, {
+			shouldContainHandle: true,
+			handleCount: 1,
+			lastSummary: summary.summary,
+		});
+	});
+
 	describe("Summarize and Load", () => {
 		const testCases: {
 			encodeType: TreeCompressionStrategy;
@@ -463,6 +552,39 @@ describe("ForestSummarizer", () => {
 				);
 			});
 
+			it("recursive nodes", async () => {
+				const child = new RecursiveNodeSchema({ child: "leaf" });
+				const recursiveNode = new RecursiveNodeSchema({ child });
+				assert(recursiveNode.child instanceof RecursiveNodeSchema);
+				const inferredChild: RecursiveNodeSchema = recursiveNode.child;
+				assert.equal(inferredChild, child);
+				assert.equal(recursiveNode.optionalChild, undefined);
+
+				const policy = incrementalEncodingPolicyForAllowedTypes(
+					new TreeViewConfigurationAlpha({ schema: RecursiveNodeSchema }),
+				);
+				assert.equal(policy(RecursiveNodeSchema.identifier, "optionalChild"), true);
+				assert.equal(policy(RecursiveNodeSchema.identifier, "stagedChild"), true);
+
+				await summarizeAndValidateIncrementality(
+					RecursiveNodeSchema,
+					recursiveNode,
+					1 /* incrementalNodeCount */,
+				);
+			});
+
+			it("recognizes a direct recursive field reference", () => {
+				const allowedTypes: readonly [() => typeof DirectRecursiveNodeSchema] =
+					DirectRecursiveNodeSchema.info.child.allowedTypes;
+				assert.equal(allowedTypes.length, 1);
+				assert.equal(allowedTypes[0](), DirectRecursiveNodeSchema);
+
+				const policy = incrementalEncodingPolicyForAllowedTypes(
+					new TreeViewConfigurationAlpha({ schema: DirectRecursiveNodeSchema }),
+				);
+				assert.equal(policy(DirectRecursiveNodeSchema.identifier, "child"), true);
+			});
+
 			it("leaf nodes", async () => {
 				// Leaf nodes are not incrementally summarized.
 				await summarizeAndValidateIncrementality(
@@ -481,9 +603,7 @@ describe("ForestSummarizer", () => {
 			 */
 			class BarItem extends sf.objectAlpha("barItem", {
 				id: sf.number,
-				bar: sf.types([{ type: sf.string, metadata: {} }], {
-					custom: { [incrementalSummaryHint]: true },
-				}),
+				bar: sf.required(sf.string, { summarizeIncrementally: true }),
 			}) {}
 
 			/**
@@ -814,7 +934,7 @@ describe("ForestSummarizer", () => {
 		describe("4-depth schema with parameterized incremental summarization", () => {
 			/**
 			 * A 4-depth nested schema where each level's map field carries
-			 * {@link incrementalSummaryHint}, creating 4 independent incremental chunks:
+			 * {@link SchemaStaticsBeta.required}, creating 4 independent incremental chunks:
 			 * - Depth 1: the `documents` map (outermost chunk).
 			 * - Depth 2: each document's `sections` map.
 			 * - Depth 3: each section's `items` map.
@@ -834,9 +954,7 @@ describe("ForestSummarizer", () => {
 				/**
 				 * The entire anonymous map of {@link Tag} entries is the depth-4 incremental chunk.
 				 */
-				tags: sf.types([{ type: sf.map(Tag), metadata: {} }], {
-					custom: { [incrementalSummaryHint]: true },
-				}),
+				tags: sf.required(sf.map(Tag), { summarizeIncrementally: true }),
 			}) {}
 
 			/** Depth 2: a section whose `items` map is the depth-3 incremental chunk. */
@@ -845,9 +963,7 @@ describe("ForestSummarizer", () => {
 				/**
 				 * The entire anonymous map of {@link Item} entries is the depth-3 incremental chunk.
 				 */
-				items: sf.types([{ type: sf.map(Item), metadata: {} }], {
-					custom: { [incrementalSummaryHint]: true },
-				}),
+				items: sf.required(sf.map(Item), { summarizeIncrementally: true }),
 			}) {}
 
 			/** Depth 1: a document whose `sections` map is the depth-2 incremental chunk. */
@@ -856,9 +972,7 @@ describe("ForestSummarizer", () => {
 				/**
 				 * The entire anonymous map of {@link Section} entries is the depth-2 incremental chunk.
 				 */
-				sections: sf.types([{ type: sf.map(Section), metadata: {} }], {
-					custom: { [incrementalSummaryHint]: true },
-				}),
+				sections: sf.required(sf.map(Section), { summarizeIncrementally: true }),
 			}) {}
 
 			/** Depth 0 (root): workspace whose `documents` map is the depth-1 incremental chunk. */
@@ -867,9 +981,7 @@ describe("ForestSummarizer", () => {
 				/**
 				 * The entire anonymous map of {@link Document} entries is the depth-1 incremental chunk.
 				 */
-				documents: sf.types([{ type: sf.map(Document), metadata: {} }], {
-					custom: { [incrementalSummaryHint]: true },
-				}),
+				documents: sf.required(sf.map(Document), { summarizeIncrementally: true }),
 			}) {}
 
 			function setupForestSummarization(initialData: Workspace | undefined) {

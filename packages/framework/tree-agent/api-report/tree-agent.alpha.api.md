@@ -226,21 +226,25 @@ export const typeFactory: {
 // @alpha
 export interface TypeFactoryArray extends TypeFactoryType {
     readonly element: TypeFactoryType;
+    // (undocumented)
     readonly _kind: "array";
 }
 
 // @alpha
 export interface TypeFactoryBoolean extends TypeFactoryType {
+    // (undocumented)
     readonly _kind: "boolean";
 }
 
 // @alpha
 export interface TypeFactoryDate extends TypeFactoryType {
+    // (undocumented)
     readonly _kind: "date";
 }
 
 // @alpha
 export interface TypeFactoryFunction extends TypeFactoryType {
+    // (undocumented)
     readonly _kind: "function";
     readonly parameters: readonly TypeFactoryFunctionParameter[];
     readonly restParameter?: TypeFactoryFunctionParameter;
@@ -258,12 +262,14 @@ export interface TypeFactoryInstanceOf extends TypeFactoryType {
 
 // @alpha
 export interface TypeFactoryIntersection extends TypeFactoryType {
+    // (undocumented)
     readonly _kind: "intersection";
     readonly types: readonly TypeFactoryType[];
 }
 
 // @alpha
 export interface TypeFactoryLiteral extends TypeFactoryType {
+    // (undocumented)
     readonly _kind: "literal";
     readonly value: string | number | boolean;
 }
@@ -271,22 +277,26 @@ export interface TypeFactoryLiteral extends TypeFactoryType {
 // @alpha
 export interface TypeFactoryMap extends TypeFactoryType {
     readonly keyType: TypeFactoryType;
+    // (undocumented)
     readonly _kind: "map";
     readonly valueType: TypeFactoryType;
 }
 
 // @alpha
 export interface TypeFactoryNull extends TypeFactoryType {
+    // (undocumented)
     readonly _kind: "null";
 }
 
 // @alpha
 export interface TypeFactoryNumber extends TypeFactoryType {
+    // (undocumented)
     readonly _kind: "number";
 }
 
 // @alpha
 export interface TypeFactoryObject extends TypeFactoryType {
+    // (undocumented)
     readonly _kind: "object";
     readonly shape: Record<string, TypeFactoryType>;
 }
@@ -294,36 +304,42 @@ export interface TypeFactoryObject extends TypeFactoryType {
 // @alpha
 export interface TypeFactoryOptional extends TypeFactoryType {
     readonly innerType: TypeFactoryType;
+    // (undocumented)
     readonly _kind: "optional";
 }
 
 // @alpha
 export interface TypeFactoryPromise extends TypeFactoryType {
     readonly innerType: TypeFactoryType;
+    // (undocumented)
     readonly _kind: "promise";
 }
 
 // @alpha
 export interface TypeFactoryReadonly extends TypeFactoryType {
     readonly innerType: TypeFactoryType;
+    // (undocumented)
     readonly _kind: "readonly";
 }
 
 // @alpha
 export interface TypeFactoryRecord extends TypeFactoryType {
     readonly keyType: TypeFactoryType;
+    // (undocumented)
     readonly _kind: "record";
     readonly valueType: TypeFactoryType;
 }
 
 // @alpha
 export interface TypeFactoryString extends TypeFactoryType {
+    // (undocumented)
     readonly _kind: "string";
 }
 
 // @alpha
 export interface TypeFactoryTuple extends TypeFactoryType {
     readonly items: readonly TypeFactoryType[];
+    // (undocumented)
     readonly _kind: "tuple";
     readonly rest?: TypeFactoryType;
 }
@@ -338,22 +354,26 @@ export type TypeFactoryTypeKind = "string" | "number" | "boolean" | "void" | "un
 
 // @alpha
 export interface TypeFactoryUndefined extends TypeFactoryType {
+    // (undocumented)
     readonly _kind: "undefined";
 }
 
 // @alpha
 export interface TypeFactoryUnion extends TypeFactoryType {
+    // (undocumented)
     readonly _kind: "union";
     readonly options: readonly TypeFactoryType[];
 }
 
 // @alpha
 export interface TypeFactoryUnknown extends TypeFactoryType {
+    // (undocumented)
     readonly _kind: "unknown";
 }
 
 // @alpha
 export interface TypeFactoryVoid extends TypeFactoryType {
+    // (undocumented)
     readonly _kind: "void";
 }
 

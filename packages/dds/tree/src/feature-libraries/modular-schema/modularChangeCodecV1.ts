@@ -4,7 +4,7 @@
  */
 
 import { assert, oob, fail } from "@fluidframework/core-utils/internal";
-import type { TAnySchema } from "@sinclair/typebox";
+import type { TSchema } from "typebox";
 
 import {
 	type ICodecOptions,
@@ -14,17 +14,19 @@ import {
 	extractJsonValidator,
 	withSchemaValidation,
 } from "../../codec/index.js";
-import type {
-	ChangeEncodingContext,
-	ChangeDecodingContext,
-	ChangesetLocalId,
-	EncodedRevisionTag,
-	FieldKey,
-	FieldKindIdentifier,
-	ITreeCursorSynchronous,
-	RevisionInfo,
-	RevisionTag,
-	RevisionTagSchema,
+import {
+	type ChangeEncodingContext,
+	type ChangeDecodingContext,
+	type ChangesetLocalId,
+	type EncodedRevisionTag,
+	type FieldKey,
+	type FieldKindIdentifier,
+	type ITreeCursorSynchronous,
+	type RevisionInfo,
+	type RevisionTag,
+	type RevisionTagSchema,
+	cheapRebaseValidation,
+	strictRebaseValidation,
 } from "../../core/index.js";
 import {
 	type IdAllocator,
@@ -71,7 +73,12 @@ import {
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
-import { nodeChangeFromId } from "./modularChangeUtils.js";
+import {
+	areEquivalent,
+	fieldKindsFromConfiguration,
+	isChangesetValid,
+	nodeChangeFromId,
+} from "./modularChangeUtils.js";
 
 type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,
@@ -92,7 +99,7 @@ type FieldCodec = IJsonCodec<
 type FieldChangesetCodecs = Map<
 	FieldKindIdentifier,
 	{
-		compiledSchema?: SchemaValidationFunction<TAnySchema>;
+		compiledSchema?: SchemaValidationFunction<TSchema>;
 		codec: FieldCodec;
 	}
 >;
@@ -101,7 +108,7 @@ export function getFieldChangesetCodec(
 	fieldKind: FieldKindIdentifier,
 	fieldChangesetCodecs: FieldChangesetCodecs,
 ): {
-	compiledSchema?: SchemaValidationFunction<TAnySchema>;
+	compiledSchema?: SchemaValidationFunction<TSchema>;
 	codec: FieldCodec;
 } {
 	const entry = fieldChangesetCodecs.get(fieldKind);
@@ -467,7 +474,7 @@ export function encodeChange(
 	fieldChangesetCodecs: Map<
 		FieldKindIdentifier,
 		{
-			compiledSchema?: SchemaValidationFunction<TAnySchema>;
+			compiledSchema?: SchemaValidationFunction<TSchema>;
 			codec: FieldCodec;
 		}
 	>,
@@ -519,7 +526,7 @@ export function decodeChange(
 	fieldChangesetCodecs: Map<
 		FieldKindIdentifier,
 		{
-			compiledSchema?: SchemaValidationFunction<TAnySchema>;
+			compiledSchema?: SchemaValidationFunction<TSchema>;
 			codec: FieldCodec;
 		}
 	>,
@@ -596,7 +603,7 @@ export function getFieldChangesetCodecs(
 	codecOptions: ICodecOptions,
 ): Map<
 	FieldKindIdentifier,
-	{ compiledSchema?: SchemaValidationFunction<TAnySchema>; codec: FieldCodec }
+	{ compiledSchema?: SchemaValidationFunction<TSchema>; codec: FieldCodec }
 > {
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	const getMapEntry = ({ kind, formatVersion }: FieldKindConfigurationEntry) => {
@@ -616,7 +623,7 @@ export function getFieldChangesetCodecs(
 	const fieldChangesetCodecs: Map<
 		FieldKindIdentifier,
 		{
-			compiledSchema?: SchemaValidationFunction<TAnySchema>;
+			compiledSchema?: SchemaValidationFunction<TSchema>;
 			codec: FieldCodec;
 		}
 	> = new Map([
@@ -652,17 +659,29 @@ export function makeModularChangeCodecV1(
 	);
 
 	const modularChangeCodec: ModularChangeCodec = {
-		encode: (change, context) =>
-			encodeChange(
+		encode: (change, context) => {
+			strictRebaseValidation("Malformed V1 encode input", () =>
+				isChangesetValid(change, fieldKindsFromConfiguration(fieldKinds)),
+			);
+			const encoded = encodeChange(
 				change,
 				context,
 				fieldChangesetCodecs,
 				revisionTagCodec,
 				fieldsCodec,
 				chunkCompressionStrategy,
-			),
-		decode: (encodedChange, context) =>
-			decodeChange(
+			);
+			cheapRebaseValidation("V1 encode output", (): true | string => {
+				const decoded = modularChangeCodec.decode(encoded, context);
+				return (
+					areEquivalent(change, decoded, fieldKindsFromConfiguration(fieldKinds)) ||
+					"does not match decode output"
+				);
+			});
+			return encoded;
+		},
+		decode: (encodedChange, context) => {
+			const decoded = decodeChange(
 				encodedChange,
 				context,
 				fieldKinds,
@@ -670,7 +689,12 @@ export function makeModularChangeCodecV1(
 				revisionTagCodec,
 				fieldsCodec,
 				chunkCompressionStrategy,
-			),
+			);
+			cheapRebaseValidation("Malformed V1 decode output", () =>
+				isChangesetValid(decoded, fieldKindsFromConfiguration(fieldKinds)),
+			);
+			return decoded;
+		},
 	};
 
 	return withSchemaValidation(

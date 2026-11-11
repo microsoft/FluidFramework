@@ -128,8 +128,8 @@ export function allowsValueSuperset(
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  *
  * @param monotonicOnly - If true, only allow changes of field kinds which are explicitly listed in {@link FieldKindOptions.allowMonotonicUpgradeFrom}.
- * This prevents this function from considering two different schema as equivalent, preventing upgrades which would allow their inverse.
- * This prevents infinite upgrade loops where two clients could keep upgrading between two schema.
+ * This prevents this function from considering two different schemas as equivalent, preventing upgrades which would allow their inverse.
+ * This prevents infinite upgrade loops where two clients could keep upgrading between two schemas.
  *
  * @remarks
  * True if a client should be able to {@link TreeView.upgradeSchema} from a field schema using this field kind and `originalTypes` to `superset`.
@@ -210,7 +210,7 @@ export function allowsRepoSuperset(
 			return false;
 		}
 	}
-	// Check if all schema in original are included in superset, and permit a superset of the node content.
+	// Check if all schemas in original are included in superset, and permit a superset of the node content.
 	// Note that any schema from `original.nodeSchema` can be used as the schema for a node at the root of a detached field,
 	// so we must check all of them, even if they are not reachable from the root field schema.
 	for (const [key, schema] of original.nodeSchema) {

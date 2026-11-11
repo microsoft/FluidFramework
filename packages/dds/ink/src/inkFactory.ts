@@ -37,23 +37,14 @@ export class InkFactory implements IChannelFactory {
 		packageVersion: pkgVersion,
 	};
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
-	 */
 	public get type(): string {
 		return InkFactory.Type;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
-	 */
 	public get attributes(): IChannelAttributes {
 		return InkFactory.Attributes;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-	 */
 	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
@@ -66,9 +57,6 @@ export class InkFactory implements IChannelFactory {
 		return ink;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
-	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedObject {
 		const ink = new Ink(runtime, id, InkFactory.Attributes);
 		ink.initializeLocal();

@@ -84,6 +84,33 @@ class TestParseReviewFile:
         assert len(findings) == 1
         assert findings[0].location == "src/foo.ts:20"
 
+    def test_caps_documentation_severity_at_medium(self, tmp_path: Path) -> None:
+        review = tmp_path / "review-documentation.json"
+        review.write_text(
+            json.dumps(
+                {
+                    "findings": [
+                        {
+                            "severity": "CRITICAL",
+                            "location": "docs/example.md:10",
+                            "description": "Incorrect example",
+                            "fix": "Update the example",
+                        },
+                        {
+                            "severity": "HIGH",
+                            "location": "docs/guide.md:20",
+                            "description": "Missing guidance",
+                            "fix": "Add the guidance",
+                        },
+                    ]
+                }
+            )
+        )
+        findings = parse_review_file(
+            review, "Documentation / Developer Experience"
+        )
+        assert [finding.severity for finding in findings] == ["MEDIUM", "MEDIUM"]
+
     def test_handles_malformed_json(self, tmp_path: Path) -> None:
         review = tmp_path / "review-correctness.json"
         review.write_text("this is not json")

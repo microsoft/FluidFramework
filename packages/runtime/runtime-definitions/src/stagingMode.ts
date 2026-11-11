@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainerRuntimeBase, StageControls } from "./dataStoreContext.js";
+import type { IContainerRuntimeBase, PackagePath, StageControls } from "./dataStoreContext.js";
 
 /**
  * Options for committing staged changes in experimental staging mode.
@@ -30,10 +30,18 @@ export interface CommitStagedChangesOptionsInternal {
 /**
  * Controls for managing staged changes in experimental staging mode.
  *
- * Provides methods to either commit or discard changes made while in staging mode.
+ * Provides methods to pause inbound operations and either commit or discard staged changes.
  * @internal
  */
 export interface StageControlsInternal extends StageControls {
+	/**
+	 * Same as {@link StageControls.pauseInbound}, but always defined.
+	 */
+	readonly pauseInbound: () => Promise<void>;
+	/**
+	 * Same as {@link StageControls.resumeInbound}, but always defined.
+	 */
+	readonly resumeInbound: () => void;
 	/**
 	 * Exit staging mode and commit to any changes made while in staging mode.
 	 * This will cause them to be sent to the ordering service, and subsequent changes
@@ -44,22 +52,35 @@ export interface StageControlsInternal extends StageControls {
 }
 
 /**
- * Internal extension of {@link IContainerRuntimeBase} whose {@link IContainerRuntimeBaseInternal.enterStagingMode}
- * returns {@link StageControlsInternal} (which exposes internal commit options such as squash)
+ * Internal extension of {@link IContainerRuntimeBase} exposing staging-mode commit options
+ * and data store package-path lookup.
  * @internal
  */
 export interface IContainerRuntimeBaseInternal extends IContainerRuntimeBase {
 	/**
 	 * Enters staging mode, allowing changes to be staged before being committed or discarded.
-	 * @returns Controls for committing or discarding staged changes.
+	 * @returns Controls for pausing inbound operations and committing or discarding staged changes.
 	 */
 	enterStagingMode(): StageControlsInternal;
+
+	/**
+	 * Returns the package path of the data store containing a container-relative absolute path.
+	 * Paths within a data store return the containing data store's package path, not a DDS package path.
+	 *
+	 * @remarks
+	 * This lookup may read the data store's snapshot attributes but does not load the data store or resolve the path.
+	 * A path outside a known data store returns undefined.
+	 *
+	 * @param nodePath - The container-relative absolute path of a data store or an object within it.
+	 * @returns The containing data store's package path, or undefined if the path is not within a known data store.
+	 */
+	getDataStorePackagePath(nodePath: string): Promise<PackagePath | undefined>;
 }
 
 /**
  * Controls for managing staged changes in alpha staging mode.
  *
- * Provides methods to either commit or discard changes made while in staging mode.
+ * Provides methods to pause inbound operations and either commit or discard staged changes.
  *
  * @deprecated Use {@link StageControls} (beta) instead.
  * @legacy @alpha

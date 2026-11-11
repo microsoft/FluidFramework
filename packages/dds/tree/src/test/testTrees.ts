@@ -65,6 +65,7 @@ import {
 	walkFieldSchema,
 	ObjectNodeSchema,
 } from "../simple-tree/index.js";
+import { FormattedText, PlainText } from "../text/index.js";
 import { brand, Breakable } from "../util/index.js";
 
 // eslint-disable-next-line import-x/no-internal-modules
@@ -86,6 +87,13 @@ interface TestSimpleTreeSchema extends NamedCase {
 	readonly schema: ImplicitFieldSchema;
 	/** Whether the schema permits ambiguous content. */
 	readonly ambiguous: boolean;
+	/**
+	 * Expected presence of staging in the root field or any transitively reachable schema.
+	 * @remarks
+	 * Tests of {@link testSchema} interpret omission as `false`.
+	 * This expectation is authored independently of {@link getStagedSchemaUpgrades} and the production staging detection.
+	 */
+	readonly hasStagedSchema?: true;
 }
 
 /**
@@ -411,6 +419,33 @@ class NestedMultiStage extends factory.object("NestedMultiStage", {
 	),
 }) {}
 
+const textFactory = factory.scopedFactory("text");
+
+class TextFormat extends textFactory.object("TextFormat", {
+	bold: SchemaFactoryAlpha.boolean,
+}) {}
+
+/**
+ * Newline atom which carries formatting for the line it ends.
+ */
+class LineAtom extends textFactory.object("LineAtom", {
+	indent: SchemaFactoryAlpha.number,
+}) {
+	public readonly content = "\n";
+}
+
+/**
+ * Formatted text with an extra atom kind.
+ * @remarks
+ * Unambiguous, so apps that prevent ambiguity can use formatted text.
+ */
+class FormattedTextDocument extends FormattedText.createSchema(
+	textFactory,
+	TextFormat,
+	[LineAtom],
+	{ bold: false },
+) {}
+
 const allTheFieldsName: TreeNodeSchemaIdentifier = brand("test.allTheFields");
 
 const library = {
@@ -425,6 +460,8 @@ const library = {
  * Named simple-tree schemas used by schema-focused test suites.
  *
  * Each schema must have at least one matching entry in {@link testSimpleTrees}.
+ * Add a representative schema with observable staging whenever adding a new staging mechanism.
+ * Staged entries must produce different restrictive and permissive stored schemas so uncached conversion can independently validate their metadata.
  */
 export const testSchema: readonly TestSimpleTreeSchema[] = [
 	{ name: "empty", schema: emptySchema, ambiguous: false },
@@ -450,13 +487,45 @@ export const testSchema: readonly TestSimpleTreeSchema[] = [
 		schema: AllowsUnknownOptionalFields,
 		ambiguous: false,
 	},
-	{ name: "hasStagedAllowedTypes", schema: HasStagedAllowedTypes, ambiguous: false },
-	{ name: "mapWithStaged", schema: MapWithStaged, ambiguous: false },
-	{ name: "stagedAllowedTypesRoot", schema: stagedAllowedTypesRoot, ambiguous: false },
-	{ name: "hasStagedOptionalField", schema: HasStagedOptionalField, ambiguous: false },
-	{ name: "stagedOptionalRoot", schema: stagedOptionalRoot, ambiguous: false },
-	{ name: "nestedStagedOptional", schema: NestedStagedOptional, ambiguous: false },
-	{ name: "nestedMultiStage", schema: NestedMultiStage, ambiguous: false },
+	{
+		name: "hasStagedAllowedTypes",
+		schema: HasStagedAllowedTypes,
+		ambiguous: false,
+		hasStagedSchema: true,
+	},
+	{ name: "mapWithStaged", schema: MapWithStaged, ambiguous: false, hasStagedSchema: true },
+	{
+		name: "stagedAllowedTypesRoot",
+		schema: stagedAllowedTypesRoot,
+		ambiguous: false,
+		hasStagedSchema: true,
+	},
+	{
+		name: "hasStagedOptionalField",
+		schema: HasStagedOptionalField,
+		ambiguous: false,
+		hasStagedSchema: true,
+	},
+	{
+		name: "stagedOptionalRoot",
+		schema: stagedOptionalRoot,
+		ambiguous: false,
+		hasStagedSchema: true,
+	},
+	{
+		name: "nestedStagedOptional",
+		schema: NestedStagedOptional,
+		ambiguous: false,
+		hasStagedSchema: true,
+	},
+	{
+		name: "nestedMultiStage",
+		schema: NestedMultiStage,
+		ambiguous: false,
+		hasStagedSchema: true,
+	},
+	{ name: "plainText", schema: PlainText.Tree, ambiguous: false },
+	{ name: "formattedText", schema: FormattedTextDocument, ambiguous: false },
 ];
 
 /**
@@ -528,6 +597,20 @@ export const testSimpleTrees: readonly TestSimpleTree[] = [
 		NestedMultiStage,
 		{ b: null, c: null },
 		false,
+	),
+	// "🌍" is two UTF-16 code units, which a single character must keep together.
+	testSimpleTree("plain-text", PlainText.Tree, () => PlainText.Tree.fromString("Hi🌍")),
+	testSimpleTree("formatted-text", FormattedTextDocument, () => {
+		const text = FormattedTextDocument.fromString("Hello");
+		text.insertAt(text.characterCount(), [new LineAtom({ indent: 0 })]);
+		text.insertAt(text.characterCount(), "world🌍", { bold: true });
+		return text;
+	}),
+	// Identical characters with identical formatting.
+	// Field batch encoding does not yet produce uniform chunks, so this currently encodes like any other formatted text.
+	// It exists to cover uniform-chunk encoding once field batches support it.
+	testSimpleTree("formatted-text-uniform", FormattedTextDocument, () =>
+		FormattedTextDocument.fromString("aaaa"),
 	),
 ];
 
@@ -628,6 +711,35 @@ export class HasStagedOptionalFieldAfterUpdate extends factory.objectAlpha(
 // TODO: AB#45711: add recursive staged schema tests documents
 
 /**
+ * A {@link TestDocument} whose root node has content in unknown optional fields.
+ * @remarks
+ * The view schema is {@link AllowsUnknownOptionalFields} while the content was created with {@link AllowsUnknownOptionalFieldsV2},
+ * so the root node has fields the view schema does not know about.
+ * Also included in {@link testDocuments}.
+ */
+export const hasUnknownOptionalFieldsDocument: TestDocument = {
+	ambiguous: false,
+	name: "HasUnknownOptionalFields",
+	schema: AllowsUnknownOptionalFields,
+	hasUnknownOptionalFields: true,
+	hasUnknownOptionalFieldSchema: true,
+	policy: defaultSchemaPolicy,
+	schemaData: toInitialSchema(AllowsUnknownOptionalFieldsV2),
+	treeFactory: () =>
+		jsonableTreeFromFieldCursor(
+			fieldCursorFromInsertable(
+				AllowsUnknownOptionalFieldsV2,
+				new AllowsUnknownOptionalFieldsV2({
+					recursive: new AllowsUnknownOptionalFieldsV2({ leaf: "nested leaf" }),
+					minimal: {},
+					hasMinimalValueField: { field: {} },
+					leaf: "leaf",
+				}),
+			),
+		),
+};
+
+/**
  * Collection of {@link TestDocument|TestDocuments}.
  * @remarks
  * Use these test documents to test import and export APIs.
@@ -657,7 +769,7 @@ export const testDocuments: readonly TestDocument[] = [
 	),
 	{
 		ambiguous: false,
-		name: "AllowsUnknownOptionalFields",
+		name: "emptyUnknownOptionalFields",
 		schema: AllowsUnknownOptionalFields,
 		hasUnknownOptionalFieldSchema: true,
 		// Unknown optional fields are allowed but empty in this document.
@@ -666,27 +778,7 @@ export const testDocuments: readonly TestDocument[] = [
 		treeFactory: () =>
 			jsonableTreeFromFieldCursor(fieldCursorFromInsertable(AllowsUnknownOptionalFields, {})),
 	},
-	{
-		ambiguous: false,
-		name: "HasUnknownOptionalFields",
-		schema: AllowsUnknownOptionalFields,
-		hasUnknownOptionalFields: true,
-		hasUnknownOptionalFieldSchema: true,
-		policy: defaultSchemaPolicy,
-		schemaData: toInitialSchema(AllowsUnknownOptionalFieldsV2),
-		treeFactory: () =>
-			jsonableTreeFromFieldCursor(
-				fieldCursorFromInsertable(
-					AllowsUnknownOptionalFieldsV2,
-					new AllowsUnknownOptionalFieldsV2({
-						recursive: new AllowsUnknownOptionalFieldsV2({ leaf: "nested leaf" }),
-						minimal: {},
-						hasMinimalValueField: { field: {} },
-						leaf: "leaf",
-					}),
-				),
-			),
-	},
+	hasUnknownOptionalFieldsDocument,
 	{
 		ambiguous: false,
 		name: "HasStagedAllowedTypesAfterUpdate",

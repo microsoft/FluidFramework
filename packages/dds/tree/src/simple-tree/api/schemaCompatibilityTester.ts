@@ -14,8 +14,8 @@ import {
 import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js";
 import { NodeKind } from "../core/index.js";
 import { allowsRepoSuperset, defaultSchemaPolicy } from "../../feature-libraries/index.js";
-import { resolveStoredSchemaGenerationOptions, toUpgradeSchema } from "../toStoredSchema.js";
-import type { TreeSchema } from "../treeSchema.js";
+import { resolveStoredSchemaGenerationOptions } from "../toStoredSchema.js";
+import { toUpgradeSchema, type TreeSchema } from "../treeSchema.js";
 
 import {
 	getDiscrepanciesInAllowedContent,
@@ -120,7 +120,7 @@ export type StagedUpgradeStatus = "disabled" | "partial" | "enabled";
 /**
  * Determines the compatibility of a stored document (based on its stored schema) with a viewer (based on its view schema).
  *
- * Adapters can be provided to handle differences between the two schema.
+ * Adapters can be provided to handle differences between the two schemas.
  * Adapters should only use to types in the `view` SchemaRepository.
  *
  * TODO: this API violates the parse don't validate design philosophy.

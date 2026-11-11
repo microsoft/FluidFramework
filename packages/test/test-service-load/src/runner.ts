@@ -71,6 +71,10 @@ async function main(): Promise<void> {
 		.requiredOption("-o, --outputDir <path>", "Path for log output files")
 		.option("-e, --driverEndpoint <endpoint>", "Which endpoint should the driver target?")
 		.option(
+			"--username <username>",
+			"Which ODSP test user this runner should connect as. Assigned by the orchestrator.",
+		)
+		.option(
 			"-l, --log <filter>",
 			"Filter debug logging. If not provided, uses DEBUG env variable.",
 		)
@@ -88,6 +92,7 @@ async function main(): Promise<void> {
 	const seed: number = commander.seed;
 	const outputDir: string = commander.outputDir;
 	const enableOpsMetrics: boolean = commander.enableOpsMetrics ?? false;
+	const username: string | undefined = commander.username;
 
 	if (log !== undefined) {
 		process.env.DEBUG = log;
@@ -103,7 +108,7 @@ async function main(): Promise<void> {
 	// The driver is created before the logger so its tenant name can be logged as a dimension.
 	let testDriver: ITestDriver;
 	try {
-		testDriver = await createTestDriver(driver, endpoint, seed, runId);
+		testDriver = await createTestDriver(driver, endpoint, seed, runId, username);
 	} catch (error) {
 		// No driver means no tenant name, but the failure itself still needs to be reported.
 		const { logger: setupLogger, flush: flushSetup } = await createLogger(

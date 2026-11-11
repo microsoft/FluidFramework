@@ -187,7 +187,7 @@ describe("fieldSchema", () => {
 	/**
 	 * Tests for patterns for making generically parameterized schema.
 	 *
-	 * Since the schema themselves can not be generic (at least not in a way thats captured in the stored schema),
+	 * Since the schemas themselves can not be generic (at least not in a way thats captured in the stored schema),
 	 * this is done by making generic functions that return schema.
 	 *
 	 * Authoring such functions involves passing generic type parameters into the various schema type utilities,

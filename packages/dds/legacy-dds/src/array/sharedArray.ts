@@ -19,8 +19,10 @@ import type {
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { v4 as uuid } from "uuid";
 
@@ -52,6 +54,7 @@ const snapshotFileName = "header";
  * @internal
  */
 export class SharedArrayClass<T extends SerializableTypeForSharedArray>
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	extends SharedObject<ISharedArrayEvents>
 	implements ISharedArray<T>, ISharedArrayRevertible
 {
@@ -163,6 +166,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				},
 			],
 		};
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const summaryTreeWithStats = convertToSummaryTreeWithStats(tree);
 
 		return summaryTreeWithStats;

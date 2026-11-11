@@ -5,6 +5,7 @@
 
 import type { Linter } from "eslint";
 import { recommended } from "@fluidframework/eslint-config-fluid/flat.mts";
+import { importInternalModulesAllowed } from "../../eslint.config.data.mts";
 
 const config: Linter.Config[] = [
 	...recommended,
@@ -14,6 +15,16 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-explicit-any": "off",
 			"@typescript-eslint/no-unsafe-argument": "off",
 			"@typescript-eslint/no-unsafe-assignment": "off",
+			"import-x/no-internal-modules": [
+				"error",
+				{
+					allow: [
+						...importInternalModulesAllowed,
+						// These emitted-package probes intentionally measure internal entrypoints.
+						"@fluidframework/*/internal{,/**}",
+					],
+				},
+			],
 			"unicorn/text-encoding-identifier-case": "off",
 		},
 	},

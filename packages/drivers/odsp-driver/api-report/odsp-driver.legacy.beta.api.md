@@ -14,6 +14,9 @@ export function createLocalOdspDocumentServiceFactory(localSnapshot: Uint8Array 
 export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createShareLinkType?: ISharingLinkKind, containerPackageInfo?: IContainerPackageInfo | undefined): IRequest;
 
 // @beta @legacy
+export function createOdspCreateContainerRequestFromOptions(options: OdspCreateContainerRequestOptions): IRequest;
+
+// @beta @legacy
 export function createOdspDocumentServiceFactory(options: IOdspDocumentServiceFactoryOptions): OdspDocumentServiceFactory;
 
 // @beta @legacy
@@ -171,6 +174,24 @@ export const OdcApiSiteOrigin = "https://my.microsoftpersonalcontent.com";
 // @beta @legacy (undocumented)
 export const OdcFileSiteOrigin = "https://1drv.ms";
 
+// @beta @legacy @input
+export interface OdspCreateContainerRequestBaseOptions {
+    readonly containerPackageInfo?: IContainerPackageInfo | undefined;
+    readonly createShareLinkType?: ISharingLinkKind | undefined;
+    readonly driveId: string;
+    readonly fileName: string;
+    readonly siteUrl: string;
+}
+
+// @beta @legacy @input
+export type OdspCreateContainerRequestOptions = OdspCreateContainerRequestBaseOptions & ({
+    readonly filePath: string;
+    readonly parentFolderId?: undefined;
+} | {
+    readonly parentFolderId: string;
+    readonly filePath?: undefined;
+});
+
 // @beta @legacy
 export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
     constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy);
@@ -203,6 +224,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory, 
 export class OdspDriverUrlResolver implements IUrlResolver {
     constructor();
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, packageInfoSource?: IContainerPackageInfo): Promise<string>;
+    // (undocumented)
     resolve(request: IRequest): Promise<IOdspResolvedUrl>;
 }
 
