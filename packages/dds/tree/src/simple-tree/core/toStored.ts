@@ -43,7 +43,7 @@ export interface StagedSchemaUpgradePolicy {
  * Use the properties and methods on this object to obtain staged-schema generation options
  * for different scenarios:
  *
- * - {@link StagedSchemaUpgradePolicyFactory.restrictive} — no new staged permissions (default)
+ * - {@link StagedSchemaUpgradePolicyFactory.restrictive} — no new staged upgrades (default)
  *
  * - {@link StagedSchemaUpgradePolicyFactory.permissive} — all staged upgrades enabled
  *
@@ -54,7 +54,7 @@ export interface StagedSchemaUpgradePolicy {
  * // Enable specific upgrades:
  * const options = StagedSchemaUpgradePolicy.enabledStagedUpgrades(myUpgrade);
  *
- * // Use restrictive (default, no new staged permissions):
+ * // Use restrictive (default, no new staged upgrades):
  * const options = StagedSchemaUpgradePolicy.restrictive;
  *
  * // Use permissive (all staged upgrades, useful for testing):
