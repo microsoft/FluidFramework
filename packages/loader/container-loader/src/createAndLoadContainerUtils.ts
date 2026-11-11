@@ -56,7 +56,10 @@ import {
 import { CatchUpMonitor } from "./catchUpMonitor.js";
 import { mixinDebugLogger } from "./debugLogger.js";
 import { createDeltaManager } from "./deltaManagerFactory.js";
-import { createFrozenDocumentServiceFactory } from "./frozenServices.js";
+import {
+	FrozenDocumentServiceFactory,
+	createFrozenDocumentServiceFactory,
+} from "./frozenServices.js";
 import { Loader } from "./loader.js";
 import { pkgVersion } from "./packageVersion.js";
 import type { ProtocolHandlerBuilder } from "./protocol.js";
@@ -484,7 +487,11 @@ export async function loadFrozenContainerFromPendingState(
 			// request-form URL.
 			request: { url: offlineFrozenRequestPlaceholderUrl, headers: {} },
 			urlResolver: synthesizedUrlResolver,
-			documentServiceFactory: createFrozenDocumentServiceFactory(undefined, readOnly),
+			documentServiceFactory: new FrozenDocumentServiceFactory(
+				readOnly ?? true,
+				undefined,
+				pending.blobContentsMode === "attachmentsOmitted",
+			),
 		});
 	}
 
@@ -621,6 +628,7 @@ export async function captureFullContainerState({
 	if (resolvedUrl === undefined) {
 		throw new UsageError("Failed to resolve request to a Fluid URL");
 	}
+	const captureAttachmentPayloads = blobCaptureMode === "inline";
 
 	// Inline and structural state support the offline form of `loadFrozenContainerFromPendingState`,
 	// which requires `tryParseCompatibleResolvedUrl` to succeed on `pendingLocalState.url`.
@@ -716,13 +724,12 @@ export async function captureFullContainerState({
 		// pending state so the load side can apply the matching decoder
 		// without ambiguity. See IPendingContainerState.attachmentBlobContents.
 		if (blobCaptureMode !== "reference") {
-			gcData =
-				blobCaptureMode === "inline"
-					? await parseGcSnapshotData(baseSnapshot, storage)
-					: undefined;
+			gcData = captureAttachmentPayloads
+				? await parseGcSnapshotData(baseSnapshot, storage)
+				: undefined;
 			[snapshotBlobs, attachmentBlobContents] = await Promise.all([
 				readReferencedSnapshotBlobs(snapshot, storage), // utf8 encoded
-				blobCaptureMode === "inline"
+				captureAttachmentPayloads
 					? captureReferencedAttachmentBlobs(baseSnapshot, storage, gcData) // base64 encoded
 					: Promise.resolve({}),
 			]);
@@ -743,7 +750,7 @@ export async function captureFullContainerState({
 		deltaManager.dispose();
 
 		const postSnapshotBlobReferences: IBlobAttachReference[] = [];
-		if (blobCaptureMode === "inline") {
+		if (captureAttachmentPayloads) {
 			for (const op of savedOps) {
 				// Blobs uploaded after the base snapshot are not in its
 				// `.blobs` redirect table, so `captureReferencedAttachmentBlobs`
@@ -768,7 +775,12 @@ export async function captureFullContainerState({
 			attached: true,
 			baseSnapshot,
 			snapshotBlobs,
-			blobContentsMode: blobCaptureMode === "reference" ? "reference" : undefined,
+			blobContentsMode:
+				blobCaptureMode === "reference"
+					? "reference"
+					: blobCaptureMode === "structural"
+						? "attachmentsOmitted"
+						: undefined,
 			attachmentBlobContents:
 				Object.keys(attachmentBlobContents).length === 0 ? undefined : attachmentBlobContents,
 			loadedGroupIdSnapshots: undefined,

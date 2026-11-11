@@ -77,13 +77,14 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	 */
 	attached: true;
 	/**
-	 * Indicates that all blob payloads are omitted and must be read from live storage.
+	 * Records the payload omission policy chosen by driver-level capture:
+	 * `"reference"` omits all blob payloads; `"attachmentsOmitted"` omits attachment payloads.
 	 *
-	 * Undefined for inline captures, structural captures that omit attachment payloads,
-	 * and legacy pending state. An undefined marker does not guarantee that all
-	 * payloads are present; missing payloads still require live storage when read.
+	 * Undefined for inline captures and state serialized without capture-policy metadata,
+	 * including legacy state. This is not a completeness guarantee; missing payloads
+	 * still require live storage when read.
 	 */
-	blobContentsMode?: "reference";
+	blobContentsMode?: "reference" | "attachmentsOmitted";
 	/**
 	 * Runtime-specific state that will be needed to properly rehydrate
 	 * (it's included in ContainerContext passed to instantiateRuntime)

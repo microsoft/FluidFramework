@@ -706,12 +706,12 @@ describe("captureFullContainerState", () => {
 				baseSnapshot: ISnapshotTree;
 				snapshotBlobs: Record<string, string>;
 				attachmentBlobContents?: Record<string, string>;
-				blobContentsMode?: "reference";
+				blobContentsMode?: "reference" | "attachmentsOmitted";
 				savedOps: ISequencedDocumentMessage[];
 			} = JSON.parse(pendingLocalState);
 			assert(Object.keys(capturedState.snapshotBlobs).length > 0);
 			assert.strictEqual(capturedState.attachmentBlobContents, undefined);
-			assert.strictEqual(capturedState.blobContentsMode, undefined);
+			assert.strictEqual(capturedState.blobContentsMode, "attachmentsOmitted");
 
 			const blobsTree: ISnapshotTree | undefined = capturedState.baseSnapshot.trees[".blobs"];
 			assert(blobsTree !== undefined, "Expected snapshot attachment references");
@@ -729,7 +729,7 @@ describe("captureFullContainerState", () => {
 			]);
 			assert(
 				captureReads.every((id) => !attachmentIds.has(id)),
-				"Capture must not explicitly fetch omitted attachment payloads",
+				"Capture must not explicitly read omitted attachment payloads via readBlob",
 			);
 
 			const replayReads: string[] = [];
@@ -765,29 +765,40 @@ describe("captureFullContainerState", () => {
 			}
 			assert.deepStrictEqual(new Set(replayReads), attachmentIds);
 
-			const offlineContainer = await loadFrozenContainerFromPendingState({
-				codeLoader,
-				pendingLocalState,
-			});
-			containers.push(offlineContainer);
-			const offlineEntryPoint: FluidObject<TestFluidObject> =
-				await offlineContainer.getEntryPoint();
-			assert(offlineEntryPoint.ITestFluidObject !== undefined);
-			const offlineRoot = offlineEntryPoint.ITestFluidObject.root;
-			assert.strictEqual(offlineRoot.get("snapshotValue"), "before attach");
-			assert.strictEqual(offlineRoot.get("postSnapshotValue"), "after attach");
-			for (const key of ["snapshotBlob", "postSnapshotBlob"]) {
-				const handle: unknown = offlineRoot.get(key);
-				assert(isFluidHandle(handle));
-				await assert.rejects(
-					async () => handle.get(),
-					(error: Error) => {
-						// Handle resolution wraps the storage UsageError in a response exception.
-						assert.match(error.message, /blob payload was not captured/);
-						assert.match(error.message, /online form/);
-						return true;
-					},
-				);
+			for (const omissionMarker of ["attachmentsOmitted", undefined]) {
+				const offlineContainer = await loadFrozenContainerFromPendingState({
+					codeLoader,
+					pendingLocalState: JSON.stringify({
+						...capturedState,
+						blobContentsMode: omissionMarker,
+					}),
+				});
+				containers.push(offlineContainer);
+				const offlineEntryPoint: FluidObject<TestFluidObject> =
+					await offlineContainer.getEntryPoint();
+				assert(offlineEntryPoint.ITestFluidObject !== undefined);
+				const offlineRoot = offlineEntryPoint.ITestFluidObject.root;
+				assert.strictEqual(offlineRoot.get("snapshotValue"), "before attach");
+				assert.strictEqual(offlineRoot.get("postSnapshotValue"), "after attach");
+				for (const key of ["snapshotBlob", "postSnapshotBlob"]) {
+					const handle: unknown = offlineRoot.get(key);
+					assert(isFluidHandle(handle));
+					await assert.rejects(
+						async () => handle.get(),
+						(error: Error) => {
+							// Handle resolution wraps the storage UsageError in a response exception.
+							assert.match(error.message, /blob payload was not captured/);
+							assert.match(error.message, /online form/);
+							if (omissionMarker === "attachmentsOmitted") {
+								assert.match(error.message, /blobCaptureMode: "structural"/);
+								assert.match(error.message, /omits attachment payloads/);
+							} else {
+								assert.match(error.message, /"structural" omits attachments/);
+							}
+							return true;
+						},
+					);
+				}
 			}
 		} finally {
 			for (const loadedContainer of containers) {

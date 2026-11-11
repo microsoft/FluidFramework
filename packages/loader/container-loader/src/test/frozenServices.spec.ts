@@ -19,6 +19,7 @@ import {
 	FrozenDeltaStream,
 	FrozenDocumentServiceFactory,
 	WritableFrozenDeltaStream,
+	createFrozenDocumentServiceFactory,
 } from "../frozenServices.js";
 
 const fakeUrl = {
@@ -295,6 +296,31 @@ describe("FrozenDocumentStorageService readBlob (no inner factory)", () => {
 		});
 	});
 
+	for (const readOnly of [true, false]) {
+		it(`identifies structural attachment omission after wrapping with readOnly=${readOnly}`, async () => {
+			const factory = createFrozenDocumentServiceFactory(
+				new FrozenDocumentServiceFactory(true, undefined, true),
+				readOnly,
+			);
+			const service = await factory.createDocumentService(fakeUrl);
+			try {
+				const storage = await service.connectToStorage();
+				await assert.rejects(storage.readBlob("omitted-attachment"), (error: Error) => {
+					assert.strictEqual(error.constructor.name, "UsageError");
+					assert.match(error.message, /blobCaptureMode: "structural"/);
+					assert.match(error.message, /omits attachment payloads/);
+					assert.match(
+						error.message,
+						/online form of `loadFrozenContainerFromPendingState` with live driver wiring/,
+					);
+					return true;
+				});
+			} finally {
+				service.dispose();
+			}
+		});
+	}
+
 	it("readBlob delegates to the inner storage when one is provided", async () => {
 		// Inverse of the offline assertion: with an inner factory the
 		// wrapped storage's readBlob must serve, not throw — that's the
@@ -324,7 +350,7 @@ describe("FrozenDocumentStorageService readBlob (no inner factory)", () => {
 				throw new Error("not used in this test");
 			},
 		};
-		const factory = new FrozenDocumentServiceFactory(true, innerFactory);
+		const factory = new FrozenDocumentServiceFactory(true, innerFactory, true);
 		const service = await factory.createDocumentService(fakeUrl);
 		const storage = await service.connectToStorage();
 
