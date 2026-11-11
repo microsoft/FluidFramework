@@ -498,7 +498,9 @@ export class UnhydratedGeneralNode extends UnhydratedFlexTreeNode {
 
 /**
  * An unhydrated node for stored object schemas that retains declared field instances, even when empty.
- * {@link UnhydratedGeneralNode} also supports stored object schemas but does not retain empty fields without pending defaults.
+ * @remarks
+ * This is a specialized implementation of {@link UnhydratedGeneralNode} for object nodes:
+ * {@link UnhydratedGeneralNode} also supports stored object schemas, but this implementation should have faster field access by retaining empty declared fields without pending defaults.
  */
 export class UnhydratedObjectNode extends UnhydratedFlexTreeNode {
 	protected override retainsEmptyField(key: FieldKey): boolean {

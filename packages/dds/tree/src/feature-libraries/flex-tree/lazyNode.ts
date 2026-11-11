@@ -341,7 +341,9 @@ export abstract class LazyTreeNode
  * @remarks
  * Each cached field owns its cursor and anchor.
  * Undeclared object fields are forbidden and are not retained.
- * This is an optional optimization: {@link LazyGeneralNode} also supports stored object schemas.
+ *
+ * This is a specialized implementation of {@link LazyGeneralNode} for object nodes:
+ * {@link LazyGeneralNode} also supports stored object schemas, but this implementation should have faster field access.
  */
 export class LazyObjectNode extends LazyTreeNode {
 	public override getOrCreateField(

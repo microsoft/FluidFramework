@@ -101,15 +101,15 @@ export function makeField(
 		context.checkout.forest.anchors.locate(fieldAnchor.parent) ??
 		fail(0xb10 /* missing anchor */);
 
-	// Since anchor-set could be reused across a flex tree context getting disposed, key off the flex tree node not the anchor.
-	let cacheKey = anchorNode.slots.get(flexTreeSlot);
-	if (cacheKey === undefined) {
+	// Use the FlexTree node's field cache, since the anchor set can outlive its context.
+	let parentNode = anchorNode.slots.get(flexTreeSlot);
+	if (parentNode === undefined) {
 		cursor.exitField();
-		cacheKey = getOrCreateHydratedFlexTreeNode(context, cursor);
+		parentNode = getOrCreateHydratedFlexTreeNode(context, cursor);
 		cursor.enterField(fieldAnchor.fieldKey);
 	}
-	assert(cacheKey instanceof LazyTreeNode, "Expected a lazy parent node");
-	const result = cacheKey.getOrCreateField(cursor, makeFlexTreeField);
+	assert(parentNode instanceof LazyTreeNode, "Expected a lazy parent node");
+	const result = parentNode.getOrCreateField(cursor, makeFlexTreeField);
 	if (!usedAnchor) {
 		// The anchor must be disposed to avoid leaking. In the case of a cache hit,
 		// or a field which borrows its parent's resources, no field takes ownership of it.
@@ -254,6 +254,9 @@ abstract class NodeBackedField extends LazyField {
  * A forbidden field with constant empty results that do not access the parent's state.
  * @remarks
  * These results remain available after the parent node is freed.
+ *
+ * This is a specialized implementation of {@link LazyForbiddenField} for fields within nodes:
+ * {@link LazyForbiddenField} also supports these fields, but this implementation avoids allocating a cursor, anchor, or disposal registration.
  */
 export class UncachedForbiddenField extends NodeBackedField {
 	public override get schema(): FieldKindIdentifier {
@@ -720,6 +723,10 @@ interface SequenceLengthCache {
 
 /**
  * A sequence field with its own cursor and anchor, with lazy length caching for large fields.
+ * @remarks
+ * This is a specialized implementation of {@link NodeBackedSequenceField} for declared fields of object nodes, including array content:
+ * {@link NodeBackedSequenceField} also supports these fields, but this implementation should have faster traversal and repeated length access by retaining its own cursor and caching large field lengths.
+ * This implementation also supports detached fields, which have no containing node from which to borrow navigation resources.
  */
 export class LazySequence extends AnchoredField implements FlexTreeSequenceField {
 	/**
@@ -804,6 +811,10 @@ export class LazySequence extends AnchoredField implements FlexTreeSequenceField
 
 /**
  * A required or identifier field with its own cursor and anchor.
+ * @remarks
+ * This is a specialized implementation of {@link NodeBackedValueField} for declared fields of object nodes:
+ * {@link NodeBackedValueField} also supports these fields, but this implementation should have faster content access by retaining its own cursor.
+ * This implementation also supports detached fields, which have no containing node from which to borrow navigation resources.
  */
 export class LazyValueField extends AnchoredField implements FlexTreeRequiredField {
 	public editor: ValueFieldEditBuilder<FlexibleNodeContent> = {
@@ -828,6 +839,10 @@ export class LazyValueField extends AnchoredField implements FlexTreeRequiredFie
 
 /**
  * An optional field with its own cursor and anchor.
+ * @remarks
+ * This is a specialized implementation of {@link NodeBackedOptionalField} for declared fields of object nodes:
+ * {@link NodeBackedOptionalField} also supports these fields, but this implementation should have faster content access by retaining its own cursor.
+ * This implementation also supports detached fields, which have no containing node from which to borrow navigation resources.
  */
 export class LazyOptionalField extends AnchoredField implements FlexTreeOptionalField {
 	public editor: OptionalFieldEditBuilder<ExclusiveMapTree> = {
@@ -866,6 +881,10 @@ type Builder = new (
 	fieldAnchor: FieldAnchor,
 ) => AnchoredField;
 
+/**
+ * Constructors for fields that own navigation resources, not all field implementations.
+ * Use {@link makeField} to build fields; for fields within nodes, it delegates implementation selection and caching to the parent node.
+ */
 const builderList: [FieldKindIdentifier, Builder][] = [
 	[FieldKinds.forbidden.identifier, LazyForbiddenField],
 	[FieldKinds.optional.identifier, LazyOptionalField],
@@ -874,6 +893,10 @@ const builderList: [FieldKindIdentifier, Builder][] = [
 	[FieldKinds.identifier.identifier, LazyValueField],
 ];
 
+/**
+ * Lookup for the resource-owning constructors in {@link builderList}.
+ * Use {@link makeField} to build fields; for fields within nodes, it delegates implementation selection and caching to the parent node.
+ */
 const kindToClass: ReadonlyMap<FieldKindIdentifier, Builder> = new Map(builderList);
 
 /**
