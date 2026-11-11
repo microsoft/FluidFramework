@@ -26,11 +26,16 @@ Historical containers are read-only; generic undo, editing from an old state, an
 
 Add a sticky `runtimeHistory: true` capability to [document schema features and their validation/merge rules](src/summary/documentSchema.ts).
 Persist it under the schema's enforced `runtime` properties, not informational metadata.
-For eligible new documents, publish this capability with the first history baseline in the creation summary.
+For eligible new documents, require `explicitSchemaControl: true` and publish both schema properties with the first history baseline in the creation summary.
 Readers, writers, and summarizers must validate it before processing or summarizing the document; an unsupported runtime must fail rather than silently drop `.history`.
 Deployment saturation remains necessary, but is not the enforcement mechanism.
 
-A rollout kill switch stops new-document enablement; a UI kill switch hides previews but does not stop capture or erase data.
+For existing enabled documents, derive the session's history requirement from the persisted schema, not the session's desired features.
+Preserve `runtimeHistory: true` in session, future, and summarized schemas using the sticky `TrueOrUndefinedMax` merge pattern already used for `explicitSchemaControl`, not ordinary opt-in feature intersection.
+Reject history-enabled schemas without `explicitSchemaControl: true`; never use legacy desired-schema serialization for them.
+
+A rollout kill switch affects only new-document enablement in `desiredSchema`; it cannot disable an existing document's history requirement.
+A UI kill switch hides previews but does not stop capture or erase data.
 Existing enabled documents continue preserving and extending history unless an explicit recording-disable/purge operation is authorized below.
 Never remove the schema capability or roll such documents back to a binary that cannot preserve their format.
 If history maintenance cannot run safely, fail the session explicitly rather than publish a summary without required history.
@@ -349,6 +354,8 @@ These are implementation and service validation requirements, not tests implemen
 - Delay-load live group `X` after retaining historical copies of `X`.
   Assert service response bytes exclude all history payloads, caches cannot cross scopes, and explicit archive acquisition still includes the historical copies.
 - Verify unsupported readers/writers/summarizers reject the sticky document schema, rollout/UI kill switches preserve existing archives, and unsafe maintenance failure cannot publish a history-dropping summary.
+  Load an enabled document with the rollout flag off and local feature options unset, including `explicitSchemaControl`; it must still extend history or fail before publication, never omit `.history` or its schema marker.
+  Reject history-enabled schemas missing `explicitSchemaControl: true`, and verify rollout-disabled new documents remain unenabled.
   Test authorized disable/purge, stale and in-flight proposals, takeover, cache invalidation, no post-purge recovery from old op tails, fresh-epoch resumption, idle-file cleanup, and legal-hold/deletion-status handling.
   Validate compliance export covers the retained graph and privacy projections preserve replay.
 - Capture string-valued protocol proposals before in-place parsing, then replay them with joins/leaves and normal runtime ops.
