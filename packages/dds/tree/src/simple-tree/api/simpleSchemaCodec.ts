@@ -40,8 +40,10 @@ import * as FormatV2 from "../simpleSchemaFormatV2.js";
  * It is not possible to reconstruct a full schema (including metadata and persistedMetadata) from the encoded format.
  * Definition order is independent of the input map's iteration order.
  * Node definitions are sorted by identifier before constructing the output; field and allowed-type entries are not explicitly sorted.
- * Schemas without an application version map use snapshot v1.
- * Schemas with an application version map use snapshot v2.
+ *
+ * Application-defined versions are preserved separately from the schema definitions.
+ * To retain the existing format for unversioned schemas, this uses snapshot v1 when no version map is supplied
+ * and snapshot v2 when a map is present, including an explicitly empty map.
  *
  * @param simpleSchema - The tree schema to convert.
  *

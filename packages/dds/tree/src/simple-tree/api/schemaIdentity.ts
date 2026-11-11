@@ -17,8 +17,10 @@ import type { ImplicitFieldSchema } from "../fieldSchema.js";
  * Represents a schema identity for runtime hashing and application-defined versions.
  *
  * @remarks
- * Create with {@link identifySchemaAlpha} for application-defined versions only.
- * Use {@link identifySchemaWithHashAlpha} to also enable hash checks and hash telemetry.
+ * An identity assigned to {@link ITreeViewConfigurationAlpha.schemaIdentity} configures versioning or hashing for a view.
+ * {@link identifySchemaAlpha} creates identities with application-defined versions only,
+ * while {@link identifySchemaWithHashAlpha} also enables hash checks and hash telemetry.
+ * Only the application-defined versions are persisted; runtime hashes are not stored in the document.
  *
  * @sealed @alpha
  */
@@ -27,31 +29,32 @@ export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.Sch
 	 * Contains the application-defined versions for the view schema.
 	 *
 	 * @remarks
-	 * Each value must be a non-negative safe integer.
-	 * To configure a single version, pass a number to {@link identifySchemaAlpha} or
-	 * {@link identifySchemaWithHashAlpha} instead of a version map.
-	 * The number is normalized to a map with the identifier `"schemaVersion"`.
-	 * This identifier is not reserved and follows the same upgrade rules as other identifiers.
-	 * {@link TreeView.initialize} and {@link TreeView.upgradeSchema} store these versions.
-	 * Stored versions cannot decrease, and library identifiers cannot be removed.
+	 * {@link identifySchemaAlpha} and {@link identifySchemaWithHashAlpha} accept these versions
+	 * as a map of string library identifiers to non-negative safe integers,
+	 * or as a single number that is normalized to the map `{ "schemaVersion": number }`.
+	 * The shorthand key `"schemaVersion"` is an ordinary identifier and follows the same rules as other keys.
 	 *
-	 * Schema upgrades normally follow the additive upgrade rules.
-	 * Other changes require version maps in both the stored schema and the new view schema.
-	 * At least one version must increase, or a library identifier must be added.
-	 * The new schema must still allow all content accepted by the stored schema.
-	 * Adding a version map for the first time does not bypass the additive upgrade rules.
+	 * {@link TreeView.initialize} and {@link TreeView.upgradeSchema} copy the configured versions into stored schema.
+	 * Once stored, version values cannot decrease and their identifiers cannot be removed.
+	 * This ordering prevents an older application from reversing a versioned schema upgrade.
 	 *
-	 * Versions use an experimental stored schema format.
-	 * Until the format is stable, all clients that load or collaborate on the document
-	 * must use the same Fluid Framework version.
-	 * Runtime hashes are not stored in the document.
+	 * Within those version constraints, schema upgrades normally follow the additive upgrade rules without requiring a version increase.
+	 * To allow other changes, both the stored and new view schemas must have version maps,
+	 * and at least one version must increase or a library identifier must be added.
+	 * Even then, the new schema must still allow all content accepted by the stored schema.
+	 * In particular, adding a version map for the first time does not bypass the additive upgrade rules.
+	 *
+	 * Persisting versions requires an experimental stored schema format that is not suitable for production use.
+	 * For preview testing, all clients that load or collaborate on the document must use the same Fluid Framework version,
+	 * because the experimental format has no compatibility guarantee across releases.
 	 *
 	 * @example
-	 * Required string fields and identifier fields accept the same stored values.
-	 * Increase the version to change a required string field to an identifier field.
-	 * Older applications cannot reverse this change because stored versions cannot decrease.
+	 * Required string fields and identifier fields accept the same stored values, but changing between them
+	 * needs version ordering to prevent clients from repeatedly reversing the change.
+	 * The following configurations increase the version when changing from a required string to an identifier,
+	 * so the older configuration cannot reverse the upgrade by decreasing the stored version.
 	 *
-	 * Configure {@link configuredSharedTreeAlpha} to write the experimental format.
+	 * The example first configures {@link configuredSharedTreeAlpha} to write the experimental format for this preview.
 	 *
 	 * ```typescript
 	 * const SharedTree = configuredSharedTreeAlpha({
@@ -60,7 +63,7 @@ export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.Sch
 	 * });
 	 * ```
 	 *
-	 * Pass versions to {@link identifySchemaAlpha} with a stable string library identifier.
+	 * Both view configurations then use the same stable library identifier, with an increased version for the new schema.
 	 *
 	 * ```typescript
 	 * const schemaFactory = new SchemaFactory("com.example");
@@ -79,13 +82,17 @@ export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.Sch
 }
 
 /**
- * Options for {@link identifySchemaAlpha}.
+ * Configures application-defined versions for {@link identifySchemaAlpha}.
  *
  * @alpha @input
  */
 export interface IdentifySchemaOptions {
 	/**
 	 * Specifies the versions to store on {@link SchemaIdentity.schemaVersion}.
+	 *
+	 * @remarks
+	 * A number specifies one application-wide version, while a map specifies independent versions for parts of the schema.
+	 * {@link SchemaIdentity.schemaVersion} describes normalization and upgrade rules.
 	 */
 	readonly schemaVersion?: SchemaVersionMap | number;
 }
@@ -98,10 +105,11 @@ export interface IdentifySchemaOptions {
  * @returns An immutable {@link SchemaIdentity} without runtime hashing.
  *
  * @remarks
- * Pass the result as {@link ITreeViewConfigurationAlpha.schemaIdentity}.
- * This function does not compute hashes or log hash telemetry.
- * Bundles that only use this function can omit the hash algorithm.
- * See {@link SchemaIdentity.schemaVersion} for version requirements and upgrade rules.
+ * Assigning the result to {@link ITreeViewConfigurationAlpha.schemaIdentity} associates the versions with a view configuration.
+ * {@link SchemaIdentity.schemaVersion} describes version requirements and upgrade rules.
+ *
+ * This factory does not compute hashes or log hash telemetry, so bundles that only use it can omit the hash algorithm.
+ * {@link identifySchemaWithHashAlpha} also supports hashing.
  *
  * @see {@link identifySchemaWithHashAlpha} to enable hash checks and hash telemetry.
  *
@@ -112,9 +120,11 @@ export function identifySchemaAlpha(options: IdentifySchemaOptions = {}): Schema
 }
 
 /**
- * Runtime implementation of {@link SchemaIdentity}, separate from the hashing implementation
- * so applications that omit schema identity do not need to load the hash algorithm.
- * Compatibility snapshots restore versions without runtime hash checks or telemetry.
+ * Runtime implementation shared by version-only and hash-enabled schema identities.
+ *
+ * @remarks
+ * Keeping this implementation separate from the hash algorithm lets version-only callers avoid that dependency.
+ * Compatibility snapshot imports also use the version-only path, restoring versions without enabling runtime hash checks or telemetry.
  */
 export class SchemaIdentityInternal
 	extends ErasedTypeImplementation<SchemaIdentity>

@@ -51,12 +51,12 @@ export type SchemaFormatVersion = Values<typeof SchemaFormatVersion>;
  * Maps string library identifiers to application-defined schema versions.
  *
  * @remarks
- * Library identifiers are stored in documents and must stay the same across releases.
- * Use a globally unique name, such as a package name or a domain-based name.
- * This prevents conflicts with identifiers from other libraries.
- * All clients that use the library must use the same identifier.
- * Each version must be a non-negative safe integer.
- * The document stores the library identifiers and versions as part of its stored schema.
+ * Each entry pairs a library identifier with a non-negative safe integer version.
+ * Because these entries are persisted as part of the document's stored schema,
+ * all clients must use the same identifier for a library and keep it stable across releases.
+ * A globally unique name, such as a package name or a domain-based name, avoids conflicts with other libraries.
+ *
+ * {@link SchemaIdentity.schemaVersion} describes how these versions control schema upgrades.
  *
  * @alpha
  */

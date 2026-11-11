@@ -421,7 +421,7 @@ export class SchematizingSimpleTreeView<
 		const upgradePolicy = this.effectiveUpgradePolicy;
 		const newSchema = toUpgradeSchema(this.viewSchema.root, upgradePolicy, this.schemaVersion);
 		const storedSchema = this.checkout.storedSchema.clone();
-		// A version increase can allow an upgrade that fails the additive-only assertion.
+		// Version ordering can permit non-additive upgrades, which must bypass the checkout's additive-only assertion.
 		const isAdditiveSchemaUpgrade = allowsRepoSuperset(
 			defaultSchemaPolicy,
 			storedSchema,

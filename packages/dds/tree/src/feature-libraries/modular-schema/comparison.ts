@@ -26,25 +26,25 @@ import { isNeverField, isNeverTree } from "./isNeverTree.js";
  * Selects the rules used to compare allowed schema content.
  *
  * @remarks
- * Neither mode compares schema versions.
- * Use {@link allowsSchemaUpgrade} to also enforce schema version rules.
+ * These modes separate content compatibility from the ordering needed to prevent upgrade cycles.
+ * Neither mode compares schema versions itself; {@link allowsSchemaUpgrade} combines a content comparison with version checks.
  */
 export enum SchemaComparisonMode {
 	/**
-	 * Requires field-kind changes to be listed in {@link FieldKindOptions.allowMonotonicUpgradeFrom}.
-	 * These rules prevent cycles of schema upgrades, including changes between field kinds that allow the same content.
-	 * This is the default mode and does not require a schema version increase.
+	 * Compares allowed content and requires field-kind changes to be listed in {@link FieldKindOptions.allowMonotonicUpgradeFrom}.
+	 * That additional restriction prevents clients from repeatedly reversing changes between field kinds that allow the same content.
+	 * Because these rules provide an upgrade ordering without version increases, this is the default mode.
 	 */
 	Monotonic,
 
 	/**
 	 * Compares allowed content without enforcing monotonic field-kind upgrade rules.
-	 * Field-kind changes are checked with {@link allowsMultiplicitySuperset}, and fields with no valid content are treated as subsets of all fields.
-	 * This can allow changes between distinct schemas that allow the same content, including their inverse.
+	 * Instead, field-kind changes are checked with {@link allowsMultiplicitySuperset}, and fields with no valid content are treated as subsets of all fields.
+	 * This permits some changes between distinct schemas that allow the same content, but it can also permit their inverse.
 	 *
-	 * {@link allowsSchemaUpgrade} uses this mode only when both schema version maps are present,
-	 * {@link ifSchemaVersionsDecrease} returns false, and {@link areSchemaVersionsEqual} returns false.
-	 * A version increase or a new library identifier then prevents the inverse upgrade.
+	 * To prevent those cycles, {@link allowsSchemaUpgrade} uses this mode only when both version maps are present,
+	 * no versions decrease or disappear, and at least one version increases or a library identifier is added.
+	 * It checks these conditions with {@link ifSchemaVersionsDecrease} and {@link areSchemaVersionsEqual}.
 	 */
 	ContentOnly,
 }
@@ -172,7 +172,7 @@ export function allowsValueSuperset(
  *
  * @remarks
  * Schema versions are not checked here.
- * Use {@link allowsSchemaUpgrade} to determine whether a schema upgrade is allowed.
+ * {@link allowsSchemaUpgrade} determines whether a schema upgrade is allowed.
  *
  * @privateRemarks
  * See also {@link FieldKindOptions.allowMonotonicUpgradeFrom} for constraints on the implementation.
@@ -282,10 +282,14 @@ export function allowsRepoSuperset(
  * Returns whether `original` can be upgraded to `updated`.
  *
  * @remarks
- * Rejects removed or decreased schema versions, as checked by {@link ifSchemaVersionsDecrease}.
- * Changes allowed by {@link SchemaComparisonMode.Monotonic} do not require a version increase.
- * Other content-preserving changes use {@link SchemaComparisonMode.ContentOnly} and require both version maps to be present and different.
- * With no removed or decreased versions, this means at least one version increases or a library identifier is added.
+ * Every upgrade must preserve existing version identifiers and must not decrease their values,
+ * as checked by {@link ifSchemaVersionsDecrease}.
+ * Within that constraint, changes allowed by {@link SchemaComparisonMode.Monotonic} do not require a version increase.
+ *
+ * For other content-preserving changes, the version maps must provide the ordering that prevents inverse upgrades.
+ * Both maps must therefore be present, with at least one increased version or added library identifier,
+ * before the change is checked using {@link SchemaComparisonMode.ContentOnly}.
+ * Adding the first version map alone does not enable this less restrictive comparison.
  */
 export function allowsSchemaUpgrade(
 	policy: FullSchemaPolicy,
@@ -333,9 +337,9 @@ export function areSchemaVersionsEqual(
  * Returns whether `updated` removes a library identifier or decreases a version in `original`.
  *
  * @remarks
- * The result is `false` if `original` is `undefined`.
- * The result is `true` if only `updated` is `undefined`.
- * Adding library identifiers does not count as a decrease.
+ * Only existing versions constrain an update, so the result is `false` if `original` is `undefined`.
+ * If `original` is present but `updated` is `undefined`, the result is `true` because the map was removed.
+ * Within a present map, adding library identifiers does not count as a decrease.
  */
 function ifSchemaVersionsDecrease(
 	original: TreeStoredSchema["schemaVersion"],

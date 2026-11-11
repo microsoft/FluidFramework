@@ -31,33 +31,43 @@ import {
 } from "./schemaIdentity.js";
 
 /**
- * Options for {@link identifySchemaWithHashAlpha}.
+ * Configures hashing and application-defined versions for {@link identifySchemaWithHashAlpha}.
+ *
+ * @remarks
+ * Inherits version configuration from {@link IdentifySchemaOptions} and adds an optional expected hash for schema checks.
  *
  * @alpha @input
  */
 export interface IdentifySchemaWithHashOptions extends IdentifySchemaOptions {
 	/**
 	 * An optional hash used to detect unintended schema changes.
+	 *
 	 * @remarks
-	 * The hash uses the view schema and configured staged upgrade policy, independent of the document.
-	 * View construction throws a UsageError containing the expected and actual hashes if they differ.
-	 * If the schema change is intentional, update this value with the actual hash from the error.
-	 * When versions are configured, the error also suggests increasing the relevant version.
-	 * Omit this value to enable telemetry without a construction check.
+	 * When provided, view construction compares this value with a hash of the view schema and configured staged upgrade policy,
+	 * independent of the document, and throws a UsageError with both hashes if they differ.
+	 * If the change is intentional, this value can be updated with the actual hash from the error;
+	 * when versions are configured, the error also suggests considering an increase to the relevant version.
+	 *
+	 * Omitting this value skips the construction check but still enables hash telemetry.
 	 */
 	readonly expectedHash?: string;
 }
 
 /**
  * Enables schema hash telemetry and optional checks when constructing a view.
- * @remarks
- * Pass the result as {@link ITreeViewConfigurationAlpha.schemaIdentity}.
- * Import this function only when hashing is needed so the hash algorithm can be removed from other bundles.
- * Initialization and schema upgrades log the runtime hash in telemetry.
- * Application versions do not affect the runtime hash.
- * See {@link SchemaIdentity.schemaVersion} for version requirements and upgrade rules.
  *
- * @param options - Options for checking the schema hash.
+ * @remarks
+ * Assigning the result to {@link ITreeViewConfigurationAlpha.schemaIdentity} enables runtime hash logging during initialization and schema upgrades.
+ * The optional {@link IdentifySchemaWithHashOptions.expectedHash} enables checks for unintended schema changes when constructing a view.
+ *
+ * The {@link IdentifySchemaOptions.schemaVersion} option combines hashing with application-defined versions.
+ * Those versions follow the rules in {@link SchemaIdentity.schemaVersion} but do not affect the runtime hash,
+ * so a version-only change does not require updating the expected hash.
+ *
+ * This factory introduces a dependency on the hash algorithm.
+ * Version-only callers can use {@link identifySchemaAlpha} so their bundles can omit the hash algorithm.
+ *
+ * @param options - Optional expected hash and application-defined versions.
  *
  * @returns An immutable schema identity that uses SHA-256 hashing.
  *
@@ -79,10 +89,10 @@ export function identifySchemaWithHashAlpha(
  * Computes a hash from a view schema.
  *
  * @remarks
- * The hash includes the schema structure and persisted metadata, with the provided
- * enabled staged upgrades.
- * Application versions are not included.
- * Object key order and allowed-type order do not affect the hash, but metadata array order does.
+ * The hash includes schema structure and persisted metadata after applying the provided staged upgrade policy.
+ * It excludes application-defined versions, so version-only updates leave the hash unchanged.
+ * To keep the result stable across equivalent schema definitions, object keys and allowed types are sorted before hashing;
+ * metadata array order is preserved and therefore does affect the hash.
  *
  * @param schema - the view schema to hash
  * @param stagedSchemaUpgrades - the {@link SchemaUpgrade | staged upgrades} to include,

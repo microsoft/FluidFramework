@@ -140,9 +140,12 @@ export function schemaDataIsEmpty(data: TreeStoredSchema): boolean {
 }
 
 /**
- * Copies and freezes versions to protect stored schema from changes to a caller-owned record.
- * Does not freeze the caller's record.
- * This is not an encoding step; the schema codec sorts entries when it encodes the version map.
+ * Creates an immutable copy of a caller-owned version map for storage in the repository.
+ *
+ * @remarks
+ * Copying before freezing prevents later changes to the caller's record from affecting stored schema,
+ * without freezing an object the caller still owns.
+ * This copy preserves entry order because it is not an encoding step; the schema codec sorts entries before persisting them.
  */
 function cloneSchemaVersion(
 	schemaVersion: SchemaVersionMap | undefined,

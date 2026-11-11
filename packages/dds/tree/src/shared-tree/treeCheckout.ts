@@ -2425,9 +2425,9 @@ function getSchemaChangeTelemetryMetrics(
  * Returns whether the stored schema is still in its initial state.
  *
  * @remarks
- * Schema-change telemetry treats this state as initialization.
- * An empty node collection is not enough.
- * Root-field changes, metadata, or application versions mean the schema has changed.
+ * Schema-change telemetry classifies an edit from this state as initialization rather than an upgrade.
+ * An empty node collection alone is not enough to identify it: changes to the root field, its metadata,
+ * or application versions also mean that stored schema has already been set.
  */
 function isInitialStoredSchema(schema: TreeStoredSchema): boolean {
 	const root = schema.rootFieldSchema;

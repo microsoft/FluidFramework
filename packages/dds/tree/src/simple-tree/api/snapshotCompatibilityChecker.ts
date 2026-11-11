@@ -23,12 +23,13 @@ import {
 import type { SchemaCompatibilityStatus } from "./tree.js";
 
 /**
- * Reports the ability of a client's view configuration to view and/or upgrade a document's stored schema
- * (described by `documentViewConfiguration.schema`).
+ * Reports whether a client's view configuration can view or upgrade the stored schema represented by another configuration.
  *
  * @remarks
- * Schema metadata does not affect compatibility.
- * This function does not inspect document content.
+ * The document configuration supplies the historical schema and application-defined versions,
+ * while the client configuration supplies the schema and versions the application now expects.
+ * The comparison uses those definitions rather than inspecting document content.
+ * Schema metadata does not affect content compatibility; application-defined versions also constrain which upgrades are allowed.
  *
  * @example Checking the ability of the client's view schema to view or upgrade a document's stored schema.
  * In this case, the historical schema is a Point2D object with x and y fields, while the current schema is a Point3D object
@@ -68,10 +69,10 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * assert.equal(forwardsCompatibilityStatus.canView, true);
  * ```
  *
- * @param documentViewConfiguration - Configuration whose `schema` was used to generate the stored schema persisted in the document.
+ * @param documentViewConfiguration - Configuration whose schema and application-defined versions represent the stored schema in the document.
  * This function assumes the stored schema was generated with the default restrictive staged upgrade policy.
  * @param clientViewConfiguration - Configuration with the view schema being used by the current client.
- * This function assumes the a stored schema derived from this view would be generated with the default restrictive staged upgrade policy.
+ * This function assumes a stored schema derived from this view would be generated with the default restrictive staged upgrade policy.
  *
  * @returns The ability of `clientViewConfiguration.schema` to view and/or upgrade a document's stored schema.
  *
@@ -100,10 +101,12 @@ export function checkCompatibility(
 }
 
 /**
- * Returns a JSON-compatible representation of the tree schema for snapshot compatibility checking.
+ * Captures a configuration's schema and application-defined versions for snapshot compatibility checking.
  *
  * @remarks
- * Snapshots can be loaded by the same or newer package versions, but not necessarily older versions.
+ * The returned JSON-compatible value can be saved to compare a later application configuration with this version of its schema.
+ * Snapshots preserve application-defined versions from `schemaIdentity`, but not runtime hash checks or telemetry.
+ * They can be loaded by the same or newer package versions, but not necessarily older versions.
  *
  * @see {@link importCompatibilitySchemaSnapshot} which loads these snapshots.
  *
@@ -142,9 +145,13 @@ export function exportCompatibilitySchemaSnapshot(
 }
 
 /**
- * Parse the format exported by {@link exportCompatibilitySchemaSnapshot} into a schema.
+ * Restores a schema configuration from a compatibility snapshot created by {@link exportCompatibilitySchemaSnapshot}.
  *
- * Can load snapshots created by the same or older package versions, but not necessarily newer versions.
+ * @remarks
+ * The returned configuration contains the snapshotted schema and any application-defined versions,
+ * so it can serve as the historical configuration in {@link checkCompatibility}.
+ * Hash checks and hash telemetry are not restored because they are not part of the snapshot.
+ * This function can load snapshots created by the same or older package versions, but not necessarily newer versions.
  *
  * @see {@link exportCompatibilitySchemaSnapshot} which creates these snapshots.
  *

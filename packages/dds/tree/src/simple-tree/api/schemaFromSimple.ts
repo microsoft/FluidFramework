@@ -67,7 +67,7 @@ export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): TreeSc
 	return {
 		root,
 		definitions,
-		// Preserve application versions without changing unversioned output.
+		// Application versions are preserved without changing unversioned output.
 		...(simple.schemaVersion === undefined ? {} : { schemaVersion: simple.schemaVersion }),
 	};
 }

@@ -21,6 +21,11 @@ export const SimpleSchemaFormatVersion = {
 /**
  * Defines a snapshot format for schema compatibility and application-defined versions.
  *
+ * @remarks
+ * Extends snapshot V1 with a version map while reusing its root field and node definition formats.
+ * The map is encoded as identifier/version pairs in sorted identifier order so snapshots do not depend on map insertion order.
+ * This is a compatibility-testing format, separate from the stored schema format used in documents.
+ *
  * @see {@link SimpleTreeSchema}
  */
 export const SimpleTreeSchemaFormat = Type.Object(

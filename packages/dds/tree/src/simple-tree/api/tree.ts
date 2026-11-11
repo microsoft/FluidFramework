@@ -134,8 +134,9 @@ export interface ViewableTreeAlpha extends ViewableTree {
 	 * Contains the application-defined versions in the document's stored schema.
 	 *
 	 * @remarks
-	 * The value is `undefined` if the stored schema has no application-defined versions.
-	 * The value can change when a {@link TreeViewAlpha} updates the stored schema.
+	 * This reads the document's current versions rather than the versions configured for a particular view.
+	 * It is `undefined` when the stored schema has no application-defined versions,
+	 * and can change when a {@link TreeViewAlpha} initializes or upgrades the stored schema.
 	 */
 	readonly storedSchemaVersion: SchemaVersionMap | undefined;
 
@@ -1143,7 +1144,12 @@ export interface TreeViewAlpha<
 		>,
 		UntypedTreeViewAlpha {
 	/**
-	 * Contains the versions from this view's {@link TreeViewConfigurationAlpha}.
+	 * Contains the application-defined versions from this view's {@link TreeViewConfigurationAlpha},
+	 * or `undefined` if none were configured.
+	 *
+	 * @remarks
+	 * These are the versions the view would store when initializing or upgrading the document.
+	 * {@link TreeViewAlpha.storedSchemaVersion} exposes the versions currently stored in the document instead.
 	 */
 	readonly schemaVersion: SchemaVersionMap | undefined;
 
@@ -1151,9 +1157,9 @@ export interface TreeViewAlpha<
 	 * Contains the application-defined versions in the document's stored schema.
 	 *
 	 * @remarks
-	 * The value is `undefined` if the stored schema has no application-defined versions.
-	 * The value can change when the stored schema changes.
-	 * Subscribe to {@link TreeViewEvents.schemaChanged} to observe changes.
+	 * Unlike {@link TreeViewAlpha.schemaVersion}, which comes from the fixed view configuration,
+	 * this value follows changes to the document's stored schema and is `undefined` when it has no application-defined versions.
+	 * The {@link TreeViewEvents.schemaChanged} event reports updates to that stored schema.
 	 */
 	readonly storedSchemaVersion: SchemaVersionMap | undefined;
 
