@@ -19,7 +19,15 @@ export const encodeHandlesInContainerRuntime = "encodeHandlesInContainerRuntime"
 export const notifiesReadOnlyState = "notifiesReadOnlyState";
 
 /**
- * Independent DDS collection across the container-runtime / data-store boundary.
+ * This feature indicates that the container runtime provides per-DDS GC access checks and deletion tracking through `channelGC` for documents with independent DDS collection enabled.
+ * It also dispatches sweep decisions as data-store-relative DDS root paths.
  * @internal
  */
-export const independentDDSGC = "independentDDSGC";
+export const providesChannelGC = "providesChannelGC";
+
+/**
+ * This feature indicates that the data store runtime implements the internal `deleteSweepReadyNodes` hook for data-store-relative DDS root paths.
+ * It also preserves named DDS root markers in summaries and attach snapshots.
+ * @internal
+ */
+export const supportsChannelDeletion = "supportsChannelDeletion";

@@ -75,7 +75,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	channelsTreeName,
-	independentDDSGC,
+	supportsChannelDeletion,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -1036,20 +1036,23 @@ export abstract class FluidDataStoreContext
 
 	protected completeBindingRuntime(channel: IFluidDataStoreChannel): void {
 		// Validate that the DataStore is compatible with this Runtime.
-		const maybeDataStoreCompatDetails = channel as FluidObject<ILayerCompatDetails>;
-		validateDatastoreCompatibility(
-			maybeDataStoreCompatDetails.ILayerCompatDetails,
-			this.dispose.bind(this),
-			this.mc,
-		);
+		const maybeDataStoreCompatDetails = (channel as FluidObject<ILayerCompatDetails>)
+			.ILayerCompatDetails;
+		const dispose = (): void => {
+			this.dispose();
+			channel.dispose();
+		};
+		validateDatastoreCompatibility(maybeDataStoreCompatDetails, dispose, this.mc);
+		// DDS-less channels, such as the runtime attributor, may omit compatibility details.
 		if (
 			this.channelGC !== undefined &&
-			maybeDataStoreCompatDetails.ILayerCompatDetails?.supportedFeatures.has(
-				independentDDSGC,
-			) !== true
+			maybeDataStoreCompatDetails !== undefined &&
+			!maybeDataStoreCompatDetails.supportedFeatures.has(supportsChannelDeletion)
 		) {
+			dispose();
 			throw new UsageError("DDS GC requires a supporting data store runtime");
 		}
+		this.processPendingOps(channel);
 		if (this.deletedChannelRoutes.size > 0) {
 			this.deleteChannels(channel, [...this.deletedChannelRoutes]);
 		}
@@ -1094,7 +1097,6 @@ export abstract class FluidDataStoreContext
 			await channel.entryPoint.get();
 		}
 
-		this.processPendingOps(channel);
 		this.completeBindingRuntime(channel);
 	}
 
@@ -1664,7 +1666,6 @@ export class LocalDetachedFluidDataStoreContext
 	 */
 	public unsafe_AttachRuntimeSync(channel: IFluidDataStoreChannel): IDataStore {
 		this.channelP = Promise.resolve(channel);
-		this.processPendingOps(channel);
 		this.completeBindingRuntime(channel);
 		return this.channelToDataStoreFn(channel);
 	}

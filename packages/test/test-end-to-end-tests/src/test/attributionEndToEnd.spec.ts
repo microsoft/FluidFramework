@@ -166,6 +166,44 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 		return attributor;
 	};
 
+	it("preserves attribution across summary reload with independent DDS collection", async () => {
+		const attributionConfig = getTestConfig(true);
+		const config: ITestContainerConfig = {
+			...attributionConfig,
+			loaderProps: {
+				...attributionConfig.loaderProps,
+				configProvider: configProvider({
+					[enableOnNewFileKey]: true,
+					"Fluid.GarbageCollection.EnableDDSGC": true,
+				}),
+			},
+		};
+		const container = await provider.makeTestContainer(config);
+		const root = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+		assert("channelGC" in root.context && root.context.channelGC !== undefined);
+		const sharedString = await sharedStringFromContainer(container);
+		const attributor = await getAttributorFromContainer(container);
+		sharedString.insertText(0, "attributed");
+		await provider.ensureSynchronized();
+		assert(container.clientId !== undefined);
+		const user = container.audience.getMember(container.clientId)?.user;
+		assert(user !== undefined);
+		assertAttributionMatches(sharedString, 0, attributor, { user });
+
+		const summarizer = await createSummarizer(provider, container, {
+			...config,
+			runtimeOptions: undefined,
+		});
+		const { summaryVersion } = await summarizeNow(summarizer.summarizer);
+		const loaded = await provider.loadTestContainer(config, {
+			[LoaderHeader.version]: summaryVersion,
+		});
+		const loadedString = await sharedStringFromContainer(loaded);
+		const loadedAttributor = await getAttributorFromContainer(loaded);
+		assert.equal(loadedString.getText(), "attributed");
+		assertAttributionMatches(loadedString, 0, loadedAttributor, { user });
+	});
+
 	/**
 	 * Tracked by AB#4997, if no error event is detected within one sprint, we will remove
 	 * the skipping or take actions accordingly if it is.

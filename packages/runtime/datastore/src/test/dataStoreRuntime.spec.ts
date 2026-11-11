@@ -14,7 +14,10 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
-import { independentDDSGC } from "@fluidframework/runtime-definitions/internal";
+import {
+	providesChannelGC,
+	supportsChannelDeletion,
+} from "@fluidframework/runtime-definitions/internal";
 import type {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
@@ -120,7 +123,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 				channelGC: { isDeleted: () => false, nodeUpdated: () => {} },
 				ILayerCompatDetails: {
 					...dataStoreCoreCompatDetails,
-					supportedFeatures: new Set([independentDDSGC]),
+					supportedFeatures: new Set([providesChannelGC]),
 				},
 			});
 		});
@@ -150,7 +153,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 			Object.assign(dataStoreContext, {
 				ILayerCompatDetails: {
 					...dataStoreCoreCompatDetails,
-					supportedFeatures: new Set<string>(),
+					supportedFeatures: new Set([supportsChannelDeletion]),
 				},
 			});
 			assert.throws(

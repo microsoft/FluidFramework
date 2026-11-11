@@ -13,7 +13,7 @@ import type { ICriticalContainerError } from "@fluidframework/container-definiti
 import {
 	encodeHandlesInContainerRuntime,
 	notifiesReadOnlyState,
-	independentDDSGC,
+	providesChannelGC,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	validateLayerCompatibility,
@@ -89,7 +89,7 @@ export const runtimeCompatDetailsForDataStore: ILayerCompatDetails = {
 	supportedFeatures: new Set<string>([
 		encodeHandlesInContainerRuntime,
 		notifiesReadOnlyState,
-		independentDDSGC,
+		providesChannelGC,
 	]),
 };
 

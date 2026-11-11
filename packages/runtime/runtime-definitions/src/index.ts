@@ -72,7 +72,8 @@ export type {
 export {
 	encodeHandlesInContainerRuntime,
 	notifiesReadOnlyState,
-	independentDDSGC,
+	providesChannelGC,
+	supportsChannelDeletion,
 } from "./runtimeLayerCompatFeatureNames.js";
 export type {
 	IVersionMarkResolver,

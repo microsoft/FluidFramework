@@ -63,7 +63,7 @@ import {
 	type IRuntimeMessagesContent,
 	notifiesReadOnlyState,
 	encodeHandlesInContainerRuntime,
-	independentDDSGC,
+	providesChannelGC,
 	type IFluidDataStorePolicies,
 	type OldestSupportedClientVersion,
 	currentSummarizeStepPrefix,
@@ -128,7 +128,7 @@ type PickRequired<T extends Record<never, unknown>, K extends keyof T> = Omit<T,
 interface IFluidDataStoreContextFeaturesToTypes {
 	[encodeHandlesInContainerRuntime]: IFluidDataStoreContext; // No difference in typing with this feature
 	[notifiesReadOnlyState]: PickRequired<IFluidDataStoreContext, "isReadOnly">;
-	[independentDDSGC]: FluidDataStoreContextInternal;
+	[providesChannelGC]: FluidDataStoreContextInternal;
 }
 
 function contextSupportsFeature<K extends keyof IFluidDataStoreContextFeaturesToTypes>(
@@ -467,7 +467,7 @@ export class FluidDataStoreRuntime
 		this.channelGC = (dataStoreContext as Partial<FluidDataStoreContextInternal>).channelGC;
 		if (
 			this.channelGC !== undefined &&
-			!contextSupportsFeature(dataStoreContext, independentDDSGC)
+			!contextSupportsFeature(dataStoreContext, providesChannelGC)
 		) {
 			throw new UsageError("DDS GC requires a supporting container runtime");
 		}
