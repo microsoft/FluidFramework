@@ -8,6 +8,7 @@ repo root (via the `postinstall` hook in `test-version-utils/package.json`).
 
 ```
 compat-workspaces/
+  explicit-versions.mjs      # Human-maintained: pinned versions needed by specific tests
   generated-versions.cjs     # Machine-generated: resolved version manifest (do not edit)
   full/
     package.json            # Workspace root
@@ -28,6 +29,8 @@ from the registry for:
 - **Cross-client:** the latest patch of each selected checkpoint's earliest minor, resolved independently of OCV.
 - **FULL:** the latest release in each band from **N-2** down to the OCV floor. These versions are installed
   for opt-in FULL testing; they are not part of the default matrix.
+
+The manifest also includes any pinned versions from `explicit-versions.mjs`.
 
 See the [version-selection documentation](../README.md#legacy-version-defaults-and-installation) for release-band rules.
 Do not edit the manifest by hand.
