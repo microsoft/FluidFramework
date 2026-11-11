@@ -363,7 +363,7 @@ impl SeaConnectionService for TestHost {
     async fn content_request(
         &self,
         request: protocol::Request,
-    ) -> Result<SeaResponseStream, protocol::Response> {
+    ) -> Result<sea_webtransport_server::SeaContentStream, protocol::Response> {
         self.dispatcher.content_request(request).await
     }
 }

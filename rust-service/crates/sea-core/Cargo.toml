@@ -11,6 +11,10 @@ blake3 = "1.8.2"
 bytes.workspace = true
 futures-core.workspace = true
 futures-util.workspace = true
+tokio = { version = "1.47.1", default-features = false, features = ["io-util"] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
+tokio.workspace = true
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 blake3 = { version = "1.8.2", features = ["wasm32_simd"] }

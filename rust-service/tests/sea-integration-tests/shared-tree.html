@@ -11,7 +11,10 @@
 <body>
   <pre id="result">running</pre>
   <script type="importmap">
-    { "imports": { "@fluidframework/sea-typescript/internal": "/packages/sea-typescript/lib/index.js" } }
+    { "imports": {
+      "@fluidframework/sea-typescript/internal": "/packages/sea-typescript/lib/index.js",
+      "@fluidframework/sea-typescript/internal/websocket": "/packages/sea-typescript/lib/websocket.js"
+    } }
   </script>
   <script type="module" src="./dist/shared-tree-trace.js"></script>
 </body>

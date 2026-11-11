@@ -14,7 +14,7 @@ use crate::{ContentStore, StoreError};
 use async_trait::async_trait;
 use bytes::Bytes;
 use sea_core::{
-    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, ErrorKind,
+    BlobBody, BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, ErrorKind,
     storage::{BlobStore, ReferenceableStore, StorageHandle, StorageSurface},
 };
 use std::{collections::BTreeSet, path::PathBuf, sync::Arc};
@@ -90,7 +90,11 @@ impl ReferenceableStore for ContentStore {
     type Handle = ContentHandle;
     async fn resolve(&self, id: BlobTreeId) -> Result<Option<ContentHandle>, StoreError> {
         let present = match id {
-            BlobTreeId::Blob(id) => self.get_blob(id).map(|_| ()),
+            BlobTreeId::Blob(id) => crate::open_bounded(
+                &self.blobs.join(crate::hex(id.as_bytes())),
+                self.config.max_blob_bytes,
+            )
+            .map(|_| ()),
             BlobTreeId::Directory(id) => self.get_directory(id).map(|_| ()),
         };
         match present {
@@ -121,7 +125,21 @@ impl BlobStore for ContentStore {
             .map(|id| self.handle(BlobTreeId::Blob(id)))
     }
     async fn get_blob(&self, id: BlobId) -> Result<Bytes, StoreError> {
-        self.get_blob(id)
+        Ok(self.open_blob(id).await?.collect().await?)
+    }
+    async fn open_blob(&self, id: BlobId) -> Result<BlobBody, StoreError> {
+        let path = self.blobs.join(crate::hex(id.as_bytes()));
+        let maximum = self.config.max_blob_bytes;
+        let (file, length) =
+            tokio::task::spawn_blocking(move || crate::open_bounded(&path, maximum))
+                .await
+                .map_err(std::io::Error::other)??;
+        let mut reader = tokio::fs::File::from_std(file);
+        reader.set_max_buf_size(64 * 1024);
+        Ok(BlobBody::Reader {
+            length,
+            reader: Box::pin(reader),
+        })
     }
     async fn put_directory(&self, directory: BlobDirectory) -> Result<ContentHandle, StoreError> {
         for child in directory.entries().values() {
@@ -278,6 +296,66 @@ mod tests {
         assert!(matches!(
             alias.resolve(parent_id).await,
             Err(StoreError::Corrupt("blob identity mismatch"))
+        ));
+        fs::remove_file(&leaf_path).unwrap();
+        fs::create_dir(&leaf_path).unwrap();
+        let reopened = ContentStore::open(&root, StoreConfig::default()).unwrap();
+        assert!(reopened.resolve(leaf.id()).await.is_err());
+        assert!(reopened.ensure_available(&parent_handle).await.is_err());
+        let another =
+            BlobDirectory::new(BTreeMap::from([("another".to_owned(), leaf.id())])).unwrap();
+        assert!(BlobStore::put_directory(&reopened, another).await.is_err());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test]
+    async fn opened_blob_extents_survive_growth_and_reject_short_reads() {
+        let root =
+            PathBuf::from("target").join(format!("sea-content-bodies-{}", std::process::id()));
+        let store = ContentStore::open(&root, StoreConfig::default()).unwrap();
+        let id = store.put_blob(&Bytes::from_static(b"content")).unwrap();
+        let path = store.blobs.join(crate::hex(id.as_bytes()));
+        let first = store.open_blob(id).await.unwrap();
+        let second = store.open_blob(id).await.unwrap();
+        assert!(matches!(first, BlobBody::Reader { .. }));
+        {
+            use std::io::Write as _;
+            fs::OpenOptions::new()
+                .append(true)
+                .open(&path)
+                .unwrap()
+                .write_all(b"extra")
+                .unwrap();
+        }
+        let (first, second) = tokio::try_join!(first.collect(), second.collect()).unwrap();
+        assert_eq!(first, b"content"[..]);
+        assert_eq!(second, first);
+        let shortened = store.open_blob(id).await.unwrap();
+        fs::OpenOptions::new()
+            .write(true)
+            .open(&path)
+            .unwrap()
+            .set_len(1)
+            .unwrap();
+        assert_eq!(
+            shortened.collect().await.unwrap_err().kind(),
+            std::io::ErrorKind::UnexpectedEof
+        );
+        let empty = store.put_blob(&Bytes::new()).unwrap();
+        assert!(
+            store
+                .open_blob(empty)
+                .await
+                .unwrap()
+                .collect()
+                .await
+                .unwrap()
+                .is_empty()
+        );
+        fs::remove_file(path).unwrap();
+        assert!(matches!(
+            store.open_blob(id).await,
+            Err(StoreError::Missing)
         ));
         fs::remove_dir_all(root).unwrap();
     }

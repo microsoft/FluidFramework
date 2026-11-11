@@ -6,16 +6,19 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::{StreamExt as _, stream};
 use sea_core::{
-    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, Event, EventPosition, MonitoredStreamItem,
-    MonitoredStreamStatus,
+    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeBodyItem, BlobTreeId, Event, EventPosition,
+    MonitoredStreamItem, MonitoredStreamStatus,
     archive::{EventSubmission, SnapshotParticipation as ArchiveSnapshotParticipation},
-    session::{BlobTreeItem, SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
+    session::{SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
     storage::{LoadStart, Snapshot, StorageHandle},
 };
 
 use sea_webtransport::protocol;
 
-use super::{SeaConnectionService, SeaLoadStreams, SeaResponseStream, error_response};
+use super::{
+    SeaConnectionService, SeaContentResponse, SeaContentStream, SeaLoadStreams, SeaResponseStream,
+    error_response,
+};
 
 /// Dispatches requests to one already-open session, never a connection's replacement session.
 /// The connection host validates authority before handing this dispatcher to a logical stream.
@@ -64,7 +67,7 @@ where
         let hint = hint.decode().map_err(|error| invalid(&error.to_string()))?;
         let load = self
             .session
-            .load(
+            .load_bodies(
                 resume_after.map_or(LoadStart::LatestSnapshot, |position| {
                     LoadStart::ReplayAtLeastAllAfter(EventPosition::new(position))
                 }),
@@ -97,15 +100,19 @@ where
                                     length > protocol::LOAD_CONTENT_MAX_ITEM_BYTES
                                 }) =>
                         {
-                            protocol::Response::LoadContentComplete
+                            protocol::Response::LoadContentComplete.into()
                         }
                         Ok(item) => {
                             blob_tree_to_wire(item, Some(protocol::LOAD_CONTENT_MAX_ITEM_BYTES))
                         }
-                        Err(error) => error_response(error),
+                        Err(error) => error_response(error).into(),
                     };
-                    let remaining =
-                        matches!(response, protocol::Response::BlobTree { .. }).then_some(items);
+                    let remaining = matches!(
+                        response,
+                        SeaContentResponse::Blob { .. }
+                            | SeaContentResponse::Message(protocol::Response::BlobTree { .. })
+                    )
+                    .then_some(items);
                     Some((response, (remaining, true)))
                 },
             )),
@@ -189,13 +196,13 @@ where
     async fn content_request(
         &self,
         request: protocol::Request,
-    ) -> Result<SeaResponseStream, protocol::Response> {
+    ) -> Result<SeaContentStream, protocol::Response> {
         if let protocol::Request::GetBlobTrees { roots, hint } = request {
             let hint = hint.decode().map_err(|error| invalid(&error.to_string()))?;
             let first = roots.first().copied().map(tree_from_wire);
             let items = self
                 .session
-                .get_blob_trees(roots.into_iter().map(tree_from_wire).collect(), hint);
+                .open_blob_trees(roots.into_iter().map(tree_from_wire).collect(), hint);
             return Ok(Box::pin(stream::unfold(
                 (items, first, false),
                 |(mut items, first, done)| async move {
@@ -203,20 +210,18 @@ where
                         return None;
                     }
                     match items.next().await {
-                        Some(Ok(item)) if first.is_none_or(|id| id == item.id()) => Some((
-                            blob_tree_to_wire(
-                                item,
-                                Some(protocol::Limits::default().max_frame_bytes),
-                            ),
-                            (items, None, false),
-                        )),
+                        Some(Ok(item)) if first.is_none_or(|id| id == item.id()) => {
+                            Some((blob_tree_to_wire(item, None), (items, None, false)))
+                        }
                         Some(Ok(_)) => Some((
-                            invalid("content traversal omitted its first root"),
+                            invalid("content traversal omitted its first root").into(),
                             (items, None, true),
                         )),
-                        Some(Err(error)) => Some((error_response(error), (items, None, true))),
+                        Some(Err(error)) => {
+                            Some((error_response(error).into(), (items, None, true)))
+                        }
                         None if first.is_some() => Some((
-                            invalid("content traversal omitted its first root"),
+                            invalid("content traversal omitted its first root").into(),
                             (items, None, true),
                         )),
                         None => None,
@@ -229,19 +234,23 @@ where
                 after.map(EventPosition::new),
                 stop_after.map(EventPosition::new),
             );
-            return Ok(Box::pin(stream.map(|item| match item {
-                Ok(MonitoredStreamItem::Item(event)) => session_event_to_wire(&event),
-                Ok(MonitoredStreamItem::Progress(progress)) => protocol::Response::StreamProgress {
-                    previous: progress.previous.map(EventPosition::get),
-                    latest_known: progress.latest_known.map(EventPosition::get),
-                    status: stream_status_to_wire(progress.status),
-                },
-                Err(error) => error_response(error),
+            return Ok(Box::pin(stream.map(|item| {
+                SeaContentResponse::from(match item {
+                    Ok(MonitoredStreamItem::Item(event)) => session_event_to_wire(&event),
+                    Ok(MonitoredStreamItem::Progress(progress)) => {
+                        protocol::Response::StreamProgress {
+                            previous: progress.previous.map(EventPosition::get),
+                            latest_known: progress.latest_known.map(EventPosition::get),
+                            status: stream_status_to_wire(progress.status),
+                        }
+                    }
+                    Err(error) => error_response(error),
+                })
             })));
         }
-        self.request_inner(request)
-            .await
-            .map(|response| Box::pin(stream::once(async move { response })) as SeaResponseStream)
+        self.request_inner(request).await.map(|response| {
+            Box::pin(stream::once(async move { response.into() })) as SeaContentStream
+        })
     }
 }
 
@@ -391,38 +400,49 @@ where
     }
 }
 
-fn blob_tree_encoded_len(item: &BlobTreeItem) -> Option<usize> {
+fn blob_tree_encoded_len(item: &BlobTreeBodyItem) -> Option<usize> {
     let length = match item {
-        BlobTreeItem::Blob { bytes, .. } => Some(bytes.len()),
-        BlobTreeItem::Directory { directory, .. } => directory
+        BlobTreeBodyItem::Blob { body, .. } => usize::try_from(body.len()).ok(),
+        BlobTreeBodyItem::Directory { directory, .. } => directory
             .entries()
             .iter()
             .try_fold(4usize, |length, (name, _)| {
                 length.checked_add(37)?.checked_add(name.len())
             }),
     };
-    length.and_then(|length| {
-        let length_bytes = (usize::BITS - length.leading_zeros()).max(1).div_ceil(7) as usize;
-        length.checked_add(38)?.checked_add(length_bytes)
-    })
+    protocol::encode_blob_tree_prefix(
+        protocol::StreamRole::Content,
+        tree_to_wire(item.id()),
+        length? as u64,
+        protocol::Limits {
+            max_frame_bytes: usize::MAX,
+        },
+    )
+    .ok()
+    .map(|prefix| prefix.encoded_len())
 }
 
-fn blob_tree_to_wire(item: BlobTreeItem, ceiling: Option<usize>) -> protocol::Response {
+fn blob_tree_to_wire(item: BlobTreeBodyItem, ceiling: Option<usize>) -> SeaContentResponse {
     let id = tree_to_wire(item.id());
     let encoded_length = blob_tree_encoded_len(&item);
     if encoded_length.is_none()
         || ceiling.is_some_and(|limit| encoded_length.unwrap_or(usize::MAX) > limit)
     {
-        return invalid("load content item exceeds the bounded frame ceiling");
+        return invalid("load content item exceeds the bounded frame ceiling").into();
     }
     let payload = match item {
-        BlobTreeItem::Blob { bytes, .. } => bytes.to_vec(),
-        BlobTreeItem::Directory { directory, .. } => match directory.encode() {
+        BlobTreeBodyItem::Blob { id, body } => {
+            return SeaContentResponse::Blob {
+                id: *id.as_bytes(),
+                body,
+            };
+        }
+        BlobTreeBodyItem::Directory { directory, .. } => match directory.encode() {
             Ok(bytes) => bytes.to_vec(),
-            Err(error) => return invalid(&error.to_string()),
+            Err(error) => return invalid(&error.to_string()).into(),
         },
     };
-    protocol::Response::BlobTree { id, payload }
+    protocol::Response::BlobTree { id, payload }.into()
 }
 
 fn session_event_to_wire(event: &sea_core::archive::SessionCommittedEvent) -> protocol::Response {
@@ -516,7 +536,7 @@ mod tests {
     use sea_memory::MemoryStorage;
     use sea_sequencer::session::LocalSequencer;
 
-    use super::SessionDispatcher;
+    use super::{SeaContentResponse, SessionDispatcher};
     use sea_webtransport::protocol;
 
     use crate::SeaConnectionService;
@@ -527,6 +547,161 @@ mod tests {
         LocalSequencer::<MemoryStorage>::recover(view)
             .await
             .unwrap()
+    }
+
+    #[tokio::test]
+    async fn file_dispatch_retains_unread_bodies_for_demand_and_selected_load() {
+        for durable in [false, true] {
+            let root = std::env::temp_dir().join(format!(
+                "sea-body-dispatch-{}-{durable}",
+                std::process::id()
+            ));
+            if durable {
+                check_file_dispatch(&root, sea_file::DurableStorage::open(&root).unwrap()).await;
+            } else {
+                check_file_dispatch(&root, sea_file::FileStorage::open(&root).unwrap()).await;
+            }
+            std::fs::remove_dir_all(root).unwrap();
+        }
+    }
+
+    /// Exercises the owned-body boundary with published files, not a pending overlay.
+    #[allow(clippy::too_many_lines)]
+    async fn check_file_dispatch<S: sea_core::storage::SeaStorage + 'static>(
+        root: &std::path::Path,
+        storage: S,
+    ) {
+        use sea_core::storage::StorageHandle as _;
+        use sea_core::{SeaArchive as _, SeaAuthorSession as _, SeaSnapshotCoordinator as _};
+        let (_, view) = storage.create_view().await.unwrap();
+        let sequencer = LocalSequencer::<S>::recover(view).await.unwrap();
+        let session =
+            sea_core::factory::PassThroughSession::new(sequencer.open_session(None).await.unwrap());
+        let mut payload = vec![7; 128 * 1024];
+        let handle = session
+            .put_blob(bytes::Bytes::from(payload.clone()))
+            .await
+            .unwrap();
+        let id = super::tree_to_wire(handle.id());
+        let position = session
+            .submit(sea_core::EventSubmission {
+                reference: None,
+                event: sea_core::Event {
+                    payload: bytes::Bytes::new(),
+                    blob_tree: Some(handle.id()),
+                },
+            })
+            .await
+            .unwrap();
+        let coordination = session
+            .coordinate_snapshots(sea_core::SnapshotParticipation::ClientSelected)
+            .await
+            .unwrap();
+        session
+            .publish_snapshot(
+                None,
+                None,
+                sea_core::storage::Snapshot {
+                    root: handle,
+                    at_event: session.resolve_position(position).await.unwrap().unwrap(),
+                },
+            )
+            .await
+            .unwrap();
+        storage.flush().await.unwrap();
+        let directory = std::fs::read_dir(root)
+            .unwrap()
+            .map(|entry| entry.unwrap().path())
+            .find(|path| {
+                path.extension()
+                    .is_some_and(|extension| extension == "content")
+            })
+            .unwrap();
+        let file = std::fs::read_dir(directory)
+            .unwrap()
+            .next()
+            .unwrap()
+            .unwrap()
+            .path();
+        let mut stored = std::fs::read(&file).unwrap();
+        stored[33] = 4;
+        payload[0] = 4;
+        std::fs::write(&file, stored).unwrap();
+        let dispatcher = SessionDispatcher::new(Arc::new(session));
+        let request = protocol::Request::GetBlobTrees {
+            roots: vec![id],
+            hint: protocol::LoadingHint::default(),
+        };
+        let mut demand = dispatcher.content_request(request.clone()).await.unwrap();
+        let mut load = dispatcher
+            .event_stream(None, protocol::LoadingHint::default())
+            .await
+            .unwrap();
+        assert!(
+            matches!(load.events.next().await, Some(protocol::Response::LoadSnapshot(snapshot)) if snapshot.root == id)
+        );
+        for response in [
+            demand.next().await.unwrap(),
+            load.content.next().await.unwrap(),
+        ] {
+            let SeaContentResponse::Blob { body, .. } = response else {
+                panic!("expected body")
+            };
+            assert!(matches!(body, sea_core::BlobBody::Reader { .. }));
+            assert_eq!(body.collect().await.unwrap(), payload);
+        }
+        assert!(demand.next().await.is_none());
+        assert!(load.content.next().await.is_none());
+        let mut delayed = dispatcher.content_request(request).await.unwrap();
+        let SeaContentResponse::Blob { body, .. } = delayed.next().await.unwrap() else {
+            panic!("expected body")
+        };
+        std::fs::OpenOptions::new()
+            .write(true)
+            .open(&file)
+            .unwrap()
+            .set_len(33)
+            .unwrap();
+        assert_eq!(
+            body.collect().await.unwrap_err().kind(),
+            std::io::ErrorKind::UnexpectedEof
+        );
+        let large_length = sea_core::MAX_BLOB_TREE_BYTES as u64 + 1;
+        std::fs::OpenOptions::new()
+            .write(true)
+            .open(file)
+            .unwrap()
+            .set_len(33 + large_length)
+            .unwrap();
+        let mut large_demand = dispatcher
+            .content_request(protocol::Request::GetBlobTrees {
+                roots: vec![id],
+                hint: protocol::LoadingHint::default(),
+            })
+            .await
+            .unwrap();
+        let Some(SeaContentResponse::Blob { body, .. }) = large_demand.next().await else {
+            panic!("transport configuration, not dispatch defaults, owns the demand frame limit")
+        };
+        assert_eq!(body.len(), large_length);
+        drop((body, large_demand));
+        let mut oversized = dispatcher.session.open_blob_trees(
+            vec![
+                super::tree_from_wire(id),
+                sea_core::BlobTreeId::Blob(sea_core::BlobId::for_bytes(b"absent")),
+            ],
+            sea_core::BlobTreeHint::default(),
+        );
+        let sea_core::BlobTreeBodyItem::Blob { body, .. } =
+            oversized.next().await.unwrap().unwrap()
+        else {
+            panic!("expected blob")
+        };
+        assert_eq!(body.len(), large_length);
+        assert!(oversized.next().await.is_none());
+        drop((body, oversized));
+        drop((delayed, demand, load, coordination, dispatcher));
+        sequencer.shutdown().await.unwrap();
     }
 
     #[tokio::test]
@@ -605,7 +780,9 @@ mod tests {
             })
             .await
             .unwrap();
-        let Some(protocol::Response::BlobStored { id }) = uploaded.next().await else {
+        let Some(SeaContentResponse::Message(protocol::Response::BlobStored { id })) =
+            uploaded.next().await
+        else {
             panic!("blob missing");
         };
         let protocol::Response::EventCommitted { position } = dispatcher
@@ -645,7 +822,7 @@ mod tests {
             })
             .await
             .expect("blob upload response");
-        let protocol::Response::BlobStored { id } = dispatcher
+        let SeaContentResponse::Message(protocol::Response::BlobStored { id }) = dispatcher
             .content_request(protocol::Request::PutBlob {
                 payload: b"content-2".to_vec(),
             })
@@ -659,7 +836,9 @@ mod tests {
         };
         assert!(matches!(
             stored.next().await,
-            Some(protocol::Response::BlobStored { .. })
+            Some(SeaContentResponse::Message(
+                protocol::Response::BlobStored { .. }
+            ))
         ));
         let mut fetched = dispatcher
             .content_request(protocol::Request::GetBlobTrees {
@@ -671,7 +850,12 @@ mod tests {
         let protocol::Response::BlobTree {
             id: fetched_id,
             payload,
-        } = fetched.next().await.expect("blob fetch payload")
+        } = fetched
+            .next()
+            .await
+            .expect("blob fetch payload")
+            .into_buffered()
+            .await
         else {
             panic!("blob fetch should return bytes");
         };
@@ -778,7 +962,9 @@ mod tests {
             })
             .await
             .unwrap();
-        let Some(protocol::Response::BlobStored { id }) = uploaded.next().await else {
+        let Some(SeaContentResponse::Message(protocol::Response::BlobStored { id })) =
+            uploaded.next().await
+        else {
             panic!("blob missing");
         };
         let root = protocol::TreeId::Blob(id);
@@ -825,7 +1011,9 @@ mod tests {
             })
             .await
             .unwrap();
-        let Some(protocol::Response::BlobStored { id }) = uploaded.next().await else {
+        let Some(SeaContentResponse::Message(protocol::Response::BlobStored { id })) =
+            uploaded.next().await
+        else {
             panic!("blob missing");
         };
         for (root, message) in [
@@ -888,7 +1076,7 @@ mod tests {
         let sequencer = sequencer().await;
         let dispatcher =
             SessionDispatcher::new(Arc::new(sequencer.open_session(None).await.unwrap()));
-        let Some(protocol::Response::BlobStored { id }) = dispatcher
+        let Some(SeaContentResponse::Message(protocol::Response::BlobStored { id })) = dispatcher
             .content_request(protocol::Request::PutBlob {
                 payload: b"leaf".to_vec(),
             })
@@ -900,17 +1088,18 @@ mod tests {
             panic!("missing leaf")
         };
         let leaf = protocol::TreeId::Blob(id);
-        let Some(protocol::Response::DirectoryStored { id }) = dispatcher
-            .content_request(protocol::Request::PutDirectory {
-                entries: vec![protocol::DirectoryEntry {
-                    name: "child".to_owned(),
-                    child: leaf,
-                }],
-            })
-            .await
-            .unwrap()
-            .next()
-            .await
+        let Some(SeaContentResponse::Message(protocol::Response::DirectoryStored { id })) =
+            dispatcher
+                .content_request(protocol::Request::PutDirectory {
+                    entries: vec![protocol::DirectoryEntry {
+                        name: "child".to_owned(),
+                        child: leaf,
+                    }],
+                })
+                .await
+                .unwrap()
+                .next()
+                .await
         else {
             panic!("missing directory")
         };
@@ -927,6 +1116,7 @@ mod tests {
                 })
                 .await
                 .unwrap()
+                .then(SeaContentResponse::into_buffered)
                 .collect()
                 .await;
             assert_eq!(responses.len(), expected);
@@ -958,7 +1148,9 @@ mod tests {
             .unwrap();
         assert!(matches!(
             missing.next().await,
-            Some(protocol::Response::Error { .. })
+            Some(SeaContentResponse::Message(
+                protocol::Response::Error { .. }
+            ))
         ));
         assert!(missing.next().await.is_none());
     }
@@ -983,14 +1175,15 @@ mod tests {
         let mut previous = None;
         let mut selected = None;
         for bytes in [b"first".to_vec(), b"second".to_vec()] {
-            let Some(protocol::Response::BlobStored { id }) = dispatcher
-                .content_request(protocol::Request::PutBlob {
-                    payload: bytes.clone(),
-                })
-                .await
-                .unwrap()
-                .next()
-                .await
+            let Some(SeaContentResponse::Message(protocol::Response::BlobStored { id })) =
+                dispatcher
+                    .content_request(protocol::Request::PutBlob {
+                        payload: bytes.clone(),
+                    })
+                    .await
+                    .unwrap()
+                    .next()
+                    .await
             else {
                 panic!("missing root")
             };
@@ -1040,24 +1233,26 @@ mod tests {
             }))
         );
         assert_eq!(
-            load.content.next().await,
-            Some(protocol::Response::BlobTree {
+            load.content.next().await.unwrap().into_buffered().await,
+            protocol::Response::BlobTree {
                 id: root,
                 payload: bytes
-            })
+            }
         );
         assert!(load.content.next().await.is_none());
     }
 
-    #[test]
-    fn oversized_prefetch_is_rejected_before_encoding_and_boundary_is_exact() {
+    #[tokio::test]
+    async fn oversized_prefetch_is_rejected_before_encoding_and_boundary_is_exact() {
         let limit = protocol::LOAD_CONTENT_MAX_ITEM_BYTES;
         let payload = vec![0; limit - 41];
-        let item = sea_core::BlobTreeItem::Blob {
+        let item = sea_core::BlobTreeBodyItem::Blob {
             id: sea_core::BlobId::for_bytes(&payload),
-            bytes: payload.into(),
+            body: bytes::Bytes::from(payload).into(),
         };
-        let response = super::blob_tree_to_wire(item, Some(limit));
+        let response = super::blob_tree_to_wire(item, Some(limit))
+            .into_buffered()
+            .await;
         assert_eq!(
             protocol::encode_response_frame(
                 protocol::StreamRole::Event,
@@ -1069,13 +1264,13 @@ mod tests {
             limit
         );
         let payload = vec![0; limit - 40];
-        let item = sea_core::BlobTreeItem::Blob {
+        let item = sea_core::BlobTreeBodyItem::Blob {
             id: sea_core::BlobId::for_bytes(&payload),
-            bytes: payload.into(),
+            body: bytes::Bytes::from(payload).into(),
         };
         assert!(matches!(
             super::blob_tree_to_wire(item, Some(limit)),
-            protocol::Response::Error { .. }
+            SeaContentResponse::Message(protocol::Response::Error { .. })
         ));
     }
 
@@ -1085,7 +1280,7 @@ mod tests {
         let sequencer = sequencer().await;
         let dispatcher =
             SessionDispatcher::new(Arc::new(sequencer.open_session(None).await.unwrap()));
-        let Some(protocol::Response::BlobStored { id }) = dispatcher
+        let Some(SeaContentResponse::Message(protocol::Response::BlobStored { id })) = dispatcher
             .content_request(protocol::Request::PutBlob {
                 payload: vec![0; protocol::LOAD_CONTENT_MAX_ITEM_BYTES],
             })
@@ -1097,17 +1292,18 @@ mod tests {
             panic!("missing leaf")
         };
         let leaf = protocol::TreeId::Blob(id);
-        let Some(protocol::Response::DirectoryStored { id }) = dispatcher
-            .content_request(protocol::Request::PutDirectory {
-                entries: vec![protocol::DirectoryEntry {
-                    name: "large".to_owned(),
-                    child: leaf,
-                }],
-            })
-            .await
-            .unwrap()
-            .next()
-            .await
+        let Some(SeaContentResponse::Message(protocol::Response::DirectoryStored { id })) =
+            dispatcher
+                .content_request(protocol::Request::PutDirectory {
+                    entries: vec![protocol::DirectoryEntry {
+                        name: "large".to_owned(),
+                        child: leaf,
+                    }],
+                })
+                .await
+                .unwrap()
+                .next()
+                .await
         else {
             panic!("missing directory")
         };
@@ -1159,12 +1355,14 @@ mod tests {
             .await
             .unwrap();
         assert!(
-            matches!(load.content.next().await, Some(protocol::Response::BlobTree { id, .. }) if id == root)
+            matches!(load.content.next().await, Some(SeaContentResponse::Message(protocol::Response::BlobTree { id, .. })) if id == root)
         );
-        assert_eq!(
+        assert!(matches!(
             load.content.next().await,
-            Some(protocol::Response::LoadContentComplete)
-        );
+            Some(SeaContentResponse::Message(
+                protocol::Response::LoadContentComplete
+            ))
+        ));
         assert!(load.content.next().await.is_none());
         assert!(matches!(
             load.events.next().await,
@@ -1178,7 +1376,7 @@ mod tests {
             .await
             .unwrap();
         assert!(
-            matches!(demand.next().await, Some(protocol::Response::BlobTree { id, payload }) if id == leaf && payload.len() == protocol::LOAD_CONTENT_MAX_ITEM_BYTES)
+            matches!(demand.next().await, Some(SeaContentResponse::Blob { id, body }) if protocol::TreeId::Blob(id) == leaf && body.len() == protocol::LOAD_CONTENT_MAX_ITEM_BYTES as u64)
         );
         assert!(demand.next().await.is_none());
     }

@@ -20,6 +20,8 @@ import {
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/legacy";
 import { defineTreeDataStore } from "@fluidframework/tree/internal";
+import { DirectSharedTreeClient } from "@fluidframework/sea-tree/internal";
+import { openRemote } from "@fluidframework/sea-typescript/internal/websocket";
 
 import {
 	createSeaFactories,
@@ -100,6 +102,95 @@ function setStage(value: string): void {
 function assert(condition: unknown, message: string): asserts condition {
 	if (!condition) {
 		throw new Error(message);
+	}
+}
+
+/** Ordered edit identities expose loss or duplicate replay after a streamed storage failure. */
+class RecoveryItems extends schemaFactory.array("RecoveryItems", schemaFactory.string) {}
+/** Direct-host state used only by the file-fault browser fixture. */
+class RecoveryState extends schemaFactory.object("RecoveryState", { items: RecoveryItems }) {}
+
+/** Lets a real post-prefix storage failure, rather than a synthetic driver error, trigger recovery. */
+async function runStreamingRecovery(
+	url: string,
+	certificateHash: Uint8Array,
+): Promise<Record<string, unknown>> {
+	let opened = 0;
+	const factory = async (
+		document: Uint8Array | undefined,
+		options: Parameters<typeof openWebTransport>[2],
+	) => {
+		const session =
+			parameters.get("faultTransport") === "websocket"
+				? await openRemote({ mode: "WebSocket", websocketUrl: url }, document, options)
+				: await openWebTransport({ url, certificateHash }, document, options);
+		opened++;
+		return session;
+	};
+	const driver = new SeaSessionDriverClient(factory, "seaSelected");
+	const host = await DirectSharedTreeClient.create(
+		driver,
+		new Uint8Array(),
+		4,
+		1024 * 1024,
+		true,
+		{ summaryIdleMs: 60_000 },
+	);
+	const configuration = new TreeViewConfiguration({ schema: RecoveryState });
+	const view = host.tree.viewWith(configuration);
+	try {
+		view.initialize({ items: [] });
+		await host.waitForIdle();
+		view.root.items.insertAtEnd("before");
+		await host.waitForIdle();
+		const payload = await driver.uploadBlob(new Uint8Array(128 * 1024).fill(91));
+		const beforeFault = opened;
+		const response = await fetch("/__sea_blob_fault", {
+			method: "POST",
+			body: Array.from(payload.digest, (byte) => byte.toString(16).padStart(2, "0")).join(""),
+		});
+		assert(response.ok, "storage fault was not armed");
+		view.root.items.insertAtEnd("during");
+		await waitUntil(
+			() => opened > beforeFault,
+			"post-prefix failure did not reopen the direct host",
+		);
+		await host.waitForIdle();
+		view.root.items.insertAtEnd("after");
+		await host.waitForIdle();
+		const expected = ["before", "during", "after"];
+		assert(
+			JSON.stringify([...view.root.items]) === JSON.stringify(expected),
+			"recovery changed local edit ordering",
+		);
+		const observer = await DirectSharedTreeClient.create(
+			new SeaSessionDriverClient(factory, "seaSelected"),
+			host.documentId,
+			4,
+			1024 * 1024,
+			false,
+			{ summaryIdleMs: 60_000 },
+		);
+		const observed = observer.tree.viewWith(configuration);
+		try {
+			assert(
+				JSON.stringify([...observed.root.items]) === JSON.stringify(expected),
+				"archive replay lost or duplicated an edit",
+			);
+		} finally {
+			observed.dispose();
+			await observer.dispose();
+		}
+		return {
+			status: "passed",
+			recoveryOwner: "direct host",
+			opened,
+			items: expected,
+			fault: "post-prefix file truncation",
+		};
+	} finally {
+		view.dispose();
+		await host.dispose();
 	}
 }
 
@@ -247,6 +338,8 @@ async function run(): Promise<Record<string, unknown>> {
 	const hash = Uint8Array.from(certificateHex.match(/../gu) ?? [], (value) =>
 		Number.parseInt(value, 16),
 	);
+	if (parameters.get("streamingFault") === "true")
+		return runStreamingRecovery(transportUrl, hash);
 	if (parameters.get("serviceClient") === "true") {
 		return runServiceClient(transportUrl, hash);
 	}

@@ -22,7 +22,9 @@ import {
 	type SeaSessionFactory,
 } from "@fluidframework/sea-driver/internal";
 import { DirectSharedTreeClient } from "@fluidframework/sea-tree/internal";
+import type { SeaBlobTreeItem, SeaStream } from "@fluidframework/sea-typescript/internal";
 import { openWebTransport } from "@fluidframework/sea-typescript/internal/webtransport";
+import { openRemote } from "@fluidframework/sea-typescript/internal/websocket";
 import {
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,
@@ -60,6 +62,54 @@ const rows = Math.ceil(bytes / 1024);
 const rowsPerBlock = 32;
 const calls: { name: string; start: number; end: number; bytes?: number }[] = [];
 const expectedValues = Array.from({ length: rows }, (_, index) => value(index));
+
+/** Decoded network content observed below the driver's cache and API spans. */
+interface ContentTraffic {
+	/** Explicit remote requests, including their immutable root identities. */
+	requests: { roots: string[]; at: number }[];
+	/** Complete remote items, not repeated cache reads or transport overhead. */
+	receipts: {
+		id: string;
+		kind: "blob" | "directory";
+		path: "opening" | "demand";
+		at: number;
+		payloadBytes: number;
+	}[];
+	/** Distinct application payload identity captured during fixture publication. */
+	payloadId?: string;
+}
+const contentTraffic = new WeakMap<SeaSessionDriverClient, ContentTraffic>();
+
+/** Records decoded receipt before caching, without copying payloads or changing cancellation. */
+function observeContent(
+	source: SeaStream<SeaBlobTreeItem>,
+	path: "opening" | "demand",
+	traffic: ContentTraffic,
+): SeaStream<SeaBlobTreeItem> {
+	return {
+		cancel: () => source.cancel(),
+		next: async () => {
+			const item = await source.next();
+			if (item !== undefined) {
+				traffic.receipts.push({
+					id: documentHex(item.id.bytes),
+					kind: item.kind,
+					path,
+					at: performance.now(),
+					payloadBytes:
+						item.kind === "blob"
+							? item.bytes.byteLength
+							: 4 +
+								item.entries.reduce(
+									(sum, entry) => sum + 37 + new TextEncoder().encode(entry.name).byteLength,
+									0,
+								),
+				});
+			}
+			return item;
+		},
+	};
+}
 
 declare global {
 	interface Window {
@@ -138,18 +188,47 @@ function seaClient(direct: boolean): SeaSessionDriverClient {
 	const url = parameters.get("transport");
 	if (url === null || hash.length !== 32) throw new Error("Missing Sea endpoint");
 	const compression = boolean("compression");
+	const traffic: ContentTraffic = { requests: [], receipts: [] };
 	const factory: SeaSessionFactory = (document, options) =>
-		timed("session.open", async () =>
-			openWebTransport(
-				{
-					url,
-					certificateHash: hash,
-					configuration: compression ? "webtransport-compression" : "webtransport",
+		timed("session.open", async () => {
+			const session =
+				parameters.get("remoteMode") === "websocket"
+					? await openRemote({ mode: "WebSocket", websocketUrl: url }, document, options)
+					: await openWebTransport(
+							{
+								url,
+								certificateHash: hash,
+								configuration: compression ? "webtransport-compression" : "webtransport",
+							},
+							document,
+							{ ...options, compression },
+						);
+			return {
+				...session,
+				putBlob: async (payload) => {
+					const id = await session.putBlob(payload);
+					if (
+						blobBytes > 0 &&
+						payload.byteLength === blobBytes &&
+						payload.every((byte) => byte === 173)
+					) {
+						traffic.payloadId = documentHex(id.bytes);
+					}
+					return id;
 				},
-				document,
-				{ ...options, compression },
-			),
-		);
+				getBlobTrees: (roots, hint) => {
+					traffic.requests.push({
+						roots: roots.map((id) => documentHex(id.bytes)),
+						at: performance.now(),
+					});
+					return observeContent(session.getBlobTrees(roots, hint), "demand", traffic);
+				},
+				load: async (required, hint) => {
+					const loaded = await session.load(required, hint);
+					return { ...loaded, content: observeContent(loaded.content, "opening", traffic) };
+				},
+			};
+		});
 	const client = new SeaSessionDriverClient(
 		factory,
 		direct ? "seaSelected" : "clientSelected",
@@ -163,6 +242,7 @@ function seaClient(direct: boolean): SeaSessionDriverClient {
 					: { maxExtraItems: 0 },
 		},
 	);
+	contentTraffic.set(client, traffic);
 	const fetchBlob = client.fetchBlob.bind(client);
 	client.fetchBlob = async (id) => timed("blob", async () => fetchBlob(id));
 	const fetchBlobs = client.fetchBlobs.bind(client);
@@ -232,6 +312,7 @@ async function directDocument(seed: boolean, id: string) {
 		return {
 			id: documentHex(host.documentId),
 			root: view.root,
+			traffic: contentTraffic.get(client),
 			blobReadCount: () => blobReads,
 			close: async () => {
 				view.dispose();
@@ -308,7 +389,13 @@ async function fluidDocument(seed: boolean, id: string) {
 			"Fluid connection",
 		);
 		if (container.resolvedUrl?.type !== "fluid") throw new Error("Missing document URL");
-		return { id: container.resolvedUrl.id, root: view.root, blobReadCount: () => 0, close };
+		return {
+			id: container.resolvedUrl.id,
+			root: view.root,
+			traffic: undefined,
+			blobReadCount: () => 0,
+			close,
+		};
 	} catch (error) {
 		await close();
 		throw error;
@@ -333,8 +420,21 @@ async function load(id: string, scheduledAt = performance.now()) {
 		const verified = performance.now();
 		const readsBefore = opened.blobReadCount();
 		const blobStarted = performance.now();
+		const payloadId = parameters.get("payloadId");
+		const receipts = () =>
+			opened.traffic?.receipts.filter(
+				(item) => item.id === payloadId && item.kind === "blob",
+			) ?? [];
+		const receivedBefore = receipts().length;
+		let payloadAvailable = blobStarted;
+		let blobVerified = blobStarted;
 		if (blobBytes > 0) {
+			if (payloadId === null) throw new Error("Missing seeded payload identity");
+			if (receivedBefore !== (boolean("prefetchBlobs") ? 1 : 0)) {
+				throw new Error(`Unexpected payload receipts before handle read: ${receivedBefore}`);
+			}
 			const content = await opened.root.payload?.get();
+			payloadAvailable = performance.now();
 			if (
 				!(content instanceof ArrayBuffer) ||
 				content.byteLength !== blobBytes ||
@@ -342,8 +442,12 @@ async function load(id: string, scheduledAt = performance.now()) {
 			) {
 				throw new Error("Blob-handle payload verification failed");
 			}
+			blobVerified = performance.now();
+			if (receipts().length !== 1 || receipts()[0]?.payloadBytes !== blobBytes) {
+				throw new Error("Expected one actual network receipt of the distinct handle payload");
+			}
 		}
-		const blobReadMilliseconds = performance.now() - blobStarted;
+		const blobReadMilliseconds = payloadAvailable - blobStarted;
 		const blobReadCalls = opened.blobReadCount() - readsBefore;
 		if (blobBytes > 0 && blobReadCalls !== (boolean("prefetchBlobs") ? 0 : 1)) {
 			throw new Error(`Unexpected post-load blob read count: ${blobReadCalls}`);
@@ -355,9 +459,24 @@ async function load(id: string, scheduledAt = performance.now()) {
 			schedulerLagMilliseconds: started - scheduledAt,
 			traversalMilliseconds: verified - ready,
 			verifiedRows: rows,
+			traffic: opened.traffic,
+			milestones: {
+				started,
+				ready,
+				treeVerified: verified,
+				payloadAvailable,
+				allVerified: blobVerified,
+			},
 			...(blobBytes === 0
 				? {}
-				: { verifiedBlobBytes: blobBytes, blobReadMilliseconds, blobReadCalls }),
+				: {
+						verifiedBlobBytes: blobBytes,
+						payloadId,
+						blobReadMilliseconds,
+						blobVerificationMilliseconds: blobVerified - payloadAvailable,
+						blobReadCalls,
+						payloadReceiptsBeforeRead: receivedBefore,
+					}),
 		};
 	} finally {
 		await opened.close();
@@ -472,7 +591,12 @@ async function run(): Promise<Record<string, unknown>> {
 		const opened = await open(true, "");
 		try {
 			verify(opened.root);
-			return { status: "passed", document: opened.id, logicalBytes: rows * 1024 };
+			return {
+				status: "passed",
+				document: opened.id,
+				logicalBytes: rows * 1024,
+				payloadId: opened.traffic?.payloadId,
+			};
 		} finally {
 			await opened.close();
 		}

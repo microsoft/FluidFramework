@@ -50,12 +50,86 @@ pub(crate) fn error_response(error: impl ClassifiedError) -> protocol::Response 
 /// Response stream returned by a connection-scoped Sea service.
 pub type SeaResponseStream = Pin<Box<dyn Stream<Item = protocol::Response> + Send + 'static>>;
 
+/// Server-owned content output; readers never enter the serializable wire schema.
+pub enum SeaContentResponse {
+    /// An ordinary materialized protocol response, including directories and terminal markers.
+    Message(protocol::Response),
+    /// An owned leaf whose bytes have not been read for serialization.
+    Blob {
+        /// Identity of the stored representation.
+        id: [u8; 32],
+        /// Exact payload source retained until transmission or cancellation.
+        body: sea_core::BlobBody,
+    },
+}
+
+impl SeaContentResponse {
+    /// Full opening-window charge, computed without reading an owned body.
+    pub(crate) fn load_bytes(&self) -> u32 {
+        match self {
+            Self::Message(response) => protocol::load_response_bytes(response),
+            Self::Blob { body, .. } => protocol::load_payload_bytes(body.len()),
+        }
+    }
+
+    /// Validates complete framing before any body read or network output.
+    pub(crate) fn validate_frame(
+        &self,
+        role: protocol::StreamRole,
+        limits: protocol::Limits,
+    ) -> Result<(), protocol::ProtocolError> {
+        match self {
+            Self::Blob { id, body } => {
+                protocol::encode_blob_tree_prefix(
+                    role,
+                    protocol::TreeId::Blob(*id),
+                    body.len(),
+                    limits,
+                )?;
+            }
+            Self::Message(protocol::Response::BlobTree { id, payload }) => {
+                protocol::encode_blob_tree_prefix(role, *id, payload.len() as u64, limits)?;
+            }
+            Self::Message(response) => {
+                protocol::encode_response_frame(role, response, limits)?;
+            }
+        }
+        Ok(())
+    }
+
+    /// Materializes for compatibility consumers; body errors become explicit wire errors.
+    pub async fn into_buffered(self) -> protocol::Response {
+        match self {
+            Self::Message(response) => response,
+            Self::Blob { id, body } => match body.collect().await {
+                Ok(bytes) => protocol::Response::BlobTree {
+                    id: protocol::TreeId::Blob(id),
+                    payload: bytes.to_vec(),
+                },
+                Err(error) => protocol::Response::Error {
+                    kind: protocol::ErrorKind::Unavailable,
+                    message: error.to_string(),
+                },
+            },
+        }
+    }
+}
+
+impl From<protocol::Response> for SeaContentResponse {
+    fn from(response: protocol::Response) -> Self {
+        Self::Message(response)
+    }
+}
+
+/// Bounded content responses, retaining at most the traversal's current owned body.
+pub type SeaContentStream = Pin<Box<dyn Stream<Item = SeaContentResponse> + Send + 'static>>;
+
 /// Independently consumed event recovery and optional content from the same selected load.
 pub struct SeaLoadStreams {
     /// Snapshot, recovery progress, and live events.
     pub events: SeaResponseStream,
     /// Best-effort snapshot content, ending naturally or with a truncation completion marker.
-    pub content: SeaResponseStream,
+    pub content: SeaContentStream,
 }
 
 impl Stream for SeaLoadStreams {
@@ -136,7 +210,7 @@ pub trait SeaConnectionService: Send + Sync {
     async fn content_request(
         &self,
         request: protocol::Request,
-    ) -> Result<SeaResponseStream, protocol::Response>;
+    ) -> Result<SeaContentStream, protocol::Response>;
 }
 
 /// Creates isolated Sea protocol state for each transport connection.

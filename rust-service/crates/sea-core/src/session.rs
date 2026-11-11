@@ -18,6 +18,7 @@
 
 use async_trait::async_trait;
 use bytes::Bytes;
+use futures_util::StreamExt as _;
 
 pub use crate::blob_tree::{BlobTreeHint, BlobTreeItem, BlobTreeStream};
 use crate::storage::{ArchiveStream, LoadStart, Snapshot, StorageHandle};
@@ -33,6 +34,16 @@ pub struct SessionLoad<BlobHandle, EventHandle, Error> {
     pub snapshot: Option<Snapshot<BlobHandle, EventHandle>>,
     /// Content rooted at the selected snapshot, or an empty stream when no snapshot is selected.
     pub content: BlobTreeStream<Error>,
+    /// Ordered events after the selected snapshot, or from the beginning.
+    pub events: ArchiveStream<SessionCommittedEvent, EventPosition, Error>,
+}
+
+/// One selected load whose content leaves retain owned, known-length body sources.
+pub struct SessionBodyLoad<BlobHandle, EventHandle, Error> {
+    /// The same selected snapshot used to root content and start the event suffix.
+    pub snapshot: Option<Snapshot<BlobHandle, EventHandle>>,
+    /// Finite content traversal, independently consumed from events.
+    pub content: crate::BlobTreeBodyStream<Error>,
     /// Ordered events after the selected snapshot, or from the beginning.
     pub events: ArchiveStream<SessionCommittedEvent, EventPosition, Error>,
 }
@@ -71,6 +82,23 @@ pub trait SeaArchive: crate::SeaService {
         start: LoadStart,
         hint: BlobTreeHint,
     ) -> Result<SessionLoad<Self::BlobHandle, Self::EventHandle, Self::Error>, Self::Error>;
+    /// Selects one load with owned blob bodies, preserving the snapshot and event suffix.
+    ///
+    /// The default wraps the materialized load, including any payload transformations.
+    /// Transparent decorators should forward this operation while retaining their admission rules.
+    async fn load_bodies(
+        &self,
+        start: LoadStart,
+        hint: BlobTreeHint,
+    ) -> Result<SessionBodyLoad<Self::BlobHandle, Self::EventHandle, Self::Error>, Self::Error>
+    {
+        let loaded = self.load(start, hint).await?;
+        Ok(SessionBodyLoad {
+            snapshot: loaded.snapshot,
+            content: Box::pin(loaded.content.map(|item| item.map(BlobTreeItem::into_body))),
+            events: loaded.events,
+        })
+    }
     /// Selects a publication; exact lookup compares the returned event identity with the bound.
     async fn get_snapshot(
         &self,
@@ -85,12 +113,29 @@ pub trait SeaArchive: crate::SeaService {
     /// Empty roots return an empty stream. Nonempty successful responses include at least the
     /// first root; failures are explicit stream errors. Normal completion may truncate later
     /// roots or descendants at implementation limits, so consumers must track missing identities.
-    /// Encoded content must be verified before payload decorators transform it.
+    /// Ordinary blob reads need not recompute content identities.
+    /// An optional validating client or session adapter must check the representation named by
+    /// the identity before payload transformation; decoded bytes may have a different identity.
+    /// Authenticated decryption must still finish before exposing plaintext.
     fn get_blob_trees(
         &self,
         roots: Vec<BlobTreeId>,
         hint: BlobTreeHint,
     ) -> BlobTreeStream<Self::Error>;
+    /// Traverses the same bounded content request with owned known-length blob bodies.
+    ///
+    /// The default wraps materialized content rather than bypassing transformations or admission.
+    /// Normal completion can omit later roots or descendants, as with [`Self::get_blob_trees`].
+    fn open_blob_trees(
+        &self,
+        roots: Vec<BlobTreeId>,
+        hint: BlobTreeHint,
+    ) -> crate::BlobTreeBodyStream<Self::Error> {
+        Box::pin(
+            self.get_blob_trees(roots, hint)
+                .map(|item| item.map(BlobTreeItem::into_body)),
+        )
+    }
     /// Publishes a complete directory tree.
     async fn put_directory(
         &self,

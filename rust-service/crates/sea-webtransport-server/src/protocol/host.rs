@@ -418,7 +418,7 @@ impl SeaConnectionService for HostedConnection {
     async fn content_request(
         &self,
         request: protocol::Request,
-    ) -> Result<SeaResponseStream, protocol::Response> {
+    ) -> Result<super::SeaContentStream, protocol::Response> {
         let session = self.session.lock().await.clone();
         match session {
             Some(session) => session.service.content_request(request).await,
@@ -506,7 +506,7 @@ impl SeaConnectionService for HostedSession {
     async fn content_request(
         &self,
         request: protocol::Request,
-    ) -> Result<SeaResponseStream, protocol::Response> {
+    ) -> Result<super::SeaContentStream, protocol::Response> {
         self.service.content_request(request).await
     }
 }
@@ -951,7 +951,9 @@ mod tests {
             second_snapshots.next().await,
             Some(protocol::Response::SnapshotCoordination { fence: None, .. })
         ));
-        let protocol::Response::BlobStored { id: snapshot_root } = first_connection
+        let crate::SeaContentResponse::Message(protocol::Response::BlobStored {
+            id: snapshot_root,
+        }) = first_connection
             .content_request(protocol::Request::PutBlob {
                 payload: b"state".to_vec(),
             })
@@ -1226,7 +1228,9 @@ mod tests {
                 })
                 .await
                 .unwrap();
-            let Some(protocol::Response::BlobStored { id: root }) = replacement
+            let Some(crate::SeaContentResponse::Message(protocol::Response::BlobStored {
+                id: root,
+            })) = replacement
                 .content_request(protocol::Request::PutBlob {
                     payload: b"replacement".to_vec(),
                 })

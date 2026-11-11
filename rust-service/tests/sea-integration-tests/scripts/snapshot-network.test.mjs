@@ -12,7 +12,9 @@ import {
 	initializeNetwork,
 	networkCounters,
 	probeRtt,
+	probeTcpRtt,
 	setRtt,
+	setTcpServicePort,
 } from "./snapshot-network.mjs";
 
 if (process.argv[2] === "--child") {
@@ -20,13 +22,20 @@ if (process.argv[2] === "--child") {
 	const baseline = distribution(await probeRtt());
 	setRtt(100);
 	const delayed = distribution(await probeRtt());
+	setTcpServicePort(49151);
+	const tcpDelayed = distribution(await probeTcpRtt());
 	const unaffected = distribution(await probeRtt("127.0.0.1"));
 	assert.ok(delayed.p50 - baseline.p50 >= 90 && delayed.p50 - baseline.p50 < 125);
 	assert.ok(unaffected.p50 < 20, "control traffic must remain unshaped");
+	assert.ok(
+		tcpDelayed.p50 >= 95 && tcpDelayed.p50 < 130,
+		"TCP service traffic must use the same delay queue",
+	);
 	assert.equal(networkCounters().drops, 0);
 	setRtt(0);
 	assert.ok(distribution(await probeRtt()).p50 < 20);
-	console.log(JSON.stringify({ baseline, delayed, unaffected }));
+	assert.ok(distribution(await probeTcpRtt()).p50 < 20);
+	console.log(JSON.stringify({ baseline, delayed, tcpDelayed, unaffected }));
 } else {
 	test("nearest-rank distributions retain sample count and reject invalid evidence", () => {
 		assert.deepEqual(distribution([4, 1, 3, 2]), {

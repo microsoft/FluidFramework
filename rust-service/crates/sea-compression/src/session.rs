@@ -234,6 +234,17 @@ mod tests {
         assert_eq!(decompress_payload(&stored).unwrap(), payload);
         assert_eq!(BlobId::for_bytes(&stored), id);
         assert_eq!(wrapped.get_blob(id).await.unwrap(), payload);
+        let body = wrapped
+            .open_blob_trees(vec![blob.id()], BlobTreeHint::default())
+            .next()
+            .await
+            .unwrap()
+            .unwrap();
+        let sea_core::BlobTreeBodyItem::Blob { body, .. } = body else {
+            panic!("expected blob")
+        };
+        assert!(matches!(body, sea_core::BlobBody::Bytes(_)));
+        assert_eq!(body.collect().await.unwrap(), payload);
         assert_eq!(
             wrapped.resolve_tree(blob.id()).await.unwrap().unwrap().id(),
             blob.id()

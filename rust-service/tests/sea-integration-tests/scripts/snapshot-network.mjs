@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { createSocket } from "node:dgram";
 import { readlinkSync } from "node:fs";
+import { connect, createServer } from "node:net";
 import { setTimeout as delay } from "node:timers/promises";
 
 /** Refuses to modify the caller's network namespace. */
@@ -68,6 +69,87 @@ export function initializeNetwork(parentNamespace) {
 
 function tc(args) {
 	return execFileSync("tc", args, { encoding: "utf8" });
+}
+
+let tcpServicePort;
+
+/** Shapes only the current WebSocket listener port on the allowed 127.0.0.1 endpoint. */
+export function setTcpServicePort(port) {
+	assert.ok(Number.isInteger(port) && port > 0 && port <= 65535);
+	if (tcpServicePort !== undefined) {
+		for (const priority of ["2", "3"])
+			tc(["filter", "del", "dev", "lo", "parent", "1:", "protocol", "ip", "prio", priority]);
+	}
+	for (const [direction, priority] of [
+		["sport", "2"],
+		["dport", "3"],
+	]) {
+		tc([
+			"filter",
+			"add",
+			"dev",
+			"lo",
+			"protocol",
+			"ip",
+			"parent",
+			"1:",
+			"prio",
+			priority,
+			"u32",
+			"match",
+			"ip",
+			"protocol",
+			"6",
+			"0xff",
+			"match",
+			"ip",
+			direction,
+			String(port),
+			"0xffff",
+			"flowid",
+			"1:3",
+		]);
+	}
+	tcpServicePort = port;
+}
+
+/** Verifies the TCP port filter separately from connection establishment, then restores it. */
+export async function probeTcpRtt(count = 7) {
+	const previous = tcpServicePort;
+	assert.ok(previous !== undefined);
+	const server = createServer((socket) => socket.on("data", (bytes) => socket.write(bytes)));
+	await new Promise((resolve, reject) => {
+		server.once("error", reject);
+		server.listen(0, "127.0.0.1", resolve);
+	});
+	const port = server.address().port;
+	setTcpServicePort(port);
+	const socket = connect(port, "127.0.0.1");
+	try {
+		await new Promise((resolve, reject) => {
+			socket.once("connect", resolve);
+			socket.once("error", reject);
+		});
+		socket.setNoDelay(true);
+		const samples = [];
+		for (let index = 0; index < count; index++) {
+			const start = performance.now();
+			await new Promise((resolve, reject) => {
+				const timeout = setTimeout(() => reject(new Error("TCP RTT probe timed out")), 5000);
+				socket.once("data", () => {
+					clearTimeout(timeout);
+					resolve();
+				});
+				socket.write(Buffer.from([index]));
+			});
+			samples.push(performance.now() - start);
+		}
+		return samples;
+	} finally {
+		socket.destroy();
+		await new Promise((resolve) => server.close(resolve));
+		setTcpServicePort(previous);
+	}
 }
 
 export function setRtt(milliseconds) {

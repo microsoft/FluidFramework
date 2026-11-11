@@ -53,6 +53,67 @@ impl BlobTreeItem {
 /// A finite content response. Normal completion does not prove complete descendant coverage.
 pub type BlobTreeStream<E> = SessionStream<BlobTreeItem, E>;
 
+/// One requested content item whose leaf owns its exact transfer extent.
+pub enum BlobTreeBodyItem {
+    /// A known-length leaf, decoded by any session decorators.
+    Blob {
+        /// Identity of the stored representation, not necessarily decoded application bytes.
+        id: BlobId,
+        /// Owns the payload source independently of traversal.
+        body: crate::BlobBody,
+    },
+    /// A materialized immutable directory.
+    Directory {
+        /// Identity of the canonical directory bytes.
+        id: BlobDirectoryId,
+        /// Validated directory entries.
+        directory: BlobDirectory,
+    },
+}
+
+impl BlobTreeBodyItem {
+    /// Returns the typed stored identity.
+    #[must_use]
+    pub const fn id(&self) -> BlobTreeId {
+        match self {
+            Self::Blob { id, .. } => BlobTreeId::Blob(*id),
+            Self::Directory { id, .. } => BlobTreeId::Directory(*id),
+        }
+    }
+}
+
+/// A finite body response with the same ordering and truncation rules as [`BlobTreeStream`].
+pub type BlobTreeBodyStream<E> = SessionStream<BlobTreeBodyItem, E>;
+
+impl BlobTreeItem {
+    /// Wraps resident payloads without copying them or changing their stored identities.
+    #[must_use]
+    pub fn into_body(self) -> BlobTreeBodyItem {
+        match self {
+            Self::Blob { id, bytes } => BlobTreeBodyItem::Blob {
+                id,
+                body: bytes.into(),
+            },
+            Self::Directory { id, directory } => BlobTreeBodyItem::Directory { id, directory },
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn legacy_directory_construction_needs_no_payload_type_annotation() {
+        let directory = BlobDirectory::default();
+        let id = directory.id().unwrap();
+        assert_eq!(
+            BlobTreeItem::Directory { id, directory }.id(),
+            BlobTreeId::Directory(id)
+        );
+    }
+}
+
 /// Failure to read the first explicitly requested content item.
 #[derive(Debug)]
 pub enum BlobTreeReadError<E> {

@@ -45,6 +45,8 @@ Recovery follows the `SeaAuthorSession` contract: replay through the terminal de
 The wrapper buffers one complete payload with no size limit; untrusted inputs need an outer limit.
 Reads decrypt on poll without a background task or extra stream buffer.
 Decryption errors do not rewind the underlying stream's delivery progress.
+The body APIs deliberately use their materializing compatibility defaults over decrypted reads and loads.
+No plaintext body is returned before authentication completes, and raw inner ciphertext bodies are not forwarded.
 
 Membership metadata, directories, event metadata, and snapshot metadata pass through unchanged so the server can validate membership, ordering, and reachability.
 For compression plus encryption, wrap an `EncryptionSession` in `CompressionSession` so compression processes plaintext first.

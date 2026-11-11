@@ -1,6 +1,7 @@
 #![doc = include_str!("../README.md")]
 
 mod atomic_file;
+mod blob_reader;
 mod common;
 mod journal;
 

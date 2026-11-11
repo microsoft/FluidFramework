@@ -134,16 +134,22 @@ impl ContentStore {
         Ok(id)
     }
 
-    /// Fetches one immutable blob without recomputing its content hash.
+    /// Fetches one immutable blob, trusting its published payload without content hashing.
     ///
     /// # Errors
     ///
-    /// Returns an error when the blob is missing, oversized, or unreadable.
+    /// Returns an error when the blob is missing, oversized, unreadable, or shortened during reading.
     pub fn get_blob(&self, id: BlobId) -> Result<Bytes, StoreError> {
-        read_bounded(
+        let (file, length) = open_bounded(
             &self.blobs.join(hex(id.as_bytes())),
             self.config.max_blob_bytes,
-        )
+        )?;
+        let mut bytes = Vec::new();
+        let count = file.take(length).read_to_end(&mut bytes)?;
+        if u64::try_from(count).ok() != Some(length) {
+            return Err(std::io::Error::from(std::io::ErrorKind::UnexpectedEof).into());
+        }
+        Ok(Bytes::from(bytes))
     }
 
     /// Publishes or deduplicates one immutable directory without checking child availability.
@@ -289,24 +295,34 @@ fn verify_existing(path: &Path, expected: &[u8]) -> Result<(), StoreError> {
 }
 
 fn read_bounded(path: &Path, limit: u64) -> Result<Bytes, StoreError> {
-    let mut file = File::open(path).map_err(|error| {
+    let (mut file, length) = open_bounded(path, limit)?;
+    let capacity = usize::try_from(length)
+        .map_err(|_| StoreError::Corrupt("stored object exceeds address space"))?;
+    let mut bytes = Vec::with_capacity(capacity);
+    file.read_to_end(&mut bytes)?;
+    Ok(Bytes::from(bytes))
+}
+
+/// Opens a regular file and checks the extent from that same handle without reading data.
+fn open_bounded(path: &Path, limit: u64) -> Result<(File, u64), StoreError> {
+    let file = File::open(path).map_err(|error| {
         if error.kind() == std::io::ErrorKind::NotFound {
             StoreError::Missing
         } else {
             StoreError::Io(error)
         }
     })?;
-    let length = file.metadata()?.len();
+    let metadata = file.metadata()?;
+    if !metadata.is_file() {
+        return Err(StoreError::Corrupt("stored object is not a regular file"));
+    }
+    let length = metadata.len();
     if length > limit {
         return Err(StoreError::Corrupt(
             "stored object exceeds configured bound",
         ));
     }
-    let capacity = usize::try_from(length)
-        .map_err(|_| StoreError::Corrupt("stored object exceeds address space"))?;
-    let mut bytes = Vec::with_capacity(capacity);
-    file.read_to_end(&mut bytes)?;
-    Ok(Bytes::from(bytes))
+    Ok((file, length))
 }
 
 fn sync_directory(path: &Path) -> Result<(), StoreError> {

@@ -59,12 +59,22 @@ Explicit blob roots remain eligible regardless of that flag.
 Empty requests produce no items.
 A nonempty successful response includes its first root, but normal completion can truncate later roots or descendants at implementation limits.
 Track missing identities and request them explicitly; stream completion does not prove complete subtree coverage.
+`open_blob_trees` and `load_bodies` expose the same selection through owned, known-length `BlobBody` values.
+They return `BlobTreeBodyStream` and `SessionBodyLoad`; the existing materialized item and load types remain unchanged.
+Their compatibility defaults wrap materialized content, including payload decorators' transformations.
+`BlobBody::copy_to` sends only the declared extent and rejects early EOF; `collect` preserves byte-returning consumers.
+The core depends only on Tokio's I/O traits and utilities, not filesystem or runtime features.
+Readers are `Send` on native targets and may be browser-local on WASM.
+Dropping a body cannot cancel filesystem work already dispatched by a backend.
 Requests accept up to 4,096 explicit roots, including duplicates.
 Responses remain limited to 4,096 unique items and a soft 16 MiB byte budget, with an oversized first root allowed to ensure progress.
 Traversal inspects at most 65,536 directory entries and queues at most 4,096 additional identities, independently of explicit roots.
 These are fixed execution budgets, not adaptive resource-pressure detection.
 `SeaArchiveExt` provides single-root `get_blob` and `get_directory` convenience methods, separate from the session primitives.
-Payload decorators retain stored identities while transforming leaf bytes, so verify encoded content before decoding rather than hashing decoded bytes against stored IDs.
+Ordinary blob reads may trust published file contents without rehashing them.
+Payload decorators retain stored identities while transforming leaf bytes.
+An optional validating client or session adapter must therefore verify the stored representation before decoding, rather than hashing decoded bytes against stored IDs.
+Authenticated decryption still completes before plaintext is exposed.
 
 ### Append Outcomes
 

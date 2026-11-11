@@ -91,13 +91,30 @@ An event larger than the entire event window fails explicitly.
 Receiver slot capacity derives from the byte budget and minimum charge, not a separate item-count policy.
 The budgets do not bound total process memory or transport and decoder buffering.
 Either channel can be cancelled independently, dropping its source while retaining the other channel.
-Control frames and both ready channels are scheduled fairly.
+Ready control frames take priority at frame boundaries; the two data channels are scheduled fairly.
 
 Unsolicited content frames are limited to 256 KiB.
 An oversized required snapshot root fails content delivery explicitly without ending events.
 After the root is delivered, an oversized speculative descendant instead ends prefetch successfully; demand fetching remains available.
 Explicit `GetBlobTrees` requests use ordinary content streams and may return a bounded, incomplete descendant traversal.
+The transport's configured complete-frame limit applies to demand bodies; dispatch does not impose a separate default transport limit.
+While a demand frame is in flight, the sender may open one lookahead item.
+Its payload is not read until the preceding frame succeeds; cancellation or failure drops that queued ownership.
+The server-side `SeaContentStream` yields `SeaContentResponse`, separating ordinary wire messages from owned blob bodies.
+Session dispatch uses body traversal for both demand and opening content; directories remain materialized.
+`into_buffered` supports consumers that need the old wire-response representation and reports body-read failures as explicit errors.
+Both transport loops send checked framing followed by the exact owned body, without collecting file-backed payloads.
+Resident bytes are written directly; readers use bounded asynchronous copy.
+WebSocket writes retain at most one bounded Sea record before flushing it, without a producer queue.
+One operation deadline covers the prefix, body, and final flush.
+Logical content cancellation takes effect between complete frames; a started frame finishes before its terminal marker, retaining live events.
+A body-read error, short read, peer stop, or deadline expiry aborts the physical direction without sending a completion marker.
+On the shared opening stream this can fail both logical channels; an independent demand failure does not close other streams.
 A nonempty root request must return its first root or an explicit error.
+
+The extended browser gate also injects real file truncation after an opening body has started.
+It checks direct `SharedTree` recovery and ordered edit replay on both file modes and both transports.
+The fixture adds a delayed speculative body so the host is established before the fault; initial-open failures still reject the open.
 
 ### Bounded author admission
 

@@ -403,6 +403,41 @@ fn close_wakes_policy_waits_across_clones_and_never_waits_for_admission() {
 }
 
 #[test]
+fn body_operations_forward_without_bypassing_live_reader_admission() {
+    let source = TestSession::new();
+    source.pending_load.store(true, Ordering::SeqCst);
+    let policy = TestPolicy::new(1, 7);
+    let session = PolicySession::new(source.clone(), policy.clone());
+    let mut loading = session.load_bodies(LoadStart::LatestSnapshot, BlobTreeHint::default());
+    pending(&mut loading, &Arc::default());
+    assert_eq!(*source.calls.lock().unwrap(), ["load_bodies", "load"]);
+    assert_eq!(policy.readers.load(Ordering::SeqCst), 1);
+    assert!(matches!(
+        ready(session.load_bodies(LoadStart::LatestSnapshot, BlobTreeHint::default())),
+        Err(PolicyError::Policy(Refused))
+    ));
+    drop(loading);
+    assert_eq!(policy.readers.load(Ordering::SeqCst), 0);
+    source.pending_load.store(false, Ordering::SeqCst);
+    let drops = install_stream(&source);
+    let loaded =
+        ready(session.load_bodies(LoadStart::LatestSnapshot, BlobTreeHint::default())).unwrap();
+    assert_eq!(policy.readers.load(Ordering::SeqCst), 1);
+    drop(loaded.events);
+    assert_eq!(policy.readers.load(Ordering::SeqCst), 0);
+    assert_eq!(drops.load(Ordering::SeqCst), 1);
+    let mut content = session.open_blob_trees(
+        vec![BlobTreeId::Blob(BlobId::for_bytes(b"payload"))],
+        BlobTreeHint::default(),
+    );
+    assert!(ready(Box::pin(content.next())).unwrap().is_err());
+    assert_eq!(
+        source.calls.lock().unwrap().last(),
+        Some(&"open_blob_trees")
+    );
+}
+
+#[test]
 fn bounded_wait_ownership_is_acquired_before_suspension_and_released_on_drop() {
     for (requests, bytes) in [(1, 100), (100, 7)] {
         let source = TestSession::new();

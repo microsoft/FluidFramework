@@ -602,6 +602,26 @@ mod tests {
         assert!(raw.submit(submission).await.is_err());
     }
 
+    #[tokio::test]
+    async fn body_reads_return_decoded_plaintext_not_inner_ciphertext() {
+        let runtime = new_runtime().await;
+        let raw = runtime.open_session(None).await.unwrap();
+        let wrapped = EncryptionSession::new(raw, TestKeys::new());
+        let payload = Bytes::from_static(b"body payload");
+        let blob = wrapped.put_blob(payload.clone()).await.unwrap();
+        let item = wrapped
+            .open_blob_trees(vec![blob.id()], BlobTreeHint::default())
+            .next()
+            .await
+            .unwrap()
+            .unwrap();
+        let sea_core::BlobTreeBodyItem::Blob { body, .. } = item else {
+            panic!("expected blob")
+        };
+        assert!(matches!(body, sea_core::BlobBody::Bytes(_)));
+        assert_eq!(body.collect().await.unwrap(), payload);
+    }
+
     /// Distinguishes decryption failures after delivery from errors reported by the source stream.
     #[tokio::test]
     async fn malformed_stored_envelopes_preserve_error_kind_and_delivery_progress() {
@@ -625,6 +645,17 @@ mod tests {
         let BlobTreeId::Blob(id) = malformed_blob.id() else {
             panic!("expected blob")
         };
+        assert_eq!(
+            wrapped
+                .open_blob_trees(vec![malformed_blob.id()], BlobTreeHint::default())
+                .next()
+                .await
+                .unwrap()
+                .err()
+                .unwrap()
+                .kind(),
+            ErrorKind::Corrupt
+        );
         assert_eq!(
             wrapped.get_blob(id).await.unwrap_err().kind(),
             ErrorKind::Corrupt

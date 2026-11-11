@@ -1028,6 +1028,22 @@ impl<Storage: SeaStorage + 'static> SeaArchive for LocalSession<Storage> {
         start: LoadStart,
         hint: BlobTreeHint,
     ) -> Result<SessionLoad<Self::BlobHandle, Self::EventHandle, Self::Error>, Self::Error> {
+        let loaded = self.load_bodies(start, hint).await?;
+        Ok(SessionLoad {
+            snapshot: loaded.snapshot,
+            content: blob_tree::materialize(loaded.content),
+            events: loaded.events,
+        })
+    }
+
+    async fn load_bodies(
+        &self,
+        start: LoadStart,
+        hint: BlobTreeHint,
+    ) -> Result<
+        sea_core::SessionBodyLoad<Self::BlobHandle, Self::EventHandle, Self::Error>,
+        Self::Error,
+    > {
         let snapshot = self.get_snapshot(start).await?;
         let after = snapshot.as_ref().map(|snapshot| snapshot.at_event.id());
         let roots = snapshot
@@ -1035,9 +1051,9 @@ impl<Storage: SeaStorage + 'static> SeaArchive for LocalSession<Storage> {
             .map(|snapshot| snapshot.root.id())
             .into_iter()
             .collect();
-        Ok(SessionLoad {
+        Ok(sea_core::SessionBodyLoad {
             snapshot,
-            content: self.get_blob_trees(roots, hint),
+            content: self.open_blob_trees(roots, hint),
             events: self.read(after, None),
         })
     }
@@ -1065,7 +1081,14 @@ impl<Storage: SeaStorage + 'static> SeaArchive for LocalSession<Storage> {
         roots: Vec<BlobTreeId>,
         hint: BlobTreeHint,
     ) -> BlobTreeStream<Self::Error> {
-        blob_tree::read(self.clone(), roots, hint)
+        blob_tree::materialize(self.open_blob_trees(roots, hint))
+    }
+    fn open_blob_trees(
+        &self,
+        roots: Vec<BlobTreeId>,
+        hint: BlobTreeHint,
+    ) -> sea_core::BlobTreeBodyStream<Self::Error> {
+        blob_tree::open(self.clone(), roots, hint)
     }
     async fn put_directory(
         &self,

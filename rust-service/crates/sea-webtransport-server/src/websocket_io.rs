@@ -1,10 +1,15 @@
 //! Bounded WebSocket byte-stream adaptation with directional EOF.
 
-use std::sync::Arc;
+use std::{
+    io,
+    pin::Pin,
+    sync::Arc,
+    task::{Context, Poll, ready},
+};
 
 use async_trait::async_trait;
 use bytes::Bytes;
-use futures_util::{SinkExt as _, StreamExt as _, stream::SplitSink};
+use futures_util::{Sink, StreamExt as _, stream::SplitSink};
 use sea_webtransport::websocket::{
     self, CHUNK_BYTES, DATA, FIN, MAX_RECORD_BYTES, RECORD_HEADER_BYTES, Record,
 };
@@ -52,9 +57,11 @@ pub(crate) struct SocketSend<Socket> {
     /// Peer closure notification, independent of directional FIN.
     stopped: watch::Receiver<bool>,
     /// Shared reader task lifetime.
-    _lease: Arc<ReaderLease>,
+    lease: Arc<ReaderLease>,
     /// Whether FIN has already been sent.
     finished: bool,
+    /// Physical failure forbids any subsequent data or FIN.
+    aborted: bool,
 }
 
 /// Bounded queued data and partially consumed bytes for cancellation-safe reads.
@@ -119,8 +126,9 @@ where
         SocketSend {
             sink,
             stopped: stopped_receiver,
-            _lease: Arc::clone(&lease),
+            lease: Arc::clone(&lease),
             finished: false,
+            aborted: false,
         },
         SocketReceive {
             receiver,
@@ -131,40 +139,77 @@ where
     )
 }
 
+impl<Socket> AsyncWrite for SocketSend<Socket>
+where
+    Socket: AsyncRead + AsyncWrite + Unpin + Send + 'static,
+{
+    fn poll_write(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        bytes: &[u8],
+    ) -> Poll<io::Result<usize>> {
+        if self.finished || self.aborted {
+            return Poll::Ready(Err(io::ErrorKind::BrokenPipe.into()));
+        }
+        if bytes.is_empty() {
+            return Poll::Ready(Ok(0));
+        }
+        // Flush the previous record before owning another, including after cancelled writes.
+        ready!(self.as_mut().poll_flush(cx))?;
+        ready!(Pin::new(&mut self.sink).poll_ready(cx)).map_err(io::Error::other)?;
+        let count = bytes.len().min(CHUNK_BYTES);
+        let mut record = Vec::with_capacity(count + RECORD_HEADER_BYTES);
+        record.push(DATA);
+        record.extend_from_slice(&bytes[..count]);
+        Pin::new(&mut self.sink)
+            .start_send(Message::Binary(record.into()))
+            .map_err(io::Error::other)?;
+        Poll::Ready(Ok(count))
+    }
+
+    fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
+        if self.aborted {
+            return Poll::Ready(Err(io::ErrorKind::BrokenPipe.into()));
+        }
+        Pin::new(&mut self.sink)
+            .poll_flush(cx)
+            .map_err(io::Error::other)
+    }
+
+    fn poll_shutdown(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
+        ready!(self.as_mut().poll_flush(cx))?;
+        if !self.finished {
+            ready!(Pin::new(&mut self.sink).poll_ready(cx)).map_err(io::Error::other)?;
+            Pin::new(&mut self.sink)
+                .start_send(Message::Binary(Bytes::from_static(&[FIN])))
+                .map_err(io::Error::other)?;
+            self.finished = true;
+        }
+        self.poll_flush(cx)
+    }
+}
+
 #[async_trait]
 impl<Socket> SendStream for SocketSend<Socket>
 where
     Socket: AsyncRead + AsyncWrite + Unpin + Send + 'static,
 {
-    async fn write_all(&mut self, bytes: &[u8]) -> Result<(), WebTransportError> {
-        if self.finished {
-            return Err(WebTransportError::Disconnected);
-        }
-        for chunk in bytes.chunks(CHUNK_BYTES) {
-            let mut record = Vec::with_capacity(chunk.len() + RECORD_HEADER_BYTES);
-            record.push(DATA);
-            record.extend_from_slice(chunk);
-            self.sink
-                .send(Message::Binary(record.into()))
-                .await
-                .map_err(transport_error)?;
-        }
-        Ok(())
-    }
-
     async fn finish(&mut self) -> Result<(), WebTransportError> {
-        if !self.finished {
-            self.sink
-                .send(Message::Binary(Bytes::from_static(&[FIN])))
-                .await
-                .map_err(transport_error)?;
-            self.finished = true;
-        }
-        Ok(())
+        tokio::io::AsyncWriteExt::shutdown(self)
+            .await
+            .map_err(transport_error)
     }
 
-    async fn stopped(&mut self) {
-        let _ = self.stopped.wait_for(|stopped| *stopped).await;
+    fn stopped(&self) -> impl Future<Output = ()> + Send + 'static {
+        let mut stopped = self.stopped.clone();
+        async move {
+            let _ = stopped.wait_for(|stopped| *stopped).await;
+        }
+    }
+
+    fn abort(&mut self) {
+        self.aborted = true;
+        self.lease.0.abort();
     }
 }
 
@@ -199,8 +244,143 @@ impl ReceiveStream for SocketReceive {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use futures_util::SinkExt as _;
     use tokio::time::{Duration, timeout};
     use tokio_tungstenite::tungstenite::protocol::Role;
+
+    #[tokio::test]
+    async fn cancelled_flush_preserves_one_record_and_shutdown_sends_one_fin() {
+        let (client, server) = tokio::io::duplex(128);
+        let (mut send, _receive) = split(
+            WebSocketStream::from_raw_socket(client, Role::Client, Some(socket_config())).await,
+        );
+        let server =
+            WebSocketStream::from_raw_socket(server, Role::Server, Some(socket_config())).await;
+        let payload = vec![37; CHUNK_BYTES + 1];
+        let count = tokio::io::AsyncWriteExt::write(&mut send, &payload)
+            .await
+            .unwrap();
+        assert_eq!(count, CHUNK_BYTES);
+        assert!(
+            timeout(
+                Duration::from_millis(20),
+                tokio::io::AsyncWriteExt::flush(&mut send)
+            )
+            .await
+            .is_err()
+        );
+        let (_send, mut receive) = split(server);
+        let writing = async {
+            send.finish().await.unwrap();
+            send.finish().await.unwrap();
+        };
+        let reading = async {
+            let mut actual = Vec::new();
+            let mut buffer = [0; 97];
+            while let Some(count) = receive.read(&mut buffer).await.unwrap() {
+                actual.extend_from_slice(&buffer[..count]);
+            }
+            assert_eq!(actual, payload[..CHUNK_BYTES]);
+        };
+        timeout(Duration::from_secs(2), async {
+            tokio::join!(writing, reading);
+        })
+        .await
+        .unwrap();
+    }
+
+    #[tokio::test]
+    async fn abort_never_sends_directional_fin() {
+        let (client, server) = tokio::io::duplex(128);
+        let (mut send, receive) = split(
+            WebSocketStream::from_raw_socket(client, Role::Client, Some(socket_config())).await,
+        );
+        let (_send, mut peer) = split(
+            WebSocketStream::from_raw_socket(server, Role::Server, Some(socket_config())).await,
+        );
+        tokio::io::AsyncWriteExt::write(&mut send, &vec![7; CHUNK_BYTES])
+            .await
+            .unwrap();
+        send.abort();
+        assert!(send.finish().await.is_err());
+        drop(send);
+        drop(receive);
+        assert!(
+            timeout(Duration::from_secs(1), peer.read(&mut [0; 1]))
+                .await
+                .unwrap()
+                .is_err()
+        );
+    }
+
+    #[tokio::test]
+    async fn stalled_body_copy_read_ahead_is_independent_of_payload_length() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        /// Produces bytes on demand without retaining a full source payload.
+        struct Counted {
+            /// Total source bytes made available to the copy operation.
+            read: Arc<AtomicUsize>,
+            /// Largest requested source chunk.
+            maximum: Arc<AtomicUsize>,
+        }
+        impl AsyncRead for Counted {
+            fn poll_read(
+                self: Pin<&mut Self>,
+                _: &mut Context<'_>,
+                buffer: &mut tokio::io::ReadBuf<'_>,
+            ) -> Poll<io::Result<()>> {
+                let count = buffer.remaining();
+                buffer.initialize_unfilled().fill(42);
+                buffer.advance(count);
+                self.read.fetch_add(count, Ordering::SeqCst);
+                self.maximum.fetch_max(count, Ordering::SeqCst);
+                Poll::Ready(Ok(()))
+            }
+        }
+        for length in [1024 * 1024, 16 * 1024 * 1024] {
+            let (client, server) = tokio::io::duplex(128);
+            let (mut send, _receive) = split(
+                WebSocketStream::from_raw_socket(client, Role::Client, Some(socket_config())).await,
+            );
+            let (_send, mut receive) = split(
+                WebSocketStream::from_raw_socket(server, Role::Server, Some(socket_config())).await,
+            );
+            let read = Arc::new(AtomicUsize::new(0));
+            let maximum = Arc::new(AtomicUsize::new(0));
+            let body = sea_core::BlobBody::Reader {
+                length,
+                reader: Box::pin(Counted {
+                    read: read.clone(),
+                    maximum: maximum.clone(),
+                }),
+            };
+            let mut copying = Box::pin(async {
+                body.copy_to(&mut send).await.unwrap();
+                send.finish().await.unwrap();
+            });
+            assert!(
+                timeout(Duration::from_millis(20), &mut copying)
+                    .await
+                    .is_err()
+            );
+            assert!(read.load(Ordering::SeqCst) <= 64 * 1024);
+            assert!(maximum.load(Ordering::SeqCst) <= 8192);
+            let reading = async {
+                let mut total = 0;
+                let mut buffer = [0; 997];
+                while let Some(count) = receive.read(&mut buffer).await.unwrap() {
+                    assert!(buffer[..count].iter().all(|byte| *byte == 42));
+                    total += count as u64;
+                }
+                assert_eq!(total, length);
+            };
+            timeout(Duration::from_secs(10), async {
+                tokio::join!(copying, reading);
+            })
+            .await
+            .unwrap();
+        }
+    }
 
     #[tokio::test]
     async fn finish_preserves_reverse_direction_and_cancel_notifies_writer() {
@@ -322,7 +502,7 @@ mod tests {
         ] {
             let (client, server) = tokio::io::duplex(CHUNK_BYTES * 2);
             let mut client = WebSocketStream::from_raw_socket(client, Role::Client, None).await;
-            let (mut send, mut receive) = split(
+            let (send, mut receive) = split(
                 WebSocketStream::from_raw_socket(server, Role::Server, Some(socket_config())).await,
             );
             client.send(message).await.unwrap();

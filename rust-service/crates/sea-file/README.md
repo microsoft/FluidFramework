@@ -70,6 +70,12 @@ Directory membership proves transitive availability because publication and reco
 Reusing a stored directory checks membership without taking the journal writer lock or checking its children again.
 Membership checks the hash-addressed filename; writer independence does not imply an I/O-free lookup.
 New directories are encoded once for identity and persistence; durable publication rechecks membership within document mutation order.
+Ordinary blob reads trust published payloads without checking either their content identity or the atomic-value checksum.
+The stored 32-byte checksum and one-byte record tag remain unchanged, and opening validates the header and blob tag.
+Publication hashing and failure handling, directory integrity, and journal/checkpoint checks remain unchanged.
+Same-length corruption can be returned successfully; truncation before opening can look like a shorter published body.
+An optional validating client or session adapter must verify the stored representation before transformation, not decoded bytes against a stored-content identity.
+Authenticated decryption remains required.
 The document opening owns content and checkpoint publication failures independently of the event and snapshot journals.
 Events are never deduplicated or retried, and snapshots must advance their event position.
 Session retry identities and conditional snapshot policy remain above storage.
@@ -87,7 +93,7 @@ They still require the 33-byte checksum/tag header and the blob record tag.
 Same-length payload corruption can be returned successfully; without an independent trusted length, truncation can appear to be a shorter blob.
 Publication hashing and storage formats are unchanged, as are directory validation and journal/checkpoint checks.
 Consumers requiring content-address validation must verify the stored representation before decoding compression or encryption; transport encryption cannot detect corruption already present in storage.
-Reads still materialize the complete payload before returning it.
+The byte-returning API materializes the complete payload; owned body reads stream under the bounds below.
 
 Event archives support independent terminal-opening observation through `Archive::observe_invalidation`.
 Opening poison reports the classified ambiguous error, and factory shutdown reports a rejected closed-opening error.
@@ -111,6 +117,18 @@ Finite ranges have exclusive lower and inclusive upper bounds, including sparse 
 Nonempty ranges reject bounds beyond their initialization head; reversed/equal ranges complete without waiting.
 Progress advances only with delivery, reports backlog, and remains coherent when discovering new appends.
 Normal commits and uncertain writes wake readers outside the state lock; uncertain openings terminate reads with an error.
+
+`BlobStore::open_blob` captures visible pending-overlay `Bytes` without copying, or opens an independent file cursor after the 33-byte storage header.
+It checks the extent from that same handle, then releases visibility locks before returning.
+Each file body retains its document opening and sidecar lock without retaining a worker permit.
+Opening and every bounded read share the factory's worker budget.
+After a consumer requests bytes, a read may fill up to 64 KiB, bounded by the opened body's remaining extent.
+Small consumer reads share that buffer instead of dispatching a new filesystem operation for each chunk.
+Only one read per body can be outstanding, and dispatched reads own the file, lease, and permit until completion even after cancellation.
+Network backpressure or unused opening credit does not hold a worker permit.
+The byte-returning `get_blob` collects through this same trusted path.
+An opened body sends at most its captured extent and fails on a short read; appended bytes are not sent.
+Already-opened immutable bodies can finish after factory shutdown or opening invalidation, like previously returned resident bytes; session and transport owners decide whether to continue sending them.
 
 ## Cancellation And Failures
 

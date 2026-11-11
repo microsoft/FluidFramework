@@ -42,6 +42,21 @@ const contentTypes = new Map([
 ]);
 const server = createServer(async (request, response) => {
 	try {
+		if (
+			request.url === "/__sea_blob_fault" &&
+			request.method === "POST" &&
+			process.env.SEA_TEST_BLOB_FAULT_MARKER !== undefined
+		) {
+			let digest = "";
+			for await (const chunk of request) {
+				digest += chunk.toString();
+				if (digest.length > 64) throw new Error("invalid fault fixture identity");
+			}
+			if (!/^[0-9a-f]{64}$/u.test(digest)) throw new Error("invalid fault fixture identity");
+			await writeFile(process.env.SEA_TEST_BLOB_FAULT_MARKER, digest);
+			response.writeHead(200).end();
+			return;
+		}
 		const relative =
 			new URL(request.url, "http://localhost").pathname.slice(1) || "index.html";
 		const normalized = normalize(relative);

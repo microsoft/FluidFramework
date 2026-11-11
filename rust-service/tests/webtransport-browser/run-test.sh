@@ -80,6 +80,8 @@ wasm-bindgen "$CARGO_TARGET_DIR/wasm32-unknown-unknown/debug/examples/browser_li
 	--target web --out-name browser_lifecycle --out-dir "$temporary_root/lifecycle-wasm"
 SEA_BROWSER_LIFECYCLE_WASM="$temporary_root/lifecycle-wasm" cargo test --locked \
 	-p sea-webtransport-server "${server_features[@]}" browser_disconnect_and_drop_release_capacity -- --ignored --nocapture
+cargo test --locked -p sea-webtransport-server "${server_features[@]}" \
+	--test blob_streaming_recovery -- --ignored --nocapture
 
 start_server() {
 	local mode_root="$temporary_root/$1"

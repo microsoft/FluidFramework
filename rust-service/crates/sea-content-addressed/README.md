@@ -15,7 +15,7 @@ Initialization propagates creation, metadata, canonicalization, and synchronizat
 Use the trait methods to obtain `storage::ContentHandle` availability evidence; the existing synchronous methods remain lower-level identity-based object primitives.
 Trait-based directory publication verifies every transitive child before publication.
 Low-level synchronous directory publication validates encoding but not closure.
-Resolution and availability checks verify reachable bytes, visiting shared subtrees once; a stored root with a missing descendant is corrupt rather than absent.
+Resolution and availability checks use the same policy, visiting shared subtrees once; a stored root with a missing descendant is corrupt rather than absent.
 Private handles record canonical namespace provenance, do not retain writer ownership, and can be revalidated by a reopened compatible store.
 An equal identity from a different namespace does not establish availability.
 
@@ -31,6 +31,14 @@ Ordinary blob reads trust published bytes without recomputing their identity; di
 Same-length corruption or a truncated blob can therefore be returned successfully.
 Publication collision checks and transitive availability verification still check blob identities.
 Consumers requiring content-address validation must verify the stored representation before decoding compression or encryption.
+
+The async `BlobStore::open_blob` operation opens an independent file cursor and captures its length from that same handle.
+It uses Tokio's blocking pool for opening and file reads, with at most 64 KiB in the file adapter's read buffer.
+This standalone store has no factory-wide worker budget; `sea-file` uses its own shared admission budget instead.
+An opened body owns its file independently of the store, sends no appended bytes, and fails if a subsequent short read cannot satisfy the declared extent.
+Dropping the body stops further reads, but a dispatched blocking operation can retain its resources until completion.
+The async byte-returning operation collects through this same body path.
+Existing synchronous operations remain synchronous and require caller-provided execution isolation.
 
 Publication removes its temporary file after ordinary failures when possible.
 If a staging path already exists, publication fails without removing another attempt's file.

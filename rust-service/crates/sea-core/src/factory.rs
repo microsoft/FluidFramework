@@ -156,6 +156,24 @@ impl<S: SeaSession> SeaArchive for PassThroughSession<S> {
         self.source.get_snapshot(start)
     }
 
+    fn load_bodies<'life0, 'async_trait>(
+        &'life0 self,
+        start: LoadStart,
+        hint: BlobTreeHint,
+    ) -> SessionFuture<
+        'async_trait,
+        Result<
+            crate::SessionBodyLoad<Self::BlobHandle, Self::EventHandle, Self::Error>,
+            Self::Error,
+        >,
+    >
+    where
+        'life0: 'async_trait,
+        Self: 'async_trait,
+    {
+        self.source.load_bodies(start, hint)
+    }
+
     fn put_blob<'life0, 'async_trait>(
         &'life0 self,
         payload: Bytes,
@@ -173,6 +191,14 @@ impl<S: SeaSession> SeaArchive for PassThroughSession<S> {
         hint: BlobTreeHint,
     ) -> BlobTreeStream<Self::Error> {
         self.source.get_blob_trees(roots, hint)
+    }
+
+    fn open_blob_trees(
+        &self,
+        roots: Vec<BlobTreeId>,
+        hint: BlobTreeHint,
+    ) -> crate::BlobTreeBodyStream<Self::Error> {
+        self.source.open_blob_trees(roots, hint)
     }
 
     fn put_directory<'life0, 'async_trait>(
@@ -501,6 +527,35 @@ mod tests {
     impl SeaArchive for TestSession {
         type BlobHandle = TestHandle<BlobTreeId>;
         type EventHandle = TestHandle<EventPosition>;
+
+        async fn load_bodies(
+            &self,
+            start: LoadStart,
+            hint: BlobTreeHint,
+        ) -> Result<
+            crate::SessionBodyLoad<Self::BlobHandle, Self::EventHandle, Self::Error>,
+            Self::Error,
+        > {
+            self.calls.lock().unwrap().push("load_bodies");
+            let loaded = self.load(start, hint).await?;
+            Ok(crate::SessionBodyLoad {
+                snapshot: loaded.snapshot,
+                content: Box::pin(loaded.content.map(|item| item.map(BlobTreeItem::into_body))),
+                events: loaded.events,
+            })
+        }
+
+        fn open_blob_trees(
+            &self,
+            roots: Vec<BlobTreeId>,
+            hint: BlobTreeHint,
+        ) -> crate::BlobTreeBodyStream<Self::Error> {
+            self.calls.lock().unwrap().push("open_blob_trees");
+            Box::pin(
+                self.get_blob_trees(roots, hint)
+                    .map(|item| item.map(BlobTreeItem::into_body)),
+            )
+        }
 
         fn read(
             &self,
@@ -888,5 +943,44 @@ mod tests {
             drop(events);
             assert_eq!(drops.load(Ordering::SeqCst), 1);
         }
+    }
+
+    #[test]
+    fn body_load_preserves_one_selection_and_the_original_event_stream() {
+        let source = TestSession::new();
+        let session = PassThroughSession::new(source.clone());
+        let drops = Arc::new(AtomicUsize::new(0));
+        let stream = Box::pin(TestStream {
+            drops: drops.clone(),
+        });
+        let address = std::ptr::from_ref(&*stream).cast::<()>();
+        *source.stream.lock().unwrap() = Some(stream);
+        let mut loaded =
+            ready(session.load_bodies(LoadStart::LatestSnapshot, BlobTreeHint::default())).unwrap();
+        assert_eq!(
+            &*source.calls.lock().unwrap(),
+            &["load_bodies", "load", "read"]
+        );
+        assert_eq!(std::ptr::from_ref(&*loaded.events).cast::<()>(), address);
+        let item = ready(Box::pin(loaded.content.next())).unwrap().unwrap();
+        assert_eq!(item.id(), loaded.snapshot.unwrap().root.id());
+        let crate::BlobTreeBodyItem::Blob { body, .. } = item else {
+            panic!("expected blob");
+        };
+        assert_eq!(ready(Box::pin(body.collect())).unwrap(), b"state"[..]);
+        drop(loaded.events);
+        assert_eq!(drops.load(Ordering::SeqCst), 1);
+        assert_error(
+            ready(Box::pin(
+                session
+                    .open_blob_trees(
+                        vec![BlobTreeId::Blob(BlobId::for_bytes(b"payload"))],
+                        BlobTreeHint::default(),
+                    )
+                    .next(),
+            ))
+            .unwrap(),
+            &source.error,
+        );
     }
 }

@@ -1276,6 +1276,7 @@ dependencies = [
  "bytes",
  "futures-core",
  "futures-util",
+ "tokio",
 ]
 
 [[package]]

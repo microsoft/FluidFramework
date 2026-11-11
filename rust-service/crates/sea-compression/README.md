@@ -17,6 +17,7 @@ Membership metadata, directories, and snapshot metadata pass through unchanged s
 For compression plus encryption, wrap an encrypted session in `CompressionSession`; the outer compression layer processes plaintext before the inner encryption layer stores it.
 Loads preserve the selected handle-based snapshot and decode its live suffix; read progress and source error classifications are preserved.
 Content identities and availability handles are those of the encoded stored bytes, not plaintext hashes.
+The body APIs deliberately use their materializing compatibility defaults over these decoded reads and loads, never raw inner bodies.
 Directory references, handle resolution, snapshot publication, publisher participation/fences, and revocation pass through unchanged.
 Deterministic encoding does not deduplicate submissions; each submit is a new event.
 Dropping a forwarded coordination stream revokes its underlying registration.

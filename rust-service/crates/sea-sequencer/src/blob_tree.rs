@@ -2,21 +2,21 @@
 
 use std::collections::{BTreeSet, VecDeque};
 
-use futures_util::stream;
+use futures_util::{StreamExt as _, stream};
 use sea_core::{
-    BlobTreeHint, BlobTreeId, BlobTreeItem, BlobTreeStream, MAX_BLOB_TREE_BYTES,
-    MAX_BLOB_TREE_ITEMS, MAX_BLOB_TREE_ROOTS, MAX_BLOB_TREE_WORK,
+    BlobTreeBodyItem, BlobTreeBodyStream, BlobTreeHint, BlobTreeId, BlobTreeItem, BlobTreeStream,
+    MAX_BLOB_TREE_BYTES, MAX_BLOB_TREE_ITEMS, MAX_BLOB_TREE_ROOTS, MAX_BLOB_TREE_WORK,
     storage::{BlobStore, SeaStorage},
 };
 
 use super::{LocalSession, SessionError};
 
 /// Traverses bounded work without retaining payloads from previously yielded items.
-pub(super) fn read<S: SeaStorage + 'static>(
+pub(super) fn open<S: SeaStorage + 'static>(
     session: LocalSession<S>,
     roots: Vec<BlobTreeId>,
     hint: BlobTreeHint,
-) -> BlobTreeStream<SessionError<S::Error>> {
+) -> BlobTreeBodyStream<SessionError<S::Error>> {
     if roots.len() > MAX_BLOB_TREE_ROOTS {
         return Box::pin(stream::once(async {
             Err(SessionError::Rejected("too many blob-tree roots"))
@@ -35,7 +35,7 @@ pub(super) fn read<S: SeaStorage + 'static>(
         bytes: 0,
     };
     Box::pin(stream::try_unfold(state, |mut state| async move {
-        if state.items >= MAX_BLOB_TREE_ITEMS || state.bytes >= MAX_BLOB_TREE_BYTES {
+        if state.items >= MAX_BLOB_TREE_ITEMS || state.bytes >= MAX_BLOB_TREE_BYTES as u64 {
             return Ok(None);
         }
         let Some(id) = state.pending.pop_front() else {
@@ -44,13 +44,13 @@ pub(super) fn read<S: SeaStorage + 'static>(
         let view = state.session.view().await?;
         let (item, size) = match id {
             BlobTreeId::Blob(id) => {
-                let bytes = view
+                let body = view
                     .blobs()
-                    .get_blob(id)
+                    .open_blob(id)
                     .await
                     .map_err(SessionError::Storage)?;
-                let size = bytes.len();
-                (BlobTreeItem::Blob { id, bytes }, size)
+                let size = body.len();
+                (BlobTreeBodyItem::Blob { id, body }, size)
             }
             BlobTreeId::Directory(id) => {
                 let directory = view
@@ -64,15 +64,18 @@ pub(super) fn read<S: SeaStorage + 'static>(
                 if actual != id {
                     return Err(SessionError::Corrupt("directory identity mismatch"));
                 }
-                (BlobTreeItem::Directory { id, directory }, encoded.len())
+                (
+                    BlobTreeBodyItem::Directory { id, directory },
+                    encoded.len() as u64,
+                )
             }
         };
-        if state.items > 0 && size > MAX_BLOB_TREE_BYTES.saturating_sub(state.bytes) {
+        if state.items > 0 && size > (MAX_BLOB_TREE_BYTES as u64).saturating_sub(state.bytes) {
             return Ok(None);
         }
         state.bytes = state.bytes.saturating_add(size);
         state.items += 1;
-        if let BlobTreeItem::Directory { directory, .. } = &item {
+        if let BlobTreeBodyItem::Directory { directory, .. } = &item {
             for child in directory.entries().values() {
                 if state.work >= MAX_BLOB_TREE_WORK
                     || state.extras >= state.hint.max_extra_items
@@ -94,6 +97,27 @@ pub(super) fn read<S: SeaStorage + 'static>(
     }))
 }
 
+/// Collects one leaf at a time for compatibility callers, without repeating traversal or selection.
+pub(super) fn materialize<E: sea_core::ClassifiedError>(
+    source: BlobTreeBodyStream<SessionError<E>>,
+) -> BlobTreeStream<SessionError<E>> {
+    Box::pin(stream::try_unfold(source, |mut source| async move {
+        let Some(item) = source.next().await else {
+            return Ok(None);
+        };
+        let item = match item? {
+            BlobTreeBodyItem::Blob { id, body } => BlobTreeItem::Blob {
+                id,
+                bytes: body.collect().await.map_err(SessionError::BlobRead)?,
+            },
+            BlobTreeBodyItem::Directory { id, directory } => {
+                BlobTreeItem::Directory { id, directory }
+            }
+        };
+        Ok(Some((item, source)))
+    }))
+}
+
 struct Traversal<S: SeaStorage> {
     session: LocalSession<S>,
     pending: VecDeque<BlobTreeId>,
@@ -102,7 +126,7 @@ struct Traversal<S: SeaStorage> {
     extras: u32,
     work: usize,
     items: usize,
-    bytes: usize,
+    bytes: u64,
 }
 
 #[cfg(test)]
@@ -117,6 +141,30 @@ mod tests {
 
     use super::*;
     use crate::session::LocalSequencer;
+
+    #[tokio::test]
+    async fn materialized_body_failure_terminates_before_later_roots() {
+        let id = BlobId::for_bytes(b"first");
+        let source = stream::iter([
+            Ok(BlobTreeBodyItem::Blob {
+                id,
+                body: sea_core::BlobBody::Reader {
+                    length: 1,
+                    reader: Box::pin(std::io::Cursor::new(b"")),
+                },
+            }),
+            Ok(BlobTreeBodyItem::Blob {
+                id,
+                body: Bytes::from_static(b"later").into(),
+            }),
+        ]);
+        let mut items = materialize::<sea_memory::MemoryStorageError>(Box::pin(source));
+        assert!(matches!(
+            items.next().await,
+            Some(Err(SessionError::BlobRead(_)))
+        ));
+        assert!(items.next().await.is_none());
+    }
 
     async fn session() -> LocalSession<MemoryStorage> {
         let (_, view) = MemoryStorage::new().create_view().await.unwrap();

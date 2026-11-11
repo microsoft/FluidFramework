@@ -225,9 +225,18 @@ Set `blobBytes` to a positive byte count to add a real application blob handle t
 This option defaults to zero and currently requires direct-only `cases`.
 The load records ready latency separately from the later handle read, verifies every payload byte, and checks that the first handle read makes one driver read in lazy mode and none in eager mode.
 Handle-read timing and read counts are retained in each sample.
+The benchmark also records content identities and decoded payload bytes at the remote-session boundary, below the driver's cache.
+It distinguishes opening-prefetch receipts from explicit demand requests.
+For the distinct application payload it checks that lazy opening receives no payload, and that eager opening receives it before the later handle read.
+Handle availability and full-byte verification have separate timestamps and durations; `blobReadMilliseconds` excludes verification.
+These receipt counts are not encrypted network-byte totals or additive API spans.
 `direct-demand` disables speculative descendants even when the host uses the eager policy; eager mode still bulk-loads all payloads before returning.
-The manifest records both settings and hashes the selected WASM artifact.
+The manifest records both settings and the path and hash of the selected WASM artifact.
 Compressed results measure a different storage representation, not a transport-only optimization.
+Set `transport: "websocket"` to run the uncompressed direct cases over ordinary WebSocket rather than the default WebTransport.
+Set `serverBinary` to an absolute executable path for baseline/final comparisons; the report records the selected binary hash.
+File-backed fixtures are flushed and their service is restarted before measurement, excluding pending overlays.
+This establishes persisted-file reads with warm OS caches, not cold-cache reads.
 All cases use the optimized forest and the same deterministic, 1,024-byte pseudorandom hexadecimal strings.
 Direct snapshots use the schema's incremental chunk boundaries.
 Version 4 direct snapshots wrap each summary blob in a directory so native application-blob edges survive incremental reuse.
@@ -250,6 +259,9 @@ Tinylicious must have its separate workspace dependencies installed and its `dis
 The runner requires Linux, Chromium, `unshare`, `ip`, `tc`, `taskset`, `findmnt`, and at least four allowed logical CPUs.
 It creates a private user/network namespace and refuses to change the caller's network namespace.
 Only packets to or from the benchmark service address, `127.0.0.2`, receive delay.
+For WebSocket, the client requires `127.0.0.1` for plaintext loopback connections.
+The runner instead shapes only that listener's TCP port and verifies its delay with a separate TCP echo probe.
+It replaces the port filter when reopening the service.
 Browser assets, DevTools traffic, and Tinylicious's internal localhost HTTP remain unshaped.
 The 100 ms round-trip time (RTT) setting adds 50 ms per direction to both TCP and UDP, without a bandwidth limit or intentional packet loss.
 UDP echo probes verify the measured RTT and the unshaped control path.
@@ -300,10 +312,10 @@ Those counters are sampled, can miss short-lived processes, and include warmup; 
 Failed loads and capacity workers remain explicit failures, not successful timing samples.
 The runner stops owned services and removes their temporary data; the network namespace disappears when its processes exit.
 
-Validate the network helper and run the small browser correctness matrix with:
+Validate the network helper and artifact provenance, then run the small browser correctness matrix with:
 
 ```bash
-node --test rust-service/tests/sea-integration-tests/scripts/snapshot-network.test.mjs
+node --test rust-service/tests/sea-integration-tests/scripts/snapshot-network.test.mjs rust-service/tests/sea-integration-tests/scripts/snapshot-artifacts.test.mjs
 pnpm --dir rust-service/tests/sea-integration-tests run typecheck:shared-tree
 node rust-service/tests/sea-integration-tests/scripts/run-snapshot-benchmark.mjs \
 	'{"bytes":[102400],"repetitions":1,"concurrency":[]}' /tmp/snapshot-smoke

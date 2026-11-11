@@ -528,6 +528,40 @@ impl<S: SeaSession, P: DocumentPolicy> SeaArchive for PolicySession<S, P> {
             .map_err(PolicyError::Source)
     }
 
+    async fn load_bodies(
+        &self,
+        start: LoadStart,
+        hint: BlobTreeHint,
+    ) -> Result<crate::SessionBodyLoad<Self::BlobHandle, Self::EventHandle, Self::Error>, Self::Error>
+    {
+        let reader_permit = self
+            .policy
+            .admit_live_reader()
+            .map_err(PolicyError::Policy)?;
+        let loaded = self
+            .source
+            .load_bodies(start, hint)
+            .await
+            .map_err(PolicyError::Source)?;
+        Ok(crate::SessionBodyLoad {
+            snapshot: loaded.snapshot,
+            content: Box::pin(loaded.content.map(|item| item.map_err(PolicyError::Source))),
+            events: map_stream(loaded.events, Some(reader_permit)),
+        })
+    }
+
+    fn open_blob_trees(
+        &self,
+        roots: Vec<BlobTreeId>,
+        hint: BlobTreeHint,
+    ) -> crate::BlobTreeBodyStream<Self::Error> {
+        Box::pin(
+            self.source
+                .open_blob_trees(roots, hint)
+                .map(|item| item.map_err(PolicyError::Source)),
+        )
+    }
+
     async fn put_blob(&self, payload: Bytes) -> Result<Self::BlobHandle, Self::Error> {
         let admission = self.admit_write(WriteRequest::Blob(&payload)).await?;
         drop(admission);

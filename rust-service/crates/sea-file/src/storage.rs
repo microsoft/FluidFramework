@@ -30,8 +30,8 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::{Stream, stream, task::AtomicWaker};
 use sea_core::{
-    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, CommittedEvent, Durability, Event,
-    EventPosition, MonitoredStream, MonitoredStreamItem, MonitoredStreamProgress,
+    BlobBody, BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, CommittedEvent, Durability,
+    Event, EventPosition, MonitoredStream, MonitoredStreamItem, MonitoredStreamProgress,
     MonitoredStreamStatus,
     storage::{
         Archive, ArchiveStream, BlobStore, CreatedDocument, DocumentId, ReferenceableStore,
@@ -40,6 +40,7 @@ use sea_core::{
 };
 use std::{
     fs,
+    io::Read as _,
     path::{Path, PathBuf},
     sync::{
         Arc, Mutex, MutexGuard, Weak,
@@ -774,7 +775,7 @@ impl State {
         self.path.with_extension("content").join(name)
     }
 
-    /// Reads published content, trusting blob payloads but verifying directories.
+    /// Reads a content record and verifies persisted bytes against its typed identity.
     fn content_record(&self, id: BlobTreeId) -> Result<Option<Vec<u8>>, FileStorageError> {
         let key = Key::Content(id);
         let publication = self.unpublished.lock().unwrap();
@@ -783,17 +784,6 @@ impl State {
         }
         if let Some(record) = self.pending.lock().unwrap().get(&key) {
             return Ok(Some(record.to_vec()));
-        }
-        if matches!(id, BlobTreeId::Blob(_)) {
-            let bytes = match fs::read(self.content_path(id)) {
-                Ok(bytes) => bytes,
-                Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-                Err(error) => return Err(error.into()),
-            };
-            if bytes.get(32) != Some(&1) {
-                return Err(FileStorageError::Corrupt("blob record header"));
-            }
-            return Ok(Some(bytes[32..].to_vec()));
         }
         let Some(record) = atomic_file::read(&self.content_path(id))? else {
             return Ok(None);
@@ -1335,8 +1325,11 @@ impl BlobStore for FileBlobs {
             .await
     }
     async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error> {
+        Ok(self.open_blob(id).await?.collect().await?)
+    }
+    async fn open_blob(&self, id: BlobId) -> Result<BlobBody, Self::Error> {
         let component = self.clone();
-        self.0.query(move || component.get_blob_blocking(id)).await
+        self.0.query(move || component.open_blob_blocking(id)).await
     }
     async fn put_directory(&self, directory: BlobDirectory) -> Result<Self::Handle, Self::Error> {
         self.0.admission()?;
@@ -1784,6 +1777,20 @@ impl SnapshotArchive for FileSnapshots {
     }
 }
 
+/// A body's independent cursor retains the document lease, including during blocking reads.
+struct BlobSource {
+    /// Positioned immediately after the immutable blob record header.
+    file: fs::File,
+    /// Keeps the sidecar lock alive without retaining a worker permit.
+    _opening: Arc<Opening>,
+}
+
+impl std::io::Read for BlobSource {
+    fn read(&mut self, bytes: &mut [u8]) -> std::io::Result<usize> {
+        self.file.read(bytes)
+    }
+}
+
 impl FileBlobs {
     /// Publishes one immutable pending record in the document's buffered mutation order.
     async fn admit_content(
@@ -1837,14 +1844,49 @@ impl FileBlobs {
         }
         Ok(self.0.handle(BlobTreeId::Blob(id)))
     }
-    /// Reads blob bytes from the pending overlay or trusted persisted content.
-    fn get_blob_blocking(&self, id: BlobId) -> Result<Bytes, FileStorageError> {
-        let record = self
-            .0
-            .published()?
-            .content_record(BlobTreeId::Blob(id))?
-            .ok_or(FileStorageError::Rejected("missing blob"))?;
-        Ok(Bytes::copy_from_slice(&record[1..]))
+    /// Captures a visible overlay or independent file cursor without hashing published blob bytes.
+    fn open_blob_blocking(&self, id: BlobId) -> Result<BlobBody, FileStorageError> {
+        let state = self.0.published()?;
+        let key = Key::Content(BlobTreeId::Blob(id));
+        let publication = state.unpublished.lock().unwrap();
+        if publication.contains(&key) {
+            return Err(FileStorageError::Rejected("missing blob"));
+        }
+        if let Some(record) = state.pending.lock().unwrap().get(&key) {
+            if record.first() != Some(&1) {
+                return Err(FileStorageError::Corrupt("blob record tag"));
+            }
+            return Ok(BlobBody::Bytes(record.slice(1..)));
+        }
+        let mut file =
+            fs::File::open(state.content_path(BlobTreeId::Blob(id))).map_err(|error| {
+                if error.kind() == std::io::ErrorKind::NotFound {
+                    FileStorageError::Rejected("missing blob")
+                } else {
+                    error.into()
+                }
+            })?;
+        let length = file
+            .metadata()?
+            .len()
+            .checked_sub(33)
+            .ok_or(FileStorageError::Corrupt("blob record header"))?;
+        let mut header = [0; 33];
+        file.read_exact(&mut header)?;
+        if header[32] != 1 {
+            return Err(FileStorageError::Corrupt("blob record tag"));
+        }
+        Ok(BlobBody::Reader {
+            length,
+            reader: Box::pin(crate::blob_reader::BlobFileReader::new(
+                BlobSource {
+                    file,
+                    _opening: self.0.clone(),
+                },
+                self.0.workers.clone(),
+                length,
+            )),
+        })
     }
     /// Rechecks directory membership in mutation order and validates children only for new content.
     fn put_directory_blocking(
@@ -2809,6 +2851,200 @@ mod tests {
         }
     }
 
+    #[tokio::test]
+    async fn blob_bodies_retain_independent_extents_and_document_lease() {
+        use std::io::Write as _;
+        for durable in [false, true] {
+            let (root, storage, created) = create_test_document(durable).await;
+            let payload = Bytes::from(vec![7; 128 * 1024]);
+            let id = BlobId::for_bytes(&payload);
+            created
+                .components
+                .blobs
+                .put_blob(payload.clone())
+                .await
+                .unwrap();
+            storage.flush().await.unwrap();
+            let path = created
+                .components
+                .blobs
+                .0
+                .published()
+                .unwrap()
+                .content_path(BlobTreeId::Blob(id));
+            let first = created.components.blobs.open_blob(id).await.unwrap();
+            let second = created.components.blobs.open_blob(id).await.unwrap();
+            assert!(matches!(first, BlobBody::Reader { .. }));
+            assert_eq!(first.len(), payload.len() as u64);
+            fs::OpenOptions::new()
+                .append(true)
+                .open(&path)
+                .unwrap()
+                .write_all(b"appended")
+                .unwrap();
+            let document = created.id.clone();
+            drop(created);
+            assert!(matches!(
+                storage.open_document(&document).await,
+                Err(FileStorageError::Busy)
+            ));
+            let (first, second) = tokio::try_join!(first.collect(), second.collect()).unwrap();
+            assert_eq!(first, payload);
+            assert_eq!(second, payload);
+            let reopened = storage.open_document(&document).await.unwrap().unwrap();
+            let shortened = reopened.blobs.open_blob(id).await.unwrap();
+            fs::OpenOptions::new()
+                .write(true)
+                .open(&path)
+                .unwrap()
+                .set_len(34)
+                .unwrap();
+            assert_eq!(
+                shortened.collect().await.unwrap_err().kind(),
+                std::io::ErrorKind::UnexpectedEof
+            );
+            drop((reopened, storage));
+            fs::remove_dir_all(root).unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn blob_open_checks_headers_and_visibility_without_payload_hashing() {
+        for durable in [false, true] {
+            let (root, storage, created) = create_test_document(durable).await;
+            let blobs = &created.components.blobs;
+            let id = BlobId::for_bytes(b"");
+            blobs.put_blob(Bytes::new()).await.unwrap();
+            storage.flush().await.unwrap();
+            assert!(blobs.get_blob(id).await.unwrap().is_empty());
+            let state = blobs.0.published().unwrap();
+            let key = Key::Content(BlobTreeId::Blob(id));
+            let path = state.content_path(BlobTreeId::Blob(id));
+            state.unpublished.lock().unwrap().insert(key);
+            assert!(matches!(
+                blobs.open_blob(id).await,
+                Err(FileStorageError::Rejected("missing blob"))
+            ));
+            state.unpublished.lock().unwrap().remove(&key);
+            fs::write(&path, [0; 32]).unwrap();
+            assert!(matches!(
+                blobs.open_blob(id).await,
+                Err(FileStorageError::Corrupt("blob record header"))
+            ));
+            fs::write(&path, [0; 33]).unwrap();
+            assert!(matches!(
+                blobs.open_blob(id).await,
+                Err(FileStorageError::Corrupt("blob record tag"))
+            ));
+            fs::remove_file(&path).unwrap();
+            assert!(matches!(
+                blobs.open_blob(id).await,
+                Err(FileStorageError::Rejected("missing blob"))
+            ));
+            if !durable {
+                state
+                    .pending
+                    .lock()
+                    .unwrap()
+                    .insert(key, Bytes::from_static(b"\x01overlay"));
+                let body = blobs.open_blob(id).await.unwrap();
+                assert!(matches!(body, BlobBody::Bytes(_)));
+                assert_eq!(body.collect().await.unwrap(), b"overlay"[..]);
+                state.pending.lock().unwrap().remove(&key);
+            }
+            drop((created, storage));
+            fs::remove_dir_all(root).unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn stalled_blob_bodies_leave_one_worker_available_for_events_and_mutations() {
+        use tokio::io::AsyncReadExt as _;
+        for durable in [false, true] {
+            let root = root();
+            let storage = Factory::open_with_worker_limit(&root, durable, 1).unwrap();
+            let created = storage.create_document().await.unwrap();
+            let payload = Bytes::from(vec![7; 128 * 1024]);
+            let id = BlobId::for_bytes(&payload);
+            created.components.blobs.put_blob(payload).await.unwrap();
+            storage.flush().await.unwrap();
+            let idle = created.components.blobs.open_blob(id).await.unwrap();
+            let active = created.components.blobs.open_blob(id).await.unwrap();
+            let (mut writer, mut receiver) = tokio::io::duplex(1);
+            let copying = tokio::spawn(async move { active.copy_to(&mut writer).await });
+            tokio::time::timeout(std::time::Duration::from_secs(5), async {
+                receiver.read_exact(&mut [0]).await.unwrap();
+                let event = created
+                    .components
+                    .events
+                    .append(batch_event())
+                    .await
+                    .unwrap();
+                storage.flush().await.unwrap();
+                let mut history = created.components.events.read(None, Some(event.id()));
+                let mut positions = Vec::new();
+                while let Some(item) = history.next().await {
+                    if let MonitoredStreamItem::Item(item) = item.unwrap() {
+                        positions.push(item.position);
+                    }
+                }
+                assert_eq!(positions, vec![event.id()]);
+            })
+            .await
+            .unwrap();
+            assert!(!copying.is_finished());
+            copying.abort();
+            assert!(copying.await.unwrap_err().is_cancelled());
+            drop((idle, receiver, created));
+            let permit = storage.workers.clone().acquire_owned().await.unwrap();
+            drop(permit);
+            drop(storage);
+            fs::remove_dir_all(root).unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn blob_trust_does_not_relax_directory_or_checkpoint_checksums() {
+        for durable in [false, true] {
+            let (root, storage, created) = create_test_document(durable).await;
+            let directory = BlobDirectory::default();
+            let id = directory.id().unwrap();
+            created
+                .components
+                .blobs
+                .put_directory(directory)
+                .await
+                .unwrap();
+            created
+                .components
+                .checkpoints
+                .publish_checkpoint(Bytes::from_static(b"metadata"))
+                .await
+                .unwrap();
+            storage.flush().await.unwrap();
+            let opening = &created.components.blobs.0;
+            let path = opening
+                .published()
+                .unwrap()
+                .content_path(BlobTreeId::Directory(id));
+            for path in [path, opening.path.with_extension("checkpoint")] {
+                let mut bytes = fs::read(&path).unwrap();
+                bytes[0] ^= 1;
+                fs::write(path, bytes).unwrap();
+            }
+            assert!(matches!(
+                created.components.blobs.get_directory(id).await,
+                Err(FileStorageError::Corrupt("atomic value checksum"))
+            ));
+            assert!(matches!(
+                created.components.checkpoints.checkpoint().await,
+                Err(FileStorageError::Corrupt("atomic value checksum"))
+            ));
+            drop((created, storage));
+            fs::remove_dir_all(root).unwrap();
+        }
+    }
+
     #[test]
     fn worker_limits_are_shared_and_policy_specific() {
         for (durable, expected) in [(false, 4), (true, 32)] {
@@ -3287,7 +3523,7 @@ mod tests {
                 let components = storage.open_document(&created.id).await.unwrap().unwrap();
                 assert!(matches!(
                     components.blobs.get_blob(id).await,
-                    Err(FileStorageError::Corrupt("blob record header"))
+                    Err(FileStorageError::Corrupt(_))
                 ));
                 drop(components);
             }

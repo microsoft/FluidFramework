@@ -173,6 +173,44 @@ impl<Session: SeaSession> SeaArchive for SessionAdapter<Session> {
             .map_err(|error| BindingError::from_error(&error))
     }
 
+    async fn load_bodies(
+        &self,
+        start: LoadStart,
+        hint: BlobTreeHint,
+    ) -> Result<
+        sea_core::SessionBodyLoad<Self::BlobHandle, Self::EventHandle, Self::Error>,
+        Self::Error,
+    > {
+        let loaded = self
+            .inner
+            .load_bodies(start, hint)
+            .await
+            .map_err(|error| BindingError::from_error(&error))?;
+        Ok(sea_core::SessionBodyLoad {
+            snapshot: loaded.snapshot.map(erase_snapshot),
+            content: Box::pin(
+                loaded
+                    .content
+                    .map(|item| item.map_err(|error| BindingError::from_error(&error))),
+            ),
+            events: map_monitored_stream(loaded.events, Ok, |error| {
+                BindingError::from_error(&error)
+            }),
+        })
+    }
+
+    fn open_blob_trees(
+        &self,
+        roots: Vec<BlobTreeId>,
+        hint: BlobTreeHint,
+    ) -> sea_core::BlobTreeBodyStream<Self::Error> {
+        Box::pin(
+            self.inner
+                .open_blob_trees(roots, hint)
+                .map(|item| item.map_err(|error| BindingError::from_error(&error))),
+        )
+    }
+
     async fn put_blob(&self, payload: Bytes) -> Result<Self::BlobHandle, Self::Error> {
         self.inner
             .put_blob(payload)

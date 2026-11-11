@@ -763,6 +763,18 @@ async fn serve_network_stream(
     .await
 }
 
+/// Fair data-channel selection, subordinate to ready controls at a frame boundary.
+enum LoadDelivery {
+    /// The retained event fits its window.
+    SendEvent,
+    /// The retained content fits its window.
+    SendContent,
+    /// Event production advanced or ended.
+    Event(Option<protocol::Response>),
+    /// Content production advanced or ended.
+    Content(Option<crate::SeaContentResponse>),
+}
+
 /// Services independent bounded delivery windows without polling a stalled traversal.
 #[allow(clippy::too_many_lines)]
 async fn serve_load_streams(
@@ -816,13 +828,22 @@ async fn serve_load_streams(
     let mut events_done = false;
     let mut controls_done = false;
     let mut pending_event = None;
-    let mut pending_content = None;
+    let mut pending_content: Option<crate::SeaContentResponse> = None;
     loop {
         if events_done && content.is_none() && pending_event.is_none() && pending_content.is_none()
         {
             return send.finish().await;
         }
+        let event_ready = pending_event
+            .as_ref()
+            .is_some_and(|response| protocol::load_response_bytes(response) <= event_credits);
+        let content_ready = pending_content
+            .as_ref()
+            .is_some_and(|response| response.load_bytes() <= content_credits);
+        let poll_events = !events_done && pending_event.is_none();
+        let poll_content = content.is_some() && pending_content.is_none();
         let response = tokio::select! {
+            biased;
             () = send.stopped() => return Ok(()),
             frame = incoming.next(), if !controls_done => {
                 let Some(frame) = frame else {
@@ -853,7 +874,7 @@ async fn serve_load_streams(
                             continue;
                         }
                         pending_content = None;
-                        protocol::Response::LoadContentComplete
+                        protocol::Response::LoadContentComplete.into()
                     }
                     protocol::Request::CancelLoadEvents => {
                         responses.events = Box::pin(stream::empty());
@@ -870,17 +891,26 @@ async fn serve_load_streams(
                     }
                 }
             }
-            () = std::future::ready(()), if pending_event.as_ref().is_some_and(|response| protocol::load_response_bytes(response) <= event_credits) => {
+            delivery = async {
+                tokio::select! {
+                    () = std::future::ready(()), if event_ready => LoadDelivery::SendEvent,
+                    () = std::future::ready(()), if content_ready => LoadDelivery::SendContent,
+                    response = responses.events.next(), if poll_events => LoadDelivery::Event(response),
+                    response = async { content.as_mut().expect("active content").next().await }, if poll_content => LoadDelivery::Content(response),
+                    else => std::future::pending().await,
+                }
+            } => match delivery {
+            LoadDelivery::SendEvent => {
                 let response = pending_event.take().expect("ready event");
                 event_credits -= protocol::load_response_bytes(&response);
-                response
+                response.into()
             }
-            () = std::future::ready(()), if pending_content.as_ref().is_some_and(|response| protocol::load_response_bytes(response) <= content_credits) => {
+            LoadDelivery::SendContent => {
                 let response = pending_content.take().expect("ready content");
-                content_credits -= protocol::load_response_bytes(&response);
+                content_credits -= response.load_bytes();
                 response
             }
-            response = responses.events.next(), if !events_done && pending_event.is_none() => {
+            LoadDelivery::Event(response) => {
                 let Some(response) = response else {
                     events_done = true;
                     continue;
@@ -891,56 +921,54 @@ async fn serve_load_streams(
                 pending_event = Some(response);
                 continue;
             }
-            response = async { content.as_mut().expect("active content").next().await }, if content.is_some() && pending_content.is_none() => {
+            LoadDelivery::Content(response) => {
                 pending_content = Some(match response {
-                    Some(protocol::Response::BlobTree { id, payload }) => {
-                        let response = protocol::Response::BlobTree { id, payload };
+                    Some(response @ (crate::SeaContentResponse::Blob { .. } | crate::SeaContentResponse::Message(protocol::Response::BlobTree { .. }))) => {
                         let bounded = protocol::Limits {
                             max_frame_bytes: limits.max_frame_bytes.min(protocol::LOAD_CONTENT_MAX_ITEM_BYTES),
                         };
-                        if matches!(&response, protocol::Response::BlobTree { payload, .. } if payload.len() > bounded.max_frame_bytes)
-                            || protocol::encode_response_frame(role, &response, bounded).is_err() {
+                        if response.validate_frame(role, bounded).is_err() {
                             content = None;
                             if delivered_content_root {
-                                protocol::Response::LoadContentComplete
+                                protocol::Response::LoadContentComplete.into()
                             } else {
                                 protocol::Response::LoadContentError {
                                     kind: protocol::ErrorKind::Invalid,
                                     message: "load content item exceeds the bounded frame ceiling".to_owned(),
-                                }
+                                }.into()
                             }
                         } else {
                             delivered_content_root = true;
                             response
                         }
                     }
-                    Some(protocol::Response::Error { kind, message } | protocol::Response::LoadContentError { kind, message }) => {
+                    Some(crate::SeaContentResponse::Message(protocol::Response::Error { kind, message } | protocol::Response::LoadContentError { kind, message })) => {
                         content = None;
-                        protocol::Response::LoadContentError { kind, message }
+                        protocol::Response::LoadContentError { kind, message }.into()
                     }
-                    None | Some(protocol::Response::LoadContentComplete) => {
+                    None | Some(crate::SeaContentResponse::Message(protocol::Response::LoadContentComplete)) => {
                         content = None;
-                        protocol::Response::LoadContentComplete
+                        protocol::Response::LoadContentComplete.into()
                     }
                     Some(_) => {
                         content = None;
                         protocol::Response::LoadContentError {
                             kind: protocol::ErrorKind::Invalid,
                             message: "unexpected load content response".to_owned(),
-                        }
+                        }.into()
                     }
                 });
                 continue;
             }
+            }
         };
-        write_network_response(
+        write_content_response(
             &mut send,
             role,
-            &response,
+            response,
             limits,
             config.operation_timeout,
             metrics,
-            false,
         )
         .await?;
     }
@@ -1252,10 +1280,11 @@ async fn serve_content_stream(
     {
         let request = protocol::decode_request_frame(role, &frame)?;
         metrics.add_wire_bytes(frame.encoded_len()?);
-        let mut responses = match service.content_request(request).await {
+        let responses = match service.content_request(request).await {
             Ok(responses) => responses,
-            Err(response) => Box::pin(stream::once(async move { response })),
+            Err(response) => Box::pin(stream::once(async move { response.into() })),
         };
+        let mut responses = responses.peekable();
         loop {
             let response = tokio::select! {
                 biased;
@@ -1265,9 +1294,11 @@ async fn serve_content_stream(
             let Some(response) = response else {
                 break;
             };
-            if matches!(response, protocol::Response::BlobTree { .. })
-                && protocol::encode_response_frame(role, &response, limits).is_err()
-            {
+            let terminal = matches!(
+                response,
+                crate::SeaContentResponse::Message(protocol::Response::Error { .. })
+            );
+            if response.validate_frame(role, limits).is_err() {
                 write_network_response(
                     &mut send,
                     role,
@@ -1283,16 +1314,29 @@ async fn serve_content_stream(
                 .await?;
                 break;
             }
-            write_network_response(
+            let writing = write_content_response(
                 &mut send,
                 role,
-                &response,
+                response,
                 limits,
                 config.operation_timeout,
                 metrics,
-                false,
-            )
-            .await?;
+            );
+            tokio::pin!(writing);
+            if terminal {
+                writing.await?;
+            } else {
+                // Overlap one item's opening with the current write, without reading its body.
+                let next = std::pin::Pin::new(&mut responses);
+                tokio::select! {
+                    biased;
+                    result = &mut writing => result?,
+                    () = async { let _ = next.peek().await; } => writing.await?,
+                }
+            }
+            if terminal {
+                break;
+            }
         }
         write_network_response(
             &mut send,
@@ -1368,7 +1412,7 @@ async fn write_network_response(
     // QUIC writes and cached streams can both stay ready without spending Tokio's task budget.
     tokio::task::consume_budget().await;
     let encoded = protocol::encode_response_frame(role, response, limits)?;
-    timeout(operation_timeout, async {
+    let result = timeout(operation_timeout, async {
         send.write_all(&encoded).await.map_err(transport_error)?;
         if finish {
             send.finish().await.map_err(transport_error)?;
@@ -1376,8 +1420,66 @@ async fn write_network_response(
         Ok::<(), WebTransportError>(())
     })
     .await
-    .map_err(|_| WebTransportError::Timeout)??;
+    .map_err(|_| WebTransportError::Timeout)
+    .and_then(std::convert::identity);
+    if result.is_err() {
+        send.abort();
+    }
+    result?;
     metrics.add_wire_bytes(encoded.len());
+    Ok(())
+}
+
+/// Writes an exact body under one deadline; any partial-frame failure aborts this direction.
+async fn write_content_response(
+    send: &mut impl SendStream,
+    role: protocol::StreamRole,
+    response: crate::SeaContentResponse,
+    limits: protocol::Limits,
+    operation_timeout: Duration,
+    metrics: &Metrics,
+) -> Result<(), WebTransportError> {
+    let (id, body) = match response {
+        crate::SeaContentResponse::Blob { id, body } => (protocol::TreeId::Blob(id), body),
+        crate::SeaContentResponse::Message(protocol::Response::BlobTree { id, payload }) => {
+            (id, sea_core::BlobBody::Bytes(payload.into()))
+        }
+        crate::SeaContentResponse::Message(response) => {
+            return write_network_response(
+                send,
+                role,
+                &response,
+                limits,
+                operation_timeout,
+                metrics,
+                false,
+            )
+            .await;
+        }
+    };
+    let prefix = protocol::encode_blob_tree_prefix(role, id, body.len(), limits)?;
+    tokio::task::consume_budget().await;
+    let stopped = send.stopped();
+    let result = timeout(operation_timeout, async {
+        tokio::select! {
+            biased;
+            () = stopped => Err(WebTransportError::Disconnected),
+            result = async {
+                send.write_all(prefix.as_bytes()).await?;
+                body.copy_to(send).await.map_err(transport_error)?;
+                tokio::io::AsyncWriteExt::flush(send).await.map_err(transport_error)?;
+                Ok::<(), WebTransportError>(())
+            } => result,
+        }
+    })
+    .await
+    .map_err(|_| WebTransportError::Timeout)
+    .and_then(std::convert::identity);
+    if result.is_err() {
+        send.abort();
+    }
+    result?;
+    metrics.add_wire_bytes(prefix.encoded_len());
     Ok(())
 }
 
@@ -1461,7 +1563,7 @@ mod tests {
         async fn content_request(
             &self,
             _request: protocol::Request,
-        ) -> Result<SeaResponseStream, protocol::Response> {
+        ) -> Result<crate::SeaContentStream, protocol::Response> {
             unreachable!("admission tests do not open Sea streams")
         }
     }
@@ -1491,26 +1593,54 @@ mod tests {
         finished: Arc<AtomicBool>,
     }
 
-    #[async_trait]
-    impl SendStream for TestSend {
-        async fn write_all(&mut self, bytes: &[u8]) -> Result<(), WebTransportError> {
+    impl tokio::io::AsyncWrite for TestSend {
+        fn poll_write(
+            self: std::pin::Pin<&mut Self>,
+            _: &mut std::task::Context<'_>,
+            bytes: &[u8],
+        ) -> std::task::Poll<std::io::Result<usize>> {
             if self.fail.load(Ordering::Relaxed) {
-                return Err(WebTransportError::Disconnected);
+                return std::task::Poll::Ready(Err(std::io::ErrorKind::BrokenPipe.into()));
             }
             self.writes.fetch_add(1, Ordering::Relaxed);
             if let Some(responses) = &self.responses {
                 responses.send(bytes.to_vec()).unwrap();
             }
-            Ok(())
+            std::task::Poll::Ready(Ok(bytes.len()))
         }
 
+        fn poll_flush(
+            self: std::pin::Pin<&mut Self>,
+            _: &mut std::task::Context<'_>,
+        ) -> std::task::Poll<std::io::Result<()>> {
+            std::task::Poll::Ready(Ok(()))
+        }
+
+        fn poll_shutdown(
+            self: std::pin::Pin<&mut Self>,
+            _: &mut std::task::Context<'_>,
+        ) -> std::task::Poll<std::io::Result<()>> {
+            self.finished.store(true, Ordering::Relaxed);
+            std::task::Poll::Ready(Ok(()))
+        }
+    }
+
+    #[async_trait]
+    impl SendStream for TestSend {
         async fn finish(&mut self) -> Result<(), WebTransportError> {
             self.finished.store(true, Ordering::Relaxed);
             Ok(())
         }
 
-        async fn stopped(&mut self) {
-            let _ = self.stopped.wait_for(|stopped| *stopped).await;
+        fn stopped(&self) -> impl Future<Output = ()> + Send + 'static {
+            let mut stopped = self.stopped.clone();
+            async move {
+                let _ = stopped.wait_for(|stopped| *stopped).await;
+            }
+        }
+
+        fn abort(&mut self) {
+            self.fail.store(true, Ordering::SeqCst);
         }
     }
 
@@ -1519,18 +1649,40 @@ mod tests {
         responses: tokio::sync::mpsc::UnboundedReceiver<Vec<u8>>,
         stop: watch::Sender<bool>,
         serving: tokio::task::JoinHandle<Result<(), WebTransportError>>,
+        /// Observes an explicit physical abort rather than graceful completion.
+        aborted: Arc<AtomicBool>,
     }
 
     impl LoadHarness {
         async fn start(events: SeaResponseStream, content: SeaResponseStream) -> Self {
+            Self::start_bodies(events, Box::pin(content.map(Into::into))).await
+        }
+
+        /// Starts opening delivery without materializing the fixture's reader bodies.
+        async fn start_bodies(events: SeaResponseStream, content: crate::SeaContentStream) -> Self {
+            Self::start_bodies_with_timeout(
+                events,
+                content,
+                TransportConfig::default().operation_timeout,
+            )
+            .await
+        }
+
+        /// Selects one deadline for fault tests without changing production limits.
+        async fn start_bodies_with_timeout(
+            events: SeaResponseStream,
+            content: crate::SeaContentStream,
+            operation_timeout: Duration,
+        ) -> Self {
             let (requests, receive) = tokio::sync::mpsc::unbounded_channel();
             let (output, responses) = tokio::sync::mpsc::unbounded_channel();
             let (stop, stopped) = watch::channel(false);
+            let aborted = Arc::new(AtomicBool::new(false));
             let send = TestSend {
                 writes: Arc::new(AtomicUsize::new(0)),
                 responses: Some(output),
                 stopped,
-                fail: Arc::new(AtomicBool::new(false)),
+                fail: aborted.clone(),
                 finished: Arc::new(AtomicBool::new(false)),
             };
             let opening = protocol::Response::EventStreamOpened {
@@ -1546,7 +1698,10 @@ mod tests {
                         events: Box::pin(stream::iter([opening]).chain(events)),
                         content,
                     },
-                    &TransportConfig::default(),
+                    &TransportConfig {
+                        operation_timeout,
+                        ..TransportConfig::default()
+                    },
                     &Metrics::default(),
                 )
                 .await
@@ -1556,6 +1711,7 @@ mod tests {
                 responses,
                 stop,
                 serving,
+                aborted,
             };
             assert!(matches!(
                 harness.response().await,
@@ -1578,16 +1734,20 @@ mod tests {
         }
 
         async fn response(&mut self) -> protocol::Response {
-            let bytes = timeout(Duration::from_secs(1), self.responses.recv())
-                .await
-                .unwrap()
-                .unwrap();
             let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
-            decoder.push(&bytes);
-            protocol::decode_response_network_frame(
-                protocol::StreamRole::Event,
-                &decoder.next_frame().unwrap().unwrap(),
-            )
+            timeout(Duration::from_secs(1), async {
+                loop {
+                    if let Some(frame) = decoder.next_frame().unwrap() {
+                        return protocol::decode_response_network_frame(
+                            protocol::StreamRole::Event,
+                            &frame,
+                        )
+                        .unwrap();
+                    }
+                    decoder.push(&self.responses.recv().await.unwrap());
+                }
+            })
+            .await
             .unwrap()
         }
 
@@ -1610,6 +1770,324 @@ mod tests {
             id: protocol::TreeId::Blob([0; 32]),
             payload: vec![0; bytes],
         }
+    }
+
+    /// Returns an indefinitely pending reader with observable poll and drop boundaries.
+    fn pending_body() -> (
+        crate::SeaContentResponse,
+        Arc<tokio::sync::Notify>,
+        Arc<AtomicBool>,
+    ) {
+        /// Models filesystem admission without emitting any body bytes.
+        struct PendingBody {
+            /// Signals that collection is waiting on this source.
+            polled: Arc<tokio::sync::Notify>,
+            /// Observes cancellation of the owned source.
+            dropped: Arc<AtomicBool>,
+        }
+        impl tokio::io::AsyncRead for PendingBody {
+            fn poll_read(
+                self: std::pin::Pin<&mut Self>,
+                _: &mut std::task::Context<'_>,
+                _: &mut tokio::io::ReadBuf<'_>,
+            ) -> std::task::Poll<std::io::Result<()>> {
+                self.polled.notify_one();
+                std::task::Poll::Pending
+            }
+        }
+        impl Drop for PendingBody {
+            fn drop(&mut self) {
+                self.dropped.store(true, Ordering::SeqCst);
+            }
+        }
+        let polled = Arc::new(tokio::sync::Notify::new());
+        let dropped = Arc::new(AtomicBool::new(false));
+        let response = crate::SeaContentResponse::Blob {
+            id: [0; 32],
+            body: sea_core::BlobBody::Reader {
+                length: 1,
+                reader: Box::pin(PendingBody {
+                    polled: polled.clone(),
+                    dropped: dropped.clone(),
+                }),
+            },
+        };
+        (response, polled, dropped)
+    }
+
+    #[tokio::test]
+    async fn logical_cancellation_finishes_started_body_before_events_and_terminal_marker() {
+        let (mut source, reader) = tokio::io::duplex(16);
+        let body = crate::SeaContentResponse::Blob {
+            id: [0; 32],
+            body: sea_core::BlobBody::Reader {
+                length: 3,
+                reader: Box::pin(reader),
+            },
+        };
+        let (queued, _, dropped) = pending_body();
+        let (event, ready) = tokio::sync::oneshot::channel();
+        let mut harness = LoadHarness::start_bodies(
+            Box::pin(stream::once(async move { ready.await.unwrap() }).chain(stream::pending())),
+            Box::pin(stream::iter([body, queued])),
+        )
+        .await;
+        let prefix = harness.responses.recv().await.unwrap();
+        event.send(load_progress()).unwrap();
+        harness.request(&protocol::Request::CancelLoadContent);
+        assert!(
+            timeout(Duration::from_millis(20), harness.responses.recv())
+                .await
+                .is_err()
+        );
+        tokio::io::AsyncWriteExt::write_all(&mut source, b"abc")
+            .await
+            .unwrap();
+        let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
+        decoder.push(&prefix);
+        decoder.push(&harness.responses.recv().await.unwrap());
+        assert_eq!(
+            protocol::decode_response_network_frame(
+                protocol::StreamRole::Event,
+                &decoder.next_frame().unwrap().unwrap(),
+            )
+            .unwrap(),
+            protocol::Response::BlobTree {
+                id: protocol::TreeId::Blob([0; 32]),
+                payload: b"abc".to_vec()
+            }
+        );
+        let remaining = [harness.response().await, harness.response().await];
+        assert!(remaining.contains(&load_progress()));
+        assert!(remaining.contains(&protocol::Response::LoadContentComplete));
+        assert!(dropped.load(Ordering::SeqCst));
+        harness.finish().await;
+    }
+
+    #[tokio::test]
+    async fn opening_peer_stop_aborts_a_started_pending_body() {
+        let (body, polled, dropped) = pending_body();
+        let harness =
+            LoadHarness::start_bodies(Box::pin(stream::pending()), Box::pin(stream::iter([body])))
+                .await;
+        timeout(Duration::from_secs(1), polled.notified())
+            .await
+            .unwrap();
+        harness.stop.send(true).unwrap();
+        assert!(
+            timeout(Duration::from_secs(1), harness.serving)
+                .await
+                .unwrap()
+                .unwrap()
+                .is_err()
+        );
+        assert!(dropped.load(Ordering::SeqCst));
+        assert!(harness.aborted.load(Ordering::SeqCst));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn cancellation_does_not_restart_the_started_frame_deadline() {
+        let (body, polled, dropped) = pending_body();
+        let mut harness = LoadHarness::start_bodies_with_timeout(
+            Box::pin(stream::pending()),
+            Box::pin(stream::iter([body])),
+            Duration::from_secs(10),
+        )
+        .await;
+        polled.notified().await;
+        let started = tokio::time::Instant::now();
+        tokio::time::advance(Duration::from_secs(9)).await;
+        harness.request(&protocol::Request::CancelLoadContent);
+        assert!(matches!(
+            harness.serving.await.unwrap(),
+            Err(WebTransportError::Timeout)
+        ));
+        assert_eq!(started.elapsed(), Duration::from_secs(10));
+        assert!(dropped.load(Ordering::SeqCst));
+        assert!(harness.aborted.load(Ordering::SeqCst));
+        let prefix = harness.responses.recv().await.unwrap();
+        let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
+        decoder.push(&prefix);
+        assert!(decoder.next_frame().unwrap().is_none());
+        assert!(decoder.finish().is_err());
+        assert!(harness.responses.recv().await.is_none());
+    }
+
+    #[tokio::test]
+    async fn rejected_body_is_not_polled_or_partially_sent() {
+        let (mut response, polled, dropped) = pending_body();
+        if let crate::SeaContentResponse::Blob {
+            body: sea_core::BlobBody::Reader { length, .. },
+            ..
+        } = &mut response
+        {
+            *length = u64::MAX;
+        } else {
+            unreachable!();
+        }
+        let (output, mut responses) = tokio::sync::mpsc::unbounded_channel();
+        let (_stop, stopped) = watch::channel(false);
+        let mut send = TestSend {
+            writes: Arc::default(),
+            responses: Some(output),
+            stopped,
+            fail: Arc::default(),
+            finished: Arc::default(),
+        };
+        assert!(
+            write_content_response(
+                &mut send,
+                protocol::StreamRole::Content,
+                response,
+                protocol::Limits::default(),
+                Duration::from_secs(1),
+                &Metrics::default()
+            )
+            .await
+            .is_err()
+        );
+        assert_eq!(send.writes.load(Ordering::SeqCst), 0);
+        assert!(dropped.load(Ordering::SeqCst));
+        assert!(
+            timeout(Duration::from_millis(10), polled.notified())
+                .await
+                .is_err()
+        );
+        assert!(!send.fail.load(Ordering::SeqCst));
+        write_network_response(
+            &mut send,
+            protocol::StreamRole::Content,
+            &protocol::Response::ResponseComplete,
+            protocol::Limits::default(),
+            Duration::from_secs(1),
+            &Metrics::default(),
+            false,
+        )
+        .await
+        .unwrap();
+        assert!(responses.recv().await.is_some());
+    }
+
+    #[tokio::test]
+    async fn demand_body_failure_or_peer_stop_aborts_without_later_frames() {
+        for cancel in [false, true] {
+            let (pending, polled, dropped) = pending_body();
+            let first = if cancel {
+                pending
+            } else {
+                crate::SeaContentResponse::Blob {
+                    id: [0; 32],
+                    body: sea_core::BlobBody::Reader {
+                        length: 1,
+                        reader: Box::pin(std::io::Cursor::new(b"")),
+                    },
+                }
+            };
+            let (queued, queued_polled, queued_dropped) = pending_body();
+            let admitted = Arc::new(AtomicU64::new(0));
+            let count = admitted.clone();
+            let content = Box::pin(stream::iter([first, queued, load_blob(1).into()]).inspect(
+                move |_| {
+                    count.fetch_add(1, Ordering::SeqCst);
+                },
+            ));
+            let service = Arc::new(StreamBindingProbe {
+                admitted: Some(1),
+                current: Arc::new(AtomicU64::new(1)),
+                calls: Arc::default(),
+                finished: Arc::default(),
+                submissions: None,
+                content: Arc::new(Mutex::new(Some(content))),
+            });
+            let (requests, receive) = tokio::sync::mpsc::unbounded_channel();
+            let (output, responses) = tokio::sync::mpsc::unbounded_channel();
+            let (stop, stopped) = watch::channel(false);
+            let aborted = Arc::new(AtomicBool::new(false));
+            let finished = Arc::new(AtomicBool::new(false));
+            let send = TestSend {
+                writes: Arc::default(),
+                responses: Some(output),
+                stopped,
+                fail: aborted.clone(),
+                finished: finished.clone(),
+            };
+            let role = protocol::StreamRole::Content;
+            requests
+                .send(
+                    protocol::encode_request_frame(
+                        role,
+                        &protocol::Request::GetBlobTrees {
+                            roots: vec![protocol::TreeId::Blob([0; 32])],
+                            hint: protocol::LoadingHint::default(),
+                        },
+                        protocol::Limits::default(),
+                    )
+                    .unwrap(),
+                )
+                .unwrap();
+            drop(requests);
+            let serving = tokio::spawn(async move {
+                serve_content_stream(
+                    send,
+                    TestReceive(receive),
+                    service,
+                    &TransportConfig::default(),
+                    &Metrics::default(),
+                    role,
+                    protocol::Request::OpenContentStream {
+                        authority: Vec::new(),
+                    },
+                )
+                .await
+            });
+            if cancel {
+                timeout(Duration::from_secs(1), polled.notified())
+                    .await
+                    .unwrap();
+                timeout(Duration::from_secs(1), async {
+                    while admitted.load(Ordering::SeqCst) < 2 {
+                        tokio::task::yield_now().await;
+                    }
+                })
+                .await
+                .unwrap();
+                assert_eq!(admitted.load(Ordering::SeqCst), 2);
+                assert!(futures_util::poll!(Box::pin(queued_polled.notified())).is_pending());
+                stop.send(true).unwrap();
+            }
+            assert!(
+                timeout(Duration::from_secs(1), serving)
+                    .await
+                    .unwrap()
+                    .unwrap()
+                    .is_err()
+            );
+            assert!(queued_dropped.load(Ordering::SeqCst));
+            assert_eq!(admitted.load(Ordering::SeqCst), if cancel { 2 } else { 1 });
+            assert_partial_demand_frame(responses).await;
+            assert!(aborted.load(Ordering::SeqCst));
+            assert!(!finished.load(Ordering::SeqCst));
+            assert!(!cancel || dropped.load(Ordering::SeqCst));
+        }
+    }
+
+    /// Requires a successful bind followed only by an incomplete demand frame.
+    async fn assert_partial_demand_frame(
+        mut responses: tokio::sync::mpsc::UnboundedReceiver<Vec<u8>>,
+    ) {
+        let mut messages = Vec::new();
+        let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
+        while let Some(bytes) = responses.recv().await {
+            decoder.push(&bytes);
+            while let Some(frame) = decoder.next_frame().unwrap() {
+                messages.push(
+                    protocol::decode_response_network_frame(protocol::StreamRole::Content, &frame)
+                        .unwrap(),
+                );
+            }
+        }
+        assert_eq!(messages, [protocol::Response::Acknowledged]);
+        assert!(decoder.finish().is_err());
     }
 
     #[tokio::test]
@@ -1910,6 +2388,8 @@ mod tests {
         submissions: Option<
             tokio::sync::mpsc::UnboundedSender<tokio::sync::oneshot::Sender<protocol::Response>>,
         >,
+        /// Optional reader-backed demand response fixture.
+        content: Arc<Mutex<Option<crate::SeaContentStream>>>,
     }
 
     impl StreamBindingProbe {
@@ -1944,6 +2424,7 @@ mod tests {
                 calls: self.calls.clone(),
                 finished: self.finished.clone(),
                 submissions: self.submissions.clone(),
+                content: self.content.clone(),
             }))
         }
 
@@ -2002,10 +2483,13 @@ mod tests {
         async fn content_request(
             &self,
             request: protocol::Request,
-        ) -> Result<SeaResponseStream, protocol::Response> {
+        ) -> Result<crate::SeaContentStream, protocol::Response> {
             self.record(request);
+            if let Some(content) = self.content.lock().unwrap().take() {
+                return Ok(content);
+            }
             Ok(Box::pin(stream::once(async {
-                protocol::Response::Acknowledged
+                protocol::Response::Acknowledged.into()
             })))
         }
     }
@@ -2045,6 +2529,7 @@ mod tests {
                 calls: calls.clone(),
                 finished: finished.clone(),
                 submissions: Some(submissions),
+                content: Arc::default(),
             });
             let send = TestSend {
                 writes: Arc::new(AtomicUsize::new(0)),
@@ -2415,6 +2900,7 @@ mod tests {
                     calls: calls.clone(),
                     finished: finished.clone(),
                     submissions: None,
+                    content: Arc::default(),
                 });
                 let limits = protocol::Limits::default();
                 let opening = protocol::encode_request_frame(role, &opening, limits).unwrap();

@@ -28,6 +28,16 @@ pub trait BlobStore: ReferenceableStore<Id = BlobTreeId> {
     /// must verify the stored representation against `id` before transforming it.
     async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error>;
 
+    /// Opens an owned known-length body under the same visibility rules as [`Self::get_blob`].
+    ///
+    /// The compatibility implementation materializes through `get_blob`.
+    /// Implementations overriding both operations must avoid mutually recursive defaults.
+    /// Read errors after opening are reported by the body. An opened file's extent bounds its
+    /// transfer but cannot detect every truncation or alteration that occurred before opening.
+    async fn open_blob(&self, id: BlobId) -> Result<crate::BlobBody, Self::Error> {
+        self.get_blob(id).await.map(crate::BlobBody::from)
+    }
+
     /// Publishes or deduplicates a directory after verifying all transitive children.
     async fn put_directory(&self, directory: BlobDirectory) -> Result<Self::Handle, Self::Error>;
 

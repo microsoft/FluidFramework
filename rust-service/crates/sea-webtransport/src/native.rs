@@ -1503,6 +1503,8 @@ mod tests {
         incoming: mpsc::UnboundedReceiver<Vec<u8>>,
         /// Reports explicit cancellation separately from dropping a transport handle.
         cancelled: Option<oneshot::Sender<()>>,
+        /// Observes consumed fragments before the test cancels a logical receiver.
+        received: Option<Arc<tokio::sync::Notify>>,
     }
 
     #[async_trait]
@@ -1537,7 +1539,11 @@ mod tests {
         }
 
         async fn receive(&mut self) -> Result<Option<Vec<u8>>, Self::Error> {
-            Ok(self.incoming.recv().await)
+            let bytes = self.incoming.recv().await;
+            if let Some(received) = &self.received {
+                received.notify_one();
+            }
+            Ok(bytes)
         }
 
         async fn cancel(&mut self) -> Result<(), Self::Error> {
@@ -1576,16 +1582,30 @@ mod tests {
         SessionClient<OpeningTransport>,
         mpsc::UnboundedSender<Vec<u8>>,
     ) {
+        opening_client_with_observed_reads(reference, additional, None).await
+    }
+
+    /// Optionally observes physical opening reads independently of decoded logical items.
+    async fn opening_client_with_observed_reads(
+        reference: Option<EventPosition>,
+        additional: Vec<OpeningStream>,
+        received: Option<Arc<tokio::sync::Notify>>,
+    ) -> (
+        SessionClient<OpeningTransport>,
+        mpsc::UnboundedSender<Vec<u8>>,
+    ) {
         let (events, incoming) = mpsc::unbounded_channel();
         let (author, author_incoming) = mpsc::unbounded_channel();
         let mut streams = VecDeque::from([
             OpeningStream {
                 incoming,
                 cancelled: None,
+                received,
             },
             OpeningStream {
                 incoming: author_incoming,
                 cancelled: None,
+                received: None,
             },
         ]);
         streams.extend(additional);
@@ -1645,6 +1665,7 @@ mod tests {
             streams.push(OpeningStream {
                 incoming,
                 cancelled: None,
+                received: None,
             });
         }
         let (client, _events) = opening_client_with_streams(None, streams).await;
@@ -1700,10 +1721,12 @@ mod tests {
                     OpeningStream {
                         incoming,
                         cancelled: None,
+                        received: None,
                     },
                     OpeningStream {
                         incoming: opening_incoming,
                         cancelled: None,
+                        received: None,
                     },
                 ],
             )
@@ -1770,6 +1793,7 @@ mod tests {
             streams.push(OpeningStream {
                 incoming,
                 cancelled: None,
+                received: None,
             });
         }
         reply(&senders[0], StreamRole::Content, &Response::Acknowledged);
@@ -1827,6 +1851,7 @@ mod tests {
                 vec![OpeningStream {
                     incoming,
                     cancelled: None,
+                    received: None,
                 }],
             )
             .await;
@@ -1867,6 +1892,7 @@ mod tests {
             streams.push(OpeningStream {
                 incoming,
                 cancelled: None,
+                received: None,
             });
         }
         let (client, _events) = opening_client_with_streams(None, streams).await;
@@ -1922,10 +1948,12 @@ mod tests {
                 OpeningStream {
                     incoming,
                     cancelled: None,
+                    received: None,
                 },
                 OpeningStream {
                     incoming: pending,
                     cancelled: None,
+                    received: None,
                 },
             ],
         )
@@ -1974,6 +2002,7 @@ mod tests {
                 vec![OpeningStream {
                     incoming,
                     cancelled: None,
+                    received: None,
                 }],
             )
             .await;
@@ -2012,6 +2041,7 @@ mod tests {
                 streams.push(OpeningStream {
                     incoming,
                     cancelled: None,
+                    received: None,
                 });
             }
             let (client, _events) = opening_client_with_streams(None, streams).await;
@@ -2200,6 +2230,72 @@ mod tests {
             })
             .is_err()
         );
+    }
+
+    #[tokio::test]
+    async fn cancelling_content_drains_a_partially_received_frame_before_delivering_events() {
+        use futures_util::FutureExt as _;
+
+        let received = Arc::new(tokio::sync::Notify::new());
+        let (client, sender) =
+            opening_client_with_observed_reads(None, Vec::new(), Some(received.clone())).await;
+        reply(
+            &sender,
+            StreamRole::Event,
+            &Response::StreamProgress {
+                previous: None,
+                latest_known: None,
+                status: protocol::StreamStatus::AwaitingNewItems,
+            },
+        );
+        let mut loaded = client
+            .load(LoadStart::LatestSnapshot, sea_core::BlobTreeHint::default())
+            .await
+            .unwrap();
+        loaded.events.next().await.unwrap().unwrap();
+        while received.notified().now_or_never().is_some() {}
+        let frame = protocol::encode_response_frame(
+            StreamRole::Event,
+            &Response::BlobTree {
+                id: protocol::TreeId::Blob([0; 32]),
+                payload: vec![42; 16 * 1024],
+            },
+            protocol::Limits::default(),
+        )
+        .unwrap();
+        sender.send(frame[..frame.len() - 1].to_vec()).unwrap();
+        tokio::time::timeout(std::time::Duration::from_secs(1), received.notified())
+            .await
+            .unwrap();
+        assert!(loaded.content.next().now_or_never().is_none());
+        drop(loaded.content);
+        sender.send(frame[frame.len() - 1..].to_vec()).unwrap();
+        reply(&sender, StreamRole::Event, &Response::LoadContentComplete);
+        reply(
+            &sender,
+            StreamRole::Event,
+            &Response::LoadEvent(Box::new(protocol::StreamEvent {
+                kind: protocol::SessionEventKind::Application,
+                position: 1,
+                session: 2,
+                reference: None,
+                minimum_reference: None,
+                event: protocol::Event {
+                    payload: b"after".to_vec(),
+                    blob_tree: None,
+                },
+            })),
+        );
+        let item = tokio::time::timeout(std::time::Duration::from_secs(1), loaded.events.next())
+            .await
+            .unwrap()
+            .unwrap()
+            .unwrap();
+        let MonitoredStreamItem::Item(event) = item else {
+            panic!("expected the event following the discarded body")
+        };
+        assert_eq!(event.committed.position, EventPosition::new(1));
+        assert_eq!(event.committed.event.payload, Bytes::from_static(b"after"));
     }
 
     #[tokio::test]
@@ -2424,6 +2520,7 @@ mod tests {
                 vec![OpeningStream {
                     incoming,
                     cancelled: None,
+                    received: None,
                 }],
             )
             .await;
@@ -2481,6 +2578,7 @@ mod tests {
                 vec![OpeningStream {
                     incoming,
                     cancelled: None,
+                    received: None,
                 }],
             )
             .await;
@@ -2548,10 +2646,12 @@ mod tests {
                         OpeningStream {
                             incoming,
                             cancelled: None,
+                            received: None,
                         },
                         OpeningStream {
                             incoming: snapshot_incoming,
                             cancelled: Some(cancelled),
+                            received: None,
                         },
                     ])),
                 },

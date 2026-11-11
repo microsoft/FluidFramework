@@ -10,6 +10,8 @@ The [JavaScript bindings](src/bindings.rs) and [signal adapters](src/signals.rs)
 The [core session contracts](../sea-core/src/session.rs) define archive, author, and snapshot behavior; this crate adapts those contracts rather than defining another session model.
 
 The transport-independent session adapter preserves concrete availability handles while hiding their implementation types.
+Its Rust body APIs forward owned bodies and preserve error classification without collecting them.
+The JavaScript-facing byte APIs still return materialized payloads.
 Storage, transport, and decorator construction remain separate from session operations.
 Errors retain their core service classification, and snapshot publication delegates to the original session with its original handles.
 

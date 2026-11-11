@@ -12,12 +12,15 @@ import { resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { createTemporaryBenchmarkData } from "../../../scripts/benchmark-temporary-data.mjs";
 import { freePort } from "../browser/chromium.mjs";
+import { snapshotClientArtifact } from "./snapshot-artifacts.mjs";
 import {
 	distribution,
 	initializeNetwork,
 	networkCounters,
 	probeRtt,
+	probeTcpRtt,
 	setRtt,
+	setTcpServicePort,
 } from "./snapshot-network.mjs";
 
 const packageRoot = resolve(import.meta.dirname, "..");
@@ -61,6 +64,7 @@ const config = {
 	rates: [],
 	rateSeconds: 10,
 	storage: "memory",
+	transport: "webtransport",
 	...JSON.parse(json),
 };
 for (const name of ["bytes", "concurrency", "rates", "rtts"]) {
@@ -94,11 +98,15 @@ assert.ok(
 		),
 );
 assert.ok(["memory", "buffered-file", "durable-file"].includes(config.storage));
+const clientArtifact = snapshotClientArtifact(root, config);
 assert.ok(["load", "download"].includes(config.workload));
 const output = resolve(outputPath);
 mkdirSync(output, { recursive: true });
 const services = [];
 const samples = [];
+const browserPorts = new Set();
+while (browserPorts.size < config.workers) browserPorts.add(await freePort());
+const httpPorts = [...browserPorts];
 const allowedCpus = readFileSync("/proc/self/status", "utf8")
 	.match(/^Cpus_allowed_list:\s+(.+)$/mu)[1]
 	.trim()
@@ -115,7 +123,9 @@ const serviceCpus = allowedCpus.slice(0, Math.min(4, Math.floor(allowedCpus.leng
 const clientCpus = allowedCpus.slice(serviceCpus.length);
 const clockTicks = Number(execFileSync("getconf", ["CLK_TCK"], { encoding: "utf8" }));
 const certificateDirectory = resolve(root, "rust-service/tests/webtransport-browser/.certs");
-const native = resolve(root, "rust-service/target/release/sea-webtransport-server");
+const native = resolve(
+	config.serverBinary ?? resolve(root, "rust-service/target/release/sea-webtransport-server"),
+);
 const bundle = resolve(packageRoot, "dist/shared-tree-snapshot.js");
 const hash = (file) => createHash("sha256").update(readFileSync(file)).digest("hex");
 const manifest = {
@@ -131,13 +141,9 @@ const manifest = {
 		bundleSha256: hash(bundle),
 		runnerSha256: hash(import.meta.filename),
 		networkHelperSha256: hash(resolve(import.meta.dirname, "snapshot-network.mjs")),
+		artifactHelperSha256: hash(resolve(import.meta.dirname, "snapshot-artifacts.mjs")),
 		serviceSha256: hash(native),
-		wasmSha256: hash(
-			resolve(
-				root,
-				`rust-service/packages/sea-typescript/generated/${config.compression ? "webtransport-compression" : "webtransport"}/web/sea_wasm_bg.wasm`,
-			),
-		),
+		...clientArtifact,
 	},
 	environment: {
 		cpu: cpus()[0]?.model,
@@ -184,9 +190,12 @@ async function stop(child) {
 	}
 }
 
-async function startService(tinylicious) {
-	const data = createTemporaryBenchmarkData("snapshot-benchmark");
+async function startService(
+	tinylicious,
+	data = createTemporaryBenchmarkData("snapshot-benchmark"),
+) {
 	const port = tinylicious ? await freePort() : undefined;
+	const shutdownMarker = resolve(data.path, `shutdown-${Date.now()}.request`);
 	const logs = [];
 	const child = spawn(
 		"taskset",
@@ -205,6 +214,7 @@ async function startService(tinylicious) {
 						resolve(certificateDirectory, "cert.pem"),
 						resolve(certificateDirectory, "key.pem"),
 						resolve(data.path, "data"),
+						shutdownMarker,
 					]),
 		],
 		{
@@ -216,6 +226,14 @@ async function startService(tinylicious) {
 				SEA_STORAGE_MODE: config.storage,
 				SEA_EXPERIMENTAL_LIVE_CACHE: "true",
 				SEA_MAX_CONNECTIONS: String(config.maxConnections),
+				...(config.transport === "websocket"
+					? {
+							SEA_WEBSOCKET_BIND: "127.0.0.1:0",
+							SEA_WEBSOCKET_ORIGINS: httpPorts
+								.map((port) => `http://localhost:${port}`)
+								.join(","),
+						}
+					: {}),
 			},
 			stdio: ["ignore", "pipe", "pipe"],
 		},
@@ -226,7 +244,7 @@ async function startService(tinylicious) {
 	});
 	child.stdout.on("data", (chunk) => logs.push(chunk.toString()));
 	child.stderr.on("data", (chunk) => logs.push(chunk.toString()));
-	const service = { child, data, port, logs, tinylicious };
+	const service = { child, data, port, logs, tinylicious, shutdownMarker };
 	services.push(service);
 	const deadline = Date.now() + 30_000;
 	while (Date.now() < deadline) {
@@ -240,8 +258,15 @@ async function startService(tinylicious) {
 				if (!(error instanceof TypeError) && error.name !== "TimeoutError") throw error;
 			}
 		} else {
-			const url = logs.join("").match(/^WEBTRANSPORT_URL=(.+)$/mu)?.[1];
+			const url = logs
+				.join("")
+				.match(
+					config.transport === "websocket"
+						? /^WEBSOCKET_URL=(.+)$/mu
+						: /^WEBTRANSPORT_URL=(.+)$/mu,
+				)?.[1];
 			if (url) {
+				if (config.transport === "websocket") setTcpServicePort(Number(new URL(url).port));
 				service.url = url;
 				service.certificateHash = readFileSync(
 					resolve(certificateDirectory, "cert.sha256"),
@@ -253,6 +278,27 @@ async function startService(tinylicious) {
 		await delay(100);
 	}
 	throw new Error(`Service startup timed out:\n${logs.join("")}`);
+}
+
+/** Flushes publication and reopens file-backed fixtures before the measured interval. */
+async function reopenPersisted(service) {
+	if (service.tinylicious || config.storage === "memory") return service;
+	writeFileSync(service.shutdownMarker, "");
+	const deadline = Date.now() + 30_000;
+	while (service.child.exitCode === null && service.child.signalCode === null) {
+		assert.ok(Date.now() < deadline, "timed out draining fixture publication");
+		await delay(25);
+	}
+	assert.equal(service.child.exitCode, 0, service.logs.join(""));
+	const restart = samples.filter((sample) => sample.action === "reopen").length;
+	writeFileSync(resolve(output, `sea-before-reopen-${restart}.log`), service.logs.join(""));
+	services.splice(services.indexOf(service), 1);
+	const reopened = await startService(false, service.data);
+	samples.push({
+		action: "reopen",
+		result: { status: "passed", source: "reopened-persisted-warm", pid: reopened.child.pid },
+	});
+	return reopened;
 }
 
 function resources(service) {
@@ -283,7 +329,7 @@ function sampleProcessTree(pid, processes) {
 	}
 }
 
-async function browser(service, query) {
+async function browser(service, query, worker = 0) {
 	const child = spawn(
 		"taskset",
 		[
@@ -302,13 +348,18 @@ async function browser(service, query) {
 				prefetchBlobs: String(config.prefetchBlobs),
 				compression: String(config.compression),
 				blobBytes: String(config.blobBytes),
+				remoteMode: config.transport,
 				...(service.port ? { port: String(service.port) } : {}),
 			}).toString(),
 		],
 		{
 			cwd: packageRoot,
 			stdio: ["ignore", "pipe", "pipe"],
-			env: { ...process.env, BENCHMARK_BROWSER_TIMEOUT_MS: "240000" },
+			env: {
+				...process.env,
+				BENCHMARK_BROWSER_TIMEOUT_MS: "240000",
+				BENCHMARK_HTTP_PORT: String(httpPorts[worker]),
+			},
 		},
 	);
 	let stdout = "";
@@ -351,7 +402,7 @@ async function browser(service, query) {
 }
 
 try {
-	const sea = config.cases.some((name) => name !== "tinylicious")
+	let sea = config.cases.some((name) => name !== "tinylicious")
 		? await startService(false)
 		: undefined;
 	const tiny = config.cases.includes("tinylicious") ? await startService(true) : undefined;
@@ -366,7 +417,11 @@ try {
 		assert.ok(probe.p50 >= Math.max(0, rtt - 5) && probe.p50 < rtt + 30, "RTT verification");
 		const control = distribution(await probeRtt("127.0.0.1"));
 		assert.ok(control.p50 < 20, "control traffic was delayed");
-		manifest.network.probes.push({ rtt, probe, control });
+		const tcp =
+			config.transport === "websocket" ? distribution(await probeTcpRtt()) : undefined;
+		if (tcp !== undefined)
+			assert.ok(tcp.p50 >= Math.max(0, rtt - 5) && tcp.p50 < rtt + 30, "TCP RTT verification");
+		manifest.network.probes.push({ rtt, probe, control, tcp });
 	}
 	for (const bytes of config.bytes) {
 		setRtt(0);
@@ -375,10 +430,11 @@ try {
 			const service = backend === "tinylicious" ? tiny : sea;
 			const seeded = await browser(service, { backend, bytes: String(bytes), action: "seed" });
 			assert.equal(seeded.status, "passed", JSON.stringify(seeded));
-			documents.set(backend, seeded.document);
+			documents.set(backend, seeded);
 			samples.push({ action: "seed", backend, bytes, result: seeded });
 			save();
 		}
+		if (sea !== undefined && config.repetitions > 0) sea = await reopenPersisted(sea);
 		// Rotate backend and delay order across repetitions to reduce ordering bias.
 		for (let repetition = 0; repetition < config.repetitions; repetition++) {
 			const order = [
@@ -395,7 +451,10 @@ try {
 						action: "load",
 						backend,
 						bytes: String(bytes),
-						document: documents.get(backend),
+						document: documents.get(backend).document,
+						...(documents.get(backend).payloadId === undefined
+							? {}
+							: { payloadId: documents.get(backend).payloadId }),
 					});
 					const after = resources(service);
 					const networkAfter = networkCounters();
@@ -441,7 +500,7 @@ try {
 				})),
 				...config.rates.map((rate) => ({ rate, count: rate * config.rateSeconds })),
 			]) {
-				const service = backend === "tinylicious" ? tiny : sea;
+				let service = backend === "tinylicious" ? tiny : sea;
 				const seeded = await browser(service, {
 					backend,
 					bytes: String(bytes),
@@ -450,6 +509,8 @@ try {
 				samples.push({ action: "capacity-seed", backend, bytes, ...settings, result: seeded });
 				save();
 				assert.equal(seeded.status, "passed", JSON.stringify(seeded));
+				service = await reopenPersisted(service);
+				if (backend !== "tinylicious") sea = service;
 				const before = resources(service);
 				const networkBefore = networkCounters();
 				const workers = Math.min(
@@ -462,22 +523,27 @@ try {
 					Array.from({ length: workers }, async (_, index) => {
 						const divide = (total) =>
 							Math.floor(total / workers) + (index < total % workers ? 1 : 0);
-						return browser(service, {
-							action: "capacity",
-							workload: config.workload,
-							backend,
-							bytes: String(bytes),
-							document: seeded.document,
-							startAt: String(startAt),
-							count: String(
-								settings.rate === undefined
-									? divide(settings.count)
-									: divide(settings.rate) * config.rateSeconds,
-							),
-							...(settings.rate === undefined
-								? { concurrency: String(divide(settings.concurrency)) }
-								: { rate: String(divide(settings.rate)) }),
-						});
+						return browser(
+							service,
+							{
+								action: "capacity",
+								workload: config.workload,
+								backend,
+								bytes: String(bytes),
+								document: seeded.document,
+								...(seeded.payloadId === undefined ? {} : { payloadId: seeded.payloadId }),
+								startAt: String(startAt),
+								count: String(
+									settings.rate === undefined
+										? divide(settings.count)
+										: divide(settings.rate) * config.rateSeconds,
+								),
+								...(settings.rate === undefined
+									? { concurrency: String(divide(settings.concurrency)) }
+									: { rate: String(divide(settings.rate)) }),
+							},
+							index,
+						);
 					}),
 				);
 				const valid = workerResults.every((worker) => Array.isArray(worker.samples));

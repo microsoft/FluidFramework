@@ -351,16 +351,80 @@ impl NetworkFrame {
     /// # Errors
     /// Returns [`ProtocolError::FrameTooLarge`] when the wire length cannot represent the payload.
     pub fn encoded_len(&self) -> Result<usize, ProtocolError> {
-        let declared = self
-            .payload
-            .len()
-            .checked_add(NETWORK_HEADER_BYTES)
-            .ok_or(ProtocolError::FrameTooLarge)?;
-        u32::try_from(declared).map_err(|_| ProtocolError::FrameTooLarge)?;
-        NETWORK_LENGTH_BYTES
-            .checked_add(declared)
-            .ok_or(ProtocolError::FrameTooLarge)
+        network_frame_length(self.payload.len())
     }
+}
+
+/// Checks the common envelope length without allocating its payload.
+fn network_frame_length(payload_length: usize) -> Result<usize, ProtocolError> {
+    let declared = payload_length
+        .checked_add(NETWORK_HEADER_BYTES)
+        .ok_or(ProtocolError::FrameTooLarge)?;
+    u32::try_from(declared).map_err(|_| ProtocolError::FrameTooLarge)?;
+    NETWORK_LENGTH_BYTES
+        .checked_add(declared)
+        .ok_or(ProtocolError::FrameTooLarge)
+}
+
+/// Checked framing for a `BlobTree` payload, without ownership of its body.
+pub struct BlobTreePrefix {
+    /// Outer length, kind, typed identity, and postcard sequence length.
+    bytes: [u8; 48],
+    /// Initialized prefix extent.
+    length: usize,
+    /// Complete frame extent, including the body.
+    encoded_length: usize,
+}
+
+impl BlobTreePrefix {
+    /// Returns only the framing bytes; the exact body must follow.
+    #[must_use]
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.bytes[..self.length]
+    }
+
+    /// Returns the checked size of prefix and body together.
+    #[must_use]
+    pub fn encoded_len(&self) -> usize {
+        self.encoded_length
+    }
+}
+
+/// Encodes `BlobTree` framing without reading or allocating the declared body.
+///
+/// # Errors
+/// Rejects wrong-stream kinds, unrepresentable lengths, and complete-frame limits before output.
+pub fn encode_blob_tree_prefix(
+    role: StreamRole,
+    id: TreeId,
+    payload_length: u64,
+    limits: Limits,
+) -> Result<BlobTreePrefix, ProtocolError> {
+    MessageKind::BlobTree.validate_on(role)?;
+    let payload_length =
+        usize::try_from(payload_length).map_err(|_| ProtocolError::FrameTooLarge)?;
+    let mut bytes = [0; 48];
+    // Postcard writes struct/tuple fields consecutively; Vec starts with its usize length.
+    let typed_length = postcard::to_slice(&(id, payload_length), &mut bytes[MIN_FRAME_BYTES..])
+        .map_err(ProtocolError::InvalidPayload)?
+        .len();
+    let encoded_length = network_frame_length(
+        typed_length
+            .checked_add(payload_length)
+            .ok_or(ProtocolError::FrameTooLarge)?,
+    )?;
+    if encoded_length > limits.max_frame_bytes {
+        return Err(ProtocolError::FrameTooLarge);
+    }
+    let declared = u32::try_from(encoded_length - NETWORK_LENGTH_BYTES)
+        .map_err(|_| ProtocolError::FrameTooLarge)?;
+    bytes[..NETWORK_LENGTH_BYTES].copy_from_slice(&declared.to_be_bytes());
+    bytes[NETWORK_LENGTH_BYTES] = MessageKind::BlobTree.into();
+    Ok(BlobTreePrefix {
+        bytes,
+        length: MIN_FRAME_BYTES + typed_length,
+        encoded_length,
+    })
 }
 
 /// Encodes one complete bounded network envelope.
@@ -1242,6 +1306,13 @@ pub fn load_response_bytes(response: &Response) -> u32 {
         Response::LoadSnapshot(_) | Response::StreamProgress { .. } => 0,
         _ => return 0,
     };
+    load_payload_bytes(payload as u64)
+}
+
+/// Charges the full declared payload plus the common opening-message allowance.
+/// Unrepresentable charges saturate and cannot fit an opening window.
+#[must_use]
+pub fn load_payload_bytes(payload: u64) -> u32 {
     u32::try_from(payload)
         .unwrap_or(u32::MAX)
         .saturating_add(LOAD_MESSAGE_OVERHEAD)
@@ -1874,6 +1945,63 @@ mod tests {
         TreeId, decode_request_frame, decode_response_network_frame, encode_network_frame,
         encode_request_frame, encode_response_frame,
     };
+
+    #[test]
+    fn streamed_prefix_matches_buffered_frames_and_complete_limits() {
+        let limits = Limits::default();
+        let maximum = limits.max_frame_bytes - 42;
+        for role in [StreamRole::Event, StreamRole::Content] {
+            for id in [TreeId::Blob([0xa5; 32]), TreeId::Directory([0x71; 32])] {
+                for length in [0, 1, 127, 128, 16_383, 16_384, 1024 * 1024, maximum] {
+                    let payload = vec![0x93; length];
+                    let prefix =
+                        super::encode_blob_tree_prefix(role, id, length as u64, limits).unwrap();
+                    let expected = encode_response_frame(
+                        role,
+                        &Response::BlobTree {
+                            id,
+                            payload: payload.clone(),
+                        },
+                        limits,
+                    )
+                    .unwrap();
+                    let mut actual = prefix.as_bytes().to_vec();
+                    actual.extend_from_slice(&payload);
+                    assert_eq!(prefix.encoded_len(), expected.len());
+                    assert_eq!(actual, expected);
+                    assert_eq!(
+                        super::load_payload_bytes(length as u64),
+                        super::load_response_bytes(&Response::BlobTree { id, payload })
+                    );
+                    let exact = Limits {
+                        max_frame_bytes: actual.len(),
+                    };
+                    assert!(super::encode_blob_tree_prefix(role, id, length as u64, exact).is_ok());
+                    assert!(matches!(
+                        super::encode_blob_tree_prefix(
+                            role,
+                            id,
+                            length as u64,
+                            Limits {
+                                max_frame_bytes: exact.max_frame_bytes - 1
+                            }
+                        ),
+                        Err(ProtocolError::FrameTooLarge)
+                    ));
+                }
+            }
+            for length in [maximum as u64 + 1, u64::from(u32::MAX), u64::MAX] {
+                assert!(matches!(
+                    super::encode_blob_tree_prefix(role, TreeId::Blob([0; 32]), length, limits),
+                    Err(ProtocolError::FrameTooLarge)
+                ));
+            }
+        }
+        assert!(matches!(
+            super::encode_blob_tree_prefix(StreamRole::Author, TreeId::Blob([0; 32]), 0, limits),
+            Err(ProtocolError::WrongStream { .. })
+        ));
+    }
 
     #[test]
     fn every_message_kind_has_one_explicit_byte() {

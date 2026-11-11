@@ -10,6 +10,7 @@ async-trait.workspace = true
 bytes.workspace = true
 sea-core = { path = "../sea-core" }
 thiserror.workspace = true
+tokio = { version = "1.47.1", default-features = false, features = ["fs", "rt"] }
 
 [dev-dependencies]
 tokio.workspace = true

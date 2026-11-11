@@ -13,6 +13,8 @@ use std::{error::Error, fmt};
 pub enum SessionError<E> {
     /// The trusted backend failed.
     Storage(E),
+    /// An already-opened blob body failed while a materialized compatibility read consumed it.
+    BlobRead(std::io::Error),
     /// Independent notification that the storage opening is no longer valid.
     StorageInvalidated(std::sync::Arc<E>),
     /// Only this live subscription was revoked; author and sibling authority are unchanged.
@@ -31,6 +33,7 @@ impl<E: fmt::Display> fmt::Display for SessionError<E> {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Storage(error) => write!(formatter, "storage failed: {error}"),
+            Self::BlobRead(error) => write!(formatter, "blob body read failed: {error}"),
             Self::StorageInvalidated(error) => {
                 write!(formatter, "storage opening invalidated: {error}")
             }
@@ -47,6 +50,7 @@ impl<E: Error + 'static> Error for SessionError<E> {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::Storage(error) => Some(error),
+            Self::BlobRead(error) => Some(error),
             Self::StorageInvalidated(error) => Some(error.as_ref()),
             Self::SubscriptionRevoked
             | Self::Rejected(_)
@@ -61,6 +65,7 @@ impl<E: ClassifiedError> ClassifiedError for SessionError<E> {
     fn kind(&self) -> ErrorKind {
         match self {
             Self::Storage(error) => error.kind(),
+            Self::BlobRead(_) => ErrorKind::Unavailable,
             Self::StorageInvalidated(error) => error.kind(),
             Self::SubscriptionRevoked | Self::Rejected(_) | Self::Closed => ErrorKind::Rejected,
             Self::Corrupt(_) => ErrorKind::Corrupt,
