@@ -244,6 +244,16 @@ describe("container serializeV2", () => {
 			assert.equal(retainedObject.root.get("value"), "local");
 		});
 
+		it(`includes the acknowledged edit when serialized inside a saved event handler, includeLocalChanges: ${includeLocalChanges}`, async () => {
+			const state = await timeoutPromise<string>((resolve) => {
+				source.once("saved", () => resolve(serialize(source, includeLocalChanges)));
+				sourceObject.root.set("value", "saved callback edit");
+			});
+			const frozen = await loadFrozen(state);
+			const frozenObject = await getDataObject(frozen);
+			assert.equal(frozenObject.root.get("value"), "saved callback edit");
+		});
+
 		for (const action of ["close", "dispose"] as const) {
 			it(`rejects after ${action}, includeLocalChanges: ${includeLocalChanges}`, async () => {
 				source[action]();

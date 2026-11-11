@@ -1210,6 +1210,10 @@ export class Container
 	 * {@inheritDoc ContainerAlpha.serializeV2}
 	 */
 	public async serializeV2(options: ContainerSerializationOptions): Promise<string> {
+		// Yield to guard against consistency problems when serializeV2 is called from an op-processing
+		// or "saved" event handler.
+		await Promise.resolve();
+
 		if (this.closed || this._disposed || this.attachState === AttachState.Attaching) {
 			throw new UsageError(
 				"Container must be detached or attached, open, and not disposed to use serializeV2.",
@@ -2752,7 +2756,7 @@ export interface ContainerAlpha extends IContainer {
 	getPendingLocalState(): Promise<string>;
 
 	/**
-	 * Serialize an attached container or a detached draft for later loading.
+	 * Serialize an attached or detached container for later loading.
 	 *
 	 * @param options - Controls whether to include unsequenced local changes in attached containers.
 	 * @returns An opaque serialized state string. Do not inspect or modify its contents.
