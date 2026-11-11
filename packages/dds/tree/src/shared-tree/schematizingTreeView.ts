@@ -274,7 +274,7 @@ export class SchematizingSimpleTreeView<
 				: SchemaIdentityInternal.extract(configAlpha.schemaIdentity);
 		if (identity?.expectedHash !== undefined) {
 			const { expectedHash, schemaHasher: hasher } = identity;
-			const actualHash = hasher(configAlpha.schema, this.stagedUpgradePolicy);
+			const actualHash = hasher(toInitialSchema(configAlpha.schema, this.stagedUpgradePolicy));
 			if (actualHash !== expectedHash) {
 				throw new UsageError(
 					`Expected schema hash does not match the configured schema. Expected ${JSON.stringify(expectedHash)}, got ${JSON.stringify(actualHash)}.`,
@@ -335,7 +335,7 @@ export class SchematizingSimpleTreeView<
 		}
 
 		const schema = toInitialSchema(this.config.schema, this.stagedUpgradePolicy);
-		const schemaHash = this.computeSchemaHash(this.stagedUpgradePolicy);
+		const schemaHash = this.computeSchemaHash(schema);
 		this.runSchemaEdit(() => {
 			// This has to be the contextless version, since when "initialize" is called (right after this),
 			// it will do a schema change which would dispose of the current context (see inside `update`).
@@ -414,7 +414,7 @@ export class SchematizingSimpleTreeView<
 			return;
 		}
 
-		const schemaHash = this.computeSchemaHash(upgradePolicy);
+		const schemaHash = this.computeSchemaHash(newSchema);
 		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
 		if (schemaHash !== undefined) {
 			this.breaker.logger?.sendTelemetryEvent({
@@ -424,16 +424,11 @@ export class SchematizingSimpleTreeView<
 		}
 	}
 
-	private computeSchemaHash(
-		stagedUpgradePolicy: StagedSchemaUpgradePolicy,
-	): string | undefined {
+	private computeSchemaHash(schema: TreeStoredSchema): string | undefined {
 		const identity = (this.config as Partial<ITreeViewConfigurationAlpha>).schemaIdentity;
 		return identity === undefined
 			? undefined
-			: SchemaIdentityInternal.extract(identity).schemaHasher(
-					this.config.schema,
-					stagedUpgradePolicy,
-				);
+			: SchemaIdentityInternal.extract(identity).schemaHasher(schema);
 	}
 
 	public isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus {

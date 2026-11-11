@@ -50,6 +50,7 @@ import {
 	toUpgradeSchema,
 	SchemaFactoryBeta,
 	TreeViewConfigurationAlpha,
+	StagedSchemaUpgradePolicy,
 	computeSchemaHash,
 	identifySchemaAlpha,
 	FieldKind,
@@ -255,6 +256,101 @@ describe("SchematizingSimpleTreeView", () => {
 				tag: TelemetryDataTag.SchemaArtifact,
 			});
 			view.dispose();
+		});
+
+		/**
+		 * V1 enables strings; V2 stages strings and null but selects only null for its upgrade.
+		 * V2's construction check must use its view and policy, while upgrade telemetry must include the retained strings.
+		 * A repeated upgrade must not emit another event.
+		 */
+		it("logs retained staged types in the upgrade target hash", () => {
+			const logger = createMockLoggerExt();
+			const tree = createIndependentTreeAlpha({ logger });
+			const schemaV1 = schema.required([schema.number, schema.string]);
+			const viewV1 = tree.viewWith(new TreeViewConfiguration({ schema: schemaV1 }));
+			viewV1.initialize("retained string");
+			viewV1.dispose();
+
+			const stagedString = schema.staged(schema.string);
+			const stagedNull = schema.staged(schema.null);
+			const schemaV2 = schema.required(
+				schema.types([schema.number, stagedString, stagedNull]),
+			);
+			const nullUpgrade = stagedNull.metadata.stagedSchemaUpgrade;
+			assert(nullUpgrade !== undefined);
+			const policy = StagedSchemaUpgradePolicy.enabledStagedUpgrades(nullUpgrade);
+			const configuredHash = computeSchemaHash(schemaV2, policy);
+			const targetHash = computeSchemaHash([schema.number, schema.string, schema.null]);
+			assert.notEqual(configuredHash, targetHash);
+
+			// The expected hash describes newly initialized V2 documents, not this document's stored history.
+			const viewV2 = tree.viewWith(
+				new TreeViewConfigurationAlpha({
+					schema: schemaV2,
+					stagedUpgradePolicy: policy,
+					schemaIdentity: identifySchemaAlpha({ expectedHash: configuredHash }),
+				}),
+			);
+			viewV2.upgradeSchema();
+			assert.equal(viewV2.root, "retained string");
+			viewV2.root = null;
+			viewV2.upgradeSchema();
+
+			const events = logger
+				.events()
+				.filter((event) => event.eventName.endsWith("SchemaUpgraded"));
+			assert.equal(events.length, 1);
+			assert.deepEqual(events[0]?.schemaHash, {
+				value: targetHash,
+				tag: TelemetryDataTag.SchemaArtifact,
+			});
+			viewV2.dispose();
+		});
+
+		/**
+		 * V1 has optional hours; V2 stages that optionality and adds a label under the restrictive policy.
+		 * The upgrade must keep hours optional and report that stored state, even though a new V2 document would require hours.
+		 * The constructor's expected hash must still describe the new-document schema.
+		 */
+		it("logs retained staged optionality in the upgrade target hash", () => {
+			const sf = new SchemaFactoryAlpha("schemaHashTelemetry");
+			class TaskV1 extends sf.object("Task", {
+				hours: sf.optional(sf.number),
+			}) {}
+			class TaskV2 extends sf.objectAlpha("Task", {
+				hours: sf.stagedOptional(sf.number),
+				label: sf.optional(sf.string),
+			}) {}
+
+			const logger = createMockLoggerExt();
+			const tree = createIndependentTreeAlpha({ logger });
+			const viewV1 = tree.viewWith(new TreeViewConfiguration({ schema: TaskV1 }));
+			viewV1.initialize(new TaskV1({}));
+			viewV1.dispose();
+
+			const configuredHash = computeSchemaHash(TaskV2);
+			const targetHash = computeSchemaHash(TaskV2, StagedSchemaUpgradePolicy.permissive);
+			assert.notEqual(configuredHash, targetHash);
+			const viewV2 = tree.viewWith(
+				new TreeViewConfigurationAlpha({
+					schema: TaskV2,
+					schemaIdentity: identifySchemaAlpha({ expectedHash: configuredHash }),
+				}),
+			);
+			viewV2.upgradeSchema();
+			assert.equal(viewV2.root.hours, undefined);
+			viewV2.root.label = "upgraded";
+			viewV2.upgradeSchema();
+
+			const events = logger
+				.events()
+				.filter((event) => event.eventName.endsWith("SchemaUpgraded"));
+			assert.equal(events.length, 1);
+			assert.deepEqual(events[0]?.schemaHash, {
+				value: targetHash,
+				tag: TelemetryDataTag.SchemaArtifact,
+			});
+			viewV2.dispose();
 		});
 
 		it("does not log hashes without schema identity", () => {
