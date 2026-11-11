@@ -23,7 +23,6 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
 
@@ -138,13 +137,13 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// Create a Container for the first client.
 		container1 = await provider.makeTestContainer(configCopy);
-		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		dataObject1map1 = await dataObject1.getSharedObject<ISharedMap>(map1Id);
 		dataObject1map2 = await dataObject1.getSharedObject<ISharedMap>(map2Id);
 
 		// Load the Container that was created by the first client.
 		container2 = await provider.loadTestContainer(configCopy);
-		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		dataObject2map1 = await dataObject2.getSharedObject<ISharedMap>(map1Id);
 		dataObject2map2 = await dataObject2.getSharedObject<ISharedMap>(map2Id);
 
