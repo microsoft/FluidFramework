@@ -492,6 +492,37 @@ describe("ModularChangeFamily", () => {
 				assert(built.builds?.size === 1);
 			});
 		}
+
+		it("keeps the earliest of several builds of the same ID, as composing them would", () => {
+			const builds = [node1Chunk, nodesChunk].map(
+				(chunk): GlobalEditDescription => ({
+					type: "global",
+					revision: tag1,
+					builds: newChangeAtomIdBTree([[[tag1, brand(0)], chunk]]),
+				}),
+			);
+			const edit: EditDescription = {
+				type: "field",
+				field: pathA,
+				fieldKind: valueField.identifier,
+				change: brand(valueChange1a),
+				revision: tag1,
+			};
+			const built = family
+				.buildEditor(mintRevisionTag, () => undefined)
+				.buildChanges([...builds, edit]);
+			const separateEditor = family.buildEditor(mintRevisionTag, () => undefined);
+			const composed = family.compose(
+				[...builds, edit].map((change) =>
+					makeAnonChange(separateEditor.buildChanges([change])),
+				),
+			);
+			assertEqual(
+				removeAliases(built),
+				removeAliases({ ...composed, revisions: [{ revision: tag1 }] }),
+			);
+			assert.equal(built.builds?.get([tag1, brand(0)]), node1Chunk);
+		});
 	});
 
 	describe("compose", () => {

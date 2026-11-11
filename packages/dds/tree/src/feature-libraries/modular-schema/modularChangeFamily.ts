@@ -2279,7 +2279,10 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 				editRevisions.add(change.revision);
 				if (change.type === "global") {
 					for (const [key, chunk] of change.builds?.entries() ?? []) {
-						builds.set(key, chunk);
+						// As in composition, the earliest build of an ID is kept.
+						if (!builds.has(key)) {
+							builds.set(key, chunk);
+						}
 					}
 				}
 			}
