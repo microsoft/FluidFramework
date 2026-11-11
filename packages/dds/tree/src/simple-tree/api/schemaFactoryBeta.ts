@@ -35,16 +35,17 @@ export interface SchemaStaticsBeta {
 	 * This allows for an incremental rollout of a schema change to add a {@link TreeNodeSchema} to an {@link AllowedTypes} without breaking cross version collaboration.
 	 * A guide on this process can be found here: https://fluidframework.com/docs/data-structures/tree/schema-evolution/allowed-types-rollout
 	 *
+	 * Staging separates the view's ability to handle a type from the document's permission to store it.
+	 * By default, {@link TreeView.initialize} creates a document that does not allow the staged type at that location, and {@link TreeView.upgradeSchema} does not add it where it is not yet allowed.
+	 * The view can handle either stored state, but writing a value of the staged type is rejected until the document permits it.
+	 *
 	 * Once enough clients have the type staged (and thus can read documents which allow it), documents can start being created and upgraded to allow the staged type.
-	 * This is done by deploying a new version of the app which removes the `staged` wrapper around the allowed type in the the schema definition.
-	 * This will also require {@link TreeView.upgradeSchema|upgrading the schema} for existing documents.
+	 * You can enable this by deploying a version that removes the `staged` wrapper, or by selecting its upgrade token through {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy}.
+	 * Enabling the type means that initialization includes it in the document's stored schema, and an {@link TreeView.upgradeSchema | explicit upgrade} adds it to an existing document.
+	 * The document then permits writing values of that type at the declared location.
 	 *
-	 * Using a staged allowed type in a schema is just like using the schema as an allowed type with the following exceptions:
-	 *
-	 * 1. {@link TreeView.initialize} will omit the staged allowed type from the newly created stored schema.
-	 * 2. {@link TreeView.upgradeSchema} will omit the staged allowed type from the the upgraded stored schema.
-	 * 3. When evaluating {@link TreeView.compatibility}, it will be viewable even if the staged allowed type is not present in the stored schema's corresponding allowed types.
-	 * 4. Because of the above, it is possible to get errors when inserting content which uses the staged allowed type into a tree whose stored schema does not permit it.
+	 * Once the stored schema permits the type, a view that still stages it can read and write those values.
+	 * Subsequent upgrades preserve that permission at the same location, so turning a feature flag off does not remove support from documents already upgraded.
 	 *
 	 * For recursive schemas, use {@link SchemaStaticsBeta.stagedRecursive} instead.
 	 * It offers equivalent runtime behavior with relaxed compile-time typing for recursive type.

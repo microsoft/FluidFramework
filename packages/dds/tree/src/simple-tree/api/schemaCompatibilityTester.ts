@@ -26,7 +26,8 @@ import type { SchemaCompatibilityStatusBeta, SchemaDiscrepancy } from "./tree.js
 
 /**
  * Returns discrepancies that prevent the view from providing read/write access to documents using the stored schema.
- * @remarks The returned discrepancies do not indicate whether the stored schema may be made compatible via upgrade.
+ * @remarks
+ * The returned set of discrepancies does not indicate whether an upgrade can make the document viewable.
  *
  * @param viewSchema - The view schema requesting access to the document.
  * @param storedSchema - The stored schema to check against the view.
@@ -45,17 +46,12 @@ export function getSchemaIncompatibilityDetails(
 }
 
 /**
- * Checks whether a candidate preserves existing stored permissions and supports read/write access through the view.
+ * Checks whether an upgrade candidate would enable the view to access the document.
  *
  * @param viewSchema - The view schema that must be able to use the document after the upgrade.
  * @param storedSchema - The document's stored schema before the upgrade.
  * @param candidate - The proposed stored schema after the upgrade.
  * @returns Whether the candidate passes the default schema upgrade rules and has no viewing blockers.
- *
- * @remarks
- * The view does not need to be compatible with `storedSchema` before the upgrade.
- * A candidate can preserve all stored permissions but still contain types that the view cannot read.
- * This function validates the candidate without constructing or applying it.
  */
 export function isSchemaUpgradeAllowed(
 	viewSchema: TreeSchema,

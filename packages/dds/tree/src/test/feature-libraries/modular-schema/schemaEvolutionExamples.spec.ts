@@ -59,11 +59,9 @@ describe("Schema Evolution Examples", () => {
 	 * @param view - A readable view whose upgrade is expected to succeed without changing the document.
 	 *
 	 * @remarks
-	 * Synchronize all pending operations before calling this helper.
-	 * Otherwise, an earlier operation could advance the sequence number during this check.
-	 * The helper requests an upgrade and synchronizes the clients.
-	 * It verifies that no schema-change event occurs, no operation is sequenced, and the root object is unchanged.
-	 * Its temporary event listener is removed even if a check fails.
+	 * The helper requests an upgrade and synchronizes the clients to check both local and sequenced effects.
+	 * No schema-change event or sequenced operation should result, and the root object should remain unchanged.
+	 * Synchronize pending operations before calling it so an earlier edit cannot be mistaken for an effect of this upgrade.
 	 */
 	function verifyNoOpUpgrade<TSchema extends ImplicitFieldSchema>(
 		provider: TestTreeProviderLite,
@@ -101,8 +99,8 @@ describe("Schema Evolution Examples", () => {
 	 * @param view - The view whose upgrade must be rejected.
 	 *
 	 * @remarks
-	 * Captures stored data independently of the view so unknown fields are included.
-	 * The rejected call breaks the requesting view; do not use that view or its checkout's public APIs afterward.
+	 * To verify that rejection preserves the entire document, this captures stored data independently of the view, including unknown fields.
+	 * The rejected call also breaks the requesting view, so neither that view nor its checkout's public APIs may be used afterward.
 	 */
 	function verifyRejectedUpgrade<TSchema extends ImplicitFieldSchema>(
 		provider: TestTreeProviderLite,
