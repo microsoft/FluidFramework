@@ -1,5 +1,11 @@
 # Managing Dependencies
 
+Dependencies come from the public Azure Artifacts `publicPackages` feed.
+Before changing dependencies, read [Dependency setup and changes](./Dependencies.md) for maintainer authentication and the maintainer-assisted workflow for external contributors.
+If you edit a package manifest directly, run `pnpm install --no-frozen-lockfile` to update its lockfile.
+Maintainers should pay attention to any platform-specific optional dependencies and [save them for all platforms](./Dependencies.md#save-dependencies-for-all-platforms) when found.
+This ensures the repository is usable for development across all platforms.
+
 ## Adding new dependencies...
 
 ### ...to a package
