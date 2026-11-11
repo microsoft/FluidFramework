@@ -1,6 +1,7 @@
 ---
 "@fluidframework/container-runtime": minor
 "@fluidframework/datastore": minor
+"@fluid-experimental/attributor": minor
 "__section": feature
 "__includeInReleaseNotes": false
 ---
@@ -11,6 +12,7 @@ It is disabled by default, is persisted for the document's lifetime, and cannot 
 DDSs created with an explicit ID remain roots of their owning data store.
 DDSs created without an explicit ID remain alive through handle reachability rather than attachment alone.
 An unreachable data store can still be collected together with its named DDSs.
+Runtime attribution remains supported when independent DDS collection is enabled.
 
 All clients opening an enabled document must include supporting container and data store runtimes from the same Fluid Framework version.
 The document schema records the capability so older schema-aware runtimes reject enabled documents.

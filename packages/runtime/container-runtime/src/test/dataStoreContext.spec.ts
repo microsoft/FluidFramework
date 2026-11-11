@@ -84,6 +84,16 @@ import {
 describe("Data Store Context Tests", () => {
 	const dataStoreId = "Test1";
 	const emptyGCData: IGarbageCollectionData = { gcNodes: {} };
+	const unsupportedRuntimeCompatDetails = [
+		{ description: "without compatibility details", details: undefined },
+		{
+			description: "without DDS deletion support",
+			details: {
+				...runtimeCompatDetailsForDataStore,
+				supportedFeatures: new Set([providesChannelGC]),
+			},
+		},
+	];
 	let createSummarizerNodeFn: CreateChildSummarizerNodeFn;
 
 	function queueRemoteChannelOp(context: FluidDataStoreContext): void {
@@ -122,59 +132,39 @@ describe("Data Store Context Tests", () => {
 		});
 
 		describe("Initialization", () => {
-			it("rejects an unsupported DDS runtime before applying pending ops and disposes it", async () => {
-				const channel = new MockFluidDataStoreRuntime();
-				channel.ILayerCompatDetails = {
-					...runtimeCompatDetailsForDataStore,
-					supportedFeatures: new Set<string>(),
-				};
-				const processMessages = spy(channel, "processMessages");
-				assert(parentContext.IFluidDataStoreRegistry !== undefined);
-				const entry = await parentContext.IFluidDataStoreRegistry.get("TestDataStore1");
-				assert(entry?.IFluidDataStoreFactory !== undefined);
-				entry.IFluidDataStoreFactory.instantiateDataStore = async () => channel;
-				parentContext = {
-					...parentContext,
-					channelGC: {
-						isDeleted: () => false,
-						nodeUpdated: () => {},
-					},
-				};
-				const context = new LocalFluidDataStoreContext({
-					id: dataStoreId,
-					pkg: ["TestDataStore1"],
-					parentContext,
-					storage,
-					scope,
-					createSummarizerNodeFn,
-					makeLocallyVisibleFn,
-					snapshotTree: undefined,
-				});
-				queueRemoteChannelOp(context);
-				await assert.rejects(context.realize(), /supporting data store runtime/);
-				assert.equal(processMessages.callCount, 0);
-				assert.equal(channel.disposed, true);
-				assert.equal(context.disposed, true);
-			});
-
-			it("accepts a DDS-less channel without compatibility details when DDS GC is enabled", async () => {
-				const context = new LocalFluidDataStoreContext({
-					id: dataStoreId,
-					pkg: ["TestDataStore1"],
-					parentContext: {
+			for (const { description, details } of unsupportedRuntimeCompatDetails) {
+				it(`rejects a DDS runtime ${description} before applying pending ops and disposes it`, async () => {
+					const channel = new MockFluidDataStoreRuntime();
+					channel.ILayerCompatDetails = details;
+					const processMessages = spy(channel, "processMessages");
+					assert(parentContext.IFluidDataStoreRegistry !== undefined);
+					const entry = await parentContext.IFluidDataStoreRegistry.get("TestDataStore1");
+					assert(entry?.IFluidDataStoreFactory !== undefined);
+					entry.IFluidDataStoreFactory.instantiateDataStore = async () => channel;
+					parentContext = {
 						...parentContext,
-						channelGC: { isDeleted: () => false, nodeUpdated: () => {} },
-					},
-					storage,
-					scope,
-					createSummarizerNodeFn,
-					makeLocallyVisibleFn,
-					snapshotTree: undefined,
+						channelGC: {
+							isDeleted: () => false,
+							nodeUpdated: () => {},
+						},
+					};
+					const context = new LocalFluidDataStoreContext({
+						id: dataStoreId,
+						pkg: ["TestDataStore1"],
+						parentContext,
+						storage,
+						scope,
+						createSummarizerNodeFn,
+						makeLocallyVisibleFn,
+						snapshotTree: undefined,
+					});
+					queueRemoteChannelOp(context);
+					await assert.rejects(context.realize(), /supporting data store runtime/);
+					assert.equal(processMessages.callCount, 0);
+					assert.equal(channel.disposed, true);
+					assert.equal(context.disposed, true);
 				});
-				const channel = await context.realize();
-				assert.equal(channel.disposed, false);
-				assert.equal(context.disposed, false);
-			});
+			}
 
 			it("rejects ids with forward slashes", async () => {
 				const invalidId = "beforeSlash/afterSlash";
@@ -1130,36 +1120,35 @@ describe("Data Store Context Tests", () => {
 		});
 
 		describe("Initialization", () => {
-			it("rejects an unsupported DDS runtime before synchronously applying pending ops and disposes it", () => {
-				const channel = new MockFluidDataStoreRuntime();
-				channel.ILayerCompatDetails = {
-					...runtimeCompatDetailsForDataStore,
-					supportedFeatures: new Set([providesChannelGC]),
-				};
-				const processMessages = spy(channel, "processMessages");
-				const context = new LocalDetachedFluidDataStoreContext({
-					id: dataStoreId,
-					pkg: [factory.type],
-					parentContext: {
-						...parentContext,
-						channelGC: { isDeleted: () => false, nodeUpdated: () => {} },
-					},
-					storage,
-					scope,
-					createSummarizerNodeFn,
-					makeLocallyVisibleFn,
-					snapshotTree: undefined,
-					channelToDataStoreFn,
+			for (const { description, details } of unsupportedRuntimeCompatDetails) {
+				it(`rejects a DDS runtime ${description} before synchronously applying pending ops and disposes it`, () => {
+					const channel = new MockFluidDataStoreRuntime();
+					channel.ILayerCompatDetails = details;
+					const processMessages = spy(channel, "processMessages");
+					const context = new LocalDetachedFluidDataStoreContext({
+						id: dataStoreId,
+						pkg: [factory.type],
+						parentContext: {
+							...parentContext,
+							channelGC: { isDeleted: () => false, nodeUpdated: () => {} },
+						},
+						storage,
+						scope,
+						createSummarizerNodeFn,
+						makeLocallyVisibleFn,
+						snapshotTree: undefined,
+						channelToDataStoreFn,
+					});
+					queueRemoteChannelOp(context);
+					assert.throws(
+						() => context.unsafe_AttachRuntimeSync(channel),
+						/supporting data store runtime/,
+					);
+					assert.equal(processMessages.callCount, 0);
+					assert.equal(channel.disposed, true);
+					assert.equal(context.disposed, true);
 				});
-				queueRemoteChannelOp(context);
-				assert.throws(
-					() => context.unsafe_AttachRuntimeSync(channel),
-					/supporting data store runtime/,
-				);
-				assert.equal(processMessages.callCount, 0);
-				assert.equal(channel.disposed, true);
-				assert.equal(context.disposed, true);
-			});
+			}
 
 			it("rejects ids with forward slashes", async () => {
 				const invalidId = "beforeSlash/afterSlash";

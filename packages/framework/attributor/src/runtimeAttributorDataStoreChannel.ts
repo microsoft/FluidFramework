@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	type IDeltaManager,
@@ -11,7 +11,10 @@ import {
 import type { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred, unreachableCase } from "@fluidframework/core-utils/internal";
-import { FluidObjectHandle } from "@fluidframework/datastore/internal";
+import {
+	dataStoreCoreCompatDetails,
+	FluidObjectHandle,
+} from "@fluidframework/datastore/internal";
 import type { IFluidDataStoreRuntimeEvents } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IDocumentMessage,
@@ -22,12 +25,14 @@ import type {
 import {
 	type IGarbageCollectionData,
 	type IFluidDataStoreChannel,
+	type FluidDataStoreChannelInternal,
 	type IFluidDataStoreContext,
 	type IInboundSignalMessage,
 	VisibilityState,
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
 	type IRuntimeMessageCollection,
+	supportsChannelDeletion,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	createChildMonitoringContext,
@@ -43,8 +48,16 @@ import { RuntimeAttributor } from "./runtimeAttributor.js";
  */
 export class RuntimeAttributorDataStoreChannel
 	extends TypedEventEmitter<IFluidDataStoreRuntimeEvents>
-	implements IFluidDataStoreChannel
+	implements FluidDataStoreChannelInternal
 {
+	/**
+	 * The attributor supports the deletion contract without hosting child DDSs.
+	 */
+	public readonly ILayerCompatDetails: ILayerCompatDetails = {
+		...dataStoreCoreCompatDetails,
+		supportedFeatures: new Set([supportsChannelDeletion]),
+	};
+
 	public constructor(
 		public readonly dataStoreContext: IFluidDataStoreContext,
 		existing: boolean,
@@ -177,6 +190,13 @@ export class RuntimeAttributorDataStoreChannel
 	 */
 	public updateUsedRoutes(usedRoutes: string[]): void {
 		return;
+	}
+
+	/**
+	 * Rejects child DDS sweep routes because the attributor has no child DDSs.
+	 */
+	public deleteSweepReadyNodes(routes: readonly string[]): void {
+		assert(routes.length === 0, "The runtime attributor must not receive DDS sweep routes");
 	}
 
 	/**

@@ -1043,11 +1043,9 @@ export abstract class FluidDataStoreContext
 			channel.dispose();
 		};
 		validateDatastoreCompatibility(maybeDataStoreCompatDetails, dispose, this.mc);
-		// DDS-less channels, such as the runtime attributor, may omit compatibility details.
 		if (
 			this.channelGC !== undefined &&
-			maybeDataStoreCompatDetails !== undefined &&
-			!maybeDataStoreCompatDetails.supportedFeatures.has(supportsChannelDeletion)
+			maybeDataStoreCompatDetails?.supportedFeatures.has(supportsChannelDeletion) !== true
 		) {
 			dispose();
 			throw new UsageError("DDS GC requires a supporting data store runtime");

@@ -30,6 +30,10 @@ Older schema-aware runtimes that do not recognize it reject the document instead
 The runtime rejects inconsistent GC metadata and schema flags.
 Applications must still deploy supporting code before enabling the setting and exclude clients that predate document-schema enforcement.
 
+The container runtime advertises `providesChannelGC` across the layer boundary.
+Enabled documents require every data store channel to advertise `supportsChannelDeletion` and implement the internal deletion hook.
+DDS-less channels such as the runtime attributor advertise this support explicitly; missing compatibility details do not exempt a channel from the check.
+
 DDSs created with an explicit ID are roots relative to their owning data store.
 Their summaries and attach snapshots contain an empty `.gcRoot` blob.
 Anonymous DDSs omit this blob and remain live only through reachability.
