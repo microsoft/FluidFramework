@@ -35,7 +35,7 @@ Do not push without explicit permission; upstream push permissions granted for t
 
 ### 1. Entry-point existence checks
 
-**Status:** Pending decision. Strong candidate; suggested first category.
+**Status:** Cleanup approved and complete.
 
 - `packages/loader/container-loader/src/container.ts`, `Container.getEntryPoint`:
   both immediate and runtime-instantiated paths call `this._runtime.getEntryPoint?.()`.
@@ -51,7 +51,28 @@ implements container entry points. Current `IRuntime` and `IContainer` require t
 for disposal, runtime instantiation, invalid entry-point contents, and summarizer validation.
 Check custom runtime/loader contracts before assuming every existence check is historical.
 
-**Decision / changes / validation:** Not yet recorded.
+**Decision:** Remove all three method-existence guards. Current `IRuntime` and `IContainer` contracts
+require `getEntryPoint()`, including for custom implementations. Verified actual `2.0.9` loader
+Container and ContainerRuntime prototypes both implement it. The on-demand summary helper loads
+the current concrete Container, so its existence check is also redundant.
+
+**Changes:** Call runtime entry points directly in both Container paths, remove the old summarizer
+`.request()` fallback and unused imports, and remove the on-demand summary method-existence check.
+Preserve disposal/instantiation handling, invalid-result checks, ISummarizer validation, and request headers.
+No exported signatures change. Runtime request-routing removal remains category 2.
+
+**Validation:**
+
+- Actual installed `2.0.9` prototypes: Container and ContainerRuntime both provide `getEntryPoint`.
+- `fluid-build --task build /container-loader$ /container-runtime$` passed, including ESM/CJS compilation,
+  type tests, lint/format, dependency checks, API reports, and documentation models. No API report changes.
+- Loader unit suite: 347 passing, including existing on-demand-summary lifecycle/failure tests.
+- Runtime `containerRuntime.spec.js` and `summary/summaryManager.spec.js`: 228 passing.
+  Initial default-glob discovery hit stale compiled tests importing removed OrderedClientCollection;
+  explicit current test-file selection avoided those unrelated build artifacts.
+- E2E build passed. Local OCV summarization selection: 70 passing, 8 pending.
+- Targeted local N-1/cross-client incremental-summary selection: 32 passing.
+- No live real-service validation performed for this category.
 
 ### 2. Old loader-to-runtime request routing
 
@@ -227,5 +248,5 @@ These are not cleanup targets merely because OCV advanced:
 
 ## Working decision summary
 
-No product changes have been approved or implemented yet. Start with category 1 and record each decision
-before proceeding. Retained/deferred categories should include the reason and any follow-up evidence needed.
+Category 1 cleanup is approved and complete. Categories 2–11 remain pending decision.
+Retained/deferred categories should include the reason and any follow-up evidence needed.
