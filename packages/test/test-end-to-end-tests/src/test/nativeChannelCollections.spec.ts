@@ -155,21 +155,25 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 			return collection;
 		},
 	};
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
-		defaultFactory: factory,
-		registryEntries: [[factory.type, factory]],
-		oldestSupportedClient: "3.12.0",
-		runtimeOptions: {
-			summaryOptions: {
-				summaryConfigOverrides: {
-					state: "disableHeuristics",
-					initialSummarizerDelayMs: 0,
-					maxAckWaitTime: 20000,
-					maxOpsSinceLastSummary: 7000,
+	const makeRuntimeFactory = (
+		summarizer: boolean,
+	): InstanceType<typeof ContainerRuntimeFactoryWithDefaultDataStore> =>
+		new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory: factory,
+			registryEntries: [[factory.type, factory]],
+			oldestSupportedClient: "3.12.0",
+			runtimeOptions: {
+				summaryOptions: {
+					summaryConfigOverrides: {
+						state: summarizer ? "disableHeuristics" : "disabled",
+						initialSummarizerDelayMs: 0,
+						maxAckWaitTime: 20000,
+						maxOpsSinceLastSummary: 7000,
+					},
 				},
 			},
-		},
-	});
+		});
+	const runtimeFactory = makeRuntimeFactory(false);
 
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
@@ -256,6 +260,7 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 			defaultFactory: initializingFactory,
 			registryEntries: [[initializingFactory.type, initializingFactory]],
 			oldestSupportedClient: "3.12.0",
+			runtimeOptions: { summaryOptions: { summaryConfigOverrides: { state: "disabled" } } },
 		});
 		const container = await provider.createDetachedContainer(initializingRuntimeFactory);
 		const initializedCollection =
@@ -277,6 +282,7 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 		additionalRoot.set("after-initialization", 44);
 		await provider.ensureSynchronized();
 		const remote = await provider.loadContainer(initializingRuntimeFactory);
+		await provider.ensureSynchronized();
 		const remoteCollection =
 			(await remote.getEntryPoint()) as IFluidDataStoreChannelCollection;
 		const restored = (await (
@@ -311,7 +317,9 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 		map.set("value", 42);
 		assert.equal(await child.trySetAlias("named"), "Success");
 		await provider.ensureSynchronized();
-		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
+		const loader = provider.createLoader([
+			[provider.defaultCodeDetails, makeRuntimeFactory(true)],
+		]);
 		const { summarizer } = await createSummarizerCore(container, loader);
 		await provider.ensureSynchronized();
 		const { summaryVersion } = await summarizeNow(summarizer);
@@ -342,7 +350,9 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 		const peer = (await peerStore.entryPoint.get()) as ITestFluidObject;
 		root.set("peer", peer.handle);
 		await provider.ensureSynchronized();
-		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
+		const loader = provider.createLoader([
+			[provider.defaultCodeDetails, makeRuntimeFactory(true)],
+		]);
 		const { summarizer } = await createSummarizerCore(container, loader);
 		await provider.ensureSynchronized();
 		await summarizeNow(summarizer);
@@ -434,7 +444,9 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 		root.set("child", childStore.entryPoint);
 		await provider.ensureSynchronized();
 
-		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
+		const loader = provider.createLoader([
+			[provider.defaultCodeDetails, makeRuntimeFactory(true)],
+		]);
 		const { summarizer } = await createSummarizerCore(container, loader);
 		await provider.ensureSynchronized();
 		const { summaryVersion } = await summarizeNow(summarizer);
@@ -458,6 +470,7 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 			defaultFactory: factory,
 			registryEntries: [[factory.type, factory]],
 			oldestSupportedClient: "3.11.0",
+			runtimeOptions: { summaryOptions: { summaryConfigOverrides: { state: "disabled" } } },
 		});
 		const container = await provider.createContainer(incompatibleFactory);
 		const parent = (await container.getEntryPoint()) as IFluidDataStoreChannelCollection;
@@ -535,6 +548,7 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 			defaultFactory: rootFactory,
 			registryEntries: [[rootFactory.type, rootFactory]],
 			oldestSupportedClient: "3.12.0",
+			runtimeOptions: { summaryOptions: { summaryConfigOverrides: { state: "disabled" } } },
 		});
 		const container = await provider.createContainer(outerFactory);
 		const root = await getRoot(

@@ -67,6 +67,10 @@ MOCHA_SPEC=lib/test/channelCollectionCompat.spec.js npm run test:realsvc:local -
 
 The [native collection suite](src/test/nativeChannelCollections.spec.ts) covers native nesting, signal isolation, rejected operations, and aggregate tombstone/sweep lifetimes.
 Run it with `--compatVersion=0`; its GC lifecycle tests require the local driver.
+Also run the native leaf, native collection, incremental-summary, and legacy bridge suites against Tinylicious.
+The local driver can hide missing post-load synchronization because operations arrive faster.
+Synchronize newly loaded clients before inspecting state created by another client.
+These suites disable automatic summarizers on interactive clients and enable only the dedicated summarizers used by summary tests.
 
 ### Writing Tests That Take Summaries
 

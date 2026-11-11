@@ -165,19 +165,34 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		return kind;
 	};
 
-	const legacyFactory = new BaseContainerRuntimeFactory({
-		oldestSupportedClient: defaultTestOldestSupportedClient,
-		registryEntries: [[factory.type, factory]],
-		provideEntryPoint: async (runtime) => {
-			const root = await runtime.getAliasedDataStoreEntryPoint("root");
-			assert(root !== undefined);
-			return root.get();
-		},
-	});
+	const makeLegacyFactory = (
+		summarizer: boolean,
+	): InstanceType<typeof BaseContainerRuntimeFactory> =>
+		new BaseContainerRuntimeFactory({
+			oldestSupportedClient: defaultTestOldestSupportedClient,
+			runtimeOptions: {
+				summaryOptions: {
+					summaryConfigOverrides: {
+						state: summarizer ? "disableHeuristics" : "disabled",
+						initialSummarizerDelayMs: 0,
+						maxAckWaitTime: 20000,
+						maxOpsSinceLastSummary: 7000,
+					},
+				},
+			},
+			registryEntries: [[factory.type, factory]],
+			provideEntryPoint: async (runtime) => {
+				const root = await runtime.getAliasedDataStoreEntryPoint("root");
+				assert(root !== undefined);
+				return root.get();
+			},
+		});
+	const legacyFactory = makeLegacyFactory(false);
 	class LegacyCreatingFactory extends BaseContainerRuntimeFactory {
 		public constructor(private readonly rootAlias = "root") {
 			super({
 				oldestSupportedClient: defaultTestOldestSupportedClient,
+				runtimeOptions: { summaryOptions: { summaryConfigOverrides: { state: "disabled" } } },
 				registryEntries: [[factory.type, factory]],
 				provideEntryPoint: async (runtime) => {
 					const root = await runtime.getAliasedDataStoreEntryPoint(rootAlias);
@@ -201,6 +216,7 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		registryKinds: DataStoreRegistry,
 		root?: DataStoreKind,
 		oldestSupportedClient: OldestSupportedClientVersion = defaultTestOldestSupportedClient,
+		summarizer = false,
 	): Promise<IRuntimeFactory> {
 		const loader = makeCodeLoader(
 			registryKinds,
@@ -211,7 +227,7 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 					runtimeOptions: {
 						summaryOptions: {
 							summaryConfigOverrides: {
-								state: "disableHeuristics",
+								state: summarizer ? "disableHeuristics" : "disabled",
 								initialSummarizerDelayMs: 0,
 								maxAckWaitTime: 20000,
 								maxOpsSinceLastSummary: 7000,
@@ -298,6 +314,7 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 
 		const runtimeFactory = await alphaFactory(async () => modernKind, undefined, "3.12.0");
 		const modern = await provider.loadContainer(runtimeFactory);
+		await provider.ensureSynchronized();
 		const root = (await modern.getEntryPoint()) as ISharedMap;
 		const collection = collections.get(root);
 		assert(collection !== undefined);
@@ -305,7 +322,12 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		await assert.rejects(child.trySetAlias("named"), /existing .aliases child/);
 		root.set("child", child.entryPoint);
 		await provider.ensureSynchronized();
-		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
+		const loader = provider.createLoader([
+			[
+				provider.defaultCodeDetails,
+				await alphaFactory(async () => modernKind, undefined, "3.12.0", true),
+			],
+		]);
 		const { summarizer } = await createSummarizerCore(modern, loader);
 		await provider.ensureSynchronized();
 		const { summaryVersion } = await summarizeNow(summarizer);
@@ -375,7 +397,12 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		nestedMap.set("value", 43);
 		root.set("nested", nestedMap.handle);
 		await provider.ensureSynchronized();
-		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
+		const loader = provider.createLoader([
+			[
+				provider.defaultCodeDetails,
+				await alphaFactory(async () => modernKind, undefined, "3.12.0", true),
+			],
+		]);
 		const { summarizer } = await createSummarizerCore(container, loader);
 		await provider.ensureSynchronized();
 		const { summaryVersion, summaryTree } = await summarizeNow(summarizer);
@@ -526,8 +553,13 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 			await provider.ensureSynchronized();
 			const summaryFactory =
 				writer === "legacy"
-					? legacyFactory
-					: await alphaFactory(writer === "generalized" ? async () => modernKind : kinds);
+					? makeLegacyFactory(true)
+					: await alphaFactory(
+							writer === "generalized" ? async () => modernKind : kinds,
+							undefined,
+							defaultTestOldestSupportedClient,
+							true,
+						);
 			const loader = provider.createLoader([[provider.defaultCodeDetails, summaryFactory]]);
 			const { summarizer } = await createSummarizerCore(container, loader);
 			await provider.ensureSynchronized();

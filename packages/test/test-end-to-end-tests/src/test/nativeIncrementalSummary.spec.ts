@@ -92,28 +92,34 @@ describeCompat("Native incremental summaries", "NoCompat", (getProvider, apis) =
 			const provider = getProvider({ syncSummarizer: true });
 			let factory: IFluidDataStoreFactory = leaf;
 			for (let i = 1; i <= depth; i++) factory = composite(factory, i);
-			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
-				defaultFactory: factory,
-				registryEntries: [[factory.type, factory]],
-				oldestSupportedClient: "3.12.0",
-				runtimeOptions: {
-					enableRuntimeIdCompressor: "on",
-					summaryOptions: {
-						summaryConfigOverrides: {
-							state: "disableHeuristics",
-							initialSummarizerDelayMs: 0,
-							maxAckWaitTime: 20000,
-							maxOpsSinceLastSummary: 7000,
+			const makeRuntimeFactory = (
+				isSummarizer: boolean,
+			): InstanceType<typeof ContainerRuntimeFactoryWithDefaultDataStore> =>
+				new ContainerRuntimeFactoryWithDefaultDataStore({
+					defaultFactory: factory,
+					registryEntries: [[factory.type, factory]],
+					oldestSupportedClient: "3.12.0",
+					runtimeOptions: {
+						enableRuntimeIdCompressor: "on",
+						summaryOptions: {
+							summaryConfigOverrides: {
+								state: isSummarizer ? "disableHeuristics" : "disabled",
+								initialSummarizerDelayMs: 0,
+								maxAckWaitTime: 20000,
+								maxOpsSinceLastSummary: 7000,
+							},
 						},
 					},
-				},
-			});
+				});
+			const runtimeFactory = makeRuntimeFactory(false);
 			const container = await provider.createContainer(runtimeFactory);
 			const tree = (await container.getEntryPoint()) as ITree;
 			const view = tree.viewWith(config);
 			view.initialize(new Root({ version: 0, data: { unchanged: "retained" } }));
 			await provider.ensureSynchronized();
-			const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
+			const loader = provider.createLoader([
+				[provider.defaultCodeDetails, makeRuntimeFactory(true)],
+			]);
 			const { summarizer } = await createSummarizerCore(container, loader);
 			await provider.ensureSynchronized();
 			await summarizeNow(summarizer);

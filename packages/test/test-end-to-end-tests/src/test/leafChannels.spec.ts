@@ -47,21 +47,25 @@ describeCompat("Native leaf channels", "NoCompat", (getTestObjectProvider, apis)
 			return runtime;
 		},
 	};
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
-		defaultFactory: factory,
-		registryEntries: [[factory.type, factory]],
-		oldestSupportedClient: "3.12.0",
-		runtimeOptions: {
-			summaryOptions: {
-				summaryConfigOverrides: {
-					state: "disableHeuristics",
-					initialSummarizerDelayMs: 0,
-					maxAckWaitTime: 20000,
-					maxOpsSinceLastSummary: 7000,
+	const makeRuntimeFactory = (
+		summarizer: boolean,
+	): InstanceType<typeof ContainerRuntimeFactoryWithDefaultDataStore> =>
+		new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory: factory,
+			registryEntries: [[factory.type, factory]],
+			oldestSupportedClient: "3.12.0",
+			runtimeOptions: {
+				summaryOptions: {
+					summaryConfigOverrides: {
+						state: summarizer ? "disableHeuristics" : "disabled",
+						initialSummarizerDelayMs: 0,
+						maxAckWaitTime: 20000,
+						maxOpsSinceLastSummary: 7000,
+					},
 				},
 			},
-		},
-	});
+		});
+	const runtimeFactory = makeRuntimeFactory(false);
 
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
@@ -149,7 +153,9 @@ describeCompat("Native leaf channels", "NoCompat", (getTestObjectProvider, apis)
 		const root = await getMap(container);
 		root.set("value", 42);
 		await provider.ensureSynchronized();
-		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
+		const loader = provider.createLoader([
+			[provider.defaultCodeDetails, makeRuntimeFactory(true)],
+		]);
 		const { summarizer } = await createSummarizerCore(container, loader);
 		await provider.ensureSynchronized();
 		const { summaryTree, summaryVersion } = await summarizeNow(summarizer);
@@ -253,7 +259,10 @@ describeCompat("Native leaf channels", "NoCompat", (getTestObjectProvider, apis)
 			defaultFactory: storeFactory,
 			registryEntries: [[storeFactory.type, storeFactory]],
 			oldestSupportedClient: "3.12.0",
-			runtimeOptions: { enableRuntimeIdCompressor: "on" },
+			runtimeOptions: {
+				enableRuntimeIdCompressor: "on",
+				summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
+			},
 		});
 		const config = new TreeViewConfiguration({ schema: SchemaFactory.number });
 		const container = await provider.createContainer(treeRuntimeFactory);
