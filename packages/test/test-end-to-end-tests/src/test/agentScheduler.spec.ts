@@ -12,7 +12,6 @@ import { disabledCompressionConfig } from "@fluidframework/container-runtime/int
 import {
 	ITestObjectProvider,
 	createTestContainerRuntimeFactory,
-	getContainerEntryPointBackCompat,
 	type fluidEntryPoint,
 } from "@fluidframework/test-utils/internal";
 
@@ -58,7 +57,7 @@ describeCompat("AgentScheduler", "FullCompat", (getTestObjectProvider, apis) => 
 		provider.loadContainer(getContainerRuntimeFactory(true));
 
 	const getAgentScheduler = async (container: IContainer): Promise<IAgentScheduler> => {
-		const scheduler = await getContainerEntryPointBackCompat<IAgentScheduler>(container);
+		const scheduler = (await container.getEntryPoint()) as IAgentScheduler;
 		await forceWriteMode(scheduler);
 		return scheduler;
 	};
@@ -277,10 +276,10 @@ describeCompat("AgentScheduler", "FullCompat", (getTestObjectProvider, apis) => 
 
 		beforeEach("createContainersAndSchedulers", async function () {
 			container1 = await createContainer();
-			scheduler1 = await getContainerEntryPointBackCompat<IAgentScheduler>(container1);
+			scheduler1 = (await container1.getEntryPoint()) as IAgentScheduler;
 
 			container2 = await loadContainer();
-			scheduler2 = await getContainerEntryPointBackCompat<IAgentScheduler>(container2);
+			scheduler2 = (await container2.getEntryPoint()) as IAgentScheduler;
 		});
 
 		it("Tasks picked while in read mode are assigned after switching to write mode", async () => {

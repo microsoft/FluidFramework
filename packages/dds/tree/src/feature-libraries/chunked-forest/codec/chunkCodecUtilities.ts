@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import type { TreeValue, TreeChunk } from "../../../core/index.js";
-import { assertValidIndex } from "../../../util/index.js";
 import { type FluidSerializableReadOnly, assertAllowedValue } from "../../valueUtilities.js";
 
 /**
@@ -101,11 +100,41 @@ export function jsonMinimizingFilter(s: string, value: number, count: number): b
 }
 
 /**
- * Read from an array, but error if index is not valid.
+ * Read from an array, asserting that the selected entry is not undefined.
+ * @remarks
+ * Use this when the index is known to be an integer, such as an internally maintained stream offset.
+ * Does not support negative indexing relative to the end, undefined entries, or holes in sparse arrays.
+ * Does not validate the index itself: a string naming an array property can pass this check.
+ * Use {@link getFullyChecked} for indices from serialized data.
  */
 export function getChecked<T>(data: readonly T[], index: number): T {
-	assertValidIndex(index, data);
-	return data[index] ?? oob();
+	const value = data[index];
+	assert(
+		value !== undefined,
+		"missing array entry",
+		() => `index ${index} produced undefined in array of length ${data.length}.`,
+	);
+	return value;
+}
+
+/**
+ * {@link getChecked} with additional validation that the index is an integer.
+ * @remarks
+ * Use this for indices from serialized data, which another user could control.
+ * Valid data must contain an in-bounds integer index into an array without custom indexed properties.
+ *
+ * Does not guarantee rejection of custom integer-keyed properties (like `-1`):
+ * such checks are not needed to prevent problematic cases, like `__proto__` accessing objects outside the encoded data.
+ *
+ * If an invalid index can result from application misuse, report a usage error at the API boundary instead of using this assertion.
+ */
+export function getFullyChecked<T>(data: readonly T[], index: number): T {
+	assert(
+		Number.isInteger(index),
+		"invalid array index",
+		() => `index ${index} is not an integer.`,
+	);
+	return getChecked(data, index);
 }
 
 /**
@@ -174,10 +203,23 @@ export function readStreamStream(stream: StreamCursor): StreamCursor {
  */
 export interface ChunkDecoder {
 	/**
+	 * Provides the decoders this one references.
+	 * @remarks
+	 * ChunkDecoders are allowed to reference (and be implemented in terms of) other ChunkDecoders in the batch.
+	 * To support cyclic references, decoders are linked after construction during this `initialize` call, forming a two-phase initialization pattern.
+	 * Due to the cyclic nature of these references, the passed-in decoders cannot be assumed to have been initialized yet.
+	 *
+	 * This method provides an opportunity to cache computations that may be needed during decoding.
+	 */
+	initialize(decoders: readonly ChunkDecoder[]): void;
+
+	/**
 	 * Read from stream, updating the offset.
 	 *
 	 * @returns a TreeChunk made from the data from `stream`.
+	 * @remarks
 	 * This chunk is allowed to reference/take ownership of content it reads from the stream.
+	 * Only called after `initialize` has been called on all decoders in the batch.
 	 */
-	decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk;
+	decode(stream: StreamCursor): TreeChunk;
 }

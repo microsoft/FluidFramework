@@ -19,7 +19,6 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	type ChannelFactoryRegistry,
 	DataObjectFactoryType,
-	getContainerEntryPointBackCompat,
 	getRequiredPendingLocalState,
 	type ITestContainerConfig,
 	type ITestFluidObject,
@@ -48,7 +47,7 @@ describeCompat("Version marks", "NoCompat", function (getTestObjectProvider, api
 	});
 
 	const getTestContext = async (container: IContainer) => {
-		const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		const containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
 		const exactlyOnceCounter = await dataObject.getSharedObject<SharedCounter>(counterId);
 
