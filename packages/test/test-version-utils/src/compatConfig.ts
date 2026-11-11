@@ -3,16 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Lazy } from "@fluidframework/core-utils/internal";
+import { Lazy } from "@fluidframework/core-utils/internal";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import * as semver from "semver";
 
-import {
-	baseVersion,
-	baseVersionForMinCompat,
-	codeVersion,
-	testBaseVersion,
-} from "./baseVersion.js";
+import { baseVersion, baseVersionForMinCompat, testBaseVersion } from "./baseVersion.js";
 import {
 	checkpointResolutionRange,
 	getCurrentCheckpoint,
@@ -29,7 +24,11 @@ import {
 } from "./compatOptions.js";
 import { pkgVersion } from "./packageVersion.js";
 import { ensureVersionLoaded } from "./testApi.js";
-import { getRequestedVersion, resolveRangeViaManifest } from "./versionUtils.js";
+import {
+	calculateRequestedRange,
+	getRequestedVersion,
+	resolveRangeViaManifest,
+} from "./versionUtils.js";
 
 /**
  * Represents a previous major release of a package based on the provided delta. For example, if the base version is 2.X and
@@ -68,7 +67,7 @@ export interface CompatConfig {
 	loadVersion?: string;
 }
 
-export const oldestCompatibleVersion = resolveRangeViaManifest("2.0.0-internal.5.4.2");
+export const oldestCompatibleVersion = resolveRangeViaManifest("2.0.9");
 
 /**
  * The default versions to be used for generating configurations for layer compat testing.
@@ -79,10 +78,6 @@ const defaultVersionsForLayerCompat = {
 	// This is the oldest compatible version (OCV) for Loader and Driver layers.
 	oldestCompatibleVersion: [oldestCompatibleVersion],
 };
-
-// This indicates the number of versions above 2.0.0.internal.1.y.z that we want to support for back compat.
-// Currently we only want to support 2.0.0.internal.3.y.z. and above
-const defaultNumOfDriverVersionsAboveV2Int1 = 2;
 
 const currentVersionStr = `${baseVersion} (N)`;
 
@@ -216,42 +211,34 @@ const genDriverLoaderBackCompatConfig = (compatVersion: number): CompatConfig[] 
 };
 
 /**
- * We have 8 internal and 5 RC versions.
+ * Stable back-compat release bands, excluding N and N-1 which are tested separately.
+ * Shared with workspace generation so FULL never requests an uninstalled release band.
  */
-export const numOfInternalMajorsBeforePublic2dot0 = 8 + 5;
-
-const getNumberOfVersionsToGoBack = (numOfVersionsAboveV2Int1: number = 0): number => {
-	const semverVersion = semver.parse(codeVersion);
-	assert(semverVersion !== null, `Unexpected pkg version '${codeVersion}'`);
-
-	// We want to generate back compat configs for all of them because they are all considered major releases.
-	// RCs can be thought of as internal 9 through 13 for this purpose, so just add them.
-	// This allows us to increase our oldest compatible version (OCV) support for certain versions above
-	// 2.0.0.internal.1.y.z, where we don't want to go that far.
-	return numOfInternalMajorsBeforePublic2dot0 - numOfVersionsAboveV2Int1;
-};
-
-const genFullBackCompatConfig = (driverVersionsAboveV2Int1: number = 0): CompatConfig[] => {
-	// not working with new rc version
-	const _configList: CompatConfig[] = [];
-
-	const loaderVersionBackCompatCount = getNumberOfVersionsToGoBack(driverVersionsAboveV2Int1);
-
-	// This makes the assumption N and N-1 scenarios are already fully tested thus skipping 0 and -1.
-	// This loop goes as far back as 2.0.0.internal.1.y.z.
-	// The idea is to generate all the versions from -2 -> - (major - 1) the current major version (i.e 2.0.0-internal.9.y.z would be -8)
-	// This means as the number of majors increase the number of versions we support - this may be updated in the future.
-	for (let i = 2; i < loaderVersionBackCompatCount; i++) {
-		_configList.push(...genLoaderBackCompatConfig(-i));
+export function getFullBackCompatVersionDeltas(version: string): number[] {
+	const deltas: number[] = [];
+	let delta = -2;
+	let range = calculateRequestedRange(version, delta);
+	let minimum = semver.minVersion(range);
+	// Stable release bands have a -0 lower bound in the generic version arithmetic.
+	// Include the band containing OCV even when the floor is above that band's lower bound.
+	while (
+		minimum !== null &&
+		semver.intersects(range, `>=${oldestCompatibleVersion}`) &&
+		minimum.prerelease.every((part) => part === 0)
+	) {
+		deltas.push(delta);
+		delta--;
+		range = calculateRequestedRange(version, delta);
+		minimum = semver.minVersion(range);
 	}
+	return deltas;
+}
 
-	// Splitting the two allows us to still test driver-loader while skipping older loader-driver versions are no longer supported
-	const driverVersionBackCompatCount = getNumberOfVersionsToGoBack(driverVersionsAboveV2Int1);
-	for (let i = 2; i < driverVersionBackCompatCount; i++) {
-		_configList.push(...genDriverLoaderBackCompatConfig(-i));
-	}
-	return _configList;
-};
+const genFullBackCompatConfig = (): CompatConfig[] =>
+	getFullBackCompatVersionDeltas(baseVersion).flatMap((delta) => [
+		...genLoaderBackCompatConfig(delta),
+		...genDriverLoaderBackCompatConfig(delta),
+	]);
 
 /**
  * Returns true if compat test version is below the one provided as minimum version.
@@ -281,29 +268,6 @@ export function isCompatVersionBelowMinVersion(
 		useOnlineRegistry,
 	});
 	return semver.compare(compatVersion, minVersion) < 0;
-}
-
-/**
- * Returns true if the given compat config is compliant with ODSP's version requirements.
- * ! If a summarizer's version is too old (using dual-commit summaries), ODSP will nack the summaries with "Upgrade to a newer version of the Fluid client packages to summarize".
- */
-export function isOdspCompatCompliant(config: CompatConfig): boolean {
-	const versionIsCompliant = (version: string | number | undefined): boolean => {
-		// ! Looking at current telemetry, the oldest hit that doesn't use dual-commit summaries was version "2.0.0-rc.5.0.7"
-		// ! Given this, version "2.0.0" is a fine cut off since we currently only test back to N-1
-		const odspMinVersion = "2.0.0";
-		return (
-			version === undefined ||
-			typeof version !== "string" ||
-			semver.compare(version, odspMinVersion) >= 0
-		);
-	};
-
-	return (
-		versionIsCompliant(config.compatVersion) &&
-		versionIsCompliant(config.createVersion) &&
-		versionIsCompliant(config.loadVersion)
-	);
 }
 
 // Helper function for genCrossClientCompatConfig().
@@ -412,9 +376,6 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 		if (process.env.fluid__test__backCompat === "FULL") {
 			_configList.push(...genFullBackCompatConfig());
 		}
-		if (process.env.fluid__test__backCompat === "V2_INT_3") {
-			_configList.push(...genFullBackCompatConfig(defaultNumOfDriverVersionsAboveV2Int1));
-		}
 	} else {
 		compatVersions.forEach((value) => {
 			switch (value) {
@@ -426,10 +387,6 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 				}
 				case "FULL": {
 					_configList.push(...genFullBackCompatConfig());
-					break;
-				}
-				case "V2_INT_3": {
-					_configList.push(...genFullBackCompatConfig(defaultNumOfDriverVersionsAboveV2Int1));
 					break;
 				}
 				case "CROSS_CLIENT": {

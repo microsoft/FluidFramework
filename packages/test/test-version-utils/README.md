@@ -32,6 +32,7 @@ are generated (empty entries are current versions):
 | ------------------- | ------ | ------ | ----------------- | ------------ |
 | None                |        |        |                   |              |
 | Loader              | old    |        |                   |              |
+| LoaderDriver        | old    | old    |                   |              |
 | Driver              |        | old    |                   |              |
 | ContainerRuntime    |        |        | old               |              |
 | DataRuntime         |        |        |                   | old          |
@@ -73,11 +74,27 @@ to enable compat testing easily in the future just by changing the compatVersion
 
 ### Legacy version defaults and installation
 
-By default, the cross-client checkpoint matrix described above is generated, a layer-compat permutation against
-the most recent prior in-window checkpoint, and a hard-coded "Oldest Compatible Version" (OCV) for Loader / Driver
-layer-compat. The versions can be specified using command line (see below) to run the test against any two versions. This
-package includes a `mocha` global hook that will install legacy packages at the beginning of the package based on the
-`compatVersion` settings.
+**N** is the base version under test (`--baseVersion`), normally the current repository build.
+**N-1** and **N-2** select one and two release bands before the band containing N, rather than subtracting
+a major, minor, or patch version. Stable release bands are bounded by successive multiples of ten in the minor
+version; not every intervening minor version is published. These boundaries match the designated
+minor releases where [`@beta` and `@legacy` API breaking changes are permitted](../../../docs/content/Contributing/Breaking-vs-Non-Breaking-Changes.md#beta--legacy-apis).
+See the [release-tag stability guarantees](../../../docs/content/Guidelines/Documentation-Guidelines/Documenting-TypeScript/Release-Tags.md#stability-guarantees-1)
+and `calculateRequestedRange` in [`src/versionUtils.ts`](./src/versionUtils.ts) for the policy and selection rules,
+including transitions between major versions.
+
+By default, `describeCompat` generates test variants for the following version configurations, subject to the suite's compatibility filter:
+
+- **Non-compat:** the current build across all layers.
+- **N-1:** the latest installed release in the previous release band, with all layer permutations.
+- **Oldest Compatible Version (OCV):** the exact `oldestCompatibleVersion` in
+  [`src/compatConfig.ts`](./src/compatConfig.ts), with an old loader or old loader plus driver and current other layers.
+- **Cross-client:** the current build paired with compatibility checkpoint versions as described above, resolved independently of OCV.
+
+**N-2 is part of the opt-in `FULL` mode, not the default matrix.** FULL selects the latest installed release
+in each release band from N-2 down to the OCV floor, with old-loader and old-loader-plus-driver permutations.
+
+Versioned packages are pre-installed in the committed compatibility workspace, and loaded by a Mocha setup hook.
 
 ## Command line options
 
@@ -88,7 +105,7 @@ driver selection, versions for compat testing, and compat kind combinations.
 --compatKind <CompatKind> - filter to the compat variant. See above table. Can be specified multiple times.
                                 Default: undefined (no filter)
 --compatVersion <version> - specify the old version. Relative (to base) or specific version. Can be specified multiple times.
-                                Default: -1, -2, LTS (hard coded in src/compatConfig.ts)
+                                Default: 0, -1, OCV, CROSS_CLIENT (see src/compatConfig.ts)
 --baseVersion <version>   - specify the base (new) version. Allow the test to run against any version combinations.
                                 Default: <current> (same version of the test package)
 --driver <driverType>     - <driverType> = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local"
@@ -106,6 +123,10 @@ driver selection, versions for compat testing, and compat kind combinations.
 
 `compatVersion` can be a semver or semver range or an integer apply to the minor version relative to `baseVersion`
 
+The named modes are `OCV` (exact configured floor, loader and loader-plus-driver), `FULL` (stable back-compat release
+bands from N-2 down to the OCV floor, loader and loader-plus-driver), and `CROSS_CLIENT` (cross-client combinations described above).
+Use `--compatVersion=FULL --compatVersion=OCV` to include both stable release-band coverage and the exact boundary.
+
 -   If it is a semver range, the latest in that range will be picked.
 -   If it is an integer, the value will be apply to the minor version of the `baseVersion`, and create a `^` range
     including prerelease versions. The latest in that range will be picked.
@@ -113,6 +134,8 @@ driver selection, versions for compat testing, and compat kind combinations.
         will be `^0.1.3-0`
 
 We also accept some of the flags via environment variables.
+
+Setting `fluid__test__backCompat=FULL` adds the floor-bounded FULL configurations to the default matrix.
 
 | Environment Variables         | Command line options |
 | ----------------------------- | -------------------- |
@@ -166,11 +189,6 @@ The script (`scripts/updateCompatVersions.ts`) does the following:
 Commit all files produced by the script: `generated-versions.cjs`, per-version `package.json` files, and
 `compat-workspaces/full/pnpm-lock.yaml`.
 
-### Adding pinned versions for specific tests
-
-When adding a test that uses `describeInstallVersions({ requestAbsoluteVersions: [...] })` for some pinned version,
-add that version to `compat-workspaces/explicit-versions.mjs`. Then re-run `update-compat-versions` and commit the changes.
-
 ## Implementation notes
 
 Legacy packages are installed in a committed pnpm sub-workspace at `compat-workspaces/full/`.
@@ -185,7 +203,8 @@ same public API as `ContainerRuntime` in FF@1.0.0.
 For the most part, public API breaks are relatively contained and the type is "correct enough" that increasing the
 complexity of the typing setup isn't worth the associated redesign.
 However, this does give rise to several places in this package and test-utils that have intentional "back-compat" code.
-See for example [`versionHasMovedSparsedMatrix`](https://github.com/microsoft/FluidFramework/blob/e5b339c9e0cd6b96410ff2bc02206c66c636ccd9/packages/test/test-version-utils/src/versionUtils.ts#L467) or [explicitly using ContainerRuntime.load over the newer variant](https://github.com/microsoft/FluidFramework/blob/e5b339c9e0cd6b96410ff2bc02206c66c636ccd9/packages/test/test-utils/src/testContainerRuntimeFactory.ts#L67).
+For example, `test-utils/src/testContainerRuntimeFactory.ts` adapts the `loadRuntime` registry signature
+and compatibility-setting property names across supported historical and current packages.
 
 Thus it's important to keep in mind that the type provided by static import or `import type` might not align exactly with the
 runtime object once taking the compatibility configuration into account.
