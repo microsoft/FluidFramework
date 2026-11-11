@@ -15,14 +15,19 @@ import {
 } from "@fluid-tools/benchmark";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import { EmptyKey, rootFieldKey, type NormalizedUpPath } from "../../core/index.js";
+import {
+	EmptyKey,
+	rootFieldKey,
+	type NormalizedUpPath,
+	type Revertible,
+} from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	TreeCompressionStrategy,
 	jsonableTreeFromFieldCursor,
 } from "../../feature-libraries/index.js";
 import { Tree } from "../../shared-tree/index.js";
-import { TreeViewConfiguration } from "../../simple-tree/index.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import { makeArray } from "../../util/index.js";
 import {
@@ -351,6 +356,64 @@ describe("SharedTree benchmarks", () => {
 								provider.synchronizeMessages();
 							});
 						} while (running);
+					},
+				}),
+			});
+		}
+	});
+
+	describe("a transaction while earlier edits are retained for undo", () => {
+		const schemaFactory = new SchemaFactory("transactionBenchmark");
+		class Item extends schemaFactory.object("Item", { value: schemaFactory.number }) {}
+		class Items extends schemaFactory.array("Items", Item) {}
+		const config = new TreeViewConfiguration({ schema: Items });
+		const itemCount = 100;
+		for (const [retainedEditCount, benchmarkType] of [
+			[10, BenchmarkType.Perspective],
+			[1000, BenchmarkType.Measurement],
+		] as const) {
+			benchmarkIt({
+				type: benchmarkType,
+				title: `that sets one property, with ${retainedEditCount} retained edits`,
+				...benchmarkDurationBatchless({
+					benchmarkFn: (state) => {
+						// Setup: each retained edit replaces a value, whose removed node is kept so the edit can be undone.
+						const provider = new TestTreeProviderLite(1, factory);
+						const view = provider.trees[0].viewWith(config);
+						view.initialize(makeArray(itemCount, (index) => new Item({ value: index })));
+						const revertibles: Revertible[] = [];
+						const unsubscribe = view.events.on("commitApplied", (_, getRevertible) => {
+							if (getRevertible !== undefined) {
+								revertibles.push(getRevertible());
+							}
+						});
+						for (let index = 0; index < retainedEditCount; index++) {
+							const editedItem = view.root[index % itemCount];
+							assert(editedItem !== undefined);
+							editedItem.value = -index;
+						}
+						unsubscribe();
+						assert.equal(revertibles.length, retainedEditCount);
+
+						// Measure
+						const item = view.root[0];
+						assert(item !== undefined);
+						let value = 0;
+						let running: boolean;
+						do {
+							running = state.time(() => {
+								Tree.runTransaction(view, () => {
+									item.value = ++value;
+								});
+							});
+						} while (running);
+						assert.equal(item.value, value);
+
+						// Cleanup
+						for (const revertible of revertibles) {
+							revertible.dispose();
+						}
+						view.dispose();
 					},
 				}),
 			});
