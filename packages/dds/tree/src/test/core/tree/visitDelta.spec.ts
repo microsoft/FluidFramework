@@ -646,8 +646,6 @@ describe("visitDelta", () => {
 			["replace", field0, { start: 0, end: 1 }, field2, { minor: 2 }],
 			["replace", field1, { start: 1, end: 2 }, field3, { minor: 3 }],
 			["exitField", rootKey],
-			["enterField", rootKey],
-			["exitField", rootKey],
 		];
 
 		const index = makeDetachedFieldIndex("");
@@ -660,6 +658,90 @@ describe("visitDelta", () => {
 			],
 		);
 	});
+	it("skips completed replacement fields while visiting pending sibling fields", () => {
+		const delta: DeltaRoot = {
+			build: [{ id: { minor: 0 }, trees: chunkXY }],
+			fields: new Map([
+				[
+					rootKey,
+					{
+						marks: [
+							{
+								count: 1,
+								fields: new Map([
+									[
+										fooKey,
+										{
+											marks: [
+												{ count: 2 },
+												{ count: 1, detach: { minor: 2 }, attach: { minor: 0 } },
+												{ count: 1, detach: { minor: 3 } },
+											],
+										},
+									],
+									[barKey, { marks: [{ count: 1, attach: { minor: 1 } }] }],
+								]),
+							},
+						],
+					},
+				],
+			]),
+		};
+		testDeltaVisit(delta, [
+			["create", mapTreeX, field0],
+			["create", mapTreeY, field1],
+			["enterField", rootKey],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["replace", field0, { start: 2, end: 3 }, field2, { minor: 2 }],
+			["detach", { start: 3, end: 4 }, field3, { minor: 3 }, false],
+			["exitField", fooKey],
+			["enterField", barKey],
+			["exitField", barKey],
+			["exitNode", 0],
+			["exitField", rootKey],
+			["enterField", rootKey],
+			["enterNode", 0],
+			["enterField", barKey],
+			["attach", field1, 1, 0],
+			["exitField", barKey],
+			["exitNode", 0],
+			["exitField", rootKey],
+		]);
+	});
+
+	it("makes replacement output available to an earlier attach", () => {
+		const delta: DeltaRoot = {
+			build: [{ id: { minor: 0 }, trees: chunkX }],
+			fields: new Map([
+				[
+					rootKey,
+					{
+						marks: [
+							{ count: 1, attach: { minor: 1 } },
+							{ count: 1, detach: { minor: 1 }, attach: { minor: 0 } },
+						],
+					},
+				],
+			]),
+		};
+		const index = makeDetachedFieldIndex("");
+		testDeltaVisit(
+			delta,
+			[
+				["create", mapTreeX, field0],
+				["enterField", rootKey],
+				["replace", field0, { start: 0, end: 1 }, field1, { minor: 1 }],
+				["exitField", rootKey],
+				["enterField", rootKey],
+				["attach", field1, 1, 0],
+				["exitField", rootKey],
+			],
+			index,
+		);
+		assert.deepEqual([...index.entries()], []);
+	});
+
 	it("keeps indexes aligned around replacements in both passes", () => {
 		const delta: DeltaRoot = {
 			build: [{ id: { minor: 0 }, trees: chunkXY }],
@@ -796,8 +878,6 @@ describe("visitDelta", () => {
 				["create", mapTreeX, field0],
 				["enterField", rootKey],
 				["replace", field0, { start: 0, end: 1 }, field1, { minor: 1 }],
-				["exitField", rootKey],
-				["enterField", rootKey],
 				["exitField", rootKey],
 				["destroy", field1, 1],
 			],
@@ -1375,8 +1455,6 @@ describe("visitDelta", () => {
 				["enterField", rootKey],
 				["replace", field0, { start: 0, end: 1 }, field2, { minor: 2 }],
 				["replace", field1, { start: 1, end: 2 }, field3, { minor: 3 }],
-				["exitField", rootKey],
-				["enterField", rootKey],
 				["exitField", rootKey],
 			];
 
