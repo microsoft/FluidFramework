@@ -6,7 +6,6 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type { TreeValue, TreeChunk } from "../../../core/index.js";
-import { assertValidIndex } from "../../../util/index.js";
 import { type FluidSerializableReadOnly, assertAllowedValue } from "../../valueUtilities.js";
 
 /**
@@ -101,13 +100,37 @@ export function jsonMinimizingFilter(s: string, value: number, count: number): b
 }
 
 /**
- * Read from an array, but error if index is not valid.
+ * Read from an array, asserting that the selected entry is not undefined.
+ * @remarks
+ * Use this when the index is known to be an integer, such as an internally maintained stream offset.
+ * Does not support negative indexing relative to the end, undefined entries, or holes in sparse arrays.
+ * Does not validate the index itself: a string naming an array property can pass this check.
+ * Use {@link getFullyChecked} for indices from serialized data.
  */
 export function getChecked<T>(data: readonly T[], index: number): T {
-	assertValidIndex(index, data);
 	const value = data[index];
-	assert(value !== undefined, "missing array entry");
+	assert(
+		value !== undefined,
+		"missing array entry",
+		() => `index ${index} produced undefined in array of length ${data.length}.`,
+	);
 	return value;
+}
+
+/**
+ * {@link getChecked} with additional validation that the index is an integer.
+ * @remarks
+ * Use this for indices from serialized data, which another user could control.
+ * Valid data must contain an in-bounds integer index into an array without custom indexed properties.
+ * If an invalid index can result from application misuse, report a usage error at the API boundary instead of using this assertion.
+ */
+export function getFullyChecked<T>(data: readonly T[], index: number): T {
+	assert(
+		Number.isInteger(index),
+		"invalid array index",
+		() => `index ${index} is not an integer.`,
+	);
+	return getChecked(data, index);
 }
 
 /**

@@ -13,7 +13,7 @@ import type { ChunkedCursor } from "../../../../core/index.js";
 import {
 	type ChunkDecoder,
 	type StreamCursor,
-	getChecked,
+	getFullyChecked,
 	readStreamNumber,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
@@ -127,7 +127,7 @@ class RootDecoder implements ChunkDecoder {
 	}
 	public decode(stream: StreamCursor): TreeChunk {
 		const shape = readStreamNumber(stream);
-		const decoder = getChecked(this.decoders, shape);
+		const decoder = getFullyChecked(this.decoders, shape);
 		return decoder.decode(stream);
 	}
 }
