@@ -12,7 +12,7 @@ import type { BrandedType, IdDecodingContext } from "../../../util/index.js";
 import {
 	type ChunkDecoder,
 	type StreamCursor,
-	getChecked,
+	getFullyChecked,
 	readStream,
 } from "./chunkCodecUtilities.js";
 import type { IncrementalDecoder } from "./codecs.js";
@@ -75,7 +75,7 @@ export class DecoderContext<TEncodedShape = unknown> {
 		if (typeof encoded === "string") {
 			return encoded as T;
 		}
-		return getChecked(this.identifiers, encoded) as T;
+		return getFullyChecked(this.identifiers, encoded) as T;
 	}
 }
 

@@ -13,7 +13,6 @@ import {
 	getRequestedVersion,
 	readVersionsManifest,
 	resolveRangeViaManifest,
-	versionHasMovedSparsedMatrix,
 } from "../versionUtils.js";
 
 /**
@@ -266,30 +265,6 @@ describe("versionUtils", () => {
 
 			assert.ok(expected, `Expected at least one manifest version satisfying ${range}`);
 			assert.strictEqual(getRequestedVersion({ baseVersion, requested: -1 }), expected);
-		});
-	});
-
-	describe("versionHasMovedSparsedMatrix", () => {
-		it("older version", () => {
-			for (const version of ["0.59.0", "1.4.0", "2.0.0-internal.1.4.0"]) {
-				assert.strictEqual(versionHasMovedSparsedMatrix(version), false);
-			}
-		});
-
-		it("equal version version", () => {
-			assert.strictEqual(versionHasMovedSparsedMatrix("2.0.0"), true);
-			assert.strictEqual(versionHasMovedSparsedMatrix("2.0.0-internal.2.0.0"), true);
-		});
-
-		it("newer version", () => {
-			for (const version of [
-				"2.0.0-internal.2.0.1",
-				"2.1.0-internal.1.4.0",
-				"2.0.1",
-				"3.0.0",
-			]) {
-				assert.strictEqual(versionHasMovedSparsedMatrix(version), true);
-			}
 		});
 	});
 });

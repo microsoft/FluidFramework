@@ -1,5 +1,8 @@
 packages:
   - .
 
+minimumReleaseAge: 0
+registry: https://pkgs.dev.azure.com/fluidframework/public/_packaging/publicPackages/npm/registry/
+
 allowBuilds:
   esbuild: true

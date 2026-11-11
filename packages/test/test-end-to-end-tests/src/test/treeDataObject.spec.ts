@@ -12,11 +12,7 @@ import {
 	TreeDataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import {
-	createContainerRuntimeFactoryWithDefaultDataStore,
-	defaultTestOldestSupportedClient,
-	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils/internal";
+import { defaultTestOldestSupportedClient } from "@fluidframework/test-utils/internal";
 import type { TreeView } from "@fluidframework/tree/internal";
 
 // Note: ideally these tests would live directly in the `aqueduct` package,
@@ -76,21 +72,18 @@ describeCompat("TreeDataObject", "NoCompat", (getTestObjectProvider, apis) => {
 		enableRuntimeIdCompressor: "on",
 	};
 
-	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-		ContainerRuntimeFactoryWithDefaultDataStore,
-		{
-			defaultFactory: TestTreeDataObject.getFactory(),
-			oldestSupportedClient: defaultTestOldestSupportedClient,
-			registryEntries: [[TestTreeDataObject.type, TestTreeDataObject.getFactory()]],
-			runtimeOptions,
-		},
-	);
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory: TestTreeDataObject.getFactory(),
+		oldestSupportedClient: defaultTestOldestSupportedClient,
+		registryEntries: [[TestTreeDataObject.type, TestTreeDataObject.getFactory()]],
+		runtimeOptions,
+	});
 
 	it("First time initialization", async () => {
 		const provider = getTestObjectProvider();
 		const container = await provider.createContainer(runtimeFactory);
 
-		const dataObject = await getContainerEntryPointBackCompat<TestTreeDataObject>(container);
+		const dataObject = (await container.getEntryPoint()) as TestTreeDataObject;
 		assert.deepEqual(dataObject.treeView.root.foo, "Hello world");
 	});
 
@@ -101,8 +94,7 @@ describeCompat("TreeDataObject", "NoCompat", (getTestObjectProvider, apis) => {
 		// Load second container and check data.
 		const container2 = await provider.loadContainer(runtimeFactory);
 
-		const container2DataObject =
-			await getContainerEntryPointBackCompat<TestTreeDataObject>(container2);
+		const container2DataObject = (await container2.getEntryPoint()) as TestTreeDataObject;
 		assert.deepEqual(container2DataObject.treeView.root.foo, "Hello world");
 	});
 });
