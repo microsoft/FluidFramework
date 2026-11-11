@@ -243,15 +243,14 @@ export interface CombinedSchemaCompatibilityStatus {
 	readonly snapshotViewOfCurrentDocument: Omit<SchemaCompatibilityStatus, "canInitialize">;
 
 	/**
-	 * True if and only if the schemas have identical compatibility.
+	 * Whether the view schemas produce identical compatibility snapshots.
 	 * @remarks
-	 * This includes producing equivalent initial stored schemas,
-	 * as well as equivalent compatibility with potential future schema changes beyond just those in these two schemas.
+	 * Unlike the directional results above, this compares the schema declarations rather than a view's ability to use a particular document.
+	 * The snapshots capture both ordinary schema declarations and compatibility settings such as staging and unknown optional-field support.
+	 * Two views may therefore be able to use each other's documents while producing different snapshots because they would handle future schema changes differently.
 	 *
-	 * This includes compatibility with all potential future schema changes.
-	 * For example two schemas different only in compatibility with future optional fields via allow unknown optional fields or staged schema
-	 * would be considered non-equivalent, even though they are forwards and backwards compatible with each other, and both status above report them as equivalent
-	 * since they would produce the same stored schema upon schema upgrade.
+	 * Use the directional results to decide whether either view can read or upgrade documents created by the other.
+	 * Identical snapshots alone do not establish those results, particularly for staging details that the snapshot format does not preserve.
 	 */
 	readonly identicalCompatibility: boolean;
 }
@@ -345,11 +344,10 @@ export interface SnapshotSchemaCompatibilityOptions {
 	 * @remarks
 	 * Can use any format supported by {@link SnapshotSchemaCompatibilityOptions.versionComparer}.
 	 *
-	 * For each historical schema from snapshots with a version greater than or equal to this, compatibility is required in both directions:
-	 * each schema must be able to view or upgrade documents created with the other schema.
-	 * If {@link SchemaCompatibilityStatus.canView} is false but {@link SchemaCompatibilityStatus.canUpgrade} is true,
-	 * the viewing client must call {@link TreeView.upgradeSchema} before accessing the document through its view.
-	 * Passing the snapshot check does not perform that upgrade or imply that viewing is already permitted.
+	 * Versions at or above this minimum form the collaboration window.
+	 * For each historical snapshot in that window, both its view and the current view must be able to use documents created by the other, either directly or after an upgrade.
+	 * Because an upgrade can be required, passing the snapshot check does not guarantee immediate viewing.
+	 * When {@link SchemaCompatibilityStatus.canView} is false but {@link SchemaCompatibilityStatus.canUpgrade} is true, the application must call {@link TreeView.upgradeSchema} before accessing the document.
 	 *
 	 * Typically applications will attempt to manage their deployment/update schedule such that all versions concurrently deployed can
 	 * collaborate to avoid users losing access to documents when other users upgrade the schema.
@@ -428,11 +426,6 @@ export interface SnapshotSchemaCompatibilityOptions {
 /**
  * Check `currentViewSchema` for compatibility with a collection of historical schema snapshots stored in `snapshotDirectory`.
  *
- * @throws Throws errors if the input version strings (including those in snapshot file names) are not valid SemVer versions when using default SemVer version comparison.
- * @throws Throws errors if the input version strings (including those in snapshot file names) are not ordered as expected (current being the highest, and `minVersionForCollaboration` corresponding to the current version or a lower snapshotted version).
- * @throws In `test` mode, throws an error if there is not an up to date snapshot for the current version.
- * @throws Throws an error if the current schema can neither view nor upgrade documents from any snapshotted schema.
- * @throws Throws an error if any historical snapshotted schema with a version greater than or equal to `minVersionForCollaboration` can neither view nor upgrade documents created with the current schema.
  * @remarks
  * This is intended for use in snapshot-based schema compatibility tests.
  * Every SharedTree-based component or application with a schema is recommended to use this to verify schema compatibility across versions.
@@ -440,12 +433,10 @@ export interface SnapshotSchemaCompatibilityOptions {
  * Schema snapshots should be added to `snapshotDirectory` using this function in "update" mode whenever the schema changes in a compatibility impacting way
  * (or when `snapshotUnchangedVersions` is true and a new version about to be released is getting prepared for release (and thus `version` changed)).
  *
- * Compatibility requires that the viewing schema can either view a document directly or safely upgrade it before viewing.
- * This rule applies in both directions between the current schema and historical schemas within the collaboration window.
- * The current schema must also satisfy this rule for documents from every historical snapshot outside that window.
- * This function checks schema compatibility without applying any document upgrades.
- * Applications must perform any required {@link TreeView.upgradeSchema | upgrade} before accessing the document through an incompatible view.
- * See {@link TreeView.compatibility} for more information.
+ * To keep existing documents usable, the current view must be able to read or upgrade documents from every historical snapshot.
+ * For versions within the collaboration window, the reverse must also hold: their views must be able to read or upgrade documents created by the current version.
+ * These checks allow compatibility through an upgrade, but do not perform that upgrade.
+ * Applications must therefore inspect {@link TreeView.compatibility} and apply any required {@link TreeView.upgradeSchema | upgrade} before accessing the document.
  *
  * Proper use of this utility should do a good job at detecting schema compatibility issues,
  * however it currently does not do a good job of explaining exactly what change to the schema is causing the compatibility issues.
@@ -474,6 +465,12 @@ export interface SnapshotSchemaCompatibilityOptions {
  * and this will still allow testing that the current schema can view or upgrade documents from all historical versions.
  * If a sufficiently incompatible historical schema were used in production, it may be impossible to make a single schema which can accommodate all of them:
  * this utility can be used to confirm that is the case, as well as to avoid the problem in the first place by testing schema before each one is deployed.
+ *
+ * @throws Throws errors if the input version strings (including those in snapshot file names) are not valid SemVer versions when using default SemVer version comparison.
+ * @throws Throws errors if the input version strings (including those in snapshot file names) are not ordered as expected (current being the highest, and `minVersionForCollaboration` corresponding to the current version or a lower snapshotted version).
+ * @throws In `test` mode, throws an error if there is not an up to date snapshot for the current version.
+ * @throws Throws an error if the current schema can neither view nor upgrade documents from any snapshotted schema.
+ * @throws Throws an error if any historical snapshotted schema with a version greater than or equal to `minVersionForCollaboration` can neither view nor upgrade documents created with the current schema.
  *
  * @example Mocha test which validates that the current `config` can collaborate with all historical versions back to 2.0.0
  *

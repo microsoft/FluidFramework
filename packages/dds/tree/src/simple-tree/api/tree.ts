@@ -844,19 +844,18 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 * When {@link SchemaCompatibilityStatus.canUpgrade} is true,
 	 * this can be used to modify the stored schema to make it compatible with the view.
 	 * @remarks
-	 * Such an upgrade is always additive.
-	 * That is, it will only add new allowed types, staged permissions, or optional fields, without removing any existing ones from the stored schema.
+	 * An upgrade adds the permissions needed by this view while preserving content permitted by the existing stored schema.
+	 * For example, it can add an allowed type or make a required field optional, but cannot remove an allowed type that existing content may use.
+	 * Preserving content does not guarantee that other application versions can read newly allowed values, so check their compatibility before deploying the change.
 	 *
-	 * Upgrading the schema will cause an update to the {@link TreeView.compatibility}, allowing access to `root`.
+	 * When the stored schema is upgraded, {@link SchemaCompatibilityStatus.canView} becomes `true`, and {@link TreeView.root} becomes available.
 	 *
-	 * It is an error to call this when {@link SchemaCompatibilityStatus.canUpgrade} is false.
-	 * {@link SchemaCompatibilityStatus.canUpgrade} being true does not mean that an upgrade is required, nor that an upgrade will have any effect.
+	 * Use {@link SchemaCompatibilityStatus.canUpgrade} to check whether calling this method is permitted; calling it when that flag is `false` is an error.
 	 *
 	 * When using {@link TreeViewConfigurationAlpha} with a {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy},
-	 * the configured policy selects newly introduced staged permissions.
-	 * Upgrades always preserve allowed types and supported optionality already stored at each location.
-	 * If multiple fields share a staged-upgrade token, preserving an already-enabled change in one field does not enable it in the others.
-	 * Those fields change only if the configured policy enables the token.
+	 * the configured policy selects which staged permissions to introduce.
+	 * Permissions already enabled in the document are preserved even if the policy does not select their tokens, allowing a flag-off client to make other compatible upgrades.
+	 * This preservation is local to each field: if fields share a token but only one has the change enabled, the others remain unchanged unless the policy enables that token.
 	 *
 	 * @example Enabling a staged allowed type for documents, selected by a feature flag
 	 *
@@ -1103,24 +1102,24 @@ export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus
  */
 export interface SchemaCompatibilityStatusAlpha extends SchemaCompatibilityStatusBeta {
 	/**
-	 * Stored optional fields omitted by the view but retained in its proposed upgrade target.
+	 * Stored optional fields omitted by the view but required by the stored schema, and therefore retained in the proposed upgrade.
 	 *
 	 * @remarks
-	 * Each entry identifies a field on an object type declared by the view that allows unknown optional fields.
-	 * Entries use stored node identifiers and field keys, not application property names.
-	 * Each field appears once, sorted by node identifier and then field key, regardless of how many nodes use it.
-	 * This property is omitted when no fields are retained.
+	 * Use this report to identify optional fields that an upgrade would preserve for other application versions.
+	 * It includes fields omitted from object types that the view declares with unknown optional-field support, but not fields in wholly unknown node types.
+	 * To identify these schema locations independently of application property names, entries use stored node identifiers and field keys.
+	 * Each location appears once, sorted by node identifier and then field key, regardless of how many nodes use it.
 	 *
-	 * These entries are informational, not viewing blockers or proof that an upgrade is permitted.
-	 * They can be present alongside {@link SchemaCompatibilityStatusBeta.discrepancies} when another difference prevents viewing or upgrading.
-	 * Entries remain after an upgrade while the view continues to omit those fields.
-	 * A retained field is reported even when it has no content or permits no values.
+	 * The report describes schema retention, not whether any node currently contains data in those fields.
+	 * A field is therefore reported even if it is empty or permits no values, and remains reported after an upgrade while the view still omits it.
+	 * When no fields are retained, this property is omitted.
 	 *
-	 * This does not report retained allowed types or staged optionality on fields declared by the view,
-	 * nor fields within node types wholly unknown to the view.
-	 * Unlike {@link TreeContextAlpha.unknownFieldSchemas}, this report describes the proposed upgrade target rather than providing current stored field definitions.
+	 * Retaining fields does not establish that the proposed upgrade is safe.
+	 * These entries can appear alongside {@link SchemaCompatibilityStatusBeta.discrepancies} when another difference prevents viewing or upgrading; use the compatibility flags to decide which actions are permitted.
 	 *
-	 * This data may include application-defined schema identifiers and field keys, but not document values.
+	 * Unlike {@link TreeContextAlpha.unknownFieldSchemas}, this report identifies retained locations in the proposed target rather than providing current stored field definitions.
+	 * It does not report retained types or staged optionality on fields the view declares.
+	 * If you log the report, note that it can contain application-defined schema identifiers and field keys, but not document values.
 	 *
 	 * @example Inspecting fields preserved for other application versions
 	 *
@@ -1255,15 +1254,14 @@ export interface SchemaCompatibilityStatus {
 	 * Equivalence does not require the schemas to be identical.
 	 * Differences that do not affect schema compatibility, such as {@link NodeSchemaOptionsAlpha.persistedMetadata}, do not affect this flag.
 	 *
-	 * This check compares the existing stored schema with the proposed upgrade target built from both the view and the existing stored schema.
-	 * The target retains stored optional fields omitted by view objects that allow {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields}.
-	 * The {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy} selects new permissions.
-	 * Already-enabled allowed types and supported optionality are retained at their existing locations, independently of that policy.
+	 * The comparison uses the upgrade target built from both the view and the existing stored schema.
+	 * That target combines additions selected by the {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy} with allowed types and supported optionality already stored in the document.
+	 * It also retains stored optional fields omitted by view objects that allow {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields}.
 	 *
-	 * Equivalence does not mean that initializing a new document with this view would produce the same stored schema.
-	 * It also does not mean that two application versions can view each other's documents.
-	 * For example, removing an optional field can permit a no-op upgrade of an older document,
-	 * while the older view needs to upgrade a fresh document created without that field before it can write to it.
+	 * Because the target retains permissions from the document, equivalence does not imply that initializing a new document with this view would produce the same stored schema.
+	 * For example, a view that removes an optional field may have a no-op upgrade for a document containing it, while initializing a fresh document without that field.
+	 * An older view that still declares the field would need to upgrade the fresh document before accessing it.
+	 * Comparing one view with one document therefore does not establish compatibility between every pair of application versions.
 	 *
 	 * When true, {@link TreeView.upgradeSchema} makes no change to the stored schema.
 	 *
@@ -1290,17 +1288,16 @@ export interface SchemaCompatibilityStatus {
 	 * @remarks
 	 * If false, accessing {@link TreeView.root} throws.
 	 *
-	 * A view can tolerate some differences between its declarations and the stored schema.
-	 * For example:
+	 * A view does not need to declare exactly the same schema as the document to provide read/write access.
+	 * It can tolerate additional stored content when its declarations provide the appropriate compatibility support:
 	 *
-	 * - An object node with {@link ObjectSchemaOptions.allowUnknownOptionalFields} set to true can have additional optional fields in the stored schema.
+	 * - {@link ObjectSchemaOptions.allowUnknownOptionalFields} lets an object view tolerate additional optional fields without exposing them as properties.
 	 *
-	 * - An additional type allowed at a location in the stored schema where it is {@link SchemaStaticsBeta.staged | staged} in the view schema.
+	 * - A {@link SchemaStaticsBeta.staged | staged allowed type} lets the view read and write that type where the stored schema already permits it.
 	 *
-	 * - An optional field in the stored schema where the corresponding view field is {@link SchemaStaticsAlpha.stagedOptional | staged optional}.
+	 * - A {@link SchemaStaticsAlpha.stagedOptional | staged-optional field} lets the view handle missing content where the stored field is already optional.
 	 *
-	 * These differences do not by themselves determine {@link SchemaCompatibilityStatus.canUpgrade}.
-	 * Upgrades must preserve the stored schema's allowed content and produce a schema this view can read and edit.
+	 * These allowances determine whether the current document can be used; they do not by themselves determine {@link SchemaCompatibilityStatus.canUpgrade}.
 	 *
 	 * When the set of documents allowed by the view schema is a strict superset of those allowed by the stored schema,
 	 * `canView` is false because writes to the document using the view schema could make the document violate its stored schema.
@@ -1323,25 +1320,20 @@ export interface SchemaCompatibilityStatus {
 	 * Whether the stored schema and the view's requested additions can be composed into a safe upgrade target that the view can read and edit.
 	 *
 	 * @remarks
-	 * If false, calling {@link TreeView.upgradeSchema} throws a `UsageError`.
+	 * Use this flag when deciding whether to call {@link TreeView.upgradeSchema}; calling it when the flag is `false` throws a `UsageError`.
 	 *
-	 * When true, it is valid to call {@link TreeView.upgradeSchema}.
-	 * This does not mean that an upgrade is needed or that the call will change the stored schema.
-	 * It also does not imply that {@link SchemaCompatibilityStatus.canView} is already true or that other clients can view the document after the upgrade.
+	 * A `true` result permits the call but does not mean an upgrade is needed: the view may already work with the stored schema, or the requested upgrade may be a no-op.
+	 * If {@link SchemaCompatibilityStatus.canView} is `false`, you must apply the permitted upgrade before accessing the document through this view.
 	 *
-	 * This check compares the existing stored schema with the proposed upgrade target built from both the view and the existing stored schema.
-	 * The {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy} selects new permissions.
-	 * Existing allowed types and supported optionality are always retained at their stored locations.
-	 * A partially enabled staged token is not enabled at additional locations unless the policy requests it.
-	 * The composed target must pass both the stored-schema upgrade rules and the view's read/write compatibility checks.
+	 * To determine whether the upgrade is safe, this check considers a target built from the existing stored schema and the view's requested additions.
+	 * The {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy} selects new staged permissions, while existing allowed types and supported optionality are retained at their stored locations.
 	 *
-	 * When adding optional fields to schema which previously were marked with {@link ObjectSchemaOptions.allowUnknownOptionalFields}
-	 * the schema upgrade (assuming no other changes are included) will allow the previous version to view.
+	 * Object views that allow {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields} can also omit stored optional fields without preventing later upgrades.
+	 * The target retains those fields and the node definitions they require, rather than deleting content the reduced view cannot see.
+	 * This retention applies to existing documents; a new document initialized with the reduced view does not include the omitted fields.
 	 *
-	 * Object schemas in the view that allow unknown optional fields can omit stored optional fields and still perform further upgrades.
-	 * The upgrade retains those fields and the node definitions they require, preserving existing content.
-	 * New documents initialized with the view do not include the omitted fields.
-	 * This does not permit removing required fields, narrowing allowed types, or otherwise violating the schema upgrade rules.
+	 * The target is accepted only if it satisfies the stored-schema upgrade rules and gives the requesting view read/write access.
+	 * Retaining optional fields therefore does not permit removing required fields, narrowing allowed types, or introducing other incompatible changes.
 	 */
 	readonly canUpgrade: boolean;
 

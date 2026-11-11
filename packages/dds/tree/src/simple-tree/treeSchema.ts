@@ -435,7 +435,8 @@ export interface RetainedUnknownOptionalField {
  * A candidate stored schema and the unknown optional fields retained while constructing it.
  *
  * @remarks
- * The candidate has not been checked against the existing stored schema to determine whether the upgrade is permitted.
+ * This result describes a proposed upgrade that has not yet been validated.
+ * Before applying it, callers must use {@link isSchemaUpgradeAllowed} to check that the proposed schema still permits all content allowed by the existing stored schema and that the requesting view can read and edit documents using it.
  */
 export interface SchemaUpgradeCandidate {
 	/**
@@ -447,9 +448,8 @@ export interface SchemaUpgradeCandidate {
 	 * Stored optional fields retained on object types declared by the view, but omitted from those view declarations.
 	 *
 	 * @remarks
-	 * Each location appears once, sorted by node identifier and then stored field key.
-	 * The array is empty when no fields are retained.
-	 * These fields are reported even if an incompatible change elsewhere in the schema prevents the upgrade.
+	 * This records the locations retained during construction, independently of whether the complete candidate passes upgrade validation.
+	 * Each location appears once, sorted by node identifier and then stored field key; the array is empty when none are retained.
 	 */
 	readonly retainedUnknownOptionalFields: readonly RetainedUnknownOptionalField[];
 }
@@ -458,22 +458,21 @@ export interface SchemaUpgradeCandidate {
  * Composes a candidate upgrade target from the view schema, existing stored schema, and configured staged-upgrade policy.
  *
  * @remarks
- * If the candidate is a permitted upgrade, it allows `viewSchema` to read and edit the document
- * without invalidating content permitted by any existing stored schema definition.
- * The candidate has the following construction guarantees:
+ * Start with the stored schema selected by the view and its policy, then combine it with existing permissions at corresponding fields.
+ * This separates the policy's decision to introduce a permission from the need to preserve it once enabled.
+ * Construction follows these rules:
  *
  * - Matching fields retain their stored allowed types and add types selected by the view and supplied policy.
- * - Already-optional fields stay optional when the view supports unknown optional fields, including through staged optionality.
- * - If multiple fields share a staged-upgrade token, preserving an already-enabled change in one field does not enable it in the others.
- * Those fields change only if the supplied policy enables the token.
+ * - Already-optional fields stay optional when the corresponding view field supports missing content, including through staged optionality.
+ * - Shared tokens do not make preservation global: an enabled change remains at its stored field, while other fields gain it only if the policy enables the token.
  * - For each included object type whose view allows unknown optional fields, omitted stored optional fields are retained with their allowed types and metadata.
  * - Existing node definitions referenced by retained fields are included, along with the definitions they reference.
  * Types known to the view use their current declarations with field permissions composed as above; types unknown to the view retain their stored definitions.
  *
- * This function does not check whether `viewSchema` can read or edit the document under `storedSchema`,
- * whether an upgrade is necessary, or whether the candidate is a permitted upgrade.
- * Preserving allowed types does not guarantee that the view can handle them.
- * Callers must validate both that the candidate is a superset of `storedSchema` and that `viewSchema` can read and edit the candidate before applying it.
+ * The result is a proposal, not an approved upgrade.
+ * Retaining an allowed type can still leave a candidate that the view cannot read, and other schema differences can still violate upgrade rules.
+ * Before applying the candidate, callers must use {@link isSchemaUpgradeAllowed} to check both preservation of stored permissions and read/write compatibility with the view.
+ * They remain responsible for deciding whether that permitted upgrade would make any change.
  *
  * @param viewSchema - The view schema for which the upgrade target is being constructed.
  * @param storedSchema - The existing stored schema from which to construct the upgrade target.
@@ -584,12 +583,11 @@ export function getSchemaUpgradeCandidate(
  * Composes fields of a stored object node and retains omitted optional fields when the view allows unknown optional fields.
  *
  * @remarks
- * Neither input node is mutated; their field maps may belong to cached schemas.
+ * The stored representation is shared by objects and arrays, but their view rules differ.
+ * Both compose permissions for declared fields; only object views that allow unknown optional fields can also retain omitted fields.
  *
- * Arrays also use stored object nodes, but only object views that allow unknown optional fields can retain omitted fields.
- * Arrays do not permit unknown optional fields.
- *
- * The caller remains responsible for processing referenced node definitions and validating the complete candidate.
+ * Field maps may belong to cached schemas, so this helper copies only the parts it changes rather than modifying either input.
+ * It handles this node's fields only; the caller must follow their type references and validate the complete candidate.
  *
  * @param candidate - The node produced by converting the view or retaining an unknown stored type.
  * @param storedNode - The existing stored definition of the same node type.
@@ -652,8 +650,9 @@ function composeObjectNodeSchema(
  * Composes the shared entry field of a stored map node with the candidate's requested permissions.
  *
  * @remarks
- * Neither input node is mutated; their field schemas may belong to cached conversions.
- * The caller remains responsible for processing referenced node definitions and validating the complete candidate.
+ * All map entries use the same field schema, so preserving its allowed types preserves them for every entry.
+ * The field schema may belong to a cached conversion and must not be mutated.
+ * As with object composition, the caller must follow the resulting type references and validate the complete candidate.
  *
  * @param candidate - The node produced by converting the view or retaining an unknown stored type.
  * @param storedNode - The existing stored definition of the same node type.
@@ -677,15 +676,15 @@ function composeMapNodeSchema(
 /**
  * Preserves stored field permissions while adding those selected by the view's configured policy.
  *
+ * @remarks
+ * Keeping an existing type prevents the candidate from narrowing the field, but does not give the view support for that type.
+ * Callers must therefore validate the complete candidate before applying it rather than treating field composition as approval.
+ *
  * @param candidate - The field produced by converting the view with the configured policy.
  * @param stored - The existing field at the same stored location.
  * @param viewField - The root or object view field, used to determine whether it supports missing content.
  *
  * @returns The original candidate if unchanged, or a new field retaining the existing permissions and candidate metadata.
- *
- * @remarks
- * A union of allowed types can still be incompatible with the view.
- * Callers must validate the complete candidate schema before applying it.
  */
 function composeFieldSchema(
 	candidate: TreeFieldStoredSchema,

@@ -141,17 +141,22 @@ export interface SchemaStaticsAlpha {
 		TCustomMetadata,
 		FieldPropsAlpha<TCustomMetadata> & { defaultProvider: DefaultProvider }
 	>;
+
 	/**
-	 * Creates a field schema that is Optional in the view but behaves as Required in the stored schema
-	 * during the rollout period of an optional-field migration.
+	 * Creates a field schema that supports a staged migration from required to optional.
 	 *
 	 * @remarks
 	 * Use this to incrementally migrate a required field to optional without a coordinated deployment.
-	 * The migration path is:
+	 * The view can handle the field being present or absent, but the document's stored schema determines whether the field may be left empty.
+	 *
+	 * Enabling this staged upgrade makes the stored field optional, permitting it to be absent or cleared.
+	 *
+	 * With the default upgrade policy, the migration path is:
 	 *
 	 * 1. Start with `sf.required(T)` — all clients require the field.
-	 * 2. Deploy `sf.stagedOptional(T)` — new clients can read documents where the field is present or absent, but the stored schema stays Required (so old clients are unaffected). Setting the field to `undefined` is rejected because the stored schema still declares the field as required.
-	 * 3. Deploy `sf.optional(T)` once all clients support the staged optional field — the stored schema becomes Optional and the field can be cleared.
+	 * 2. Deploy `sf.stagedOptional(T)` — new clients can handle present or absent fields, but new documents still require the field and upgrades keep still-required fields required.
+	 * Setting the field to `undefined` is rejected while the stored schema requires it.
+	 * 3. Deploy `sf.optional(T)` once all clients support the staged optional field — new documents permit the field to be absent.
 	 *
 	 * Analogous to {@link SchemaStaticsBeta.staged} for allowed types, but for field optionality.
 	 *
