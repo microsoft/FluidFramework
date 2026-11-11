@@ -197,7 +197,7 @@ export function createDOProviderContainerRuntimeFactory(props: {
 	 * Minimum Fluid Framework version required for collaboration as a
 	 * {@link @fluidframework/runtime-definitions#OldestSupportedClientVersion} SemVer string.
 	 */
-	minVersionForCollaboration: OldestSupportedClientVersion;
+	oldestSupportedClient: OldestSupportedClientVersion;
 	/**
 	 * Optional registry of data stores to pass to the DataObject factory.
 	 * If not provided, one will be created based on the schema.
@@ -205,12 +205,12 @@ export function createDOProviderContainerRuntimeFactory(props: {
 	rootDataStoreRegistry?: IFluidDataStoreRegistry;
 	/**
 	 * Optional overrides for the container runtime options.
-	 * If not provided, only the default options for the given minVersionForCollaboration will be used.
+	 * If not provided, only the default options for the given oldestSupportedClient will be used.
 	 */
 	runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
 }): IRuntimeFactory {
 	const { rootDataStoreRegistry, runtimeOptionOverrides, schema } = props;
-	const minVersionForCollab = props.minVersionForCollaboration;
+	const oldestSupportedClient = props.oldestSupportedClient;
 	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 	const registry = rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
 
@@ -219,7 +219,7 @@ export function createDOProviderContainerRuntimeFactory(props: {
 		new RootDataObjectFactory(sharedObjects, registry),
 		{
 			runtimeOptions: runtimeOptionOverrides,
-			minVersionForCollab,
+			oldestSupportedClient,
 		},
 	);
 }
@@ -259,18 +259,18 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 			{ InitialState: RootDataObjectProps }
 		>,
 		config: {
-			minVersionForCollab: OldestSupportedClientVersion;
+			oldestSupportedClient: OldestSupportedClientVersion;
 			runtimeOptions?: Partial<IContainerRuntimeOptions>;
 		},
 	) {
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],
 			runtimeOptions: {
-				...defaultRuntimeOptionsForMinVersion(config.minVersionForCollab),
+				...defaultRuntimeOptionsForMinVersion(config.oldestSupportedClient),
 				...config.runtimeOptions,
 			},
 			provideEntryPoint,
-			oldestSupportedClient: config.minVersionForCollab,
+			oldestSupportedClient: config.oldestSupportedClient,
 		});
 		this.rootDataObjectFactory = rootDataObjectFactory;
 		this.initialObjects = schema.initialObjects;

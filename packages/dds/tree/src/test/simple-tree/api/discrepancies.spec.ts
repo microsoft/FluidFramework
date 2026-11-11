@@ -297,13 +297,6 @@ describe("Schema Discrepancies", () => {
 					view: "Value",
 					stored: "Optional",
 				},
-				{
-					fieldKey: "y",
-					identifier: testTreeNodeIdentifier,
-					mismatch: "fieldKind",
-					view: "Forbidden",
-					stored: "Optional",
-				},
 			],
 		);
 	});

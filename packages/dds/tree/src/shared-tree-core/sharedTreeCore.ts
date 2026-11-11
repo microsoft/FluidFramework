@@ -19,6 +19,7 @@ import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type {
 	IChannelView,
@@ -46,6 +47,7 @@ import {
 	type WithBreakable,
 	throwIfBroken,
 	breakingClass,
+	getOrCreate,
 } from "../util/index.js";
 
 import type { BranchId, SharedTreeBranch } from "./branch.js";
@@ -114,10 +116,7 @@ export class SharedTreeCore<
 	implements WithBreakable, Summarizable
 {
 	private readonly editManager: EditManager<TEditor, TChange, TChangeProcessingContext>;
-	private readonly summarizables: readonly [
-		EditManagerSummarizer<TChange, TChangeProcessingContext>,
-		...Summarizable[],
-	];
+	private readonly summarizables: readonly Summarizable[];
 	/**
 	 * The sequence number that this instance is at.
 	 * This number is artificial in that it is made up by this instance as opposed to being provided by the runtime.
@@ -259,10 +258,12 @@ export class SharedTreeCore<
 		trackState?: boolean;
 		telemetryContext?: ITelemetryContext;
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		builder: SummaryTreeBuilder;
 	}): void {
 		const { stringify, fullTree, telemetryContext, incrementalSummaryContext, builder } =
 			props;
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const summarizableBuilder = new SummaryTreeBuilder();
 		// Merge the summaries of all summarizables together under a single ISummaryTree
 		for (const s of this.summarizables) {
@@ -292,19 +293,23 @@ export class SharedTreeCore<
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
 	): Promise<void> {
-		const [editManagerSummarizer, ...summarizables] = this.summarizables;
-		const loadEditManager = this.loadSummarizable(editManagerSummarizer, services, parse);
-		const loadSummarizables = summarizables.map(async (s) =>
-			this.loadSummarizable(s, services, parse),
-		);
+		// Share a pending load by component identity so dependencies are loaded only once,
+		// even when also reached from the top-level list or another dependent.
+		const loads = new Map<Summarizable, Promise<void>>();
+		const load = async (summarizable: Summarizable): Promise<void> =>
+			getOrCreate(loads, summarizable, async () => {
+				// Dependencies are acyclic by contract. Independent loads can run concurrently,
+				// but this component starts only after all of its dependencies have loaded successfully.
+				await Promise.all((summarizable.loadDependencies ?? []).map(load));
+				await this.loadSummarizable(summarizable, services, parse);
+			});
+		// Any component failure rejects loading promptly, while the other load promises remain observed.
+		await Promise.all(this.summarizables.map(load));
 
-		if (this.detachedRevision === undefined) {
-			await Promise.all([loadEditManager, ...loadSummarizables]);
-		} else {
-			// If we are detached but loading from a summary, then we need to update our detached revision to ensure that it is ahead of all detached revisions in the summary.
-			// First, finish loading the edit manager so that we can inspect the sequence numbers of the commits on the trunk.
-			await loadEditManager;
-
+		if (this.detachedRevision !== undefined) {
+			// All components, including the edit manager, are now loaded.
+			// Restore detached sequencing before loading completes so the next local edit
+			// uses a sequence number beyond the loaded history.
 			const latestDetachedSequenceNumber = this.editManager.getLatestSequenceNumber();
 			// When we load a summary for a tree that was never attached,
 			// latestDetachedSequenceNumber is either undefined (no commits in summary) or negative (all commits in summary were made while detached).
@@ -312,7 +317,6 @@ export class SharedTreeCore<
 			if (latestDetachedSequenceNumber !== undefined && latestDetachedSequenceNumber < 0) {
 				this.detachedRevision = latestDetachedSequenceNumber;
 			}
-			await Promise.all(loadSummarizables);
 		}
 	}
 
@@ -332,6 +336,11 @@ export class SharedTreeCore<
 		});
 	}
 
+	/**
+	 * Restores the summary components and detached sequencing state.
+	 * Callers must await successful completion before editing or processing messages.
+	 * If loading fails, this instance must not be used.
+	 */
 	public async loadCore(services: IChannelStorageService): Promise<void> {
 		assert(
 			this.getLocalBranch().getHead() === this.editManager.getTrunkHead("main"),

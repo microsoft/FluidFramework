@@ -59,6 +59,9 @@ updateNotifier: false
 
 # Security and compatibility overrides.
 overrides:
+  # concurrently pins vulnerable shell-quote (CVE-2026-13311).
+  concurrently@10.0.3>shell-quote: ^1.11.0
+
   # Resolve known security vulnerabilities in transitive dependencies.
   "@babel/core@>=7 <8": ^7.29.6
   # Resolve known axios vulnerabilities (CVE-2026-44486, CVE-2026-44487, CVE-2026-44492).
@@ -127,7 +130,7 @@ overrides:
   # qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.
   qs: ^6.15.2
   # simple-git: overridden to resolve a known security vulnerability.
-  simple-git: ^3.36.0
+  simple-git: ^4.0.2
   # validator: overridden to ^13.15.0 to resolve a known vulnerability in older
   # versions (transitive via swagger-tools).
   validator: ^13.15.0

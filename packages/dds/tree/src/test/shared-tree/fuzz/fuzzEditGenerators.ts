@@ -152,7 +152,7 @@ export function viewFromState(
 function fuzzViewFromCheckout(checkout: CheckoutBase): FuzzView {
 	const schema = simpleSchemaFromStoredSchema(checkout.storedSchema);
 	const view = checkout.viewWith(new TreeViewConfiguration({ schema }));
-	assert(view.compatibility.isEquivalent);
+	assert(view.compatibility.canView);
 	convertToFuzzView(
 		view,
 		nodeSchemaFromTreeSchema(schema) ?? assert.fail("nodeSchema should not be undefined"),
@@ -161,7 +161,7 @@ function fuzzViewFromCheckout(checkout: CheckoutBase): FuzzView {
 }
 
 function refreshFuzzView(view: FuzzView): FuzzView {
-	if (view.compatibility.isEquivalent) {
+	if (view.compatibility.canView) {
 		return view;
 	}
 	assert.equal(

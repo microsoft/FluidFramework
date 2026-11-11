@@ -10,6 +10,7 @@ import type {
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import type { CodecWriteOptions } from "../../codec/index.js";
@@ -38,14 +39,19 @@ import {
 	type Breakable,
 	type JsonCompatibleReadOnly,
 } from "../../util/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
+import {
+	chunkFieldSingle,
+	combineChunks,
+	defaultChunkPolicy,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../chunked-forest/chunkTree.js";
 import {
 	defaultIncrementalEncodingPolicy,
 	type FieldBatchDecodingContext,
 	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
 } from "../chunked-forest/index.js";
+import type { SchemaSummarizer } from "../schema-index/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
 import { forestCodecBuilder, type ForestCodec } from "./codec.js";
@@ -82,11 +88,20 @@ export class ForestSummarizer
 	private readonly incrementalSummaryBuilder: ForestIncrementalSummaryBuilder;
 	private readonly forestRootSummaryContentKey: string;
 
-	/**
-	 * @param encoderContext - The schema if provided here must be mutated by the caller to keep it up to date.
-	 */
+	public readonly loadDependencies: readonly Summarizable[];
+
 	public constructor(
 		private readonly forest: IEditableForest,
+		/**
+		 * The summarizer for the same stored schema repository used by the forest's chunking policy.
+		 * This establishes the schema-before-forest loading contract, so forest loading can rely on a populated schema.
+		 * Rechunking decoded content uses this schema through the forest's chunking policy.
+		 * Callers that invoke {@link ForestSummarizer.load} directly must ensure the schema is already populated.
+		 */
+		schemaSummarizer: SchemaSummarizer,
+		/**
+		 * The schema if provided here must be mutated by the caller to keep it up to date.
+		 */
 		private readonly encoderContext: FieldBatchEncodingContext,
 		private readonly decoderContext: FieldBatchDecodingContext,
 		options: CodecWriteOptions,
@@ -100,6 +115,9 @@ export class ForestSummarizer
 			supportedForestSummaryFormatVersions,
 			true /* supportPreVersioningFormat */,
 		);
+
+		// SharedTreeCore uses this dependency to load the schema before the forest.
+		this.loadDependencies = [schemaSummarizer];
 
 		this.codec = forestCodecBuilder.build(options);
 
@@ -121,6 +139,11 @@ export class ForestSummarizer
 			(cursor: ITreeCursorSynchronous) => this.forest.chunkField(cursor),
 			shouldEncodeIncrementally,
 			initialSequenceNumber,
+			(chunk, shouldRechunk) => {
+				const rechunked = combineChunks(this.forest.chunkField(chunk.cursor(), shouldRechunk));
+				chunk.referenceRemoved();
+				return rechunked;
+			},
 		);
 	}
 
@@ -140,6 +163,7 @@ export class ForestSummarizer
 		trackState?: boolean;
 		telemetryContext?: ITelemetryContext;
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		builder: SummaryTreeBuilder;
 	}): void {
 		const { stringify, fullTree = false, incrementalSummaryContext, builder } = props;

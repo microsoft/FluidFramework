@@ -214,6 +214,92 @@ describe("ChunkedForest", () => {
 		[],
 	);
 
+	// See testForest for general purpose acquireVisitor tests
+	describe("acquireVisitor optimizations", () => {
+		function setupForest() {
+			const schema = new TreeStoredSchemaRepository(toInitialSchema(SchemaFactory.number));
+			return buildChunkedForest(
+				makeTreeChunker(schema, defaultSchemaPolicy, defaultIncrementalEncodingPolicy),
+			);
+		}
+
+		it("retains an exclusively owned root across visitor acquisitions", () => {
+			const forest = setupForest();
+			const root = forest.roots;
+
+			for (let i = 0; i < 2; i++) {
+				forest.acquireVisitor().free();
+				assert.equal(forest.roots, root);
+				assert.equal(root.isShared(), false);
+				assert.equal(root.isUnreferenced(), false);
+			}
+		});
+
+		for (const editClone of [false, true]) {
+			it(`releases the old root when editing the ${editClone ? "clone" : "original"}`, () => {
+				const forest = setupForest();
+				const root = forest.roots;
+				const child = new BasicChunk(numberShape.type, new Map(), 0);
+				root.fields.set(rootFieldKey, [child]);
+				const clone = forest.clone(forest.schema);
+				assert.equal(clone.roots, root);
+				assert.equal(root.isShared(), true);
+
+				const edited = editClone ? clone : forest;
+				const remaining = editClone ? forest : clone;
+				const visitor = edited.acquireVisitor();
+				visitor.destroy(rootFieldKey, 1);
+				visitor.free();
+
+				assert.notEqual(edited.roots, root);
+				assert.equal(edited.roots.isShared(), false);
+				assert.equal(edited.roots.isUnreferenced(), false);
+				assert.equal(edited.isEmpty, true);
+				assert.equal(remaining.roots, root);
+				assert.equal(root.isShared(), false);
+				assert.equal(root.isUnreferenced(), false);
+				assert.deepEqual(root.fields.get(rootFieldKey), [child]);
+				assert.equal(child.isShared(), false);
+				assert.equal(child.isUnreferenced(), false);
+
+				const remainingVisitor = remaining.acquireVisitor();
+				// The child should now be exclusively owned by the remaining forest.
+				remainingVisitor.enterField(rootFieldKey);
+				remainingVisitor.enterNode(0);
+				remainingVisitor.exitNode(0);
+				remainingVisitor.exitField(rootFieldKey);
+				remainingVisitor.free();
+
+				assert.equal(remaining.roots, root);
+				assert.equal(root.fields.get(rootFieldKey)?.[0], child);
+				assert.equal(child.isShared(), false);
+			});
+		}
+
+		it("eagerly copies the root if and only if the root is shared", () => {
+			const forest = setupForest();
+			const root = forest.roots;
+			const firstClone = forest.clone(forest.schema);
+			const secondClone = forest.clone(forest.schema);
+
+			firstClone.acquireVisitor().free();
+			assert.notEqual(firstClone.roots, root);
+			assert.equal(firstClone.roots.isShared(), false);
+			assert.equal(root.isShared(), true);
+
+			secondClone.acquireVisitor().free();
+			assert.notEqual(secondClone.roots, root);
+			assert.notEqual(secondClone.roots, firstClone.roots);
+			assert.equal(secondClone.roots.isShared(), false);
+			assert.equal(root.isShared(), false);
+			assert.equal(root.isUnreferenced(), false);
+
+			forest.acquireVisitor().free();
+			assert.equal(forest.roots, root);
+			assert.equal(root.isUnreferenced(), false);
+		});
+	});
+
 	describe("locateNodeInChunks", () => {
 		it("locates nodes by chunk index and offset", () => {
 			const first = new BasicChunk(numberShape.type, new Map(), 0);
@@ -330,7 +416,7 @@ describe("ChunkedForest", () => {
 
 			const result = ensureExclusiveBasicChunk(chunks, 2, makeCompressor());
 
-			assert.equal(result, chunks[2]);
+			assert.equal(result, locateNodeInChunks(chunks, 2).chunk);
 			assert.equal(result.value, 2);
 			assert.equal(result.isShared(), false);
 			assert.equal(uniform.isUnreferenced(), true);
@@ -345,12 +431,65 @@ describe("ChunkedForest", () => {
 
 			const result = ensureExclusiveBasicChunk(chunks, 3, makeCompressor());
 
-			assert.equal(result, chunks[3]);
+			assert.equal(result, locateNodeInChunks(chunks, 3).chunk);
 			assert.equal(result.value, 2);
 			assert.equal(chunks[0], leading);
-			assert.equal(chunks[4], trailing);
+			assert.equal(chunks.at(-1), trailing);
 			assert.equal(uniform.isUnreferenced(), true);
 			assert.deepEqual(valuesFromChunks(chunks), [-1, 0, 1, 2, 3]);
+		});
+
+		for (const shared of [false, true]) {
+			for (const index of [0, 100_000, 199_999]) {
+				it(`isolates node ${index} in a large ${shared ? "shared" : "unshared"} uniform chunk`, () => {
+					const values = makeArray(200_000, (value) => value);
+					const uniform = new UniformChunk(
+						numberShape.withTopLevelLength(values.length),
+						values,
+					);
+					if (shared) {
+						uniform.referenceAdded();
+					}
+					const chunks: TreeChunk[] = [uniform];
+
+					const result = ensureExclusiveBasicChunk(chunks, index, makeCompressor());
+
+					assert.equal(result.value, index);
+					assert.equal(result.isShared(), false);
+					assert.equal(locateNodeInChunks(chunks, index).chunk, result);
+					assert.equal(chunks.filter((chunk) => chunk instanceof BasicChunk).length, 1);
+					assert(chunks.some((chunk) => chunk instanceof UniformChunk));
+					assert.deepEqual(valuesFromChunks(chunks), values);
+					assert.equal(uniform.isUnreferenced(), !shared);
+					if (shared) {
+						assert.equal(uniform.isShared(), false);
+						assert.deepEqual(valuesFromChunks([uniform]), values);
+						uniform.referenceRemoved();
+					}
+					for (const chunk of chunks) {
+						chunk.referenceRemoved();
+					}
+				});
+			}
+		}
+
+		it("handles large splits when the policy cannot preserve uniform chunks", () => {
+			const values = makeArray(200_000, (value) => value);
+			const uniform = new UniformChunk(numberShape.withTopLevelLength(values.length), values);
+			const chunks: TreeChunk[] = [uniform];
+
+			const result = ensureExclusiveBasicChunk(chunks, 100_000, {
+				policy: defaultChunkPolicy,
+				idCompressor: undefined,
+			});
+
+			assert.equal(result.value, 100_000);
+			assert.equal(result.isShared(), false);
+			assert.equal(uniform.isUnreferenced(), true);
+			assert.deepEqual(valuesFromChunks(chunks), values);
+			for (const chunk of chunks) {
+				chunk.referenceRemoved();
+			}
 		});
 
 		it("normalizes a shared SequenceChunk without replacing a sibling", () => {
@@ -454,16 +593,18 @@ describe("ChunkedForest", () => {
 			visitor.exitField(rootFieldKey);
 			visitor.free();
 
-			// enterNode shatters the targeted UniformChunk (with top-level length 5) into 5 BasicChunks; the
-			// field's chunk count grows from 3 to 7, with the two flanking UniformChunks
-			// untouched.
+			// Only the target node becomes a BasicChunk; its siblings remain uniform.
 			const result = forest.roots.fields.get(rootFieldKey);
 			assert(result !== undefined);
-			assert.equal(result.length, 7);
+			assert.deepEqual(
+				result.map((chunk) => chunk.topLevelLength),
+				[2, 4, 1, 3],
+			);
 			assert(result[0] instanceof UniformChunk);
-			assert.equal(result[0].topLevelLength, 2);
-			assert(result[6] instanceof UniformChunk);
-			assert.equal(result[6].topLevelLength, 3);
+			assert(result[1] instanceof UniformChunk);
+			assert(result[2] instanceof BasicChunk);
+			assert.equal(result[2].value, 6);
+			assert(result[3] instanceof UniformChunk);
 		});
 
 		it("enterNode preserves siblings when expanding a shared SequenceChunk", () => {
@@ -606,16 +747,18 @@ describe("ChunkedForest", () => {
 			visitor.exitField(rootFieldKey);
 			visitor.free();
 
-			// enterNode shatters the targeted 5-node UniformChunk into 5 BasicChunks; the
-			// field's chunk count grows from 3 to 7, with the two flanking UniformChunks
-			// left untouched.
+			// Only the target node becomes a BasicChunk; its siblings remain uniform.
 			const result = forest.roots.fields.get(rootFieldKey);
 			assert(result !== undefined);
-			assert.equal(result.length, 7);
+			assert.deepEqual(
+				result.map((chunk) => chunk.topLevelLength),
+				[2, 4, 1, 3],
+			);
 			assert(result[0] instanceof UniformChunk);
-			assert.equal(result[0].topLevelLength, 2);
-			assert(result[6] instanceof UniformChunk);
-			assert.equal(result[6].topLevelLength, 3);
+			assert(result[1] instanceof UniformChunk);
+			assert(result[2] instanceof BasicChunk);
+			assert.equal(result[2].value, 6);
+			assert(result[3] instanceof UniformChunk);
 		});
 
 		it("coalesces an inserted same-shape chunk with its neighbors", () => {

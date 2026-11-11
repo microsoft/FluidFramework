@@ -73,15 +73,6 @@ export interface TreeHistoryCompaction {
 	/**
 	 * Requests a single, bounded compaction pass using the given policy.
 	 * @param canCompactCommit - Decides, for each eligible candidate boundary, whether it may be compacted away.
-	 * @remarks
-	 * Only one pass can be in flight per client at a time; a call made while one is already running
-	 * coalesces onto the existing in-flight promise rather than starting a competing pass, and its own
-	 * `canCompactCommit` argument is not consulted in that case.
-	 *
-	 * `canCompactCommit` is only ever consulted locally by the client making this request; it is never
-	 * invoked again by this or any other client once a resulting proposal has been produced.
-	 *
-	 * Promise completion acknowledges operation ordering, not summary persistence or memory reclamation.
 	 */
 	requestCompaction(canCompactCommit: CanCompactCommit): Promise<CompactionResult>;
 

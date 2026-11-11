@@ -87,12 +87,16 @@ export {
 	type ITreeConfigurationOptions,
 	SchemaFactory,
 	scoped,
+	type SchemaFactoryOptions,
 	SchemaFactoryBeta,
+	type SchemaFactoryBetaOptions,
 	type SchemaStaticsBeta,
 	SchemaFactoryAlpha,
+	type SchemaFactoryAlphaOptions,
 	type SchemaStaticsAlpha,
 	type NodeProvider,
 	type ObjectSchemaOptionsAlpha,
+	type ObjectSchemaOptionsBeta,
 	type ObjectSchemaOptions,
 	type ScopedSchemaName,
 	type ValidateRecursiveSchema,
@@ -166,8 +170,6 @@ export {
 	type TreeViewAlpha,
 	type TreeViewBeta,
 	type UntypedTreeView,
-	type TreeBranch,
-	type TreeBranchAlpha,
 	type UntypedTreeViewAlpha,
 	type TreeBranchEvents,
 	type TreeBranchEventsBeta,
@@ -337,13 +339,7 @@ export {
 	prepareForInsertion,
 	prepareForInsertionContextless,
 } from "./prepareForInsertion.js";
-export {
-	toStoredSchema,
-	convertFieldKind,
-	toUpgradeSchema,
-	toInitialSchema,
-	toUnhydratedSchema,
-} from "./toStoredSchema.js";
+export { toUnhydratedSchema, convertFieldKind } from "./toStoredSchema.js";
 export {
 	numberSchema,
 	stringSchema,
@@ -353,4 +349,12 @@ export {
 } from "./leafNodeSchema.js";
 export type { LeafSchema, StringSchema } from "./leafNodeSchema.js";
 export { getUnhydratedContext } from "./createContext.js";
-export { type TreeSchema, createTreeSchema } from "./treeSchema.js";
+export {
+	type TreeSchema,
+	type TransitiveSchemaInfo,
+	createTreeSchema,
+	SchemaComponent,
+	toStoredSchema,
+	toUpgradeSchema,
+	toInitialSchema,
+} from "./treeSchema.js";
