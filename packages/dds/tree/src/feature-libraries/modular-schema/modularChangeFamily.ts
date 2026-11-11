@@ -2266,6 +2266,43 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	}
 
 	public buildChanges(changes: EditDescription[]): ModularChangeset {
+		const fieldEdits = changes.filter(
+			(change): change is FieldEditDescription => change.type === "field",
+		);
+		const [fieldEdit] = fieldEdits;
+		if (fieldEdits.length === 1 && fieldEdit !== undefined) {
+			// With one field edit, there is nothing to compose: the changeset is built from that edit,
+			// together with the content the other edits build.
+			const editRevisions: Set<RevisionTag> = new Set();
+			const builds = newChangeAtomIdBTree<TreeChunk>();
+			for (const change of changes) {
+				editRevisions.add(change.revision);
+				if (change.type === "global") {
+					for (const [key, chunk] of change.builds?.entries() ?? []) {
+						builds.set(key, chunk);
+					}
+				}
+			}
+			const fieldChange = buildModularChangesetFromField({
+				path: fieldEdit.field,
+				fieldChange: { fieldKind: fieldEdit.fieldKind, change: fieldEdit.change },
+				nodeChanges: newChangeAtomIdBTree(),
+				nodeToParent: newChangeAtomIdBTree(),
+				crossFieldKeys: newCrossFieldKeyTable(),
+				idAllocator: this.idAllocator,
+				localCrossFieldKeys: getChangeHandler(
+					this.fieldKinds,
+					fieldEdit.fieldKind,
+				).getCrossFieldKeys(fieldEdit.change),
+				revision: fieldEdit.revision,
+			});
+			return makeModularChangeset({
+				...fieldChange,
+				builds,
+				revisions: [...editRevisions].map((revision) => ({ revision })),
+			});
+		}
+
 		const revisions: Set<RevisionTag> = new Set();
 		const changeMaps = changes.map((change) => {
 			revisions.add(change.revision);
