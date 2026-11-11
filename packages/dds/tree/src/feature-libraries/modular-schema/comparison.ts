@@ -10,7 +10,9 @@ import {
 	MapNodeStoredSchema,
 	Multiplicity,
 	ObjectNodeStoredSchema,
+	type FieldKey,
 	type TreeFieldStoredSchema,
+	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	type TreeTypeSet,
@@ -21,6 +23,18 @@ import { compareSets } from "../../util/index.js";
 
 import type { FullSchemaPolicy } from "./fieldKind.js";
 import { isNeverField, isNeverTree } from "./isNeverTree.js";
+import type {
+	StoredSchemaDiscrepancyLocation,
+	StoredSchemaUpgradeDiscrepancy,
+} from "./schemaDiscrepancy.js";
+
+interface ComparisonDiagnostics extends StoredSchemaDiscrepancyLocation {
+	readonly discrepancies: StoredSchemaUpgradeDiscrepancy[];
+}
+
+interface NodeComparisonDiagnostics extends ComparisonDiagnostics {
+	readonly identifier: TreeNodeSchemaIdentifier;
+}
 
 /**
  * Returns true iff `superset` is a superset of `original`.
@@ -34,24 +48,38 @@ export function allowsTreeSuperset(
 	originalData: TreeStoredSchema,
 	original: TreeNodeStoredSchema | undefined,
 	superset: TreeNodeStoredSchema | undefined,
+	diagnostics?: NodeComparisonDiagnostics,
 ): boolean {
 	if (isNeverTree(policy, originalData, original)) {
 		return true;
 	}
 	if (isNeverTree(policy, originalData, superset)) {
+		diagnostics?.discrepancies.push({
+			mismatch: superset === undefined ? "missingNodeSchema" : "uninhabitableNodeSchema",
+			identifier: diagnostics.identifier,
+		});
 		return false;
 	}
 	assert(original !== undefined, 0x716 /* only never trees have undefined schema */);
 	assert(superset !== undefined, 0x717 /* only never trees have undefined schema */);
 	if (original instanceof LeafNodeStoredSchema) {
 		if (superset instanceof LeafNodeStoredSchema) {
-			return allowsValueSuperset(original.leafValue, superset.leafValue);
+			const leafCompatible = allowsValueSuperset(original.leafValue, superset.leafValue);
+			if (!leafCompatible && diagnostics !== undefined) {
+				diagnostics.discrepancies.push({
+					mismatch: "valueSchema",
+					identifier: diagnostics.identifier,
+					stored: original.leafValue,
+					proposed: superset.leafValue,
+				});
+			}
+			return leafCompatible;
 		}
-		return false;
+		return reportNodeKindMismatch(original, superset, diagnostics);
 	}
 
 	if (superset instanceof LeafNodeStoredSchema) {
-		return false;
+		return reportNodeKindMismatch(original, superset, diagnostics);
 	}
 
 	assert(
@@ -65,49 +93,67 @@ export function allowsTreeSuperset(
 
 	if (original instanceof MapNodeStoredSchema) {
 		if (superset instanceof MapNodeStoredSchema) {
-			return allowsFieldSuperset(policy, originalData, original.mapFields, superset.mapFields);
+			return allowsFieldSuperset(
+				policy,
+				originalData,
+				original.mapFields,
+				superset.mapFields,
+				true,
+				diagnostics,
+			);
 		}
-		return false;
+		return reportNodeKindMismatch(original, superset, diagnostics);
 	}
 
 	assert(original instanceof ObjectNodeStoredSchema, 0x895 /* unsupported node kind */);
+	let compatible = true;
+	const compareField = (fieldKey: FieldKey): boolean => {
+		const fieldCompatible = allowsFieldSuperset(
+			policy,
+			originalData,
+			original.objectNodeFields.get(fieldKey) ?? storedEmptyFieldSchema,
+			superset instanceof MapNodeStoredSchema
+				? superset.mapFields
+				: (superset.objectNodeFields.get(fieldKey) ?? storedEmptyFieldSchema),
+			true,
+			diagnostics === undefined ? undefined : { ...diagnostics, fieldKey },
+		);
+		compatible = fieldCompatible && compatible;
+		// Keep visiting fields after a failure only when collecting diagnostics.
+		return fieldCompatible || diagnostics !== undefined;
+	};
 	if (superset instanceof MapNodeStoredSchema) {
-		for (const [_key, field] of original.objectNodeFields) {
-			if (!allowsFieldSuperset(policy, originalData, field, superset.mapFields)) {
+		for (const key of original.objectNodeFields.keys()) {
+			if (!compareField(key)) {
 				return false;
 			}
 		}
-		return true;
+		return compatible;
 	}
 	assert(superset instanceof ObjectNodeStoredSchema, 0x896 /* unsupported node kind */);
 
-	return compareSets({
+	const fieldsCompared = compareSets({
 		a: original.objectNodeFields,
 		b: superset.objectNodeFields,
-		aExtra: (originalField) =>
-			allowsFieldSuperset(
-				policy,
-				originalData,
-				original.objectNodeFields.get(originalField) ??
-					fail(0xb17 /* missing expected field */),
-				storedEmptyFieldSchema,
-			),
-		bExtra: (supersetField) =>
-			allowsFieldSuperset(
-				policy,
-				originalData,
-				storedEmptyFieldSchema,
-				superset.objectNodeFields.get(supersetField) ??
-					fail(0xb18 /* missing expected field */),
-			),
-		same: (sameField) =>
-			allowsFieldSuperset(
-				policy,
-				originalData,
-				original.objectNodeFields.get(sameField) ?? fail(0xb19 /* missing expected field */),
-				superset.objectNodeFields.get(sameField) ?? fail(0xb1a /* missing expected field */),
-			),
+		aExtra: compareField,
+		bExtra: compareField,
+		same: compareField,
 	});
+	return compatible && fieldsCompared;
+}
+
+function reportNodeKindMismatch(
+	original: TreeNodeStoredSchema,
+	proposed: TreeNodeStoredSchema,
+	diagnostics: NodeComparisonDiagnostics | undefined,
+): false {
+	diagnostics?.discrepancies.push({
+		mismatch: "nodeKind",
+		identifier: diagnostics.identifier,
+		stored: original,
+		proposed,
+	});
+	return false;
 }
 
 /**
@@ -143,28 +189,48 @@ export function allowsFieldSuperset(
 	original: TreeFieldStoredSchema,
 	superset: TreeFieldStoredSchema,
 	monotonicOnly: boolean = true,
+	diagnostics?: ComparisonDiagnostics,
 ): boolean {
 	if (!monotonicOnly && isNeverField(policy, originalData, original)) {
 		return true;
 	}
 
-	if (!allowsTreeSchemaIdentifierSuperset(original.types, superset.types)) {
-		return false;
+	const typesCompatible = allowsTreeSchemaIdentifierSuperset(original.types, superset.types);
+	if (!typesCompatible) {
+		if (diagnostics === undefined) {
+			return false;
+		}
+		diagnostics.discrepancies.push({
+			mismatch: "allowedTypes",
+			identifier: diagnostics.identifier,
+			fieldKey: diagnostics.fieldKey,
+			stored: original.types,
+			proposed: superset.types,
+		});
 	}
 
 	if (original.kind === superset.kind) {
-		return true;
+		return typesCompatible;
 	}
 
 	const supersetKind = policy.fieldKinds.get(superset.kind) ?? fail(0xb1b /* missing kind */);
 
-	if (monotonicOnly) {
-		return supersetKind.options.allowMonotonicUpgradeFrom.has(original.kind);
-	} else {
-		const originalKind =
-			policy.fieldKinds.get(original.kind) ?? fail(0xcab /* missing kind */);
-		return allowsMultiplicitySuperset(originalKind.multiplicity, supersetKind.multiplicity);
+	const kindCompatible = monotonicOnly
+		? supersetKind.options.allowMonotonicUpgradeFrom.has(original.kind)
+		: allowsMultiplicitySuperset(
+				(policy.fieldKinds.get(original.kind) ?? fail(0xcab /* missing kind */)).multiplicity,
+				supersetKind.multiplicity,
+			);
+	if (!kindCompatible && diagnostics !== undefined) {
+		diagnostics.discrepancies.push({
+			mismatch: "fieldKind",
+			identifier: diagnostics.identifier,
+			fieldKey: diagnostics.fieldKey,
+			stored: original.kind,
+			proposed: superset.kind,
+		});
 	}
+	return typesCompatible && kindCompatible;
 }
 
 /**
@@ -192,35 +258,52 @@ export function allowsTreeSchemaIdentifierSuperset(
  * A version of this that assumes a specific root field could be slightly more permissive in some simple cases,
  * however if any extra fields and fields with unconstrained types are reachable,
  * it would have to compare everything anyway.
+ *
+ * @param discrepancies - When provided, collect all failed upgrade constraints instead of stopping at the first one.
  */
 export function allowsRepoSuperset(
 	policy: FullSchemaPolicy,
 	original: TreeStoredSchema,
 	superset: TreeStoredSchema,
+	discrepancies?: StoredSchemaUpgradeDiscrepancy[],
 ): boolean {
-	{
-		if (
-			!allowsFieldSuperset(
-				policy,
-				original,
-				original.rootFieldSchema,
-				superset.rootFieldSchema,
-			)
-		) {
-			return false;
-		}
+	let compatible = allowsFieldSuperset(
+		policy,
+		original,
+		original.rootFieldSchema,
+		superset.rootFieldSchema,
+		true,
+		discrepancies === undefined
+			? undefined
+			: { discrepancies, identifier: undefined, fieldKey: undefined },
+	);
+	if (!compatible && discrepancies === undefined) {
+		return false;
 	}
 	// Check if all schemas in original are included in superset, and permit a superset of the node content.
 	// Note that any schema from `original.nodeSchema` can be used as the schema for a node at the root of a detached field,
 	// so we must check all of them, even if they are not reachable from the root field schema.
 	for (const [key, schema] of original.nodeSchema) {
-		if (!allowsTreeSuperset(policy, original, schema, superset.nodeSchema.get(key))) {
-			return false;
+		if (
+			!allowsTreeSuperset(
+				policy,
+				original,
+				schema,
+				superset.nodeSchema.get(key),
+				discrepancies === undefined
+					? undefined
+					: { discrepancies, identifier: key, fieldKey: undefined },
+			)
+		) {
+			if (discrepancies === undefined) {
+				return false;
+			}
+			compatible = false;
 		}
 	}
 	// Any schema in superset not in original are already known to be superset of original since they are "never" due to being missing.
 	// Therefore, we do not need to check them.
-	return true;
+	return compatible;
 }
 
 /**

@@ -52,6 +52,27 @@ const nodeFileSystem = {
 };
 
 describe("snapshotCompatibilityChecker", () => {
+	it("exposes upgrade diagnostics when neither viewing nor upgrading is possible", () => {
+		const sf = new SchemaFactoryAlpha("snapshotDiagnostics");
+		const status = checkCompatibility(
+			new TreeViewConfiguration({ schema: [sf.number, sf.string] }),
+			new TreeViewConfiguration({ schema: sf.number }),
+		);
+		assert.equal(status.canView, false);
+		assert.equal(status.canUpgrade, false);
+		assert(!status.view.isCompatible);
+		assert(!status.upgrade.isCompatible);
+		assert.deepEqual(status.upgrade.incompatibilities, [
+			{
+				mismatch: "allowedTypes",
+				location: "root",
+				proposed: [],
+				stored: [sf.string.identifier],
+			},
+			{ mismatch: "missingNodeSchema", nodeType: sf.string.identifier },
+		]);
+	});
+
 	it("exports fresh snapshots without rediscovering a configured schema", () => {
 		const sf = new SchemaFactoryAlpha("snapshotReuse");
 		class Child extends sf.object("Child", { value: sf.stagedOptional(sf.number) }) {}

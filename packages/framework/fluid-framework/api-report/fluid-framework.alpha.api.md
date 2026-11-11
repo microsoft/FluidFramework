@@ -201,7 +201,7 @@ export type ChangeMetadataBeta = CommitMetadata & ({
 });
 
 // @alpha
-export function checkCompatibility(documentViewConfiguration: TreeViewConfiguration, clientViewConfiguration: TreeViewConfiguration): Omit<SchemaCompatibilityStatus, "canInitialize">;
+export function checkCompatibility(documentViewConfiguration: TreeViewConfiguration, clientViewConfiguration: TreeViewConfiguration): Omit<SchemaCompatibilityStatusBeta, "canInitialize">;
 
 // @alpha
 export function cloneWithReplacements(root: unknown, rootKey: string, replacer: (key: string, value: unknown) => {
@@ -250,7 +250,15 @@ export enum CommitOutcome {
 export type CommitRevision = string;
 
 // @alpha
-export function comparePersistedSchema(persisted: JsonCompatible, view: ImplicitFieldSchema, options: ICodecOptions): Omit<SchemaCompatibilityStatus, "canInitialize">;
+export function comparePersistedSchema(persisted: JsonCompatible, view: ImplicitFieldSchema, options: ICodecOptions): Omit<SchemaCompatibilityStatusBeta, "canInitialize">;
+
+// @beta @sealed
+export type CompatibilityResult<TIncompatibility> = {
+    readonly isCompatible: true;
+} | {
+    readonly isCompatible: false;
+    readonly incompatibilities: readonly TIncompatibility[];
+};
 
 // @alpha
 export namespace Component {
@@ -1976,6 +1984,8 @@ export interface SchemaCompatibilityStatus {
 // @beta @sealed
 export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus {
     readonly discrepancies: readonly SchemaDiscrepancy[] | undefined;
+    readonly upgrade: CompatibilityResult<SchemaUpgradeIncompatibility>;
+    readonly view: CompatibilityResult<SchemaIncompatibility>;
 }
 
 // @beta @sealed
@@ -2126,6 +2136,9 @@ const schemaIdentifierBrand: unique symbol;
 export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.SchemaIdentity"> {
 }
 
+// @beta @sealed
+export type SchemaIncompatibility = SchemaDiscrepancy;
+
 // @public @sealed @system
 export interface SchemaStatics {
     readonly boolean: LeafSchema<"boolean", boolean>;
@@ -2177,6 +2190,19 @@ export class SchemaUpgrade {
     // (undocumented)
     protected _typeCheck: MakeNominal;
 }
+
+// @beta @sealed
+export type SchemaUpgradeIncompatibility = {
+    [Incompatibility in SchemaIncompatibility as Incompatibility["mismatch"]]: Omit<Incompatibility, "view" | "stagedView" | "viewIsStagedOptional"> & {
+        readonly proposed: Incompatibility["view"];
+    };
+}[SchemaIncompatibility["mismatch"]] | {
+    readonly mismatch: "missingNodeSchema";
+    readonly nodeType: string;
+} | {
+    readonly mismatch: "uninhabitableNodeSchema";
+    readonly nodeType: string;
+};
 
 // @public @system
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;

@@ -20,7 +20,11 @@ import {
 	type TreeStoredSchema,
 	Multiplicity,
 } from "../../../core/index.js";
-import { FieldKinds, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
+import {
+	FieldKinds,
+	defaultSchemaPolicy,
+	type StoredSchemaUpgradeDiscrepancy,
+} from "../../../feature-libraries/index.js";
 import {
 	allowsFieldSuperset,
 	allowsMultiplicitySuperset,
@@ -264,7 +268,11 @@ describe("Schema Comparison", () => {
 	// influences the types of schema changes we allow
 	describe("allowsRepoSuperset", () => {
 		const compareTwoRepo = (a: TreeStoredSchema, b: TreeStoredSchema): boolean => {
-			return allowsRepoSuperset(defaultSchemaPolicy, a, b);
+			const compatible = allowsRepoSuperset(defaultSchemaPolicy, a, b);
+			const discrepancies: StoredSchemaUpgradeDiscrepancy[] = [];
+			assert.equal(allowsRepoSuperset(defaultSchemaPolicy, a, b, discrepancies), compatible);
+			assert.equal(discrepancies.length === 0, compatible);
+			return compatible;
 		};
 
 		it("Same rootFieldSchema with different TreeNodeStoredSchemas", () => {

@@ -143,22 +143,22 @@ function getUnknownFieldSchemas(
 export const ViewSlot = anchorSlot<TreeContextAlpha>();
 
 function throwIfSchemaIsIncompatible(compatibility: SchemaCompatibilityStatusBeta): void {
-	if (compatibility.canView) {
+	if (compatibility.view.isCompatible) {
 		return;
 	}
 
 	const resolution = compatibility.canInitialize
 		? "The document is uninitialized; call TreeView.initialize() before reading or writing TreeView.root."
-		: compatibility.canUpgrade
+		: compatibility.upgrade.isCompatible
 			? "The stored schema can be upgraded; call TreeView.upgradeSchema() before reading or writing TreeView.root."
 			: "The schemas cannot be upgraded automatically. Use a compatible view schema or explicitly migrate the document schema and data.";
 	throw new UsageError(
 		`TreeView.root is unavailable because the view schema is incompatible with the stored schema. ${resolution}`,
 		tagSchemaArtifacts({
-			schemaIncompatibilityDetails:
-				compatibility.discrepancies === undefined
-					? undefined
-					: JSON.stringify(compatibility.discrepancies),
+			schemaIncompatibilityDetails: JSON.stringify(compatibility.view.incompatibilities),
+			schemaUpgradeIncompatibilityDetails: compatibility.upgrade.isCompatible
+				? undefined
+				: JSON.stringify(compatibility.upgrade.incompatibilities),
 		}),
 	);
 }
@@ -284,15 +284,6 @@ export class SchematizingSimpleTreeView<
 
 		// Store viewSchema directly from the configuration (TreeViewConfigurationAlpha implements TreeSchema)
 		this.viewSchema = configAlpha;
-		// This must be initialized before `update` can be called.
-		this.currentCompatibility = {
-			canView: false,
-			canUpgrade: true,
-			isEquivalent: false,
-			canInitialize: true,
-			discrepancies: undefined,
-		};
-		this.currentEnabledUpgrades = new Map();
 		this.update();
 
 		this.unregisterCallbacks.add(
@@ -404,7 +395,14 @@ export class SchematizingSimpleTreeView<
 		const storedSchema = this.checkout.storedSchema.clone();
 		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
 			throw new UsageError(
-				"Existing stored schema cannot be upgraded to the requested schema (see TreeView.compatibility.canUpgrade).",
+				"Existing stored schema cannot be upgraded to the requested schema (see TreeView.compatibility.upgrade.isCompatible).",
+				tagSchemaArtifacts({
+					schemaUpgradeIncompatibilityDetails: JSON.stringify(
+						this.compatibility.upgrade.isCompatible
+							? undefined
+							: this.compatibility.upgrade.incompatibilities,
+					),
+				}),
 			);
 		}
 		if (allowsRepoSuperset(defaultSchemaPolicy, newSchema, storedSchema)) {
@@ -555,7 +553,7 @@ export class SchematizingSimpleTreeView<
 		const anchors = this.checkout.forest.anchors;
 		const slots = anchors.slots;
 
-		if (compatibility.canView) {
+		if (compatibility.view.isCompatible) {
 			this.flexTreeContext = new Context(
 				defaultSchemaPolicy,
 				this.checkout,

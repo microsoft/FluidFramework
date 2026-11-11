@@ -18,7 +18,7 @@ import {
 	decodeSchemaCompatibilitySnapshot,
 	encodeSchemaCompatibilitySnapshot,
 } from "./simpleSchemaCodec.js";
-import type { SchemaCompatibilityStatus } from "./tree.js";
+import type { SchemaCompatibilityStatusBeta } from "./tree.js";
 
 /**
  * Reports the ability of a client's view configuration to view and/or upgrade a document's stored schema
@@ -73,8 +73,8 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  *
  * @returns The ability of `clientViewConfiguration.schema` to view and/or upgrade a document's stored schema.
  *
- * This is the same {@link SchemaCompatibilityStatus} a {@link TreeView} would report for this combination of schemas,
- * without `canInitialize`.
+ * This includes viewing discrepancies and upgrade discrepancies when neither viewing nor upgrading is possible.
+ * The result matches {@link SchemaCompatibilityStatusBeta}, without `canInitialize`.
  *
  * @privateRemarks
  * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
@@ -84,7 +84,7 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
 export function checkCompatibility(
 	documentViewConfiguration: TreeViewConfiguration,
 	clientViewConfiguration: TreeViewConfiguration,
-): Omit<SchemaCompatibilityStatus, "canInitialize"> {
+): Omit<SchemaCompatibilityStatusBeta, "canInitialize"> {
 	const viewAsAlpha = new TreeViewConfigurationAlpha({
 		schema: clientViewConfiguration.schema,
 	});
@@ -236,11 +236,11 @@ export interface CombinedSchemaCompatibilityStatus {
 	/**
 	 * How a {@link TreeView} using the current schema would report its compatibility with the historical snapshot.
 	 */
-	readonly currentViewOfSnapshotDocument: Omit<SchemaCompatibilityStatus, "canInitialize">;
+	readonly currentViewOfSnapshotDocument: Omit<SchemaCompatibilityStatusBeta, "canInitialize">;
 	/**
 	 * How a {@link TreeView} using the snapshotted schema would report its compatibility with a document created with the current schema.
 	 */
-	readonly snapshotViewOfCurrentDocument: Omit<SchemaCompatibilityStatus, "canInitialize">;
+	readonly snapshotViewOfCurrentDocument: Omit<SchemaCompatibilityStatusBeta, "canInitialize">;
 
 	/**
 	 * True if and only if the schemas have identical compatibility.

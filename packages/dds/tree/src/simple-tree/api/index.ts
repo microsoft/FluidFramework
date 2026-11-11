@@ -23,6 +23,9 @@ export type {
 	TreeViewEvents,
 	SchemaCompatibilityStatus,
 	SchemaCompatibilityStatusBeta,
+	CompatibilityResult,
+	SchemaIncompatibility,
+	SchemaUpgradeIncompatibility,
 	SchemaDiscrepancy,
 	TreeViewAlpha,
 	TreeViewBeta,
@@ -126,6 +129,7 @@ export { getSimpleSchema } from "./getSimpleSchema.js";
 export {
 	checkSchemaCompatibility,
 	getSchemaIncompatibilityDetails,
+	getSchemaUpgradeIncompatibilityDetails,
 } from "./schemaCompatibilityTester.js";
 export { type StagedUpgradeStatus } from "./schemaCompatibilityTester.js";
 export type {

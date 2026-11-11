@@ -10,6 +10,10 @@ export {
 	allowsTreeSuperset,
 	allowsMultiplicitySuperset,
 } from "./comparison.js";
+export type {
+	StoredSchemaDiscrepancyLocation,
+	StoredSchemaUpgradeDiscrepancy,
+} from "./schemaDiscrepancy.js";
 export { isNeverField, isNeverTree } from "./isNeverTree.js";
 export {
 	addCrossFieldQuery,

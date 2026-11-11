@@ -21,7 +21,10 @@ import {
 	type TreeTypeSet,
 	type ValueSchema,
 } from "../../core/index.js";
-import { FieldKinds } from "../../feature-libraries/index.js";
+import {
+	FieldKinds,
+	type StoredSchemaDiscrepancyLocation,
+} from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import {
 	NodeKind,
@@ -85,20 +88,7 @@ export type FieldDiscrepancy =
 /**
  * Information about where a field discrepancy is located within a collection of schemas.
  */
-export interface FieldDiscrepancyLocation {
-	/**
-	 * The {@link TreeNodeSchemaIdentifier} that contains the discrepancy.
-	 *
-	 * Undefined iff the discrepancy is part of the root field schema.
-	 */
-	readonly identifier: TreeNodeSchemaIdentifier | undefined;
-	/**
-	 * The {@link FieldKey} for the field that contains the discrepancy.
-	 * Undefined when:
-	 * - the discrepancy is part of the root field schema
-	 * - the discrepancy is for 'all fields' of a map node
-	 */
-	readonly fieldKey: FieldKey | undefined;
+export interface FieldDiscrepancyLocation extends StoredSchemaDiscrepancyLocation {
 	/**
 	 * Whether the view field is a staged optional field.
 	 * Omitted when false.

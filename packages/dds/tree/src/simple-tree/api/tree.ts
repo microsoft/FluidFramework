@@ -929,8 +929,8 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
  * A discrepancy that prevents a view schema from providing read/write access to a tree, based on that tree's existing stored schema.
  *
  * @remarks
- * The `mismatch` property discriminates the different discrepancy shapes.
- * These entries explain {@link SchemaCompatibilityStatus.canView}, not whether the stored schema can be upgraded.
+ * The `mismatch` property discriminates the different incompatibility shapes.
+ * These entries explain {@link SchemaCompatibilityStatusBeta.view}, not whether the stored schema can be upgraded.
  * They compare schema constraints, not the document's current content nor the resulting stored schema generated for an upgrade.
  * Staging annotations can provide context within an entry without themselves preventing access.
  *
@@ -1047,30 +1047,101 @@ export type SchemaDiscrepancy =
 	  };
 
 /**
+ * A constraint that prevents the proposed stored schema from being a permitted upgrade.
+ *
+ * @remarks
+ * These entries explain upgrading, rather than viewing the document with its existing schema.
+ * The proposed schema includes the view's effective staged-upgrade policy.
+ * Allowed-type arrays contain identifiers present on only one side of the comparison.
+ * Proposed-only types provide context; removing stored types is what blocks the upgrade.
+ * The common mismatch shapes match {@link SchemaIncompatibility}, with `view` replaced by `proposed`
+ * and without viewing-specific staging annotations.
+ *
+ * @sealed @beta
+ */
+export type SchemaUpgradeIncompatibility =
+	| {
+			[Incompatibility in SchemaIncompatibility as Incompatibility["mismatch"]]: Omit<
+				Incompatibility,
+				"view" | "stagedView" | "viewIsStagedOptional"
+			> & {
+				/** The constraints in the proposed stored schema. */
+				readonly proposed: Incompatibility["view"];
+			};
+	  }[SchemaIncompatibility["mismatch"]]
+	| {
+			/** A constructible stored node definition is absent from the proposed schema. */
+			readonly mismatch: "missingNodeSchema";
+			/** The missing stored node schema identifier. */
+			readonly nodeType: string;
+	  }
+	| {
+			/** The proposed node definition cannot describe a valid tree under the upgrade rules. */
+			readonly mismatch: "uninhabitableNodeSchema";
+			/** The stored node schema identifier. */
+			readonly nodeType: string;
+	  };
+
+/**
+ * An incompatibility that prevents a view from providing read/write access to a document.
+ *
+ * @remarks
+ * This is equivalent to {@link SchemaDiscrepancy}.
+ *
+ * @sealed @beta
+ */
+export type SchemaIncompatibility = SchemaDiscrepancy;
+
+/**
+ * Whether a schema operation is permitted, including its blocking incompatibilities when it is not.
+ *
+ * @typeParam TIncompatibility - The incompatibilities that can prevent the operation.
+ * @remarks
+ * Narrow using `isCompatible` before accessing `incompatibilities`.
+ * Successful results do not have an `incompatibilities` property.
+ * Results describe the schema and configuration at the time compatibility was checked,
+ * even if the document schema subsequently changes.
+ *
+ * @sealed @beta
+ */
+export type CompatibilityResult<TIncompatibility> =
+	| {
+			/** The operation is permitted. */
+			readonly isCompatible: true;
+	  }
+	| {
+			/** The operation is blocked by schema incompatibilities. */
+			readonly isCompatible: false;
+			/**
+			 * The nonempty list of incompatibilities that prevent the operation.
+			 *
+			 * @remarks
+			 * This list can be computed lazily on first access and is cached for this result.
+			 * It describes schema constraints, not the document's current content.
+			 * Entries can include application-defined schema identifiers and stored field keys.
+			 */
+			readonly incompatibilities: readonly TIncompatibility[];
+	  };
+
+/**
  * {@link SchemaCompatibilityStatus} with additional beta APIs.
  *
  * @sealed @beta
  */
 export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus {
 	/**
-	 * Differences that prevent a view schema from providing read/write access to a tree, based on that tree's stored schema.
+	 * Whether the view schema permits read/write access to the document, and any incompatibilities that prevent access.
 	 *
 	 * @remarks
-	 * This property is `undefined` when {@link SchemaCompatibilityStatus.canView} is true and present
-	 * when `canView` is false.
-	 * When present, the list is nonempty and explains why accessing {@link TreeView.root} throws.
-	 *
-	 * It does not report all schema differences nor discrepancies that would prevent
-	 * {@link SchemaCompatibilityStatus.canUpgrade}.
-	 *
+	 * If `isCompatible` is false, accessing {@link TreeView.root} throws.
+	 * The failure result includes a nonempty `incompatibilities` list explaining why.
+	 * These entries do not report all schema differences or whether upgrading is permitted.
 	 * Entries may include non-blocking staging context in addition to the constraint that prevents viewing.
 	 *
-	 * This data may include application-defined schema identifiers and field keys.
-	 *
-	 * @example Interpreting an allowed-types discrepancy
+	 * @example Interpreting an allowed-types incompatibility
 	 *
 	 * If a document's stored schema allows `string` for `Todo.title`, but the view schema expects
-	 * `number`, the discrepancy identifies the field and the type permitted by each schema:
+	 * `number`, the incompatibility identifies the field and the type permitted by each schema:
 	 *
 	 * ```typescript
 	 * const sf = new SchemaFactory("com.example");
@@ -1079,16 +1150,41 @@ export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus
 	 * }) {}
 	 *
 	 * const view = asBeta(tree.viewWith(new TreeViewConfiguration({ schema: Todo })));
-	 * if (!view.compatibility.canView) {
+	 * if (!view.compatibility.view.isCompatible) {
 	 * 	// [{
 	 * 	//   mismatch: "allowedTypes",
 	 * 	//   location: { nodeType: "com.example.Todo", fieldKey: "title" },
 	 * 	//   view: ["com.fluidframework.leaf.number"],
 	 * 	//   stored: ["com.fluidframework.leaf.string"],
 	 * 	// }]
-	 * 	console.error(view.compatibility.discrepancies);
+	 * 	console.error(view.compatibility.view.incompatibilities);
 	 * }
 	 * ```
+	 */
+	readonly view: CompatibilityResult<SchemaIncompatibility>;
+
+	/**
+	 * Whether the proposed stored schema is a permitted upgrade, and any incompatibilities that prevent upgrading.
+	 *
+	 * @remarks
+	 * If `isCompatible` is true, calling {@link TreeView.upgradeSchema} is permitted,
+	 * but an upgrade is not necessarily needed.
+	 * If false, `incompatibilities` gives the nonempty list of upgrade blockers.
+	 * When viewing is possible, these details are computed only when first accessed.
+	 * They are cached against the schema snapshot used for this compatibility result.
+	 *
+	 * The proposed stored schema includes the effective staged-upgrade policy.
+	 * The check includes stored node definitions that are not reachable from the document root.
+	 * Viewing and upgrading are independent: either can be permitted without the other.
+	 */
+	readonly upgrade: CompatibilityResult<SchemaUpgradeIncompatibility>;
+
+	/**
+	 * Incompatibilities that prevent viewing, or undefined when viewing is permitted.
+	 *
+	 * @remarks
+	 * When {@link SchemaCompatibilityStatus.canView} is false, this is the same nonempty list
+	 * exposed by {@link SchemaCompatibilityStatusBeta.view} as `incompatibilities`.
 	 */
 	readonly discrepancies: readonly SchemaDiscrepancy[] | undefined;
 }
@@ -1218,7 +1314,8 @@ export interface SchemaCompatibilityStatus {
 	 * Use {@link SchemaCompatibilityStatus.canView} to determine if a document can be viewed as-is.
 	 * Use {@link SchemaCompatibilityStatus.canUpgrade} to determine if the stored schema can be upgraded to match the view schema, when the document is not viewable as-is.
 	 *
-	 * When diagnosing schema incompatibility issues, use {@link SchemaCompatibilityStatusBeta.discrepancies} to get detailed information about the incompatibilities.
+	 * When diagnosing schema incompatibility issues, use the `incompatibilities` on
+	 * {@link SchemaCompatibilityStatusBeta.view} and {@link SchemaCompatibilityStatusBeta.upgrade}.
 	 *
 	 * No direct replacement APIs are intended for this property.
 	 * It will be removed in a version 4.0.0.

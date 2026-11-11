@@ -155,6 +155,14 @@ export enum CommitOutcome {
     NewContentOnly = 2
 }
 
+// @beta @sealed
+export type CompatibilityResult<TIncompatibility> = {
+    readonly isCompatible: true;
+} | {
+    readonly isCompatible: false;
+    readonly incompatibilities: readonly TIncompatibility[];
+};
+
 // @beta
 export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | ConciseTree<THandle>[] | {
     [key: string]: ConciseTree<THandle>;
@@ -585,6 +593,8 @@ export interface SchemaCompatibilityStatus {
 // @beta @sealed
 export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus {
     readonly discrepancies: readonly SchemaDiscrepancy[] | undefined;
+    readonly upgrade: CompatibilityResult<SchemaUpgradeIncompatibility>;
+    readonly view: CompatibilityResult<SchemaIncompatibility>;
 }
 
 // @beta @sealed
@@ -681,6 +691,9 @@ export interface SchemaFactoryOptions {
 // @public @system
 const schemaIdentifierBrand: unique symbol;
 
+// @beta @sealed
+export type SchemaIncompatibility = SchemaDiscrepancy;
+
 // @public @sealed @system
 export interface SchemaStatics {
     readonly boolean: LeafSchema<"boolean", boolean>;
@@ -714,6 +727,19 @@ export class SchemaUpgrade {
     // (undocumented)
     protected _typeCheck: MakeNominal;
 }
+
+// @beta @sealed
+export type SchemaUpgradeIncompatibility = {
+    [Incompatibility in SchemaIncompatibility as Incompatibility["mismatch"]]: Omit<Incompatibility, "view" | "stagedView" | "viewIsStagedOptional"> & {
+        readonly proposed: Incompatibility["view"];
+    };
+}[SchemaIncompatibility["mismatch"]] | {
+    readonly mismatch: "missingNodeSchema";
+    readonly nodeType: string;
+} | {
+    readonly mismatch: "uninhabitableNodeSchema";
+    readonly nodeType: string;
+};
 
 // @public @system
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
