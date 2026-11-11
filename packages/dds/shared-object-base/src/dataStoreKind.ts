@@ -12,6 +12,7 @@ import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitio
 import {
 	type Registry,
 	type DataStoreKind,
+	type DataStoreRegistry,
 	lookupInRegistry,
 } from "@fluidframework/driver-definitions/internal";
 import type {
@@ -35,6 +36,51 @@ import type { ISharedObject } from "./types.js";
  * Note that much of the API surface beyond {@link defineDataStore} could be removed/deduplicated
  * if the unification noted in the TODOs in {@link SharedObjectRegistry} is implemented.
  */
+
+/**
+ * Creates a {@link @fluidframework/driver-definitions#DataStoreRegistry} from data store kinds or lazy getters for them.
+ * @remarks
+ * The iterable is consumed immediately, but each lazy getter runs only when its type is first requested.
+ * Concurrent and subsequent lookups share the loaded kind or the loader's rejection.
+ * Type identifiers must match exactly; aliases are not resolved.
+ * This helper does not replace {@link sharedObjectRegistryFromIterable}, which registers shared object kinds.
+ * @param entries - Kinds, or type identifiers and their lazy loaders.
+ * @returns A registry that loads each lazy entry at most once.
+ * @throws A usage error if the entries contain duplicate type identifiers.
+ * The returned registry rejects lookups for unknown types or loaders that return a kind with a different type.
+ * @alpha
+ */
+export function dataStoreRegistryFromIterable(
+	entries: Iterable<DataStoreKind | { type: string; kind: () => Promise<DataStoreKind> }>,
+): DataStoreRegistry {
+	const map = new Map<string, () => Promise<DataStoreKind>>();
+	for (const entry of entries) {
+		if (map.has(entry.type)) {
+			throw new UsageError(`Duplicate data store type: ${entry.type}`);
+		}
+		// Cache the in-flight promise, including rejection, before invoking the loader.
+		let loaded: Promise<DataStoreKind> | undefined;
+		map.set(
+			entry.type,
+			async () =>
+				(loaded ??=
+					"kind" in entry
+						? Promise.resolve().then(async () => entry.kind())
+						: Promise.resolve(entry)),
+		);
+	}
+	return async (type) => {
+		const load = map.get(type);
+		if (load === undefined) {
+			throw new UsageError(`Unknown data store type: ${type}`);
+		}
+		const kind = await load();
+		if (kind.type !== type) {
+			throw new UsageError(`Mismatched data store type. Expected: ${type}, got: ${kind.type}`);
+		}
+		return kind;
+	};
+}
 
 /**
  * A {@link @fluidframework/driver-definitions#Registry} of shared object kinds that can be created or loaded within a data store.
