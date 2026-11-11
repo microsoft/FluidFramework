@@ -168,7 +168,7 @@
 		"concurrently": "^10.0.3",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
-		"dependency-cruiser": "^17.3.2",
+		"dependency-cruiser": "^17.4.3",
 		"diff": "^4.0.4",
 		"easy-table": "^1.2.0",
 		"eslint": "catalog:eslint",

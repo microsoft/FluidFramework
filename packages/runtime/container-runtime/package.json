@@ -175,7 +175,7 @@
 		"concurrently": "^10.0.3",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
-		"dependency-cruiser": "^17.3.2",
+		"dependency-cruiser": "^17.4.3",
 		"eslint": "catalog:eslint",
 		"jiti": "^2.6.1",
 		"mocha": "^11.7.5",
