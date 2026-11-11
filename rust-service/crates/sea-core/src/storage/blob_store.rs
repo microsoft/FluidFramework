@@ -22,7 +22,10 @@ pub trait BlobStore: ReferenceableStore<Id = BlobTreeId> {
     /// Publishes or deduplicates one immutable blob and returns evidence of its availability.
     async fn put_blob(&self, payload: Bytes) -> Result<Self::Handle, Self::Error>;
 
-    /// Fetches and verifies one immutable blob.
+    /// Fetches one immutable blob, trusting published payload bytes.
+    ///
+    /// Ordinary reads need not recompute the content hash. Callers requiring integrity validation
+    /// must verify the stored representation against `id` before transforming it.
     async fn get_blob(&self, id: BlobId) -> Result<Bytes, Self::Error>;
 
     /// Publishes or deduplicates a directory after verifying all transitive children.

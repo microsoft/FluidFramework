@@ -3,8 +3,8 @@
 use bytes::Bytes;
 use futures_util::StreamExt as _;
 use sea_core::{
-    ClassifiedError, ErrorKind, Event, EventPosition, EventSubmission, MonitoredStreamItem,
-    SeaArchive, SeaAuthorSession,
+    BlobTreeId, ClassifiedError, ErrorKind, Event, EventPosition, EventSubmission,
+    MonitoredStreamItem, SeaArchive, SeaArchiveExt as _, SeaAuthorSession,
     archive::SessionEventKind,
     policy::PolicyError,
     storage::{DocumentId, SeaStorage, StorageHandle},
@@ -140,4 +140,79 @@ async fn direct_sessions_preserve_typed_capabilities_and_errors_across_backends(
     reopened.shutdown().await.unwrap();
     drop((history, reader, reopened));
     std::fs::remove_dir_all(root).unwrap();
+}
+
+#[tokio::test]
+async fn file_sessions_return_trusted_payloads_without_rehashing_in_traversal() {
+    let root = std::env::temp_dir().join(format!("sea-trusted-host-{}", std::process::id()));
+    assert!(!root.exists());
+    check_trusted_payload(
+        StorageSetup::buffered(root.clone()),
+        StorageSetup::buffered(root.clone()),
+        &root,
+    )
+    .await;
+    std::fs::remove_dir_all(&root).unwrap();
+    check_trusted_payload(
+        StorageSetup::durable(root.clone()),
+        StorageSetup::durable(root.clone()),
+        &root,
+    )
+    .await;
+    std::fs::remove_dir_all(root).unwrap();
+}
+
+/// Alters a closed file namespace, then checks the unchanged materialized session API.
+async fn check_trusted_payload<S: SeaStorage + 'static>(
+    storage: StorageSetup<S>,
+    reopen: StorageSetup<S>,
+    root: &std::path::Path,
+) {
+    use std::{
+        fmt::Write as _,
+        io::{Seek as _, SeekFrom, Write as _},
+    };
+    let host = DocumentHost::new(storage, SessionSetup::default()).unwrap();
+    let document = host.create_document().await.unwrap();
+    let session = host.open_session(&document, None).await.unwrap().session;
+    let handle = session
+        .put_blob(Bytes::from_static(b"payload"))
+        .await
+        .unwrap();
+    let BlobTreeId::Blob(id) = handle.id() else {
+        panic!("expected blob");
+    };
+    session.close().await.unwrap();
+    host.shutdown().await.unwrap();
+    drop((session, host));
+    let directory = std::fs::read_dir(root)
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .find(|path| {
+            path.extension()
+                .is_some_and(|extension| extension == "content")
+        })
+        .unwrap();
+    let name = std::iter::once(1_u8)
+        .chain(id.as_bytes().iter().copied())
+        .fold(String::new(), |mut name, byte| {
+            write!(name, "{byte:02x}").unwrap();
+            name
+        });
+    let mut file = std::fs::OpenOptions::new()
+        .write(true)
+        .open(directory.join(name))
+        .unwrap();
+    file.seek(SeekFrom::Start(33)).unwrap();
+    file.write_all(b"Payload").unwrap();
+    drop(file);
+    let reopened = DocumentHost::new(reopen, SessionSetup::default()).unwrap();
+    let session = reopened
+        .open_session(&document, None)
+        .await
+        .unwrap()
+        .session;
+    assert_eq!(session.get_blob(id).await.unwrap(), b"Payload"[..]);
+    session.close().await.unwrap();
+    reopened.shutdown().await.unwrap();
 }

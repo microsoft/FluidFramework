@@ -26,7 +26,11 @@ Repeated publication verifies and reuses an existing immutable object only when 
 It synchronizes the containing directory before acknowledgement, including when a concurrent publisher installed the object.
 
 Directory encoding and identity validation are delegated to `sea-core`.
-Reads enforce configured byte limits and verify that stored bytes match the requested identity before returning data.
+Reads enforce configured byte limits.
+Ordinary blob reads trust published bytes without recomputing their identity; directory reads still validate their encoding and identity.
+Same-length corruption or a truncated blob can therefore be returned successfully.
+Publication collision checks and transitive availability verification still check blob identities.
+Consumers requiring content-address validation must verify the stored representation before decoding compression or encryption.
 
 Publication removes its temporary file after ordinary failures when possible.
 If a staging path already exists, publication fails without removing another attempt's file.

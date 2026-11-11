@@ -82,6 +82,13 @@ Process the entire error suffix, not just its first error, and never automatical
 
 ## Ownership And Reads
 
+Ordinary blob reads trust published payload bytes without recomputing either their content identity or the stored atomic-value checksum.
+They still require the 33-byte checksum/tag header and the blob record tag.
+Same-length payload corruption can be returned successfully; without an independent trusted length, truncation can appear to be a shorter blob.
+Publication hashing and storage formats are unchanged, as are directory validation and journal/checkpoint checks.
+Consumers requiring content-address validation must verify the stored representation before decoding compression or encryption; transport encryption cannot detect corruption already present in storage.
+Reads still materialize the complete payload before returning it.
+
 Event archives support independent terminal-opening observation through `Archive::observe_invalidation`.
 Opening poison reports the classified ambiguous error, and factory shutdown reports a rejected closed-opening error.
 Notification is sticky, covers racing and late registrations, and runs without another archive poll.

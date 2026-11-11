@@ -4,7 +4,7 @@ use std::collections::{BTreeSet, VecDeque};
 
 use futures_util::stream;
 use sea_core::{
-    BlobId, BlobTreeHint, BlobTreeId, BlobTreeItem, BlobTreeStream, MAX_BLOB_TREE_BYTES,
+    BlobTreeHint, BlobTreeId, BlobTreeItem, BlobTreeStream, MAX_BLOB_TREE_BYTES,
     MAX_BLOB_TREE_ITEMS, MAX_BLOB_TREE_ROOTS, MAX_BLOB_TREE_WORK,
     storage::{BlobStore, SeaStorage},
 };
@@ -49,9 +49,6 @@ pub(super) fn read<S: SeaStorage + 'static>(
                     .get_blob(id)
                     .await
                     .map_err(SessionError::Storage)?;
-                if BlobId::for_bytes(&bytes) != id {
-                    return Err(SessionError::Corrupt("blob identity mismatch"));
-                }
                 let size = bytes.len();
                 (BlobTreeItem::Blob { id, bytes }, size)
             }
@@ -113,7 +110,7 @@ mod tests {
     use bytes::Bytes;
     use futures_util::{StreamExt, TryStreamExt};
     use sea_core::{
-        BlobDirectory, ClassifiedError, ErrorKind, SeaArchive,
+        BlobDirectory, BlobId, ClassifiedError, ErrorKind, SeaArchive,
         storage::{LoadStart, StorageHandle},
     };
     use sea_memory::MemoryStorage;

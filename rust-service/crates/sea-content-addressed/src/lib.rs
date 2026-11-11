@@ -134,20 +134,16 @@ impl ContentStore {
         Ok(id)
     }
 
-    /// Fetches and verifies one immutable blob.
+    /// Fetches one immutable blob without recomputing its content hash.
     ///
     /// # Errors
     ///
-    /// Returns an error when the blob is missing, oversized, unreadable, or corrupt.
+    /// Returns an error when the blob is missing, oversized, or unreadable.
     pub fn get_blob(&self, id: BlobId) -> Result<Bytes, StoreError> {
-        let payload = read_bounded(
+        read_bounded(
             &self.blobs.join(hex(id.as_bytes())),
             self.config.max_blob_bytes,
-        )?;
-        if BlobId::for_bytes(&payload) != id {
-            return Err(StoreError::Corrupt("blob identity mismatch"));
-        }
-        Ok(payload)
+        )
     }
 
     /// Publishes or deduplicates one immutable directory without checking child availability.
@@ -432,7 +428,7 @@ mod tests {
     }
 
     #[test]
-    fn rejects_blob_bounds_and_corruption() {
+    fn enforces_blob_bounds_but_trusts_published_payloads() {
         let root = test_directory();
         let store = ContentStore::open(
             &root,
@@ -460,7 +456,9 @@ mod tests {
             ))
         ));
         fs::write(store.blobs.join(hex(blob.as_bytes())), b"no").unwrap();
-        assert!(matches!(store.get_blob(blob), Err(StoreError::Corrupt(_))));
+        assert_eq!(store.get_blob(blob).unwrap(), b"no"[..]);
+        fs::write(store.blobs.join(hex(blob.as_bytes())), b"n").unwrap();
+        assert_eq!(store.get_blob(blob).unwrap(), b"n"[..]);
         fs::remove_dir_all(root).unwrap();
     }
 

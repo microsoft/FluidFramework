@@ -774,7 +774,7 @@ impl State {
         self.path.with_extension("content").join(name)
     }
 
-    /// Reads a content record and verifies persisted bytes against its typed identity.
+    /// Reads published content, trusting blob payloads but verifying directories.
     fn content_record(&self, id: BlobTreeId) -> Result<Option<Vec<u8>>, FileStorageError> {
         let key = Key::Content(id);
         let publication = self.unpublished.lock().unwrap();
@@ -783,6 +783,17 @@ impl State {
         }
         if let Some(record) = self.pending.lock().unwrap().get(&key) {
             return Ok(Some(record.to_vec()));
+        }
+        if matches!(id, BlobTreeId::Blob(_)) {
+            let bytes = match fs::read(self.content_path(id)) {
+                Ok(bytes) => bytes,
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+                Err(error) => return Err(error.into()),
+            };
+            if bytes.get(32) != Some(&1) {
+                return Err(FileStorageError::Corrupt("blob record header"));
+            }
+            return Ok(Some(bytes[32..].to_vec()));
         }
         let Some(record) = atomic_file::read(&self.content_path(id))? else {
             return Ok(None);
@@ -1826,7 +1837,7 @@ impl FileBlobs {
         }
         Ok(self.0.handle(BlobTreeId::Blob(id)))
     }
-    /// Reads blob bytes from the pending overlay or checksum- and identity-checked persisted content.
+    /// Reads blob bytes from the pending overlay or trusted persisted content.
     fn get_blob_blocking(&self, id: BlobId) -> Result<Bytes, FileStorageError> {
         let record = self
             .0
@@ -3233,6 +3244,68 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn trusted_blob_reads_keep_header_checks_and_directory_validation() {
+        for durable in [false, true] {
+            let (root, storage, created) = create_test_document(durable).await;
+            let blobs = &created.components.blobs;
+            let blob = blobs
+                .put_blob(Bytes::from_static(b"payload"))
+                .await
+                .unwrap();
+            let BlobTreeId::Blob(id) = blob.id() else {
+                panic!("expected blob");
+            };
+            let directory = BlobDirectory::new(BTreeMap::new()).unwrap();
+            let directory_id = directory.id().unwrap();
+            blobs.put_directory(directory).await.unwrap();
+            storage.flush().await.unwrap();
+            let path = blobs.0.lock().unwrap().content_path(blob.id());
+            let directory_path = blobs
+                .0
+                .lock()
+                .unwrap()
+                .content_path(BlobTreeId::Directory(directory_id));
+            let original = fs::read(&path).unwrap();
+            drop(created.components);
+
+            let mut changed = original.clone();
+            changed[0] ^= 1;
+            changed[33] = b'P';
+            fs::write(&path, &changed).unwrap();
+            let components = storage.open_document(&created.id).await.unwrap().unwrap();
+            assert_eq!(components.blobs.get_blob(id).await.unwrap(), b"Payload"[..]);
+            drop(components);
+
+            for record in [&original[..33], &original[..34]] {
+                fs::write(&path, record).unwrap();
+                let components = storage.open_document(&created.id).await.unwrap().unwrap();
+                assert_eq!(components.blobs.get_blob(id).await.unwrap(), record[33..]);
+                drop(components);
+            }
+            for record in [vec![], original[..32].to_vec(), vec![2; 33]] {
+                fs::write(&path, record).unwrap();
+                let components = storage.open_document(&created.id).await.unwrap().unwrap();
+                assert!(matches!(
+                    components.blobs.get_blob(id).await,
+                    Err(FileStorageError::Corrupt("blob record header"))
+                ));
+                drop(components);
+            }
+            let mut record = fs::read(&directory_path).unwrap();
+            record[0] ^= 1;
+            fs::write(&directory_path, record).unwrap();
+            let components = storage.open_document(&created.id).await.unwrap().unwrap();
+            assert!(matches!(
+                components.blobs.get_directory(directory_id).await,
+                Err(FileStorageError::Corrupt(_))
+            ));
+            drop(components);
+            storage.shutdown().await.unwrap();
+            fs::remove_dir_all(root).unwrap();
+        }
+    }
+
+    #[tokio::test]
     async fn direct_reopen_keeps_history_lazy_and_checkpoint_size_independent() {
         use std::io::{Seek, SeekFrom, Write};
         let (root, storage, created) = create_test_document(true).await;
@@ -3312,10 +3385,10 @@ mod tests {
         file.write_all(b"X").unwrap();
         drop(file);
         let components = storage.open_document(&id).await.unwrap().unwrap();
-        assert!(matches!(
-            components.blobs.get_blob(blob_id).await,
-            Err(FileStorageError::Corrupt(_))
-        ));
+        assert_eq!(
+            components.blobs.get_blob(blob_id).await.unwrap(),
+            b"Xld payload"[..]
+        );
         drop(components);
         fs::remove_dir_all(root).unwrap();
     }

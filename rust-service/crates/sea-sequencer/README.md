@@ -60,7 +60,8 @@ Closing a membership terminates its initialized storage-backed reads, including 
 Cached unbounded reads register at creation, so closure also terminates subscriptions that have not been polled.
 Loads use `LoadStart`, returning a selected handle-based snapshot and the live suffix without an atomic captured head.
 `load(start, hint)` also returns a lazy content stream rooted at that snapshot.
-Content traversal uses storage's unchanged single-item reads, verifies stored identities, and visits unique typed IDs breadth-first after all explicit roots.
+Content traversal uses storage's unchanged single-item reads, verifies directory identities, and visits unique typed IDs breadth-first after all explicit roots.
+Blob payloads are trusted without recomputing their identities.
 Each request accepts at most 256 explicit roots and returns at most 4,096 unique items.
 Traversal inspects at most 65,536 directory entries and stops at a soft 16 MiB response limit.
 The first root is returned even if it exceeds that byte limit, ensuring progress; subsequent omitted identities can be requested explicitly.

@@ -63,7 +63,9 @@ impl ContentStore {
             }
             match id {
                 BlobTreeId::Blob(id) => {
-                    self.get_blob(id)?;
+                    if BlobId::for_bytes(&self.get_blob(id)?) != id {
+                        return Err(StoreError::Corrupt("blob identity mismatch"));
+                    }
                 }
                 BlobTreeId::Directory(id) => {
                     pending.extend(self.get_directory(id)?.entries().values().copied());
