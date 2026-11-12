@@ -50,6 +50,7 @@ import {
 	toUpgradeSchema,
 	SchemaFactoryBeta,
 	TreeViewConfigurationAlpha,
+	StagedSchemaUpgradePolicy,
 	computeSchemaHash,
 	identifySchemaAlpha,
 	FieldKind,
@@ -255,6 +256,55 @@ describe("SchematizingSimpleTreeView", () => {
 				tag: TelemetryDataTag.SchemaArtifact,
 			});
 			view.dispose();
+		});
+
+		/**
+		 * V1 enables strings; V2 stages strings and null but selects only null for its upgrade.
+		 * V2's construction check must use its view and policy, while upgrade telemetry must include the retained strings.
+		 * A repeated upgrade must not emit another event.
+		 */
+		it("logs retained staged types in the upgrade target hash", () => {
+			const logger = createMockLoggerExt();
+			const tree = createIndependentTreeAlpha({ logger });
+			const schemaV1 = schema.required([schema.number, schema.string]);
+			const viewV1 = tree.viewWith(new TreeViewConfiguration({ schema: schemaV1 }));
+			viewV1.initialize("retained string");
+			viewV1.dispose();
+
+			const stagedString = schema.staged(schema.string);
+			const stagedNull = schema.staged(schema.null);
+			const schemaV2 = schema.required(
+				schema.types([schema.number, stagedString, stagedNull]),
+			);
+			const nullUpgrade = stagedNull.metadata.stagedSchemaUpgrade;
+			assert(nullUpgrade !== undefined);
+			const policy = StagedSchemaUpgradePolicy.enabledStagedUpgrades(nullUpgrade);
+			const configuredHash = computeSchemaHash(schemaV2, policy);
+			const targetHash = computeSchemaHash([schema.number, schema.string, schema.null]);
+			assert.notEqual(configuredHash, targetHash);
+
+			// The expected hash describes newly initialized V2 documents, not this document's stored history.
+			const viewV2 = tree.viewWith(
+				new TreeViewConfigurationAlpha({
+					schema: schemaV2,
+					stagedUpgradePolicy: policy,
+					schemaIdentity: identifySchemaAlpha({ expectedHash: configuredHash }),
+				}),
+			);
+			viewV2.upgradeSchema();
+			assert.equal(viewV2.root, "retained string");
+			viewV2.root = null;
+			viewV2.upgradeSchema();
+
+			const events = logger
+				.events()
+				.filter((event) => event.eventName.endsWith("SchemaUpgraded"));
+			assert.equal(events.length, 1);
+			assert.deepEqual(events[0]?.schemaHash, {
+				value: targetHash,
+				tag: TelemetryDataTag.SchemaArtifact,
+			});
+			viewV2.dispose();
 		});
 
 		it("does not log hashes without schema identity", () => {
@@ -1120,18 +1170,19 @@ describe("SchematizingSimpleTreeView", () => {
 		assert(!view.compatibility.upgrade.isCompatible);
 		assert.deepEqual(view.compatibility.upgrade.incompatibilities, [
 			{
-				mismatch: "allowedTypes",
-				location: "root",
-				proposed: [],
-				stored: [schema.string.identifier],
+				mismatch: "viewIncompatibleAfterUpgrade",
 				reason:
-					'Cannot upgrade the root field: the proposed schema removes allowed node types ["com.fluidframework.leaf.string"].',
-			},
-			{
-				mismatch: "missingNodeSchema",
-				nodeType: schema.string.identifier,
-				reason:
-					'Cannot upgrade node type "com.fluidframework.leaf.string": its stored definition is missing from the proposed schema.',
+					"Cannot upgrade: the resulting stored schema would still prevent the view from reading or writing the document.",
+				incompatibilities: [
+					{
+						mismatch: "allowedTypes",
+						location: "root",
+						view: [],
+						stored: [schema.string.identifier],
+						reason:
+							'Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
+					},
+				],
 			},
 		]);
 		assert.equal(originalCompatibility.canView, true);
@@ -1140,20 +1191,28 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	it("retains deferred incompatibilities across schema changes and disposal", () => {
-		const stagedConfig = new TreeViewConfigurationAlpha({
-			schema: schema.types([schema.number, schema.staged(schema.string)]),
+		class Stored extends schema.object("DeferredDisposal", {
+			x: schema.number,
+			hidden: schema.optional(schema.number),
+		}) {}
+		class Viewed extends schema.object(
+			"DeferredDisposal",
+			{ x: schema.number },
+			{ allowUnknownOptionalFields: true },
+		) {}
+		const checkout = checkoutWithInitialTree(new TreeViewConfiguration({ schema: Stored }), {
+			x: 5,
 		});
-		const checkout = checkoutWithInitialTree(configGeneralized, 5);
 		const view = new SchematizingSimpleTreeView(
 			checkout,
-			stagedConfig,
+			new TreeViewConfiguration({ schema: Viewed }),
 			new MockNodeIdentifierManager(),
 		);
 		const previous = view.compatibility;
 		assert(previous.view.isCompatible);
 		assert(!previous.upgrade.isCompatible);
 
-		checkout.updateSchema(toUpgradeSchema([schema.number, schema.string, schema.boolean]));
+		checkout.updateSchema(toUpgradeSchema([Stored, schema.string]));
 		assert.equal(view.compatibility.view.isCompatible, false);
 		assert.equal(view.compatibility.upgrade.isCompatible, false);
 		assert.notStrictEqual(view.compatibility, previous);
@@ -1162,17 +1221,19 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.deepEqual(previous.upgrade.incompatibilities, [
 			{
 				mismatch: "allowedTypes",
-				location: "root",
+				location: { nodeType: Viewed.identifier, fieldKey: "hidden" },
 				proposed: [],
-				stored: [schema.string.identifier],
+				stored: [schema.number.identifier],
 				reason:
-					'Cannot upgrade the root field: the proposed schema removes allowed node types ["com.fluidframework.leaf.string"].',
+					'Cannot upgrade field "hidden" of node type "com.example.DeferredDisposal": the proposed schema removes allowed node types ["com.fluidframework.leaf.number"].',
 			},
 			{
-				mismatch: "missingNodeSchema",
-				nodeType: schema.string.identifier,
+				mismatch: "fieldKind",
+				location: { nodeType: Viewed.identifier, fieldKey: "hidden" },
+				proposed: "Forbidden",
+				stored: "Optional",
 				reason:
-					'Cannot upgrade node type "com.fluidframework.leaf.string": its stored definition is missing from the proposed schema.',
+					'Cannot upgrade field "hidden" of node type "com.example.DeferredDisposal": changing from zero or one child to no children is not permitted by the schema upgrade rules.',
 			},
 		]);
 	});
@@ -1600,7 +1661,6 @@ describe("SchematizingSimpleTreeView", () => {
 				assert.equal(viewB.root.content, 43);
 				// ...but then is rolled back after sequencing because the child node was removed by Tree A.
 				provider.synchronizeMessages();
-				assert.equal(viewB.root.content, 42);
 				assert.equal(viewB.root.content, 42);
 			});
 

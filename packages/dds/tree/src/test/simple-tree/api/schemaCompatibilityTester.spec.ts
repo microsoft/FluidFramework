@@ -19,6 +19,9 @@ import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-librar
 import { LeafNodeSchema } from "../../../simple-tree/leafNodeSchema.js";
 import {
 	checkSchemaCompatibility,
+	getSchemaUpgradeCandidate,
+	isSchemaUpgradeAllowed,
+	toInitialSchema,
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
 	type SchemaDiscrepancy,
@@ -36,7 +39,7 @@ import {
 } from "../../../simple-tree/index.js";
 import { SchemaFactoryAlpha } from "../../../simple-tree/index.js";
 import type { areSafelyAssignable, requireTrue } from "../../../util/index.js";
-import { TestSchemaRepository } from "../../utils.js";
+import { expectSchemaEqual, TestSchemaRepository } from "../../utils.js";
 
 const emptySchema: TreeStoredSchema = {
 	nodeSchema: new Map(),
@@ -67,10 +70,14 @@ function expectCompatibility(
 	expected: Pick<ReturnType<typeof checkSchemaCompatibility>, "canView" | "canUpgrade"> & {
 		enabledUpgrades?: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
 	},
-	stagedSchemaUpgrades?: Parameters<typeof checkSchemaCompatibility>[2],
+	stagedUpgradePolicy?: StagedSchemaUpgradePolicy,
 ) {
-	const viewSchema = new TreeViewConfigurationAlpha({ schema: view });
-	const compatibility = checkSchemaCompatibility(viewSchema, stored, stagedSchemaUpgrades);
+	const viewSchema = new TreeViewConfigurationAlpha({ schema: view, stagedUpgradePolicy });
+	const compatibility = checkSchemaCompatibility(
+		viewSchema,
+		stored,
+		viewSchema.stagedUpgradePolicy,
+	);
 	const { discrepancies, canView, canUpgrade, enabledUpgrades } = compatibility;
 	// Check the existing properties alongside the new results.
 	assert.deepEqual(
@@ -92,15 +99,16 @@ function expectCompatibility(
 		assert(compatibility.upgrade.incompatibilities.length > 0);
 	}
 
-	const viewStored = toUpgradeSchema(view, compatibility.enabledUpgrades.keys());
+	const viewStored = getSchemaUpgradeCandidate(
+		viewSchema,
+		stored,
+		viewSchema.stagedUpgradePolicy,
+	);
 
-	// if it says upgradable, deriving a stored schema from the view schema gives one thats a superset of the old stored schema
+	// A permitted upgrade must continue to allow all content permitted by the stored schema and support read/write access through this view.
 	if (compatibility.canUpgrade) {
 		assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, viewStored), true);
-	}
-	// if it is viewable, the old stored schema is also a superset of the new one.
-	if (compatibility.canView) {
-		assert.equal(allowsRepoSuperset(defaultSchemaPolicy, viewStored, stored), true);
+		assert.equal(checkSchemaCompatibility(viewSchema, viewStored).view.isCompatible, true);
 	}
 	return compatibility;
 }
@@ -254,6 +262,87 @@ describe("checkSchemaCompatibility viewing incompatibilities", () => {
 	});
 });
 
+describe("isSchemaUpgradeAllowed", () => {
+	it("allows adding an optional field even when the current document cannot be viewed", () => {
+		class Before extends factory.object("Task", {
+			title: factory.string,
+		}) {}
+
+		// Add optional notes; the document needs this field's schema before the view can write notes.
+		class After extends factory.object("Task", {
+			title: factory.string,
+			notes: factory.optional(factory.string),
+		}) {}
+		const view = new TreeViewConfigurationAlpha({ schema: After });
+		const stored = toUpgradeSchema(Before);
+		const candidate = toUpgradeSchema(After);
+
+		// Viewing is blocked before the upgrade, but the candidate adds the missing optional field without removing anything.
+		assert.equal(checkSchemaCompatibility(view, stored).view.isCompatible, false);
+		assert.equal(isSchemaUpgradeAllowed(view, stored, candidate), true);
+	});
+
+	it("rejects a candidate that discards allowed content even when the view can use it", () => {
+		class Before extends factory.object("Task", {
+			priority: factory.number,
+		}) {}
+
+		// Replace numeric priorities with strings without providing support for the historical numeric values.
+		class After extends factory.object("Task", {
+			priority: factory.string,
+		}) {}
+		const view = new TreeViewConfigurationAlpha({ schema: After });
+		const stored = toUpgradeSchema(Before);
+		const candidate = toUpgradeSchema(After);
+
+		// A view-only target suits the new application but cannot safely replace the historical schema.
+		assert.equal(checkSchemaCompatibility(view, candidate).view.isCompatible, true);
+		assert.equal(isSchemaUpgradeAllowed(view, stored, candidate), false);
+	});
+
+	it("rejects a composed superset that the view cannot read", () => {
+		class Before extends factory.object("Task", {
+			priority: [factory.number, factory.string],
+		}) {}
+
+		// Drop support for string priorities while adding optional notes.
+		class After extends factory.object("Task", {
+			priority: factory.number,
+			notes: factory.optional(factory.string),
+		}) {}
+		const view = new TreeViewConfigurationAlpha({ schema: After });
+		const stored = toUpgradeSchema(Before);
+		const candidate = getSchemaUpgradeCandidate(
+			view,
+			stored,
+			StagedSchemaUpgradePolicy.restrictive,
+		);
+
+		// Composition retains both priority types and adds notes, but cannot make the numeric-only view tolerate strings.
+		assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, candidate), true);
+		assert.equal(isSchemaUpgradeAllowed(view, stored, candidate), false);
+		const { upgrade } = checkSchemaCompatibility(view, stored);
+		assert(!upgrade.isCompatible);
+		assert.deepEqual(upgrade.incompatibilities, [
+			{
+				mismatch: "viewIncompatibleAfterUpgrade",
+				reason:
+					"Cannot upgrade: the resulting stored schema would still prevent the view from reading or writing the document.",
+				incompatibilities: [
+					{
+						mismatch: "allowedTypes",
+						location: { nodeType: After.identifier, fieldKey: "priority" },
+						view: [],
+						stored: [factory.string.identifier],
+						reason:
+							'Cannot view field "priority" of node type ".Task": the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
+					},
+				],
+			},
+		]);
+	});
+});
+
 describe("checkSchemaCompatibility", () => {
 	it("narrows incompatibilities using isCompatible", () => {
 		const checkResult = (result: CompatibilityResult<SchemaViewIncompatibility>): void => {
@@ -276,7 +365,16 @@ describe("checkSchemaCompatibility", () => {
 	});
 
 	it("collects upgrade incompatibilities lazily and caches the result", () => {
-		const stored = toUpgradeSchema([factory.number, factory.string]);
+		class Stored extends factory.object("diagnostics.Deferred", {
+			x: factory.number,
+			hidden: factory.optional(factory.number),
+		}) {}
+		class View extends factory.object(
+			"diagnostics.Deferred",
+			{ x: factory.number },
+			{ allowUnknownOptionalFields: true },
+		) {}
+		const stored = toUpgradeSchema(Stored);
 		let typeReads = 0;
 		const rootFieldSchema = {
 			kind: stored.rootFieldSchema.kind,
@@ -287,9 +385,7 @@ describe("checkSchemaCompatibility", () => {
 			},
 		};
 		const compatibility = checkSchemaCompatibility(
-			new TreeViewConfigurationAlpha({
-				schema: factory.types([factory.number, factory.staged(factory.string)]),
-			}),
+			new TreeViewConfigurationAlpha({ schema: View }),
 			{ rootFieldSchema, nodeSchema: stored.nodeSchema },
 		);
 		assert.equal(compatibility.view.isCompatible, true);
@@ -303,11 +399,16 @@ describe("checkSchemaCompatibility", () => {
 		assertIncompatibilities(details, [
 			{
 				mismatch: "allowedTypes",
-				location: "root",
+				location: { nodeType: View.identifier, fieldKey: "hidden" },
 				proposed: [],
-				stored: [factory.string.identifier],
+				stored: [factory.number.identifier],
 			},
-			{ mismatch: "missingNodeSchema", nodeType: factory.string.identifier },
+			{
+				mismatch: "fieldKind",
+				location: { nodeType: View.identifier, fieldKey: "hidden" },
+				proposed: "Forbidden",
+				stored: "Optional",
+			},
 		]);
 		const readsAfterDetails = typeReads;
 		assert.strictEqual(compatibility.upgrade.incompatibilities, details);
@@ -315,26 +416,36 @@ describe("checkSchemaCompatibility", () => {
 	});
 
 	it("retains the original stored schema for deferred upgrade incompatibilities", () => {
-		const stored = new TreeStoredSchemaRepository(
-			toUpgradeSchema([factory.number, factory.string]),
-		);
-		const config = new TreeViewConfigurationAlpha({
-			schema: factory.types([factory.number, factory.staged(factory.string)]),
-		});
+		class Stored extends factory.object("diagnostics.DeferredSnapshot", {
+			x: factory.number,
+			hidden: factory.optional(factory.number),
+		}) {}
+		class View extends factory.object(
+			"diagnostics.DeferredSnapshot",
+			{ x: factory.number },
+			{ allowUnknownOptionalFields: true },
+		) {}
+		const stored = new TreeStoredSchemaRepository(toUpgradeSchema(Stored));
+		const config = new TreeViewConfigurationAlpha({ schema: View });
 		const previous = checkSchemaCompatibility(config, stored);
 		assert(!previous.upgrade.isCompatible);
 
-		stored.apply(toUpgradeSchema(factory.number));
+		stored.apply(toUpgradeSchema(View));
 		const current = checkSchemaCompatibility(config, stored);
 		assert.equal(current.upgrade.isCompatible, true);
 		assertIncompatibilities(previous.upgrade.incompatibilities, [
 			{
 				mismatch: "allowedTypes",
-				location: "root",
+				location: { nodeType: View.identifier, fieldKey: "hidden" },
 				proposed: [],
-				stored: [factory.string.identifier],
+				stored: [factory.number.identifier],
 			},
-			{ mismatch: "missingNodeSchema", nodeType: factory.string.identifier },
+			{
+				mismatch: "fieldKind",
+				location: { nodeType: View.identifier, fieldKey: "hidden" },
+				proposed: "Forbidden",
+				stored: "Optional",
+			},
 		]);
 	});
 
@@ -406,7 +517,7 @@ describe("checkSchemaCompatibility", () => {
 			assert.deepEqual(compatibility.upgrade, { isCompatible: true });
 		});
 
-		it("permits viewing but not upgrading an already-enabled staged type", () => {
+		it("permits viewing and upgrading an already-enabled staged type", () => {
 			const stagedString = factory.staged(factory.string);
 			const upgrade = stagedString.metadata.stagedSchemaUpgrade;
 			assert(upgrade !== undefined);
@@ -417,14 +528,14 @@ describe("checkSchemaCompatibility", () => {
 				},
 				{
 					canView: true,
-					canUpgrade: false,
+					canUpgrade: true,
 					enabledUpgrades: new Map([[upgrade, "enabled"]]),
 				},
 			);
 			assert.equal(compatibility.discrepancies, undefined);
 		});
 
-		it("keeps the short-circuiting upgrade comparison when viewing is possible", () => {
+		it("keeps the short-circuiting stored-schema comparison for a root failure", () => {
 			class CountingSchemaMap extends Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
 				public iterations = 0;
 				public override [Symbol.iterator](): MapIterator<
@@ -436,19 +547,18 @@ describe("checkSchemaCompatibility", () => {
 			}
 			const schema = toUpgradeSchema([factory.number, factory.string]);
 			const nodeSchema = new CountingSchemaMap(schema.nodeSchema);
-			const compatibility = checkSchemaCompatibility(
-				new TreeViewConfigurationAlpha({
-					schema: factory.types([factory.number, factory.staged(factory.string)]),
-				}),
-				{ rootFieldSchema: schema.rootFieldSchema, nodeSchema },
+			assert.equal(
+				allowsRepoSuperset(
+					defaultSchemaPolicy,
+					{ rootFieldSchema: schema.rootFieldSchema, nodeSchema },
+					toUpgradeSchema(factory.number),
+				),
+				false,
 			);
-			assert.equal(compatibility.canView, true);
-			assert.equal(compatibility.canUpgrade, false);
-			// Only the viewing walk should enumerate nodes; the upgrade check fails at the root.
-			assert.equal(nodeSchema.iterations, 1);
+			assert.equal(nodeSchema.iterations, 0);
 		});
 
-		it("explains removed root types and missing node definitions when both operations fail", () => {
+		it("explains preserved root types that still prevent viewing after an upgrade", () => {
 			const compatibility = expectCompatibility(
 				{
 					view: factory.number,
@@ -467,21 +577,16 @@ describe("checkSchemaCompatibility", () => {
 			assert(!compatibility.upgrade.isCompatible);
 			assertIncompatibilities(compatibility.upgrade.incompatibilities, [
 				{
-					mismatch: "allowedTypes",
-					location: "root",
-					proposed: [],
-					stored: [factory.string.identifier],
-				},
-				{
-					mismatch: "missingNodeSchema",
-					nodeType: factory.string.identifier,
+					mismatch: "viewIncompatibleAfterUpgrade",
+					incompatibilities: compatibility.view.isCompatible
+						? assert.fail("This view must be incompatible.")
+						: compatibility.view.incompatibilities,
 				},
 			]);
 			assert.deepEqual(
 				compatibility.upgrade.incompatibilities.map(({ reason }) => reason),
 				[
-					'Cannot upgrade the root field: the proposed schema removes allowed node types ["com.fluidframework.leaf.string"].',
-					'Cannot upgrade node type "com.fluidframework.leaf.string": its stored definition is missing from the proposed schema.',
+					"Cannot upgrade: the resulting stored schema would still prevent the view from reading or writing the document.",
 				],
 			);
 		});
@@ -528,7 +633,7 @@ describe("checkSchemaCompatibility", () => {
 			]);
 		});
 
-		it("collects independent upgrade blockers after a root failure without reporting legal relaxations", () => {
+		it("reports a prohibited field transition without reporting preserved types or legal relaxations", () => {
 			class Stored extends factory.object("diagnostics.AllBlockers", {
 				types: [factory.number, factory.string],
 				narrowed: factory.optional(factory.number),
@@ -574,18 +679,6 @@ describe("checkSchemaCompatibility", () => {
 			assert(!compatibility.upgrade.isCompatible);
 			assertIncompatibilities(compatibility.upgrade.incompatibilities, [
 				{
-					mismatch: "allowedTypes",
-					location: "root",
-					proposed: [],
-					stored: [factory.string.identifier],
-				},
-				{
-					mismatch: "allowedTypes",
-					location: { nodeType: View.identifier, fieldKey: "types" },
-					proposed: [],
-					stored: [factory.string.identifier],
-				},
-				{
 					mismatch: "fieldKind",
 					location: { nodeType: View.identifier, fieldKey: "narrowed" },
 					proposed: "Value",
@@ -594,7 +687,7 @@ describe("checkSchemaCompatibility", () => {
 			]);
 		});
 
-		it("locates removed allowed types in an array's sequence field", () => {
+		it("locates preserved types that the view cannot read in an array's sequence field", () => {
 			class StoredItems extends factory.array("diagnostics.Items", [
 				factory.number,
 				factory.string,
@@ -615,15 +708,22 @@ describe("checkSchemaCompatibility", () => {
 			assert(!compatibility.upgrade.isCompatible);
 			assertIncompatibilities(compatibility.upgrade.incompatibilities, [
 				{
-					mismatch: "allowedTypes",
-					location: { nodeType: ViewItems.identifier, fieldKey: EmptyKey },
-					proposed: [],
-					stored: [factory.string.identifier],
+					mismatch: "viewIncompatibleAfterUpgrade",
+					incompatibilities: [
+						{
+							mismatch: "allowedTypes",
+							location: { nodeType: ViewItems.identifier, fieldKey: EmptyKey },
+							view: [],
+							stored: [factory.string.identifier],
+							reason:
+								'Cannot view field "" of node type ".diagnostics.Items": the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
+						},
+					],
 				},
 			]);
 		});
 
-		it("locates removed allowed types in a map's implicit field", () => {
+		it("locates preserved types that the view cannot read in a map's implicit field", () => {
 			class StoredItems extends factory.map("diagnostics.Map", [
 				factory.number,
 				factory.string,
@@ -644,15 +744,21 @@ describe("checkSchemaCompatibility", () => {
 			assert(!compatibility.upgrade.isCompatible);
 			assertIncompatibilities(compatibility.upgrade.incompatibilities, [
 				{
-					mismatch: "allowedTypes",
-					location: { nodeType: ViewItems.identifier, fieldKey: undefined },
-					proposed: [],
-					stored: [factory.string.identifier],
+					mismatch: "viewIncompatibleAfterUpgrade",
+					incompatibilities: [
+						{
+							mismatch: "allowedTypes",
+							location: { nodeType: ViewItems.identifier, fieldKey: undefined },
+							view: [],
+							stored: [factory.string.identifier],
+							reason: `Cannot view map entries of node type ${JSON.stringify(ViewItems.identifier)}: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.`,
+						},
+					],
 				},
 			]);
 			assert.equal(
 				compatibility.upgrade.incompatibilities[0]?.reason,
-				`Cannot upgrade map entries of node type ${JSON.stringify(ViewItems.identifier)}: the proposed schema removes allowed node types ["com.fluidframework.leaf.string"].`,
+				"Cannot upgrade: the resulting stored schema would still prevent the view from reading or writing the document.",
 			);
 		});
 
@@ -810,16 +916,6 @@ describe("checkSchemaCompatibility", () => {
 				]);
 				assert(!compatibility.upgrade.isCompatible);
 				assertIncompatibilities(compatibility.upgrade.incompatibilities, [
-					...(policy === "restrictive"
-						? [
-								{
-									mismatch: "allowedTypes",
-									location: { nodeType: View.identifier, fieldKey: "value" },
-									proposed: [],
-									stored: [factory.string.identifier],
-								},
-							]
-						: []),
 					{
 						mismatch: "fieldKind",
 						location: { nodeType: View.identifier, fieldKey: "blocker" },
@@ -867,16 +963,6 @@ describe("checkSchemaCompatibility", () => {
 				]);
 				assert(!compatibility.upgrade.isCompatible);
 				assertIncompatibilities(compatibility.upgrade.incompatibilities, [
-					...(policy === "restrictive"
-						? [
-								{
-									mismatch: "fieldKind",
-									location: { nodeType: View.identifier, fieldKey: "value" },
-									proposed: "Value",
-									stored: "Optional",
-								},
-							]
-						: []),
 					{
 						mismatch: "fieldKind",
 						location: { nodeType: View.identifier, fieldKey: "blocker" },
@@ -1007,6 +1093,117 @@ describe("checkSchemaCompatibility", () => {
 				assert.equal(compatibility.canView, true);
 				assert.equal(compatibility.canUpgrade, true);
 				assert.equal(compatibility.isEquivalent, false);
+			});
+
+			/**
+			 * V1 stages strings and V2 enables them.
+			 * V1's restrictive upgrade preserves V2's strings without changing the document, but a new V1 document still excludes them.
+			 * Equivalence must remain false until V1's configured policy also enables strings.
+			 */
+			it("compares generated schema rather than retained staged types", () => {
+				const stagedString = factory.staged(factory.string);
+				const upgrade = stagedString.metadata.stagedSchemaUpgrade;
+				assert(upgrade !== undefined);
+				const schemaV1 = factory.types([factory.number, stagedString]);
+				const schemaV2 = [factory.number, factory.string] as const;
+				const stored = toInitialSchema(schemaV2);
+				const view = new TreeViewConfigurationAlpha({ schema: schemaV1 });
+
+				const compatibility = checkSchemaCompatibility(view, stored);
+				assert.equal(compatibility.canView, true);
+				assert.equal(compatibility.canUpgrade, true);
+				assert.equal(compatibility.isEquivalent, false);
+
+				// A non-equivalent configuration can still produce a no-op upgrade for this document.
+				expectSchemaEqual(
+					getSchemaUpgradeCandidate(view, stored, StagedSchemaUpgradePolicy.restrictive),
+					stored,
+				);
+				expectSchemaEqual(toInitialSchema(schemaV1), toInitialSchema(factory.number));
+
+				const enabled = checkSchemaCompatibility(
+					view,
+					stored,
+					StagedSchemaUpgradePolicy.enabledStagedUpgrades(upgrade),
+				);
+				assert.equal(enabled.canView, true);
+				assert.equal(enabled.canUpgrade, true);
+				assert.equal(enabled.isEquivalent, true);
+			});
+
+			/**
+			 * V1 stages root optionality and V2 fully enables it.
+			 * V1 can preserve V2's optional root, but its restrictive policy still creates required roots in new documents.
+			 * Only explicitly enabling optionality makes the generated schema equivalent.
+			 */
+			it("compares generated schema rather than retained staged optionality", () => {
+				const schemaV1 = factory.stagedOptional(factory.number);
+				const upgrade = schemaV1.isStagedOptional;
+				assert(upgrade !== false);
+				const schemaV2 = factory.optional(factory.number);
+				const stored = toInitialSchema(schemaV2);
+				const view = new TreeViewConfigurationAlpha({ schema: schemaV1 });
+
+				const compatibility = checkSchemaCompatibility(view, stored);
+				assert.equal(compatibility.canView, true);
+				assert.equal(compatibility.canUpgrade, true);
+				assert.equal(compatibility.isEquivalent, false);
+				expectSchemaEqual(
+					getSchemaUpgradeCandidate(view, stored, StagedSchemaUpgradePolicy.restrictive),
+					stored,
+				);
+				expectSchemaEqual(toInitialSchema(schemaV1), toInitialSchema(factory.number));
+
+				const enabled = checkSchemaCompatibility(
+					view,
+					stored,
+					StagedSchemaUpgradePolicy.enabledStagedUpgrades(upgrade),
+				);
+				assert.equal(enabled.canView, true);
+				assert.equal(enabled.canUpgrade, true);
+				assert.equal(enabled.isEquivalent, true);
+			});
+
+			/**
+			 * V1 stages strings at two fields using one token; V2 enables them only at the primary field.
+			 * V1's restrictive upgrade is a no-op, but neither a disabled nor enabled token generates V2's partial state.
+			 * Equivalence becomes true only when the configured token and both stored locations are enabled.
+			 */
+			it("does not treat a partially enabled token as generated-schema equivalence", () => {
+				const stagedString = factory.staged(factory.string);
+				const upgrade = stagedString.metadata.stagedSchemaUpgrade;
+				assert(upgrade !== undefined);
+				const priorities = factory.types([factory.number, stagedString]);
+				class TaskV1 extends factory.object("PartialEquivalence", {
+					primary: priorities,
+					fallback: priorities,
+				}) {}
+				class TaskV2 extends factory.object("PartialEquivalence", {
+					primary: [factory.number, factory.string],
+					fallback: factory.number,
+				}) {}
+				const view = new TreeViewConfigurationAlpha({ schema: TaskV1 });
+				const stored = toInitialSchema(TaskV2);
+				const compatibility = checkSchemaCompatibility(view, stored);
+				assert.equal(compatibility.canView, true);
+				assert.equal(compatibility.canUpgrade, true);
+				assert.equal(compatibility.isEquivalent, false);
+				assert.equal(compatibility.enabledUpgrades.get(upgrade), "partial");
+				expectSchemaEqual(
+					getSchemaUpgradeCandidate(view, stored, StagedSchemaUpgradePolicy.restrictive),
+					stored,
+				);
+
+				// Enabling the shared token would add fallback strings, so it is not equivalent to the partial document either.
+				const policy = StagedSchemaUpgradePolicy.enabledStagedUpgrades(upgrade);
+				const enabled = checkSchemaCompatibility(view, stored, policy);
+				assert.equal(enabled.canView, true);
+				assert.equal(enabled.canUpgrade, true);
+				assert.equal(enabled.isEquivalent, false);
+				assert.equal(
+					checkSchemaCompatibility(view, toInitialSchema(TaskV1, policy), policy).isEquivalent,
+					true,
+				);
 			});
 		});
 
@@ -1346,6 +1543,91 @@ describe("checkSchemaCompatibility", () => {
 		});
 
 		describe("with staged allowed types", () => {
+			/**
+			 * V1 stages string priorities.
+			 * V2 enables strings and adds optional notes.
+			 *
+			 * V1 can read V2's document, but preserving string priorities does not let it upgrade while omitting notes.
+			 * Staged preservation must not also enable upgrades that omit stored optional fields.
+			 */
+			it("does not retain omitted fields when preserving enabled staged types", () => {
+				const stagedString = factory.staged(factory.string);
+				const upgrade = stagedString.metadata.stagedSchemaUpgrade;
+				assert(upgrade !== undefined);
+				class TaskV1 extends factory.object("Task", {
+					priority: factory.types([factory.number, stagedString]),
+				}) {}
+				class TaskV2 extends factory.object("Task", {
+					priority: [factory.number, factory.string],
+					notes: factory.optional(factory.string),
+				}) {}
+				expectCompatibility(
+					{ view: TaskV1, stored: toInitialSchema(TaskV2) },
+					{
+						canView: true,
+						canUpgrade: false,
+						enabledUpgrades: new Map([[upgrade, "enabled"]]),
+					},
+				);
+			});
+
+			for (const location of ["root", "array", "map"] as const) {
+				it(`preserves newer document types without enabling them in documents created by the older schema (${location})`, () => {
+					const priorities = [factory.number, factory.string] as const;
+					const stagedString = factory.staged(factory.string);
+					const upgrade = stagedString.metadata.stagedSchemaUpgrade;
+					assert(upgrade !== undefined);
+					const stagedPriorities = factory.types([factory.number, stagedString]);
+					const before: ImplicitFieldSchema =
+						location === "root"
+							? stagedPriorities
+							: location === "array"
+								? factory.array("Priorities", stagedPriorities)
+								: factory.map("Priorities", stagedPriorities);
+
+					// Fully enable string priorities in the later schema.
+					const after: ImplicitFieldSchema =
+						location === "root"
+							? priorities
+							: location === "array"
+								? factory.array("Priorities", priorities)
+								: factory.map("Priorities", priorities);
+					const stored = toInitialSchema(after);
+					const fresh = toInitialSchema(before);
+
+					// The older staged view can read the newer document and request a no-op upgrade that retains strings.
+					expectCompatibility(
+						{ view: before, stored },
+						{
+							canView: true,
+							canUpgrade: true,
+							enabledUpgrades: new Map([[upgrade, "enabled"]]),
+						},
+						StagedSchemaUpgradePolicy.restrictive,
+					);
+
+					// A document initialized by the older view is numeric-only; requesting an upgrade with that view keeps staging disabled.
+					expectCompatibility(
+						{ view: before, stored: fresh },
+						{ canView: true, canUpgrade: true },
+						StagedSchemaUpgradePolicy.restrictive,
+					);
+
+					// The later view must upgrade the older numeric-only document before it can write strings.
+					expectCompatibility(
+						{ view: after, stored: fresh },
+						{ canView: false, canUpgrade: true },
+					);
+
+					// Explicitly enabling the staged token also permits adding strings; this is a real upgrade, not a no-op.
+					expectCompatibility(
+						{ view: before, stored: fresh },
+						{ canView: true, canUpgrade: true },
+						StagedSchemaUpgradePolicy.enabledStagedUpgrades(upgrade),
+					);
+				});
+			}
+
 			it("adding a staged allowed type does not break compatibility", () => {
 				class Compatible1 extends factory.object("MyType", {
 					foo: SchemaFactoryAlpha.number,
@@ -1402,10 +1684,7 @@ describe("checkSchemaCompatibility", () => {
 						canUpgrade: true,
 						enabledUpgrades: new Map([[upgrade, "enabled"]]),
 					},
-					{
-						...StagedSchemaUpgradePolicy.restrictive,
-						includeAlreadyEnabledUpgrades: true,
-					},
+					StagedSchemaUpgradePolicy.restrictive,
 				);
 			});
 

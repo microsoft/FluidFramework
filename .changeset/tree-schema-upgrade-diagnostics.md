@@ -25,6 +25,9 @@ They identify removed allowed types, prohibited field-kind transitions, incompat
 `nodeSchemaCannotBeSatisfied` identifies a proposed node definition with requirements that cannot be satisfied under the upgrade rules,
 such as a required field that allows no child types.
 Its reason identifies the required field or map constraint.
+If the proposed schema is an allowed stored-schema upgrade but would still block viewing,
+`viewIncompatibleAfterUpgrade` includes the viewing incompatibilities with that proposed schema.
+For example, preserving existing allowed types can retain types that the view does not support.
 When viewing is possible, upgrade incompatibilities are computed only when first read and cached for that compatibility result.
 Retained results continue to describe the schema snapshot used when they were created, even after the document schema changes.
 

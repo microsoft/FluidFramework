@@ -5,19 +5,38 @@
 
 import { strict as assert } from "node:assert";
 
-import { EmptyKey, storedEmptyFieldSchema } from "../../../core/index.js";
-import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+
+import { asAlpha } from "../../../api.js";
+import { EmptyKey, moveToDetachedField, storedEmptyFieldSchema } from "../../../core/index.js";
+import {
+	defaultSchemaPolicy,
+	jsonableTreeFromFieldCursor,
+} from "../../../feature-libraries/index.js";
+import { TreeBeta } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { getDiscrepanciesInAllowedContent } from "../../../simple-tree/api/discrepancies.js";
 import {
 	checkSchemaCompatibility,
+	type ImplicitFieldSchema,
 	SchemaFactoryAlpha,
+	StagedSchemaUpgradePolicy,
+	type TreeView,
+	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 	schemaStatics,
 	toUpgradeSchema,
 } from "../../../simple-tree/index.js";
-import { TestSchemaRepository } from "../../utils.js";
+import { expectSchemaEqual, TestSchemaRepository, TestTreeProviderLite } from "../../utils.js";
 
+/**
+ * Asserts that two numeric enum values are equal.
+ *
+ * @typeParam TEnum - The enum object type with numeric keys that map values to member names.
+ * @param enumObject - The enum object used to include member names in failure messages.
+ * @param a - The first value to compare.
+ * @param b - The second value to compare.
+ */
 function assertEnumEqual<TEnum extends { [key: number]: string }>(
 	enumObject: TEnum,
 	a: number,
@@ -29,30 +48,96 @@ function assertEnumEqual<TEnum extends { [key: number]: string }>(
 }
 
 describe("Schema Evolution Examples", () => {
-	const builder = new SchemaFactoryAlpha("test");
+	// Shared schema factory used by the tests in this suite.
+	const factory = new SchemaFactoryAlpha("test");
 
-	const codePoint = builder.objectAlpha("Primitive.CodePoint", {
-		[EmptyKey]: builder.number,
-	});
+	/**
+	 * Verifies that an explicit schema upgrade makes no observable change.
+	 *
+	 * @remarks
+	 * The helper requests an upgrade and synchronizes the clients to check both local and sequenced effects.
+	 * No schema-change event or sequenced operation should result, and the root object should remain unchanged.
+	 * Synchronize pending operations before calling it so an earlier edit cannot be mistaken for an effect of this upgrade.
+	 *
+	 * @typeParam TSchema - The root schema of the view being checked.
+	 * @param provider - Connects the clients and processes any operations submitted by the upgrade.
+	 * @param view - A readable view whose upgrade is expected to succeed without changing the document.
+	 */
+	function verifyNoOpUpgrade<TSchema extends ImplicitFieldSchema>(
+		provider: TestTreeProviderLite,
+		view: TreeView<TSchema>,
+	): void {
+		// Applications may request an upgrade even when none is needed; the request must remain permitted.
+		assert.equal(view.compatibility.canUpgrade, true);
 
-	// String made of unicode code points, allowing for sequence editing of a string.
-	const text = builder.arrayAlpha("Text", codePoint);
+		const rootBeforeUpgrade = view.root;
+		const sequenceNumber = provider.sequenceNumber;
+		let schemaChanges = 0;
+		const unsubscribe = view.events.on("schemaChanged", () => schemaChanges++);
+		try {
+			view.upgradeSchema();
+			provider.synchronizeMessages();
 
-	const point = builder.objectAlpha("Point", {
-		x: builder.number,
-		y: builder.number,
-	});
+			// A no-op must not tell the application to refresh its schema-dependent state.
+			assert.equal(schemaChanges, 0);
 
-	// A type that can be used to position items without an inherent position within the canvas.
-	const positionedCanvasItem = builder.objectAlpha("PositionedCanvasItem", {
-		position: point,
-		content: text,
-	});
-	const canvas = builder.arrayAlpha("Canvas", positionedCanvasItem);
+			// With no earlier operations pending, an unchanged sequence number means no new operation was sequenced.
+			assert.equal(provider.sequenceNumber, sequenceNumber);
 
-	const root = builder.required(canvas);
+			// Application references to the root must remain usable without obtaining a replacement node.
+			assert.equal(view.root, rootBeforeUpgrade);
+		} finally {
+			unsubscribe();
+		}
+	}
 
-	const tolerantRoot = builder.optional(canvas);
+	/**
+	 * Verifies that an incompatible view cannot upgrade any local or synchronized document state.
+	 *
+	 * @remarks
+	 * To verify that rejection preserves the entire document, this captures stored data independently of the view, including unknown fields.
+	 * The rejected call also breaks the requesting view, so neither that view nor its checkout's public APIs may be used afterward.
+	 *
+	 * @typeParam TSchema - The incompatible view's root schema.
+	 * @param provider - Synchronized clients with no pending operations.
+	 * @param view - The view whose upgrade must be rejected.
+	 */
+	function verifyRejectedUpgrade<TSchema extends ImplicitFieldSchema>(
+		provider: TestTreeProviderLite,
+		view: TreeView<TSchema>,
+	): void {
+		assert.equal(view.compatibility.canView, false);
+		assert.equal(view.compatibility.canUpgrade, false);
+		const sequenceNumber = provider.sequenceNumber;
+		const snapshots = provider.trees.map((tree) => {
+			const forest = tree.kernel.checkout.forest;
+
+			// Open cursors before rejection: the expected error prevents allocating new cursors afterward.
+			const cursor = forest.allocateCursor();
+			moveToDetachedField(forest, cursor);
+			return {
+				tree,
+				cursor,
+				schema: tree.kernel.checkout.storedSchema.clone(),
+				content: jsonableTreeFromFieldCursor(cursor),
+			};
+		});
+		try {
+			assert.throws(() => view.upgradeSchema(), validateUsageError(/cannot be upgraded/));
+			provider.synchronizeMessages();
+
+			// Rejecting an incompatible application version must not publish an operation or change either client's document.
+			assert.equal(provider.sequenceNumber, sequenceNumber);
+			for (const { tree, cursor, schema, content } of snapshots) {
+				expectSchemaEqual(tree.kernel.checkout.storedSchema, schema);
+				assert.deepEqual(jsonableTreeFromFieldCursor(cursor), content);
+			}
+		} finally {
+			for (const { cursor } of snapshots) {
+				cursor.free();
+			}
+		}
+	}
 
 	/**
 	 * This shows basic usage of stored and view schema, including a schema change handled using the
@@ -63,6 +148,29 @@ describe("Schema Evolution Examples", () => {
 	 * (since adapters are not implemented yet, and they are the nice way to handle that).
 	 */
 	it("basic usage", () => {
+		const codePoint = factory.objectAlpha("Primitive.CodePoint", {
+			[EmptyKey]: factory.number,
+		});
+
+		// String made of unicode code points, allowing for sequence editing of a string.
+		const text = factory.arrayAlpha("Text", codePoint);
+
+		const point = factory.objectAlpha("Point", {
+			x: factory.number,
+			y: factory.number,
+		});
+
+		// A type that can be used to position items without an inherent position within the canvas.
+		const positionedCanvasItem = factory.objectAlpha("PositionedCanvasItem", {
+			position: point,
+			content: text,
+		});
+		const canvas = factory.arrayAlpha("Canvas", positionedCanvasItem);
+
+		const root = factory.required(canvas);
+
+		const tolerantRoot = factory.optional(canvas);
+
 		// Compose all the view information together.
 		const viewSchema = new TreeViewConfigurationAlpha({ schema: root });
 
@@ -170,19 +278,19 @@ describe("Schema Evolution Examples", () => {
 
 			// Now lets imagine some time passes, and the developers want to add a second content type:
 
-			const counter = builder.objectAlpha("Counter", {
-				count: builder.number,
+			const counter = factory.objectAlpha("Counter", {
+				count: factory.number,
 			});
 			// Lets allow counters inside positionedCanvasItem, instead of just text:
-			const positionedCanvasItem2 = builder.objectAlpha("PositionedCanvasItem", {
+			const positionedCanvasItem2 = factory.objectAlpha("PositionedCanvasItem", {
 				position: point,
 				content: [text, counter],
 			});
 			// And canvas is still the same storage wise, but its view schema references the updated positionedCanvasItem2:
-			const canvas2 = builder.array("Canvas", positionedCanvasItem2);
+			const canvas2 = factory.array("Canvas", positionedCanvasItem2);
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
 			const viewSchema3 = new TreeViewConfigurationAlpha({
-				schema: builder.optional(canvas2),
+				schema: factory.optional(canvas2),
 			});
 
 			// With this new schema, we can load the document just like before:
@@ -215,6 +323,778 @@ describe("Schema Evolution Examples", () => {
 			assert.equal(compat3.discrepancies, undefined);
 			assert.deepEqual(compat3.enabledUpgrades, new Map());
 		}
+	});
+
+	describe("Staged allowed types", () => {
+		/**
+		 * V1 permits numeric `priority`.
+		 * V2 adds staged string support to `priority` without enabling it.
+		 *
+		 * Open a V1 document with V2 and create a separate document with V2's default policy (the staged type is not enabled).
+		 * Both documents must remain numeric-only, and V1 and V2 must still collaborate on numeric values.
+		 * Declaring support for a future type must not itself permit writes of that type.
+		 */
+		it("adds a staged type without enabling it in existing or new documents", () => {
+			class TaskV1 extends factory.object("Task", { priority: factory.number }) {}
+			const stagedString = factory.staged(factory.string);
+			const stringUpgrade = stagedString.metadata.stagedSchemaUpgrade;
+			assert(stringUpgrade !== undefined);
+			class TaskV2 extends factory.object("Task", {
+				priority: factory.types([factory.number, stagedString]),
+			}) {}
+			const provider = new TestTreeProviderLite(2);
+			const [originalTree, stagedTree] = provider.trees;
+			const original = originalTree.viewWith(new TreeViewConfiguration({ schema: TaskV1 }));
+			original.initialize({ priority: 1 });
+			provider.synchronizeMessages();
+			const staged = asAlpha(
+				stagedTree.viewWith(new TreeViewConfigurationAlpha({ schema: TaskV2 })),
+			);
+
+			// V2 can edit the old document without widening its stored priority types.
+			assert.equal(staged.compatibility.canView, true);
+			assert.equal(staged.isStagedUpgradeEnabled(stringUpgrade), "disabled");
+			verifyNoOpUpgrade(provider, staged);
+			staged.root.priority = 2;
+			provider.synchronizeMessages();
+			assert.equal(original.root.priority, 2);
+			original.root.priority = 3;
+			provider.synchronizeMessages();
+			assert.equal(staged.root.priority, 3);
+			for (const tree of provider.trees) {
+				expectSchemaEqual(tree.kernel.checkout.storedSchema, toUpgradeSchema(TaskV1));
+			}
+
+			// Initialization with the staged view also excludes strings until explicitly enabled.
+			const freshProvider = new TestTreeProviderLite(1);
+			const freshTree = freshProvider.trees[0];
+			const fresh = freshTree.viewWith(new TreeViewConfigurationAlpha({ schema: TaskV2 }));
+			fresh.initialize({ priority: 4 });
+			freshProvider.synchronizeMessages();
+			expectSchemaEqual(freshTree.kernel.checkout.storedSchema, toUpgradeSchema(TaskV1));
+			verifyNoOpUpgrade(freshProvider, fresh);
+
+			// These invalid writes can break their views, so perform them after all successful interactions.
+			assert.throws(() => {
+				staged.root.priority = "urgent";
+			});
+			assert.throws(() => {
+				fresh.root.priority = "urgent";
+			});
+			original.dispose();
+		});
+
+		/**
+		 * V1 permits numeric `priority` values.
+		 * V2 adds staged string support to `priority` without enabling it.
+		 * V3 removes the staged string alternative and adds an unrelated optional `label`.
+		 *
+		 * Upgrade the same V1 document through V2 and V3.
+		 * Canceling an unused staged declaration must not prevent the `label` upgrade or numeric edits by earlier clients.
+		 */
+		it("cancels a staged type before enablement while making another schema change", () => {
+			class TaskV1 extends factory.object("Task", { priority: factory.number }) {}
+			class TaskV2 extends factory.object("Task", {
+				priority: factory.types([factory.number, factory.staged(factory.string)]),
+			}) {}
+			class TaskV3 extends factory.object("Task", {
+				priority: factory.number,
+				label: factory.optional(factory.string),
+			}) {}
+			const provider = new TestTreeProviderLite(3);
+			const [originalTree, stagedTree, canceledTree] = provider.trees;
+			const original = originalTree.viewWith(new TreeViewConfiguration({ schema: TaskV1 }));
+			original.initialize({ priority: 1 });
+			provider.synchronizeMessages();
+			const staged = stagedTree.viewWith(new TreeViewConfiguration({ schema: TaskV2 }));
+			assert.equal(staged.compatibility.canView, true);
+			verifyNoOpUpgrade(provider, staged);
+
+			// Strings were never stored as an allowed type. Only the missing label requires an upgrade.
+			const canceled = canceledTree.viewWith(new TreeViewConfiguration({ schema: TaskV3 }));
+			assert.equal(canceled.compatibility.canView, false);
+			assert.equal(canceled.compatibility.canUpgrade, true);
+			canceled.upgradeSchema();
+			canceled.root.label = "Experiment canceled";
+			canceled.root.priority = 2;
+			provider.synchronizeMessages();
+			assert.equal(original.root.priority, 2);
+			assert.equal(staged.root.priority, 2);
+			original.root.priority = 3;
+			provider.synchronizeMessages();
+			assert.equal(canceled.root.priority, 3);
+			assert.equal(canceled.root.label, "Experiment canceled");
+			for (const tree of provider.trees) {
+				expectSchemaEqual(tree.kernel.checkout.storedSchema, toUpgradeSchema(TaskV3));
+			}
+
+			// Earlier views can use the new label as an unknown field, but upgrading with omitted fields remains unsupported.
+			assert.equal(original.compatibility.canView, true);
+			assert.equal(original.compatibility.canUpgrade, false);
+			assert.equal(staged.compatibility.canView, true);
+			assert.equal(staged.compatibility.canUpgrade, false);
+			verifyNoOpUpgrade(provider, canceled);
+
+			// A client that still declares the canceled staged alternative cannot write it into this document.
+			assert.throws(() => {
+				staged.root.priority = "urgent";
+			});
+			canceled.dispose();
+			original.dispose();
+		});
+
+		/**
+		 * V1 declares numeric `priority` values and a staged string alternative.
+		 * V2 removes the staged string alternative from `priority` instead of merely disabling the feature flag.
+		 *
+		 * Create a numeric-only document with V1's default policy, then explicitly enable strings using the same view schema.
+		 * Open the enabled V1 document with V2, testing both numeric and string `priority` values.
+		 * V2 must reject the document even when its current `priority` is numeric: enabled upgrades outlive individual values.
+		 * The failed upgrade must not remove string support or change the document.
+		 */
+		for (const priority of [1, "urgent"] as const) {
+			it(`cannot remove a staged type after enablement (current value: "${typeof priority}")`, () => {
+				const stagedString = factory.staged(factory.string);
+				const stringUpgrade = stagedString.metadata.stagedSchemaUpgrade;
+				assert(stringUpgrade !== undefined);
+				class TaskV1 extends factory.object("Task", {
+					priority: factory.types([factory.number, stagedString]),
+				}) {}
+				class TaskV2 extends factory.object("Task", { priority: factory.number }) {}
+				const provider = new TestTreeProviderLite(2);
+				const [documentTree, readerTree] = provider.trees;
+				const initial = documentTree.viewWith(new TreeViewConfiguration({ schema: TaskV1 }));
+				initial.initialize({ priority: 1 });
+				provider.synchronizeMessages();
+				initial.dispose();
+				const enabled = asAlpha(
+					documentTree.viewWith(
+						new TreeViewConfigurationAlpha({
+							schema: TaskV1,
+							stagedUpgradePolicy:
+								StagedSchemaUpgradePolicy.enabledStagedUpgrades(stringUpgrade),
+						}),
+					),
+				);
+				enabled.upgradeSchema();
+				enabled.root.priority = priority;
+				provider.synchronizeMessages();
+				assert.equal(enabled.isStagedUpgradeEnabled(stringUpgrade), "enabled");
+
+				// Unknown optional-field tolerance cannot hide an unsupported type in a field V2 still declares.
+				const removed = readerTree.viewWith(new TreeViewConfiguration({ schema: TaskV2 }));
+				verifyRejectedUpgrade(provider, removed);
+				assert.equal(enabled.root.priority, priority);
+				enabled.dispose();
+			});
+		}
+
+		/**
+		 * V1 declares numeric `priority` values and a staged string alternative.
+		 * V2 keeps the staged string alternative for `priority` and adds an optional `label`.
+		 *
+		 * Create a numeric-only document with V1's default policy, then enable strings and roll the feature flag back to the restrictive policy.
+		 * Reopen the enabled document with the flag-off V1 view, then upgrade it with V2 and create a separate V2 document.
+		 * Both the V1 no-op and the V2 `label` upgrade must keep strings readable and writable in the enabled document.
+		 * The fresh V2 document must still exclude strings from `priority`: preserving existing upgrades does not enable them in new documents.
+		 */
+		it("preserves enabled types after a feature-flag rollback and a later upgrade", () => {
+			const stagedString = factory.staged(factory.string);
+			const stringUpgrade = stagedString.metadata.stagedSchemaUpgrade;
+			assert(stringUpgrade !== undefined);
+			const priorityTypes = factory.types([factory.number, stagedString]);
+			class TaskV1 extends factory.object("Task", { priority: priorityTypes }) {}
+			class TaskV2 extends factory.object("Task", {
+				priority: priorityTypes,
+				label: factory.optional(factory.string),
+			}) {}
+			const provider = new TestTreeProviderLite(2);
+			const [documentTree, rolledBackTree] = provider.trees;
+			const initial = documentTree.viewWith(new TreeViewConfiguration({ schema: TaskV1 }));
+			initial.initialize({ priority: 1 });
+			provider.synchronizeMessages();
+			initial.dispose();
+			const enabled = documentTree.viewWith(
+				new TreeViewConfigurationAlpha({
+					schema: TaskV1,
+					stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(stringUpgrade),
+				}),
+			);
+			enabled.upgradeSchema();
+			enabled.root.priority = "urgent";
+			provider.synchronizeMessages();
+			const rolledBack = asAlpha(
+				rolledBackTree.viewWith(new TreeViewConfigurationAlpha({ schema: TaskV1 })),
+			);
+
+			// Turning off the flag prevents new upgrades without undoing the document's already-enabled string upgrade.
+			assert.equal(rolledBack.compatibility.canView, true);
+			assert.equal(rolledBack.isStagedUpgradeEnabled(stringUpgrade), "enabled");
+			assert.equal(rolledBack.root.priority, "urgent");
+			verifyNoOpUpgrade(provider, rolledBack);
+			rolledBack.root.priority = "normal";
+			provider.synchronizeMessages();
+			assert.equal(enabled.root.priority, "normal");
+			enabled.dispose();
+
+			// The flag-off client can add a label without losing the already-enabled string upgrade.
+			const patched = documentTree.viewWith(
+				new TreeViewConfigurationAlpha({ schema: TaskV2 }),
+			);
+			assert.equal(patched.compatibility.canView, false);
+			assert.equal(patched.compatibility.canUpgrade, true);
+			patched.upgradeSchema();
+			assert.equal(patched.root.priority, "normal");
+			patched.root.label = "Review";
+			patched.root.priority = "high";
+			provider.synchronizeMessages();
+			assert.equal(rolledBack.root.priority, "high");
+			for (const tree of provider.trees) {
+				expectSchemaEqual(
+					tree.kernel.checkout.storedSchema,
+					toUpgradeSchema(TaskV2, StagedSchemaUpgradePolicy.permissive),
+				);
+			}
+
+			// The older view can read the updated document, but cannot upgrade while omitting the newly stored label.
+			assert.equal(rolledBack.compatibility.canView, true);
+			assert.equal(rolledBack.compatibility.canUpgrade, false);
+
+			verifyNoOpUpgrade(provider, patched);
+
+			// The identical view and policy produce a numeric-only schema when there is no stored history to preserve.
+			const freshProvider = new TestTreeProviderLite(1);
+			const freshTree = freshProvider.trees[0];
+			const fresh = asAlpha(
+				freshTree.viewWith(new TreeViewConfigurationAlpha({ schema: TaskV2 })),
+			);
+			fresh.initialize({ priority: 1 });
+			assert.equal(fresh.isStagedUpgradeEnabled(stringUpgrade), "disabled");
+			expectSchemaEqual(freshTree.kernel.checkout.storedSchema, toUpgradeSchema(TaskV2));
+			assert.throws(() => {
+				fresh.root.priority = "high";
+			});
+			patched.dispose();
+			rolledBack.dispose();
+		});
+
+		/**
+		 * V1 permits numeric `priority` values.
+		 * V2 adds staged string support to `priority`; some documents enable it while others remain numeric-only.
+		 * V3 completes the rollout by replacing the staged alternative with ordinary string support for `priority`.
+		 *
+		 * Open both V2 document histories with V3 and request an upgrade.
+		 * V3 must upgrade the numeric-only document, but its upgrade of an enabled document must be a no-op.
+		 * V2 clients must still collaborate, whereas V1 clients must reject the widened schema.
+		 */
+		for (const alreadyEnabled of [false, true]) {
+			it(`removes the staged wrapper after rollout (strings already enabled: ${alreadyEnabled})`, () => {
+				class TaskV1 extends factory.object("Task", { priority: factory.number }) {}
+				const stagedString = factory.staged(factory.string);
+				const stringUpgrade = stagedString.metadata.stagedSchemaUpgrade;
+				assert(stringUpgrade !== undefined);
+				class TaskV2 extends factory.object("Task", {
+					priority: factory.types([factory.number, stagedString]),
+				}) {}
+				class TaskV3 extends factory.object("Task", {
+					priority: [factory.number, factory.string],
+				}) {}
+				const provider = new TestTreeProviderLite(3);
+				const [stagedTree, migratedTree, originalTree] = provider.trees;
+				const staged = asAlpha(
+					stagedTree.viewWith(new TreeViewConfigurationAlpha({ schema: TaskV2 })),
+				);
+				staged.initialize({ priority: 1 });
+				provider.synchronizeMessages();
+				if (alreadyEnabled) {
+					const enabler = migratedTree.viewWith(
+						new TreeViewConfigurationAlpha({
+							schema: TaskV2,
+							stagedUpgradePolicy:
+								StagedSchemaUpgradePolicy.enabledStagedUpgrades(stringUpgrade),
+						}),
+					);
+					enabler.upgradeSchema();
+					enabler.root.priority = "urgent";
+					provider.synchronizeMessages();
+					enabler.dispose();
+				}
+				const migrated = migratedTree.viewWith(new TreeViewConfiguration({ schema: TaskV3 }));
+
+				// Removing the wrapper requests the string upgrade; it is not removal of the string type.
+				assert.equal(migrated.compatibility.canView, alreadyEnabled);
+				assert.equal(migrated.compatibility.canUpgrade, true);
+				if (alreadyEnabled) {
+					verifyNoOpUpgrade(provider, migrated);
+				} else {
+					migrated.upgradeSchema();
+					provider.synchronizeMessages();
+				}
+				assert.equal(migrated.compatibility.canView, true);
+				assert.equal(migrated.root.priority, alreadyEnabled ? "urgent" : 1);
+				assert.equal(staged.isStagedUpgradeEnabled(stringUpgrade), "enabled");
+				migrated.root.priority = "normal";
+				provider.synchronizeMessages();
+				assert.equal(staged.root.priority, "normal");
+				staged.root.priority = "high";
+				provider.synchronizeMessages();
+				assert.equal(migrated.root.priority, "high");
+				for (const tree of provider.trees) {
+					expectSchemaEqual(tree.kernel.checkout.storedSchema, toUpgradeSchema(TaskV3));
+				}
+				verifyNoOpUpgrade(provider, staged);
+				verifyNoOpUpgrade(provider, migrated);
+
+				// A client that never shipped string support cannot participate after either rollout history.
+				const original = originalTree.viewWith(new TreeViewConfiguration({ schema: TaskV1 }));
+				verifyRejectedUpgrade(provider, original);
+				migrated.dispose();
+				staged.dispose();
+			});
+		}
+	});
+
+	describe("Replacing staged allowed types", () => {
+		/**
+		 * V1 declares a `priority` field that allows numbers and includes staged support for strings.
+		 * V2 replaces that experiment with staged `Priority` nodes, initially leaving the new token disabled.
+		 *
+		 * Create a numeric-only document with V1's default policy.
+		 * Open it with V2's default policy (the new staged type is not enabled), then explicitly enable `Priority`.
+		 * The default-policy upgrade must be a no-op.
+		 * The enabled document must permit numbers and `Priority` nodes, without acquiring the canceled string alternative.
+		 */
+		it("replaces a never-enabled staged type with another experimental type", () => {
+			class TaskV1 extends factory.object("Task", {
+				priority: factory.types([factory.number, factory.staged(factory.string)]),
+			}) {}
+			class Priority extends factory.object("Priority", { label: factory.string }) {}
+			const stagedPriority = factory.staged(Priority);
+			const priorityUpgrade = stagedPriority.metadata.stagedSchemaUpgrade;
+			assert(priorityUpgrade !== undefined);
+			class TaskV2 extends factory.object("Task", {
+				priority: factory.types([factory.number, stagedPriority]),
+			}) {}
+			const provider = new TestTreeProviderLite(2);
+			const [documentTree, readerTree] = provider.trees;
+			const original = documentTree.viewWith(new TreeViewConfiguration({ schema: TaskV1 }));
+			original.initialize({ priority: 1 });
+			provider.synchronizeMessages();
+			const replacement = asAlpha(
+				readerTree.viewWith(new TreeViewConfigurationAlpha({ schema: TaskV2 })),
+			);
+
+			// Neither experiment has been enabled, so swapping the staged declaration does not change the stored schema.
+			assert.equal(replacement.compatibility.canView, true);
+			assert.equal(replacement.isStagedUpgradeEnabled(priorityUpgrade), "disabled");
+			verifyNoOpUpgrade(provider, replacement);
+			replacement.root.priority = 2;
+			provider.synchronizeMessages();
+			assert.equal(original.root.priority, 2);
+			for (const tree of provider.trees) {
+				expectSchemaEqual(tree.kernel.checkout.storedSchema, toUpgradeSchema(TaskV2));
+			}
+			original.dispose();
+			const enabled = documentTree.viewWith(
+				new TreeViewConfigurationAlpha({
+					schema: TaskV2,
+					stagedUpgradePolicy:
+						StagedSchemaUpgradePolicy.enabledStagedUpgrades(priorityUpgrade),
+				}),
+			);
+			enabled.upgradeSchema();
+			enabled.root.priority = new Priority({ label: "Urgent" });
+			provider.synchronizeMessages();
+
+			// The flag-off V2 client receives the newly enabled upgrade and can read and edit the structured value.
+			assert.equal(replacement.isStagedUpgradeEnabled(priorityUpgrade), "enabled");
+			const upgradedTask = replacement.root;
+			assert(upgradedTask.priority instanceof Priority);
+			assert.equal(upgradedTask.priority.label, "Urgent");
+			upgradedTask.priority.label = "Normal";
+			provider.synchronizeMessages();
+			assert(enabled.root.priority instanceof Priority);
+			assert.equal(enabled.root.priority.label, "Normal");
+			for (const tree of provider.trees) {
+				expectSchemaEqual(
+					tree.kernel.checkout.storedSchema,
+					toUpgradeSchema(TaskV2, StagedSchemaUpgradePolicy.permissive),
+				);
+			}
+			verifyNoOpUpgrade(provider, replacement);
+			enabled.dispose();
+			replacement.dispose();
+		});
+
+		/**
+		 * V1 declares a `priority` field that allows numbers and includes staged support for strings.
+		 * V2 removes string support from `priority` and declares a staged `Priority` type instead.
+		 *
+		 * Initialize a V1 document with strings already enabled.
+		 * Open it with V2 configured to enable the new `Priority` type.
+		 * Enabling the replacement cannot make removal of the earlier upgrade safe.
+		 * V2 must reject the document without changing the existing string value or stored schema.
+		 */
+		it("cannot replace an enabled staged type with an unsupported alternative", () => {
+			const stagedString = factory.staged(factory.string);
+			const stringUpgrade = stagedString.metadata.stagedSchemaUpgrade;
+			assert(stringUpgrade !== undefined);
+			class TaskV1 extends factory.object("Task", {
+				priority: factory.types([factory.number, stagedString]),
+			}) {}
+			class Priority extends factory.object("Priority", { label: factory.string }) {}
+			const stagedPriority = factory.staged(Priority);
+			const priorityUpgrade = stagedPriority.metadata.stagedSchemaUpgrade;
+			assert(priorityUpgrade !== undefined);
+			class TaskV2 extends factory.object("Task", {
+				priority: factory.types([factory.number, stagedPriority]),
+			}) {}
+			const provider = new TestTreeProviderLite(2);
+			const [documentTree, readerTree] = provider.trees;
+			const original = documentTree.viewWith(
+				new TreeViewConfigurationAlpha({
+					schema: TaskV1,
+					stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(stringUpgrade),
+				}),
+			);
+			original.initialize({ priority: "urgent" });
+			provider.synchronizeMessages();
+			const replacement = readerTree.viewWith(
+				new TreeViewConfigurationAlpha({
+					schema: TaskV2,
+					stagedUpgradePolicy:
+						StagedSchemaUpgradePolicy.enabledStagedUpgrades(priorityUpgrade),
+				}),
+			);
+
+			// V2 still cannot read strings; composing a larger stored type set cannot repair that missing view support.
+			verifyRejectedUpgrade(provider, replacement);
+			assert.equal(original.root.priority, "urgent");
+			original.dispose();
+		});
+
+		/**
+		 * V1 declares a `priority` field that allows numbers and includes staged support for strings.
+		 * V2 keeps strings staged for historical documents and adds a staged `Priority` alternative to the same field.
+		 *
+		 * Initialize a V1 document with strings already enabled.
+		 * Select only the new `Priority` token when upgrading it with V2.
+		 * Both strings and `Priority` nodes must remain writable.
+		 * A V2 client using the default policy (no new staged types are enabled) must receive and preserve both enabled upgrades.
+		 */
+		it("retains the earlier staged type while enabling its replacement", () => {
+			const stagedString = factory.staged(factory.string);
+			const stringUpgrade = stagedString.metadata.stagedSchemaUpgrade;
+			assert(stringUpgrade !== undefined);
+			class TaskV1 extends factory.object("Task", {
+				priority: factory.types([factory.number, stagedString]),
+			}) {}
+			class Priority extends factory.object("Priority", { label: factory.string }) {}
+			const stagedPriority = factory.staged(Priority);
+			const priorityUpgrade = stagedPriority.metadata.stagedSchemaUpgrade;
+			assert(priorityUpgrade !== undefined);
+			class TaskV2 extends factory.object("Task", {
+				priority: factory.types([factory.number, stagedString, stagedPriority]),
+			}) {}
+			const provider = new TestTreeProviderLite(2);
+			const [documentTree, upgradingTree] = provider.trees;
+			const original = documentTree.viewWith(
+				new TreeViewConfigurationAlpha({
+					schema: TaskV1,
+					stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(stringUpgrade),
+				}),
+			);
+			original.initialize({ priority: "urgent" });
+			provider.synchronizeMessages();
+			original.dispose();
+			const observer = asAlpha(
+				documentTree.viewWith(new TreeViewConfigurationAlpha({ schema: TaskV2 })),
+			);
+			const upgrading = upgradingTree.viewWith(
+				new TreeViewConfigurationAlpha({
+					schema: TaskV2,
+					stagedUpgradePolicy:
+						StagedSchemaUpgradePolicy.enabledStagedUpgrades(priorityUpgrade),
+				}),
+			);
+
+			// V2 can already use the string document; the explicit upgrade adds Priority while preserving strings.
+			assert.equal(upgrading.compatibility.canView, true);
+			assert.equal(upgrading.compatibility.canUpgrade, true);
+			assert.equal(observer.isStagedUpgradeEnabled(stringUpgrade), "enabled");
+			assert.equal(observer.isStagedUpgradeEnabled(priorityUpgrade), "disabled");
+			upgrading.upgradeSchema();
+			provider.synchronizeMessages();
+			assert.equal(upgrading.root.priority, "urgent");
+			assert.equal(observer.isStagedUpgradeEnabled(stringUpgrade), "enabled");
+			assert.equal(observer.isStagedUpgradeEnabled(priorityUpgrade), "enabled");
+			upgrading.root.priority = new Priority({ label: "Structured priority" });
+			provider.synchronizeMessages();
+			assert(observer.root.priority instanceof Priority);
+			assert.equal(observer.root.priority.label, "Structured priority");
+
+			// Preserving the string upgrade does more than allow reading old data: strings can still be written.
+			observer.root.priority = "normal";
+			provider.synchronizeMessages();
+			assert.equal(upgrading.root.priority, "normal");
+			for (const tree of provider.trees) {
+				expectSchemaEqual(
+					tree.kernel.checkout.storedSchema,
+					toUpgradeSchema(TaskV2, StagedSchemaUpgradePolicy.permissive),
+				);
+			}
+			verifyNoOpUpgrade(provider, observer);
+			verifyNoOpUpgrade(provider, upgrading);
+			upgrading.dispose();
+			observer.dispose();
+		});
+
+		describe("Removing a staged type at one location of a shared token", () => {
+			/**
+			 * V1 enables strings only at `primaryPriority`.
+			 * V2 also stages strings at `fallbackPriority` using the same token.
+			 * V3 removes the never-enabled string alternative from `fallbackPriority` while retaining it at `primaryPriority`.
+			 *
+			 * Open a V1 document with V2 and V3 using the default policy (no new staged types are enabled).
+			 * Both V2 and V3 must use the existing document without changing its stored schema.
+			 * V2 reports the token as "partial": strings are enabled at `primaryPriority`, but not `fallbackPriority`.
+			 * V3 uses the token only at `primaryPriority`, where strings are already enabled, so it reports "enabled".
+			 * The stored schema is unchanged: `fallbackPriority` still permits only numbers.
+			 */
+			it("can remove a never-enabled location while another location remains enabled", () => {
+				const stagedString = factory.staged(factory.string);
+				const stringUpgrade = stagedString.metadata.stagedSchemaUpgrade;
+				assert(stringUpgrade !== undefined);
+				const stagedPriorities = factory.types([factory.number, stagedString]);
+				class TaskV1 extends factory.object("Task", {
+					primaryPriority: stagedPriorities,
+					fallbackPriority: factory.number,
+				}) {}
+				class TaskV2 extends factory.object("Task", {
+					primaryPriority: stagedPriorities,
+					fallbackPriority: stagedPriorities,
+				}) {}
+				class TaskV3 extends factory.object("Task", {
+					primaryPriority: stagedPriorities,
+					fallbackPriority: factory.number,
+				}) {}
+				const provider = new TestTreeProviderLite(2);
+				const [documentTree, readerTree] = provider.trees;
+				const original = documentTree.viewWith(
+					new TreeViewConfigurationAlpha({
+						schema: TaskV1,
+						stagedUpgradePolicy:
+							StagedSchemaUpgradePolicy.enabledStagedUpgrades(stringUpgrade),
+					}),
+				);
+				original.initialize({ primaryPriority: "urgent", fallbackPriority: 1 });
+				provider.synchronizeMessages();
+				original.dispose();
+				const staged = asAlpha(
+					documentTree.viewWith(new TreeViewConfigurationAlpha({ schema: TaskV2 })),
+				);
+				assert.equal(staged.isStagedUpgradeEnabled(stringUpgrade), "partial");
+				verifyNoOpUpgrade(provider, staged);
+				const reduced = asAlpha(
+					readerTree.viewWith(new TreeViewConfigurationAlpha({ schema: TaskV3 })),
+				);
+
+				// The status describes the locations in each view, not a document-wide switch.
+				assert.equal(reduced.compatibility.canView, true);
+				assert.equal(reduced.isStagedUpgradeEnabled(stringUpgrade), "enabled");
+				verifyNoOpUpgrade(provider, reduced);
+				reduced.root.primaryPriority = "normal";
+				reduced.root.fallbackPriority = 2;
+				provider.synchronizeMessages();
+				assert.equal(staged.root.primaryPriority, "normal");
+				assert.equal(staged.root.fallbackPriority, 2);
+				for (const tree of provider.trees) {
+					expectSchemaEqual(
+						tree.kernel.checkout.storedSchema,
+						toUpgradeSchema(TaskV1, StagedSchemaUpgradePolicy.permissive),
+					);
+				}
+
+				// V2 still stages fallback strings, but preserving primary strings never enabled that other location.
+				assert.throws(() => {
+					staged.root.fallbackPriority = "low";
+				});
+				reduced.dispose();
+			});
+
+			/**
+			 * V1 enables strings at `primaryPriority`.
+			 * V2 stages the same token at both `primaryPriority` and `fallbackPriority`.
+			 * V3 removes string support from `primaryPriority` but keeps it staged at `fallbackPriority`.
+			 *
+			 * Open the V1 document with V2 and request a no-op upgrade, then attempt an upgrade with V3.
+			 * The remaining declaration at `fallbackPriority` must not make V3 compatible with stored strings at `primaryPriority`.
+			 * Reject V3's upgrade without moving or removing the already-enabled upgrade or its data.
+			 */
+			it("cannot remove an enabled location by retaining the token at another field", () => {
+				const stagedString = factory.staged(factory.string);
+				const stringUpgrade = stagedString.metadata.stagedSchemaUpgrade;
+				assert(stringUpgrade !== undefined);
+				const stagedPriorities = factory.types([factory.number, stagedString]);
+				class TaskV1 extends factory.object("Task", {
+					primaryPriority: stagedPriorities,
+					fallbackPriority: factory.number,
+				}) {}
+				class TaskV2 extends factory.object("Task", {
+					primaryPriority: stagedPriorities,
+					fallbackPriority: stagedPriorities,
+				}) {}
+				class TaskV3 extends factory.object("Task", {
+					primaryPriority: factory.number,
+					fallbackPriority: stagedPriorities,
+				}) {}
+				const provider = new TestTreeProviderLite(2);
+				const [documentTree, readerTree] = provider.trees;
+				const original = documentTree.viewWith(
+					new TreeViewConfigurationAlpha({
+						schema: TaskV1,
+						stagedUpgradePolicy:
+							StagedSchemaUpgradePolicy.enabledStagedUpgrades(stringUpgrade),
+					}),
+				);
+				original.initialize({ primaryPriority: "urgent", fallbackPriority: 1 });
+				provider.synchronizeMessages();
+				original.dispose();
+				const staged = asAlpha(
+					documentTree.viewWith(new TreeViewConfigurationAlpha({ schema: TaskV2 })),
+				);
+				assert.equal(staged.isStagedUpgradeEnabled(stringUpgrade), "partial");
+				verifyNoOpUpgrade(provider, staged);
+				const reduced = readerTree.viewWith(
+					new TreeViewConfigurationAlpha({ schema: TaskV3 }),
+				);
+				verifyRejectedUpgrade(provider, reduced);
+				assert.equal(staged.root.primaryPriority, "urgent");
+				assert.equal(staged.root.fallbackPriority, 1);
+				staged.dispose();
+			});
+		});
+
+		describe("Changing the definition of a staged node type", () => {
+			/**
+			 * V1 declares numeric `priority` values and staged `Priority` nodes with string-valued `rank`, but never enables the staged upgrade.
+			 * V2 reuses the `Priority` identifier with numeric `rank` and stages that revised definition.
+			 *
+			 * Create a numeric-only document with V1's default policy, excluding the staged node definition.
+			 * Open it with V2's default policy (the staged type is not enabled), then explicitly enable V2's token.
+			 * The historical document can adopt V2 because it has no stored reference to either `Priority` definition.
+			 * Enabling V2's token must introduce only the new definition and allow clients declaring it to edit numeric `rank`.
+			 */
+			it("can change a staged-only node definition before it enters the stored schema", () => {
+				class PriorityV1 extends factory.object("Priority", { rank: factory.string }) {}
+				class TaskV1 extends factory.object("Task", {
+					priority: factory.types([factory.number, factory.staged(PriorityV1)]),
+				}) {}
+				class PriorityV2 extends factory.object("Priority", { rank: factory.number }) {}
+				const stagedPriority = factory.staged(PriorityV2);
+				const priorityUpgrade = stagedPriority.metadata.stagedSchemaUpgrade;
+				assert(priorityUpgrade !== undefined);
+				class TaskV2 extends factory.object("Task", {
+					priority: factory.types([factory.number, stagedPriority]),
+				}) {}
+				const provider = new TestTreeProviderLite(2);
+				const [documentTree, readerTree] = provider.trees;
+				const original = documentTree.viewWith(new TreeViewConfiguration({ schema: TaskV1 }));
+				original.initialize({ priority: 1 });
+				provider.synchronizeMessages();
+				const revised = asAlpha(
+					readerTree.viewWith(new TreeViewConfigurationAlpha({ schema: TaskV2 })),
+				);
+				assert.equal(revised.compatibility.canView, true);
+				assert.equal(revised.isStagedUpgradeEnabled(priorityUpgrade), "disabled");
+				verifyNoOpUpgrade(provider, revised);
+				for (const tree of provider.trees) {
+					expectSchemaEqual(tree.kernel.checkout.storedSchema, toUpgradeSchema(TaskV2));
+				}
+				original.dispose();
+				const enabled = documentTree.viewWith(
+					new TreeViewConfigurationAlpha({
+						schema: TaskV2,
+						stagedUpgradePolicy:
+							StagedSchemaUpgradePolicy.enabledStagedUpgrades(priorityUpgrade),
+					}),
+				);
+				assert.equal(enabled.compatibility.canUpgrade, true);
+				enabled.upgradeSchema();
+				enabled.root.priority = new PriorityV2({ rank: 2 });
+				provider.synchronizeMessages();
+
+				// No string-rank definition was ever stored, so the newly enabled numeric definition has nothing to conflict with.
+				assert.equal(revised.isStagedUpgradeEnabled(priorityUpgrade), "enabled");
+				assert(revised.root.priority instanceof PriorityV2);
+				assert.equal(revised.root.priority.rank, 2);
+				revised.root.priority.rank = 3;
+				provider.synchronizeMessages();
+				assert(enabled.root.priority instanceof PriorityV2);
+				assert.equal(enabled.root.priority.rank, 3);
+				for (const tree of provider.trees) {
+					expectSchemaEqual(
+						tree.kernel.checkout.storedSchema,
+						toUpgradeSchema(TaskV2, StagedSchemaUpgradePolicy.permissive),
+					);
+				}
+				verifyNoOpUpgrade(provider, revised);
+				enabled.dispose();
+				revised.dispose();
+			});
+
+			/**
+			 * V1 declares numeric `priority` values and staged `Priority` nodes with string-valued `rank`.
+			 * V2 retains the staged `Priority` identifier but changes `rank` to number.
+			 *
+			 * Create a numeric-only document with V1's default policy, then explicitly enable `Priority` using the same view schema.
+			 * Open the enabled V1 document with V2, testing both a stored `Priority` node and a document where no such node was ever inserted.
+			 * The old definition is part of the stored schema as soon as the token is enabled, whether or not a `Priority` node is inserted.
+			 * Both histories must reject V2 without changing the stored definition or content.
+			 */
+			for (const populated of [false, true]) {
+				it(`cannot redefine an enabled staged node type (${populated ? "node present" : "node never inserted"})`, () => {
+					class PriorityV1 extends factory.object("Priority", { rank: factory.string }) {}
+					const stagedPriority = factory.staged(PriorityV1);
+					const priorityUpgrade = stagedPriority.metadata.stagedSchemaUpgrade;
+					assert(priorityUpgrade !== undefined);
+					class TaskV1 extends factory.object("Task", {
+						priority: factory.types([factory.number, stagedPriority]),
+					}) {}
+					class PriorityV2 extends factory.object("Priority", { rank: factory.number }) {}
+					class TaskV2 extends factory.object("Task", {
+						priority: factory.types([factory.number, factory.staged(PriorityV2)]),
+					}) {}
+					const provider = new TestTreeProviderLite(2);
+					const [documentTree, readerTree] = provider.trees;
+					const initial = documentTree.viewWith(new TreeViewConfiguration({ schema: TaskV1 }));
+					initial.initialize({ priority: 1 });
+					provider.synchronizeMessages();
+					initial.dispose();
+					const enabled = documentTree.viewWith(
+						new TreeViewConfigurationAlpha({
+							schema: TaskV1,
+							stagedUpgradePolicy:
+								StagedSchemaUpgradePolicy.enabledStagedUpgrades(priorityUpgrade),
+						}),
+					);
+					enabled.upgradeSchema();
+					if (populated) {
+						enabled.root.priority = new PriorityV1({ rank: "urgent" });
+					}
+					provider.synchronizeMessages();
+					const before = TreeBeta.exportConcise(enabled.root);
+
+					// Leaving the revised type staged does not hide an incompatible definition already used by the document's schema.
+					const revised = readerTree.viewWith(
+						new TreeViewConfigurationAlpha({ schema: TaskV2 }),
+					);
+					verifyRejectedUpgrade(provider, revised);
+					assert.deepEqual(TreeBeta.exportConcise(enabled.root), before);
+					enabled.dispose();
+				});
+			}
+		});
 	});
 
 	// TODO: support adapters.

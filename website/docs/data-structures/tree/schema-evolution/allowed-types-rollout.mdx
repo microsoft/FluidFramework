@@ -35,7 +35,9 @@ const mySchema = SchemaFactoryBeta.optional(SchemaFactoryBeta.types([
 ]));
 ```
 
-No schema upgrade is performed at this step: <ApiLink package="fluid-framework" api="SchemaFactoryBeta.staged">`staged`</ApiLink> types are excluded from stored schemas, so `upgradeSchema()` is a no-op and the new type cannot be added to documents yet:
+Adding the staged string declaration changes what the application can understand, not what a numeric-only document permits.
+With the default restrictive policy, new documents still exclude strings, and <ApiLink package="fluid-framework" api="TreeView.upgradeSchema">`upgradeSchema()`</ApiLink> does not add them to existing numeric-only documents.
+On those documents the upgrade is therefore a no-op, and the following write remains invalid until Step 3:
 
 ```typescript
 // Assuming `view` is a TreeView configured with `mySchema`:

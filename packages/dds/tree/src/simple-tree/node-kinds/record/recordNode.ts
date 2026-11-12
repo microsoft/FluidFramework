@@ -139,7 +139,7 @@ function createRecordNodeProxy(
 		},
 		has: (target, key): boolean => {
 			if (typeof key === "symbol") {
-				return false;
+				return Object.prototype.hasOwnProperty.call(target, key);
 			}
 
 			const innerNode = getInnerNode(proxy);
@@ -149,11 +149,15 @@ function createRecordNodeProxy(
 		},
 		ownKeys: (target) => {
 			const innerNode = getInnerNode(proxy);
-			return [...innerNode.keys()];
+			// The target's symbol-keyed own properties are reported, as a proxy must report those which are not configurable.
+			// For example, tools that transpile JavaScript private fields (`#field`) to symbol-keyed properties for runtimes
+			// older than ES2022, such as Babel with its `privateFieldsAsSymbols` assumption, give every node a
+			// non-configurable symbol-keyed property for `TreeNode`'s `#brand`.
+			return [...innerNode.keys(), ...Object.getOwnPropertySymbols(target)];
 		},
 		getOwnPropertyDescriptor: (target, key) => {
 			if (typeof key === "symbol") {
-				return undefined;
+				return Reflect.getOwnPropertyDescriptor(target, key);
 			}
 
 			const innerNode = getInnerNode(proxy);

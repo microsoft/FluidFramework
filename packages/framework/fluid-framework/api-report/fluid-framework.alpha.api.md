@@ -433,9 +433,9 @@ export function encodeSchemaCompatibilitySnapshot(simpleSchema: SimpleTreeSchema
 export function enumFromStrings<TScope extends string, const Members extends readonly string[]>(factory: SchemaFactory<TScope>, members: Members): (<TValue extends Members[number]>(value: TValue) => TValue extends unknown ? NodeFromSchema<ReturnType<typeof singletonSchema<TScope, TValue>>> : never) & { [Index in Extract<keyof Members, `${number}`> extends `${infer N extends number}` ? N : never as Members[Index]]: TreeNodeSchemaClass<ScopedSchemaName<TScope, Members[Index]>, NodeKind.Object, TreeNode & {
         readonly value: Members[Index];
     }, Record<string, never>, true, Record<string, never>, undefined>; } & {
-    readonly schema: UnionToTuple<Members[number] extends unknown ? { [Index in Extract<keyof Members, `${number}`> extends `${infer N extends number}` ? N : never as Members[Index]]: TreeNodeSchemaClass<ScopedSchemaName<TScope, Members[Index]>, NodeKind.Object, TreeNode & {
-            readonly value: Members[Index];
-        }, Record<string, never>, true, Record<string, never>, undefined>; }[Members[number]] : never>;
+    readonly schema: { -readonly [Position in keyof Members]: TreeNodeSchemaClass<ScopedSchemaName<TScope, Members[Position]>, NodeKind.Object, TreeNode & {
+            readonly value: Members[Position];
+        }, Record<string, never>, true, Record<string, never>, undefined>; };
 };
 
 // @beta @sealed @system
@@ -2227,6 +2227,10 @@ export type SchemaUpgradeIncompatibility = {
     readonly mismatch: "nodeSchemaCannotBeSatisfied";
     readonly reason: string;
     readonly nodeType: string;
+} | {
+    readonly mismatch: "viewIncompatibleAfterUpgrade";
+    readonly reason: string;
+    readonly incompatibilities: readonly SchemaViewIncompatibility[];
 };
 
 // @beta @sealed
@@ -2417,7 +2421,6 @@ export interface SnapshotSchemaCompatibilityOptions {
 
 // @alpha @input
 export interface StagedSchemaUpgradePolicy {
-    readonly includeAlreadyEnabledUpgrades?: boolean;
     includeStaged(upgrade: SchemaUpgrade): boolean;
     includeStagedOptional(upgrade: SchemaUpgrade): boolean;
 }

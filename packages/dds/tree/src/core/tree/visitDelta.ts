@@ -32,13 +32,16 @@ import type { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
  * reside in the correct detached field. That is the responsibility of the root transfers phase.
  *
  * The attach phase carries out attaches.
+ * Replacements whose incoming roots are available and have no pending nested changes can run in the detach pass.
+ * These replacements retain their positions through the remainder of that pass and are skipped in the attach pass.
+ * Replacements with nested edits on outgoing content or with scheduled root transfers use separate detach and attach calls.
  *
  * After the attach phase, roots destruction is carried out.
  * This needs to happen last to allow modifications to detached roots to be applied before they are destroyed.
  *
  * The details of the delta visit algorithm can impact how/when events are emitted by the objects that own the visitors.
  * For example, as of 2024-03-27, the subtreeChanged event of an AnchorNode is emitted when exiting a node during a
- * delta visit, and thus the two-pass nature of the algorithm means the event fires twice for any given change.
+ * delta visit, and thus the two-pass nature of the algorithm can cause the event to fire in both passes.
  */
 
 /**
@@ -62,6 +65,7 @@ export function visitDelta(
 	const attachPassRoots: Map<ForestRootId, Delta.FieldMap> = new Map();
 	const rootTransfers: Delta.DetachedNodeRename[] = [];
 	const rootDestructions: Delta.DetachedNodeDestruction[] = [];
+	const replacedMarks: Set<Delta.Mark> = new Set();
 	const refreshers: NestedMap<Major, Minor, ITreeCursorSynchronous> = new Map();
 	for (const {
 		id: { major, minor },
@@ -82,6 +86,7 @@ export function visitDelta(
 		attachPassRoots,
 		rootTransfers,
 		rootDestructions,
+		replacedMarks,
 	};
 	processBuilds(delta.build, detachConfig, visitor);
 	processGlobal(delta.global, detachConfig, visitor);
@@ -105,6 +110,7 @@ export function visitDelta(
 		attachPassRoots,
 		rootTransfers,
 		rootDestructions,
+		replacedMarks,
 	};
 	visitFieldMarks(delta.fields, visitor, attachConfig);
 	fixedPointVisitOfRoots(visitor, attachPassRoots, attachConfig);
@@ -262,6 +268,26 @@ export interface DeltaVisitor {
 	 */
 	attach(source: FieldKey, count: number, destination: PlaceIndex): void;
 	/**
+	 * Replaces a range in the current field with all nodes from a detached field.
+	 * Transfers the replaced nodes to a new detached field.
+	 * @param source - The detached field containing the incoming nodes.
+	 * Its length must equal the length of `range`.
+	 * @param range - The range of existing nodes to replace.
+	 * @param destination - A new detached field for the outgoing nodes.
+	 * @param id - The ID assigned to the first outgoing node.
+	 * Remaining outgoing nodes receive consecutive IDs.
+	 * @remarks
+	 * The source, destination, and current field must be distinct.
+	 * This operation has the final effect of detaching `range` to `destination`,
+	 * then attaching `source` at `range.start`, without an intervening visitor callback.
+	 */
+	replace(
+		source: FieldKey,
+		range: Range,
+		destination: FieldKey,
+		id: Delta.DetachedNodeId,
+	): void;
+	/**
 	 * Transfers a range of nodes from the current field to a new detached field.
 	 * @param source - The bounds of the range of nodes to detach.
 	 * @param destination - The key for a new detached field.
@@ -324,7 +350,7 @@ export interface DeltaVisitor {
 	 * list) without needing to diff the old and new states.
 	 * @remarks
 	 * Called once per field per delta, during the first (detach) pass only, after `enterField` but
-	 * before any `attach`, `detach`, or `enterNode` calls for the field. Firing only during the
+	 * before any `attach`, `detach`, `replace`, or `enterNode` calls for the field. Firing only during the
 	 * detach pass ensures marks are always relative to the original array positions rather than an
 	 * intermediate partially-transformed state.
 	 */
@@ -371,6 +397,11 @@ interface PassConfig {
 	 * Carried out at the end of the attach pass.
 	 */
 	readonly rootDestructions: Delta.DetachedNodeDestruction[];
+	/**
+	 * Marks applied as replacements during the detach pass.
+	 * Their incoming nodes remain in the field and must not be attached again in the attach pass.
+	 */
+	readonly replacedMarks: Set<Delta.Mark>;
 }
 
 type Pass = (delta: Delta.FieldChanges, visitor: DeltaVisitor, config: PassConfig) => void;
@@ -415,6 +446,11 @@ function detachPass(
 	visitor.fieldMarks?.(fieldChanges.marks);
 	let index = 0;
 	for (const mark of fieldChanges.marks) {
+		if (tryReplace(mark, index, visitor, config)) {
+			config.replacedMarks.add(mark);
+			index += mark.count;
+			continue;
+		}
 		if (mark.fields !== undefined) {
 			assert(
 				mark.attach === undefined || mark.detach !== undefined,
@@ -437,6 +473,50 @@ function detachPass(
 			index += mark.count;
 		}
 	}
+}
+
+/**
+ * Applies a replacement when its roots are ready and neither side needs further nested edits.
+ * Returns false without changing the visitor or detached-field index when separate passes are needed.
+ */
+function tryReplace(
+	mark: Delta.Mark,
+	index: number,
+	visitor: DeltaVisitor,
+	config: PassConfig,
+): boolean {
+	if (
+		mark.detach === undefined ||
+		mark.attach === undefined ||
+		mark.fields !== undefined ||
+		config.rootTransfers.length > 0
+	) {
+		return false;
+	}
+	for (let offset = 0; offset < mark.count; offset++) {
+		const source = config.detachedFieldIndex.tryGetEntry(offsetDetachId(mark.attach, offset));
+		if (
+			source === undefined ||
+			config.detachPassRoots.has(source) ||
+			config.attachPassRoots.has(source)
+		) {
+			return false;
+		}
+	}
+	for (let offset = 0; offset < mark.count; offset++) {
+		const attachId = offsetDetachId(mark.attach, offset);
+		const detachId = offsetDetachId(mark.detach, offset);
+		const source = config.detachedFieldIndex.getEntry(attachId);
+		const destination = config.detachedFieldIndex.createEntry(detachId, config.latestRevision);
+		visitor.replace(
+			config.detachedFieldIndex.toFieldKey(source),
+			{ start: index + offset, end: index + offset + 1 },
+			config.detachedFieldIndex.toFieldKey(destination),
+			detachId,
+		);
+		config.detachedFieldIndex.deleteEntry(attachId);
+	}
+	return true;
 }
 
 function buildTrees(
@@ -525,6 +605,10 @@ function attachPass(
 ): void {
 	let index = 0;
 	for (const mark of fieldChanges.marks) {
+		if (config.replacedMarks.has(mark)) {
+			index += mark.count;
+			continue;
+		}
 		if (mark.attach !== undefined) {
 			for (let i = 0; i < mark.count; i += 1) {
 				const offsetAttachId = offsetDetachId(mark.attach, i);

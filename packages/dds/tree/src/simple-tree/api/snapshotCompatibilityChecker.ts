@@ -243,15 +243,14 @@ export interface CombinedSchemaCompatibilityStatus {
 	readonly snapshotViewOfCurrentDocument: Omit<SchemaCompatibilityStatusBeta, "canInitialize">;
 
 	/**
-	 * True if and only if the schemas have identical compatibility.
+	 * Whether the view schemas produce identical compatibility snapshots.
 	 * @remarks
-	 * This includes producing the equivalent stored schema (which currentViewOfSnapshotDocument and snapshotViewOfCurrentDocument also measure)
-	 * as well as equivalent compatibility with potential future schema changes beyond just those in these two schemas.
+	 * Unlike the directional results above, this compares the schema declarations rather than a view's ability to use a particular document.
+	 * The snapshots capture both ordinary schema declarations and compatibility settings such as staging and unknown optional-field support.
+	 * Two views may therefore be able to use each other's documents while producing different snapshots because they would handle future schema changes differently.
 	 *
-	 * This includes compatibility with all potential future schema changes.
-	 * For example two schemas different only in compatibility with future optional fields via allow unknown optional fields or staged schema
-	 * would be considered non-equivalent, even though they are forwards and backwards compatible with each other, and both status above report them as equivalent
-	 * since they would produce the same stored schema upon schema upgrade.
+	 * Use the directional results to decide whether either view can read or upgrade documents created by the other.
+	 * Identical snapshots alone do not establish those results, particularly for staging details that the snapshot format does not preserve.
 	 */
 	readonly identicalCompatibility: boolean;
 }

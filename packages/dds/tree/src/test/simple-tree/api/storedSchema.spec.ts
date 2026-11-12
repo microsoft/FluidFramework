@@ -37,18 +37,19 @@ describe("simple-tree storedSchema", () => {
 		assert(!status.upgrade.isCompatible);
 		assert.deepEqual(status.upgrade.incompatibilities, [
 			{
-				mismatch: "allowedTypes",
-				location: "root",
-				proposed: [],
-				stored: [sf.string.identifier],
+				mismatch: "viewIncompatibleAfterUpgrade",
 				reason:
-					'Cannot upgrade the root field: the proposed schema removes allowed node types ["com.fluidframework.leaf.string"].',
-			},
-			{
-				mismatch: "missingNodeSchema",
-				nodeType: sf.string.identifier,
-				reason:
-					'Cannot upgrade node type "com.fluidframework.leaf.string": its stored definition is missing from the proposed schema.',
+					"Cannot upgrade: the resulting stored schema would still prevent the view from reading or writing the document.",
+				incompatibilities: [
+					{
+						mismatch: "allowedTypes",
+						location: "root",
+						view: [],
+						stored: [sf.string.identifier],
+						reason:
+							'Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
+					},
+				],
 			},
 		]);
 	});
