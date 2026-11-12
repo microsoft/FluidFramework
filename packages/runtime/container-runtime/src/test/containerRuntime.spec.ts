@@ -312,6 +312,16 @@ describe("Runtime", () => {
 			updateDirtyContainerState: (_dirty: boolean) => {},
 			updatePendingOpState,
 			getLoadedFromVersion: () => loadedFromVersion,
+			submitBatchFn: (messages: IBatchMessage[]) => {
+				for (const message of messages) {
+					submittedOps.push({
+						...JSON.parse(message.contents ?? "{}"),
+						metadata: message.metadata,
+					});
+					opFakeSequenceNumber++;
+				}
+				return opFakeSequenceNumber - 1;
+			},
 			submitFn: (
 				_type: MessageType,
 				contents: object,
@@ -957,24 +967,22 @@ describe("Runtime", () => {
 								}
 							},
 							updateDirtyContainerState: (_dirty: boolean) => {},
-							submitFn: (
-								_type: MessageType,
-								// eslint-disable-next-line @typescript-eslint/no-explicit-any
-								contents: any,
-								_batch: boolean,
-								appData?: unknown,
-							) => {
-								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-								if (contents.type === "groupedBatch") {
-									// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-									for (const subMessage of contents.contents) {
-										// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-										submittedOpsMetadata.push(subMessage.metadata);
+							submitBatchFn: (messages: IBatchMessage[]) => {
+								for (const message of messages) {
+									const contents = JSON.parse(message.contents ?? "{}") as {
+										type?: string;
+										contents: { metadata?: unknown }[];
+									};
+									if (contents.type === "groupedBatch") {
+										for (const subMessage of contents.contents) {
+											submittedOpsMetadata.push(subMessage.metadata);
+										}
+									} else {
+										submittedOpsMetadata.push(message.metadata);
 									}
-								} else {
-									submittedOpsMetadata.push(appData);
+									opFakeSequenceNumber++;
 								}
-								return opFakeSequenceNumber++;
+								return opFakeSequenceNumber - 1;
 							},
 							connected: true,
 							clientId: fakeClientId,
@@ -1205,8 +1213,9 @@ describe("Runtime", () => {
 								containerErrors.push(error);
 							}
 						},
-						submitFn: (...args) => {
-							return ++submittedOpsCount; // clientSequenceNumber
+						submitBatchFn: (messages) => {
+							submittedOpsCount += messages.length;
+							return submittedOpsCount; // clientSequenceNumber
 						},
 						updateDirtyContainerState: (dirty: boolean) => {},
 						getLoadedFromVersion: () => undefined,

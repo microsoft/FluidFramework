@@ -116,7 +116,7 @@ Keep handle resolution independently of any future request-routing removal.
 
 ### 3. Loader batch-submission fallbacks
 
-**Status:** Pending decision. Strong candidate.
+**Status:** Cleanup approved and complete. Inbound-only splitter behavior retained.
 
 - `packages/runtime/container-runtime/src/opLifecycle/outbox.ts`, `sendBatch`:
   branches on missing `submitBatchFn` and invokes `legacySendBatchFn`.
@@ -131,7 +131,35 @@ Keep handle resolution independently of any future request-routing removal.
 and obsolete capability checks. Validate compression, grouping, chunking, resubmission, and sequence numbers.
 This is an outbound API cleanup, not permission to remove historical batch readers.
 
-**Decision / changes / validation:** Not yet recorded.
+**Contract audit:** `IContainerContext` is non-deprecated `@legacy @beta`, but `submitBatchFn` is already
+required. Installed `2.0.9` ContainerContext accepts and stores that callback. The removed fallback
+supports contexts missing a required method, not an alternative permitted by the current contract.
+The deprecated `submitFn` API itself and its loader implementation remain unchanged (summary submission
+still has a separate fallback; category 4). `makeLegacySendBatchFn`, Outbox, and OpSplitter are not
+exported from the package entry point. No legacy/beta signatures or conforming behavior change.
+
+**Decision / changes:** Require `submitBatchFn` in internal Outbox parameters; remove legacy batch send,
+the callback factory/runtime wiring, and the missing-callback compression bypass. Remove the obsolete
+legacy-context Outbox test and migrate existing runtime test mocks to batch submission, preserving
+their operation counts, metadata, rollback, and sequence-number assertions.
+
+**Retained:** OpSplitter accepts an absent callback for inbound-only processing, used by current message
+reader tests. Its chunking guard and send-time assertion remain; comments now explain this purpose.
+Do not delete historical chunk/compression readers or their tests. No entries added to deferred API lists:
+the callback omission is not part of the current non-deprecated legacy/beta contract.
+
+**Validation:**
+
+- Runtime build passed (ESM/CJS, type tests, lint/format, dependency checks, API reports, docs model).
+  No API report changes. E2E build passed.
+- Explicit current runtime/op-lifecycle suites: 276 passing, including Outbox, OpSplitter,
+  RemoteMessageProcessor, OpDecompressor, and ContainerRuntime.
+- The initial selection order exposed an existing circular-import initialization issue; loading
+  containerRuntime.spec first avoids it. Initial behavior failures identified missing required callbacks
+  in test mocks, fixed as described above.
+- Local OCV compression/detached scenarios: 42 passing, 2 pending.
+- Targeted local N-1/cross-client compression/schema scenarios: 224 passing.
+- No live real-service validation performed for this category.
 
 ### 4. Loader summary-submission fallbacks
 
@@ -275,7 +303,7 @@ These are not cleanup targets merely because OCV advanced:
 ## Working decision summary
 
 Category 1 cleanup is approved and complete. Category 2 is deferred to preserve deprecated legacy/beta
-API behavior. Categories 3–11 remain pending decision.
+API behavior. Category 3 cleanup is approved and complete. Categories 4–11 remain pending decision.
 Retained/deferred categories should include the reason and any follow-up evidence needed.
 
 ## Deferred list 1: reachable through already-deprecated legacy/beta APIs

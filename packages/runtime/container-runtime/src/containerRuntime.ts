@@ -253,7 +253,6 @@ import {
 	Outbox,
 	RemoteMessageProcessor,
 	tryGetDeserializedRuntimeOpCopy,
-	type OutboundBatch,
 	type BatchResubmitInfo,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
@@ -694,39 +693,6 @@ export function getDeviceSpec(): {
 		hardwareConcurrency: navigator.hardwareConcurrency,
 	};
 }
-
-/**
- * Older loader doesn't have a submitBatchFn member, this is the older way of submitting a batch.
- * Rather than exposing the submitFn (now deprecated) and IDeltaManager (dangerous to hand out) to the Outbox,
- * we can provide a partially-applied function to keep those items private to the ContainerRuntime.
- */
-export const makeLegacySendBatchFn =
-	(
-		submitFn: (
-			type: MessageType,
-			contents: unknown,
-			batch: boolean,
-			appData?: unknown,
-		) => number,
-		deltaManager: Pick<IDeltaManager<unknown, unknown>, "flush">,
-	) =>
-	(batch: OutboundBatch): number => {
-		// Default to negative one to match Container.submitBatch behavior
-		let clientSequenceNumber: number = -1;
-		for (const message of batch.messages) {
-			clientSequenceNumber = submitFn(
-				MessageType.Operation,
-				// For back-compat (submitFn only works on deserialized content)
-				message.contents === undefined ? undefined : JSON.parse(message.contents),
-				true, // batch
-				message.metadata,
-			);
-		}
-
-		deltaManager.flush();
-
-		return clientSequenceNumber;
-	};
 
 /**
  * Extract last message from the snapshot metadata.
@@ -2267,13 +2233,10 @@ export class ContainerRuntime
 			createChildLogger({ logger: this.baseLogger, namespace: "InboundBatchAggregator" }),
 		);
 
-		const legacySendBatchFn = makeLegacySendBatchFn(submitFn, this.innerDeltaManager);
-
 		this.outbox = new Outbox({
 			shouldSend: () => this.shouldSendOps(),
 			pendingStateManager: this.pendingStateManager,
 			submitBatchFn,
-			legacySendBatchFn,
 			compressor: new OpCompressor(this.mc.logger),
 			splitter: opSplitter,
 			config: {
