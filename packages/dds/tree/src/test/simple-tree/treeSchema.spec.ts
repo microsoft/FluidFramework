@@ -14,6 +14,7 @@ import {
 } from "../../simple-tree/core/index.js";
 import {
 	type ImplicitFieldSchema,
+	isSchemaUpgradeAllowed,
 	normalizeFieldSchema,
 	SchemaFactoryAlpha,
 } from "../../simple-tree/index.js";
@@ -621,6 +622,45 @@ describe("treeSchema", () => {
 			// The older view must retain the newer document's `Task` definition and recursive references.
 			expectSchemaEqual(result, stored);
 			assert(!toInitialSchema(before).nodeSchema.has(brand(Task.identifier)));
+		});
+
+		/**
+		 * V1 stages `Task` alongside numbers.
+		 * V2 enables `Task`, whose required `Child` contains a string.
+		 * Opening V2's schema with V1's restrictive policy must restore `Task` and every descendant definition, including `Child`.
+		 */
+		it("retains descendant definitions referenced only by an already-enabled staged root type", () => {
+			class Child extends schemaFactory.object("Child", {
+				text: schemaFactory.string,
+			}) {}
+			class Task extends schemaFactory.object("Task", { child: Child }) {}
+			const schemaV1 = schemaFactory.types([schemaFactory.number, schemaFactory.staged(Task)]);
+			const schemaV2 = [schemaFactory.number, Task] as const;
+			const view = createTreeSchema(schemaV1);
+			const initial = toInitialSchema(schemaV1);
+			const stored = toInitialSchema(schemaV2);
+
+			// Only number is initially queued; neither descendant can be recovered from a root reference.
+			assert.deepEqual(
+				new Set(initial.nodeSchema.keys()),
+				new Set([schemaFactory.number.identifier]),
+			);
+			const candidate = getSchemaUpgradeCandidate(
+				view,
+				stored,
+				StagedSchemaUpgradePolicy.restrictive,
+			);
+			assert.deepEqual(
+				new Set(candidate.nodeSchema.keys()),
+				new Set([
+					schemaFactory.number.identifier,
+					Task.identifier,
+					Child.identifier,
+					schemaFactory.string.identifier,
+				]),
+			);
+			expectSchemaEqual(candidate, stored);
+			assert.equal(isSchemaUpgradeAllowed(view, stored, candidate), true);
 		});
 	});
 });
