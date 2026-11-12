@@ -10,6 +10,7 @@ import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type ChangesetLocalId,
 	type DeltaDetachedNodeId,
+	type DeltaFieldChanges,
 	type DeltaFieldMap,
 	type DeltaMark,
 	type FieldKey,
@@ -17,8 +18,6 @@ import {
 	tagChange,
 } from "../../../core/index.js";
 import { type NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { FieldChangeDelta } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { sequenceFieldToDelta } from "../../../feature-libraries/sequence-field/sequenceFieldToDelta.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -40,7 +39,7 @@ const fooField = brand<FieldKey>("foo");
 const cellId = { revision: tag1, localId: brand<ChangesetLocalId>(0) };
 const deltaNodeId: DeltaDetachedNodeId = { major: cellId.revision, minor: cellId.localId };
 
-function toDeltaShallow(change: Changeset): FieldChangeDelta {
+function toDeltaShallow(change: Changeset): DeltaFieldChanges {
 	deepFreeze(change);
 	return sequenceFieldToDelta(change, () => fail("Unexpected call to child ToDelta"));
 }
@@ -50,29 +49,25 @@ const childChange1 = TestNodeId.create(nodeId1, TestChange.mint([0], 1));
 const childChange1Delta = TestChange.toDelta(tagChange(childChange1.testChange, tag));
 const detachId = { major: tag, minor: 42 };
 
-export const emptyFieldChanges: FieldChangeDelta = {};
+export const emptyFieldChanges: DeltaFieldChanges = { marks: [] };
 
 export function testToDelta(): void {
 	describe("toDelta", () => {
 		it("empty mark list", () => {
 			const actual = toDeltaShallow([]);
-			assert.deepEqual(actual, {});
+			assert.deepEqual(actual, emptyFieldChanges);
 		});
 
 		it("child change", () => {
 			const actual = toDelta(inlineRevision(Change.modify(0, childChange1), tag));
-			const markList: DeltaMark[] = [{ count: 1, fields: childChange1Delta }];
-			const expected: FieldChangeDelta = { local: { marks: markList } };
+			const expected: DeltaFieldChanges = { marks: [{ count: 1, fields: childChange1Delta }] };
 			assert.deepEqual(actual, expected);
 		});
 
 		it("child change under removed node", () => {
 			const modify = [Mark.modify(childChange1, { revision: tag, localId: brand(42) })];
 			const actual = toDelta(inlineRevision(modify, tag));
-			const expected: FieldChangeDelta = {
-				global: [{ id: detachId, fields: childChange1Delta }],
-			};
-			assertFieldChangesEqual(actual, expected);
+			assertFieldChangesEqual(actual, emptyFieldChanges);
 		});
 
 		it("empty child change", () => {
@@ -94,15 +89,13 @@ export function testToDelta(): void {
 		it("revive => restore", () => {
 			const changeset = Change.revive(0, 1, { revision: tag, localId: brand(0) }, tag2);
 			const actual = toDelta(changeset);
-			const expected: FieldChangeDelta = {
-				local: {
-					marks: [
-						{
-							count: 1,
-							attach: { major: tag, minor: 0 },
-						},
-					],
-				},
+			const expected: DeltaFieldChanges = {
+				marks: [
+					{
+						count: 1,
+						attach: { major: tag, minor: 0 },
+					},
+				],
 			};
 			assertFieldChangesEqual(actual, expected);
 		});
@@ -112,25 +105,17 @@ export function testToDelta(): void {
 			const changeset = [
 				Mark.revive(1, { revision: tag, localId: brand(0) }, { changes: nodeId }),
 			];
-			const fieldChanges = new Map([[fooField, { marks: [] }]]);
+			const fieldChanges = new Map([[fooField, emptyFieldChanges]]);
 			const deltaFromChild = (child: NodeId): DeltaFieldMap => {
 				assert.deepEqual(child, nodeId);
 				return fieldChanges;
 			};
 			const actual = sequenceFieldToDelta(changeset, deltaFromChild);
-			const expected: FieldChangeDelta = {
-				local: {
-					marks: [
-						{
-							count: 1,
-							attach: { major: tag, minor: 0 },
-						},
-					],
-				},
-				global: [
+			const expected: DeltaFieldChanges = {
+				marks: [
 					{
-						id: { major: tag, minor: 0 },
-						fields: fieldChanges,
+						count: 1,
+						attach: { major: tag, minor: 0 },
 					},
 				],
 			};
@@ -138,16 +123,14 @@ export function testToDelta(): void {
 		});
 
 		it("remove", () => {
-			const changeset = [Mark.remove(10, brand(42))];
-			const expected: FieldChangeDelta = {
-				local: {
-					marks: [
-						{
-							count: 10,
-							detach: detachId,
-						},
-					],
-				},
+			const changeset = [Mark.detach(10, brand(42))];
+			const expected: DeltaFieldChanges = {
+				marks: [
+					{
+						count: 10,
+						detach: detachId,
+					},
+				],
 			};
 			const actual = toDelta(inlineRevision(changeset, tag));
 			assert.deepStrictEqual(actual, expected);
@@ -155,16 +138,14 @@ export function testToDelta(): void {
 
 		it("remove with override", () => {
 			const detachIdOverride: SF.CellId = { revision: tag2, localId: brand(1) };
-			const changeset = [Mark.remove(10, brand(42), { idOverride: detachIdOverride })];
-			const expected: FieldChangeDelta = {
-				local: {
-					marks: [
-						{
-							count: 10,
-							detach: { major: tag2, minor: 1 },
-						},
-					],
-				},
+			const changeset = [Mark.detach(10, brand(42), { cellRename: detachIdOverride })];
+			const expected: DeltaFieldChanges = {
+				marks: [
+					{
+						count: 10,
+						detach: { major: tag2, minor: 1 },
+					},
+				],
 			};
 			const actual = toDelta(inlineRevision(changeset, tag));
 			assert.deepStrictEqual(actual, expected);
@@ -185,8 +166,9 @@ export function testToDelta(): void {
 				attach: { minor: moveId },
 				count: 10,
 			};
-			const markList: DeltaMark[] = [{ count: 42 }, moveOut, { count: 8 }, moveIn];
-			const expected: FieldChangeDelta = { local: { marks: markList } };
+			const expected: DeltaFieldChanges = {
+				marks: [{ count: 42 }, moveOut, { count: 8 }, moveIn],
+			};
 			const actual = toDelta(changeset);
 			assert.deepStrictEqual(actual, expected);
 		});
@@ -224,17 +206,18 @@ export function testToDelta(): void {
 				attach: { major: tag1, minor: moveId2 },
 				count: 3,
 			};
-			const markList: DeltaMark[] = [moveOut1, moveIn1, moveOut2, moveIn2, moveOut3, moveIn3];
-			const expected: FieldChangeDelta = { local: { marks: markList } };
+			const expected: DeltaFieldChanges = {
+				marks: [moveOut1, moveIn1, moveOut2, moveIn2, moveOut3, moveIn3],
+			};
 			const actual = toDelta(changeset);
 			assert.deepStrictEqual(actual, expected);
 		});
 
 		it("multiple changes", () => {
 			const changeset: Changeset = [
-				Mark.remove(10, brand(42)),
+				Mark.detach(10, brand(42)),
 				{ count: 3 },
-				Mark.insert(1, brand(52)),
+				Mark.attach(1, brand(52)),
 				{ count: 1 },
 				Mark.modify(childChange1),
 			];
@@ -246,35 +229,25 @@ export function testToDelta(): void {
 				count: 1,
 				attach: { major: tag, minor: 52 },
 			};
-			const markList: DeltaMark[] = [
-				del,
-				{ count: 3 },
-				ins,
-				{ count: 1 },
-				{ count: 1, fields: childChange1Delta },
-			];
-			const expected: FieldChangeDelta = {
-				local: { marks: markList },
+			const expected: DeltaFieldChanges = {
+				marks: [del, { count: 3 }, ins, { count: 1 }, { count: 1, fields: childChange1Delta }],
 			};
 			const actual = toDelta(inlineRevision(changeset, tag));
 			assert.deepStrictEqual(actual, expected);
 		});
 
 		it("insert and modify => insert", () => {
-			const changeset = [Mark.insert(1, brand(0), { changes: childChange1 })];
+			const changeset = [Mark.attach(1, brand(0), { changes: childChange1 })];
 			const buildId = { major: tag, minor: 0 };
-			const expected: FieldChangeDelta = {
-				global: [{ id: buildId, fields: childChange1Delta }],
-				local: { marks: [{ count: 1, attach: buildId }] },
-			};
+			const expected: DeltaFieldChanges = { marks: [{ count: 1, attach: buildId }] };
 			const actual = toDelta(inlineRevision(changeset, tag));
 			assertFieldChangesEqual(actual, expected);
 		});
 
 		it("modify and remove => remove", () => {
-			const changeset = [Mark.remove(1, brand(42), { changes: childChange1 })];
-			const expected: FieldChangeDelta = {
-				local: { marks: [{ count: 1, detach: detachId, fields: childChange1Delta }] },
+			const changeset = [Mark.detach(1, brand(42), { changes: childChange1 })];
+			const expected: DeltaFieldChanges = {
+				marks: [{ count: 1, detach: detachId, fields: childChange1Delta }],
 			};
 			const actual = toDelta(inlineRevision(changeset, tag));
 			assertFieldChangesEqual(actual, expected);
@@ -282,12 +255,10 @@ export function testToDelta(): void {
 
 		it("modify and move-out => move-out", () => {
 			const changeset = [Mark.moveOut(1, moveId, { changes: childChange1 })];
-			const expected: FieldChangeDelta = {
-				local: {
-					marks: [
-						{ count: 1, detach: { major: tag, minor: moveId }, fields: childChange1Delta },
-					],
-				},
+			const expected: DeltaFieldChanges = {
+				marks: [
+					{ count: 1, detach: { major: tag, minor: moveId }, fields: childChange1Delta },
+				],
 			};
 			const actual = toDelta(inlineRevision(changeset, tag));
 			assertFieldChangesEqual(actual, expected);
@@ -296,15 +267,12 @@ export function testToDelta(): void {
 		it("insert and modify w/ move-in => insert", () => {
 			const nodeId: NodeId = { localId: brand(0) };
 
-			const changeset = [Mark.insert(1, brand(0), { changes: nodeId })];
+			const changeset = [Mark.attach(1, brand(0), { changes: nodeId })];
 			const nestedMoveDelta = new Map([
 				[fooField, { marks: [{ attach: { minor: moveId }, count: 42 }] }],
 			]);
 			const buildId = { minor: 0 };
-			const expected: FieldChangeDelta = {
-				global: [{ id: buildId, fields: nestedMoveDelta }],
-				local: { marks: [{ count: 1, attach: buildId }] },
-			};
+			const expected: DeltaFieldChanges = { marks: [{ count: 1, attach: buildId }] };
 			const deltaFromChild = (child: NodeId): DeltaFieldMap => {
 				assert.deepEqual(child, nodeId);
 				return nestedMoveDelta;
@@ -316,13 +284,9 @@ export function testToDelta(): void {
 		describe("Transient changes", () => {
 			// TODO: Should test revives and returns in addition to inserts and moves
 			it("insert & remove", () => {
-				const changeset = [Mark.remove(2, brand(2), { cellId: { localId: brand(0) } })];
+				const changeset = [Mark.detach(2, brand(2), { cellId: { localId: brand(0) } })];
 				const delta = toDelta(changeset);
-				const buildId = { minor: 0 };
-				const expected: FieldChangeDelta = {
-					rename: [{ count: 2, oldId: buildId, newId: { minor: 2 } }],
-				};
-				assertFieldChangesEqual(delta, expected);
+				assertFieldChangesEqual(delta, emptyFieldChanges);
 			});
 
 			it("insert & move", () => {
@@ -335,71 +299,52 @@ export function testToDelta(): void {
 				const delta = toDelta(changeset);
 				const buildId = { minor: 0 };
 				const id = { minor: 2 };
-				const expected: FieldChangeDelta = {
-					rename: [{ oldId: buildId, newId: id, count: 2 }],
-					local: { marks: [{ count: 1 }, { count: 2, attach: id }] },
+				const expected: DeltaFieldChanges = {
+					marks: [{ count: 1 }, { count: 2, attach: id }],
 				};
 				assertFieldChangesEqual(delta, expected);
 			});
 
 			it("move & remove", () => {
 				const [moveOut, moveIn] = Mark.move(2, brand(0));
-				const changeset = [
-					moveOut,
-					{ count: 1 },
-					Mark.attachAndDetach(moveIn, Mark.remove(2, brand(4))),
-				];
+				const changeset = [moveOut, { count: 1 }, Mark.rename(2, brand(2), brand(4))];
 				const delta = toDelta(changeset);
 
 				const id = { minor: 0 };
-				const expected: FieldChangeDelta = {
-					local: { marks: [{ count: 2, detach: id }] },
-					rename: [{ count: 2, oldId: id, newId: { minor: 4 } }],
-				};
+				const expected: DeltaFieldChanges = { marks: [{ count: 2, detach: id }] };
 				assertFieldChangesEqual(delta, expected);
 			});
 
 			it("insert & move & remove", () => {
 				const [moveOut, moveIn] = Mark.move(2, brand(2));
 				const changeset: Changeset = [
-					{ ...moveOut, cellId: { localId: brand(0) } },
+					Mark.rename(2, brand(0), brand(2)),
 					{ count: 1 },
-					Mark.attachAndDetach(moveIn, Mark.remove(2, brand(6))),
+					Mark.rename(2, brand(4), brand(6)),
 				];
 				const delta = toDelta(changeset);
-				const buildId = { minor: 0 };
-				const id1 = { minor: 2 };
-				const id2 = { minor: 6 };
-				const expected: FieldChangeDelta = {
-					rename: [
-						{ count: 2, oldId: buildId, newId: id1 },
-						{ count: 2, oldId: id1, newId: id2 },
-					],
-				};
-				assertFieldChangesEqual(delta, expected);
+				assertFieldChangesEqual(delta, emptyFieldChanges);
 			});
 
 			it("move & move & move", () => {
 				const changeset = [
-					Mark.moveOut(2, brand(0), { finalEndpoint: { localId: brand(4) } }),
+					Mark.moveOut(2, brand(0)),
 					{ count: 1 },
 					Mark.rename(2, brand(2), brand(2)),
 					Mark.rename(2, brand(4), brand(4)),
 					{ count: 1 },
-					Mark.moveIn(2, brand(4), { finalEndpoint: { localId: brand(0) } }),
+					Mark.moveIn(2, brand(4)),
 				];
 				const delta = toDelta(changeset);
 
 				const id = { minor: 0 };
-				const expected: FieldChangeDelta = {
-					local: {
-						marks: [
-							{ count: 2, detach: id },
-							{ count: 1 },
-							{ count: 1 },
-							{ count: 2, attach: id },
-						],
-					},
+				const expected: DeltaFieldChanges = {
+					marks: [
+						{ count: 2, detach: id },
+						{ count: 1 },
+						{ count: 1 },
+						{ count: 2, attach: id },
+					],
 				};
 				assertFieldChangesEqual(delta, expected);
 			});
@@ -413,48 +358,21 @@ export function testToDelta(): void {
 			];
 
 			const actual = toDelta(move);
-			const expected: FieldChangeDelta = {
-				rename: [{ count: 1, oldId: deltaNodeId, newId: { minor: 0 } }],
-				local: { marks: [{ count: 1, attach: { minor: 0 } }] },
-			};
+			const expected: DeltaFieldChanges = { marks: [{ count: 1, attach: { minor: 0 } }] };
 			assertFieldChangesEqual(actual, expected);
 		});
 
 		describe("Idempotent changes", () => {
 			it("remove", () => {
-				const deletion = [Mark.remove(1, brand(0), { cellId })];
+				const deletion = [Mark.detach(1, brand(0), { cellId })];
 				const actual = toDelta(inlineRevision(deletion, tag));
-				const expected: FieldChangeDelta = {
-					rename: [
-						{
-							count: 1,
-							oldId: deltaNodeId,
-							newId: { major: tag, minor: 0 },
-						},
-					],
-				};
-				assertFieldChangesEqual(actual, expected);
+				assertFieldChangesEqual(actual, emptyFieldChanges);
 			});
 
 			it("modify and remove", () => {
-				const deletion = [Mark.remove(1, brand(0), { cellId, changes: childChange1 })];
+				const deletion = [Mark.detach(1, brand(0), { cellId, changes: childChange1 })];
 				const actual = toDelta(inlineRevision(deletion, tag));
-				const expected: FieldChangeDelta = {
-					rename: [
-						{
-							count: 1,
-							oldId: deltaNodeId,
-							newId: { major: tag, minor: 0 },
-						},
-					],
-					global: [
-						{
-							id: deltaNodeId,
-							fields: childChange1Delta,
-						},
-					],
-				};
-				assertFieldChangesEqual(actual, expected);
+				assertFieldChangesEqual(actual, emptyFieldChanges);
 			});
 
 			it("redundant revive", () => {
@@ -463,8 +381,8 @@ export function testToDelta(): void {
 					Mark.pin(1, brand(1), { changes: childChange1 }),
 				];
 				const actual = toDelta(inlineRevision(changeset, tag));
-				const expected: FieldChangeDelta = {
-					local: { marks: [{ count: 1 }, { count: 1, fields: childChange1Delta }] },
+				const expected: DeltaFieldChanges = {
+					marks: [{ count: 1 }, { count: 1, fields: childChange1Delta }],
 				};
 				assertFieldChangesEqual(actual, expected);
 			});

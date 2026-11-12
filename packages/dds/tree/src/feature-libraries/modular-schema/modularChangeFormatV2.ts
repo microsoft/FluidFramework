@@ -12,7 +12,7 @@ import { EncodedModularChangesetV1 } from "./modularChangeFormatV1.js";
 
 const noAdditionalProps: TObjectOptions = { additionalProperties: false };
 
-const EncodedNoChangeConstraint = Type.Object(
+export const EncodedNoChangeConstraint = Type.Object(
 	{
 		violated: Type.Boolean(),
 	},

@@ -56,7 +56,7 @@ describe("Fuzz - move", () => {
 		DDSFuzzTestState<SharedTreeTestFactory>
 	> = {
 		workloadName: "move",
-		factory: new SharedTreeTestFactory(createOnCreate(populatedInitialState), undefined, {
+		factory: SharedTreeTestFactory.build(createOnCreate(populatedInitialState), undefined, {
 			forest: ForestTypeExpensiveDebug,
 		}),
 		generatorFactory,
@@ -87,8 +87,6 @@ describe("Fuzz - move", () => {
 		},
 		reconnectProbability: 0.1,
 		idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
-		// TODO: AB#31176 tracks failing seeds when trying to synchronize with move edits.
-		skip: [38],
 	};
 	createDDSFuzzSuite(model, options);
 });

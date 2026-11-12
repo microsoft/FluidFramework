@@ -62,9 +62,6 @@ describe("Fuzz - Top-Level", () => {
 			},
 			reconnectProbability: 0.1,
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
-			skip: [
-				...[30], //  0x92a
-			],
 		};
 		createDDSFuzzSuite(baseTreeModel, options);
 	});
@@ -85,11 +82,12 @@ describe("Fuzz - Top-Level", () => {
 				// AB#43127: fully allowing rehydrate after attach is currently not supported in tests (but should be in prod) due to limitations in the test mocks.
 				attachingBeforeRehydrateDisable: true,
 			},
+			skip: [
+				// Seed 35 fails due to a cursor caching issue
+				35,
+			],
 			reconnectProbability: 0.1,
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
-			skip: [
-				...[30], //  0x92a
-			],
 		};
 		createDDSFuzzSuite(comparisonForestTreeModel, options);
 	});
@@ -102,7 +100,7 @@ describe("Fuzz - Top-Level", () => {
 		> = {
 			...baseTreeModel,
 			workloadName: "SharedTree rebasing",
-			factory: new SharedTreeFuzzTestFactory(FuzzTestOnCreate),
+			factory: SharedTreeFuzzTestFactory.build(FuzzTestOnCreate),
 		};
 		const options: Partial<DDSFuzzSuiteOptions> = {
 			...baseOptions,

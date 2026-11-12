@@ -14,4 +14,6 @@
  * to regenerate local package.json files and the workspace lockfile,
  * then commit all changes.
  */
-export const explicitVersions = [];
+export const explicitVersions = [
+	"3.12.0", // version-compat-tests/.../sharedTree.fuzz.spec.ts -- pre- ModularChangeFamily refactor
+];
