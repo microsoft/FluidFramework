@@ -336,7 +336,7 @@ No live real-service validation performed.
 
 ### 10. Ancient detached-storage behavior
 
-**Status:** Pending decision. Additional proof required.
+**Status:** Retained and deferred: valid storage lifecycle states and exported API behavior.
 
 - `packages/loader/container-loader/src/containerStorageAdapter.ts`, `policies` getter:
   catches storage access failures, with a comment about a 0.40 runtime requesting policies while detached.
@@ -344,7 +344,24 @@ No live real-service validation performed.
 **Potential change:** Remove the catch only if it no longer handles legitimate current detached-state access.
 Do not infer that the storage policy itself is always present just because the old runtime is unsupported.
 
-**Decision / changes / validation:** Not yet recorded.
+**Contract audit / decision:** Retain the catch. ContainerStorageAdapter starts with BlobOnlyStorage,
+whose `policies` getter calls `notCalled()` and throws. After connectToService, the adapter wraps
+RetriableDocumentStorageService, whose `policies` getter also throws until its asynchronous underlying
+storage service resolves. These states can occur with current implementations, independently of old runtimes.
+
+`IContainerStorageService` is legacy/beta: its optional `policies` member is already deprecated,
+but its optional `maximumCacheDurationMs` member is not. The latter delegates through the adapter's
+`policies` getter. Removing the catch would replace undefined with an exception on both access paths.
+Record the two paths in deferred lists 1 and 2. Current ContainerRuntime checks policies only when
+attached, but that narrower caller behavior does not redefine the exported storage contract.
+
+**Future consideration:** A separate lifecycle/API design could expose absent policies explicitly
+instead of deliberately throwing and swallowing an exception. It would need to distinguish unavailable
+storage from genuine driver getter failures and preserve existing observable contracts. This is not
+a pre-OCV-only shim removal.
+
+**Validation:** Read-only audit of adapter initialization, BlobOnlyStorage, retriable and protocol-tree
+wrappers, exported types, and current runtime caller. No product/test changes or additional execution.
 
 ### 11. Extra scheduling hooks for old loaders
 
@@ -390,7 +407,7 @@ API behavior. Category 3 cleanup is approved and complete. Category 4 runtime cl
 with loader-side routing deferred. Categories 5 and 6 cleanup are approved and complete;
 category 7 is deferred to preserve non-deprecated legacy/beta API behavior. Category 8 event-bridge
 cleanup is approved and complete, with visibility behavior deferred. Category 9 cleanup is approved and complete;
-categories 10–11 remain pending decision.
+category 10 is retained/deferred for storage lifecycle and API behavior; category 11 remains pending decision.
 Retained/deferred categories should include the reason and any follow-up evidence needed.
 
 ## Deferred list 1: reachable through already-deprecated legacy/beta APIs
@@ -401,6 +418,7 @@ These are candidates for a separately approved API-removal effort, not this clea
 | --- | --- | --- | --- |
 | 2. Old loader-to-runtime request routing: ContainerRuntime's private `request()`, stored handler, and associated plumbing | `LoadContainerRuntimeParams.requestHandler` (`@legacy @beta`); Aqueduct `BaseContainerRuntimeFactoryProps.requestHandlers` (`@legacy @beta`) | Both properties have existing `@deprecated` notices tied to entry-point migration | Review partner usage and follow the legacy/beta breaking-change process; remove routing and configuration together. Preserve `resolveHandle` and any independently needed handle-resolution handlers. |
 | 4. Loader generic-submit summary routing: `submitContainerMessage` handling of `MessageType.Summarize` | `IContainerContext.submitFn` (`@legacy @beta`) | Method has `@deprecated` directing callers to `submitBatchFn` and `submitSummaryFn` | Preserve generic submission behavior until the deprecated API is separately approved for removal. The runtime's missing-`submitSummaryFn` fallback can be removed independently. |
+| 10. Storage-policy exception suppression (deprecated access path) | `IContainerStorageService.policies` (`@legacy @beta`) | Member has `@deprecated` directing runtimes toward maximumCacheDurationMs | Preserve undefined on unavailable storage. A separate lifecycle refactor or approved API removal is needed; see the non-deprecated path in list 2. |
 
 ## Deferred list 2: reachable through non-deprecated legacy/beta APIs
 
@@ -408,6 +426,7 @@ These are candidates for a separately approved API-removal effort, not this clea
 | --- | --- | --- | --- |
 | 7. Runtime `disposeFn ?? closeFn` fallback | Optional `IContainerContext.disposeFn` and required `closeFn` on non-deprecated `@legacy @beta` IContainerContext | Neither member is deprecated; `closeFn` remarks explicitly document fallback when disposal is omitted | Establish and deprecate the optional-context contract before any separately approved breaking change. Preserve summarizer disposal and error propagation for conforming contexts meanwhile. |
 | 8. Automatic graph attachment when entering Attaching; existing duplicate Attached notifications | Non-deprecated `@legacy @beta` FluidDataStoreRuntime and IFluidDataStoreChannel attachment methods | Neither the runtime class nor attachment methods are deprecated | Audit and stage any new graph-visibility ordering requirement or notification-count change separately; retain current observable behavior in this cleanup. |
+| 10. Storage-policy exception suppression (cache-duration access path) | `IContainerStorageService.maximumCacheDurationMs` (`@legacy @beta`), implemented through the adapter's policies getter | Member is optional and not deprecated | Preserve undefined while storage is detached or initializing. Any cleanup must preserve this lifecycle behavior; advancing OCV does not make storage synchronously available. |
 
 When adding an entry, identify the compatibility path, the API that makes it reachable, evidence that
 the API is not deprecated, and the prerequisite for a separate deprecation/removal effort. If a candidate
