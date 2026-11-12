@@ -42,6 +42,13 @@ import {
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
+/**
+ * Verifies that legacy factories and containers can use the ServiceClient APIs without migrating persisted documents.
+ * Exercises both bridges with real runtimes: factory identity and child registries, initialization-time child creation,
+ * application-selected roots, named channels, handles, and collaboration across the two APIs.
+ * Checks that mismatched factories are rejected and that summaries retain the legacy structure and load through either API.
+ * This tests interoperability between APIs at the same version, not compatibility between client versions.
+ */
 describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 	const { FluidDataStoreRuntime } = apis.dataRuntime;
