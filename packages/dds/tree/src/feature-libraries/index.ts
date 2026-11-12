@@ -182,6 +182,7 @@ export {
 	// Internal
 	flexTreeMarker,
 	assertFlexTreeEntityNotFreed,
+	notLeafContent,
 	flexTreeSlot,
 	getSchemaAndPolicy,
 	LazyEntity,

@@ -5,6 +5,7 @@
 
 export {
 	isTreeNode,
+	kernelSlot,
 	TreeNodeKernel,
 	getKernel,
 	tryGetTreeNodeSchema,

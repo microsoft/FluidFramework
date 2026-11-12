@@ -14,7 +14,9 @@ import {
 } from "../../../core/index.js";
 import {
 	FieldKinds,
+	isFlexTreeNode,
 	isTreeValue,
+	notLeafContent,
 	type FlexTreeField,
 	type FlexTreeNode,
 	type FlexTreeOptionalField,
@@ -38,6 +40,7 @@ import {
 	type TreeNode,
 	type UnhydratedFlexTreeNode,
 	getInnerNode,
+	getOrCreateNodeFromInnerNode,
 	type NodeSchemaMetadata,
 	type ImplicitAllowedTypes,
 	TreeNodeValid,
@@ -50,6 +53,8 @@ import {
 	createField,
 	type TreeNodeSchemaCorePrivate,
 	type TreeNodeSchemaPrivateData,
+	kernelSlot,
+	type TreeNodeKernel,
 } from "../../core/index.js";
 import {
 	getTreeNodeSchemaInitializedData,
@@ -318,10 +323,20 @@ function createProxyHandler(
 	// a dispatch object to see if it improves performance.
 	const handler: ProxyHandler<TreeNode> = {
 		get(target, propertyKey, proxy): unknown {
+			if (propertyKey === kernelSlot) {
+				return Reflect.get(target, propertyKey);
+			}
 			const fieldInfo = schema.flexKeyMap.get(propertyKey);
 			if (fieldInfo !== undefined) {
 				const flexNode = getInnerNode(proxy);
 				debugAssert(() => !flexNode.context.isDisposed() || "FlexTreeNode is disposed");
+				if (flexNode.tryGetSingleContent !== undefined) {
+					// Read the content without creating a field object for it.
+					const content = flexNode.tryGetSingleContent(fieldInfo.storedKey);
+					if (content !== notLeafContent) {
+						return isFlexTreeNode(content) ? getOrCreateNodeFromInnerNode(content) : content;
+					}
+				}
 				const field = flexNode.tryGetField(fieldInfo.storedKey);
 				if (field !== undefined) {
 					return tryGetTreeNodeForField(field);
@@ -365,28 +380,28 @@ function createProxyHandler(
 		has: (target, propertyKey) => {
 			return (
 				schema.flexKeyMap.has(propertyKey) ||
-				(allowAdditionalProperties ? Reflect.has(target, propertyKey) : false)
+				(allowAdditionalProperties && propertyKey !== kernelSlot
+					? Reflect.has(target, propertyKey)
+					: false)
 			);
 		},
 		ownKeys: (target) => {
 			return [
 				...schema.flexKeyMap.keys(),
-				...(allowAdditionalProperties ? Reflect.ownKeys(target) : []),
+				...(allowAdditionalProperties ? ownKeysOfTarget(target) : []),
 			];
 		},
 		getOwnPropertyDescriptor: (target, propertyKey) => {
 			const fieldInfo = schema.flexKeyMap.get(propertyKey);
 
 			if (fieldInfo === undefined) {
-				return allowAdditionalProperties
+				return allowAdditionalProperties && propertyKey !== kernelSlot
 					? Reflect.getOwnPropertyDescriptor(target, propertyKey)
 					: undefined;
 			}
 
-			// For some reason, the getOwnPropertyDescriptor is not passed in the receiver, so use a weak map.
-			// If a refactoring is done to associated flex tree data with the target not the proxy, this extra map could be removed,
-			// and the design would be more compatible with proxyless nodes.
-			const proxy = targetToProxy.get(target) ?? fail(0xadd /* missing proxy */);
+			// getOwnPropertyDescriptor is not passed the receiver, so find the proxy from the kernel its target holds.
+			const proxy = proxyOfTarget(target) ?? fail(0xadd /* missing proxy */);
 			const field = getInnerNode(proxy).tryGetField(fieldInfo.storedKey);
 
 			const p: PropertyDescriptor = {
@@ -564,7 +579,6 @@ export function objectSchema<
 
 			const proxyTarget = customizable ? instance : {};
 			const proxy = new Proxy(proxyTarget, handler) as CustomObjectNode;
-			targetToProxy.set(proxyTarget, proxy);
 			return proxy;
 		}
 
@@ -652,7 +666,19 @@ export function objectSchema<
 	return CustomObjectNode as Output;
 }
 
-const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();
+/**
+ * The proxy (node) whose target is `target`, once its kernel is attached: the proxy forwards the kernel slot to its target.
+ */
+function proxyOfTarget(target: object): TreeNode | undefined {
+	return (target as { [kernelSlot]?: TreeNodeKernel })[kernelSlot]?.node;
+}
+
+/**
+ * The own keys of a proxy target, without the {@link kernelSlot} it holds for the proxy.
+ */
+function ownKeysOfTarget(target: object): (string | symbol)[] {
+	return Reflect.ownKeys(target).filter((key) => key !== kernelSlot);
+}
 
 /**
  * Ensures that the set of property keys in the schema is unique.
@@ -808,7 +834,7 @@ function applyFieldChange(
 	const proxy =
 		from.kind === "proxy"
 			? from.node
-			: (targetToProxy.get(from.node) ?? fail(0xc95 /* missing proxy */));
+			: (proxyOfTarget(from.node) ?? fail(0xc95 /* missing proxy */));
 	const inner = getInnerNode(proxy);
 	const storedSchema = inner.context.schema.nodeSchema.get(brand(schema.identifier));
 	assert(
