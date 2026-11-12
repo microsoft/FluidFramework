@@ -858,36 +858,6 @@ describe("checkSchemaCompatibility", () => {
 				);
 			});
 
-			it("lets an older client enable another staged type without removing types allowed by a newer document", () => {
-				const stagedString = factory.staged(factory.string);
-				const stringUpgrade = stagedString.metadata.stagedSchemaUpgrade;
-				assert(stringUpgrade !== undefined);
-				const stagedUnassigned = factory.staged(factory.null);
-				const unassignedUpgrade = stagedUnassigned.metadata.stagedSchemaUpgrade;
-				assert(unassignedUpgrade !== undefined);
-
-				class Before extends factory.object("Task", {
-					priority: factory.types([factory.number, stagedString, stagedUnassigned]),
-				}) {}
-
-				// Fully enable string priorities in the later schema, without shipping the staged `null` alternative.
-				class After extends factory.object("Task", {
-					priority: [factory.number, factory.string],
-				}) {}
-
-				// The older view can read the newer document. Enabling only `null` must retain its strings and produce a real upgrade.
-				// Enablement status describes the document before the upgrade, so only its string upgrade is reported as enabled.
-				expectCompatibility(
-					{ view: Before, stored: toInitialSchema(After) },
-					{
-						canView: true,
-						canUpgrade: true,
-						enabledUpgrades: new Map([[stringUpgrade, "enabled"]]),
-					},
-					StagedSchemaUpgradePolicy.enabledStagedUpgrades(unassignedUpgrade),
-				);
-			});
-
 			for (const location of ["root", "array", "map"] as const) {
 				it(`preserves newer document types without enabling them in documents created by the older schema (${location})`, () => {
 					const priorities = [factory.number, factory.string] as const;

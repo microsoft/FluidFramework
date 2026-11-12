@@ -29,7 +29,7 @@ import {
 	type TransitiveSchemaInfo,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/treeSchema.js";
-import { brand, oneFromIterable } from "../../util/index.js";
+import { oneFromIterable } from "../../util/index.js";
 import { getStagedSchemaUpgrades, testSchema } from "../testTrees.js";
 import { expectSchemaEqual } from "../utils.js";
 import { createSchemaGraph } from "./schemaTestUtils.js";
@@ -603,37 +603,19 @@ describe("treeSchema", () => {
 			expectSchemaEqual(toInitialSchema(before), toInitialSchema(Task));
 		});
 
-		it("retains recursive definitions referenced only by an already-enabled staged root type", () => {
-			class Task extends schemaFactory.objectRecursive("Task", {
-				title: schemaFactory.string,
-				next: schemaFactory.optionalRecursive([() => Task]),
-			}) {}
-			const before = schemaFactory.types([schemaFactory.string, schemaFactory.staged(Task)]);
-
-			// Fully enable structured tasks alongside plain task titles in the later schema.
-			const after = [schemaFactory.string, Task] as const;
-			const stored = toInitialSchema(after);
-			const result = getSchemaUpgradeCandidate(
-				createTreeSchema(before),
-				stored,
-				StagedSchemaUpgradePolicy.restrictive,
-			);
-
-			// The older view must retain the newer document's `Task` definition and recursive references.
-			expectSchemaEqual(result, stored);
-			assert(!toInitialSchema(before).nodeSchema.has(brand(Task.identifier)));
-		});
-
 		/**
 		 * V1 stages `Task` alongside numbers.
-		 * V2 enables `Task`, whose required `Child` contains a string.
-		 * Opening V2's schema with V1's restrictive policy must restore `Task` and every descendant definition, including `Child`.
+		 * V2 enables `Task`, which references itself and has a required `Child` containing a string.
+		 * Opening V2's schema with V1's restrictive policy must restore all three definitions without repeating traversal around the cycle.
 		 */
-		it("retains descendant definitions referenced only by an already-enabled staged root type", () => {
+		it("retains descendants and recursive references of an already-enabled staged root type", () => {
 			class Child extends schemaFactory.object("Child", {
 				text: schemaFactory.string,
 			}) {}
-			class Task extends schemaFactory.object("Task", { child: Child }) {}
+			class Task extends schemaFactory.objectRecursive("Task", {
+				child: Child,
+				next: schemaFactory.optionalRecursive([() => Task]),
+			}) {}
 			const schemaV1 = schemaFactory.types([schemaFactory.number, schemaFactory.staged(Task)]);
 			const schemaV2 = [schemaFactory.number, Task] as const;
 			const view = createTreeSchema(schemaV1);
