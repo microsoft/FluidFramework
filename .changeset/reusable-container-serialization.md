@@ -6,7 +6,7 @@ Capture reusable container state
 
 The new `ContainerAlpha.serializeAttached` method makes capturing an attached container's state more convenient.
 For attached containers, callers explicitly choose whether to include unsequenced local changes.
-With `includePendingLocalState: false`, `serializeAttached` omits local changes and session-specific state and can safely load multiple independent containers for the same document.
+With `includePendingLocalState: false`, `serializeAttached` omits local changes and session-specific state and the returned state can safely be used to load multiple containers connected to the original document.
 `includePendingLocalState: true` has the same behavior and restrictions as `getPendingLocalState`: close the source container before loading the state, never load the same state more than once, and replace stored state after each reconnect.
 
 ```typescript
