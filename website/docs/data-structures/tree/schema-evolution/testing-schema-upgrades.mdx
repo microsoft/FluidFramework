@@ -167,31 +167,6 @@ assert.equal(result.canView, true);
 
 This is useful for verifying that each phase of your rollout maintains the expected compatibility relationships.
 
-### Testing Staged Permission Preservation
-
-To verify that an earlier client preserves a completed rollout, define an earlier schema that stages a type and a later schema that fully enables it.
-Create a document with the later schema, then open it with the earlier client's restrictive policy.
-The earlier view should still read and edit the enabled values, and a call to `upgradeSchema()` must not remove that permission.
-If the view requests no other additions, verify that the call leaves the stored schema unchanged and emits no schema-change event or operation.
-
-Extend that scenario to cover the ways permissions can accumulate during a rollout:
-
-- A selected token enables a new type while another type, staged but not selected, is already permitted by the stored schema.
-- A shared token is enabled at only one of two fields; preservation leaves the other field unchanged until the policy explicitly enables it.
-- A remote schema change refreshes the other client's compatibility and staged-upgrade status.
-- A summary and reload preserve already-enabled types, optionality, and the data that uses those permissions.
-
-Also initialize a fresh document with the earlier view and restrictive policy.
-Unlike the upgraded document, it should still exclude the staged type: preserving a permission in one document must not enable it in another.
-
-These live-document tests complement the <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">snapshot validator</ApiLink>, which checks a different set of conditions.
-It requires the current schema to be able to upgrade documents from every historical snapshot, while historical clients within the collaboration window must be able to view current documents without upgrading.
-A safe runtime upgrade by an older client does not satisfy that immediate-viewing requirement, so test any application flow that performs such an upgrade separately.
-
-Snapshots also describe view-schema versions rather than every possible stored history.
-The helpers currently assume restrictive staging instead of honoring configured upgrade policies, and they do not preserve staged optionality when reconstructing a schema.
-Use live-document tests to cover those limitations, including documents with partially enabled tokens.
-
 ## Tips
 
 - **Use `independentView`** for isolated tests that don't require a Fluid service connection.
