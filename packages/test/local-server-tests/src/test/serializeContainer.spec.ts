@@ -199,16 +199,18 @@ describe("container serialization", () => {
 			const frozenObject = await getDataObject(frozen);
 			assert.equal(frozenObject.root.get("value"), "saved callback edit");
 		});
+	}
 
-		for (const action of ["close", "dispose"] as const) {
-			it(`rejects after ${action}, includePendingLocalState: ${includePendingLocalState}`, async () => {
-				source[action]();
+	for (const action of ["close", "dispose"] as const) {
+		it(`rejects after ${action}`, async () => {
+			source[action]();
+			for (const includePendingLocalState of [true, false]) {
 				await assert.rejects(
 					serialize(source, includePendingLocalState),
 					/Container must be attached, open, and not disposed/,
 				);
-			});
-		}
+			}
+		});
 	}
 
 	it("loads reusable state into multiple live containers while the source remains open", async () => {

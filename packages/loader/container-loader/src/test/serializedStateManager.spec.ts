@@ -207,35 +207,36 @@ describe("serializedStateManager", () => {
 	});
 
 	describe("serialize", () => {
-		for (const includePendingLocalState of [true, false]) {
-			it(`requires offline loading, includePendingLocalState: ${includePendingLocalState}`, async () => {
-				const manager = new SerializedStateManager(
-					logger,
-					new MockStorageAdapter(),
-					false,
-					eventEmitter,
-					() => true,
-					() => false,
-				);
-				await assert.rejects(
-					manager.serialize("clientId", new MockRuntime(), resolvedUrl, {
-						includePendingLocalState,
-					}),
-					/Can't get pending local state unless offline load is enabled/,
-				);
-				manager.dispose();
-			});
-		}
-
-		it("omits local runtime state and client identity without calling the runtime", async () => {
+		function createTestState(offlineLoadEnabled: boolean = true): {
+			manager: SerializedStateManager;
+			storage: MockStorageAdapter;
+			runtime: MockRuntime;
+		} {
+			const storage = new MockStorageAdapter();
 			const manager = new SerializedStateManager(
 				logger,
-				new MockStorageAdapter(),
-				true,
+				storage,
+				offlineLoadEnabled,
 				eventEmitter,
 				() => true,
 				() => false,
 			);
+			return { manager, storage, runtime: new MockRuntime() };
+		}
+
+		it("requires offline loading for reusable state", async () => {
+			const { manager, runtime } = createTestState(false);
+			await assert.rejects(
+				manager.serialize("clientId", runtime, resolvedUrl, {
+					includePendingLocalState: false,
+				}),
+				/Can't get pending local state unless offline load is enabled/,
+			);
+			manager.dispose();
+		});
+
+		it("omits local runtime state and client identity without calling the runtime", async () => {
+			const { manager } = createTestState();
 			manager.setInitialSnapshot(initialSnapshot);
 			manager.addProcessedOp(generateSavedOp(1));
 			const runtime: ISerializedStateManagerRuntime = {
@@ -256,16 +257,8 @@ describe("serializedStateManager", () => {
 		});
 
 		it("includes the same local state as getPendingLocalState when requested", async () => {
-			const manager = new SerializedStateManager(
-				logger,
-				new MockStorageAdapter(),
-				true,
-				eventEmitter,
-				() => true,
-				() => false,
-			);
+			const { manager, runtime } = createTestState();
 			manager.setInitialSnapshot(initialSnapshot);
-			const runtime = new MockRuntime();
 			const state = await manager.serialize("source-client", runtime, resolvedUrl, {
 				includePendingLocalState: true,
 			});
@@ -279,38 +272,67 @@ describe("serializedStateManager", () => {
 			manager.dispose();
 		});
 
-		it("captures the sequenced boundary before asynchronous blob reads", async () => {
+		it("keeps the snapshot and trailing ops consistent when refresh occurs during blob reads", async () => {
 			const storage = new MockStorageAdapter();
 			const manager = new SerializedStateManager(
-				logger,
+				enableOfflineSnapshotRefresh(logger),
 				storage,
 				true,
 				eventEmitter,
-				() => true,
 				() => false,
+				() => false,
+				1000,
 			);
-			await manager.fetchSnapshot(undefined, undefined);
-			manager.addProcessedOp(generateSavedOp(1));
+			const runtime = new MockRuntime();
+			const readStarted = new Deferred<void>();
 			const readAllowed = new Deferred<void>();
-			const readBlob = storage.readBlob.bind(storage);
-			storage.readBlob = async (id) => {
-				await readAllowed.promise;
-				return readBlob(id);
-			};
-			const stateP = manager.serialize("source-client", new MockRuntime(), resolvedUrl, {
-				includePendingLocalState: false,
-			});
-			manager.addProcessedOp(generateSavedOp(2));
-			readAllowed.resolve();
-			const state = JSON.parse(await stateP) as IPendingContainerState;
-			assert.deepEqual(state.savedOps, [generateSavedOp(1)]);
-			const nextState = JSON.parse(
-				await manager.serialize("source-client", new MockRuntime(), resolvedUrl, {
+			const clock = useFakeTimers();
+			try {
+				await manager.fetchSnapshot(undefined, undefined);
+				const ops = [generateSavedOp(1), generateSavedOp(2)];
+				for (const op of ops) {
+					manager.addProcessedOp(op);
+				}
+				const readBlob = storage.readBlob.bind(storage);
+				storage.readBlob = async (id) => {
+					if (id === snapshotTree.trees[".protocol"].blobs.attributes) {
+						readStarted.resolve();
+						await readAllowed.promise;
+					}
+					return readBlob(id);
+				};
+				const stateP = manager.serialize("source-client", runtime, resolvedUrl, {
 					includePendingLocalState: false,
-				}),
-			) as IPendingContainerState;
-			assert.deepEqual(nextState.savedOps, [generateSavedOp(1), generateSavedOp(2)]);
-			manager.dispose();
+				});
+				await readStarted.promise;
+
+				// Refresh covers op 1 and trims it from the live op list while capture is reading the old snapshot.
+				storage.uploadSummary(1);
+				clock.tick(1000);
+				const refresh = manager.refreshSnapshotP;
+				assert(refresh !== undefined);
+				assert.equal(await refresh, 1);
+				readAllowed.resolve();
+
+				const state = JSON.parse(await stateP) as IPendingContainerState;
+				const snapshotSequenceNumber = getAttributesFromPendingState(state).sequenceNumber;
+				assert([0, 1].includes(snapshotSequenceNumber));
+				assert.deepEqual(
+					state.savedOps,
+					ops.filter((op) => op.sequenceNumber > snapshotSequenceNumber),
+				);
+				const nextState = JSON.parse(
+					await manager.serialize("source-client", runtime, resolvedUrl, {
+						includePendingLocalState: false,
+					}),
+				) as IPendingContainerState;
+				assert.equal(getAttributesFromPendingState(nextState).sequenceNumber, 1);
+				assert.deepEqual(nextState.savedOps, [generateSavedOp(2)]);
+			} finally {
+				readAllowed.resolve();
+				manager.dispose();
+				clock.restore();
+			}
 		});
 	});
 

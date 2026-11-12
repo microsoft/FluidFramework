@@ -465,8 +465,9 @@ export class SerializedStateManager implements IDisposable {
 							sessionExpiryTimerStarted: this.snapshotInfo.snapshotFetchedTime,
 						})
 					: undefined;
-				// Keep the snapshot and trailing ops together while blob reads yield to incoming ops
-				// and snapshot refreshes.
+				// Capture a consistent snapshot and trailing-op list before blob reads yield.
+				// Snapshot refresh replaces the snapshot and trims processedOps in place; mixing the old
+				// snapshot with the trimmed list would omit operations during reload.
 				const snapshotInfo = this.snapshotInfo;
 				const savedOps = [...this.processedOps];
 				// This conversion is required because ArrayBufferLike doesn't survive JSON.stringify
