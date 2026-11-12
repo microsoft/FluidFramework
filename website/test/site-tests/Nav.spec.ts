@@ -174,6 +174,11 @@ async function withPendingQuickStart(
 	} finally {
 		// Playwright's Route.removeHandler continues requests held by the removed handler.
 		// Calling route.continue() ourselves would handle them twice.
+		// As of 11/12/26, this behavior does not appear to be officially documented.
+		// If the behavior changes in some future playwright release, this would likely result in tests
+		// that use this helper hanging.
+		// The helper can be adapted to explicitly invoke continue on all pending scripts before calling unroute.
+		// Relevant code pointer in playwright:
 		// https://github.com/microsoft/playwright/blob/9a82788d83cf91d8262e65a432b9bf93dc5418a7/packages/playwright-core/src/server/network.ts#L417-L423
 		await page.unroute("**/*.js", holdScript);
 	}
