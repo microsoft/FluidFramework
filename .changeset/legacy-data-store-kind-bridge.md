@@ -2,7 +2,9 @@
 "@fluidframework/runtime-utils": minor
 "__section": legacy
 ---
-Use legacy data-store factories with alpha ServiceClient APIs
+Legacy data-store factories can now be used with the alpha ServiceClient APIs
+
+Two new `@legacy` `@alpha` APIs have been added to help existing users of the `@legacy` API surface incrementally adopt the new `@alpha` [`ServiceClient`](https://fluidframework.com/docs/api/fluid-framework/serviceclient-interface) APIs.
 
 The new `dataStoreKindFromFactory` function in `@fluidframework/runtime-utils/legacy/alpha` lets you use an existing data-store factory as an alpha `DataStoreKind`.
 It preserves the original factory, child registry, entry point, and persisted representation without adding persisted objects.
