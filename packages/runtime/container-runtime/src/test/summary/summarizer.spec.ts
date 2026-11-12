@@ -33,6 +33,87 @@ import {
 describe("Runtime", () => {
 	describe("Summarization", () => {
 		describe("Summarizer", () => {
+			for (const retryOnFailure of [false, true]) {
+				it(`starts on demand without competing heuristics (retryOnFailure: ${retryOnFailure})`, async () => {
+					const clock = sinon.useFakeTimers();
+					const deltaManager = new MockDeltaManager();
+					const logger = new MockLogger();
+					const stopped = new Deferred<SummarizerStopReason>();
+					const coordinator: ICancellableSummarizerController = {
+						cancelled: false,
+						waitCancelled: stopped.promise,
+						stop: (reason) => stopped.resolve(reason),
+					};
+					const runtime = Object.assign(new TypedEventEmitter<IContainerRuntimeEvents>(), {
+						deltaManager,
+						baseLogger: logger,
+						clientId: "summarizer",
+						disposeFn: () => {},
+					});
+					const configuration: ISummaryConfigurationHeuristics = {
+						state: "enabled",
+						maxTime: 1000,
+						maxOps: 2,
+						minOpsForLastSummaryAttempt: 1,
+						minIdleTime: 0,
+						maxIdleTime: 1000,
+						runtimeOpWeight: 1,
+						nonRuntimeOpWeight: 0.1,
+						maxAckWaitTime: 12345,
+						maxOpsSinceLastSummary: 7000,
+						initialSummarizerDelayMs: 0,
+					};
+					const submitSummary = sinon.stub().resolves({ stage: "base" });
+					const summarizer = new Summarizer(
+						runtime as unknown as ISummarizerRuntime,
+						() => configuration,
+						{ submitSummary, refreshLatestSummaryAck: async () => {} },
+						{} as unknown as IFluidHandleContext,
+						new SummaryCollection(deltaManager, logger),
+						async () => coordinator,
+					);
+					try {
+						const op = {
+							sequenceNumber: 1,
+							type: MessageType.Operation,
+						} as unknown as ISequencedDocumentMessage;
+						for (let i = 0; i < 3; i++) {
+							runtime.emit("op", op, true);
+						}
+						const results = summarizer.summarizeOnDemand({
+							reason: "test-request",
+							retryOnFailure,
+						});
+						await clock.tickAsync(0);
+						// A base-stage result ends the attempt without needing a service ACK.
+						await results.receivedSummaryAckOrNack;
+						assert.equal(submitSummary.callCount, 1, "only the requested summary should run");
+						logger.assertMatchAny([
+							{
+								eventName: "Summarizer:RunningSummarizer",
+								config: JSON.stringify({ ...configuration, state: "summaryOnRequest" }),
+							},
+							{
+								eventName: "Summarizer:Running:Summarize_start",
+								// Existing telemetry uses ";" in the retry path and "/" in the single-attempt path.
+								summarizeReason: retryOnFailure
+									? "onDemand;test-request"
+									: "onDemand/test-request",
+							},
+						]);
+						assert.equal(
+							configuration.state,
+							"enabled",
+							"must not mutate runtime configuration",
+						);
+					} finally {
+						summarizer.dispose();
+						await clock.tickAsync(0);
+						clock.restore();
+					}
+				});
+			}
+
 			for (const trigger of ["maxTime", "maxOps"] as const) {
 				it(`starts automatic ${trigger} scheduling from the correct time and catch-up counts`, async () => {
 					const clock = sinon.useFakeTimers();
