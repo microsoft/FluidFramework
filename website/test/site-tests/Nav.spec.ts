@@ -4,7 +4,7 @@
  */
 
 import { test, expect } from "@playwright/test";
-import type { Locator, Page, Route } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 
 test.describe("Nav", () => {
 	test.beforeEach(async ({ page }) => {
@@ -158,29 +158,21 @@ async function withPendingQuickStart(
 		});
 	});
 	const sidebar = await openSidebar(page, width, "/docs/start/tutorial/");
-	const pendingScripts: Route[] = [];
-	let releasing = false;
-	const holdScript = async (route: Route): Promise<void> => {
-		if (releasing) {
-			await route.continue();
-		} else {
-			pendingScripts.push(route);
-		}
-	};
-	await page.route("**/*.js", holdScript);
+	await page.route("**/*.js", () => {
+		// Pause scripts until cleanup removes the interceptor.
+	});
 	try {
-		await sidebar.locator('a[href="/docs/start/quick-start"]').press("Enter");
+		await Promise.all([
+			page.waitForRequest("**/*.js"),
+			sidebar.locator('a[href="/docs/start/quick-start"]').press("Enter"),
+		]);
 		await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
-		await expect.poll(() => pendingScripts.length).toBeGreaterThan(0);
 		// Exceed the previous 50 ms focus delay before scripts can complete.
 		await page.waitForTimeout(150);
 		await expect(page.locator("main h1")).toHaveText("Tutorial: DiceRoller application");
 		await assertPending(sidebar);
 	} finally {
-		releasing = true;
-		// Unrouting also releases held requests, so continue them before removing the handler.
-		await Promise.all(pendingScripts.map(async (route) => route.continue()));
-		await page.unroute("**/*.js", holdScript);
+		await page.unroute("**/*.js");
 	}
 }
 
