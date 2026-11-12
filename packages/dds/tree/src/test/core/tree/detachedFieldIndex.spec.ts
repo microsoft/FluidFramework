@@ -749,5 +749,29 @@ describe("DetachedFieldIndex methods", () => {
 			assert.deepEqual(snapshot(index, [r1]), before);
 			point.release();
 		});
+
+		for (const [name, replace] of [
+			["purge", (index: DetachedFieldIndex) => index.purge()],
+			[
+				"loadData",
+				(index: DetachedFieldIndex) => index.loadData({ data: new Map(), maxId: brand(10) }),
+			],
+		] as const) {
+			it(`restore entry changes made before ${name}`, () => {
+				const index = makeDetachedFieldIndex();
+				const [r1, r2] = [mintRevisionTag(), mintRevisionTag()];
+				index.createEntry(makeDetachedNodeId(r1, 1), r1);
+				index.createEntry(makeDetachedNodeId(r2, 1), r2, 2);
+				const before = snapshot(index, [r1, r2]);
+				const point = index.createRestorePoint();
+				index.createEntry(makeDetachedNodeId(r1, 2), r1);
+				index.deleteEntry(makeDetachedNodeId(r2, 1));
+				index.deleteEntry(makeDetachedNodeId(r2, 2));
+				replace(index);
+				point.restore();
+				assert.deepEqual(snapshot(index, [r1, r2]), before);
+				point.release();
+			});
+		}
 	});
 });

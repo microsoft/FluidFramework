@@ -121,13 +121,13 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 	readonly #restorePointStarts: number[] = [];
 
 	/**
-	 * For each inner map of the index which has had an entry deleted while a restore point is open,
+	 * For each map of the index (at either level) which has had an entry deleted while a restore point is open,
 	 * the record in {@link DetachedFieldIndex.#undoLog} which restores all its entries, in order.
 	 * @remarks
 	 * One such record, made after the newest open restore point started, is enough to undo any number of deletions from the map:
 	 * the records of later changes are undone first.
 	 */
-	readonly #innerMapRestores = new WeakMap<
+	readonly #mapRestores = new WeakMap<
 		ReadonlyMap<unknown, unknown>,
 		{ readonly index: number; readonly undo: () => void }
 	>();
@@ -239,33 +239,39 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 	 * Undoing restores the iteration order of both levels of the map, which summaries depend on.
 	 */
 	#deleteFromNestedMap<K1, K2, V>(map: NestedMap<K1, K2, V>, key1: K1, key2: K2): boolean {
-		const log = this.#undoLog;
 		const inner = map.get(key1);
-		if (log !== undefined && inner?.has(key2) === true) {
+		if (inner?.has(key2) === true) {
 			if (inner.size === 1) {
 				// The inner map is removed from `map`, so its position in `map` must be restored too.
-				log.push(restoreMapOrder(map, key1, inner));
+				this.#recordMapEntries(map);
 			}
-			const restore = this.#innerMapRestores.get(inner);
-			const newestStart = Math.max(...this.#restorePointStarts);
-			// Copying the inner map for each deletion would make deleting many of its entries quadratic.
-			if (
-				restore === undefined ||
-				restore.index < newestStart ||
-				log[restore.index] !== restore.undo
-			) {
-				const entries = [...inner];
-				const undo = (): void => {
-					inner.clear();
-					for (const [key, value] of entries) {
-						inner.set(key, value);
-					}
-				};
-				this.#innerMapRestores.set(inner, { index: log.length, undo });
-				log.push(undo);
-			}
+			this.#recordMapEntries(inner);
 		}
 		return deleteFromNestedMap(map, key1, key2);
+	}
+
+	/**
+	 * Records how to restore all the entries of `map`, in order, before an entry is deleted from it while a restore point is open,
+	 * unless that is already recorded since the newest open restore point started.
+	 * @remarks
+	 * Copying the map for each deletion would make deleting many of its entries quadratic.
+	 */
+	#recordMapEntries<K, V>(map: Map<K, V>): void {
+		const log = this.#undoLog;
+		if (log === undefined) {
+			return;
+		}
+		const restore = this.#mapRestores.get(map);
+		const newestStart = Math.max(...this.#restorePointStarts);
+		if (
+			restore === undefined ||
+			restore.index < newestStart ||
+			log[restore.index] !== restore.undo
+		) {
+			const undo = restoreMapEntries(map);
+			this.#mapRestores.set(map, { index: log.length, undo });
+			log.push(undo);
+		}
 	}
 
 	/**
@@ -278,25 +284,15 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 		}
 		const detachedNodeToField = this.detachedNodeToField;
 		const latestRelevantRevisionToFields = this.latestRelevantRevisionToFields;
-		const detachedNodeToFieldCopy: NestedMap<Major, Minor, DetachedField> = new Map();
-		populateNestedMap(detachedNodeToField, detachedNodeToFieldCopy, true);
-		const latestRelevantRevisionToFieldsCopy: typeof latestRelevantRevisionToFields =
-			new Map();
-		populateNestedMap(
+		// The maps are restored as the same objects, since the records of earlier changes refer to them.
+		const restoreDetachedNodeToField = restoreNestedMapEntries(detachedNodeToField);
+		const restoreLatestRelevantRevisionToFields = restoreNestedMapEntries(
 			latestRelevantRevisionToFields,
-			latestRelevantRevisionToFieldsCopy,
-			true,
 		);
 		const isFullyLoaded = this.isFullyLoaded;
 		log.push(() => {
-			detachedNodeToField.clear();
-			populateNestedMap(detachedNodeToFieldCopy, detachedNodeToField, true);
-			latestRelevantRevisionToFields.clear();
-			populateNestedMap(
-				latestRelevantRevisionToFieldsCopy,
-				latestRelevantRevisionToFields,
-				true,
-			);
+			restoreDetachedNodeToField();
+			restoreLatestRelevantRevisionToFields();
 			this.detachedNodeToField = detachedNodeToField;
 			this.latestRelevantRevisionToFields = latestRelevantRevisionToFields;
 			this.isFullyLoaded = isFullyLoaded;
@@ -366,9 +362,7 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 			return;
 		}
 
-		this.#undoLog?.push(
-			restoreMapOrder(this.latestRelevantRevisionToFields, revision, entries),
-		);
+		this.#recordMapEntries(this.latestRelevantRevisionToFields);
 		this.latestRelevantRevisionToFields.delete(revision);
 		for (const detachedNodeId of entries.values()) {
 			const found = this.#deleteFromNestedMap(
@@ -508,16 +502,29 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 }
 
 /**
- * Returns a function which puts `inner` back under `key` in `map`, at the position `key` has now,
- * for undoing the removal of `key` from `map` after this is called.
+ * Returns a function which puts back the entries `map` has now, in their current order.
  */
-function restoreMapOrder<K, V>(map: Map<K, V>, key: K, inner: V): () => void {
-	const keys = [...map.keys()];
+function restoreMapEntries<K, V>(map: Map<K, V>): () => void {
+	const entries = [...map];
 	return () => {
-		const current = new Map(map);
 		map.clear();
-		for (const k of keys) {
-			map.set(k, k === key ? inner : (current.get(k) as V));
+		for (const [key, value] of entries) {
+			map.set(key, value);
 		}
+	};
+}
+
+/**
+ * Returns a function which puts back the entries `map` and each of its inner maps have now, in their current order,
+ * keeping the same inner map objects.
+ */
+function restoreNestedMapEntries<K1, K2, V>(map: NestedMap<K1, K2, V>): () => void {
+	const restoreInnerMaps = [...map.values()].map((inner) => restoreMapEntries(inner));
+	const restoreOuterMap = restoreMapEntries(map);
+	return () => {
+		for (const restoreInnerMap of restoreInnerMaps) {
+			restoreInnerMap();
+		}
+		restoreOuterMap();
 	};
 }
