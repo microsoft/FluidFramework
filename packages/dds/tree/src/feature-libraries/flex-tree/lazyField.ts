@@ -15,6 +15,7 @@ import {
 	type FieldKindIdentifier,
 	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
+	ITreeSubscriptionCursorState,
 	type NormalizedFieldUpPath,
 	type TreeNavigationResult,
 	inCursorNode,
@@ -208,6 +209,34 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
 		return this.context.checkout.forest.tryMoveCursorToField(this.anchor, cursor);
+	}
+
+	protected override cursorFromAncestor(): ITreeSubscriptionCursor | undefined {
+		if (this.anchor.parent === undefined) {
+			return undefined;
+		}
+		const parent = this.context.checkout.forest.anchors.locate(this.anchor.parent);
+		const cursor =
+			parent === undefined ? undefined : LazyTreeNode.forkCursorFromAncestor(parent, true);
+		cursor?.enterField(this.key);
+		return cursor;
+	}
+
+	/**
+	 * The cursor this field holds, if it is current and at this field.
+	 * @remarks
+	 * A held cursor is moved away from its field only briefly, while reading the field's content.
+	 */
+	public currentCursorAtField(): ITreeSubscriptionCursor | undefined {
+		if (this.isFreed()) {
+			return undefined;
+		}
+		const held = this.heldCursor;
+		return held.state === ITreeSubscriptionCursorState.Current &&
+			held.mode === CursorLocationType.Fields &&
+			held.getFieldKey() === this.key
+			? held
+			: undefined;
 	}
 
 	protected override forgetAnchor(): void {

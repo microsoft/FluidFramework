@@ -14,6 +14,7 @@ import {
 	type FieldKey,
 	type ITreeSubscriptionCursor,
 	type MapTree,
+	compareUpPaths,
 	rootFieldKey,
 } from "../../../core/index.js";
 import { Context } from "../../../feature-libraries/flex-tree/context.js";
@@ -267,6 +268,48 @@ describe("LazyNode", () => {
 					[0, 1, 2],
 				);
 				view.dispose();
+			});
+
+			it("read leaves after an edit with cursors forked from an ancestor", () => {
+				/**
+				 * Reads every leaf of a slide with `count` shapes after an edit, returning how many cursors were moved from the root.
+				 */
+				function seeksToReadAfterEdit(count: number): number {
+					const view = createSlide(count);
+					const read = (): unknown =>
+						view.root.shapes.map((shape) => [shape.id, shape.xfrm.off?.x, shape.xfrm.off?.y]);
+					const before = read();
+					view.root.title = "edited";
+
+					const root = getInnerNode(view.root);
+					assert(root instanceof LazyTreeNode);
+					const checkoutForest = root.context.checkout.forest;
+					let seeks = 0;
+					const tryMoveCursorToNode = checkoutForest.tryMoveCursorToNode.bind(checkoutForest);
+					const tryMoveCursorToField =
+						checkoutForest.tryMoveCursorToField.bind(checkoutForest);
+					checkoutForest.tryMoveCursorToNode = (...args) => {
+						seeks++;
+						return tryMoveCursorToNode(...args);
+					};
+					checkoutForest.tryMoveCursorToField = (...args) => {
+						seeks++;
+						return tryMoveCursorToField(...args);
+					};
+					assert.deepEqual(read(), before);
+					const offset = view.root.shapes[count - 1]?.xfrm.off;
+					assert(offset !== undefined);
+					const node = getInnerNode(offset);
+					assert(node instanceof LazyTreeNode);
+					assert.equal(compareUpPaths(node.cursor.getPath(), node.anchorNode), true);
+					assert.equal(node.cursor.type, Offset.identifier);
+					view.dispose();
+					return seeks;
+				}
+				// Only the entities at the top of the tree move cursors from the root: the others fork them.
+				const seeksForFewShapes = seeksToReadAfterEdit(2);
+				assert(seeksForFewShapes <= 4);
+				assert.equal(seeksToReadAfterEdit(6), seeksForFewShapes);
 			});
 
 			it("read replaced, removed and moved children", () => {

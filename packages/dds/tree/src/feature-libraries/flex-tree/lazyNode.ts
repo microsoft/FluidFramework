@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert, fail, oob } from "@fluidframework/core-utils/internal";
 
 import {
 	type Anchor,
@@ -12,6 +12,7 @@ import {
 	type FieldKey,
 	type FieldKindIdentifier,
 	type ITreeSubscriptionCursor,
+	ITreeSubscriptionCursorState,
 	LeafNodeStoredSchema,
 	type TreeNavigationResult,
 	type TreeNodeSchemaIdentifier,
@@ -33,7 +34,7 @@ import {
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
 import { LazyEntity } from "./lazyEntity.js";
-import { getCachedField, makeField } from "./lazyField.js";
+import { LazyField, getCachedField, makeField } from "./lazyField.js";
 import { currentObserver } from "./observer.js";
 
 /**
@@ -115,6 +116,76 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
 		return this.context.checkout.forest.tryMoveCursorToNode(this.anchor, cursor);
+	}
+
+	protected override cursorFromAncestor(): ITreeSubscriptionCursor | undefined {
+		return LazyTreeNode.forkCursorFromAncestor(this.anchorNode, false);
+	}
+
+	/**
+	 * Forks the current cursor of the closest {@link LazyTreeNode} holding one at or above `anchorNode`, and moves it down to `anchorNode`.
+	 * @param includeSelf - Whether the {@link LazyTreeNode} at `anchorNode` itself may provide the cursor.
+	 * @returns The forked cursor, at `anchorNode`, or undefined if no such node holds a current cursor.
+	 * @remarks
+	 * Edits clear all cursors, so after one, reading each node would otherwise move a cursor from the root to it.
+	 */
+	public static forkCursorFromAncestor(
+		anchorNode: AnchorNode,
+		includeSelf: boolean,
+	): ITreeSubscriptionCursor | undefined {
+		const keys: FieldKey[] = [];
+		const indexes: number[] = [];
+		let node: AnchorNode | undefined = anchorNode;
+		if (!includeSelf) {
+			keys.push(node.parentField);
+			indexes.push(node.parentIndex);
+			node = node.parent;
+		}
+		while (node !== undefined) {
+			const holder = node.slots.get(flexTreeSlot);
+			if (holder instanceof LazyTreeNode && !holder.isFreed()) {
+				const last = keys.length - 1;
+				const field = last >= 0 ? getCachedField(holder, keys[last] ?? oob()) : undefined;
+				const fieldCursor =
+					field instanceof LazyField ? field.currentCursorAtField() : undefined;
+				if (fieldCursor !== undefined) {
+					const cursor = fieldCursor.fork("LazyEntity from ancestor field");
+					cursor.enterNode(indexes[last] ?? oob());
+					return descend(cursor, last - 1);
+				}
+				const held = holder.currentCursorAtNode();
+				if (held !== undefined) {
+					return descend(held.fork("LazyEntity from ancestor"), last);
+				}
+			}
+			keys.push(node.parentField);
+			indexes.push(node.parentIndex);
+			node = node.parent;
+		}
+		return undefined;
+
+		function descend(cursor: ITreeSubscriptionCursor, from: number): ITreeSubscriptionCursor {
+			for (let index = from; index >= 0; index--) {
+				cursor.enterField(keys[index] ?? oob());
+				cursor.enterNode(indexes[index] ?? oob());
+			}
+			return cursor;
+		}
+	}
+
+	/**
+	 * The cursor this node holds, if it is current and at this node.
+	 * @remarks
+	 * A held cursor is moved away from its node only briefly, while reading the node's content.
+	 */
+	private currentCursorAtNode(): ITreeSubscriptionCursor | undefined {
+		const held = this.heldCursor;
+		return held.state === ITreeSubscriptionCursorState.Current &&
+			held.mode === CursorLocationType.Nodes &&
+			held.type === this.type &&
+			held.fieldIndex === this.anchorNode.parentIndex
+			? held
+			: undefined;
 	}
 
 	protected override forgetAnchor(): void {
