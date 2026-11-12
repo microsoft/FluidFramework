@@ -8,6 +8,8 @@ Sea, short for Snapshotted Event Archive, is an experimental Rust service for sy
 
 Applications can use Sea locally or over WebTransport or the optional WebSocket transport, with a shared native and browser client implementation.
 Storage is selectable between memory, buffered-file, and durable-file backends.
+Embedded Rust hosts can also select the optional [PostgreSQL](crates/sea-postgres/README.md) and [Azure/Azurite](crates/sea-azure/README.md) backend crates.
+Those providers are not included in the server executable's built-in storage modes.
 The Fluid driver is an application adapter, not a requirement for using Sea.
 
 This is a speculative learning project, not a proposed production replacement for an existing Fluid service.
@@ -56,5 +58,6 @@ Reusable agent workflows remain in the [coordination](../.github/skills/rust-ser
 The native server is single-host, and uploaded content, events, and snapshots are retained without garbage collection.
 The durable backend is designed for power-loss recovery on local filesystems with crash-atomic rename and reliable synchronization; qualification through power-cut testing remains outstanding.
 See the [durable backend](crates/sea-file/README.md#power-loss-model) for assumptions and costs; it does not provide distributed durability.
-Authentication, multi-tenant policy, cross-host fencing, replication, and production Fluid membership are not implemented.
+The optional remote backends delegate persistence and writer fencing to PostgreSQL or Azure; their guarantees depend on the configured service.
+Application authentication, multi-tenant policy, built-in replication, and production Fluid membership are not implemented.
 See [known issues](KNOWN_ISSUES.md) for outstanding limitations and future work.

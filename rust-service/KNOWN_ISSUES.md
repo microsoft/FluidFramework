@@ -3,6 +3,20 @@
 This file tracks current limitations of the experimental Sea implementation and its development tooling.
 Historical findings and resolved investigations are retained in [Historical records](historical/README.md).
 
+## Azurite manifest-write timeout during remote-backend validation
+
+- **Status:** Open; cause not established.
+- **Area:** Local Azure backend service tests with Azurite 3.35.0.
+- **Evidence:** On 2026-11-12, `takeover_fences_old_segment_requests_before_recovery` twice timed out while creating a new document's manifest against the same emulator process.
+  Container creation and append-blob creation returned successfully, but the manifest PUT did not return within the client's 30-second deadline.
+  An unauthenticated health probe still received an HTTP response.
+  A fresh emulator instance passed the targeted test and the complete backend service suite, including session conformance.
+- **Disposition:** Replacing the fixture is not a causal fix.
+  The backend surfaced an ambiguous result and did not retry the write.
+  Real Azure availability-zone failure behavior remains untested.
+- **Follow-up:** Capture Azurite debug logs on recurrence and distinguish a stalled emulator write from a client request-body or connection-lifecycle defect.
+  See the [Azure backend guide](crates/sea-azure/README.md) for service-test configuration.
+
 ## Intermittent native connection timeout
 
 - **Status:** Open; a new recurrence is localized to durable-storage initialization, but its blocking operation remains unidentified.

@@ -15,6 +15,9 @@ Development-only conformance fixtures and integration-test dependencies are desc
 | `sea-integration-tests` | `crates/sea-integration-tests/` | None (test-only package) | Cross-crate composition of concrete sessions, decorators, and transports. |
 | `sea-memory` | `crates/sea-memory/` | `sea-core` | In-process retain-all archive storage. |
 | `sea-file` | `crates/sea-file/` | `sea-core` | Buffered and durable configurations of a shared file engine with dependency-closed recovery. |
+| `sea-remote` | `crates/sea-remote/` | `sea-core` | Shared fenced-journal storage components, recovery, and live reads for optional remote providers. |
+| `sea-postgres` | `crates/sea-postgres/` | `sea-core`, `sea-remote` | PostgreSQL storage with dedicated connections and session advisory locks. |
+| `sea-azure` | `crates/sea-azure/` | `sea-core`, `sea-remote` | Azure/Azurite storage with leased append segments and fenced rollover. |
 | `sea-content-addressed` | `crates/sea-content-addressed/` | `sea-core` | Reusable immutable blob and directory storage. |
 | `sea-sequencer` | `crates/sea-sequencer/` | `sea-core` | Multi-user local `SeaSession`, stable event positions, accepted-prefix recovery, fencing, replay, and subscriptions. |
 | `sea-signals` | `crates/sea-signals/` | `sea-core` | Bounded memory-only document messaging and live membership, independent of archive sequencing. |
@@ -27,6 +30,8 @@ Development-only conformance fixtures and integration-test dependencies are desc
 | `sea-counter` | `examples/sea-counter/` | `sea-core`, `sea-memory`, `sea-sequencer` | Snapshot and replay over a local session. |
 
 Storage implementations and session decorators use `sea-conformance` as a development dependency where applicable.
+The PostgreSQL and Azure providers are opt-in library crates, not dependencies of the native server or WASM packages.
+Their service tests require explicitly configured local or hosted services.
 `sea-integration-tests` uses core, memory storage, the sequencer, payload decorators, and the WebTransport client and server as development dependencies.
 
 At runtime, the primary service path is:

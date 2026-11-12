@@ -1,0 +1,24 @@
+[package]
+name = "sea-postgres"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+async-trait.workspace = true
+bytes.workspace = true
+sea-core = { path = "../sea-core" }
+sea-remote = { path = "../sea-remote" }
+tokio.workspace = true
+tokio-postgres = "0.7.15"
+postgres-native-tls = "0.5.1"
+native-tls = "0.2.14"
+
+[dev-dependencies]
+sea-conformance = { path = "../sea-conformance" }
+sea-sequencer = { path = "../sea-sequencer" }
+futures-util.workspace = true
+
+[lints]
+workspace = true

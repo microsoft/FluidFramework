@@ -1,0 +1,27 @@
+[package]
+name = "sea-azure"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+async-trait.workspace = true
+bytes.workspace = true
+sea-core = { path = "../sea-core" }
+sea-remote = { path = "../sea-remote" }
+tokio.workspace = true
+reqwest = { version = "0.12.24", default-features = false, features = ["rustls-tls"] }
+uuid = { version = "1.18.1", features = ["v4"] }
+base64 = "0.22.1"
+hmac = "0.12.1"
+sha2 = "0.10.9"
+httpdate = "1.0.3"
+
+[dev-dependencies]
+sea-conformance = { path = "../sea-conformance" }
+sea-sequencer = { path = "../sea-sequencer" }
+futures-util.workspace = true
+
+[lints]
+workspace = true

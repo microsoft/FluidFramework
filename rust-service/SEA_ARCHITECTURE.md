@@ -52,6 +52,8 @@ Recovery must preserve those dependencies as well as event order.
 This lets `SeaView` coordinate publication without requiring a distributed transaction across its components.
 
 [Memory](crates/sea-memory/README.md) and [buffered/durable file](crates/sea-file/README.md) backends implement `SeaStorage` with different persistence guarantees.
+[PostgreSQL](crates/sea-postgres/README.md) and [Azure/Azurite](crates/sea-azure/README.md) provide optional remote implementations with service-enforced writer fencing.
+They share [journal component and recovery logic](crates/sea-remote/README.md), but keep provider dependencies in separate crates.
 Storage does not manage client membership or publisher election; those belong to the session layer.
 Neither layer deduplicates event submissions.
 

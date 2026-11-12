@@ -6,6 +6,8 @@ This folder contains the Rust packages that implement Sea.
 - [`sea-conformance/`](sea-conformance/) provides implementation-independent contract tests.
 - [`sea-integration-tests/`](sea-integration-tests/) tests cross-crate composition, including repeated session decorators and transport hops.
 - [`sea-memory/`](sea-memory/) and the buffered/durable modules in [`sea-file/`](sea-file/) implement archive storage; [`sea-content-addressed/`](sea-content-addressed/) provides reusable immutable blob-tree storage.
+- [`sea-postgres/`](sea-postgres/) and [`sea-azure/`](sea-azure/) provide optional PostgreSQL and Azure/Azurite storage.
+  Their provider dependencies are isolated; [`sea-remote/`](sea-remote/) shares ordered journal recovery and component semantics without depending on either client.
 - [`sea-sequencer/`](sea-sequencer/) implements local multi-user sessions.
 - [`sea-webtransport/`](sea-webtransport/) owns framing, dispatch, and native/browser transports.
 - [`sea-wasm/`](sea-wasm/) exposes sessions to the [TypeScript packages](../packages/README.md).
