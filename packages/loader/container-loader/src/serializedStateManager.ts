@@ -426,7 +426,7 @@ export class SerializedStateManager implements IDisposable {
 		runtime: Pick<IRuntime, "getPendingLocalState">,
 		resolvedUrl: IResolvedUrl,
 	): Promise<string> {
-		return this.serialize(clientId, runtime, resolvedUrl, { includeLocalChanges: true });
+		return this.serialize(clientId, runtime, resolvedUrl, { includePendingLocalState: true });
 	}
 
 	/**
@@ -442,7 +442,7 @@ export class SerializedStateManager implements IDisposable {
 		if (!this.offlineLoadEnabled) {
 			throw new UsageError("Can't get pending local state unless offline load is enabled");
 		}
-		const { includeLocalChanges } = options;
+		const { includePendingLocalState } = options;
 
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
@@ -458,7 +458,7 @@ export class SerializedStateManager implements IDisposable {
 			},
 			async () => {
 				assert(this.snapshotInfo !== undefined, 0x8e5 /* no base data */);
-				const pendingRuntimeState = includeLocalChanges
+				const pendingRuntimeState = includePendingLocalState
 					? await runtime.getPendingLocalState({
 							notifyImminentClosure: false,
 							snapshotSequenceNumber: this.snapshotInfo.snapshotSequenceNumber,
@@ -496,7 +496,7 @@ export class SerializedStateManager implements IDisposable {
 					loadedGroupIdSnapshots: hasGroupIdSnapshots ? loadedGroupIdSnapshots : undefined,
 					savedOps,
 					url: resolvedUrl.url,
-					clientId: includeLocalChanges ? clientId : undefined,
+					clientId: includePendingLocalState ? clientId : undefined,
 				};
 
 				return JSON.stringify(pendingState);

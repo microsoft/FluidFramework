@@ -7,21 +7,16 @@ import { strict as assert } from "node:assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
-import type {
-	IContainer,
-	IFluidCodeDetails,
-} from "@fluidframework/container-definitions/internal";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	createDetachedContainer,
 	loadExistingContainer,
 	loadFrozenContainerFromPendingState,
-	rehydrateDetachedContainer,
 	waitContainerToCatchUp,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import { asLegacyAlpha } from "@fluidframework/container-loader/legacy/alpha";
 import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces/internal";
-import type { LocalResolver } from "@fluidframework/local-driver/internal";
 import { SharedMap } from "@fluidframework/map/internal";
 import {
 	LocalDeltaConnectionServer,
@@ -76,16 +71,14 @@ async function waitForSaved(container: IContainer): Promise<void> {
 
 async function serialize(
 	container: IContainer,
-	includeLocalChanges: boolean,
+	includePendingLocalState: boolean,
 ): Promise<string> {
-	return asLegacyAlpha(container).serializeV2({ includeLocalChanges });
+	return asLegacyAlpha(container).serializeAttached({ includePendingLocalState });
 }
 
-describe("container serializeV2", () => {
+describe("container serialization", () => {
 	let server: ILocalDeltaConnectionServer;
 	let loaderProps: ILoaderProps;
-	let codeDetails: IFluidCodeDetails;
-	let urlResolver: LocalResolver;
 	let source: IContainer;
 	let sourceObject: ITestFluidObject;
 	let url: string;
@@ -113,8 +106,6 @@ describe("container serializeV2", () => {
 		});
 		const loader = createLoader({ deltaConnectionServer: server, runtimeFactory });
 		loaderProps = loader.loaderProps;
-		codeDetails = loader.codeDetails;
-		urlResolver = loader.urlResolver;
 		source = await createDetachedContainer({
 			...loaderProps,
 			codeDetails: loader.codeDetails,
@@ -170,68 +161,23 @@ describe("container serializeV2", () => {
 		return container;
 	}
 
-	for (const includeLocalChanges of [true, false]) {
-		it(`captures the full detached draft for independent documents, includeLocalChanges: ${includeLocalChanges}`, async () => {
-			const draft = await createDetachedContainer({ ...loaderProps, codeDetails });
-			containers.push(draft);
-			const draftObject = await getDataObject(draft);
-			draftObject.root.set("value", "draft");
-			const tree = SharedTree.create(draftObject.runtime, treeKey);
-			const draftView = tree.viewWith(treeConfiguration);
-			draftView.initialize({ first: "draft first", second: "draft second" });
-			draftObject.root.set(treeKey, tree.handle);
-			const state = await serialize(draft, includeLocalChanges);
-			draftObject.root.set("value", "later draft");
-			draftView.root.first = "later draft first";
-			draftView.dispose();
-
-			const first = await rehydrateDetachedContainer({
-				...loaderProps,
-				serializedState: state,
-			});
-			const second = await rehydrateDetachedContainer({
-				...loaderProps,
-				serializedState: state,
-			});
-			containers.push(first, second);
-			const firstObject = await getDataObject(first);
-			const secondObject = await getDataObject(second);
-			const firstView = await getTreeView(firstObject);
-			const secondView = await getTreeView(secondObject);
-			assert.equal(firstObject.root.get("value"), "draft");
-			assert.equal(secondObject.root.get("value"), "draft");
-			assert.equal(firstView.root.first, "draft first");
-			assert.equal(secondView.root.first, "draft first");
-			firstView.root.first = "first document";
-			secondView.root.second = "second document";
-			await first.attach(urlResolver.createCreateNewRequest("first"));
-			await second.attach(urlResolver.createCreateNewRequest("second"));
-			await waitForSaved(first);
-			await waitForSaved(second);
-			assert.notEqual(await first.getAbsoluteUrl(""), await second.getAbsoluteUrl(""));
-			assert.equal(firstView.root.second, "draft second");
-			assert.equal(secondView.root.first, "draft first");
-			assert.equal(draftObject.root.get("value"), "later draft");
-			firstView.dispose();
-			secondView.dispose();
-		});
-
-		it(`captures the requested state without changing the source, includeLocalChanges: ${includeLocalChanges}`, async () => {
+	for (const includePendingLocalState of [true, false]) {
+		it(`captures the requested state without changing the source, includePendingLocalState: ${includePendingLocalState}`, async () => {
 			source.disconnect();
 			sourceObject.root.set("value", "local");
 			const view = await getTreeView(sourceObject);
 			view.root.first = "local first";
-			const state = await serialize(source, includeLocalChanges);
+			const state = await serialize(source, includePendingLocalState);
 			const frozen = await loadFrozen(state);
 			const frozenObject = await getDataObject(frozen);
 			const frozenView = await getTreeView(frozenObject);
 			assert.equal(
 				frozenObject.root.get("value"),
-				includeLocalChanges ? "local" : "sequenced",
+				includePendingLocalState ? "local" : "sequenced",
 			);
 			assert.equal(
 				frozenView.root.first,
-				includeLocalChanges ? "local first" : "sequenced first",
+				includePendingLocalState ? "local first" : "sequenced first",
 			);
 			assert.equal(sourceObject.root.get("value"), "local");
 			assert.equal(view.root.first, "local first");
@@ -244,9 +190,9 @@ describe("container serializeV2", () => {
 			assert.equal(retainedObject.root.get("value"), "local");
 		});
 
-		it(`includes the acknowledged edit when serialized inside a saved event handler, includeLocalChanges: ${includeLocalChanges}`, async () => {
+		it(`includes the acknowledged edit when serialized inside a saved event handler, includePendingLocalState: ${includePendingLocalState}`, async () => {
 			const state = await timeoutPromise<string>((resolve) => {
-				source.once("saved", () => resolve(serialize(source, includeLocalChanges)));
+				source.once("saved", () => resolve(serialize(source, includePendingLocalState)));
 				sourceObject.root.set("value", "saved callback edit");
 			});
 			const frozen = await loadFrozen(state);
@@ -255,11 +201,11 @@ describe("container serializeV2", () => {
 		});
 
 		for (const action of ["close", "dispose"] as const) {
-			it(`rejects after ${action}, includeLocalChanges: ${includeLocalChanges}`, async () => {
+			it(`rejects after ${action}, includePendingLocalState: ${includePendingLocalState}`, async () => {
 				source[action]();
 				await assert.rejects(
-					serialize(source, includeLocalChanges),
-					/Container must be detached or attached, open, and not disposed/,
+					serialize(source, includePendingLocalState),
+					/Container must be attached, open, and not disposed/,
 				);
 			});
 		}

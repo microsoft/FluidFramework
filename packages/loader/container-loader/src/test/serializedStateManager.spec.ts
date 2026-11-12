@@ -207,8 +207,8 @@ describe("serializedStateManager", () => {
 	});
 
 	describe("serialize", () => {
-		for (const includeLocalChanges of [true, false]) {
-			it(`requires offline loading, includeLocalChanges: ${includeLocalChanges}`, async () => {
+		for (const includePendingLocalState of [true, false]) {
+			it(`requires offline loading, includePendingLocalState: ${includePendingLocalState}`, async () => {
 				const manager = new SerializedStateManager(
 					logger,
 					new MockStorageAdapter(),
@@ -219,7 +219,7 @@ describe("serializedStateManager", () => {
 				);
 				await assert.rejects(
 					manager.serialize("clientId", new MockRuntime(), resolvedUrl, {
-						includeLocalChanges,
+						includePendingLocalState,
 					}),
 					/Can't get pending local state unless offline load is enabled/,
 				);
@@ -244,7 +244,7 @@ describe("serializedStateManager", () => {
 			};
 			const state = JSON.parse(
 				await manager.serialize("source-client", runtime, resolvedUrl, {
-					includeLocalChanges: false,
+					includePendingLocalState: false,
 				}),
 			) as IPendingContainerState;
 			assert.equal(Object.hasOwn(state, "pendingRuntimeState"), false);
@@ -267,7 +267,7 @@ describe("serializedStateManager", () => {
 			manager.setInitialSnapshot(initialSnapshot);
 			const runtime = new MockRuntime();
 			const state = await manager.serialize("source-client", runtime, resolvedUrl, {
-				includeLocalChanges: true,
+				includePendingLocalState: true,
 			});
 			assert.equal(
 				state,
@@ -298,7 +298,7 @@ describe("serializedStateManager", () => {
 				return readBlob(id);
 			};
 			const stateP = manager.serialize("source-client", new MockRuntime(), resolvedUrl, {
-				includeLocalChanges: false,
+				includePendingLocalState: false,
 			});
 			manager.addProcessedOp(generateSavedOp(2));
 			readAllowed.resolve();
@@ -306,7 +306,7 @@ describe("serializedStateManager", () => {
 			assert.deepEqual(state.savedOps, [generateSavedOp(1)]);
 			const nextState = JSON.parse(
 				await manager.serialize("source-client", new MockRuntime(), resolvedUrl, {
-					includeLocalChanges: false,
+					includePendingLocalState: false,
 				}),
 			) as IPendingContainerState;
 			assert.deepEqual(nextState.savedOps, [generateSavedOp(1), generateSavedOp(2)]);

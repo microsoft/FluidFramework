@@ -1207,20 +1207,17 @@ export class Container
 	}
 
 	/**
-	 * {@inheritDoc ContainerAlpha.serializeV2}
+	 * {@inheritDoc ContainerAlpha.serializeAttached}
 	 */
-	public async serializeV2(options: ContainerSerializationOptions): Promise<string> {
-		// Yield to guard against consistency problems when serializeV2 is called from an op-processing
+	public async serializeAttached(options: ContainerSerializationOptions): Promise<string> {
+		// Yield to guard against consistency problems when serializeAttached is called from an op-processing
 		// or "saved" event handler.
 		await Promise.resolve();
 
-		if (this.closed || this._disposed || this.attachState === AttachState.Attaching) {
+		if (this.closed || this._disposed || this.attachState !== AttachState.Attached) {
 			throw new UsageError(
-				"Container must be detached or attached, open, and not disposed to use serializeV2.",
+				"Container must be attached, open, and not disposed to use serializeAttached.",
 			);
-		}
-		if (this.attachState === AttachState.Detached) {
-			return this.serialize();
 		}
 		assert(
 			this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
@@ -2719,19 +2716,17 @@ export class Container
 }
 
 /**
- * Options for {@link ContainerAlpha.serializeV2}.
+ * Options for {@link ContainerAlpha.serializeAttached}.
  * @legacy @alpha
  */
 export interface ContainerSerializationOptions {
 	/**
 	 * Whether to include pending local changes and the session state needed to replay them in an attached container.
 	 * When `false`, the result contains only sequenced state and can safely be used to load multiple containers.
-	 * When `true`, all restrictions documented on {@link IContainer.getPendingLocalState} apply.
-	 *
-	 * Changes made to detached containers are considered immediately acked,
-	 * thus the returned serialized state is unaffected by this option (and does not have those restrictions).
+	 * When `true`, all restrictions documented on
+	 * {@link @fluidframework/container-definitions#IContainer.getPendingLocalState | IContainer.getPendingLocalState} apply.
 	 */
-	readonly includeLocalChanges: boolean;
+	readonly includePendingLocalState: boolean;
 }
 
 /**
@@ -2756,37 +2751,41 @@ export interface ContainerAlpha extends IContainer {
 	getPendingLocalState(): Promise<string>;
 
 	/**
-	 * Serialize an attached or detached container for later loading.
+	 * Serialize an attached container for later loading, optionally including the pending local state
+	 * captured by {@link @fluidframework/container-definitions#IContainer.getPendingLocalState | IContainer.getPendingLocalState}.
 	 *
-	 * @param options - Controls whether to include unsequenced local changes in attached containers.
+	 * @param options - Controls whether to include pending local state.
 	 * @returns An opaque serialized state string. Do not inspect or modify its contents.
 	 *
 	 * @remarks
-	 * The container must be open and not disposed. Serialization while attaching is not currently supported.
+	 * The container must be attached, open, and not disposed. Serialization while attaching is not currently supported.
 	 * Violating these requirements throws `UsageError`.
 	 *
-	 * For detached containers, this method captures the full current state, regardless of `includeLocalChanges`.
-	 * The result can safely create multiple independent detached containers through
-	 * {@link @fluidframework/container-definitions#IHostLoader.rehydrateDetachedContainerFromSnapshot}
-	 * or `rehydrateDetachedContainer` from `@fluidframework/container-loader`.
+	 * For detached containers, use
+	 * {@link @fluidframework/container-definitions#IContainer.serialize | IContainer.serialize}, which captures the full current state.
 	 *
 	 * For attached containers, pending-state capture must be enabled when the container is created or loaded:
 	 * the client must be interactive, and the `Fluid.Container.enableOfflineFull` configuration flag
 	 * must not be `false` (the flag defaults to `true`).
 	 * Otherwise, this method throws `UsageError`.
 	 *
-	 * The serialized state can be used to load a new container using {@link ILoader.resolve} or `loadExistingContainer` from
+	 * The serialized state can be used to load a new container using
+	 * {@link @fluidframework/container-definitions#ILoader.resolve | ILoader.resolve} or `loadExistingContainer` from
 	 * `@fluidframework/container-loader`.
-	 * With `includeLocalChanges: false`, the result captures only sequenced state.
+	 * With `includePendingLocalState: false`, the result captures only sequenced state.
 	 * Unsequenced operations, pending attachment blobs, and session-specific runtime state are omitted.
 	 * The original container is not modified and can continue editing.
 	 * The result can safely load multiple independent instances of the same document, including
 	 * frozen containers at the captured state.
 	 *
-	 * With `includeLocalChanges: true`, this method has the same behavior and reuse restrictions as
-	 * {@link IContainer.getPendingLocalState}. Reusing such state can cause document corruption.
+	 * With `includePendingLocalState: true`, this method has the same behavior and reuse restrictions as
+	 * {@link @fluidframework/container-definitions#IContainer.getPendingLocalState | IContainer.getPendingLocalState}.
+	 * WARNING: misuse of this API can result in duplicate op submission and potential document corruption.
+	 * When pending local state is included, close the source container before loading the state,
+	 * never load the same state more than once, and delete the returned state if and when this
+	 * container emits a "connected" event.
 	 */
-	serializeV2(options: ContainerSerializationOptions): Promise<string>;
+	serializeAttached(options: ContainerSerializationOptions): Promise<string>;
 }
 
 /**
@@ -2795,8 +2794,8 @@ export interface ContainerAlpha extends IContainer {
  * @remarks
  * For `getPendingLocalState`, prefer calling
  * {@link @fluidframework/container-definitions#IContainer.getPendingLocalState | IContainer.getPendingLocalState}
- * directly on the `@legacy @beta` surface. This helper is retained for callers that need the
- * typed-required shape and will be removed in a future breaking release.
+ * directly on the `@legacy @beta` surface. This helper also exposes
+ * {@link ContainerAlpha.serializeAttached}.
  *
  * @legacy @alpha
  */
