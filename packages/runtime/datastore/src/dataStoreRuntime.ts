@@ -705,10 +705,7 @@ export class FluidDataStoreRuntime
 				// In first two cases we will encode result as strings in more compact form, with leading underscore,
 				// to ensure no overlap with user-provided DDS names (see validateChannelId())
 				if (this.visibilityState === VisibilityState.GloballyVisible) {
-					// Due to back-compat, we could not depend yet on generateDocumentUniqueId() being there.
-					// We can remove the need to leverage uuid() as fall-back in couple releases.
-					const res =
-						this.dataStoreContext.containerRuntime.generateDocumentUniqueId?.() ?? uuid();
+					const res = this.dataStoreContext.containerRuntime.generateDocumentUniqueId();
 					id = typeof res === "number" ? encodeCompactIdToString(2 * res + 1, "_") : res;
 				} else {
 					// container is detached, only one client observes content, no way to hit collisions with other clients.

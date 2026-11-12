@@ -307,7 +307,7 @@ checks, API reports, and documentation models. Datastore unit tests: 51 passing;
 
 ### 9. Document-unique-ID fallbacks
 
-**Status:** Pending decision. Additional proof required.
+**Status:** Cleanup approved and complete.
 
 - `packages/runtime/datastore/src/dataStoreRuntime.ts`, `createChannel`:
   `containerRuntime.generateDocumentUniqueId?.() ?? uuid()`.
@@ -317,7 +317,22 @@ checks, API reports, and documentation models. Datastore unit tests: 51 passing;
 **Potential change:** Make the API call unconditional if supported context implementations guarantee it.
 Preserve the explicit DisableShortIds feature flag, numeric-versus-string results, and ID namespace rules.
 
-**Decision / changes / validation:** Not yet recorded.
+**Contract audit / decision:** `IContainerRuntimeBase.generateDocumentUniqueId` is required and
+returns number or string. Installed `2.0.9` ContainerRuntime implements it, falling back internally
+to UUID generation when no compressor is available. Remove only the datastore's missing-method
+fallback; no conforming legacy/beta contract changes, and no deferred-list entry needed.
+
+**Changes:** Call the method directly for globally visible datastores. Preserve DisableShortIds,
+detached IDs, numeric compact-ID encoding, string results, and UUID fallback inside ContainerRuntime.
+
+**Validation:** Datastore build passed, including ESM/CJS, type tests, lint/format, API reports, and
+docs model; no report changes. Datastore unit tests: 51 passing. E2E build passed.
+Local current/OCV targeted channel creation, visibility, and aliasing: 66 passing.
+N-1/cross-client detached/visibility/aliasing: 544 passing, 48 pending.
+An extra all-2.0.9 detached-container run had 42 passing, 1 pending, and 1 failure in the network-attach
+retry expectation. That run uses historical product packages rather than this changed datastore;
+it does not validate this cleanup, and the failure was not investigated as part of this category.
+No live real-service validation performed.
 
 ### 10. Ancient detached-storage behavior
 
@@ -374,7 +389,8 @@ Category 1 cleanup is approved and complete. Category 2 is deferred to preserve 
 API behavior. Category 3 cleanup is approved and complete. Category 4 runtime cleanup is approved and complete,
 with loader-side routing deferred. Categories 5 and 6 cleanup are approved and complete;
 category 7 is deferred to preserve non-deprecated legacy/beta API behavior. Category 8 event-bridge
-cleanup is approved and complete, with visibility behavior deferred; categories 9–11 remain pending decision.
+cleanup is approved and complete, with visibility behavior deferred. Category 9 cleanup is approved and complete;
+categories 10–11 remain pending decision.
 Retained/deferred categories should include the reason and any follow-up evidence needed.
 
 ## Deferred list 1: reachable through already-deprecated legacy/beta APIs
