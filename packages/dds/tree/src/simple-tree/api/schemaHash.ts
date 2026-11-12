@@ -14,6 +14,7 @@ import {
 	ObjectNodeStoredSchema,
 	type TreeFieldStoredSchema,
 	type TreeNodeStoredSchema,
+	type TreeStoredSchema,
 } from "../../core/index.js";
 import {
 	compareStrings,
@@ -30,6 +31,8 @@ import { SchemaIdentityInternal, type SchemaIdentity } from "./schemaIdentity.js
  * Enables schema hash telemetry and optional checks when constructing a view.
  * @remarks
  * Pass the result as {@link ITreeViewConfigurationAlpha.schemaIdentity}.
+ * Telemetry identifies the stored schema applied by initialization or upgrade, including schema retained from the existing document.
+ *
  * Import this function only when hashing is needed so the hash algorithm can be removed from other bundles.
  * @param options - Options for checking the schema hash.
  * @returns An immutable schema identity that uses SHA-256 hashing.
@@ -48,7 +51,7 @@ export function identifySchemaAlpha(
 		readonly expectedHash?: string;
 	} = {},
 ): SchemaIdentity {
-	return new SchemaIdentityInternal(options.expectedHash, computeSchemaHash);
+	return new SchemaIdentityInternal(options.expectedHash, computeStoredSchemaHash);
 }
 
 /**
@@ -72,14 +75,17 @@ export function computeSchemaHash(
 	schema: ImplicitFieldSchema,
 	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
 ): string {
-	const normalized = toInitialSchema(schema, stagedSchemaUpgrades);
+	return computeStoredSchemaHash(toInitialSchema(schema, stagedSchemaUpgrades));
+}
+
+/**
+ * Hashes a stored schema using the canonical representation shared with {@link computeSchemaHash}.
+ */
+function computeStoredSchemaHash(schema: TreeStoredSchema): string {
 	const serialized = JSON.stringify({
-		root: serializeField(normalized.rootFieldSchema),
+		root: serializeField(schema.rootFieldSchema),
 		nodes: Object.fromEntries(
-			[...normalized.nodeSchema].map(([identifier, node]) => [
-				identifier,
-				serializeNode(node),
-			]),
+			[...schema.nodeSchema].map(([identifier, node]) => [identifier, serializeNode(node)]),
 		),
 	});
 	// Normalize metadata to its JSON representation before sorting object keys.
