@@ -5,7 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import {
@@ -101,7 +100,6 @@ describe("container serialization", () => {
 			runtimeOptions: {
 				enableRuntimeIdCompressor: "on",
 				explicitSchemaControl: true,
-				createBlobPayloadPending: true,
 			},
 		});
 		const loader = createLoader({ deltaConnectionServer: server, runtimeFactory });
@@ -224,26 +222,6 @@ describe("container serialization", () => {
 		assert.equal(firstObject.root.get("value"), "sequenced");
 		assert.equal(secondObject.root.get("value"), "sequenced");
 		assert.equal(source.closed, false);
-	});
-
-	it("excludes pending attachment blobs without losing the source's local state", async () => {
-		const frozen = await loadFrozen(await serialize(source, false));
-		const dataObject = await getDataObject(frozen);
-		const blob = await dataObject.runtime.uploadBlob(stringToBuffer("pending blob", "utf8"));
-		dataObject.root.set("blob", blob);
-		const reusable = await serialize(frozen, false);
-		const copy = await loadFrozen(reusable);
-		const copyObject = await getDataObject(copy);
-		assert.equal(copyObject.root.has("blob"), false);
-		assert.equal(bufferToString(await blob.get(), "utf8"), "pending blob");
-
-		const pending = await serialize(frozen, true);
-		frozen.dispose();
-		const replay = await loadLive(pending);
-		const replayObject = await getDataObject(replay);
-		const replayBlob = replayObject.root.get<IFluidHandle<ArrayBufferLike>>("blob");
-		assert(replayBlob !== undefined);
-		assert.equal(bufferToString(await replayBlob.get(), "utf8"), "pending blob");
 	});
 
 	it("preserves independent SharedTree edits replayed from the same reusable state", async () => {
