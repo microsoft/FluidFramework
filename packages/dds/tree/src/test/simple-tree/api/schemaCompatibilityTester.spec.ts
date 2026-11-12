@@ -31,7 +31,7 @@ import {
 	toUpgradeSchema,
 } from "../../../simple-tree/index.js";
 import { SchemaFactoryAlpha } from "../../../simple-tree/index.js";
-import { TestSchemaRepository } from "../../utils.js";
+import { expectSchemaEqual, TestSchemaRepository } from "../../utils.js";
 
 const emptySchema: TreeStoredSchema = {
 	nodeSchema: new Map(),
@@ -212,7 +212,7 @@ describe("isSchemaUpgradeAllowed", () => {
 		const stored = toUpgradeSchema(Before);
 		const candidate = toUpgradeSchema(After);
 
-		// Viewing is blocked before the upgrade, but the candidate adds the missing permission without removing anything.
+		// Viewing is blocked before the upgrade, but the candidate adds the missing optional field without removing anything.
 		assert.notEqual(getViewBlockers(view, stored), undefined);
 		assert.equal(isSchemaUpgradeAllowed(view, stored, candidate), true);
 	});
@@ -345,7 +345,7 @@ describe("checkSchemaCompatibility", () => {
 			assert.equal(compatibility.isEquivalent, false);
 		});
 
-		it("is true when unknown optional fields are retained by a no-op upgrade", () => {
+		it("is false when unknown optional fields are retained by a no-op upgrade", () => {
 			class StoredPoint extends factory.object("Point", {
 				x: factory.number,
 				y: factory.optional(factory.number),
@@ -361,7 +361,7 @@ describe("checkSchemaCompatibility", () => {
 			);
 			assert.equal(compatibility.canView, true);
 			assert.equal(compatibility.canUpgrade, true);
-			assert.equal(compatibility.isEquivalent, true);
+			assert.equal(compatibility.isEquivalent, false);
 		});
 
 		it("is false when viewing and upgrading are allowed but an upgrade expands the stored schema", () => {
@@ -377,6 +377,117 @@ describe("checkSchemaCompatibility", () => {
 			assert.equal(compatibility.canView, true);
 			assert.equal(compatibility.canUpgrade, true);
 			assert.equal(compatibility.isEquivalent, false);
+		});
+
+		/**
+		 * V1 stages strings and V2 enables them.
+		 * V1's restrictive upgrade preserves V2's strings without changing the document, but a new V1 document still excludes them.
+		 * Equivalence must remain false until V1's configured policy also enables strings.
+		 */
+		it("compares generated schema rather than retained staged types", () => {
+			const stagedString = factory.staged(factory.string);
+			const upgrade = stagedString.metadata.stagedSchemaUpgrade;
+			assert(upgrade !== undefined);
+			const schemaV1 = factory.types([factory.number, stagedString]);
+			const schemaV2 = [factory.number, factory.string] as const;
+			const stored = toInitialSchema(schemaV2);
+			const view = new TreeViewConfigurationAlpha({ schema: schemaV1 });
+
+			const compatibility = checkSchemaCompatibility(view, stored);
+			assert.equal(compatibility.canView, true);
+			assert.equal(compatibility.canUpgrade, true);
+			assert.equal(compatibility.isEquivalent, false);
+
+			// A non-equivalent configuration can still produce a no-op upgrade for this document.
+			expectSchemaEqual(
+				getSchemaUpgradeCandidate(view, stored, StagedSchemaUpgradePolicy.restrictive),
+				stored,
+			);
+			expectSchemaEqual(toInitialSchema(schemaV1), toInitialSchema(factory.number));
+
+			const enabled = checkSchemaCompatibility(
+				view,
+				stored,
+				StagedSchemaUpgradePolicy.enabledStagedUpgrades(upgrade),
+			);
+			assert.equal(enabled.canView, true);
+			assert.equal(enabled.canUpgrade, true);
+			assert.equal(enabled.isEquivalent, true);
+		});
+
+		/**
+		 * V1 stages root optionality and V2 fully enables it.
+		 * V1 can preserve V2's optional root, but its restrictive policy still creates required roots in new documents.
+		 * Only explicitly enabling optionality makes the generated schema equivalent.
+		 */
+		it("compares generated schema rather than retained staged optionality", () => {
+			const schemaV1 = factory.stagedOptional(factory.number);
+			const upgrade = schemaV1.isStagedOptional;
+			assert(upgrade !== false);
+			const schemaV2 = factory.optional(factory.number);
+			const stored = toInitialSchema(schemaV2);
+			const view = new TreeViewConfigurationAlpha({ schema: schemaV1 });
+
+			const compatibility = checkSchemaCompatibility(view, stored);
+			assert.equal(compatibility.canView, true);
+			assert.equal(compatibility.canUpgrade, true);
+			assert.equal(compatibility.isEquivalent, false);
+			expectSchemaEqual(
+				getSchemaUpgradeCandidate(view, stored, StagedSchemaUpgradePolicy.restrictive),
+				stored,
+			);
+			expectSchemaEqual(toInitialSchema(schemaV1), toInitialSchema(factory.number));
+
+			const enabled = checkSchemaCompatibility(
+				view,
+				stored,
+				StagedSchemaUpgradePolicy.enabledStagedUpgrades(upgrade),
+			);
+			assert.equal(enabled.canView, true);
+			assert.equal(enabled.canUpgrade, true);
+			assert.equal(enabled.isEquivalent, true);
+		});
+
+		/**
+		 * V1 stages strings at two fields using one token; V2 enables them only at the primary field.
+		 * V1's restrictive upgrade is a no-op, but neither a disabled nor enabled token generates V2's partial state.
+		 * Equivalence becomes true only when the configured token and both stored locations are enabled.
+		 */
+		it("does not treat a partially enabled token as generated-schema equivalence", () => {
+			const stagedString = factory.staged(factory.string);
+			const upgrade = stagedString.metadata.stagedSchemaUpgrade;
+			assert(upgrade !== undefined);
+			const priorities = factory.types([factory.number, stagedString]);
+			class TaskV1 extends factory.object("PartialEquivalence", {
+				primary: priorities,
+				fallback: priorities,
+			}) {}
+			class TaskV2 extends factory.object("PartialEquivalence", {
+				primary: [factory.number, factory.string],
+				fallback: factory.number,
+			}) {}
+			const view = new TreeViewConfigurationAlpha({ schema: TaskV1 });
+			const stored = toInitialSchema(TaskV2);
+			const compatibility = checkSchemaCompatibility(view, stored);
+			assert.equal(compatibility.canView, true);
+			assert.equal(compatibility.canUpgrade, true);
+			assert.equal(compatibility.isEquivalent, false);
+			assert.equal(compatibility.enabledUpgrades.get(upgrade), "partial");
+			expectSchemaEqual(
+				getSchemaUpgradeCandidate(view, stored, StagedSchemaUpgradePolicy.restrictive),
+				stored,
+			);
+
+			// Enabling the shared token would add fallback strings, so it is not equivalent to the partial document either.
+			const policy = StagedSchemaUpgradePolicy.enabledStagedUpgrades(upgrade);
+			const enabled = checkSchemaCompatibility(view, stored, policy);
+			assert.equal(enabled.canView, true);
+			assert.equal(enabled.canUpgrade, true);
+			assert.equal(enabled.isEquivalent, false);
+			assert.equal(
+				checkSchemaCompatibility(view, toInitialSchema(TaskV1, policy), policy).isEquivalent,
+				true,
+			);
 		});
 	});
 
@@ -745,36 +856,6 @@ describe("checkSchemaCompatibility", () => {
 	});
 
 	describe("with staged allowed types", () => {
-		it("lets an older client enable another staged type without removing types allowed by a newer document", () => {
-			const stagedString = factory.staged(factory.string);
-			const stringUpgrade = stagedString.metadata.stagedSchemaUpgrade;
-			assert(stringUpgrade !== undefined);
-			const stagedUnassigned = factory.staged(factory.null);
-			const unassignedUpgrade = stagedUnassigned.metadata.stagedSchemaUpgrade;
-			assert(unassignedUpgrade !== undefined);
-
-			class Before extends factory.object("Task", {
-				priority: factory.types([factory.number, stagedString, stagedUnassigned]),
-			}) {}
-
-			// Fully enable string priorities in the later schema, without shipping the staged `null` alternative.
-			class After extends factory.object("Task", {
-				priority: [factory.number, factory.string],
-			}) {}
-
-			// The older view can read the newer document. Enabling only `null` must retain its strings and produce a real upgrade.
-			// Enablement status describes the document before the upgrade, so only its string permission is reported.
-			expectCompatibility(
-				{ view: Before, stored: toInitialSchema(After) },
-				{
-					canView: true,
-					canUpgrade: true,
-					enabledUpgrades: new Map([[stringUpgrade, "enabled"]]),
-				},
-				StagedSchemaUpgradePolicy.enabledStagedUpgrades(unassignedUpgrade),
-			);
-		});
-
 		for (const location of ["root", "array", "map"] as const) {
 			it(`preserves newer document types without enabling them in documents created by the older schema (${location})`, () => {
 				const priorities = [factory.number, factory.string] as const;

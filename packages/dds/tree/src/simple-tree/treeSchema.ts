@@ -418,7 +418,7 @@ export function toUpgradeSchema(
  *
  * @remarks
  * Start with the stored schema selected by the view and its policy, then combine it with existing permissions at corresponding fields.
- * This separates the policy's decision to introduce a permission from the need to preserve it once enabled.
+ * This separates the policy's decision to enable a staged upgrade from the need to preserve one already enabled.
  * Construction follows these rules:
  *
  * - Matching fields retain their stored allowed types and add types selected by the view and supplied policy.
@@ -430,12 +430,12 @@ export function toUpgradeSchema(
  *
  * The result is a proposal, not an approved upgrade.
  * Retaining an allowed type can still leave a candidate that the view cannot read, and other schema differences can still violate upgrade rules.
- * Before applying the candidate, callers must use {@link isSchemaUpgradeAllowed} to check both preservation of stored permissions and read/write compatibility with the view.
+ * Before applying the candidate, callers must use {@link isSchemaUpgradeAllowed} to check that all previously allowed content remains allowed and that the view can read and edit documents using the candidate.
  * They remain responsible for deciding whether that permitted upgrade would make any change.
  *
  * @param viewSchema - The view schema for which the upgrade target is being constructed.
  * @param storedSchema - The existing stored schema from which to construct the upgrade target.
- * @param policy - The policy that selects new staged permissions. Existing permissions are preserved independently at each location.
+ * @param policy - The policy that selects new staged upgrades. Already-enabled upgrades are preserved independently at each location.
  *
  * @returns The complete candidate stored schema.
  */
@@ -482,7 +482,7 @@ export function getSchemaUpgradeCandidate(
 				}
 			}
 
-			// For each field, combine its existing stored permissions with the additions requested by the view and policy.
+			// For each field, preserve its already-enabled upgrades while adding the schema changes requested by the view and policy.
 			// Preserving an already-enabled change in one field must not enable it in other fields that share the same token.
 			//
 			// Arrays also use stored object fields; their element types follow the same composition rule.
@@ -527,7 +527,7 @@ export function getSchemaUpgradeCandidate(
  *
  * @remarks
  * The stored representation is shared by objects and arrays, but their view rules differ.
- * Both compose permissions for declared fields; only object views that allow unknown optional fields can also retain omitted fields.
+ * Both preserve enabled upgrades for declared fields; only object views that allow unknown optional fields can also retain omitted fields.
  *
  * Field maps may belong to cached schemas, so this helper copies only the parts it changes rather than modifying either input.
  * It handles this node's fields only; the caller must follow their type references and validate the complete candidate.
@@ -549,7 +549,7 @@ function composeObjectNodeSchema(
 		const propertyKey = viewObject?.storedKeyToPropertyKey.get(fieldKey);
 
 		// The candidate already declares this stored field.
-		// Combine its requested permissions with the existing ones so disabled staging cannot narrow the field.
+		// Preserve already-enabled upgrades alongside the requested changes so disabled staging cannot narrow the field.
 		if (candidateField !== undefined) {
 			const composed = composeFieldSchema(
 				candidateField,
@@ -585,7 +585,7 @@ function composeObjectNodeSchema(
 }
 
 /**
- * Composes the shared entry field of a stored map node with the candidate's requested permissions.
+ * Combines the shared entry field schema of a stored map node with the candidate's entry field schema.
  *
  * @remarks
  * All map entries use the same field schema, so preserving its allowed types preserves them for every entry.

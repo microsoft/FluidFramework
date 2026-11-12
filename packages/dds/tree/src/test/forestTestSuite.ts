@@ -28,6 +28,7 @@ import {
 	type TreeStoredSchemaSubscription,
 	type UpPath,
 	clonePath,
+	combineVisitors,
 	createAnnouncedVisitor,
 	detachedFieldAsKey,
 	makeDetachedFieldIndex,
@@ -745,6 +746,14 @@ export function testForest(config: ForestTestConfiguration): void {
 		it("set fields as replace", () => {
 			const forest = factory(new TreeStoredSchemaRepository(jsonSequenceRootSchema));
 			initializeForest(forest, fieldJsonCursor([nestedContent]));
+			let replacements = 0;
+			forest.registerAnnouncedVisitor(() =>
+				createAnnouncedVisitor({
+					afterReplace: () => {
+						replacements++;
+					},
+				}),
+			);
 
 			const setField: DeltaMark = {
 				count: 1,
@@ -773,6 +782,91 @@ export function testForest(config: ForestTestConfiguration): void {
 			reader.enterField(xField);
 			assert.equal(reader.firstNode(), true);
 			assert.equal(reader.value, true);
+			assert.equal(replacements, 1);
+			reader.free();
+		});
+
+		it("replaces a range with consistent announcements, anchors, and detached content", () => {
+			const forest = factory(new TreeStoredSchemaRepository(jsonSequenceRootSchema));
+			initializeForest(forest, fieldJsonCursor([1, 2, 3, 4]));
+			const source: FieldKey = brand("incoming");
+			const destination: FieldKey = brand("outgoing");
+			const creator = forest.acquireVisitor();
+			creator.create([singleJsonCursor(10), singleJsonCursor(11)], source);
+			creator.free();
+			const readField = (fieldKey: FieldKey): JsonCompatible[] => {
+				const cursor = forest.allocateCursor();
+				forest.tryMoveCursorToField({ fieldKey, parent: undefined }, cursor);
+				const values = mapCursorField(cursor, cursorToJsonObject);
+				cursor.free();
+				return values;
+			};
+			const outgoingAnchor = forest.anchors.track({
+				parent: undefined,
+				parentField: rootFieldKey,
+				parentIndex: 1,
+			});
+			const incomingAnchor = forest.anchors.track({
+				parent: undefined,
+				parentField: source,
+				parentIndex: 0,
+			});
+			const siblingAnchor = forest.anchors.track({
+				parent: undefined,
+				parentField: rootFieldKey,
+				parentIndex: 3,
+			});
+			const events: string[] = [];
+			forest.registerAnnouncedVisitor(() =>
+				createAnnouncedVisitor({
+					beforeReplace: (incoming, range, outgoing) => {
+						events.push("beforeReplace");
+						assert.equal(incoming, source);
+						assert.deepEqual(range, { start: 1, end: 3 });
+						assert.equal(outgoing, destination);
+						assert.deepEqual(readField(rootFieldKey), [1, 2, 3, 4]);
+						assert.deepEqual(readField(source), [10, 11]);
+						assert.deepEqual(readField(destination), []);
+					},
+					afterReplace: () => {
+						events.push("afterReplace");
+						assert.deepEqual(readField(rootFieldKey), [1, 10, 11, 4]);
+						assert.deepEqual(readField(source), []);
+						assert.deepEqual(readField(destination), [2, 3]);
+						expectEqualPaths(forest.anchors.locate(outgoingAnchor), {
+							parent: undefined,
+							parentField: destination,
+							parentIndex: 0,
+						});
+						expectEqualPaths(forest.anchors.locate(incomingAnchor), {
+							parent: undefined,
+							parentField: rootFieldKey,
+							parentIndex: 1,
+						});
+						expectEqualPaths(forest.anchors.locate(siblingAnchor), {
+							parent: undefined,
+							parentField: rootFieldKey,
+							parentIndex: 3,
+						});
+					},
+				}),
+			);
+			forest.events.on("beforeChange", () => {
+				events.push("beforeChange");
+				assert.deepEqual(readField(rootFieldKey), [1, 2, 3, 4]);
+			});
+			const visitor = combineVisitors([
+				forest.acquireVisitor(),
+				forest.anchors.acquireVisitor(),
+			]);
+			visitor.enterField(rootFieldKey);
+			visitor.replace(source, { start: 1, end: 3 }, destination, detachId);
+			visitor.exitField(rootFieldKey);
+			visitor.free();
+			assert.deepEqual(events, ["beforeReplace", "beforeChange", "afterReplace"]);
+			forest.forgetAnchor(outgoingAnchor);
+			forest.forgetAnchor(incomingAnchor);
+			forest.forgetAnchor(siblingAnchor);
 		});
 
 		it("remove", () => {

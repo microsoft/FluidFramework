@@ -14,6 +14,7 @@ import {
 } from "../../simple-tree/core/index.js";
 import {
 	type ImplicitFieldSchema,
+	isSchemaUpgradeAllowed,
 	normalizeFieldSchema,
 	SchemaFactoryAlpha,
 } from "../../simple-tree/index.js";
@@ -486,7 +487,7 @@ describe("treeSchema", () => {
 				expectSchemaEqual(result, toInitialSchema(expectedCandidate));
 				assert.deepEqual(structuredClone(stored), storedSnapshot);
 
-				// Neither the cached conversion nor a candidate for another document may inherit these stored string permissions.
+				// Neither the cached conversion nor a candidate for another document may inherit this document's enabled string upgrade.
 				expectSchemaEqual(toInitialSchema(before, policy), toInitialSchema(expectedFresh));
 				expectSchemaEqual(
 					getSchemaUpgradeCandidate(createTreeSchema(before), fresh, policy),
@@ -520,8 +521,8 @@ describe("treeSchema", () => {
 				fallbackHours: schemaFactory.number,
 			}) {}
 
-			// The older view retains the newer document's primary permissions, using the older view's field metadata.
-			// Sharing the staged tokens does not add either permission to the fallback fields.
+			// The older view retains the newer document's enabled upgrades at the primary fields, using the older view's field metadata.
+			// Sharing the staged tokens does not enable either upgrade at the fallback fields.
 			class Expected extends schemaFactory.object("Task", {
 				primaryPriority: schemaFactory.required([schemaFactory.number, schemaFactory.string], {
 					persistedMetadata: { label: "Earlier priority label" },
@@ -597,30 +598,51 @@ describe("treeSchema", () => {
 				StagedSchemaUpgradePolicy.restrictive,
 			);
 
-			// The older view's restrictive candidate retains the newer document's permission to omit the root.
+			// The older view's restrictive candidate retains the staged optionality already enabled for the root.
 			expectSchemaEqual(result, stored);
 			expectSchemaEqual(toInitialSchema(before), toInitialSchema(Task));
 		});
 
-		it("retains recursive definitions referenced only by an already-enabled staged root type", () => {
+		/**
+		 * V1 stages `Task` alongside numbers.
+		 * V2 enables `Task`, which references itself and has a required `Child` containing a string.
+		 * Opening V2's schema with V1's restrictive policy must restore all three definitions without repeating traversal around the cycle.
+		 */
+		it("retains descendants and recursive references of an already-enabled staged root type", () => {
+			class Child extends schemaFactory.object("Child", {
+				text: schemaFactory.string,
+			}) {}
 			class Task extends schemaFactory.objectRecursive("Task", {
-				title: schemaFactory.string,
+				child: Child,
 				next: schemaFactory.optionalRecursive([() => Task]),
 			}) {}
-			const before = schemaFactory.types([schemaFactory.string, schemaFactory.staged(Task)]);
+			const schemaV1 = schemaFactory.types([schemaFactory.number, schemaFactory.staged(Task)]);
+			const schemaV2 = [schemaFactory.number, Task] as const;
+			const view = createTreeSchema(schemaV1);
+			const initial = toInitialSchema(schemaV1);
+			const stored = toInitialSchema(schemaV2);
 
-			// Fully enable structured tasks alongside plain task titles in the later schema.
-			const after = [schemaFactory.string, Task] as const;
-			const stored = toInitialSchema(after);
-			const result = getSchemaUpgradeCandidate(
-				createTreeSchema(before),
+			// Only number is initially queued; neither descendant can be recovered from a root reference.
+			assert.deepEqual(
+				new Set(initial.nodeSchema.keys()),
+				new Set([schemaFactory.number.identifier]),
+			);
+			const candidate = getSchemaUpgradeCandidate(
+				view,
 				stored,
 				StagedSchemaUpgradePolicy.restrictive,
 			);
-
-			// The older view must retain the newer document's `Task` definition and recursive references.
-			expectSchemaEqual(result, stored);
-			assert(!toInitialSchema(before).nodeSchema.has(brand(Task.identifier)));
+			assert.deepEqual(
+				new Set(candidate.nodeSchema.keys()),
+				new Set([
+					schemaFactory.number.identifier,
+					Task.identifier,
+					Child.identifier,
+					schemaFactory.string.identifier,
+				]),
+			);
+			expectSchemaEqual(candidate, stored);
+			assert.equal(isSchemaUpgradeAllowed(view, stored, candidate), true);
 		});
 
 		it("retains an omitted optional field and its metadata without replacing view metadata", () => {

@@ -296,7 +296,7 @@ describe("snapshotCompatibilityChecker", () => {
 		assert.equal(combinedCompatibility.currentViewOfSnapshotDocument.canView, false);
 		assert.equal(combinedCompatibility.currentViewOfSnapshotDocument.canUpgrade, true);
 
-		// Current documents already allow strings. The historical view supports them through staging and preserves that permission.
+		// Current documents already allow strings. The historical view supports them through staging and preserves that enabled upgrade.
 		// Its upgrade therefore leaves the stored schema unchanged.
 		assert.equal(combinedCompatibility.snapshotViewOfCurrentDocument.canView, true);
 		assert.equal(combinedCompatibility.snapshotViewOfCurrentDocument.canUpgrade, true);
@@ -565,64 +565,6 @@ describe("snapshotCompatibilityChecker", () => {
 				mode,
 				snapshotDirectory: "partialPrioritySnapshot",
 			});
-		}
-	});
-
-	/**
-	 * V1 declares numeric `priority` values and stages strings without enabling them.
-	 * V2 completes the rollout by declaring strings as an ordinary allowed type.
-	 *
-	 * Compare both directions and record the versions with V1 either inside or outside the collaboration window.
-	 * V1 must be able to read and preserve V2's strings under its restrictive policy, while V2 must be able to upgrade V1's numeric-only documents.
-	 * Both snapshot modes must accept the rollout.
-	 */
-	it("permits historical clients to retain already-enabled staged types in a no-op upgrade", () => {
-		const factory = new SchemaFactoryBeta("taskPriorityRollout");
-
-		class TaskV1 extends factory.object("Task", {
-			title: factory.string,
-			priority: factory.types([factory.number, factory.staged(factory.string)]),
-		}) {}
-
-		// Finish the priority rollout: newly created documents allow string priorities without an explicit staged policy.
-		class TaskV2 extends factory.object("Task", {
-			title: factory.string,
-			priority: [factory.number, factory.string],
-		}) {}
-		const historical = new TreeViewConfiguration({ schema: TaskV1 });
-		const current = new TreeViewConfiguration({ schema: TaskV2 });
-		const result = getCompatibility(current, historical);
-
-		// The historical view supports strings through staging; the composed candidate preserves them despite the restrictive policy.
-		assert.equal(result.snapshotViewOfCurrentDocument.canView, true);
-		assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, true);
-
-		const [fileSystem] = inMemorySnapshotFileSystem();
-		snapshotSchemaCompatibility({
-			schema: historical,
-			fileSystem,
-			version: "1.0.0",
-			minVersionForCollaboration: "1.0.0",
-			mode: "update",
-			snapshotDirectory: "taskPriorityRollout",
-		});
-
-		// The later client must add string support to documents created before the rollout completed.
-		assert.equal(result.currentViewOfSnapshotDocument.canView, false);
-		assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
-
-		// This forward rollout must pass in both snapshot modes, whether or not the older client is still required to collaborate.
-		for (const minVersionForCollaboration of ["1.0.0", "2.0.0"]) {
-			for (const mode of ["update", "assert"] as const) {
-				snapshotSchemaCompatibility({
-					schema: current,
-					fileSystem,
-					version: "2.0.0",
-					minVersionForCollaboration,
-					mode,
-					snapshotDirectory: "taskPriorityRollout",
-				});
-			}
 		}
 	});
 

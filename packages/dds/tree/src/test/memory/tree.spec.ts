@@ -19,6 +19,7 @@ import type { NodeBuilderData } from "../../internalTypes.js";
 import {
 	ForestTypeOptimized,
 	ForestTypeReference,
+	Tree,
 	type SharedTreeOptions,
 } from "../../shared-tree/index.js";
 import {
@@ -200,6 +201,41 @@ describe("SharedTree memory usage", () => {
 				...iterationSettings,
 			}),
 		}).timeout(40000); // Set relatively higher threshold as 100_000 iterations can take a while.
+	}
+
+	const listenedNodeCounts =
+		currentBenchmarkMode === BenchmarkMode.Performance ? [1000] : [10];
+	for (const numberOfNodes of listenedNodeCounts) {
+		benchmarkIt({
+			title: `Add a nodeChanged listener to each of ${numberOfNodes} nodes`,
+			...benchmarkMemoryUse({
+				...memoryAddedBy({
+					setup: () => {
+						const view = createLocalSharedTree(
+							"testSharedTree",
+							DeepMonomorphicArray,
+							new DeepMonomorphicArray(
+								Array.from(
+									{ length: numberOfNodes },
+									(_, index) =>
+										new DeepMonomorphicNode({
+											layer1: { layer2: { layer3: { layer4: { x: index, y: index } } } },
+										}),
+								),
+							),
+						);
+						// Read the nodes first, so only the memory used by their listeners is measured.
+						return { view, nodes: [...view.root] };
+					},
+					modify: ({ nodes }) => {
+						for (const node of nodes) {
+							Tree.on(node, "nodeChanged", () => {});
+						}
+					},
+				}),
+				...iterationSettings,
+			}),
+		}).timeout(120000);
 	}
 
 	/**

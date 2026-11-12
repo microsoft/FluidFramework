@@ -147,9 +147,6 @@ export interface SchemaStaticsAlpha {
 	 *
 	 * @remarks
 	 * Use this to incrementally migrate a required field to optional without a coordinated deployment.
-	 * The view can handle the field being present or absent, but the document's stored schema determines whether the field may be left empty.
-	 *
-	 * Enabling this staged upgrade makes the stored field optional, permitting it to be absent or cleared.
 	 *
 	 * With the default upgrade policy, the migration path is:
 	 *
@@ -157,6 +154,7 @@ export interface SchemaStaticsAlpha {
 	 * 2. Deploy `sf.stagedOptional(T)` — new clients can handle present or absent fields, but new documents still require the field and upgrades keep still-required fields required.
 	 * Setting the field to `undefined` is rejected while the stored schema requires it.
 	 * 3. Deploy `sf.optional(T)` once all clients support the staged optional field — new documents permit the field to be absent.
+	 * For existing documents whose stored field is still required, check {@link SchemaCompatibilityStatus.canUpgrade} and call {@link TreeView.upgradeSchema} before accessing or clearing the field through the new view.
 	 *
 	 * Analogous to {@link SchemaStaticsBeta.staged} for allowed types, but for field optionality.
 	 *
