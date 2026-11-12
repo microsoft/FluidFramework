@@ -37,7 +37,6 @@ import {
 	createSummarizer,
 	createSummarizerFromFactory,
 	createTestConfigProvider,
-	getContainerEntryPointBackCompat,
 	summarizeNow,
 	timeoutPromise,
 	waitForContainerConnection,
@@ -450,11 +449,11 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 			},
 		};
 		const container1 = await provider.makeTestContainer(configNoSummarizer);
-		const entryPoint1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		const entryPoint1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		const sharedString1 = await entryPoint1.getSharedObject<SharedString>(stringId);
 
 		const container2 = await provider.loadTestContainer(configNoSummarizer);
-		const entryPoint2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		const entryPoint2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const sharedString2 = await entryPoint2.getSharedObject<SharedString>(stringId);
 
 		await waitForContainerConnection(container1);
@@ -529,8 +528,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 			const containerRuntime = (summarizer as any).runtime as ContainerRuntime;
 			const submitSumarySpy = sandbox.spy(containerRuntime, "submitSummary");
 
-			const defaultDataStore =
-				await getContainerEntryPointBackCompat<ITestDataObject>(mainContainer);
+			const defaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 
 			const directory1 = defaultDataStore._root;
 			directory1.set("key", "value");
@@ -559,8 +557,7 @@ describeCompat("Summaries 2", "NoCompat", (getTestObjectProvider) => {
 			const container = await provider.makeTestContainer({
 				loaderProps: { logger: mockLogger },
 			});
-			const defaultDataStore =
-				await getContainerEntryPointBackCompat<ITestDataObject>(container);
+			const defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
 			const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
 			await provider.ensureSynchronized();
 

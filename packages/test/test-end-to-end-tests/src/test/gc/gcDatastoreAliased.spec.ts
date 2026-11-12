@@ -17,7 +17,6 @@ import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	ITestObjectProvider,
 	createSummarizer,
-	getContainerEntryPointBackCompat,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -36,7 +35,7 @@ describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObject
 	});
 
 	async function waitForSummary(container: IContainer) {
-		const dataStore = await getContainerEntryPointBackCompat<ITestDataObject>(container);
+		const dataStore = (await container.getEntryPoint()) as ITestDataObject;
 		return (dataStore._context.containerRuntime as ContainerRuntime).summarize({
 			runGC: true,
 			trackState: false,
@@ -51,8 +50,8 @@ describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObject
 		}
 		const container1 = await provider.makeTestContainer(defaultGCConfig);
 		const container2 = await provider.loadTestContainer(defaultGCConfig);
-		const mainDataStore1 = await getContainerEntryPointBackCompat<ITestDataObject>(container1);
-		const mainDataStore2 = await getContainerEntryPointBackCompat<ITestDataObject>(container2);
+		const mainDataStore1 = (await container1.getEntryPoint()) as ITestDataObject;
+		const mainDataStore2 = (await container2.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(container1);
 		await waitForContainerConnection(container2);
 

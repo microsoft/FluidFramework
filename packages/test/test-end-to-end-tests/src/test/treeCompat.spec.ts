@@ -9,7 +9,6 @@ import { describeCompat, type CompatApis } from "@fluid-private/test-version-uti
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	DataObjectFactoryType,
-	getContainerEntryPointBackCompat,
 	type ITestContainerConfig,
 	type ITestFluidObject,
 	type ITestObjectProvider,
@@ -37,7 +36,7 @@ async function createTreeView(
 
 	const treeViewConfig = new TreeViewConfiguration({ schema: TestSchema });
 
-	const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+	const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 	const tree = await dataObject.getSharedObject<ITree>(treeId);
 	return tree.viewWith(treeViewConfig);
 }
