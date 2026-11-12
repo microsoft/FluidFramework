@@ -322,13 +322,8 @@ describe("Runtime", () => {
 				}
 				return opFakeSequenceNumber - 1;
 			},
-			submitFn: (
-				_type: MessageType,
-				contents: object,
-				_batch: boolean,
-				metadata?: unknown,
-			) => {
-				submittedOps.push({ ...contents, metadata }); // Note: this object shape is for testing only. Not representative of real ops.
+			submitSummaryFn: (contents) => {
+				submittedOps.push({ ...contents, metadata: undefined }); // Note: this object shape is for testing only. Not representative of real ops.
 				return opFakeSequenceNumber++;
 			},
 			submitSignalFn: (content: unknown, targetClientId?: string) => {

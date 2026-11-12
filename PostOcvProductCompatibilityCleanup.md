@@ -163,7 +163,7 @@ the callback omission is not part of the current non-deprecated legacy/beta cont
 
 ### 4. Loader summary-submission fallbacks
 
-**Status:** Pending decision. Strong candidate.
+**Status:** Runtime cleanup approved and complete. Loader-side legacy routing deferred.
 
 - `packages/runtime/container-runtime/src/containerRuntime.ts`:
   `submitSummaryFn ?? ((summaryOp, refseq) => submitFn(...))`.
@@ -176,7 +176,21 @@ the callback omission is not part of the current non-deprecated legacy/beta cont
 **Potential change:** Use dedicated summary submission and remove the paired generic-submission adapter,
 subject to caller and API-contract audit. Preserve reference-sequence-number handling and summary validation.
 
-**Decision / changes / validation:** Not yet recorded.
+**Contract audit / decision:** `IContainerContext.submitSummaryFn` is already required by its
+non-deprecated `@legacy @beta` contract and supplied by installed `2.0.9` ContainerContext. Remove
+the runtime fallback for contexts missing that required method. The deprecated `submitFn` method
+itself remains callable by custom runtimes: keep the loader's `MessageType.Summarize` routing and
+record it in deferred list 1. No current exported signatures or conforming behavior change.
+
+**Changes:** Assign the dedicated callback directly, remove the runtime's unused `submitFn`
+destructuring, and migrate the runtime test mock's summary callback. Continue forwarding the summary
+reference sequence number at submission. Do not remove or alter loader summary validation/routing.
+
+**Validation:** Runtime build passed, including ESM/CJS, type tests, lint/format, dependency checks,
+API reports, and documentation model; no report changes. Runtime/summary-manager suites: 228 passing.
+E2E build passed. Local OCV summary selection: 70 passing, 8 pending; targeted N-1/cross-client
+incremental summaries: 32 passing; current summary/summarizer selection: 24 passing.
+No live real-service validation performed for this category.
 
 ### 5. Audience API polyfills
 
@@ -303,7 +317,8 @@ These are not cleanup targets merely because OCV advanced:
 ## Working decision summary
 
 Category 1 cleanup is approved and complete. Category 2 is deferred to preserve deprecated legacy/beta
-API behavior. Category 3 cleanup is approved and complete. Categories 4–11 remain pending decision.
+API behavior. Category 3 cleanup is approved and complete. Category 4 runtime cleanup is approved and complete,
+with loader-side routing deferred. Categories 5–11 remain pending decision.
 Retained/deferred categories should include the reason and any follow-up evidence needed.
 
 ## Deferred list 1: reachable through already-deprecated legacy/beta APIs
@@ -313,6 +328,7 @@ These are candidates for a separately approved API-removal effort, not this clea
 | Category / candidate | API preserving reachability | Deprecation evidence | Future action |
 | --- | --- | --- | --- |
 | 2. Old loader-to-runtime request routing: ContainerRuntime's private `request()`, stored handler, and associated plumbing | `LoadContainerRuntimeParams.requestHandler` (`@legacy @beta`); Aqueduct `BaseContainerRuntimeFactoryProps.requestHandlers` (`@legacy @beta`) | Both properties have existing `@deprecated` notices tied to entry-point migration | Review partner usage and follow the legacy/beta breaking-change process; remove routing and configuration together. Preserve `resolveHandle` and any independently needed handle-resolution handlers. |
+| 4. Loader generic-submit summary routing: `submitContainerMessage` handling of `MessageType.Summarize` | `IContainerContext.submitFn` (`@legacy @beta`) | Method has `@deprecated` directing callers to `submitBatchFn` and `submitSummaryFn` | Preserve generic submission behavior until the deprecated API is separately approved for removal. The runtime's missing-`submitSummaryFn` fallback can be removed independently. |
 
 ## Deferred list 2: reachable through non-deprecated legacy/beta APIs
 

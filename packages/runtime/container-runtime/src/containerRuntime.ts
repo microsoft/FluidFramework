@@ -1730,7 +1730,6 @@ export class ContainerRuntime
 			clientDetails,
 			connected,
 			baseSnapshot,
-			submitFn,
 			submitBatchFn,
 			submitSummaryFn,
 			submitSignalFn,
@@ -1793,10 +1792,7 @@ export class ContainerRuntime
 
 		// Here we could wrap/intercept on these functions to block/modify outgoing messages if needed.
 		// This makes ContainerRuntime the final gatekeeper for outgoing messages.
-		// back-compat: ADO #1385: Make this call unconditional in the future
-		this.submitSummaryFn =
-			submitSummaryFn ??
-			((summaryOp, refseq) => submitFn(MessageType.Summarize, summaryOp, false));
+		this.submitSummaryFn = submitSummaryFn;
 
 		const sequenceAndSubmitSignal = (
 			envelope: UnsequencedSignalEnvelope,
