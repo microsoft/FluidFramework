@@ -446,7 +446,7 @@ summarizer-node suites: 289 passing. Local incremental summaries across OCV, N-1
 
 ### 14. Residual context attachment-event emitter infrastructure
 
-**Status:** Pending decision; follow-up to category 8.
+**Status:** Cleanup approved and complete. Follow-up to category 8.
 
 - `packages/runtime/container-runtime/src/dataStoreContext.ts`: attachment-only
   `IFluidDataStoreContextEvents` and FluidDataStoreContext's TypedEventEmitter inheritance.
@@ -454,7 +454,20 @@ summarizer-node suites: 289 passing. Local incremental summaries across OCV, N-1
   subscriptions in the runtime package. Audit repository callers and package exports before removal.
 - Keep ContextDeltaManagerProxy's separate emitter: readonly notifications still use it.
 
-**Decision / changes / validation:** Not yet recorded.
+**Contract audit / decision:** No context attachment-event emissions remain after category 8, and a
+repository-wide subscription scan found no remaining consumers of these context events. The context
+class and event interface are not exported by the package entry point; the exported datastore-context
+contract does not inherit an event provider. Remove internal-only dead emitter infrastructure without
+changing public/legacy/beta signatures. Runtime/container attachment events remain supported separately.
+
+**Changes:** Remove IFluidDataStoreContextEvents, FluidDataStoreContext's TypedEventEmitter inheritance
+and base constructor call, and obsolete imports. Keep ContextDeltaManagerProxy's inherited event emitter
+and readonly notifications. Subclasses continue extending FluidDataStoreContext as before.
+
+**Validation:** Runtime build passed, including ESM/CJS, type tests, lint/format, dependency checks,
+API reports, and documentation model; no report changes. Runtime/context/channel/datastore-creation
+suites: 259 passing. E2E build passed. Local OCV/N-1/cross-client attachment/visibility/aliasing:
+904 passing, 32 pending. No live real-service validation performed.
 
 ### Additional retained capability checks
 
@@ -502,7 +515,7 @@ cleanup is approved and complete, with visibility behavior deferred. Category 9 
 category 10 is retained/deferred for storage lifecycle and API behavior. Category 11 is retained for
 current correctness, with its explanatory comment update approved and complete. Original categories audited;
 the structural scan added categories 12–14. Category 12 cleanup is approved and complete; category 13
-cleanup is approved and complete; category 14 remains pending.
+cleanup is approved and complete; category 14 cleanup is approved and complete.
 Retained/deferred categories should include the reason and any follow-up evidence needed.
 
 ## Deferred list 1: reachable through already-deprecated legacy/beta APIs
