@@ -365,7 +365,7 @@ wrappers, exported types, and current runtime caller. No product/test changes or
 
 ### 11. Extra scheduling hooks for old loaders
 
-**Status:** Pending decision. Additional proof required; correctness-sensitive.
+**Status:** Retained for current correctness; explanatory comment update approved and complete.
 
 - `packages/runtime/container-runtime/src/containerRuntime.ts`:
   `deltaManager.on("op", () => this.flush())`, justified by old loaders not passing non-runtime messages
@@ -374,7 +374,25 @@ wrappers, exported types, and current runtime caller. No product/test changes or
 **Potential change:** Remove the redundant listener only after establishing the contract at `2.0.9`.
 Validate reference-sequence-number changes, runtime/non-runtime op ordering, batching, and resubmission.
 
-**Decision / changes / validation:** Not yet recorded.
+**Audit / decision:** Retain the listener. Installed `2.0.9` and current loaders deliver non-runtime
+messages to runtime processing. However, the introducing PR [#24276](https://github.com/microsoft/FluidFramework/pull/24276)
+was later explicitly corrected: this listener also fixes a bug with current loader/runtime pairs.
+See the [author's ordering example](https://github.com/microsoft/FluidFramework/pull/24276#issuecomment-2902640564).
+
+DeltaManager advances its sequence number, then Container processes protocol handlers before runtime
+processing, then DeltaManager emits its op event. Message processing can queue outgoing op A at one
+reference sequence number. During the next message, protocol processing (for example quorum leave)
+can queue op B at the new reference sequence number before ContainerRuntime.process flushes.
+Without the post-processing flush, these can mix in one batch and violate sequence-number coherency.
+The start-of-process flush and end-of-message listener protect different parts of this ordering.
+
+**Changes:** Replace the old-loader-only comment with the current ordering rationale and history link.
+Keep the listener, processing behavior, and existing staging/batching tests. No deferred API-removal
+list entry: this is necessary correctness behavior, not otherwise removable compatibility code.
+
+**Validation:** Read-only audit of current and boundary loader message delivery and DeltaManager event
+ordering, runtime processing, existing batching/staging tests, and PR history. Product change is comment-only;
+format/diff checks suffice. No new behavior tests or compatibility runs needed for the comment update.
 
 ## Compatibility that remains necessary
 
@@ -407,7 +425,8 @@ API behavior. Category 3 cleanup is approved and complete. Category 4 runtime cl
 with loader-side routing deferred. Categories 5 and 6 cleanup are approved and complete;
 category 7 is deferred to preserve non-deprecated legacy/beta API behavior. Category 8 event-bridge
 cleanup is approved and complete, with visibility behavior deferred. Category 9 cleanup is approved and complete;
-category 10 is retained/deferred for storage lifecycle and API behavior; category 11 remains pending decision.
+category 10 is retained/deferred for storage lifecycle and API behavior. Category 11 is retained for
+current correctness, with its explanatory comment update approved and complete. All planned categories audited.
 Retained/deferred categories should include the reason and any follow-up evidence needed.
 
 ## Deferred list 1: reachable through already-deprecated legacy/beta APIs

@@ -2297,11 +2297,10 @@ export class ContainerRuntime
 		// We haven't emitted hasStagedChangesChanged yet, but this is the baseline so we know to emit when it changes
 		this.lastEmittedHasStagedChanges = this.computeCurrentHasStagedChanges();
 
-		// Reference Sequence Number may have just changed, and it must be consistent across a batch,
-		// so we should flush now to clear the way for the next ops.
-		// NOTE: This will be redundant whenever CR.process was called for the op (since we flush there too) -
-		// But we need this coverage for old loaders that don't call ContainerRuntime.process for non-runtime messages.
-		// (We have to call flush _before_ processing a runtime op, but after is ok for non-runtime op)
+		// Flush ops generated during message processing before the next message advances the reference sequence number.
+		// The protocol handler runs before ContainerRuntime.process and can itself generate ops, so the flush at the
+		// start of process() alone cannot prevent batches from mixing reference sequence numbers.
+		// See https://github.com/microsoft/FluidFramework/pull/24276#issuecomment-2902640564.
 		this.deltaManager.on("op", () => this.flush());
 
 		this.mc.logger.sendTelemetryEvent({
