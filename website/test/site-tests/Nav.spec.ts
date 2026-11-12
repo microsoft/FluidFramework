@@ -172,6 +172,9 @@ async function withPendingQuickStart(
 		await expect(page.locator("main h1")).toHaveText("Tutorial: DiceRoller application");
 		await assertPending(sidebar);
 	} finally {
+		// Playwright's Route.removeHandler continues requests held by the removed handler.
+		// Calling route.continue() ourselves would handle them twice.
+		// https://github.com/microsoft/playwright/blob/9a82788d83cf91d8262e65a432b9bf93dc5418a7/packages/playwright-core/src/server/network.ts#L417-L423
 		await page.unroute("**/*.js", holdScript);
 	}
 }
