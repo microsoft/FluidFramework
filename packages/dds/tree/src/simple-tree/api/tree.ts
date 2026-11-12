@@ -940,6 +940,11 @@ export type SchemaDiscrepancy =
 	| {
 			/**
 			 * Indicates that a field allows different node types in the view and stored schemas.
+			 *
+			 * @remarks
+			 * This compares node type identifiers, not the shapes of nodes with the same identifier.
+			 * For example, changing a field from `sf.number` to `sf.string` changes its allowed types.
+			 * `view` and `stored` list the types allowed only on their respective sides.
 			 */
 			readonly mismatch: "allowedTypes";
 			/**
@@ -979,6 +984,13 @@ export type SchemaDiscrepancy =
 	| {
 			/**
 			 * Indicates that a field has different field kinds in the view and stored schemas.
+			 *
+			 * @remarks
+			 * Field kinds describe how many children a field permits.
+			 * For example, `"Value"` requires exactly one child, while `"Optional"` permits zero or one.
+			 * `"Sequence"` permits any number, and `"Forbidden"` permits none.
+			 * `"Identifier"` is a required identifier field.
+			 * This compares presence requirements, not which node types the field allows.
 			 */
 			readonly mismatch: "fieldKind";
 			/**
@@ -1012,6 +1024,13 @@ export type SchemaDiscrepancy =
 	| {
 			/**
 			 * Indicates that a leaf node accepts different value types in the view and stored schemas.
+			 *
+			 * @remarks
+			 * A leaf holds a primitive value or a Fluid handle rather than child nodes.
+			 * This mismatch means the same node type identifier describes different leaf values,
+			 * such as `"Number"` in the view and `"String"` in stored schema.
+			 * This differs from a field changing between `sf.number` and `sf.string`,
+			 * which have different identifiers and produces an `"allowedTypes"` mismatch.
 			 */
 			readonly mismatch: "valueSchema";
 			/**
@@ -1030,6 +1049,12 @@ export type SchemaDiscrepancy =
 	| {
 			/**
 			 * Indicates that a node is represented by different node kinds in the view and stored schemas.
+			 *
+			 * @remarks
+			 * Node kinds describe structure, such as an object, map, array, or leaf.
+			 * For example, the same identifier cannot be viewed as an object when stored schema defines a map.
+			 * Arrays use an object representation in stored schema; a stored object that does not
+			 * have the required array structure also produces this mismatch.
 			 */
 			readonly mismatch: "nodeKind";
 			/**
@@ -1063,8 +1088,17 @@ export type SchemaUpgradeIncompatibility =
 	| {
 			/**
 			 * A field's proposed allowed types do not include all its stored allowed types.
+			 *
+			 * @remarks
+			 * For example, replacing `[sf.number, sf.string]` with `sf.number` removes support for string nodes.
+			 * This compares node type identifiers, not the primitive value types or shapes of those nodes.
 			 */
 			readonly mismatch: "allowedTypes";
+			/**
+			 * A human-readable explanation of the failed constraint.
+			 * Intended for diagnostics, not parsing or choosing an application-specific fix.
+			 */
+			readonly reason: string;
 			/**
 			 * The root field, or the containing node identifier and stored field key.
 			 * The field key is undefined for a map's implicit field.
@@ -1088,8 +1122,19 @@ export type SchemaUpgradeIncompatibility =
 	| {
 			/**
 			 * The transition from the stored field kind to the proposed kind is not permitted.
+			 *
+			 * @remarks
+			 * Field kinds describe how many children a field permits.
+			 * For example, changing `"Optional"` (zero or one child) to `"Value"` (exactly one)
+			 * would stop accepting an absent child.
+			 * Upgrade rules also restrict some transitions to prevent clients repeatedly upgrading back and forth.
 			 */
 			readonly mismatch: "fieldKind";
+			/**
+			 * A human-readable explanation of the failed constraint.
+			 * Intended for diagnostics, not parsing or choosing an application-specific fix.
+			 */
+			readonly reason: string;
 			/**
 			 * The root field, or the containing node identifier and stored field key.
 			 * The field key is undefined for a map's implicit field.
@@ -1112,8 +1157,19 @@ export type SchemaUpgradeIncompatibility =
 	| {
 			/**
 			 * A leaf node's proposed value schema is incompatible with its stored value schema.
+			 *
+			 * @remarks
+			 * A leaf holds a primitive value or a Fluid handle rather than child nodes.
+			 * For example, reusing a node type identifier for number values when it previously held strings
+			 * would stop accepting the stored string values.
+			 * Changing a field between `sf.number` and `sf.string` instead produces an `"allowedTypes"` mismatch.
 			 */
 			readonly mismatch: "valueSchema";
+			/**
+			 * A human-readable explanation of the failed constraint.
+			 * Intended for diagnostics, not parsing or choosing an application-specific fix.
+			 */
+			readonly reason: string;
 			/**
 			 * The leaf node schema identifier.
 			 */
@@ -1130,8 +1186,19 @@ export type SchemaUpgradeIncompatibility =
 	| {
 			/**
 			 * The proposed node kind is incompatible with the stored node kind.
+			 *
+			 * @remarks
+			 * This compares node structure, not field presence or primitive value types.
+			 * For example, changing a stored map to an object under the same identifier is not permitted.
+			 * Stored representations are `"Object"`, `"Map"`, and `"Leaf"`; arrays use the object representation.
+			 * Not every representation change is blocked: some object-to-map upgrades are permitted.
 			 */
 			readonly mismatch: "nodeKind";
+			/**
+			 * A human-readable explanation of the failed constraint.
+			 * Intended for diagnostics, not parsing or choosing an application-specific fix.
+			 */
+			readonly reason: string;
 			/**
 			 * The node schema identifier.
 			 */
@@ -1146,14 +1213,37 @@ export type SchemaUpgradeIncompatibility =
 			readonly stored: string;
 	  }
 	| {
-			/** A constructible stored node definition is absent from the proposed schema. */
+			/**
+			 * A constructible stored node definition is absent from the proposed schema.
+			 *
+			 * @remarks
+			 * Upgrading must preserve stored node types even when they are unreachable from the document root,
+			 * since detached content may use them.
+			 */
 			readonly mismatch: "missingNodeSchema";
+			/**
+			 * A human-readable explanation of the failed constraint.
+			 * Intended for diagnostics, not parsing or choosing an application-specific fix.
+			 */
+			readonly reason: string;
 			/** The missing stored node schema identifier. */
 			readonly nodeType: string;
 	  }
 	| {
-			/** The proposed node definition cannot describe a valid tree under the upgrade rules. */
-			readonly mismatch: "uninhabitableNodeSchema";
+			/**
+			 * The proposed node definition has requirements that cannot be satisfied under the upgrade rules.
+			 *
+			 * @remarks
+			 * For example, a required field cannot be filled when it allows no child types.
+			 * The upgrade comparison evaluates allowed child types using the existing stored definitions.
+			 * This describes a schema constraint, not invalid document content.
+			 */
+			readonly mismatch: "nodeSchemaCannotBeSatisfied";
+			/**
+			 * A human-readable explanation identifying the unsatisfied field or map constraint.
+			 * Intended for diagnostics, not parsing or choosing an application-specific fix.
+			 */
+			readonly reason: string;
 			/** The stored node schema identifier. */
 			readonly nodeType: string;
 	  };
@@ -1162,11 +1252,19 @@ export type SchemaUpgradeIncompatibility =
  * An incompatibility that prevents a view from providing read/write access to a document.
  *
  * @remarks
- * This is equivalent to {@link SchemaDiscrepancy}.
+ * This includes the structured details from {@link SchemaDiscrepancy} and a human-readable reason.
+ * The reason explains the schema constraint, not which change is appropriate for the application.
+ * Its wording is not stable API; use `mismatch` and the structured fields for programmatic handling.
  *
  * @sealed @beta
  */
-export type SchemaViewIncompatibility = SchemaDiscrepancy;
+export type SchemaViewIncompatibility = SchemaDiscrepancy & {
+	/**
+	 * A human-readable explanation of the failed constraint and its location.
+	 * Intended for diagnostics, not parsing or choosing an application-specific fix.
+	 */
+	readonly reason: string;
+};
 
 /**
  * Whether a schema operation is permitted, including its blocking incompatibilities when it is not.
@@ -1232,6 +1330,7 @@ export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus
 	 * 	//   location: { nodeType: "com.example.Todo", fieldKey: "title" },
 	 * 	//   view: ["com.fluidframework.leaf.number"],
 	 * 	//   stored: ["com.fluidframework.leaf.string"],
+	 * 	//   reason: 'Cannot view field "title" of node type "com.example.Todo": ...',
 	 * 	// }]
 	 * 	console.error(view.compatibility.view.incompatibilities);
 	 * }

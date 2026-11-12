@@ -936,6 +936,8 @@ describe("SchematizingSimpleTreeView", () => {
 				location: "root",
 				view: ["com.fluidframework.leaf.string"],
 				stored: [],
+				reason:
+					'Cannot view the root field: the view allows node types ["com.fluidframework.leaf.string"] that the stored schema does not allow.',
 			},
 		]);
 		assert.throws(
@@ -954,6 +956,8 @@ describe("SchematizingSimpleTreeView", () => {
 							location: "root",
 							view: ["com.fluidframework.leaf.string"],
 							stored: [],
+							reason:
+								'Cannot view the root field: the view allows node types ["com.fluidframework.leaf.string"] that the stored schema does not allow.',
 						},
 					]),
 				});
@@ -989,6 +993,8 @@ describe("SchematizingSimpleTreeView", () => {
 				location: "root",
 				view: [],
 				stored: ["com.fluidframework.leaf.string"],
+				reason:
+					'Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
 			},
 		]);
 		assert.throws(
@@ -1007,6 +1013,8 @@ describe("SchematizingSimpleTreeView", () => {
 							location: "root",
 							view: [],
 							stored: ["com.fluidframework.leaf.string"],
+							reason:
+								'Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
 						},
 					]),
 				});
@@ -1059,12 +1067,16 @@ describe("SchematizingSimpleTreeView", () => {
 				location: { nodeType: Viewed.identifier, fieldKey: "hidden" },
 				proposed: [],
 				stored: [schema.number.identifier],
+				reason:
+					'Cannot upgrade field "hidden" of node type "com.example.OnDemand": the proposed schema removes allowed node types ["com.fluidframework.leaf.number"].',
 			},
 			{
 				mismatch: "fieldKind",
 				location: { nodeType: Viewed.identifier, fieldKey: "hidden" },
 				proposed: "Forbidden",
 				stored: "Optional",
+				reason:
+					'Cannot upgrade field "hidden" of node type "com.example.OnDemand": changing from zero or one child to no children is not permitted by the schema upgrade rules.',
 			},
 		];
 		const incompatibilities = compatibility.upgrade.incompatibilities;
@@ -1112,10 +1124,14 @@ describe("SchematizingSimpleTreeView", () => {
 				location: "root",
 				proposed: [],
 				stored: [schema.string.identifier],
+				reason:
+					'Cannot upgrade the root field: the proposed schema removes allowed node types ["com.fluidframework.leaf.string"].',
 			},
 			{
 				mismatch: "missingNodeSchema",
 				nodeType: schema.string.identifier,
+				reason:
+					'Cannot upgrade node type "com.fluidframework.leaf.string": its stored definition is missing from the proposed schema.',
 			},
 		]);
 		assert.equal(originalCompatibility.canView, true);
@@ -1149,8 +1165,15 @@ describe("SchematizingSimpleTreeView", () => {
 				location: "root",
 				proposed: [],
 				stored: [schema.string.identifier],
+				reason:
+					'Cannot upgrade the root field: the proposed schema removes allowed node types ["com.fluidframework.leaf.string"].',
 			},
-			{ mismatch: "missingNodeSchema", nodeType: schema.string.identifier },
+			{
+				mismatch: "missingNodeSchema",
+				nodeType: schema.string.identifier,
+				reason:
+					'Cannot upgrade node type "com.fluidframework.leaf.string": its stored definition is missing from the proposed schema.',
+			},
 		]);
 	});
 
@@ -1179,6 +1202,8 @@ describe("SchematizingSimpleTreeView", () => {
 						location: "root",
 						view: ["com.fluidframework.leaf.boolean"],
 						stored: ["com.fluidframework.leaf.string"],
+						reason:
+							'Cannot view the root field: the view allows node types ["com.fluidframework.leaf.boolean"] that the stored schema does not allow; the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
 					},
 				]),
 			});

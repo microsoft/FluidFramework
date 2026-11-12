@@ -54,11 +54,17 @@ export function allowsTreeSuperset(
 		return true;
 	}
 	if (isNeverTree(policy, originalData, superset)) {
-		diagnostics?.discrepancies.push({
-			operation: "upgrade",
-			mismatch: superset === undefined ? "missingNodeSchema" : "uninhabitableNodeSchema",
-			identifier: diagnostics.identifier,
-		});
+		if (diagnostics !== undefined) {
+			if (superset === undefined) {
+				diagnostics.discrepancies.push({
+					operation: "upgrade",
+					mismatch: "missingNodeSchema",
+					identifier: diagnostics.identifier,
+				});
+			} else {
+				reportUnsatisfiedNodeConstraint(policy, originalData, superset, diagnostics);
+			}
+		}
 		return false;
 	}
 	assert(original !== undefined, 0x716 /* only never trees have undefined schema */);
@@ -142,6 +148,43 @@ export function allowsTreeSuperset(
 		same: compareField,
 	});
 	return compatible && fieldsCompared;
+}
+
+function reportUnsatisfiedNodeConstraint(
+	policy: FullSchemaPolicy,
+	originalData: TreeStoredSchema,
+	proposed: TreeNodeStoredSchema,
+	diagnostics: NodeComparisonDiagnostics,
+): void {
+	if (proposed instanceof MapNodeStoredSchema) {
+		diagnostics.discrepancies.push({
+			operation: "upgrade",
+			mismatch: "nodeSchemaCannotBeSatisfied",
+			identifier: diagnostics.identifier,
+			constraint: { kind: "requiredMapEntries" },
+		});
+		return;
+	}
+	assert(
+		proposed instanceof ObjectNodeStoredSchema,
+		"Only object and map node constraints can prevent construction of a defined node.",
+	);
+	for (const [fieldKey, field] of proposed.objectNodeFields) {
+		if (isNeverField(policy, originalData, field)) {
+			diagnostics.discrepancies.push({
+				operation: "upgrade",
+				mismatch: "nodeSchemaCannotBeSatisfied",
+				identifier: diagnostics.identifier,
+				constraint: {
+					kind: "requiredField",
+					fieldKey,
+					allowedTypes: field.types,
+				},
+			});
+			return;
+		}
+	}
+	fail("A node that cannot be constructed must have an unsatisfied constraint.");
 }
 
 function reportNodeKindMismatch(

@@ -14,11 +14,17 @@ The existing `canView`, `canUpgrade`, `discrepancies`, and `SchemaDiscrepancy` A
 Check `compatibility.view.isCompatible` before accessing the tree root and `compatibility.upgrade.isCompatible` before requesting a schema upgrade.
 These results are independent: viewing can be permitted even when upgrading is blocked, and an allowed upgrade does not mean an upgrade is needed.
 When an operation is blocked, read its `incompatibilities` to find the schema constraints that prevent it.
-`SchemaViewIncompatibility` describes viewing failures and is equivalent to the existing `SchemaDiscrepancy` type.
+`SchemaViewIncompatibility` describes viewing failures and adds a human-readable `reason` to the existing `SchemaDiscrepancy` details.
 `SchemaUpgradeIncompatibility` describes upgrade failures.
+Each incompatibility in the new results includes a `reason` explaining the failed constraint and its location.
+Use it for logging and debugging; use `mismatch` and the structured fields for programmatic handling.
+The reason describes schema constraints, not application intent or a prescribed fix.
 
 Upgrade details compare the existing stored schema with the proposed stored schema after applying the staged-upgrade policy.
-They identify removed allowed types, prohibited field-kind transitions, incompatible node or value kinds, and missing or uninhabitable node definitions.
+They identify removed allowed types, prohibited field-kind transitions, incompatible node or value kinds, and missing node definitions.
+`nodeSchemaCannotBeSatisfied` identifies a proposed node definition with requirements that cannot be satisfied under the upgrade rules,
+such as a required field that allows no child types.
+Its reason identifies the required field or map constraint.
 When viewing is possible, upgrade incompatibilities are computed only when first read and cached for that compatibility result.
 Retained results continue to describe the schema snapshot used when they were created, even after the document schema changes.
 
@@ -27,11 +33,15 @@ import { asBeta } from "@fluidframework/tree/beta";
 
 const { compatibility } = asBeta(view);
 if (!compatibility.view.isCompatible) {
-    console.error(compatibility.view.incompatibilities);
+    for (const { reason } of compatibility.view.incompatibilities) {
+        console.error(reason);
+    }
     if (compatibility.upgrade.isCompatible) {
         view.upgradeSchema();
     } else {
-        console.error(compatibility.upgrade.incompatibilities);
+        for (const { reason } of compatibility.upgrade.incompatibilities) {
+            console.error(reason);
+        }
     }
 }
 ```

@@ -67,6 +67,19 @@ function formatSchemaDiscrepancy(
 				mismatch: value.mismatch,
 				location: formatDiscrepancyLocation(value),
 				...comparison,
+				reason:
+					value.operation === "upgrade"
+						? `Cannot upgrade ${describeFieldLocation(value)}: the proposed schema removes allowed node types ${JSON.stringify(comparison.stored)}.`
+						: `Cannot view ${describeFieldLocation(value)}: ${[
+								value.view.length > 0
+									? `the view allows node types ${JSON.stringify(value.view.map(({ type }) => type.identifier).sort())} that the stored schema does not allow`
+									: undefined,
+								value.stored.length > 0
+									? `the stored schema allows node types ${JSON.stringify(comparison.stored)} that the view does not allow`
+									: undefined,
+							]
+								.filter((difference) => difference !== undefined)
+								.join("; ")}.`,
 			};
 		}
 		case "fieldKind": {
@@ -82,6 +95,10 @@ function formatSchemaDiscrepancy(
 								? { viewIsStagedOptional: value.viewIsStagedOptional }
 								: {}),
 						}),
+				reason:
+					value.operation === "upgrade"
+						? `Cannot upgrade ${describeFieldLocation(value)}: changing from ${describeFieldKind(value.stored)} to ${describeFieldKind(value.proposed)} is not permitted by the schema upgrade rules.`
+						: `Cannot view ${describeFieldLocation(value)}: the view permits ${describeFieldKind(value.view)}, but the stored schema permits ${describeFieldKind(value.stored)}.`,
 			};
 		}
 		case "valueSchema": {
@@ -92,6 +109,10 @@ function formatSchemaDiscrepancy(
 					? { proposed: formatValueSchema(value.proposed) }
 					: { view: formatValueSchema(value.view) }),
 				stored: formatValueSchema(value.stored),
+				reason:
+					value.operation === "upgrade"
+						? `Cannot upgrade node type ${JSON.stringify(value.identifier)}: changing leaf values from ${describeValueSchema(value.stored)} to ${describeValueSchema(value.proposed)} is not permitted.`
+						: `Cannot view node type ${JSON.stringify(value.identifier)}: the view expects ${describeValueSchema(value.view)}, but the stored schema allows ${describeValueSchema(value.stored)}.`,
 			};
 		}
 		case "nodeKind": {
@@ -102,11 +123,32 @@ function formatSchemaDiscrepancy(
 					? { proposed: getStoredNodeKind(value.proposed) }
 					: { view: NodeKind[value.view] }),
 				stored: getStoredNodeKind(value.stored),
+				reason:
+					value.operation === "upgrade"
+						? `Cannot upgrade node type ${JSON.stringify(value.identifier)}: changing the stored node representation from ${getStoredNodeKind(value.stored)} to ${getStoredNodeKind(value.proposed)} is not permitted.`
+						: `Cannot view node type ${JSON.stringify(value.identifier)}: the stored node structure does not match the view's ${NodeKind[value.view]} definition (stored representation: ${getStoredNodeKind(value.stored)}).`,
 			};
 		}
-		case "missingNodeSchema":
-		case "uninhabitableNodeSchema": {
-			return { mismatch: value.mismatch, nodeType: value.identifier };
+		case "missingNodeSchema": {
+			return {
+				mismatch: value.mismatch,
+				nodeType: value.identifier,
+				reason: `Cannot upgrade node type ${JSON.stringify(value.identifier)}: its stored definition is missing from the proposed schema.`,
+			};
+		}
+		case "nodeSchemaCannotBeSatisfied": {
+			const { constraint } = value;
+			const cause =
+				constraint.kind === "requiredMapEntries"
+					? "the proposed map requires an entry for every possible key, which cannot be satisfied by a finite tree"
+					: constraint.allowedTypes.size === 0
+						? `required field ${JSON.stringify(constraint.fieldKey)} allows no child types`
+						: `required field ${JSON.stringify(constraint.fieldKey)} has no child type that can be constructed using the existing stored definitions (allowed types: ${JSON.stringify([...constraint.allowedTypes].sort())})`;
+			return {
+				mismatch: value.mismatch,
+				nodeType: value.identifier,
+				reason: `Cannot upgrade node type ${JSON.stringify(value.identifier)}: ${cause}.`,
+			};
 		}
 		default: {
 			return unreachableCase(value);
@@ -138,6 +180,45 @@ function formatDiscrepancyLocation(
 
 function formatValueSchema(value: ValueSchema | undefined): string | undefined {
 	return value === undefined ? undefined : ValueSchema[value];
+}
+
+function describeFieldLocation(value: StoredSchemaDiscrepancyLocation): string {
+	return value.identifier === undefined
+		? "the root field"
+		: value.fieldKey === undefined
+			? `map entries of node type ${JSON.stringify(value.identifier)}`
+			: `field ${JSON.stringify(value.fieldKey)} of node type ${JSON.stringify(value.identifier)}`;
+}
+
+function describeFieldKind(kind: string): string {
+	switch (kind) {
+		case "Value": {
+			return "exactly one child";
+		}
+		case "Optional": {
+			return "zero or one child";
+		}
+		case "Sequence": {
+			return "zero or more children";
+		}
+		case "Forbidden": {
+			return "no children";
+		}
+		case "Identifier": {
+			return "exactly one identifier string";
+		}
+		default: {
+			return `field kind ${JSON.stringify(kind)}`;
+		}
+	}
+}
+
+function describeValueSchema(value: ValueSchema | undefined): string {
+	return value === undefined
+		? "values without a value-type constraint"
+		: value === ValueSchema.FluidHandle
+			? "Fluid handle values"
+			: `${ValueSchema[value].toLowerCase()} values`;
 }
 
 function getStoredNodeKind(

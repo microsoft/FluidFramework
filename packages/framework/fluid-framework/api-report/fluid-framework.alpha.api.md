@@ -2191,6 +2191,7 @@ export class SchemaUpgrade {
 // @beta @sealed
 export type SchemaUpgradeIncompatibility = {
     readonly mismatch: "allowedTypes";
+    readonly reason: string;
     readonly location: "root" | {
         readonly nodeType: string;
         readonly fieldKey: string | undefined;
@@ -2199,6 +2200,7 @@ export type SchemaUpgradeIncompatibility = {
     readonly stored: readonly string[];
 } | {
     readonly mismatch: "fieldKind";
+    readonly reason: string;
     readonly location: "root" | {
         readonly nodeType: string;
         readonly fieldKey: string | undefined;
@@ -2207,24 +2209,30 @@ export type SchemaUpgradeIncompatibility = {
     readonly stored: string;
 } | {
     readonly mismatch: "valueSchema";
+    readonly reason: string;
     readonly nodeType: string;
     readonly proposed: string | undefined;
     readonly stored: string | undefined;
 } | {
     readonly mismatch: "nodeKind";
+    readonly reason: string;
     readonly nodeType: string;
     readonly proposed: string;
     readonly stored: string;
 } | {
     readonly mismatch: "missingNodeSchema";
+    readonly reason: string;
     readonly nodeType: string;
 } | {
-    readonly mismatch: "uninhabitableNodeSchema";
+    readonly mismatch: "nodeSchemaCannotBeSatisfied";
+    readonly reason: string;
     readonly nodeType: string;
 };
 
 // @beta @sealed
-export type SchemaViewIncompatibility = SchemaDiscrepancy;
+export type SchemaViewIncompatibility = SchemaDiscrepancy & {
+    readonly reason: string;
+};
 
 // @public @system
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;

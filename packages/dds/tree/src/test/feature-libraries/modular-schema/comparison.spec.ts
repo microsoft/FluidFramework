@@ -278,6 +278,32 @@ describe("Schema Comparison", () => {
 			return compatible;
 		};
 
+		it("identifies an impossible requirement for every map key", () => {
+			const stored = new TreeStoredSchemaRepository({
+				rootFieldSchema: fieldOptionalEmptyTree,
+				nodeSchema: new Map([[emptyTree.name, emptyTree.schema]]),
+			});
+			const proposed = new TreeStoredSchemaRepository({
+				rootFieldSchema: fieldOptionalEmptyTree,
+				nodeSchema: new Map([
+					[emptyTree.name, new MapNodeStoredSchema(fieldRequiredEmptyTree)],
+				]),
+			});
+			const discrepancies: StoredSchemaUpgradeDiscrepancy[] = [];
+			assert.equal(
+				allowsRepoSuperset(defaultSchemaPolicy, stored, proposed, discrepancies),
+				false,
+			);
+			assert.deepEqual(discrepancies, [
+				{
+					operation: "upgrade",
+					mismatch: "nodeSchemaCannotBeSatisfied",
+					identifier: emptyTree.name,
+					constraint: { kind: "requiredMapEntries" },
+				},
+			]);
+		});
+
 		it("Same rootFieldSchema with different TreeNodeStoredSchemas", () => {
 			// Test a bunch of different TreeStoredSchema which are all the same,
 			// except one node schema (identified by `schemaName` in them has changed.

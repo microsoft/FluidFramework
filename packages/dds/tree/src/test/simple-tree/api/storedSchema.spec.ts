@@ -41,8 +41,15 @@ describe("simple-tree storedSchema", () => {
 				location: "root",
 				proposed: [],
 				stored: [sf.string.identifier],
+				reason:
+					'Cannot upgrade the root field: the proposed schema removes allowed node types ["com.fluidframework.leaf.string"].',
 			},
-			{ mismatch: "missingNodeSchema", nodeType: sf.string.identifier },
+			{
+				mismatch: "missingNodeSchema",
+				nodeType: sf.string.identifier,
+				reason:
+					'Cannot upgrade node type "com.fluidframework.leaf.string": its stored definition is missing from the proposed schema.',
+			},
 		]);
 	});
 
