@@ -4,6 +4,7 @@
  */
 
 import {
+	DeltaMarkListFactory,
 	makeAnonChange,
 	makeDetachedNodeId,
 	offsetChangeAtomId,
@@ -187,7 +188,10 @@ function intoDeltaImpl(
 			},
 		);
 		if (fieldDelta !== undefined && fieldDelta.marks.length > 0) {
-			delta.set(field, inlineRenamesInFieldDelta(fieldDelta, change));
+			const inlined = inlineRenamesInFieldDelta(fieldDelta, change);
+			if (inlined.marks.length > 0) {
+				delta.set(field, inlined);
+			}
 		}
 	}
 	return delta;
@@ -197,7 +201,7 @@ function inlineRenamesInFieldDelta(
 	delta: DeltaFieldChanges,
 	change: ModularChangeset,
 ): DeltaFieldChanges {
-	const result: DeltaMark[] = [];
+	const result = new DeltaMarkListFactory();
 	for (const mark of delta.marks) {
 		let remainder: DeltaMark | undefined = mark;
 		while (remainder !== undefined) {
@@ -245,7 +249,7 @@ function inlineRenamesInFieldDelta(
 		}
 	}
 
-	return { marks: result };
+	return { marks: result.list };
 }
 
 function getNormalizedDeltaDetachId(
