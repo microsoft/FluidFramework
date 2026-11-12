@@ -14,6 +14,7 @@ import {
 	ObjectNodeStoredSchema,
 	type TreeFieldStoredSchema,
 	type TreeNodeStoredSchema,
+	type TreeStoredSchema,
 } from "../../core/index.js";
 import {
 	compareStrings,
@@ -58,6 +59,7 @@ export interface IdentifySchemaWithHashOptions extends IdentifySchemaOptions {
  *
  * @remarks
  * Assigning the result to {@link ITreeViewConfigurationAlpha.schemaIdentity} enables runtime hash logging during initialization and schema upgrades.
+ * Telemetry identifies the stored schema applied by initialization or upgrade, including schema retained from the existing document.
  * The optional {@link IdentifySchemaWithHashOptions.expectedHash} enables checks for unintended schema changes when constructing a view.
  *
  * The {@link IdentifySchemaOptions.schemaVersion} option combines hashing with application-defined versions.
@@ -79,7 +81,7 @@ export function identifySchemaWithHashAlpha(
 ): SchemaIdentity {
 	return new SchemaIdentityInternal(
 		options.expectedHash,
-		computeSchemaHash,
+		computeStoredSchemaHash,
 		options.schemaVersion,
 	);
 }
@@ -106,14 +108,17 @@ export function computeSchemaHash(
 	schema: ImplicitFieldSchema,
 	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
 ): string {
-	const normalized = toInitialSchema(schema, stagedSchemaUpgrades);
+	return computeStoredSchemaHash(toInitialSchema(schema, stagedSchemaUpgrades));
+}
+
+/**
+ * Hashes a stored schema using the canonical representation shared with {@link computeSchemaHash}.
+ */
+function computeStoredSchemaHash(schema: TreeStoredSchema): string {
 	const serialized = JSON.stringify({
-		root: serializeField(normalized.rootFieldSchema),
+		root: serializeField(schema.rootFieldSchema),
 		nodes: Object.fromEntries(
-			[...normalized.nodeSchema].map(([identifier, node]) => [
-				identifier,
-				serializeNode(node),
-			]),
+			[...schema.nodeSchema].map(([identifier, node]) => [identifier, serializeNode(node)]),
 		),
 	});
 	// Normalize metadata to its JSON representation before sorting object keys.

@@ -23,10 +23,8 @@ import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
-	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizerCore,
 	defaultTestOldestSupportedClient,
-	getContainerEntryPointBackCompat,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -90,15 +88,13 @@ describeCompat(
 								},
 							},
 			};
-			const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-				apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore,
-				{
+			const runtimeFactory =
+				new apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore({
 					defaultFactory: dataObjectFactory,
 					oldestSupportedClient: defaultTestOldestSupportedClient,
 					registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 					runtimeOptions,
-				},
-			);
+				});
 			return runtimeFactory;
 		}
 
@@ -122,7 +118,7 @@ describeCompat(
 			}
 
 			mainContainer = await createContainer(version1Apis);
-			dataStoreA = await getContainerEntryPointBackCompat<ITestFluidObject>(mainContainer);
+			dataStoreA = (await mainContainer.getEntryPoint()) as ITestFluidObject;
 			await waitForContainerConnection(mainContainer);
 		});
 

@@ -12,6 +12,7 @@ import {
 	SchemaFactoryAlpha,
 	SchemaIdentityInternal,
 	StagedSchemaUpgradePolicy,
+	toInitialSchema,
 } from "../../../simple-tree/index.js";
 
 describe("schema hash functions", () => {
@@ -28,7 +29,10 @@ describe("schema hash functions", () => {
 		for (const option of options) {
 			const identity = SchemaIdentityInternal.extract(identifySchemaWithHashAlpha(option));
 			assert.equal(identity.expectedHash, option.expectedHash);
-			assert.equal(identity.schemaHasher, computeSchemaHash);
+			assert.equal(
+				identity.schemaHasher?.(toInitialSchema(sf.string, undefined, identity.schemaVersion)),
+				expectedHash,
+			);
 			assert.deepEqual(
 				identity.schemaVersion,
 				typeof option.schemaVersion === "number"

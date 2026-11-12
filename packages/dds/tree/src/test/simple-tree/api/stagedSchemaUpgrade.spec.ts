@@ -10,6 +10,7 @@ import {
 	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
 
+import { asAlpha } from "../../../api.js";
 import { FluidClientVersion } from "../../../codec/index.js";
 import { storedEmptyFieldSchema } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
@@ -33,7 +34,7 @@ import {
 	TreeViewConfigurationAlpha,
 	type ValidateRecursiveSchema,
 } from "../../../simple-tree/index.js";
-import { TestSchemaRepository, TestTreeProviderLite } from "../../utils.js";
+import { expectSchemaEqual, TestSchemaRepository, TestTreeProviderLite } from "../../utils.js";
 
 // Some documentation links to this file on GitHub: renaming it may break those links.
 
@@ -232,12 +233,18 @@ describe("staged allowed type upgrade", () => {
 		const viewMigrated = treeMigrated.viewWith(
 			new TreeViewConfiguration({ schema: fullyMigratedSchema }),
 		);
-		assert.equal(viewMigrated.compatibility.isEquivalent, true);
+		assert.equal(viewMigrated.compatibility.canView, true);
 		viewMigrated.upgradeSchema();
 		assert.equal(viewMigrated.root, "test");
 	});
 
-	it("excludes an already enabled allowed type from upgradeSchema by default", () => {
+	/**
+	 * Create a number-only document, then explicitly enable its staged string alternative.
+	 * Open the upgraded document with the same staged view schema and the default restrictive policy.
+	 * Requesting another upgrade must submit no operation, and the client must still be able to write strings.
+	 * Disabling new staged upgrades in the policy must not remove upgrades already enabled in the document.
+	 */
+	it("preserves an already enabled allowed type during a default no-op upgrade", () => {
 		const provider = new TestTreeProviderLite(3);
 		const [treeBase, treeEnabled, treeDefault] = provider.trees;
 
@@ -258,11 +265,15 @@ describe("staged allowed type upgrade", () => {
 		const viewDefault = treeDefault.viewWith(
 			new TreeViewConfigurationAlpha({ schema: schemaWithStagedType }),
 		);
-		assert.equal(viewDefault.compatibility.canUpgrade, false);
-		assert.throws(
-			() => viewDefault.upgradeSchema(),
-			/cannot be upgraded to the requested schema/,
-		);
+		assert.equal(viewDefault.compatibility.canUpgrade, true);
+		assert.equal(viewDefault.compatibility.canView, true);
+
+		const sequenceNumber = provider.sequenceNumber;
+		viewDefault.upgradeSchema();
+		provider.synchronizeMessages();
+		assert.equal(provider.sequenceNumber, sequenceNumber);
+		viewDefault.root = "still enabled";
+		assert.equal(viewDefault.root, "still enabled");
 	});
 
 	it("using independent view user apis", () => {
@@ -337,12 +348,9 @@ describe("staged allowed type upgrade", () => {
 			new TreeViewConfigurationAlpha({ schema: baseSchema }),
 			stored,
 		);
-		assert.deepEqual(compatibility, {
-			canView: false,
-			canUpgrade: true,
-			isEquivalent: false,
-			enabledUpgrades: new Map(),
-		});
+		assert.equal(compatibility.canView, false);
+		assert.equal(compatibility.canUpgrade, true);
+		assert.deepEqual(compatibility.enabledUpgrades, new Map());
 
 		checkStagedRolloutCompatibility({
 			baseSchema,
@@ -492,12 +500,18 @@ describe("staged optional upgrade", () => {
 		const viewOptional = treeOptional.viewWith(
 			new TreeViewConfiguration({ schema: optionalSchema }),
 		);
-		assert.equal(viewOptional.compatibility.isEquivalent, true);
+		assert.equal(viewOptional.compatibility.canView, true);
 		viewOptional.upgradeSchema();
 		assert.equal(viewOptional.root, undefined);
 	});
 
-	it("excludes an already enabled upgrade from upgradeSchema by default", () => {
+	/**
+	 * Create a document with a required root, then explicitly enable staged root optionality.
+	 * Open the upgraded document with the same staged view schema and the default restrictive policy.
+	 * Requesting another upgrade must submit no operation, and the client must still be able to clear the root.
+	 * Preserving existing optionality must not require the policy to enable it again.
+	 */
+	it("preserves already enabled optionality during a default no-op upgrade", () => {
 		const provider = new TestTreeProviderLite(3);
 		const [treeRequired, treeStaged, treeOptional] = provider.trees;
 
@@ -518,15 +532,18 @@ describe("staged optional upgrade", () => {
 		viewStaged.dispose();
 		provider.synchronizeMessages();
 
-		// A new view without the upgrade token excludes the enabled upgrade.
+		// A new view without the upgrade token must preserve optionality already stored in the document.
 		const viewStagedDefault = treeOptional.viewWith(
 			new TreeViewConfigurationAlpha({ schema: stagedOptionalSchema }),
 		);
-		assert.equal(viewStagedDefault.compatibility.canUpgrade, false);
-		assert.throws(
-			() => viewStagedDefault.upgradeSchema(),
-			/cannot be upgraded to the requested schema/,
-		);
+		assert.equal(viewStagedDefault.compatibility.canUpgrade, true);
+		assert.equal(viewStagedDefault.compatibility.canView, true);
+		const sequenceNumber = provider.sequenceNumber;
+		viewStagedDefault.upgradeSchema();
+		provider.synchronizeMessages();
+		assert.equal(provider.sequenceNumber, sequenceNumber);
+		viewStagedDefault.root = undefined;
+		assert.equal(viewStagedDefault.root, undefined);
 	});
 
 	it("can include already enabled upgrades in upgradeSchema", () => {
@@ -552,10 +569,7 @@ describe("staged optional upgrade", () => {
 		const viewStagedPreserving = treeOptional.viewWith(
 			new TreeViewConfigurationAlpha({
 				schema: stagedOptionalSchema,
-				stagedUpgradePolicy: {
-					includeAlreadyEnabledUpgrades: true,
-					...StagedSchemaUpgradePolicy.enabledStagedUpgrades(),
-				},
+				stagedUpgradePolicy: StagedSchemaUpgradePolicy.restrictive,
 			}),
 		);
 		assert.equal(viewStagedPreserving.compatibility.canUpgrade, true);
@@ -629,6 +643,290 @@ describe("staged optional upgrade", () => {
 	});
 });
 
+describe("older clients retaining newer document types while enabling staged additions", () => {
+	/**
+	 * V1 permits numeric array entries and stages strings and `null` for named and unassigned priorities.
+	 * V2 fully enables strings but no longer declares the staged `null` alternative.
+	 *
+	 * Create a V2 document containing strings and numbers, then open it with two V1 clients.
+	 * Only one V1 client explicitly enables `null`; its upgrade must preserve V2's already-enabled string upgrade.
+	 * Both clients must read the original entries and synchronize writes using strings and `null`.
+	 */
+	it("preserves array entry types while enabling unassigned priorities", () => {
+		const factory = new SchemaFactoryAlpha("arrayPriorityRollout");
+		const stagedUnassigned = factory.staged(factory.null);
+		const upgrade = stagedUnassigned.metadata.stagedSchemaUpgrade;
+		assert(upgrade !== undefined);
+		class PrioritiesV1 extends factory.array(
+			"Priorities",
+			factory.types([factory.number, factory.staged(factory.string), stagedUnassigned]),
+		) {}
+
+		// V2 fully enables string priorities without shipping the staged `null` alternative.
+		class PrioritiesV2 extends factory.array("Priorities", [factory.number, factory.string]) {}
+
+		// V1 selects only the `null` token; its candidate must also retain the V2 document's strings.
+		class Expected extends factory.array("Priorities", [
+			factory.number,
+			factory.string,
+			factory.null,
+		]) {}
+		const provider = new TestTreeProviderLite(2);
+		const [documentTree, upgradingTree] = provider.trees;
+		const creator = documentTree.viewWith(new TreeViewConfiguration({ schema: PrioritiesV2 }));
+		creator.initialize(["high", 1]);
+		provider.synchronizeMessages();
+		creator.dispose();
+
+		// Both V1 clients support the staged types, but only the upgrading client explicitly enables `null`.
+		const observer = documentTree.viewWith(
+			new TreeViewConfiguration({ schema: PrioritiesV1 }),
+		);
+		const older = upgradingTree.viewWith(
+			new TreeViewConfigurationAlpha({
+				schema: PrioritiesV1,
+				stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(upgrade),
+			}),
+		);
+
+		assert.equal(older.compatibility.canView, true);
+		assert.equal(older.compatibility.canUpgrade, true);
+
+		older.upgradeSchema();
+		provider.synchronizeMessages();
+
+		// Verify the actual applied union on both clients, not just the upgrader's compatibility result.
+		for (const tree of provider.trees) {
+			expectSchemaEqual(tree.kernel.checkout.storedSchema, toUpgradeSchema(Expected));
+		}
+		assert.deepEqual([...older.root], ["high", 1]);
+		older.root.insertAtEnd("low", null);
+		provider.synchronizeMessages();
+		assert.deepEqual([...observer.root], ["high", 1, "low", null]);
+		assert.equal(observer.compatibility.canView, true);
+	});
+
+	/**
+	 * V1 permits numeric map entries and stages strings and `null` for named and unassigned priorities.
+	 * V2 fully enables strings but no longer declares the staged `null` alternative.
+	 *
+	 * Create a V2 document with numeric and string entries, then open it with two V1 clients.
+	 * Enable only V1's `null` token and upgrade without removing the already-enabled string upgrade.
+	 * Both clients must agree on the combined schema and receive edits to existing entries and a new unassigned entry.
+	 */
+	it("preserves map entry types while enabling unassigned priorities", () => {
+		const factory = new SchemaFactoryAlpha("mapPriorityRollout");
+		const stagedUnassigned = factory.staged(factory.null);
+		const upgrade = stagedUnassigned.metadata.stagedSchemaUpgrade;
+		assert(upgrade !== undefined);
+		class PrioritiesV1 extends factory.map(
+			"Priorities",
+			factory.types([factory.number, factory.staged(factory.string), stagedUnassigned]),
+		) {}
+
+		// V2 fully enables string priorities without shipping the staged `null` alternative.
+		class PrioritiesV2 extends factory.map("Priorities", [factory.number, factory.string]) {}
+
+		// V1 selects only the `null` token; its candidate must also retain the V2 document's strings.
+		class Expected extends factory.map("Priorities", [
+			factory.number,
+			factory.string,
+			factory.null,
+		]) {}
+		const provider = new TestTreeProviderLite(2);
+		const [documentTree, upgradingTree] = provider.trees;
+		const creator = documentTree.viewWith(new TreeViewConfiguration({ schema: PrioritiesV2 }));
+		creator.initialize({ primary: "high", fallback: 1 });
+		provider.synchronizeMessages();
+		creator.dispose();
+
+		// Both V1 clients support the staged types, but only the upgrading client explicitly enables `null`.
+		const observer = documentTree.viewWith(
+			new TreeViewConfiguration({ schema: PrioritiesV1 }),
+		);
+		const older = upgradingTree.viewWith(
+			new TreeViewConfigurationAlpha({
+				schema: PrioritiesV1,
+				stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(upgrade),
+			}),
+		);
+
+		assert.equal(older.compatibility.canView, true);
+		assert.equal(older.compatibility.canUpgrade, true);
+
+		older.upgradeSchema();
+		provider.synchronizeMessages();
+
+		// Verify the actual applied union on both clients and exercise writes using both retained and newly enabled types.
+		for (const tree of provider.trees) {
+			expectSchemaEqual(tree.kernel.checkout.storedSchema, toUpgradeSchema(Expected));
+		}
+		assert.equal(older.root.get("primary"), "high");
+		older.root.set("primary", "low");
+		older.root.set("unassigned", null);
+		provider.synchronizeMessages();
+		assert.equal(observer.root.get("primary"), "low");
+		assert.equal(observer.root.get("fallback"), 1);
+		assert.equal(observer.root.get("unassigned"), null);
+		assert.equal(observer.compatibility.canView, true);
+	});
+});
+
+describe("preserving staged upgrades at individual locations", () => {
+	/**
+	 * V1 shares a staged string token between two `priority` fields and a staged optionality token between two `hours` fields.
+	 * V2 enables both changes only at the primary fields and renames `priority` without changing its stored key.
+	 *
+	 * Open a V2 document with V1's restrictive policy and request an upgrade.
+	 * Both tokens must remain "partial": preserving changes at the primary fields must not enable them at the fallback fields.
+	 * Repeated upgrades by either version must be no-ops.
+	 * Then explicitly enable both tokens through V1 while another restrictive V1 client remains open.
+	 * That observer must receive the new upgrades, report both tokens as "enabled", and be able to edit the fallback fields.
+	 */
+	it("preserves shared-token upgrades only at their existing locations until explicitly enabled", () => {
+		const factory = new SchemaFactoryAlpha("partialTaskRollout");
+
+		const stagedString = factory.staged(factory.string);
+		const stringUpgrade = stagedString.metadata.stagedSchemaUpgrade;
+		assert(stringUpgrade !== undefined);
+		const stagedHours = factory.stagedOptional(factory.number);
+		const optionalUpgrade = stagedHours.isStagedOptional;
+		assert(optionalUpgrade !== false);
+
+		class TaskV1 extends factory.object("Task", {
+			priority: factory.required(factory.types([factory.number, stagedString]), {
+				key: "primaryPriority",
+			}),
+			fallbackPriority: factory.types([factory.number, stagedString]),
+			primaryHours: stagedHours,
+			fallbackHours: stagedHours,
+		}) {}
+
+		// V2 fully enables the primary fields' staged changes and leaves fallback fields numeric and required.
+		// Rename `priority` to its stored key, so V1 must map the field back to its own property name.
+		class TaskV2 extends factory.object("Task", {
+			primaryPriority: [factory.number, factory.string],
+			fallbackPriority: factory.number,
+			primaryHours: factory.optional(factory.number),
+			fallbackHours: factory.number,
+		}) {}
+
+		// V1 preserves the V2 document's enabled upgrades at the primary fields without changing fallback fields.
+		class Expected extends factory.object("Task", {
+			primaryPriority: [factory.number, factory.string],
+			fallbackPriority: factory.number,
+			primaryHours: factory.optional(factory.number),
+			fallbackHours: factory.number,
+		}) {}
+		const provider = new TestTreeProviderLite(3);
+		const [treeV1, treeV2, treeObserver] = provider.trees;
+		const newer = treeV2.viewWith(new TreeViewConfiguration({ schema: TaskV2 }));
+		newer.initialize({ primaryPriority: "high", fallbackPriority: 1, fallbackHours: 2 });
+		provider.synchronizeMessages();
+		const older = asAlpha(treeV1.viewWith(new TreeViewConfigurationAlpha({ schema: TaskV1 })));
+		assert.equal(older.isStagedUpgradeEnabled(stringUpgrade), "partial");
+		assert.equal(older.isStagedUpgradeEnabled(optionalUpgrade), "partial");
+		assert.equal(older.compatibility.canUpgrade, true);
+		older.upgradeSchema();
+		provider.synchronizeMessages();
+		expectSchemaEqual(treeV1.kernel.checkout.storedSchema, toUpgradeSchema(Expected));
+
+		// Preserving one location must not enable the token at another location.
+		assert.equal(older.isStagedUpgradeEnabled(stringUpgrade), "partial");
+		assert.equal(older.isStagedUpgradeEnabled(optionalUpgrade), "partial");
+		assert.throws(() => {
+			older.root.fallbackPriority = "low";
+		});
+		assert.throws(() => {
+			older.root.fallbackHours = undefined;
+		});
+		older.root.priority = "urgent";
+		older.root.primaryHours = undefined;
+		provider.synchronizeMessages();
+		assert.equal(newer.root.primaryPriority, "urgent");
+		assert.equal(newer.root.primaryHours, undefined);
+
+		// Both clients now have safe no-op candidates, despite their different declarations.
+		const root = older.root;
+		const sequenceNumber = provider.sequenceNumber;
+		let schemaChanges = 0;
+		const unsubscribe = older.events.on("schemaChanged", () => schemaChanges++);
+		try {
+			for (let round = 0; round < 2; round++) {
+				newer.upgradeSchema();
+				older.upgradeSchema();
+				provider.synchronizeMessages();
+			}
+			assert.equal(provider.sequenceNumber, sequenceNumber);
+			assert.equal(schemaChanges, 0);
+			assert.equal(older.root, root);
+		} finally {
+			unsubscribe();
+		}
+
+		// Keep another V1 client open with a restrictive policy while its peer enables the remaining locations.
+		const observer = asAlpha(
+			treeObserver.viewWith(new TreeViewConfigurationAlpha({ schema: TaskV1 })),
+		);
+		assert.equal(observer.isStagedUpgradeEnabled(stringUpgrade), "partial");
+		assert.equal(observer.isStagedUpgradeEnabled(optionalUpgrade), "partial");
+
+		// Enabling the tokens explicitly also enables their upgrades at the fallback fields.
+		older.dispose();
+		const enabled = asAlpha(
+			treeV1.viewWith(
+				new TreeViewConfigurationAlpha({
+					schema: TaskV1,
+					stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(
+						stringUpgrade,
+						optionalUpgrade,
+					),
+				}),
+			),
+		);
+		enabled.upgradeSchema();
+		assert.equal(enabled.isStagedUpgradeEnabled(stringUpgrade), "enabled");
+		assert.equal(enabled.isStagedUpgradeEnabled(optionalUpgrade), "enabled");
+		enabled.root.fallbackPriority = "low";
+		enabled.root.fallbackHours = undefined;
+		assert.equal(enabled.root.fallbackPriority, "low");
+		assert.equal(enabled.root.fallbackHours, undefined);
+		provider.synchronizeMessages();
+
+		// The existing observer must recompute both statuses and accept the newly enabled values after the remote schema update.
+		assert.equal(observer.isStagedUpgradeEnabled(stringUpgrade), "enabled");
+		assert.equal(observer.isStagedUpgradeEnabled(optionalUpgrade), "enabled");
+		assert.equal(observer.root.fallbackPriority, "low");
+		assert.equal(observer.root.fallbackHours, undefined);
+		observer.root.fallbackPriority = "urgent";
+		observer.root.fallbackHours = 3;
+		observer.root.fallbackHours = undefined;
+		provider.synchronizeMessages();
+		assert.equal(enabled.root.fallbackPriority, "urgent");
+		assert.equal(enabled.root.fallbackHours, undefined);
+
+		// Despite its restrictive policy, the observer's candidate now preserves the remotely enabled upgrades as a no-op.
+		assert.equal(observer.compatibility.canUpgrade, true);
+		assert.equal(observer.compatibility.canView, true);
+		const observerRoot = observer.root;
+		const sequenceAfterEnablement = provider.sequenceNumber;
+		let observerSchemaChanges = 0;
+		const unsubscribeObserver = observer.events.on(
+			"schemaChanged",
+			() => observerSchemaChanges++,
+		);
+		try {
+			observer.upgradeSchema();
+			provider.synchronizeMessages();
+			assert.equal(provider.sequenceNumber, sequenceAfterEnablement);
+			assert.equal(observerSchemaChanges, 0);
+			assert.equal(observer.root, observerRoot);
+		} finally {
+			unsubscribeObserver();
+		}
+	});
+});
+
 function checkStagedRolloutCompatibility({
 	baseSchema,
 	stagedSchema,
@@ -646,25 +944,24 @@ function checkStagedRolloutCompatibility({
 	const stored = new TestSchemaRepository(defaultSchemaPolicy, toUpgradeSchema(baseSchema));
 	const expectCompatibility = (
 		schema: ImplicitFieldSchema,
-		expected: Omit<
-			ReturnType<typeof checkSchemaCompatibility>,
-			"enabledUpgrades" | "discrepancies"
-		> & {
+		expected: Pick<ReturnType<typeof checkSchemaCompatibility>, "canView" | "canUpgrade"> & {
 			enabledUpgrades?: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
 		},
 	): void => {
-		const { discrepancies: _discrepancies, ...compatibility } = checkSchemaCompatibility(
+		const { canView, canUpgrade, enabledUpgrades } = checkSchemaCompatibility(
 			new TreeViewConfigurationAlpha({ schema }),
 			stored,
 		);
-		assert.deepEqual(compatibility, { enabledUpgrades: new Map(), ...expected });
+		assert.deepEqual(
+			{ canView, canUpgrade, enabledUpgrades },
+			{ enabledUpgrades: new Map(), ...expected },
+		);
 	};
 
-	// baseSchema is equivalent to the initial stored schema.
+	// baseSchema can view the initial stored schema.
 	expectCompatibility(baseSchema, {
 		canView: true,
 		canUpgrade: true,
-		isEquivalent: true,
 	});
 
 	// stagedSchema can view baseSchema and its default upgrade remains a no-op because the
@@ -672,24 +969,20 @@ function checkStagedRolloutCompatibility({
 	expectCompatibility(stagedSchema, {
 		canView: true,
 		canUpgrade: true,
-		isEquivalent: true,
 	});
 	expectCompatibility(fullyMigratedSchema, {
 		canView: false,
 		canUpgrade: true,
-		isEquivalent: false,
 	});
 
 	assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(stagedSchema).rootFieldSchema));
 	expectCompatibility(baseSchema, {
 		canView: true,
 		canUpgrade: true,
-		isEquivalent: true,
 	});
 	expectCompatibility(stagedSchema, {
 		canView: true,
 		canUpgrade: true,
-		isEquivalent: true,
 	});
 
 	// fullyMigratedSchema represents the code-cleanup state where the staged marker has been removed.
@@ -697,7 +990,6 @@ function checkStagedRolloutCompatibility({
 	expectCompatibility(fullyMigratedSchema, {
 		canView: false,
 		canUpgrade: true,
-		isEquivalent: false,
 	});
 
 	assert(
@@ -713,19 +1005,16 @@ function checkStagedRolloutCompatibility({
 	expectCompatibility(baseSchema, {
 		canView: false,
 		canUpgrade: false,
-		isEquivalent: false,
 	});
 
-	// stagedSchema excludes the already enabled upgrade by default.
+	// The staged view preserves the already-enabled upgrades, so its upgrade is now a no-op.
 	expectCompatibility(stagedSchema, {
 		canView: true,
-		canUpgrade: false,
-		isEquivalent: false,
+		canUpgrade: true,
 		enabledUpgrades: new Map([[upgrade, "enabled"]]),
 	});
 	expectCompatibility(fullyMigratedSchema, {
 		canView: true,
 		canUpgrade: true,
-		isEquivalent: true,
 	});
 }

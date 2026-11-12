@@ -290,8 +290,8 @@ export interface SimpleFieldSchema<Type extends SchemaType = SchemaType> {
 	/**
 	 * Indicates that this field is a {@link SchemaStaticsAlpha.stagedOptional | staged optional} field,
 	 * allowing the view schema to be compatible with stored schema where the field is required (pre-upgrade) or optional (post-upgrade).
-	 * New documents and schema upgrades will keep the field as required in the stored schema.
 	 *
+	 * @remarks
 	 * `false` if this is a view schema field that is not staged optional.
 	 * Absent (`undefined`) if derived from a stored schema (where staged optional has no meaning).
 	 *

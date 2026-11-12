@@ -136,6 +136,7 @@ export { getSimpleSchema } from "./getSimpleSchema.js";
 export {
 	checkSchemaCompatibility,
 	getSchemaIncompatibilityDetails,
+	isSchemaUpgradeAllowed,
 } from "./schemaCompatibilityTester.js";
 export { type StagedUpgradeStatus } from "./schemaCompatibilityTester.js";
 export type {

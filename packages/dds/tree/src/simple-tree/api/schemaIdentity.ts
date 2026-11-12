@@ -9,9 +9,7 @@ import {
 } from "@fluidframework/core-interfaces/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { SchemaVersionMap } from "../../core/index.js";
-import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js";
-import type { ImplicitFieldSchema } from "../fieldSchema.js";
+import type { SchemaVersionMap, TreeStoredSchema } from "../../core/index.js";
 
 /**
  * Represents a schema identity for runtime hashing and application-defined versions.
@@ -135,12 +133,7 @@ export class SchemaIdentityInternal
 
 	public constructor(
 		public readonly expectedHash: string | undefined,
-		public readonly schemaHasher:
-			| ((
-					schema: ImplicitFieldSchema,
-					stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
-			  ) => string)
-			| undefined,
+		public readonly schemaHasher: ((schema: TreeStoredSchema) => string) | undefined,
 		schemaVersion?: SchemaVersionMap | number,
 	) {
 		super();

@@ -28,8 +28,9 @@ During the rollout, there are three schema states:
 Your Phase 1 code (the "staged" state) needs to handle documents created in the "upgraded" state.
 But how do you create such a document in a test?
 
-Normally, staged types are excluded from stored schema, so `initialize()` and `upgradeSchema()` won't include them.
-**Runtime schema upgrades** solve this by letting you explicitly enable staged upgrades at view construction time.
+Simply initializing a document with the staged schema does not produce that future state: the default policy still excludes `RgbColor`.
+Calling `upgradeSchema()` under that same policy does not add it either.
+To create the upgraded state for a test, use **runtime schema upgrades** to explicitly enable the token when constructing the view.
 
 ## Creating Test Documents with Future Schema
 
@@ -93,13 +94,13 @@ it("rejects staged content when upgrades are not enabled", () => {
     const view = independentView(
         new TreeViewConfigurationAlpha({
             schema: Note,
-            // No stagedUpgradePolicy — staged types stay excluded
+            // No stagedUpgradePolicy: this new document excludes staged types.
         }),
     );
 
     view.initialize(new Note({ text: "Hello", color: "red" }));
 
-    // Writing an RgbColor should fail because it's staged
+    // This document does not yet permit RgbColor values.
     assert.throws(() => {
         view.root.color = new RgbColor({ r: 255, g: 0, b: 0 });
     });
@@ -151,7 +152,6 @@ it("staged schema is compatible with the original stored schema", () => {
     );
 
     assert.equal(view.compatibility.canView, true);
-    assert.equal(view.compatibility.isEquivalent, true);
 });
 ```
 

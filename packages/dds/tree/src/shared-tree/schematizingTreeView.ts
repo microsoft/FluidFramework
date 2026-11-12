@@ -29,6 +29,8 @@ import {
 	FieldKinds,
 	type FlexTreeRequiredField,
 	allowsRepoSuperset,
+	compareSchemaVersions,
+	SchemaVersionComparison,
 } from "../feature-libraries/index.js";
 import {
 	type ImplicitFieldSchema,
@@ -39,6 +41,8 @@ import {
 	setField,
 	normalizeFieldSchema,
 	checkSchemaCompatibility,
+	isSchemaUpgradeAllowed,
+	getSchemaUpgradeCandidate,
 	type InsertableContent,
 	type StagedSchemaUpgradePolicy,
 	type TreeViewConfiguration,
@@ -61,7 +65,6 @@ import {
 	tryDisposeTreeNode,
 	type TreeViewConfigurationAlpha,
 	toInitialSchema,
-	toUpgradeSchema,
 	type TreeBranchHistory,
 	type TreeLocationResolver,
 	type TreeLocation,
@@ -274,7 +277,7 @@ export class SchematizingSimpleTreeView<
 		if (identity?.expectedHash !== undefined) {
 			const { expectedHash, schemaHasher: hasher } = identity;
 			assert(hasher !== undefined, "An expected schema hash requires a hasher.");
-			const actualHash = hasher(configAlpha.schema, this.stagedUpgradePolicy);
+			const actualHash = hasher(toInitialSchema(configAlpha.schema, this.stagedUpgradePolicy));
 			if (actualHash !== expectedHash) {
 				const versionSuggestion =
 					identity.schemaVersion !== undefined && identity.schemaVersion.size > 0
@@ -350,7 +353,7 @@ export class SchematizingSimpleTreeView<
 			this.stagedUpgradePolicy,
 			this.viewSchema.schemaVersion,
 		);
-		const schemaHash = this.computeSchemaHash(this.stagedUpgradePolicy);
+		const schemaHash = this.computeSchemaHash(schema);
 		this.runSchemaEdit(() => {
 			// This has to be the contextless version, since when "initialize" is called (right after this),
 			// it will do a schema change which would dispose of the current context (see inside `update`).
@@ -415,30 +418,31 @@ export class SchematizingSimpleTreeView<
 	public upgradeSchema(): void {
 		this.ensureUndisposed();
 
-		const upgradePolicy = this.effectiveUpgradePolicy;
-		const newSchema = toUpgradeSchema(
-			this.viewSchema.root,
-			upgradePolicy,
-			this.viewSchema.schemaVersion,
-		);
+		const upgradePolicy = this.stagedUpgradePolicy;
 		const storedSchema = this.checkout.storedSchema.clone();
+		const newSchema = getSchemaUpgradeCandidate(this.viewSchema, storedSchema, upgradePolicy);
 		// Version ordering can permit non-additive upgrades, which must bypass the checkout's additive-only assertion.
 		const isAdditiveSchemaUpgrade = allowsRepoSuperset(
 			defaultSchemaPolicy,
 			storedSchema,
 			newSchema,
 		);
-		if (!this.compatibility.canUpgrade) {
+		if (!isSchemaUpgradeAllowed(this.viewSchema, storedSchema, newSchema)) {
 			throw new UsageError(
 				"Existing stored schema cannot be upgraded to the requested schema (see TreeView.compatibility.canUpgrade).",
 			);
 		}
-		if (this.compatibility.isEquivalent) {
+		if (
+			isAdditiveSchemaUpgrade &&
+			allowsRepoSuperset(defaultSchemaPolicy, newSchema, storedSchema) &&
+			compareSchemaVersions(storedSchema.schemaVersion, newSchema.schemaVersion) ===
+				SchemaVersionComparison.Equal
+		) {
 			// No-op
 			return;
 		}
 
-		const schemaHash = this.computeSchemaHash(upgradePolicy);
+		const schemaHash = this.computeSchemaHash(newSchema);
 		this.runSchemaEdit(() =>
 			this.checkout.updateSchema(newSchema, isAdditiveSchemaUpgrade ? undefined : true),
 		);
@@ -450,16 +454,11 @@ export class SchematizingSimpleTreeView<
 		}
 	}
 
-	private computeSchemaHash(
-		stagedUpgradePolicy: StagedSchemaUpgradePolicy,
-	): string | undefined {
+	private computeSchemaHash(schema: TreeStoredSchema): string | undefined {
 		const identity = (this.config as Partial<ITreeViewConfigurationAlpha>).schemaIdentity;
 		return identity === undefined
 			? undefined
-			: SchemaIdentityInternal.extract(identity).schemaHasher?.(
-					this.config.schema,
-					stagedUpgradePolicy,
-				);
+			: SchemaIdentityInternal.extract(identity).schemaHasher?.(schema);
 	}
 
 	public isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus {
@@ -467,28 +466,6 @@ export class SchematizingSimpleTreeView<
 			this.failDisposed();
 		}
 		return this.currentEnabledUpgrades.get(upgrade) ?? "disabled";
-	}
-
-	private get effectiveUpgradePolicy(): StagedSchemaUpgradePolicy {
-		const configuredPolicy = this.stagedUpgradePolicy;
-		if (configuredPolicy.includeAlreadyEnabledUpgrades !== true) {
-			return configuredPolicy;
-		}
-		const enabledUpgrades = this.currentEnabledUpgrades;
-		assert(
-			enabledUpgrades !== undefined,
-			0xd3e /* Enabled upgrades must be available for an active view */,
-		);
-		if (enabledUpgrades.size === 0) {
-			return configuredPolicy;
-		}
-
-		return {
-			includeStaged: (upgrade) =>
-				configuredPolicy.includeStaged(upgrade) || enabledUpgrades.has(upgrade),
-			includeStagedOptional: (upgrade) =>
-				configuredPolicy.includeStagedOptional(upgrade) || enabledUpgrades.has(upgrade),
-		};
 	}
 
 	/**

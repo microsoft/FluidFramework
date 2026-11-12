@@ -22,7 +22,6 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	TestFluidObjectFactory,
-	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizerFromFactory,
 	defaultTestOldestSupportedClient,
 	summarizeNow,
@@ -54,15 +53,12 @@ describeCompat("GC version update", "NoCompat", (getTestObjectProvider, apis) =>
 		},
 	};
 
-	const defaultRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-		ContainerRuntimeFactoryWithDefaultDataStore,
-		{
-			defaultFactory,
-			oldestSupportedClient: defaultTestOldestSupportedClient,
-			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-			runtimeOptions,
-		},
-	);
+	const defaultRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory,
+		oldestSupportedClient: defaultTestOldestSupportedClient,
+		registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+		runtimeOptions,
+	});
 
 	let mainContainer: IContainer;
 	let dataStore1Id: string;
