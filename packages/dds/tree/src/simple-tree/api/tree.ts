@@ -1188,25 +1188,24 @@ export interface TreeViewAlpha<
  */
 export interface SchemaCompatibilityStatus {
 	/**
-	 * Whether the view can already access the document and its proposed schema upgrade would leave the stored schema unchanged.
+	 * Whether the view schema would generate an equivalent stored schema to the existing one.
+	 * That is, whether both the existing stored schema and the stored schema derived
+	 * from the view allow the same subset of documents.
 	 *
 	 * @remarks
 	 *
-	 * This is true only when {@link SchemaCompatibilityStatus.canView} is true and the existing and proposed stored schemas each satisfy the schema upgrade rules relative to the other.
+	 * This is true only when {@link SchemaCompatibilityStatus.canView} is true and the existing and generated stored schemas each satisfy the schema upgrade rules relative to the other.
 	 * Thus, a `true` value also implies that {@link SchemaCompatibilityStatus.canUpgrade} is true.
 	 *
 	 * Equivalence does not require the schemas to be identical.
 	 * Differences that do not affect schema compatibility, such as {@link NodeSchemaOptionsAlpha.persistedMetadata}, do not affect this flag.
 	 *
-	 * The comparison uses the upgrade target built from both the view and the existing stored schema.
-	 * That target combines additions selected by the {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy} with allowed types and supported optionality already stored in the document.
-	 * As a result, a view that stages a type can have an equivalent upgrade target for a document where that type is already enabled, even when its policy would not enable the type in a new document.
-	 *
-	 * Equivalence here therefore does not mean that initializing a new document with this view would produce the same stored schema.
-	 * Nor does comparing one view with one document establish compatibility between every pair of application versions.
+	 * The generated schema depends only on the view and its {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy}, as when initializing a new document.
+	 * It does not retain staged permissions from the existing document.
+	 * A view whose policy excludes an already-enabled staged type can therefore report `false` even though {@link TreeView.upgradeSchema} would preserve that type and make no change.
 	 *
 	 * Allowing unknown optional fields through {@link ObjectSchemaOptions.allowUnknownOptionalFields} can permit viewing without equivalence:
-	 * fields present in the stored schema but absent from the proposed stored schema can still prevent equivalence.
+	 * fields present in the stored schema but absent from the generated stored schema can still prevent equivalence.
 	 *
 	 * When true, {@link TreeView.upgradeSchema} makes no change to the stored schema.
 	 *

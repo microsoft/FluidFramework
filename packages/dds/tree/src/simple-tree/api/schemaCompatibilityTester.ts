@@ -15,7 +15,7 @@ import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js"
 import { NodeKind } from "../core/index.js";
 import { allowsRepoSuperset, defaultSchemaPolicy } from "../../feature-libraries/index.js";
 import { resolveStoredSchemaGenerationOptions } from "../toStoredSchema.js";
-import { getSchemaUpgradeCandidate, type TreeSchema } from "../treeSchema.js";
+import { getSchemaUpgradeCandidate, toInitialSchema, type TreeSchema } from "../treeSchema.js";
 
 import {
 	getDiscrepanciesInAllowedContent,
@@ -206,10 +206,12 @@ export function checkSchemaCompatibility(
 	// The upgrade must preserve existing permissions and allow this view to read and edit the resulting schema.
 	const canUpgrade = isSchemaUpgradeAllowed(viewSchema, stored, wouldUpgradeTo);
 
-	// If true, then upgrading has no effect on what can be stored in the document.
-	// TODO: This should likely be changed to indicate up a schema upgrade would be a no-op, including stored schema metadata.
+	// `isEquivalent` (deprecated) compares the view's generated schema, independently of permissions retained from this document.
+	const viewStoredSchema = toInitialSchema(viewSchema.root, configuredPolicy);
 	const isEquivalent =
-		canView && canUpgrade && allowsRepoSuperset(policy, wouldUpgradeTo, stored);
+		canView &&
+		allowsRepoSuperset(policy, stored, viewStoredSchema) &&
+		allowsRepoSuperset(policy, viewStoredSchema, stored);
 
 	return {
 		canView,
