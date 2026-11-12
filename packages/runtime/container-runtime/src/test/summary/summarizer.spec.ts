@@ -88,7 +88,7 @@ describe("Runtime", () => {
 						// A base-stage result ends the attempt without needing a service ACK.
 						await results.receivedSummaryAckOrNack;
 						assert.equal(submitSummary.callCount, 1, "only the requested summary should run");
-						logger.assertMatchAny([
+						logger.assertMatch([
 							{
 								eventName: "Summarizer:RunningSummarizer",
 								config: JSON.stringify({ ...configuration, state: "summaryOnRequest" }),
