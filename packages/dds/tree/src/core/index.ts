@@ -67,6 +67,7 @@ export {
 	forEachField,
 	type PathRootPrefix,
 	deltaForRootInitialization,
+	DeltaMarkListFactory,
 	makeDetachedNodeId,
 	offsetDetachId,
 	offsetDetachIdOpt,
