@@ -242,7 +242,7 @@ describe("staged allowed type upgrade", () => {
 	 * Create a number-only document, then explicitly enable its staged string alternative.
 	 * Open the upgraded document with the same staged view schema and the default restrictive policy.
 	 * Requesting another upgrade must submit no operation, and the client must still be able to write strings.
-	 * Disabling new staged changes in the policy must not remove permissions already stored in the document.
+	 * Disabling new staged upgrades in the policy must not remove upgrades already enabled in the document.
 	 */
 	it("preserves an already enabled allowed type during a default no-op upgrade", () => {
 		const provider = new TestTreeProviderLite(3);
@@ -649,7 +649,7 @@ describe("older clients retaining newer document types while enabling staged add
 	 * V2 fully enables strings but no longer declares the staged `null` alternative.
 	 *
 	 * Create a V2 document containing strings and numbers, then open it with two V1 clients.
-	 * Only one V1 client explicitly enables `null`; its upgrade must retain V2's existing string permission.
+	 * Only one V1 client explicitly enables `null`; its upgrade must preserve V2's already-enabled string upgrade.
 	 * Both clients must read the original entries and synchronize writes using strings and `null`.
 	 */
 	it("preserves array entry types while enabling unassigned priorities", () => {
@@ -711,7 +711,7 @@ describe("older clients retaining newer document types while enabling staged add
 	 * V2 fully enables strings but no longer declares the staged `null` alternative.
 	 *
 	 * Create a V2 document with numeric and string entries, then open it with two V1 clients.
-	 * Enable only V1's `null` token and upgrade without removing the stored string permission.
+	 * Enable only V1's `null` token and upgrade without removing the already-enabled string upgrade.
 	 * Both clients must agree on the combined schema and receive edits to existing entries and a new unassigned entry.
 	 */
 	it("preserves map entry types while enabling unassigned priorities", () => {
@@ -781,7 +781,7 @@ describe("preserving staged upgrades at individual locations", () => {
 	 * Both tokens must remain "partial": preserving changes at the primary fields must not enable them at the fallback fields.
 	 * Repeated upgrades by either version must be no-ops.
 	 * Then explicitly enable both tokens through V1 while another restrictive V1 client remains open.
-	 * That observer must receive the new permissions, report both tokens as "enabled", and be able to edit the fallback fields.
+	 * That observer must receive the new upgrades, report both tokens as "enabled", and be able to edit the fallback fields.
 	 */
 	it("preserves shared-token upgrades only at their existing locations until explicitly enabled", () => {
 		const factory = new SchemaFactoryAlpha("partialTaskRollout");
@@ -811,7 +811,7 @@ describe("preserving staged upgrades at individual locations", () => {
 			fallbackHours: factory.number,
 		}) {}
 
-		// V1 retains the V2 document's primary permissions without changing fallback fields.
+		// V1 preserves the V2 document's enabled upgrades at the primary fields without changing fallback fields.
 		class Expected extends factory.object("Task", {
 			primaryPriority: [factory.number, factory.string],
 			fallbackPriority: factory.number,
@@ -871,7 +871,7 @@ describe("preserving staged upgrades at individual locations", () => {
 		assert.equal(observer.isStagedUpgradeEnabled(stringUpgrade), "partial");
 		assert.equal(observer.isStagedUpgradeEnabled(optionalUpgrade), "partial");
 
-		// Enabling the tokens explicitly may introduce the remaining permissions at the fallback fields.
+		// Enabling the tokens explicitly also enables their upgrades at the fallback fields.
 		older.dispose();
 		const enabled = asAlpha(
 			treeV1.viewWith(
@@ -905,7 +905,7 @@ describe("preserving staged upgrades at individual locations", () => {
 		assert.equal(enabled.root.fallbackPriority, "urgent");
 		assert.equal(enabled.root.fallbackHours, undefined);
 
-		// Despite its restrictive policy, the observer's candidate now preserves the remotely enabled permissions as a no-op.
+		// Despite its restrictive policy, the observer's candidate now preserves the remotely enabled upgrades as a no-op.
 		assert.equal(observer.compatibility.canUpgrade, true);
 		assert.equal(observer.compatibility.canView, true);
 		const observerRoot = observer.root;
@@ -1007,7 +1007,7 @@ function checkStagedRolloutCompatibility({
 		canUpgrade: false,
 	});
 
-	// The staged view preserves the already-enabled permissions, so its upgrade is now a no-op.
+	// The staged view preserves the already-enabled upgrades, so its upgrade is now a no-op.
 	expectCompatibility(stagedSchema, {
 		canView: true,
 		canUpgrade: true,

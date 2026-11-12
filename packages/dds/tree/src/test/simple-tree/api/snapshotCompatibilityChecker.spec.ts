@@ -296,7 +296,7 @@ describe("snapshotCompatibilityChecker", () => {
 		assert.equal(combinedCompatibility.currentViewOfSnapshotDocument.canView, false);
 		assert.equal(combinedCompatibility.currentViewOfSnapshotDocument.canUpgrade, true);
 
-		// Current documents already allow strings. The historical view supports them through staging and preserves that permission.
+		// Current documents already allow strings. The historical view supports them through staging and preserves that enabled upgrade.
 		// Its upgrade therefore leaves the stored schema unchanged.
 		assert.equal(combinedCompatibility.snapshotViewOfCurrentDocument.canView, true);
 		assert.equal(combinedCompatibility.snapshotViewOfCurrentDocument.canUpgrade, true);

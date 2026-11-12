@@ -203,10 +203,10 @@ export function checkSchemaCompatibility(
 	const enabledUpgrades = computeUpgradeStatuses(totalLocations, enabledLocations);
 	const wouldUpgradeTo = getSchemaUpgradeCandidate(viewSchema, stored, configuredPolicy);
 
-	// The upgrade must preserve existing permissions and allow this view to read and edit the resulting schema.
+	// The upgrade must continue to allow all content permitted by the stored schema and let this view read and edit the resulting schema.
 	const canUpgrade = isSchemaUpgradeAllowed(viewSchema, stored, wouldUpgradeTo);
 
-	// `isEquivalent` (deprecated) compares the view's generated schema, independently of permissions retained from this document.
+	// `isEquivalent` (deprecated) compares the view's generated schema, independently of upgrades already enabled in this document.
 	const viewStoredSchema = toInitialSchema(viewSchema.root, configuredPolicy);
 	const isEquivalent =
 		canView &&

@@ -487,7 +487,7 @@ describe("treeSchema", () => {
 				expectSchemaEqual(result, toInitialSchema(expectedCandidate));
 				assert.deepEqual(structuredClone(stored), storedSnapshot);
 
-				// Neither the cached conversion nor a candidate for another document may inherit these stored string permissions.
+				// Neither the cached conversion nor a candidate for another document may inherit this document's enabled string upgrade.
 				expectSchemaEqual(toInitialSchema(before, policy), toInitialSchema(expectedFresh));
 				expectSchemaEqual(
 					getSchemaUpgradeCandidate(createTreeSchema(before), fresh, policy),
@@ -521,8 +521,8 @@ describe("treeSchema", () => {
 				fallbackHours: schemaFactory.number,
 			}) {}
 
-			// The older view retains the newer document's primary permissions, using the older view's field metadata.
-			// Sharing the staged tokens does not add either permission to the fallback fields.
+			// The older view retains the newer document's enabled upgrades at the primary fields, using the older view's field metadata.
+			// Sharing the staged tokens does not enable either upgrade at the fallback fields.
 			class Expected extends schemaFactory.object("Task", {
 				primaryPriority: schemaFactory.required([schemaFactory.number, schemaFactory.string], {
 					persistedMetadata: { label: "Earlier priority label" },
@@ -598,7 +598,7 @@ describe("treeSchema", () => {
 				StagedSchemaUpgradePolicy.restrictive,
 			);
 
-			// The older view's restrictive candidate retains the newer document's permission to omit the root.
+			// The older view's restrictive candidate retains the staged optionality already enabled for the root.
 			expectSchemaEqual(result, stored);
 			expectSchemaEqual(toInitialSchema(before), toInitialSchema(Task));
 		});

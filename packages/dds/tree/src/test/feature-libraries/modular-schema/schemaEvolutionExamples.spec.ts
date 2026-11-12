@@ -443,7 +443,7 @@ describe("Schema Evolution Examples", () => {
 		 *
 		 * Create a numeric-only document with V1's default policy, then explicitly enable strings using the same view schema.
 		 * Open the enabled V1 document with V2, testing both numeric and string `priority` values.
-		 * V2 must reject the document even when its current `priority` is numeric: stored permissions outlive individual values.
+		 * V2 must reject the document even when its current `priority` is numeric: enabled upgrades outlive individual values.
 		 * The failed upgrade must not remove string support or change the document.
 		 */
 		for (const priority of [1, "urgent"] as const) {
@@ -490,7 +490,7 @@ describe("Schema Evolution Examples", () => {
 		 * Create a numeric-only document with V1's default policy, then enable strings and roll the feature flag back to the restrictive policy.
 		 * Reopen the enabled document with the flag-off V1 view, then upgrade it with V2 and create a separate V2 document.
 		 * Both the V1 no-op and the V2 `label` upgrade must keep strings readable and writable in the enabled document.
-		 * The fresh V2 document must still exclude strings from `priority`: preserving existing permissions does not enable them in new documents.
+		 * The fresh V2 document must still exclude strings from `priority`: preserving existing upgrades does not enable them in new documents.
 		 */
 		it("preserves enabled types after a feature-flag rollback and a later upgrade", () => {
 			const stagedString = factory.staged(factory.string);
@@ -521,7 +521,7 @@ describe("Schema Evolution Examples", () => {
 				rolledBackTree.viewWith(new TreeViewConfigurationAlpha({ schema: TaskV1 })),
 			);
 
-			// Turning off the flag changes new permissions, not the document's already-enabled string support.
+			// Turning off the flag prevents new upgrades without undoing the document's already-enabled string upgrade.
 			assert.equal(rolledBack.compatibility.canView, true);
 			assert.equal(rolledBack.isStagedUpgradeEnabled(stringUpgrade), "enabled");
 			assert.equal(rolledBack.root.priority, "urgent");
@@ -531,7 +531,7 @@ describe("Schema Evolution Examples", () => {
 			assert.equal(enabled.root.priority, "normal");
 			enabled.dispose();
 
-			// The flag-off client can add a label without losing the string permission.
+			// The flag-off client can add a label without losing the already-enabled string upgrade.
 			const patched = documentTree.viewWith(
 				new TreeViewConfigurationAlpha({ schema: TaskV2 }),
 			);
@@ -615,7 +615,7 @@ describe("Schema Evolution Examples", () => {
 				}
 				const migrated = migratedTree.viewWith(new TreeViewConfiguration({ schema: TaskV3 }));
 
-				// Removing the wrapper requests string permission; it is not removal of the string type.
+				// Removing the wrapper requests the string upgrade; it is not removal of the string type.
 				assert.equal(migrated.compatibility.canView, alreadyEnabled);
 				assert.equal(migrated.compatibility.canUpgrade, true);
 				if (alreadyEnabled) {
@@ -678,7 +678,7 @@ describe("Schema Evolution Examples", () => {
 				readerTree.viewWith(new TreeViewConfigurationAlpha({ schema: TaskV2 })),
 			);
 
-			// Neither experiment has been enabled, so swapping the staged declaration changes no stored permissions.
+			// Neither experiment has been enabled, so swapping the staged declaration does not change the stored schema.
 			assert.equal(replacement.compatibility.canView, true);
 			assert.equal(replacement.isStagedUpgradeEnabled(priorityUpgrade), "disabled");
 			verifyNoOpUpgrade(provider, replacement);
@@ -700,7 +700,7 @@ describe("Schema Evolution Examples", () => {
 			enabled.root.priority = new Priority({ label: "Urgent" });
 			provider.synchronizeMessages();
 
-			// The flag-off V2 client receives the new permission and can read and edit the structured value.
+			// The flag-off V2 client receives the newly enabled upgrade and can read and edit the structured value.
 			assert.equal(replacement.isStagedUpgradeEnabled(priorityUpgrade), "enabled");
 			const upgradedTask = replacement.root;
 			assert(upgradedTask.priority instanceof Priority);
@@ -726,7 +726,7 @@ describe("Schema Evolution Examples", () => {
 		 *
 		 * Initialize a V1 document with strings already enabled.
 		 * Open it with V2 configured to enable the new `Priority` type.
-		 * Enabling the replacement cannot make removal of the earlier permission safe.
+		 * Enabling the replacement cannot make removal of the earlier upgrade safe.
 		 * V2 must reject the document without changing the existing string value or stored schema.
 		 */
 		it("cannot replace an enabled staged type with an unsupported alternative", () => {
@@ -774,7 +774,7 @@ describe("Schema Evolution Examples", () => {
 		 * Initialize a V1 document with strings already enabled.
 		 * Select only the new `Priority` token when upgrading it with V2.
 		 * Both strings and `Priority` nodes must remain writable.
-		 * A V2 client using the default policy (no new staged types are enabled) must receive and preserve both permissions.
+		 * A V2 client using the default policy (no new staged types are enabled) must receive and preserve both enabled upgrades.
 		 */
 		it("retains the earlier staged type while enabling its replacement", () => {
 			const stagedString = factory.staged(factory.string);
@@ -827,7 +827,7 @@ describe("Schema Evolution Examples", () => {
 			assert(observer.root.priority instanceof Priority);
 			assert.equal(observer.root.priority.label, "Structured priority");
 
-			// Retaining string support is not just permission to read old data: strings can still be written.
+			// Preserving the string upgrade does more than allow reading old data: strings can still be written.
 			observer.root.priority = "normal";
 			provider.synchronizeMessages();
 			assert.equal(upgrading.root.priority, "normal");
@@ -853,7 +853,7 @@ describe("Schema Evolution Examples", () => {
 			 * Both V2 and V3 must use the existing document without changing its stored schema.
 			 * V2 reports the token as "partial": strings are enabled at `primaryPriority`, but not `fallbackPriority`.
 			 * V3 uses the token only at `primaryPriority`, where strings are already enabled, so it reports "enabled".
-			 * No stored permissions change: `fallbackPriority` still permits only numbers.
+			 * The stored schema is unchanged: `fallbackPriority` still permits only numbers.
 			 */
 			it("can remove a never-enabled location while another location remains enabled", () => {
 				const stagedString = factory.staged(factory.string);
@@ -923,7 +923,7 @@ describe("Schema Evolution Examples", () => {
 			 *
 			 * Open the V1 document with V2 and request a no-op upgrade, then attempt an upgrade with V3.
 			 * The remaining declaration at `fallbackPriority` must not make V3 compatible with stored strings at `primaryPriority`.
-			 * Reject V3's upgrade without moving or removing the existing permission or data.
+			 * Reject V3's upgrade without moving or removing the already-enabled upgrade or its data.
 			 */
 			it("cannot remove an enabled location by retaining the token at another field", () => {
 				const stagedString = factory.staged(factory.string);

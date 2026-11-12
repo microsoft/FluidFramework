@@ -24,7 +24,7 @@ When updating your schema, it's important to understand the difference between t
 
 When a document is first created, its stored schema is derived from the view schema and its configured staged-upgrade policy.
 Later changes to application code do not change that stored schema until a client explicitly [upgrades](./index.mdx#schema-upgrade-process) the document.
-The upgrade combines the view's requested additions with staged permissions already enabled in the document.
+The upgrade combines the view's requested additions with staged upgrades already enabled in the document.
 
 ### Stored Schema Invariants
 
@@ -53,7 +53,7 @@ Therefore, a Fluid application should be prepared to encounter any version of a 
 When you open a document, SharedTree compares your application's view schema with the document's stored schema to determine compatibility:
 
 - **Viewable**: The view can read and edit the document using its current stored schema.
-- **Upgradeable**: The view's requested additions can be combined with already-enabled staged permissions into a safe target that the view can read and edit.
+- **Upgradeable**: The view's requested additions can be combined with already-enabled staged upgrades into a safe target that the view can read and edit.
   Apply that target with <ApiLink package="fluid-framework" api="TreeView.upgradeSchema">`view.upgradeSchema()`</ApiLink>.
 - **Incompatible**: The view can neither read and edit the document nor upgrade it to a compatible target.
 

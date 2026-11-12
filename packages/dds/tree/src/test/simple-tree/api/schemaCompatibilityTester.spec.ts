@@ -66,7 +66,7 @@ function expectCompatibility(
 		viewSchema.stagedUpgradePolicy,
 	);
 
-	// A permitted upgrade must preserve stored permissions and support read/write access through this view.
+	// A permitted upgrade must continue to allow all content permitted by the stored schema and support read/write access through this view.
 	if (compatibility.canUpgrade) {
 		assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, viewStored), true);
 		assert.equal(getSchemaIncompatibilityDetails(viewSchema, viewStored), undefined);
@@ -213,7 +213,7 @@ describe("isSchemaUpgradeAllowed", () => {
 		const stored = toUpgradeSchema(Before);
 		const candidate = toUpgradeSchema(After);
 
-		// Viewing is blocked before the upgrade, but the candidate adds the missing permission without removing anything.
+		// Viewing is blocked before the upgrade, but the candidate adds the missing optional field without removing anything.
 		assert.notEqual(getSchemaIncompatibilityDetails(view, stored), undefined);
 		assert.equal(isSchemaUpgradeAllowed(view, stored, candidate), true);
 	});
@@ -876,7 +876,7 @@ describe("checkSchemaCompatibility", () => {
 				}) {}
 
 				// The older view can read the newer document. Enabling only `null` must retain its strings and produce a real upgrade.
-				// Enablement status describes the document before the upgrade, so only its string permission is reported.
+				// Enablement status describes the document before the upgrade, so only its string upgrade is reported as enabled.
 				expectCompatibility(
 					{ view: Before, stored: toInitialSchema(After) },
 					{
