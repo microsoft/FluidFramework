@@ -5,8 +5,12 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import type { DeltaFieldChanges, DeltaMark } from "../../core/index.js";
-import { getLast, hasSome, type Mutable } from "../../util/index.js";
+import {
+	type DeltaFieldChanges,
+	type DeltaMark,
+	DeltaMarkListFactory,
+} from "../../core/index.js";
+import type { Mutable } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
 import type { ToDelta } from "../modular-schema/index.js";
 
@@ -23,7 +27,7 @@ export function sequenceFieldToDelta(
 	change: MarkList,
 	deltaFromChild: ToDelta,
 ): DeltaFieldChanges {
-	const deltaMarks: DeltaMark[] = [];
+	const deltaMarks = new DeltaMarkListFactory();
 
 	for (const mark of change) {
 		const deltaMark: Mutable<DeltaMark> = { count: mark.count };
@@ -76,18 +80,6 @@ export function sequenceFieldToDelta(
 			}
 		}
 	}
-	// Remove trailing no-op marks
-	while (hasSome(deltaMarks)) {
-		const lastMark = getLast(deltaMarks);
-		if (
-			lastMark.attach !== undefined ||
-			lastMark.detach !== undefined ||
-			lastMark.fields !== undefined
-		) {
-			break;
-		}
-		deltaMarks.pop();
-	}
 
-	return { marks: deltaMarks };
+	return { marks: deltaMarks.list };
 }

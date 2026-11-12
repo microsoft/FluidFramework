@@ -43,6 +43,7 @@ export type {
 	DetachedNodeRename as DeltaDetachedNodeRename,
 	FieldChanges as DeltaFieldChanges,
 } from "./delta.js";
+export { DeltaMarkListFactory } from "./deltaMarkListFactory.js";
 export { type MapTree, type ExclusiveMapTree, deepCopyMapTree } from "./mapTree.js";
 export {
 	clonePath,
