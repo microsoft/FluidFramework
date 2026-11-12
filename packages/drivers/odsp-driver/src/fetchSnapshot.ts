@@ -732,6 +732,7 @@ function getTreeStatsCore(snapshotTree: ISnapshotTree, stats: ITreeStats): void 
  * @param controller - abort controller if caller needs to abort the network call.
  * @param epochTracker - epoch tracker used to add/validate epoch in the network call.
  * @param scenarioName - scenario name for telemetry.
+ * @param useEffectiveMethodForTokenFetch - Opts authorization into the effective GET method while preserving multipart POST transport.
  * @returns fetched snapshot.
  */
 export const downloadSnapshot = mockify(
@@ -747,6 +748,7 @@ export const downloadSnapshot = mockify(
 		epochTracker?: EpochTracker,
 		scenarioName?: string,
 		requestHeaders?: Readonly<Record<string, string>>,
+		useEffectiveMethodForTokenFetch: boolean = false,
 	): Promise<ISnapshotRequestAndResponseOptions> => {
 		// back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
@@ -794,9 +796,15 @@ export const downloadSnapshot = mockify(
 			header[ClpCompliantAppHeader.isClpCompliantApp] =
 				odspResolvedUrl.isClpCompliantApp.toString();
 		}
-		// The service authenticates the GET inside the multipart POST.
+		// Preserve legacy callback metadata unless the host opts into the authenticated GET.
 		const authHeader = await getAuthHeader(
-			{ ...tokenFetchOptions, request: { url, method: "GET" } },
+			{
+				...tokenFetchOptions,
+				request: {
+					url,
+					method: useEffectiveMethodForTokenFetch === true ? "GET" : method,
+				},
+			},
 			"downloadSnapshot",
 		);
 		assert(authHeader !== null, 0x1e5 /* "Storage token should not be null" */);

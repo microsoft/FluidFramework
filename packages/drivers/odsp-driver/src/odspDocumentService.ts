@@ -212,6 +212,7 @@ export class OdspDocumentService
 			this.getAuthHeader,
 			this.epochTracker,
 			this.mc.logger,
+			this.hostPolicy.useEffectiveMethodForTokenFetch,
 		);
 
 		// batch size, please see issue #5211 for data around batch sizing

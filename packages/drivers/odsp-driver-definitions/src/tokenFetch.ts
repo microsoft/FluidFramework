@@ -52,12 +52,12 @@ export interface TokenFetchOptions {
 	tenantId?: string;
 
 	/**
-	 * Request details used to bind the fetched token to the request authenticated by the service.
+	 * Request that will be made using the fetched token.
 	 * - url: full request URL, including query parameters.
-	 * - method: effective method authenticated by the service.
+	 * - method: transport method by default.
 	 *
-	 * For multipart requests with an HTTP method override, the method is the overridden method, not the outer POST method.
-	 * The URL still includes all query parameters, including `ump=1`.
+	 * Hosts that opt into `useEffectiveMethodForTokenFetch` receive the effective GET method for multipart snapshot and ops downloads instead of the outer POST method.
+	 * In either mode, the URL includes all query parameters, including `ump=1`.
 	 * Request info may be encoded into the returned token that the receiver can use to validate that caller is allowed to make specific call.
 	 */
 	readonly request?: { url: string; method: "GET" | "POST" | "PATCH" | "DELETE" | "PUT" };

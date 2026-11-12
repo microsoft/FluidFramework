@@ -108,10 +108,16 @@ describe("Snapshot download authorization", () => {
 		await epochTracker.removeEntries();
 	});
 
-	for (const scheme of ["Bearer", "bearer"]) {
+	for (const [scheme, useEffectiveMethodForTokenFetch] of [
+		["Bearer", undefined],
+		["bearer", false],
+	] as const) {
 		it(`preserves the multipart request for ${scheme} authorization`, async () => {
 			const authHeader = `${scheme} storage-token`;
-			getAuthHeader.resolves(authHeader);
+			getAuthHeader.callsFake(async (tokenOptions) => {
+				assert.equal(tokenOptions.request?.method, "POST");
+				return authHeader;
+			});
 			await downloadSnapshot(
 				resolved,
 				getAuthHeader,
@@ -122,6 +128,9 @@ describe("Snapshot download authorization", () => {
 				undefined,
 				undefined,
 				epochTracker,
+				undefined,
+				undefined,
+				useEffectiveMethodForTokenFetch,
 			);
 
 			assert(fetchStub.calledOnce);
@@ -130,7 +139,7 @@ describe("Snapshot download authorization", () => {
 			assert(typeof url === "string" && options !== undefined);
 			assert.deepEqual(getAuthHeader.firstCall.args[0].request, {
 				url,
-				method: "GET",
+				method: "POST",
 			});
 			assert.equal(options.method, "POST");
 			assert.equal(new URL(url).searchParams.get("ump"), "1");
@@ -178,6 +187,7 @@ describe("Snapshot download authorization", () => {
 				useEpochTracker ? epochTracker : undefined,
 				"snapshot-test",
 				hostHeaders,
+				true,
 			);
 
 			assert(fetchStub.calledOnce);
@@ -224,43 +234,61 @@ describe("Snapshot download authorization", () => {
 		});
 	}
 
-	it("refreshes GET-bound authorization only once on a claims challenge", async () => {
-		const claims = '{"access_token":{"auth_time":{"essential":true}}}';
-		const tenantId = "test-tenant";
-		fetchStub.onFirstCall().resolves(
-			new Response(undefined, {
-				status: 401,
-				headers: {
-					"www-authenticate": `Bearer realm="${tenantId}", error="insufficient_claims", claims="${fromUtf8ToBase64(claims)}"`,
-				},
-			}),
-		);
-
-		await getWithRetryForTokenRefresh(async (options) =>
-			downloadSnapshot(resolved, getAuthHeader, options, undefined, { blobs: 2 }),
-		);
-
-		assert(fetchStub.calledTwice);
-		assert(getAuthHeader.calledTwice);
-		assert.equal(getAuthHeader.firstCall.args[0].refresh, false);
-		assert.equal(getAuthHeader.secondCall.args[0].refresh, true);
-		assert.equal(getAuthHeader.secondCall.args[0].claims, claims);
-		assert.equal(getAuthHeader.secondCall.args[0].tenantId, tenantId);
-		for (const [index, call] of getAuthHeader.getCalls().entries()) {
-			const [url, options] = fetchStub.getCall(index).args;
-			assert(typeof url === "string" && options !== undefined);
-			assert.deepEqual(call.args[0].request, { url, method: "GET" });
-			assert.equal(options.method, "POST");
-			assert.equal(new URL(url).searchParams.get("ump"), "1");
-			assert(typeof options.body === "string");
-			assert(
-				options.body.includes(`Authorization: MSAuth1.0 popToken="GET ${url}", type="AT_POP"`),
+	for (const useEffectiveMethodForTokenFetch of [false, true]) {
+		it(`refreshes authorization once with effective-method opt-in ${useEffectiveMethodForTokenFetch}`, async () => {
+			const method = useEffectiveMethodForTokenFetch ? "GET" : "POST";
+			const claims = '{"access_token":{"auth_time":{"essential":true}}}';
+			const tenantId = "test-tenant";
+			fetchStub.onFirstCall().resolves(
+				new Response(undefined, {
+					status: 401,
+					headers: {
+						"www-authenticate": `Bearer realm="${tenantId}", error="insufficient_claims", claims="${fromUtf8ToBase64(claims)}"`,
+					},
+				}),
 			);
-		}
-	});
 
-	it("does not send a request if authorization for the GET fails", async () => {
-		const error = new Error("Could not authorize the snapshot GET");
+			await getWithRetryForTokenRefresh(async (options) =>
+				downloadSnapshot(
+					resolved,
+					getAuthHeader,
+					options,
+					undefined,
+					{ blobs: 2 },
+					undefined,
+					undefined,
+					undefined,
+					undefined,
+					undefined,
+					undefined,
+					useEffectiveMethodForTokenFetch,
+				),
+			);
+
+			assert(fetchStub.calledTwice);
+			assert(getAuthHeader.calledTwice);
+			assert.equal(getAuthHeader.firstCall.args[0].refresh, false);
+			assert.equal(getAuthHeader.secondCall.args[0].refresh, true);
+			assert.equal(getAuthHeader.secondCall.args[0].claims, claims);
+			assert.equal(getAuthHeader.secondCall.args[0].tenantId, tenantId);
+			for (const [index, call] of getAuthHeader.getCalls().entries()) {
+				const [url, options] = fetchStub.getCall(index).args;
+				assert(typeof url === "string" && options !== undefined);
+				assert.deepEqual(call.args[0].request, { url, method });
+				assert.equal(options.method, "POST");
+				assert.equal(new URL(url).searchParams.get("ump"), "1");
+				assert(typeof options.body === "string");
+				assert(
+					options.body.includes(
+						`Authorization: MSAuth1.0 popToken="${method} ${url}", type="AT_POP"`,
+					),
+				);
+			}
+		});
+	}
+
+	it("does not send a request if authorization fails", async () => {
+		const error = new Error("Could not authorize the snapshot request");
 		getAuthHeader.rejects(error);
 		await assert.rejects(
 			downloadSnapshot(resolved, getAuthHeader, { refresh: false }, undefined, undefined),

@@ -35,6 +35,7 @@ export class OdspDeltaStorageService {
 		private readonly getAuthHeader: InstrumentedStorageTokenFetcher,
 		private readonly epochTracker: EpochTracker,
 		private readonly logger: TelemetryLoggerExt,
+		private readonly useEffectiveMethodForTokenFetch: boolean = false,
 	) {}
 
 	/**
@@ -56,9 +57,15 @@ export class OdspDeltaStorageService {
 			// Thus it needs to be done before we call getAuthHeader() to reduce extra calls
 			const url = this.buildUrl(from, to);
 			const method = "POST";
-			// The service authenticates the GET inside the multipart POST.
+			// Preserve legacy callback metadata unless the host opts into the authenticated GET.
 			const authHeader = await this.getAuthHeader(
-				{ ...options, request: { url, method: "GET" } },
+				{
+					...options,
+					request: {
+						url,
+						method: this.useEffectiveMethodForTokenFetch === true ? "GET" : method,
+					},
+				},
 				"DeltaStorage",
 			);
 
