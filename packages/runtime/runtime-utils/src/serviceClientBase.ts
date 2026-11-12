@@ -115,18 +115,23 @@ export class DataStoreKindImplementation<T>
 const legacyKinds = new WeakMap<IFluidDataStoreFactory, DataStoreKind>();
 
 /**
- * Uses a legacy data-store factory as a kind in the alpha ServiceClient APIs.
+ * Uses a legacy data-store factory as a kind in the alpha {@link @fluidframework/driver-definitions#ServiceClient} APIs.
  * @remarks
- * This preserves the factory, its entry point, child registry, and persisted representation.
- * It does not create an additional data store or adapt the entry-point value.
+ * Import from `@fluidframework/runtime-utils/legacy/alpha`.
+ * Pass the returned kind to ServiceClient creation/loading APIs or register it in a data-store registry.
+ *
+ * This preserves the factory identity, entry point, child registry, named channels, and document format.
+ * Factories can create registered child data stores during initialization.
+ * No additional hosting object is persisted, and the entry-point value is not adapted.
  * Repeated calls with the same factory return the same kind.
+ * Different factories remain different kinds, even if they have the same type identifier.
  *
  * The caller must ensure that the factory's entry point is a `T`.
  * Legacy factories do not encode that type, so this function cannot check it.
- * Register the returned kind wherever the new APIs need the factory.
  * Existing legacy registries can continue to register the original factory.
  *
- * This does not change the container's root-discovery convention.
+ * This does not change root discovery: ServiceClient currently expects the `root` data-store alias.
+ * For other conventions, load and resolve the root with your existing legacy APIs, then use {@link fluidContainerFromLegacy}.
  * @typeParam T - The entry-point type produced by the legacy factory.
  * @param factory - The existing data-store factory.
  * @returns The kind for the factory, with the caller-specified entry-point type.
@@ -285,18 +290,16 @@ export abstract class ServiceContainerBase<TData, TOptions = unknown>
 /**
  * Exposes an attached legacy container through the alpha container API.
  * @remarks
+ * Import from `@fluidframework/runtime-utils/legacy/alpha`.
  * Resolve the application's root using its existing legacy APIs and pass that value as `data`.
  * No root alias, named channel, handle, or document content is changed.
- * Register the same factories in `registry` and the existing container runtime before using
- * {@link @fluidframework/driver-definitions#DataStoreCreator.createDataStore}.
  * Closing the returned container closes the original container.
- * The caller supplies the ID used to reopen the document with its service.
- * This need not equal `container.resolvedUrl.id`: for example, ODSP uses an item ID
- * to reopen a document, while its resolved URL ID is a hash.
  * @param container - The attached legacy container.
  * @param data - The application-facing root value selected using legacy APIs.
- * @param registry - Kinds whose factories are registered in the existing runtime.
+ * @param registry - Kinds whose factories are already registered in the existing runtime; use {@link dataStoreKindFromFactory} to adapt legacy factories.
+ * Used by {@link @fluidframework/driver-definitions#DataStoreCreator.createDataStore}; does not install factories in that runtime.
  * @param id - The service-facing ID used to reopen this document.
+ * This need not equal `container.resolvedUrl.id`: for example, ODSP uses an item ID to reopen a document, while its resolved URL ID is a hash.
  * @returns An alpha view of the same attached container.
  * @throws If the container is not attached.
  * @legacy
