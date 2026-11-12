@@ -12,6 +12,11 @@ The test-floor change does not itself change production compatibility guarantees
 contracts, supported third-party implementations, checkpoint policy, or persisted-document support.
 Each removal needs evidence that its purpose is limited to versions outside the supported layer set.
 
+**Execution constraint:** Do not introduce breaking changes to behavior reachable through legacy/beta
+APIs in this effort, including already-deprecated APIs. Keep those paths intact and classify otherwise
+removable compatibility code in the two deferred lists below. Assess behavioral reachability as well as
+exported type signatures; a private implementation method can still implement an exported option.
+
 Initial inspection was against `92230cb4b32`. Source paths below are navigation pointers; line numbers
 and comments can change. Candidate status is not approval to remove code.
 
@@ -76,7 +81,7 @@ No exported signatures change. Runtime request-routing removal remains category 
 
 ### 2. Old loader-to-runtime request routing
 
-**Status:** Pending decision. Strong candidate, with caller/API audit required.
+**Status:** Deferred by agreement: behavior reachable through deprecated legacy/beta APIs. No product changes.
 
 - `packages/runtime/container-runtime/src/containerRuntime.ts`:
   private `request()` method, including summarizer routing, and the `requestHandler` load option.
@@ -86,7 +91,28 @@ No exported signatures change. Runtime request-routing removal remains category 
 Audit application/framework callers and release-tag commitments. Keep `resolveHandle` and handlers
 that still participate in handle resolution; not every request handler is an old-loader shim.
 
-**Decision / changes / validation:** Not yet recorded.
+**Audit findings:**
+
+- Actual installed `2.0.9` Container has `getEntryPoint()` and no `request()` method.
+  Current loader sources contain no runtime `.request()` calls.
+- ContainerRuntime's private `request()` handles the special summarizer route and otherwise invokes
+  its stored `requestHandler`. `resolveHandle()` is separate and does not invoke that handler.
+- `LoadContainerRuntimeParams.requestHandler` is exported as `@legacy @beta` and appears in legacy
+  API reports. Aqueduct's exported `BaseContainerRuntimeFactoryProps.requestHandlers` also feeds it.
+- `containerRuntime.spec.ts` explicitly tests invoking the private method through an `any` cast and
+  receiving the configured response. This is not a loader-driven scenario, but documents existing behavior.
+- Removing the private method alone would leave exported handler configuration accepted but ineffective.
+  Removing the configuration too would change exported legacy APIs. Neither follows automatically from OCV.
+- The repository's Beta Break Process requires partner-usage/deprecation review and designated breaking
+  releases for legacy+beta removals. The current build is `3.13.0`, outside a designated ten-minor boundary.
+- Existing test factories still pass handlers for versioned runtime construction. Those adapters must be
+  considered separately from current product API removal; supported older runtimes retain their own behavior.
+
+**Decision:** Retain routing and configuration as a unit. Track future removal in deferred list 1;
+do not remove the private method while silently accepting an ineffective exported handler option.
+Keep handle resolution independently of any future request-routing removal.
+
+**Validation:** Read-only caller/contract audit and installed-boundary prototype check; no new tests needed yet.
 
 ### 3. Loader batch-submission fallbacks
 
@@ -248,5 +274,24 @@ These are not cleanup targets merely because OCV advanced:
 
 ## Working decision summary
 
-Category 1 cleanup is approved and complete. Categories 2–11 remain pending decision.
+Category 1 cleanup is approved and complete. Category 2 is deferred to preserve deprecated legacy/beta
+API behavior. Categories 3–11 remain pending decision.
 Retained/deferred categories should include the reason and any follow-up evidence needed.
+
+## Deferred list 1: reachable through already-deprecated legacy/beta APIs
+
+These are candidates for a separately approved API-removal effort, not this cleanup.
+
+| Category / candidate | API preserving reachability | Deprecation evidence | Future action |
+| --- | --- | --- | --- |
+| 2. Old loader-to-runtime request routing: ContainerRuntime's private `request()`, stored handler, and associated plumbing | `LoadContainerRuntimeParams.requestHandler` (`@legacy @beta`); Aqueduct `BaseContainerRuntimeFactoryProps.requestHandlers` (`@legacy @beta`) | Both properties have existing `@deprecated` notices tied to entry-point migration | Review partner usage and follow the legacy/beta breaking-change process; remove routing and configuration together. Preserve `resolveHandle` and any independently needed handle-resolution handlers. |
+
+## Deferred list 2: reachable through non-deprecated legacy/beta APIs
+
+No candidates established yet. This does not mean the remaining categories are safe to remove; audit
+each category for exported contracts, observable behavior, and custom implementation support first.
+
+When adding an entry, identify the compatibility path, the API that makes it reachable, evidence that
+the API is not deprecated, and the prerequisite for a separate deprecation/removal effort. If a candidate
+is reachable through both deprecated and non-deprecated APIs, record those paths explicitly and track
+the candidate in this list as well; do not treat a deprecated route as the only constraint.
