@@ -172,8 +172,8 @@ async function withPendingQuickStart(
 		await expect(page.locator("main h1")).toHaveText("Tutorial: DiceRoller application");
 		await assertPending(sidebar);
 	} finally {
-		await page.unroute("**/*.js", holdScript);
 		await Promise.all(pendingScripts.map(async (route) => route.continue()));
+		await page.unroute("**/*.js", holdScript);
 	}
 }
 
