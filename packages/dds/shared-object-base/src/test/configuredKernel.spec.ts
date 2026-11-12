@@ -443,6 +443,25 @@ describe("configured kernel composition", () => {
 		test.runtime.dispose();
 	});
 
+	it("rejects incoming ordinary messages after configuration submission fails", async () => {
+		const { runtime, delta, services } = harness();
+		const shared = makeKind({}).getFactory().create(runtime, "configured");
+		shared.connect(services);
+		const failure = new Error("configuration submission failed");
+		delta.submit = () => {
+			throw failure;
+		};
+		await assert.rejects(
+			requireConfig(shared).requestChange({ retain: true }),
+			(error: unknown) => error === failure,
+		);
+		assert.throws(
+			() => delta.processMessages(collection(["ordinary"])),
+			(error: unknown) => error === failure,
+		);
+		runtime.dispose();
+	});
+
 	it("preserves common event-listener wrapping and channel closure", async () => {
 		const test = datastoreHarness(makeKind({}).getFactory());
 		await test.runtime.getChannel("dds");

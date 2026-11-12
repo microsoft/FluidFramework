@@ -385,7 +385,7 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 	/**
 	 * Reconstructs restored intent through the runtime's stashed-op submission capture,
 	 * without activating it or recreating process-local promises.
-	 * The wrapper must call this during stashed-op capture, not ordinary submission.
+	 * The host router must call this during stashed-op capture, not ordinary submission.
 	 */
 	public applyStashedOp(content: unknown): void {
 		this.verifyCanSubmit();
@@ -426,7 +426,7 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 	}
 
 	/**
-	 * Also used by the wrapper to prohibit ordinary submission from configuration callbacks.
+	 * Also used by the host to prohibit ordinary submission from configuration callbacks.
 	 */
 	public verifyCanSubmit(): void {
 		this.#verifyNotDisposed();

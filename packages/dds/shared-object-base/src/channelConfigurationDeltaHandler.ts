@@ -4,22 +4,16 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type {
-	IChannelAttributes,
-	IDeltaHandler,
-} from "@fluidframework/datastore-definitions/internal";
-import type { IRuntimeMessageCollection } from "@fluidframework/runtime-definitions/internal";
+import type { IChannelAttributes } from "@fluidframework/datastore-definitions/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	ChannelConfigurationController,
 	type ChannelConfiguration,
+	type ChannelConfigurationAttachedContext,
 	type ChannelConfigurationDefinition,
 } from "./channelConfiguration.js";
-import {
-	hasChannelConfigurationMarker,
-	parseChannelConfigurationMessage,
-} from "./channelConfigurationFormat.js";
+import type { ChannelConfigurationMessageV1 } from "./channelConfigurationFormat.js";
 import type { SharedObjectTransport } from "./sharedObject.js";
 import type { SharedObjectConfigurationOptions } from "./sharedObjectConfiguration.js";
 import type {
@@ -64,9 +58,8 @@ function makeConfiguredKernelSupport<TConfig extends ChannelConfiguration>(
 			: initialConfiguration === undefined
 				? { kind: "create" }
 				: { kind: "create", initialConfiguration };
-	const handler = new ChannelConfigurationDeltaHandler(
+	const handler = new ChannelConfigurationHandler(
 		{ definition, initialization },
-		args.ordinary,
 		args.transport,
 		{
 			attributes: args.attributes,
@@ -79,23 +72,22 @@ function makeConfiguredKernelSupport<TConfig extends ChannelConfiguration>(
 	handler.beginInitialization(args.initializationKind);
 	return {
 		configuration: handler.controller,
-		deltaHandler: handler,
 		attributes: handler.attributes,
 		verifyCanSubmit: () => handler.verifyCanSubmit(),
+		processMessage: (message, context, localOpMetadata) =>
+			handler.processMessage(message, context, localOpMetadata),
+		applyStashedOp: (message) => handler.applyStashedOp(message),
+		reSubmit: (message, localOpMetadata) => handler.reSubmit(message, localOpMetadata),
+		rollback: (localOpMetadata) => handler.rollback(localOpMetadata),
 		completeInitialization: () => handler.completeInitialization(),
 		close: (error) => handler.close(error),
 	};
 }
 
 /**
- * Routes a configuration-capable shared object's transport, including before its first configuration op.
- * Retains ordinary DDS hooks and metadata.
- * The ordinary endpoint is downstream of configuration routing, before handle decoding and DDS events.
- * This layer owns initialization, persistence, and disposal; the controller owns CAS state and requests.
+ * Owns persisted configuration initialization, control operations, persistence, and disposal.
  */
-export class ChannelConfigurationDeltaHandler<TConfig extends ChannelConfiguration>
-	implements IDeltaHandler
-{
+class ChannelConfigurationHandler<TConfig extends ChannelConfiguration> {
 	#initialized = false;
 	readonly #initializationKind: "create" | "load";
 	public readonly controller: ChannelConfigurationController<TConfig>;
@@ -103,7 +95,6 @@ export class ChannelConfigurationDeltaHandler<TConfig extends ChannelConfigurati
 
 	public constructor(
 		{ definition, initialization }: SharedObjectConfigurationOptions<TConfig>,
-		private readonly ordinary: Required<IDeltaHandler>,
 		private readonly transport: SharedObjectTransport,
 		private readonly host: ChannelConfigurationHost,
 	) {
@@ -186,85 +177,42 @@ export class ChannelConfigurationDeltaHandler<TConfig extends ChannelConfigurati
 		}
 	}
 
-	public readonly setConnectionState = (connected: boolean): void => {
-		this.ordinary.setConnectionState(connected);
-	};
-
-	public readonly processMessages = (messages: IRuntimeMessageCollection): void => {
+	public processMessage(
+		message: ChannelConfigurationMessageV1,
+		context: ChannelConfigurationAttachedContext,
+		localOpMetadata: unknown,
+	): void {
 		this.transport.verifyNotClosed();
 		this.controller.verifyCanSubmit();
-		const ordinary: IRuntimeMessageCollection["messagesContent"][number][] = [];
-		const flush = (): void => {
-			if (ordinary.length > 0) {
-				this.ordinary.processMessages({ ...messages, messagesContent: [...ordinary] });
-				ordinary.length = 0;
-			}
-		};
-		for (const [messageIndex, message] of messages.messagesContent.entries()) {
-			if (hasChannelConfigurationMarker(message.contents)) {
-				flush();
-				const proposal = parseChannelConfigurationMessage(message.contents);
-				const result = this.controller.process(
-					proposal,
-					{
-						source: "sequenced",
-						sequenceNumber: messages.envelope.sequenceNumber,
-						clientSequenceNumber: message.clientSequenceNumber,
-						messageIndex,
-						local: messages.local,
-					},
-					message.localOpMetadata,
-				);
-				this.host.logger.sendTelemetryEvent({
-					eventName: "ChannelConfiguration",
-					status: result.status,
-					source: result.source,
-					protocolVersion: 1,
-					configurationRevision: result.current.revision,
-					...(result.source === "sequenced"
-						? {
-								sequenceNumber: result.sequenceNumber,
-								clientSequenceNumber: result.clientSequenceNumber,
-								messageIndex: result.messageIndex,
-								local: result.local,
-							}
-						: {}),
-				});
-			} else {
-				ordinary.push(message);
-			}
-		}
-		flush();
-	};
+		const result = this.controller.process(message, context, localOpMetadata);
+		this.host.logger.sendTelemetryEvent({
+			eventName: "ChannelConfiguration",
+			status: result.status,
+			source: result.source,
+			protocolVersion: 1,
+			configurationRevision: result.current.revision,
+			...(result.source === "sequenced"
+				? {
+						sequenceNumber: result.sequenceNumber,
+						clientSequenceNumber: result.clientSequenceNumber,
+						messageIndex: result.messageIndex,
+						local: result.local,
+					}
+				: {}),
+		});
+	}
 
-	public readonly applyStashedOp = (content: unknown): void => {
-		if (hasChannelConfigurationMarker(content)) {
-			this.controller.applyStashedOp(parseChannelConfigurationMessage(content));
-		} else {
-			this.ordinary.applyStashedOp(content);
-		}
-	};
+	public applyStashedOp(message: ChannelConfigurationMessageV1): void {
+		this.controller.applyStashedOp(message);
+	}
 
-	public readonly reSubmit = (
-		content: unknown,
-		metadata: unknown,
-		squash: boolean = false,
-	): void => {
-		if (hasChannelConfigurationMarker(content)) {
-			this.controller.reSubmit(parseChannelConfigurationMessage(content), metadata);
-		} else {
-			this.ordinary.reSubmit(content, metadata, squash);
-		}
-	};
+	public reSubmit(message: ChannelConfigurationMessageV1, localOpMetadata: unknown): void {
+		this.controller.reSubmit(message, localOpMetadata);
+	}
 
-	public readonly rollback = (content: unknown, metadata: unknown): void => {
-		if (hasChannelConfigurationMarker(content)) {
-			parseChannelConfigurationMessage(content);
-			this.controller.rollback(metadata);
-		} else {
-			this.ordinary.rollback(content, metadata);
-		}
-	};
+	public rollback(localOpMetadata: unknown): void {
+		this.controller.rollback(localOpMetadata);
+	}
 
 	public close(error: unknown): void {
 		this.controller.dispose(error);

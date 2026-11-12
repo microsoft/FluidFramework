@@ -29,13 +29,19 @@ import { extractTelemetryLoggerExt } from "@fluidframework/telemetry-utils/inter
 
 import type {
 	ChannelConfiguration,
+	ChannelConfigurationAttachedContext,
 	ChannelConfigurationFacet,
 } from "./channelConfiguration.js";
-import { verifyOrdinaryChannelMessage } from "./channelConfigurationFormat.js";
+import {
+	hasChannelConfigurationMarker,
+	parseChannelConfigurationMessage,
+	type ChannelConfigurationMessageV1,
+	verifyOrdinaryChannelMessage,
+} from "./channelConfigurationFormat.js";
 import type { IFluidSerializer } from "./serializer.js";
 import {
 	createSharedObjectKindAlpha,
-	getSharedObjectMessageRouting,
+	installSharedObjectMessageRouter,
 	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	SharedObject,
 	type ISharedObjectKind,
@@ -121,7 +127,6 @@ export type SharedKernelMessageCollection = IRuntimeMessageCollection;
 export interface SharedKernelConfigurationFactoryArgs {
 	readonly initializationKind: "create" | "load";
 	readonly attributes: IChannelAttributes;
-	readonly ordinary: Required<IDeltaHandler>;
 	readonly transport: SharedObjectTransport;
 	readonly logger: TelemetryLoggerExt;
 	readonly isDisposed: () => boolean;
@@ -135,9 +140,16 @@ export interface SharedKernelConfigurationFactoryArgs {
  */
 export interface SharedKernelConfiguration<TConfig extends ChannelConfiguration> {
 	readonly configuration: ChannelConfigurationFacet<TConfig>;
-	readonly deltaHandler: Required<IDeltaHandler>;
 	readonly attributes: IChannelAttributes;
 	verifyCanSubmit(): void;
+	processMessage(
+		message: ChannelConfigurationMessageV1,
+		context: ChannelConfigurationAttachedContext,
+		localOpMetadata: unknown,
+	): void;
+	applyStashedOp(message: ChannelConfigurationMessageV1): void;
+	reSubmit(message: ChannelConfigurationMessageV1, localOpMetadata: unknown): void;
+	rollback(localOpMetadata: unknown): void;
 	completeInitialization(): void;
 	close(error: unknown): void;
 }
@@ -149,6 +161,82 @@ export interface SharedKernelConfiguration<TConfig extends ChannelConfiguration>
 export interface SharedKernelConfigurationFactory<TConfig extends ChannelConfiguration> {
 	readonly channelConfigurationProtocolVersion: 1;
 	create(args: SharedKernelConfigurationFactoryArgs): SharedKernelConfiguration<TConfig>;
+}
+
+/**
+ * Routes configuration control messages and ordinary DDS messages to sibling handlers.
+ */
+class KernelMessageRouter<TConfig extends ChannelConfiguration> implements IDeltaHandler {
+	public constructor(
+		private readonly configuration: SharedKernelConfiguration<TConfig>,
+		private readonly wrappedDeltaHandler: Required<IDeltaHandler>,
+	) {}
+
+	public readonly setConnectionState = (connected: boolean): void => {
+		this.wrappedDeltaHandler.setConnectionState(connected);
+	};
+
+	public readonly processMessages = (messages: IRuntimeMessageCollection): void => {
+		this.configuration.verifyCanSubmit();
+		const ordinary: IRuntimeMessageCollection["messagesContent"][number][] = [];
+		const flush = (): void => {
+			if (ordinary.length > 0) {
+				this.wrappedDeltaHandler.processMessages({
+					...messages,
+					messagesContent: [...ordinary],
+				});
+				ordinary.length = 0;
+			}
+		};
+		for (const [messageIndex, message] of messages.messagesContent.entries()) {
+			if (hasChannelConfigurationMarker(message.contents)) {
+				flush();
+				this.configuration.processMessage(
+					parseChannelConfigurationMessage(message.contents),
+					{
+						source: "sequenced",
+						sequenceNumber: messages.envelope.sequenceNumber,
+						clientSequenceNumber: message.clientSequenceNumber,
+						messageIndex,
+						local: messages.local,
+					},
+					message.localOpMetadata,
+				);
+			} else {
+				ordinary.push(message);
+			}
+		}
+		flush();
+	};
+
+	public readonly applyStashedOp = (content: unknown): void => {
+		if (hasChannelConfigurationMarker(content)) {
+			this.configuration.applyStashedOp(parseChannelConfigurationMessage(content));
+		} else {
+			this.wrappedDeltaHandler.applyStashedOp(content);
+		}
+	};
+
+	public readonly reSubmit = (
+		content: unknown,
+		localOpMetadata: unknown,
+		squash: boolean = false,
+	): void => {
+		if (hasChannelConfigurationMarker(content)) {
+			this.configuration.reSubmit(parseChannelConfigurationMessage(content), localOpMetadata);
+		} else {
+			this.wrappedDeltaHandler.reSubmit(content, localOpMetadata, squash);
+		}
+	};
+
+	public readonly rollback = (content: unknown, localOpMetadata: unknown): void => {
+		if (hasChannelConfigurationMarker(content)) {
+			parseChannelConfigurationMessage(content);
+			this.configuration.rollback(localOpMetadata);
+		} else {
+			this.wrappedDeltaHandler.rollback(content, localOpMetadata);
+		}
+	};
 }
 
 /**
@@ -199,19 +287,26 @@ class SharedObjectFromKernel<
 		if (configurationFactory === undefined) {
 			this.#configuration = undefined;
 		} else {
-			const messageRouting = getSharedObjectMessageRouting(this);
-			const configuration = configurationFactory.create({
-				initializationKind,
-				attributes,
-				ordinary: messageRouting.ordinary,
-				transport: messageRouting.transport,
-				logger: extractTelemetryLoggerExt(this.logger),
-				isDisposed: () => runtime.disposed,
-				isReadOnly: () => runtime.isReadOnly(),
-				onDispose: (listener) => runtime.once("dispose", listener),
+			let configuration: SharedKernelConfiguration<TConfig> | undefined;
+			installSharedObjectMessageRouter(this, (wrappedDeltaHandler, transport) => {
+				const createdConfiguration = configurationFactory.create({
+					initializationKind,
+					attributes,
+					transport,
+					logger: extractTelemetryLoggerExt(this.logger),
+					isDisposed: () => runtime.disposed,
+					isReadOnly: () => runtime.isReadOnly(),
+					onDispose: (listener) => runtime.once("dispose", listener),
+				});
+				configuration = createdConfiguration;
+				return {
+					deltaHandler: new KernelMessageRouter(createdConfiguration, wrappedDeltaHandler),
+					close: (error) => createdConfiguration.close(error),
+				};
 			});
-			messageRouting.install(configuration.deltaHandler, (error) =>
-				configuration.close(error),
+			assert(
+				configuration !== undefined,
+				"Message router factory did not initialize channel configuration",
 			);
 			Object.defineProperty(this, "attributes", {
 				value: configuration.attributes,
