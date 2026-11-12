@@ -14,7 +14,7 @@ The application controls version granularity, but the versions must not decrease
 Persisting these versions currently requires an experimental format.
 The configuration below explicitly overrides normal format selection and can therefore break collaboration with client versions the application supports.
 The experimental format will not be supported long term, so documents written with it are not guaranteed to remain readable by future Fluid Framework versions.
-For preview testing, every client that loads or collaborates on the document must use the same Fluid Framework version to avoid mixing implementations of the experimental format.
+For preview testing, every client that loads or collaborates on the document must use the same Fluid Framework version.
 This constraint does not make the format suitable for production use.
 
 #### Single application-wide version
@@ -98,15 +98,15 @@ To make a change outside those rules, both the stored and new schemas must have 
 Even then, the new schema must still accept all content allowed by the stored schema.
 Adding a version map for the first time does not bypass the additive upgrade rules.
 
-The single-number shorthand follows these same rules because SharedTree stores it as the map `{ "schemaVersion": 1 }`.
-Here, `"schemaVersion"` is an ordinary identifier, not a reserved one.
+The single-number shorthand uses the identifier `"schemaVersion"` and follows the same upgrade rules as other identifiers.
+This identifier is not reserved.
 If the application later adds feature versions, this entry must remain alongside the new identifiers rather than being replaced.
 Its value can stay unchanged while only the feature versions increase.
 
 #### Optional schema hashing
 
 [`identifySchemaAlpha`](https://fluidframework.com/docs/api/fluid-framework/identifyschemaalpha-function) provides versions without hashing.
-It does not compute hashes or log hash telemetry, so bundles can omit the hashing implementation.
+It does not compute hashes or log hash telemetry, avoiding the bundle-size cost of schema hashing.
 [`identifySchemaWithHashAlpha`](https://fluidframework.com/docs/api/fluid-framework/identifyschemawithhashalpha-function) supports both hash telemetry and versions.
 
 The hash-enabled factory also accepts `expectedHash` to check the configured schema during view construction.
@@ -125,13 +125,18 @@ const identity = identifySchemaWithHashAlpha({ expectedHash });
 ```
 
 `IdentifySchemaOptions` types reusable options objects for the version-only factory, while `IdentifySchemaWithHashOptions` does the same for the hash-enabled factory.
-Both are marked as `@input`, so future releases can add optional properties without requiring changes to those options objects.
 
 #### Compatibility investigation
 
 A schema compatibility investigation can start by comparing the versions the application expects with those stored in the document.
-On [`TreeViewAlpha`](https://fluidframework.com/docs/api/fluid-framework/treeviewalpha-interface), [`schemaVersion`](https://fluidframework.com/docs/api/fluid-framework/treeviewalpha-interface#schemaversion-property) exposes the configured versions and [`storedSchemaVersion`](https://fluidframework.com/docs/api/fluid-framework/treeviewalpha-interface#storedschemaversion-property) exposes the document's versions.
+On [`TreeViewAlpha`](https://fluidframework.com/docs/api/fluid-framework/treeviewalpha-interface), [`schemaVersion`](https://fluidframework.com/docs/api/fluid-framework/treeviewalpha-interface#schemaversion-property) groups both maps under a single property: `schemaVersion.view` contains the configured versions, and `schemaVersion.stored` contains the document's current versions.
+Both are read-only maps, with `undefined` indicating that the corresponding schema has no application-defined versions.
 The stored versions are also available through [`ViewableTreeAlpha.storedSchemaVersion`](https://fluidframework.com/docs/api/fluid-framework/viewabletreealpha-interface#storedschemaversion-property).
+
+```typescript
+const configuredNotesVersion = view.schemaVersion.view?.get(Note.identifier);
+const storedNotesVersion = view.schemaVersion.stored?.get(Note.identifier);
+```
 
 For example, the application might expect notes version `4` while the document stores version `3`.
 If both still use comments version `1`, the mismatch points to the notes schema as a useful starting point.

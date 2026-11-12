@@ -12,7 +12,6 @@ import { compareStrings } from "../../util/index.js";
 import type { TreeNodeSchemaIdentifier } from "./formatV1.js";
 import {
 	type StoredSchemaCollection,
-	type SchemaVersionMap,
 	type TreeFieldStoredSchema,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
@@ -64,7 +63,7 @@ export interface MutableTreeStoredSchema extends TreeStoredSchemaSubscription {
 export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 	protected nodeSchemaData: BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 	protected rootFieldSchemaData: TreeFieldStoredSchema;
-	protected schemaVersionData: SchemaVersionMap | undefined;
+	protected schemaVersionData: ReadonlyMap<string, number> | undefined;
 	protected readonly _events = createEmitter<SchemaEvents>();
 	public readonly events: Listenable<SchemaEvents> = this._events;
 
@@ -114,7 +113,7 @@ export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 		return this.rootFieldSchemaData;
 	}
 
-	public get schemaVersion(): SchemaVersionMap | undefined {
+	public get schemaVersion(): ReadonlyMap<string, number> | undefined {
 		return this.schemaVersionData;
 	}
 
@@ -140,17 +139,16 @@ export function schemaDataIsEmpty(data: TreeStoredSchema): boolean {
 }
 
 /**
- * Creates an immutable copy of a caller-owned version map for storage in the repository.
+ * Copies a caller-owned version map for storage in the repository.
  *
  * @remarks
- * Copying before freezing prevents later changes to the caller's record from affecting stored schema,
- * without freezing an object the caller still owns.
+ * Copying prevents later changes to the caller's map from affecting stored schema.
  * This copy preserves entry order because it is not an encoding step; the schema codec sorts entries before persisting them.
  */
 function cloneSchemaVersion(
-	schemaVersion: SchemaVersionMap | undefined,
-): SchemaVersionMap | undefined {
-	return schemaVersion === undefined ? undefined : Object.freeze({ ...schemaVersion });
+	schemaVersion: ReadonlyMap<string, number> | undefined,
+): ReadonlyMap<string, number> | undefined {
+	return schemaVersion === undefined ? undefined : new Map(schemaVersion);
 }
 
 function cloneNodeSchemaData(

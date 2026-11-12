@@ -15,7 +15,6 @@ import type {
 	RevertibleAlphaFactory,
 	RevertibleFactory,
 	RevertToOptionsAlpha,
-	SchemaVersionMap,
 } from "../../core/index.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
 import type { TreeStatus } from "../../feature-libraries/index.js";
@@ -138,7 +137,7 @@ export interface ViewableTreeAlpha extends ViewableTree {
 	 * It is `undefined` when the stored schema has no application-defined versions,
 	 * and can change when a {@link TreeViewAlpha} initializes or upgrades the stored schema.
 	 */
-	readonly storedSchemaVersion: SchemaVersionMap | undefined;
+	readonly storedSchemaVersion: ReadonlyMap<string, number> | undefined;
 
 	/**
 	 * Creates an independent branch from this tree's current state.
@@ -1144,24 +1143,23 @@ export interface TreeViewAlpha<
 		>,
 		UntypedTreeViewAlpha {
 	/**
-	 * Contains the application-defined versions from this view's {@link TreeViewConfigurationAlpha},
-	 * or `undefined` if none were configured.
+	 * Contains the configured and stored application-defined schema versions.
 	 *
 	 * @remarks
-	 * These are the versions the view would store when initializing or upgrading the document.
-	 * {@link TreeViewAlpha.storedSchemaVersion} exposes the versions currently stored in the document instead.
+	 * The configured versions remain fixed for this view, while the stored versions follow changes to the document's schema.
+	 * Either map is `undefined` when no application-defined versions are present in its schema.
+	 * The {@link TreeViewEvents.schemaChanged} event reports updates to the stored schema.
 	 */
-	readonly schemaVersion: SchemaVersionMap | undefined;
-
-	/**
-	 * Contains the application-defined versions in the document's stored schema.
-	 *
-	 * @remarks
-	 * Unlike {@link TreeViewAlpha.schemaVersion}, which comes from the fixed view configuration,
-	 * this value follows changes to the document's stored schema and is `undefined` when it has no application-defined versions.
-	 * The {@link TreeViewEvents.schemaChanged} event reports updates to that stored schema.
-	 */
-	readonly storedSchemaVersion: SchemaVersionMap | undefined;
+	readonly schemaVersion: {
+		/**
+		 * Versions from this view's configuration, used when initializing or upgrading the document.
+		 */
+		readonly view: ReadonlyMap<string, number> | undefined;
+		/**
+		 * Versions currently stored in the document.
+		 */
+		readonly stored: ReadonlyMap<string, number> | undefined;
+	};
 
 	get root(): ReadableField<TSchema>;
 

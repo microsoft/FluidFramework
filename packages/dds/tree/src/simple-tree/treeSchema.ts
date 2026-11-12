@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { SchemaVersionMap, TreeStoredSchema } from "../core/index.js";
+import type { TreeStoredSchema } from "../core/index.js";
 import { defaultSchemaPolicy } from "../feature-libraries/index.js";
 import { getOrCreate, oneFromIterable } from "../util/index.js";
 
@@ -393,7 +393,7 @@ export function getRootSchemaDerivedData(
 export function toUpgradeSchema(
 	root: ImplicitFieldSchema,
 	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
-	schemaVersion?: SchemaVersionMap,
+	schemaVersion?: ReadonlyMap<string, number>,
 ): TreeStoredSchema {
 	const stored = toStoredSchema(
 		root,
@@ -408,7 +408,7 @@ export function toUpgradeSchema(
 export function toInitialSchema(
 	root: ImplicitFieldSchema,
 	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
-	schemaVersion?: SchemaVersionMap,
+	schemaVersion?: ReadonlyMap<string, number>,
 ): TreeStoredSchema {
 	const stored = toStoredSchema(
 		root,
@@ -578,7 +578,7 @@ export interface TreeSchema extends SimpleTreeSchema<SchemaType.View> {
 	/**
 	 * Contains the application-defined versions for this schema.
 	 */
-	readonly schemaVersion?: SchemaVersionMap;
+	readonly schemaVersion?: ReadonlyMap<string, number>;
 
 	readonly root: FieldSchemaAlpha;
 

@@ -32,8 +32,10 @@ describe("schema hash functions", () => {
 			assert.deepEqual(
 				identity.schemaVersion,
 				typeof option.schemaVersion === "number"
-					? { schemaVersion: option.schemaVersion }
-					: option.schemaVersion,
+					? new Map([["schemaVersion", option.schemaVersion]])
+					: option.schemaVersion === undefined
+						? undefined
+						: new Map(Object.entries(option.schemaVersion)),
 			);
 		}
 	});

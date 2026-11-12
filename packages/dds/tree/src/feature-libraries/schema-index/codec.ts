@@ -80,9 +80,7 @@ function encodeRepoV3(repo: TreeStoredSchema): FormatV3 {
 			? {}
 			: {
 					// Sorting pairs keeps insertion order from affecting the persisted representation.
-					schemaVersion: Object.entries(repo.schemaVersion).sort(([a], [b]) =>
-						compareStrings(a, b),
-					),
+					schemaVersion: [...repo.schemaVersion].sort(([a], [b]) => compareStrings(a, b)),
 				}),
 	};
 }
@@ -159,7 +157,7 @@ function decodeV2(f: FormatV2): TreeStoredSchema {
  * When a version array is present, its values and canonical ordering are checked before creating an immutable version map.
  *
  * @param f - The encoded schema.
- * @returns The stored schema with a frozen version map when present.
+ * @returns The stored schema with a read-only version map when present.
  * @throws A usage error if versions are not non-negative safe integers or identifiers are not sorted and unique.
  */
 function decodeV3(f: FormatV3): TreeStoredSchema {
@@ -184,7 +182,7 @@ function decodeV3(f: FormatV3): TreeStoredSchema {
 	return {
 		...decodeV2({ version: SchemaFormatVersion.v2, nodes: f.nodes, root: f.root }),
 		// An omitted map remains distinct from an explicitly empty one.
-		schemaVersion: Object.freeze(Object.fromEntries(entries)),
+		schemaVersion: new Map(entries),
 	};
 }
 

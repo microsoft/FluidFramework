@@ -187,7 +187,9 @@ export function importCompatibilitySchemaSnapshot(
 		schemaIdentity:
 			simpleSchema.schemaVersion === undefined
 				? undefined
-				: identifySchemaAlpha({ schemaVersion: simpleSchema.schemaVersion }),
+				: identifySchemaAlpha({
+						schemaVersion: Object.fromEntries(simpleSchema.schemaVersion),
+					}),
 	});
 }
 

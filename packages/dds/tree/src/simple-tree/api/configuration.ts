@@ -8,7 +8,6 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
-import type { SchemaVersionMap } from "../../core/index.js";
 import {
 	type AllowedTypesFullEvaluated,
 	NodeKind,
@@ -309,7 +308,7 @@ export class TreeViewConfigurationAlpha<
 	 * Returns the application-defined versions configured through {@link TreeViewConfigurationAlpha.schemaIdentity},
 	 * or `undefined` if none were supplied.
 	 */
-	public get schemaVersion(): SchemaVersionMap | undefined {
+	public get schemaVersion(): ReadonlyMap<string, number> | undefined {
 		return this.schemaIdentity?.schemaVersion;
 	}
 

@@ -17,7 +17,6 @@ import {
 	isObjectNodeSchema,
 	SchemaFactoryAlpha,
 	SchemaUpgrade,
-	type SchemaVersionMap,
 	decodeSchemaCompatibilitySnapshot,
 	encodeSchemaCompatibilitySnapshot,
 } from "../../../simple-tree/index.js";
@@ -54,11 +53,11 @@ describe("schemaFromSimple", () => {
 
 		for (const schemaVersion of [
 			undefined,
-			{},
-			{ ["com.example"]: 1 },
-			Object.fromEntries([["__proto__", 2]]),
-		] satisfies (SchemaVersionMap | undefined)[]) {
-			it(`preserves schema versions ${JSON.stringify(schemaVersion)} through snapshots`, () => {
+			new Map(),
+			new Map([["com.example", 1]]),
+			new Map([["__proto__", 2]]),
+		] satisfies (ReadonlyMap<string, number> | undefined)[]) {
+			it(`preserves schema versions ${JSON.stringify(schemaVersion === undefined ? undefined : [...schemaVersion])} through snapshots`, () => {
 				const simple = {
 					...getSimpleSchema([]),
 					...(schemaVersion === undefined ? {} : { schemaVersion }),

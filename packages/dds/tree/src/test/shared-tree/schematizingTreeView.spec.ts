@@ -224,7 +224,10 @@ describe("SchematizingSimpleTreeView", () => {
 						updatedViewConfig,
 						new MockNodeIdentifierManager(),
 					);
-					assert.deepEqual(updatedViewConfig.schemaVersion, schemaVersion);
+					assert.deepEqual(
+						updatedViewConfig.schemaVersion,
+						new Map(Object.entries(schemaVersion)),
+					);
 					assert.equal(view.compatibility.canView, true);
 					view.dispose();
 				}

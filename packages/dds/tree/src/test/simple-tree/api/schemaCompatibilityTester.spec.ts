@@ -379,9 +379,11 @@ describe("checkSchemaCompatibility", () => {
 				});
 
 				it("required string to identifier succeeds with an increased schema version", () => {
-					const stored = toUpgradeSchema(factory.string, undefined, {
-						[testLibraryId]: 1,
-					});
+					const stored = toUpgradeSchema(
+						factory.string,
+						undefined,
+						new Map([[testLibraryId, 1]]),
+					);
 					const view = new TreeViewConfigurationAlpha({
 						schema: factory.identifier,
 						schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: 2 } }),
@@ -398,9 +400,11 @@ describe("checkSchemaCompatibility", () => {
 				});
 
 				it("required string to identifier fails with a decreased schema version", () => {
-					const stored = toUpgradeSchema(factory.string, undefined, {
-						[testLibraryId]: 2,
-					});
+					const stored = toUpgradeSchema(
+						factory.string,
+						undefined,
+						new Map([[testLibraryId, 2]]),
+					);
 					const view = new TreeViewConfigurationAlpha({
 						schema: factory.identifier,
 						schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: 1 } }),
@@ -409,9 +413,11 @@ describe("checkSchemaCompatibility", () => {
 				});
 
 				it("reports differing schema versions as non-equivalent", () => {
-					const stored = toUpgradeSchema(factory.string, undefined, {
-						[testLibraryId]: 1,
-					});
+					const stored = toUpgradeSchema(
+						factory.string,
+						undefined,
+						new Map([[testLibraryId, 1]]),
+					);
 					const view = new TreeViewConfigurationAlpha({
 						schema: factory.string,
 						schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: 2 } }),

@@ -16,7 +16,8 @@ import { NodeKind } from "../core/index.js";
 import {
 	allowsRepoSuperset,
 	allowsSchemaUpgrade,
-	areSchemaVersionsEqual,
+	compareSchemaVersions,
+	SchemaVersionComparison,
 	defaultSchemaPolicy,
 } from "../../feature-libraries/index.js";
 import { resolveStoredSchemaGenerationOptions } from "../toStoredSchema.js";
@@ -201,7 +202,8 @@ export function checkSchemaCompatibility(
 		canView &&
 		canUpgrade &&
 		allowsRepoSuperset(policy, wouldUpgradeTo, stored) &&
-		areSchemaVersionsEqual(wouldUpgradeTo.schemaVersion, stored.schemaVersion);
+		compareSchemaVersions(stored.schemaVersion, wouldUpgradeTo.schemaVersion) ===
+			SchemaVersionComparison.Equal;
 
 	return {
 		canView,

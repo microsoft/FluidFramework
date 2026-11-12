@@ -118,11 +118,67 @@ describe("independentView", () => {
 			});
 			const view = asTreeViewAlpha(tree.viewWith(config));
 
-			assert.deepEqual(view.schemaVersion, { test: 1 });
-			assert.equal(view.storedSchemaVersion, undefined);
+			assert.deepEqual(view.schemaVersion, {
+				view: new Map([["test", 1]]),
+				stored: undefined,
+			});
 
 			view.initialize(1);
-			assert.deepEqual(view.storedSchemaVersion, { test: 1 });
+			assert.deepEqual(view.schemaVersion, {
+				view: new Map([["test", 1]]),
+				stored: new Map([["test", 1]]),
+			});
+			assert.equal("storedSchemaVersion" in view, false);
+		});
+
+		for (const versionState of ["absent", "empty"] as const) {
+			it(`preserves ${versionState} maps in the combined version accessor`, () => {
+				const tree = createIndependentTreeAlpha({ idCompressor: testIdCompressor });
+				const config = new TreeViewConfigurationAlpha({
+					schema: SchemaFactory.number,
+					schemaIdentity: identifySchemaAlpha({
+						schemaVersion: versionState === "empty" ? {} : undefined,
+					}),
+				});
+				const view = asTreeViewAlpha(tree.viewWith(config));
+				const versions = versionState === "empty" ? new Map() : undefined;
+				assert.deepEqual(view.schemaVersion, { view: versions, stored: undefined });
+				view.initialize(1);
+				assert.deepEqual(view.schemaVersion, { view: versions, stored: versions });
+				view.dispose();
+			});
+		}
+
+		it("reports merged stored versions without changing the configured versions", () => {
+			const tree = createIndependentTreeAlpha({ idCompressor: testIdCompressor });
+			const config = (version: number) =>
+				new TreeViewConfigurationAlpha({
+					schema: SchemaFactory.number,
+					schemaIdentity: identifySchemaAlpha({ schemaVersion: { test: version } }),
+				});
+			const view = asTreeViewAlpha(tree.viewWith(config(1)));
+			view.initialize(1);
+			const branch = tree.forkBranch();
+			try {
+				const branchView = branch.viewWith(config(2));
+				branchView.upgradeSchema();
+				let observedVersion: number | undefined;
+				view.events.on("schemaChanged", () => {
+					observedVersion = view.schemaVersion.stored?.get("test");
+				});
+				view.merge(branchView);
+				assert.equal(observedVersion, 2);
+				assert.deepEqual(view.schemaVersion, {
+					view: new Map([["test", 1]]),
+					stored: new Map([["test", 2]]),
+				});
+				assert.equal(view.compatibility.canUpgrade, false);
+			} finally {
+				if (!branch.disposed) {
+					branch.dispose();
+				}
+				view.dispose();
+			}
 		});
 
 		it("upgrades stored application versions without hashing", () => {
@@ -140,14 +196,17 @@ describe("independentView", () => {
 						}),
 					),
 				);
-				assert.equal(view.schemaVersion, identity.schemaVersion);
+				assert.equal(view.schemaVersion.view, identity.schemaVersion);
 				if (version === 1) {
+					assert.equal(view.schemaVersion.stored, undefined);
 					view.initialize(1);
 				} else {
+					assert.deepEqual(view.schemaVersion.stored, new Map([["test", 1]]));
 					assert.equal(view.compatibility.isEquivalent, false);
 					view.upgradeSchema();
 				}
-				assert.deepEqual(tree.storedSchemaVersion, { test: version });
+				assert.deepEqual(view.schemaVersion.stored, new Map([["test", version]]));
+				assert.deepEqual(tree.storedSchemaVersion, new Map([["test", version]]));
 				assert.deepEqual(Object.keys(tree.exportSimpleSchema()).sort(), [
 					"definitions",
 					"root",
@@ -156,7 +215,7 @@ describe("independentView", () => {
 				assert.equal(view.root, 1);
 				view.dispose();
 			}
-			assert.deepEqual(tree.storedSchemaVersion, { test: 2 });
+			assert.deepEqual(tree.storedSchemaVersion, new Map([["test", 2]]));
 		});
 
 		it("can initialize with application versions restored from a compatibility snapshot", () => {
@@ -173,7 +232,7 @@ describe("independentView", () => {
 			const view = asTreeViewAlpha(tree.viewWith(restored));
 			assert(view.hasRootSchema(SchemaFactory.number));
 			view.initialize(1);
-			assert.deepEqual(tree.storedSchemaVersion, { test: 1 });
+			assert.deepEqual(tree.storedSchemaVersion, new Map([["test", 1]]));
 			assert.equal(view.root, 1);
 			view.dispose();
 		});
@@ -202,7 +261,7 @@ describe("independentView", () => {
 			assert.equal(upgradedView.compatibility.canUpgrade, true);
 
 			upgradedView.upgradeSchema();
-			assert.deepEqual(upgradedView.storedSchemaVersion, { test: 2 });
+			assert.deepEqual(upgradedView.schemaVersion.stored, new Map([["test", 2]]));
 		});
 
 		const schemaVersions: readonly (SchemaVersionMap | undefined)[] = [
@@ -253,7 +312,7 @@ describe("independentView", () => {
 				assert.equal(advanced.compatibility.canUpgrade, true);
 				advanced.upgradeSchema();
 				assert.deepEqual(tree.exportSimpleSchema().root.persistedMetadata, { app: "B" });
-				assert.deepEqual(tree.storedSchemaVersion, { test: 2 });
+				assert.deepEqual(tree.storedSchemaVersion, new Map([["test", 2]]));
 				advanced.dispose();
 
 				const older = tree.viewWith(
@@ -293,7 +352,7 @@ describe("independentView", () => {
 			assert.equal(upgraded.compatibility.canUpgrade, true);
 			upgraded.upgradeSchema();
 			assert.deepEqual(tree.exportSimpleSchema().root.persistedMetadata, { app: "B" });
-			assert.deepEqual(tree.storedSchemaVersion, schemaVersion);
+			assert.deepEqual(tree.storedSchemaVersion, new Map(Object.entries(schemaVersion)));
 			assert.equal(upgraded.root, 1);
 		});
 

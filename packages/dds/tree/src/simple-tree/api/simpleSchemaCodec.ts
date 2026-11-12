@@ -14,7 +14,6 @@ import {
 	type FormatValidator,
 } from "../../codec/index.js";
 import type { ValueSchema } from "../../core/index.js";
-import type { SchemaVersionMap } from "../../core/index.js";
 import { compareStrings, objectToMap, type JsonCompatibleReadOnly } from "../../util/index.js";
 import { createSchemaUpgrade, NodeKind, SchemaUpgrade } from "../core/index.js";
 import type { FieldKind } from "../fieldSchema.js";
@@ -39,11 +38,8 @@ import * as FormatV2 from "../simpleSchemaFormatV2.js";
  * @remarks The JSON-compatible schema returned from this method is only intended for use in snapshots/comparisons of schemas.
  * It is not possible to reconstruct a full schema (including metadata and persistedMetadata) from the encoded format.
  * Definition order is independent of the input map's iteration order.
- * Node definitions are sorted by identifier before constructing the output; field and allowed-type entries are not explicitly sorted.
  *
- * Application-defined versions are preserved separately from the schema definitions.
- * To retain the existing format for unversioned schemas, this uses snapshot v1 when no version map is supplied
- * and snapshot v2 when a map is present, including an explicitly empty map.
+ * Snapshots preserve application-defined versions, including the distinction between an absent version map and an explicitly empty one.
  *
  * @param simpleSchema - The tree schema to convert.
  *
@@ -51,6 +47,8 @@ import * as FormatV2 from "../simpleSchemaFormatV2.js";
  *
  * @privateRemarks
  * Encodes to {@link Format.SimpleTreeSchemaFormat} or {@link FormatV2.SimpleTreeSchemaFormat}.
+ * Snapshot v1 is used when no version map is supplied, and snapshot v2 when a map is present, including an explicitly empty map.
+ * Node definitions are sorted by identifier before constructing the output; field and allowed-type entries are not explicitly sorted.
  * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
  *
  * @alpha
@@ -82,9 +80,7 @@ export function encodeSchemaCompatibilitySnapshot(
 
 	return {
 		version: FormatV2.SimpleSchemaFormatVersion.v2,
-		schemaVersion: Object.entries(simpleSchema.schemaVersion).sort(([a], [b]) =>
-			compareStrings(a, b),
-		),
+		schemaVersion: [...simpleSchema.schemaVersion].sort(([a], [b]) => compareStrings(a, b)),
 		...encodedSchema,
 	} satisfies FormatV2.SimpleTreeSchemaFormat;
 }
@@ -138,7 +134,7 @@ export function decodeSchemaCompatibilitySnapshot(
 
 function decodeSchemaVersion(
 	encoded: readonly [string, number][] | undefined,
-): SchemaVersionMap | undefined {
+): ReadonlyMap<string, number> | undefined {
 	if (encoded === undefined) {
 		return undefined;
 	}
@@ -156,7 +152,7 @@ function decodeSchemaVersion(
 		entries.push([libraryId, version]);
 		previous = libraryId;
 	}
-	return Object.freeze(Object.fromEntries(entries));
+	return new Map(entries);
 }
 
 /**

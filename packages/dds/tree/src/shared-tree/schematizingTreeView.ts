@@ -80,7 +80,6 @@ import {
 	type SimpleObjectFieldSchema,
 	type TreeNodeSchema,
 } from "../simple-tree/index.js";
-import type { SchemaVersionMap } from "../core/index.js";
 import {
 	type Breakable,
 	brand,
@@ -278,8 +277,7 @@ export class SchematizingSimpleTreeView<
 			const actualHash = hasher(configAlpha.schema, this.stagedUpgradePolicy);
 			if (actualHash !== expectedHash) {
 				const versionSuggestion =
-					identity.schemaVersion !== undefined &&
-					Object.keys(identity.schemaVersion).length > 0
+					identity.schemaVersion !== undefined && identity.schemaVersion.size > 0
 						? " For an intentional schema change, consider increasing the relevant application-defined schema version."
 						: "";
 				throw new UsageError(
@@ -332,12 +330,11 @@ export class SchematizingSimpleTreeView<
 		return this.config.schema;
 	}
 
-	public get schemaVersion(): SchemaVersionMap | undefined {
-		return this.viewSchema.schemaVersion;
-	}
-
-	public get storedSchemaVersion(): SchemaVersionMap | undefined {
-		return this.checkout.storedSchema.schemaVersion;
+	public get schemaVersion(): TreeViewAlpha<TRootSchema>["schemaVersion"] {
+		return {
+			view: this.viewSchema.schemaVersion,
+			stored: this.checkout.storedSchema.schemaVersion,
+		};
 	}
 
 	public initialize(content: InsertableField<TRootSchema>): void {
@@ -351,7 +348,7 @@ export class SchematizingSimpleTreeView<
 		const schema = toInitialSchema(
 			this.config.schema,
 			this.stagedUpgradePolicy,
-			this.schemaVersion,
+			this.viewSchema.schemaVersion,
 		);
 		const schemaHash = this.computeSchemaHash(this.stagedUpgradePolicy);
 		this.runSchemaEdit(() => {
@@ -419,7 +416,11 @@ export class SchematizingSimpleTreeView<
 		this.ensureUndisposed();
 
 		const upgradePolicy = this.effectiveUpgradePolicy;
-		const newSchema = toUpgradeSchema(this.viewSchema.root, upgradePolicy, this.schemaVersion);
+		const newSchema = toUpgradeSchema(
+			this.viewSchema.root,
+			upgradePolicy,
+			this.viewSchema.schemaVersion,
+		);
 		const storedSchema = this.checkout.storedSchema.clone();
 		// Version ordering can permit non-additive upgrades, which must bypass the checkout's additive-only assertion.
 		const isAdditiveSchemaUpgrade = allowsRepoSuperset(

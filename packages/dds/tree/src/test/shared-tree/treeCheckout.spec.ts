@@ -2337,7 +2337,7 @@ describe("sharedTreeView", () => {
 			view.checkout.updateSchema({
 				rootFieldSchema: schema.rootFieldSchema,
 				nodeSchema: schema.nodeSchema,
-				schemaVersion: { ["com.fluidframework.test"]: 1 },
+				schemaVersion: new Map([["com.fluidframework.test", 1]]),
 			});
 
 			const schemaChangeEvents = provider.logger

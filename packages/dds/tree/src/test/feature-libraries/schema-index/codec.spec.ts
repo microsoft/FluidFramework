@@ -71,7 +71,7 @@ const versionedTestCases: EncodingTestData<TreeStoredSchema, FormatV3> = {
 		name,
 		{
 			...schema,
-			schemaVersion: { ["com.fluidframework.test"]: 1 },
+			schemaVersion: new Map([["com.fluidframework.test", 1]]),
 		},
 	]),
 };
@@ -97,10 +97,10 @@ describe("SchemaIndex", () => {
 		const codec = schemaCodecBuilder.build(versionedCodecOptions);
 		const schema: TreeStoredSchema = {
 			...schema2,
-			schemaVersion: {
-				["test.z"]: 2,
-				["test.a"]: 1,
-			},
+			schemaVersion: new Map([
+				["test.z", 2],
+				["test.a", 1],
+			]),
 		};
 
 		const encoded = codec.encode(schema);
@@ -125,6 +125,20 @@ describe("SchemaIndex", () => {
 		);
 		assert.equal((encoded as FormatV3).schemaVersion, undefined);
 		assert.deepEqual(codec.decode(encoded), schema2);
+	});
+
+	it("round-trips empty version maps and object prototype names", () => {
+		const codec = schemaCodecBuilder.build(versionedCodecOptions);
+		for (const schemaVersion of [
+			new Map<string, number>(),
+			new Map([
+				["__proto__", 0],
+				["constructor", Number.MAX_SAFE_INTEGER],
+			]),
+		]) {
+			const schema = { ...schema2, schemaVersion };
+			assert.deepEqual(codec.decode(codec.encode(schema)).schemaVersion, schemaVersion);
+		}
 	});
 
 	it("rejects unsorted application schema versions", () => {
@@ -152,6 +166,20 @@ describe("SchemaIndex", () => {
 		assert.throws(() => codec.decode(encoded));
 	});
 
+	it("rejects duplicate identifiers before converting versions to a map", () => {
+		const codec = schemaCodecBuilder.buildDecoder(codecOptions);
+		const encoded = {
+			version: SchemaFormatVersion.v3Experimental,
+			nodes: {},
+			root: { kind: "x" as FieldKindIdentifier, types: [] },
+			schemaVersion: [
+				["test", 1],
+				["test", 2],
+			],
+		} satisfies FormatV3;
+		assert.throws(() => codec.decode(encoded), /must be sorted.*no duplicates/);
+	});
+
 	it("rejects unsafe application schema versions", () => {
 		const codec = schemaCodecBuilder.buildDecoder(codecOptions);
 		const encoded = {
@@ -166,7 +194,7 @@ describe("SchemaIndex", () => {
 	it("omits application schema versions in stable formats", () => {
 		const schema: TreeStoredSchema = {
 			...schema2,
-			schemaVersion: { ["test"]: 1 },
+			schemaVersion: new Map([["test", 1]]),
 		};
 
 		for (const codec of [codecV1, codecV2]) {
@@ -180,7 +208,7 @@ describe("SchemaIndex", () => {
 		const codec = schemaCodecBuilder.build(versionedCodecOptions);
 		const schema: TreeStoredSchema = {
 			...schema2,
-			schemaVersion: { ["test"]: 1 },
+			schemaVersion: new Map([["test", 1]]),
 		};
 
 		const encoded = codec.encode(schema);

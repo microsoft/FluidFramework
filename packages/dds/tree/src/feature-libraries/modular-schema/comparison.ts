@@ -44,7 +44,7 @@ export enum SchemaComparisonMode {
 	 *
 	 * To prevent those cycles, {@link allowsSchemaUpgrade} uses this mode only when both version maps are present,
 	 * no versions decrease or disappear, and at least one version increases or a library identifier is added.
-	 * It checks these conditions with {@link ifSchemaVersionsDecrease} and {@link areSchemaVersionsEqual}.
+	 * It checks these conditions with {@link compareSchemaVersions}.
 	 */
 	ContentOnly,
 }
@@ -283,7 +283,7 @@ export function allowsRepoSuperset(
  *
  * @remarks
  * Every upgrade must preserve existing version identifiers and must not decrease their values,
- * as checked by {@link ifSchemaVersionsDecrease}.
+ * as checked by {@link compareSchemaVersions}.
  * Within that constraint, changes allowed by {@link SchemaComparisonMode.Monotonic} do not require a version increase.
  *
  * For other content-preserving changes, the version maps must provide the ordering that prevents inverse upgrades.
@@ -296,69 +296,88 @@ export function allowsSchemaUpgrade(
 	original: TreeStoredSchema,
 	updated: TreeStoredSchema,
 ): boolean {
-	const versionsDecrease = ifSchemaVersionsDecrease(
-		original.schemaVersion,
-		updated.schemaVersion,
-	);
-	if (!versionsDecrease && allowsRepoSuperset(policy, original, updated)) {
-		return true;
+	const comparison = compareSchemaVersions(original.schemaVersion, updated.schemaVersion);
+	if (
+		comparison === SchemaVersionComparison.Decrease ||
+		comparison === SchemaVersionComparison.Incompatible
+	) {
+		return false;
 	}
 
 	return (
-		!versionsDecrease &&
-		original.schemaVersion !== undefined &&
-		updated.schemaVersion !== undefined &&
-		!areSchemaVersionsEqual(original.schemaVersion, updated.schemaVersion) &&
-		allowsRepoSuperset(policy, original, updated, SchemaComparisonMode.ContentOnly)
+		allowsRepoSuperset(policy, original, updated) ||
+		(comparison === SchemaVersionComparison.Increase &&
+			original.schemaVersion !== undefined &&
+			updated.schemaVersion !== undefined &&
+			allowsRepoSuperset(policy, original, updated, SchemaComparisonMode.ContentOnly))
 	);
 }
 
 /**
- * Returns whether both maps have the same library identifiers and version values.
+ * Describes the direction of a schema version change from the original map to the updated map.
+ */
+export enum SchemaVersionComparison {
+	/**
+	 * Both maps have identical identifiers and values, or both are absent.
+	 */
+	Equal,
+	/**
+	 * At least one version increases or an identifier is added, with no decreases or removals.
+	 * Adding the first map, including an empty one, also counts as an increase.
+	 */
+	Increase,
+	/**
+	 * At least one version decreases or an identifier is removed, with no increases or additions.
+	 * Removing the entire map, including an empty one, also counts as a decrease.
+	 */
+	Decrease,
+	/**
+	 * Some versions increase or identifiers are added, while others decrease or are removed.
+	 * Neither map can be upgraded to the other without decreasing or removing a version.
+	 */
+	Incompatible,
+}
+
+/**
+ * Compares schema versions in upgrade order, from `original` to `updated`.
  *
  * @remarks
  * An absent map differs from an empty map.
+ * The comparison considers version ordering only; {@link allowsSchemaUpgrade} also checks allowed content
+ * and prevents the first version map from enabling non-monotonic upgrades.
  */
-export function areSchemaVersionsEqual(
-	a: TreeStoredSchema["schemaVersion"],
-	b: TreeStoredSchema["schemaVersion"],
-): boolean {
-	if (a === undefined || b === undefined) {
-		return a === b;
-	}
-	const aEntries = Object.entries(a);
-	return (
-		aEntries.length === Object.keys(b).length &&
-		aEntries.every(([libraryId, version]) => b[libraryId] === version)
-	);
-}
-
-/**
- * Returns whether `updated` removes a library identifier or decreases a version in `original`.
- *
- * @remarks
- * Only existing versions constrain an update, so the result is `false` if `original` is `undefined`.
- * If `original` is present but `updated` is `undefined`, the result is `true` because the map was removed.
- * Within a present map, adding library identifiers does not count as a decrease.
- */
-function ifSchemaVersionsDecrease(
+export function compareSchemaVersions(
 	original: TreeStoredSchema["schemaVersion"],
 	updated: TreeStoredSchema["schemaVersion"],
-): boolean {
+): SchemaVersionComparison {
 	if (original === undefined) {
-		return false;
+		return updated === undefined
+			? SchemaVersionComparison.Equal
+			: SchemaVersionComparison.Increase;
 	}
 	if (updated === undefined) {
-		return true;
+		return SchemaVersionComparison.Decrease;
 	}
-	return Object.entries(original).some(([libraryId, version]) => {
-		const updatedVersion = updated[libraryId];
-		return (
-			!Object.hasOwn(updated, libraryId) ||
-			updatedVersion === undefined ||
-			updatedVersion < version
-		);
-	});
+	let increases = false;
+	let decreases = false;
+	for (const [libraryId, version] of original) {
+		const updatedVersion = updated.get(libraryId);
+		if (updatedVersion === undefined || updatedVersion < version) {
+			decreases = true;
+		} else if (updatedVersion > version) {
+			increases = true;
+		}
+	}
+	for (const libraryId of updated.keys()) {
+		if (!original.has(libraryId)) {
+			increases = true;
+			break;
+		}
+	}
+	if (increases) {
+		return decreases ? SchemaVersionComparison.Incompatible : SchemaVersionComparison.Increase;
+	}
+	return decreases ? SchemaVersionComparison.Decrease : SchemaVersionComparison.Equal;
 }
 
 /**

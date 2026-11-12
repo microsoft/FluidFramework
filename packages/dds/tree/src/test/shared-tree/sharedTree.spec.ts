@@ -424,7 +424,7 @@ describe("SharedTree", () => {
 
 		assert.equal(tree.storedSchemaVersion, undefined);
 		view.initialize(1);
-		assert.deepEqual(tree.storedSchemaVersion, { test: 1 });
+		assert.deepEqual(tree.storedSchemaVersion, new Map([["test", 1]]));
 	});
 
 	it("can be connected to another tree", async () => {

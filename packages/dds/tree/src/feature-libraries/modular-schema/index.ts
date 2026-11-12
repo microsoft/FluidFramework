@@ -5,9 +5,10 @@
 
 export {
 	SchemaComparisonMode,
+	SchemaVersionComparison,
 	allowsRepoSuperset,
 	allowsSchemaUpgrade,
-	areSchemaVersionsEqual,
+	compareSchemaVersions,
 	allowsTreeSchemaIdentifierSuperset,
 	allowsFieldSuperset,
 	allowsTreeSuperset,

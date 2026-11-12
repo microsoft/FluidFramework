@@ -35,7 +35,7 @@ describe("schema snapshots", () => {
 					schemaFormat.formatVersion === SchemaFormatVersion.v3Experimental
 						? {
 								...schemaData,
-								schemaVersion: { ["com.fluidframework.test"]: 1 },
+								schemaVersion: new Map([["com.fluidframework.test", 1]]),
 							}
 						: schemaData;
 				const encoded = schemaFormat

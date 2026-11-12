@@ -48,7 +48,7 @@ export const SchemaFormatVersion = strictEnum("SchemaFormatVersion", {
 export type SchemaFormatVersion = Values<typeof SchemaFormatVersion>;
 
 /**
- * Maps string library identifiers to application-defined schema versions.
+ * Input record mapping string library identifiers to application-defined schema versions.
  *
  * @remarks
  * Each entry pairs a library identifier with a non-negative safe integer version.
@@ -447,7 +447,7 @@ export interface TreeStoredSchema extends StoredSchemaCollection {
 	/**
 	 * Contains the application-defined versions for this schema.
 	 */
-	readonly schemaVersion?: SchemaVersionMap;
+	readonly schemaVersion?: ReadonlyMap<string, number>;
 }
 
 /**

@@ -30,11 +30,12 @@ export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.Sch
 	 *
 	 * @remarks
 	 * {@link identifySchemaAlpha} and {@link identifySchemaWithHashAlpha} accept these versions
-	 * as a map of string library identifiers to non-negative safe integers,
-	 * or as a single number that is normalized to the map `{ "schemaVersion": number }`.
+	 * as a record of string library identifiers to non-negative safe integers,
+	 * or as a single number assigned to the identifier `"schemaVersion"`.
+	 * The configured versions are exposed as a read-only map.
 	 * The shorthand key `"schemaVersion"` is an ordinary identifier and follows the same rules as other keys.
 	 *
-	 * {@link TreeView.initialize} and {@link TreeView.upgradeSchema} copy the configured versions into stored schema.
+	 * {@link TreeView.initialize} and {@link TreeView.upgradeSchema} store the configured versions in the document.
 	 * Once stored, version values cannot decrease and their identifiers cannot be removed.
 	 * This ordering prevents an older application from reversing a versioned schema upgrade.
 	 *
@@ -78,7 +79,7 @@ export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.Sch
 	 * });
 	 * ```
 	 */
-	readonly schemaVersion: SchemaVersionMap | undefined;
+	readonly schemaVersion: ReadonlyMap<string, number> | undefined;
 }
 
 /**
@@ -91,8 +92,8 @@ export interface IdentifySchemaOptions {
 	 * Specifies the versions to store on {@link SchemaIdentity.schemaVersion}.
 	 *
 	 * @remarks
-	 * A number specifies one application-wide version, while a map specifies independent versions for parts of the schema.
-	 * {@link SchemaIdentity.schemaVersion} describes normalization and upgrade rules.
+	 * A number specifies one application-wide version, while a record specifies independent versions for parts of the schema.
+	 * {@link SchemaIdentity.schemaVersion} describes the supported inputs and upgrade rules.
 	 */
 	readonly schemaVersion?: SchemaVersionMap | number;
 }
@@ -108,7 +109,7 @@ export interface IdentifySchemaOptions {
  * Assigning the result to {@link ITreeViewConfigurationAlpha.schemaIdentity} associates the versions with a view configuration.
  * {@link SchemaIdentity.schemaVersion} describes version requirements and upgrade rules.
  *
- * This factory does not compute hashes or log hash telemetry, so bundles that only use it can omit the hash algorithm.
+ * This factory does not compute hashes or log hash telemetry, avoiding the bundle-size cost of schema hashing.
  * {@link identifySchemaWithHashAlpha} also supports hashing.
  *
  * @see {@link identifySchemaWithHashAlpha} to enable hash checks and hash telemetry.
@@ -130,7 +131,7 @@ export class SchemaIdentityInternal
 	extends ErasedTypeImplementation<SchemaIdentity>
 	implements SchemaIdentity
 {
-	public readonly schemaVersion: SchemaVersionMap | undefined;
+	public readonly schemaVersion: ReadonlyMap<string, number> | undefined;
 
 	public constructor(
 		public readonly expectedHash: string | undefined,
@@ -164,21 +165,26 @@ export class SchemaIdentityInternal
 }
 
 /**
- * Normalizes and validates application versions and returns a frozen map.
+ * Normalizes and validates application versions and returns a read-only map.
  */
 function validateSchemaVersion(
 	schemaVersion: SchemaVersionMap | number | undefined,
-): SchemaVersionMap | undefined {
+): ReadonlyMap<string, number> | undefined {
 	if (schemaVersion === undefined) {
 		return undefined;
 	}
-	const versions = typeof schemaVersion === "number" ? { schemaVersion } : schemaVersion;
-	for (const [libraryId, version] of Object.entries(versions)) {
+	const entries =
+		typeof schemaVersion === "number"
+			? [["schemaVersion", schemaVersion] as const]
+			: Object.entries(schemaVersion);
+	const versions = new Map<string, number>();
+	for (const [libraryId, version] of entries) {
 		if (!Number.isSafeInteger(version) || version < 0) {
 			throw new UsageError(
 				`Schema version for library ${JSON.stringify(libraryId)} must be a non-negative safe integer.`,
 			);
 		}
+		versions.set(libraryId, version);
 	}
-	return Object.freeze({ ...versions });
+	return versions;
 }

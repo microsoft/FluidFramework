@@ -161,12 +161,12 @@ describe("snapshotCompatibilityChecker", () => {
 		});
 
 		const parsedView = importCompatibilitySchemaSnapshot(snapshot);
-		assert.deepEqual(parsedView.schemaVersion, { test: 2 });
-		assert.deepEqual(parsedView.schemaIdentity?.schemaVersion, { test: 2 });
+		assert.deepEqual(parsedView.schemaVersion, new Map([["test", 2]]));
+		assert.deepEqual(parsedView.schemaIdentity?.schemaVersion, new Map([["test", 2]]));
 		assert.deepEqual(exportCompatibilitySchemaSnapshot(parsedView), snapshot);
 		for (const validator of [undefined, FormatValidatorBasic]) {
 			const decoded = decodeSchemaCompatibilitySnapshot(snapshot, validator);
-			assert.deepEqual(decoded.schemaVersion, { test: 2 });
+			assert.deepEqual(decoded.schemaVersion, new Map([["test", 2]]));
 			assert.deepEqual(encodeSchemaCompatibilitySnapshot(decoded), snapshot);
 		}
 	});
@@ -186,7 +186,10 @@ describe("snapshotCompatibilityChecker", () => {
 		});
 		assert.deepEqual(withCheck, withoutCheck);
 		const restored = importCompatibilitySchemaSnapshot(withCheck);
-		assert.deepEqual(restored.schemaIdentity?.schemaVersion, schemaVersion);
+		assert.deepEqual(
+			restored.schemaIdentity?.schemaVersion,
+			new Map(Object.entries(schemaVersion)),
+		);
 		assert.deepEqual(exportCompatibilitySchemaSnapshot(restored), withCheck);
 	});
 
@@ -204,7 +207,7 @@ describe("snapshotCompatibilityChecker", () => {
 		]);
 		for (const validator of [undefined, FormatValidatorBasic]) {
 			const decoded = decodeSchemaCompatibilitySnapshot(snapshot, validator);
-			assert.deepEqual(decoded.schemaVersion, {});
+			assert.deepEqual(decoded.schemaVersion, new Map());
 			assert.deepEqual(encodeSchemaCompatibilitySnapshot(decoded), snapshot);
 		}
 	});
@@ -235,6 +238,32 @@ describe("snapshotCompatibilityChecker", () => {
 			() => importCompatibilitySchemaSnapshot(snapshot),
 			/must be non-negative safe integers/,
 		);
+	});
+
+	it("rejects duplicate and unsorted version identifiers before constructing a map", () => {
+		const versionEntries: [string, number][][] = [
+			[
+				["test", 1],
+				["test", 2],
+			],
+			[
+				["z", 1],
+				["a", 2],
+			],
+		];
+		for (const schemaVersion of versionEntries) {
+			const snapshot = exportCompatibilitySchemaSnapshot({
+				schema: SchemaFactory.number,
+				schemaIdentity: identifySchemaAlpha({ schemaVersion: {} }),
+			}) as { schemaVersion: [string, number][] };
+			snapshot.schemaVersion = schemaVersion;
+			for (const validator of [undefined, FormatValidatorBasic]) {
+				assert.throws(
+					() => decodeSchemaCompatibilitySnapshot(snapshot, validator),
+					/must be sorted.*no duplicates/,
+				);
+			}
+		}
 	});
 
 	it("rejects unsafe schema versions", () => {

@@ -23,6 +23,8 @@ import {
 import { FieldKinds, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 import {
 	SchemaComparisonMode,
+	SchemaVersionComparison,
+	compareSchemaVersions,
 	allowsFieldSuperset,
 	allowsMultiplicitySuperset,
 	allowsRepoSuperset,
@@ -190,8 +192,9 @@ describe("Schema Comparison", () => {
 	describe("allowsSchemaUpgrade version gating", () => {
 		const versionCases: {
 			name: string;
-			original: TreeStoredSchema["schemaVersion"];
-			updated: TreeStoredSchema["schemaVersion"];
+			original: Readonly<Record<string, number>> | undefined;
+			updated: Readonly<Record<string, number>> | undefined;
+			comparison: SchemaVersionComparison;
 			monotonic: boolean;
 			contentOnly: boolean;
 		}[] = [
@@ -199,6 +202,7 @@ describe("Schema Comparison", () => {
 				name: "absent versions",
 				original: undefined,
 				updated: undefined,
+				comparison: SchemaVersionComparison.Equal,
 				monotonic: true,
 				contentOnly: false,
 			},
@@ -206,6 +210,7 @@ describe("Schema Comparison", () => {
 				name: "added version map",
 				original: undefined,
 				updated: { library: 1 },
+				comparison: SchemaVersionComparison.Increase,
 				monotonic: true,
 				contentOnly: false,
 			},
@@ -213,6 +218,7 @@ describe("Schema Comparison", () => {
 				name: "empty version maps",
 				original: {},
 				updated: {},
+				comparison: SchemaVersionComparison.Equal,
 				monotonic: true,
 				contentOnly: false,
 			},
@@ -220,6 +226,7 @@ describe("Schema Comparison", () => {
 				name: "equal versions",
 				original: { library: 1 },
 				updated: { library: 1 },
+				comparison: SchemaVersionComparison.Equal,
 				monotonic: true,
 				contentOnly: false,
 			},
@@ -227,6 +234,7 @@ describe("Schema Comparison", () => {
 				name: "increased version",
 				original: { library: 1 },
 				updated: { library: 2 },
+				comparison: SchemaVersionComparison.Increase,
 				monotonic: true,
 				contentOnly: true,
 			},
@@ -234,6 +242,7 @@ describe("Schema Comparison", () => {
 				name: "added library identifier",
 				original: { library: 1 },
 				updated: { library: 1, other: 1 },
+				comparison: SchemaVersionComparison.Increase,
 				monotonic: true,
 				contentOnly: true,
 			},
@@ -241,6 +250,7 @@ describe("Schema Comparison", () => {
 				name: "decreased version",
 				original: { library: 2 },
 				updated: { library: 1 },
+				comparison: SchemaVersionComparison.Decrease,
 				monotonic: false,
 				contentOnly: false,
 			},
@@ -248,6 +258,7 @@ describe("Schema Comparison", () => {
 				name: "removed library identifier despite another increase",
 				original: { library: 1, other: 1 },
 				updated: { library: 2 },
+				comparison: SchemaVersionComparison.Incompatible,
 				monotonic: false,
 				contentOnly: false,
 			},
@@ -255,6 +266,7 @@ describe("Schema Comparison", () => {
 				name: "decreased version despite another increase",
 				original: { library: 1, other: 2 },
 				updated: { library: 2, other: 1 },
+				comparison: SchemaVersionComparison.Incompatible,
 				monotonic: false,
 				contentOnly: false,
 			},
@@ -262,22 +274,83 @@ describe("Schema Comparison", () => {
 				name: "removed version map",
 				original: { library: 1 },
 				updated: undefined,
+				comparison: SchemaVersionComparison.Decrease,
+				monotonic: false,
+				contentOnly: false,
+			},
+			{
+				name: "added empty version map",
+				original: undefined,
+				updated: {},
+				comparison: SchemaVersionComparison.Increase,
+				monotonic: true,
+				contentOnly: false,
+			},
+			{
+				name: "removed empty version map",
+				original: {},
+				updated: undefined,
+				comparison: SchemaVersionComparison.Decrease,
+				monotonic: false,
+				contentOnly: false,
+			},
+			{
+				name: "added zero version",
+				original: {},
+				updated: { library: 0 },
+				comparison: SchemaVersionComparison.Increase,
+				monotonic: true,
+				contentOnly: true,
+			},
+			{
+				name: "removed library identifier",
+				original: { library: 1, other: 1 },
+				updated: { library: 1 },
+				comparison: SchemaVersionComparison.Decrease,
+				monotonic: false,
+				contentOnly: false,
+			},
+			{
+				name: "added identifier despite a decreased version",
+				original: { library: 2 },
+				updated: { library: 1, other: 0 },
+				comparison: SchemaVersionComparison.Incompatible,
+				monotonic: false,
+				contentOnly: false,
+			},
+			{
+				name: "replaced library identifier",
+				original: { library: 1 },
+				updated: { other: 1 },
+				comparison: SchemaVersionComparison.Incompatible,
 				monotonic: false,
 				contentOnly: false,
 			},
 		];
 
-		for (const { name, original, updated, monotonic, contentOnly } of versionCases) {
+		for (const {
+			name,
+			original,
+			updated,
+			comparison,
+			monotonic,
+			contentOnly,
+		} of versionCases) {
 			it(name, () => {
+				const originalMap =
+					original === undefined ? undefined : new Map(Object.entries(original));
+				const updatedMap =
+					updated === undefined ? undefined : new Map(Object.entries(updated));
+				assert.equal(compareSchemaVersions(originalMap, updatedMap), comparison);
 				const stored: TreeStoredSchema = {
 					rootFieldSchema: fieldRequiredEmptyTree,
 					nodeSchema: new Map([[emptyTree.name, emptyTree.schema]]),
-					schemaVersion: original,
+					schemaVersion: originalMap,
 				};
 				const update = (rootFieldSchema: TreeFieldStoredSchema): TreeStoredSchema => ({
 					rootFieldSchema,
 					nodeSchema: stored.nodeSchema,
-					schemaVersion: updated,
+					schemaVersion: updatedMap,
 				});
 				assert.equal(
 					allowsSchemaUpgrade(defaultSchemaPolicy, stored, update(fieldOptionalEmptyTree)),
@@ -298,16 +371,52 @@ describe("Schema Comparison", () => {
 			const stored: TreeStoredSchema = {
 				rootFieldSchema: fieldOptionalEmptyTree,
 				nodeSchema: new Map([[emptyTree.name, emptyTree.schema]]),
-				schemaVersion: { library: 1 },
+				schemaVersion: new Map([["library", 1]]),
 			};
 			assert.equal(
 				allowsSchemaUpgrade(defaultSchemaPolicy, stored, {
 					...stored,
 					rootFieldSchema: fieldRequiredEmptyTree,
-					schemaVersion: { library: 2 },
+					schemaVersion: new Map([["library", 2]]),
 				}),
 				false,
 			);
+		});
+
+		it("compares entries independently of insertion order and object prototype names", () => {
+			const original = new Map([
+				["__proto__", 0],
+				["constructor", 1],
+				["toString", Number.MAX_SAFE_INTEGER],
+			]);
+			const reordered = new Map([...original].reverse());
+			assert.equal(compareSchemaVersions(original, reordered), SchemaVersionComparison.Equal);
+			reordered.set("__proto__", 1);
+			assert.equal(
+				compareSchemaVersions(original, reordered),
+				SchemaVersionComparison.Increase,
+			);
+			assert.equal(
+				compareSchemaVersions(reordered, original),
+				SchemaVersionComparison.Decrease,
+			);
+		});
+
+		it("copies caller-owned version maps when storing and applying schema", () => {
+			const schemaVersion = new Map([["library", 1]]);
+			const stored = {
+				rootFieldSchema: fieldRequiredEmptyTree,
+				nodeSchema: new Map([[emptyTree.name, emptyTree.schema]]),
+				schemaVersion,
+			};
+			const repository = new TreeStoredSchemaRepository(stored);
+			schemaVersion.set("library", 2);
+			assert.equal(repository.schemaVersion?.get("library"), 1);
+			const clone = repository.clone();
+			repository.apply(stored);
+			schemaVersion.set("library", 3);
+			assert.equal(repository.schemaVersion?.get("library"), 2);
+			assert.equal(clone.schemaVersion?.get("library"), 1);
 		});
 	});
 

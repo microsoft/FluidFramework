@@ -58,7 +58,7 @@ describe("schemaSummarizer", () => {
 					schemaFormat.formatVersion === SchemaFormatVersion.v3Experimental
 						? {
 								...schema,
-								schemaVersion: { ["com.fluidframework.test"]: 1 },
+								schemaVersion: new Map([["com.fluidframework.test", 1]]),
 							}
 						: schema;
 				const result: JsonCompatibleReadOnly = codec.encode(schemaWithVersion);

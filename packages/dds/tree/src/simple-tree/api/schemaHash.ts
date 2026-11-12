@@ -64,12 +64,11 @@ export interface IdentifySchemaWithHashOptions extends IdentifySchemaOptions {
  * Those versions follow the rules in {@link SchemaIdentity.schemaVersion} but do not affect the runtime hash,
  * so a version-only change does not require updating the expected hash.
  *
- * This factory introduces a dependency on the hash algorithm.
- * Version-only callers can use {@link identifySchemaAlpha} so their bundles can omit the hash algorithm.
+ * For versioning without hashing, {@link identifySchemaAlpha} avoids the bundle-size cost of schema hashing.
  *
  * @param options - Optional expected hash and application-defined versions.
  *
- * @returns An immutable schema identity that uses SHA-256 hashing.
+ * @returns An immutable schema identity with hashing enabled.
  *
  * @see {@link identifySchemaAlpha} to use application versions without hashing.
  *

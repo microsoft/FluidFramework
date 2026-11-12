@@ -1572,7 +1572,7 @@ const schemaIdentifierBrand: unique symbol;
 
 // @alpha @sealed
 export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.SchemaIdentity"> {
-    readonly schemaVersion: SchemaVersionMap | undefined;
+    readonly schemaVersion: ReadonlyMap<string, number> | undefined;
 }
 
 // @public @sealed @system
@@ -1726,7 +1726,7 @@ export interface SimpleRecordNodeSchema<Type extends SchemaType = SchemaType, ou
 export interface SimpleTreeSchema<Type extends SchemaType = SchemaType> {
     readonly definitions: ReadonlyMap<string, SimpleNodeSchema<Type>>;
     readonly root: SimpleFieldSchema<Type>;
-    readonly schemaVersion?: SchemaVersionMap;
+    readonly schemaVersion?: ReadonlyMap<string, number>;
 }
 
 // @beta
@@ -2405,7 +2405,7 @@ export interface TreeSchema extends SimpleTreeSchema<SchemaType.View> {
     readonly definitions: ReadonlyMap<string, SimpleNodeSchema<SchemaType.View> & TreeNodeSchema>;
     // (undocumented)
     readonly root: FieldSchemaAlpha;
-    readonly schemaVersion?: SchemaVersionMap;
+    readonly schemaVersion?: ReadonlyMap<string, number>;
 }
 
 // @alpha @input
@@ -2443,8 +2443,10 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
     // (undocumented)
     get root(): ReadableField<TSchema>;
     set root(newRoot: InsertableField<TSchema>);
-    readonly schemaVersion: SchemaVersionMap | undefined;
-    readonly storedSchemaVersion: SchemaVersionMap | undefined;
+    readonly schemaVersion: {
+        readonly view: ReadonlyMap<string, number> | undefined;
+        readonly stored: ReadonlyMap<string, number> | undefined;
+    };
 }
 
 // @beta @sealed
@@ -2474,7 +2476,7 @@ export class TreeViewConfigurationAlpha<const TSchema extends ImplicitFieldSchem
     // (undocumented)
     readonly root: FieldSchemaAlpha;
     readonly schemaIdentity: ITreeViewConfigurationAlpha["schemaIdentity"];
-    get schemaVersion(): SchemaVersionMap | undefined;
+    get schemaVersion(): ReadonlyMap<string, number> | undefined;
     readonly stagedUpgradePolicy: StagedSchemaUpgradePolicy;
 }
 
@@ -2620,7 +2622,7 @@ export interface ViewableTreeAlpha extends ViewableTree {
     exportSimpleSchema(): SimpleTreeSchema;
     exportVerbose(): VerboseTree | undefined;
     forkBranch(): TreeBranchHandleAlpha;
-    readonly storedSchemaVersion: SchemaVersionMap | undefined;
+    readonly storedSchemaVersion: ReadonlyMap<string, number> | undefined;
 }
 
 // @alpha
