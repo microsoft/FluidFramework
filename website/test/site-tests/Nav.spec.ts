@@ -159,8 +159,13 @@ async function withPendingQuickStart(
 	});
 	const sidebar = await openSidebar(page, width, "/docs/start/tutorial/");
 	const pendingScripts: Route[] = [];
-	const holdScript = (route: Route): void => {
-		pendingScripts.push(route);
+	let releasing = false;
+	const holdScript = async (route: Route): Promise<void> => {
+		if (releasing) {
+			await route.continue();
+		} else {
+			pendingScripts.push(route);
+		}
 	};
 	await page.route("**/*.js", holdScript);
 	try {
@@ -172,6 +177,8 @@ async function withPendingQuickStart(
 		await expect(page.locator("main h1")).toHaveText("Tutorial: DiceRoller application");
 		await assertPending(sidebar);
 	} finally {
+		releasing = true;
+		// Unrouting also releases held requests, so continue them before removing the handler.
 		await Promise.all(pendingScripts.map(async (route) => route.continue()));
 		await page.unroute("**/*.js", holdScript);
 	}
