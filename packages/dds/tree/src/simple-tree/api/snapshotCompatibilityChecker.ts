@@ -13,7 +13,7 @@ import { getRootSchemaDerivedData, toInitialSchema } from "../treeSchema.js";
 
 import type { ITreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
 import { TreeViewConfigurationAlpha } from "./configuration.js";
-import { identifySchemaAlpha } from "./schemaIdentity.js";
+import { identifySchema } from "./schemaIdentity.js";
 import { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";
 import { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
 import {
@@ -29,7 +29,8 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * The document configuration supplies the historical schema and application-defined versions,
  * while the client configuration supplies the schema and versions the application now expects.
  * The comparison uses those definitions rather than inspecting document content.
- * Schema metadata does not affect content compatibility; application-defined versions also constrain which upgrades are allowed.
+ * Schema metadata does not affect content compatibility.
+ * Application-defined versions additionally constrain which upgrades are allowed.
  *
  * @example Checking the ability of the client's view schema to view or upgrade a document's stored schema.
  * In this case, the historical schema is a Point2D object with x and y fields, while the current schema is a Point3D object
@@ -187,7 +188,7 @@ export function importCompatibilitySchemaSnapshot(
 		schemaIdentity:
 			simpleSchema.schemaVersion === undefined
 				? undefined
-				: identifySchemaAlpha({
+				: identifySchema({
 						schemaVersion: Object.fromEntries(simpleSchema.schemaVersion),
 					}),
 	});

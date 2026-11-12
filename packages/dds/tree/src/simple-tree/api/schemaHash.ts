@@ -32,7 +32,7 @@ import {
 } from "./schemaIdentity.js";
 
 /**
- * Configures hashing and application-defined versions for {@link identifySchemaWithHashAlpha}.
+ * Configures hashing and application-defined versions for {@link identifySchemaWithHash}.
  *
  * @remarks
  * Inherits version configuration from {@link IdentifySchemaOptions} and adds an optional expected hash for schema checks.
@@ -66,17 +66,17 @@ export interface IdentifySchemaWithHashOptions extends IdentifySchemaOptions {
  * Those versions follow the rules in {@link SchemaIdentity.schemaVersion} but do not affect the runtime hash,
  * so a version-only change does not require updating the expected hash.
  *
- * For versioning without hashing, {@link identifySchemaAlpha} avoids the bundle-size cost of schema hashing.
+ * For versioning without hashing, {@link identifySchema} avoids the bundle-size cost of schema hashing.
  *
  * @param options - Optional expected hash and application-defined versions.
  *
  * @returns An immutable schema identity with hashing enabled.
  *
- * @see {@link identifySchemaAlpha} to use application versions without hashing.
+ * @see {@link identifySchema} to use application versions without hashing.
  *
  * @alpha
  */
-export function identifySchemaWithHashAlpha(
+export function identifySchemaWithHash(
 	options: IdentifySchemaWithHashOptions = {},
 ): SchemaIdentity {
 	return new SchemaIdentityInternal(

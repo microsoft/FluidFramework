@@ -52,7 +52,7 @@ import {
 	TreeViewConfigurationAlpha,
 	StagedSchemaUpgradePolicy,
 	computeSchemaHash,
-	identifySchemaWithHashAlpha,
+	identifySchemaWithHash,
 	FieldKind,
 	isTreeNode,
 } from "../../simple-tree/index.js";
@@ -149,7 +149,7 @@ describe("SchematizingSimpleTreeView", () => {
 				const view = getView(
 					new TreeViewConfigurationAlpha({
 						schema: root,
-						schemaIdentity: identifySchemaWithHashAlpha({
+						schemaIdentity: identifySchemaWithHash({
 							expectedHash: computeSchemaHash(root),
 						}),
 					}),
@@ -162,7 +162,7 @@ describe("SchematizingSimpleTreeView", () => {
 			it("rejects an incorrect hash when constructing the view", () => {
 				const viewConfig = new TreeViewConfigurationAlpha({
 					schema: root,
-					schemaIdentity: identifySchemaWithHashAlpha({
+					schemaIdentity: identifySchemaWithHash({
 						expectedHash: computeSchemaHash(schema.string),
 					}),
 				});
@@ -195,7 +195,7 @@ describe("SchematizingSimpleTreeView", () => {
 					const schemaVersion = { [libraryId]: version };
 					const viewConfig = new TreeViewConfigurationAlpha({
 						schema: root,
-						schemaIdentity: identifySchemaWithHashAlpha({
+						schemaIdentity: identifySchemaWithHash({
 							expectedHash: previousHash,
 							schemaVersion,
 						}),
@@ -215,7 +215,7 @@ describe("SchematizingSimpleTreeView", () => {
 					assert.deepEqual(jsonTreeFromCheckout(checkout), beforeContent);
 					const updatedViewConfig = new TreeViewConfigurationAlpha({
 						schema: root,
-						schemaIdentity: identifySchemaWithHashAlpha({
+						schemaIdentity: identifySchemaWithHash({
 							expectedHash: actualHash,
 							schemaVersion,
 						}),
@@ -238,13 +238,13 @@ describe("SchematizingSimpleTreeView", () => {
 				const view = getView(
 					new TreeViewConfigurationAlpha({
 						schema: root,
-						schemaIdentity: identifySchemaWithHashAlpha(),
+						schemaIdentity: identifySchemaWithHash(),
 					}),
 				);
 				view.dispose();
 			});
 
-			it("requires schema identity to be created with identifySchemaAlpha", () => {
+			it("requires schema identity to be created with identifySchema", () => {
 				assert.throws(
 					() =>
 						new TreeViewConfigurationAlpha({
@@ -252,7 +252,7 @@ describe("SchematizingSimpleTreeView", () => {
 							// @ts-expect-error Schema identity is opaque.
 							schemaIdentity: {},
 						}),
-					validateUsageError(/schemaIdentity must be created with identifySchemaAlpha/),
+					validateUsageError(/schemaIdentity must be created with identifySchema/),
 				);
 			});
 		});
@@ -265,7 +265,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const view = tree.viewWith(
 				new TreeViewConfigurationAlpha({
 					schema: schema.number,
-					schemaIdentity: identifySchemaWithHashAlpha(),
+					schemaIdentity: identifySchemaWithHash(),
 				}),
 			);
 
@@ -292,7 +292,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const view = tree.viewWith(
 				new TreeViewConfigurationAlpha({
 					schema: upgradedSchema,
-					schemaIdentity: identifySchemaWithHashAlpha(),
+					schemaIdentity: identifySchemaWithHash(),
 				}),
 			);
 
@@ -340,7 +340,7 @@ describe("SchematizingSimpleTreeView", () => {
 				new TreeViewConfigurationAlpha({
 					schema: schemaV2,
 					stagedUpgradePolicy: policy,
-					schemaIdentity: identifySchemaWithHashAlpha({ expectedHash: configuredHash }),
+					schemaIdentity: identifySchemaWithHash({ expectedHash: configuredHash }),
 				}),
 			);
 			viewV2.upgradeSchema();
@@ -387,7 +387,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const original = tree.viewWith(
 				new TreeViewConfigurationAlpha({
 					schema: [schema.number, schema.string],
-					schemaIdentity: identifySchemaWithHashAlpha({ schemaVersion: 1 }),
+					schemaIdentity: identifySchemaWithHash({ schemaVersion: 1 }),
 				}),
 			);
 			original.initialize("retained string");
@@ -397,7 +397,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const view = tree.viewWith(
 				new TreeViewConfigurationAlpha({
 					schema: stagedSchema,
-					schemaIdentity: identifySchemaWithHashAlpha({
+					schemaIdentity: identifySchemaWithHash({
 						expectedHash: computeSchemaHash(schema.number),
 						schemaVersion: 2,
 					}),

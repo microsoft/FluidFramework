@@ -13,23 +13,23 @@ The application controls version granularity, but the versions must not decrease
 **Experimental preview: The experimental stored-schema format is not suitable for production applications.**
 Persisting these versions currently requires an experimental format.
 The configuration below explicitly overrides normal format selection and can therefore break collaboration with client versions the application supports.
-The experimental format will not be supported long term, so documents written with it are not guaranteed to remain readable by future Fluid Framework versions.
+The experimental format will not necessarily be supported long-term, so documents written with it are not guaranteed to remain readable by future Fluid Framework versions.
 For preview testing, every client that loads or collaborates on the document must use the same Fluid Framework version.
 This constraint does not make the format suitable for production use.
 
 #### Single application-wide version
 
-An application that only needs one version can specify a non-negative safe integer in the `schemaVersion` option of [`identifySchemaAlpha`](https://fluidframework.com/docs/api/fluid-framework/identifyschemaalpha-function):
+An application that only needs one version can specify a non-negative safe integer in the `schemaVersion` option of [`identifySchema`](https://fluidframework.com/docs/api/fluid-framework/identifyschema-function):
 
 ```typescript
-const identity = identifySchemaAlpha({
+const identity = identifySchema({
 	schemaVersion: 1,
 });
 ```
 
 The returned identity configures versioning through the [`schemaIdentity`](https://fluidframework.com/docs/api/fluid-framework/treeviewconfigurationalpha-class#schemaidentity-property) property of [`TreeViewConfigurationAlpha`](https://fluidframework.com/docs/api/fluid-framework/treeviewconfigurationalpha-class).
 Persisting the version during document initialization or upgrade also requires [`configuredSharedTreeAlpha`](https://fluidframework.com/docs/api/fluid-framework/configuredsharedtreealpha-function) to use the experimental stored-schema format.
-This configuration requires `allowPossiblyIncompatibleWriteVersionOverrides` to be `true` and `writeVersionOverrides` to include `["Schema", "schemaVersion"]`, as shown in the next example.
+This configuration requires [`allowPossiblyIncompatibleWriteVersionOverrides`](https://fluidframework.com/docs/api/fluid-framework/codecwriteoptions-interface#allowpossiblyincompatiblewriteversionoverrides-propertysignature) to be `true` and [`writeVersionOverrides`](https://fluidframework.com/docs/api/fluid-framework/codecwriteoptions-interface#writeversionoverrides-propertysignature) to include `["Schema", "schemaVersion"]`, as shown in the next example.
 
 #### Independent versions for parts of the schema
 
@@ -44,7 +44,7 @@ These static properties are an application convention: SharedTree reads the map 
 ```typescript
 import {
 	configuredSharedTreeAlpha,
-	identifySchemaAlpha,
+	identifySchema,
 	SchemaFactory,
 	TreeViewConfigurationAlpha,
 } from "fluid-framework/alpha";
@@ -76,7 +76,7 @@ const SharedTree = configuredSharedTreeAlpha({
 
 const config = new TreeViewConfigurationAlpha({
 	schema: AppSchema,
-	schemaIdentity: identifySchemaAlpha({
+	schemaIdentity: identifySchema({
 		schemaVersion: {
 			[Note.identifier]: Note.version,
 			[Comment.identifier]: Comment.version,
@@ -99,21 +99,23 @@ Even then, the new schema must still accept all content allowed by the stored sc
 Adding a version map for the first time does not bypass the additive upgrade rules.
 
 The single-number shorthand uses the identifier `"schemaVersion"` and follows the same upgrade rules as other identifiers.
-This identifier is not reserved.
+This identifier is not reserved: an application can use `"schemaVersion"` explicitly in a version record, and that entry refers to the same version as the single-number shorthand.
+Switching from `schemaVersion: 3` to `schemaVersion: { schemaVersion: 3 }` therefore preserves the existing version rather than creating a new identifier.
 If the application later adds feature versions, this entry must remain alongside the new identifiers rather than being replaced.
 Its value can stay unchanged while only the feature versions increase.
 
 #### Optional schema hashing
 
-[`identifySchemaAlpha`](https://fluidframework.com/docs/api/fluid-framework/identifyschemaalpha-function) provides versions without hashing.
+[`identifySchema`](https://fluidframework.com/docs/api/fluid-framework/identifyschema-function) provides versions without hashing.
 It does not compute hashes or log hash telemetry, avoiding the bundle-size cost of schema hashing.
-[`identifySchemaWithHashAlpha`](https://fluidframework.com/docs/api/fluid-framework/identifyschemawithhashalpha-function) supports both hash telemetry and versions.
+[`identifySchemaWithHash`](https://fluidframework.com/docs/api/fluid-framework/identifyschemawithhash-function) supports both hash telemetry and versions.
+Both factories remain alpha APIs imported from `fluid-framework/alpha`, but their names no longer include the `Alpha` suffix.
 
 The hash-enabled factory also accepts `expectedHash` to check the configured schema during view construction.
 Versions are not included in the hash, so changing only the version map does not require a new `expectedHash`.
 
-Separating the version-only and hash-enabled factories is a breaking change for existing alpha API users who use [`identifySchemaAlpha`](https://fluidframework.com/docs/api/fluid-framework/identifyschemaalpha-function) for hash checks or telemetry.
-Those calls must switch to [`identifySchemaWithHashAlpha`](https://fluidframework.com/docs/api/fluid-framework/identifyschemawithhashalpha-function), keeping the same options.
+Separating the version-only and hash-enabled factories and removing the suffix is a breaking change for existing alpha API users of `identifySchemaAlpha`.
+Calls that enable hash checks or telemetry must switch to [`identifySchemaWithHash`](https://fluidframework.com/docs/api/fluid-framework/identifyschemawithhash-function), keeping the same options.
 This includes calls with no options, which previously enabled hash telemetry.
 
 ```typescript
@@ -121,7 +123,7 @@ This includes calls with no options, which previously enabled hash telemetry.
 const identity = identifySchemaAlpha({ expectedHash });
 
 // After
-const identity = identifySchemaWithHashAlpha({ expectedHash });
+const identity = identifySchemaWithHash({ expectedHash });
 ```
 
 `IdentifySchemaOptions` types reusable options objects for the version-only factory, while `IdentifySchemaWithHashOptions` does the same for the hash-enabled factory.

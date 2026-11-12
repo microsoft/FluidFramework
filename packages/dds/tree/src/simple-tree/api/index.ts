@@ -15,11 +15,11 @@ export {
 } from "./configuration.js";
 export {
 	computeSchemaHash,
-	identifySchemaWithHashAlpha,
+	identifySchemaWithHash,
 	type IdentifySchemaWithHashOptions,
 } from "./schemaHash.js";
 export {
-	identifySchemaAlpha,
+	identifySchema,
 	type IdentifySchemaOptions,
 	type SchemaIdentity,
 	SchemaIdentityInternal,

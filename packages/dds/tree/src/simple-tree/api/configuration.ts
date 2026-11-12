@@ -186,8 +186,8 @@ export interface ITreeViewConfigurationAlpha<
 	 * Specifies the schema identity for runtime hashing and application-defined versions.
 	 *
 	 * @remarks
-	 * {@link identifySchemaAlpha} provides application-defined versions only,
-	 * while {@link identifySchemaWithHashAlpha} also enables hash checks and hash telemetry.
+	 * {@link identifySchema} provides application-defined versions only,
+	 * while {@link identifySchemaWithHash} also enables hash checks and hash telemetry.
 	 * {@link SchemaIdentity.schemaVersion} describes application version requirements.
 	 */
 	readonly schemaIdentity?: SchemaIdentity;

@@ -41,8 +41,8 @@ import {
 	encodeSchemaCompatibilitySnapshot,
 	FieldKind,
 	NodeKind,
-	identifySchemaAlpha,
-	identifySchemaWithHashAlpha,
+	identifySchema,
+	identifySchemaWithHash,
 	getSchemaUpgradeCandidate,
 	toInitialSchema,
 } from "../../../simple-tree/index.js";
@@ -143,7 +143,7 @@ describe("snapshotCompatibilityChecker", () => {
 		const testLibraryId = "test";
 		const view = new TreeViewConfigurationAlpha({
 			schema: SchemaFactory.number,
-			schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: 2 } }),
+			schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: 2 } }),
 		});
 		const snapshot = exportCompatibilitySchemaSnapshot(view);
 		assert.deepEqual(snapshot, {
@@ -177,11 +177,11 @@ describe("snapshotCompatibilityChecker", () => {
 		const schemaVersion = { ["test"]: 1 };
 		const withoutCheck = exportCompatibilitySchemaSnapshot({
 			schema: SchemaFactory.number,
-			schemaIdentity: identifySchemaAlpha({ schemaVersion }),
+			schemaIdentity: identifySchema({ schemaVersion }),
 		});
 		const withCheck = exportCompatibilitySchemaSnapshot({
 			schema: SchemaFactory.number,
-			schemaIdentity: identifySchemaWithHashAlpha({
+			schemaIdentity: identifySchemaWithHash({
 				expectedHash: "runtime-only",
 				schemaVersion,
 			}),
@@ -198,7 +198,7 @@ describe("snapshotCompatibilityChecker", () => {
 	it("round-trips empty application-version maps", () => {
 		const snapshot = exportCompatibilitySchemaSnapshot({
 			schema: SchemaFactory.number,
-			schemaIdentity: identifySchemaAlpha({ schemaVersion: {} }),
+			schemaIdentity: identifySchema({ schemaVersion: {} }),
 		});
 		assert.equal((snapshot as { version: number }).version, 2);
 		assert.deepEqual(Object.keys(snapshot as object).sort(), [
@@ -217,7 +217,7 @@ describe("snapshotCompatibilityChecker", () => {
 	it("decodes unversioned v2 snapshots and emits unchanged v1 output", () => {
 		const snapshot = exportCompatibilitySchemaSnapshot({
 			schema: SchemaFactory.number,
-			schemaIdentity: identifySchemaAlpha({ schemaVersion: {} }),
+			schemaIdentity: identifySchema({ schemaVersion: {} }),
 		}) as { version: number; schemaVersion?: [string, number][] };
 		delete snapshot.schemaVersion;
 		const unversioned = exportCompatibilitySchemaSnapshot({ schema: SchemaFactory.number });
@@ -232,7 +232,7 @@ describe("snapshotCompatibilityChecker", () => {
 		const testLibraryId = "test";
 		const snapshot = exportCompatibilitySchemaSnapshot({
 			schema: SchemaFactory.number,
-			schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: 1 } }),
+			schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: 1 } }),
 		}) as { schemaVersion: [string, number][] };
 		snapshot.schemaVersion[0][1] = -1;
 
@@ -256,7 +256,7 @@ describe("snapshotCompatibilityChecker", () => {
 		for (const schemaVersion of versionEntries) {
 			const snapshot = exportCompatibilitySchemaSnapshot({
 				schema: SchemaFactory.number,
-				schemaIdentity: identifySchemaAlpha({ schemaVersion: {} }),
+				schemaIdentity: identifySchema({ schemaVersion: {} }),
 			}) as { schemaVersion: [string, number][] };
 			snapshot.schemaVersion = schemaVersion;
 			for (const validator of [undefined, FormatValidatorBasic]) {
@@ -271,7 +271,7 @@ describe("snapshotCompatibilityChecker", () => {
 	it("rejects unsafe schema versions", () => {
 		const snapshot = exportCompatibilitySchemaSnapshot({
 			schema: SchemaFactory.number,
-			schemaIdentity: identifySchemaAlpha({ schemaVersion: { ["test"]: 1 } }),
+			schemaIdentity: identifySchema({ schemaVersion: { ["test"]: 1 } }),
 		}) as { schemaVersion: [string, number][] };
 		snapshot.schemaVersion[0][1] = Number.MAX_SAFE_INTEGER + 1;
 
@@ -286,7 +286,7 @@ describe("snapshotCompatibilityChecker", () => {
 			() =>
 				exportCompatibilitySchemaSnapshot({
 					schema: SchemaFactory.number,
-					schemaIdentity: identifySchemaAlpha({
+					schemaIdentity: identifySchema({
 						schemaVersion: { ["test"]: -1 },
 					}),
 				}),

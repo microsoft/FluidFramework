@@ -431,8 +431,8 @@ export type { TreeDataStoreOptions } from "./treeDataStore.js";
 
 export { Sandboxing } from "./sandboxing/index.js";
 export {
-	identifySchemaAlpha,
-	identifySchemaWithHashAlpha,
+	identifySchema,
+	identifySchemaWithHash,
 	type IdentifySchemaOptions,
 	type IdentifySchemaWithHashOptions,
 	type SchemaIdentity,

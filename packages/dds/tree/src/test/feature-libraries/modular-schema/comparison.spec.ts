@@ -199,6 +199,7 @@ describe("Schema Comparison", () => {
 			contentOnly: boolean;
 		}[] = [
 			{
+				// Without versioning, only the existing monotonic upgrade rules provide ordering.
 				name: "absent versions",
 				original: undefined,
 				updated: undefined,
@@ -207,6 +208,7 @@ describe("Schema Comparison", () => {
 				contentOnly: false,
 			},
 			{
+				// Opting into versioning cannot unlock non-monotonic changes on the same upgrade.
 				name: "added version map",
 				original: undefined,
 				updated: { library: 1 },
@@ -215,6 +217,7 @@ describe("Schema Comparison", () => {
 				contentOnly: false,
 			},
 			{
+				// Empty maps opt into versioning but provide no increase to order inverse changes.
 				name: "empty version maps",
 				original: {},
 				updated: {},
@@ -223,6 +226,7 @@ describe("Schema Comparison", () => {
 				contentOnly: false,
 			},
 			{
+				// Unchanged values still require monotonic content upgrades.
 				name: "equal versions",
 				original: { library: 1 },
 				updated: { library: 1 },
@@ -231,6 +235,7 @@ describe("Schema Comparison", () => {
 				contentOnly: false,
 			},
 			{
+				// Increasing an existing version supplies ordering for content-preserving inverse changes.
 				name: "increased version",
 				original: { library: 1 },
 				updated: { library: 2 },
@@ -239,6 +244,7 @@ describe("Schema Comparison", () => {
 				contentOnly: true,
 			},
 			{
+				// Adding an identifier to an existing map also supplies an upgrade ordering.
 				name: "added library identifier",
 				original: { library: 1 },
 				updated: { library: 1, other: 1 },
@@ -247,6 +253,7 @@ describe("Schema Comparison", () => {
 				contentOnly: true,
 			},
 			{
+				// A decrease blocks even otherwise monotonic content upgrades.
 				name: "decreased version",
 				original: { library: 2 },
 				updated: { library: 1 },
@@ -255,6 +262,7 @@ describe("Schema Comparison", () => {
 				contentOnly: false,
 			},
 			{
+				// Increasing a retained version cannot compensate for removing another identifier.
 				name: "removed library identifier despite another increase",
 				original: { library: 1, other: 1 },
 				updated: { library: 2 },
@@ -263,6 +271,7 @@ describe("Schema Comparison", () => {
 				contentOnly: false,
 			},
 			{
+				// Changes in opposite directions make the maps incomparable.
 				name: "decreased version despite another increase",
 				original: { library: 1, other: 2 },
 				updated: { library: 2, other: 1 },
@@ -271,6 +280,7 @@ describe("Schema Comparison", () => {
 				contentOnly: false,
 			},
 			{
+				// Removing versioning would let unversioned clients undo previously ordered changes.
 				name: "removed version map",
 				original: { library: 1 },
 				updated: undefined,
@@ -279,6 +289,7 @@ describe("Schema Comparison", () => {
 				contentOnly: false,
 			},
 			{
+				// Even an empty first map is an increase, but it cannot bypass monotonic rules.
 				name: "added empty version map",
 				original: undefined,
 				updated: {},
@@ -287,6 +298,7 @@ describe("Schema Comparison", () => {
 				contentOnly: false,
 			},
 			{
+				// An empty map remains versioned state and cannot be removed by an upgrade.
 				name: "removed empty version map",
 				original: {},
 				updated: undefined,
@@ -295,6 +307,7 @@ describe("Schema Comparison", () => {
 				contentOnly: false,
 			},
 			{
+				// Identifier presence supplies ordering even when its first value is zero.
 				name: "added zero version",
 				original: {},
 				updated: { library: 0 },
@@ -303,6 +316,7 @@ describe("Schema Comparison", () => {
 				contentOnly: true,
 			},
 			{
+				// Every existing identifier must remain, even if all retained values are unchanged.
 				name: "removed library identifier",
 				original: { library: 1, other: 1 },
 				updated: { library: 1 },
@@ -311,6 +325,7 @@ describe("Schema Comparison", () => {
 				contentOnly: false,
 			},
 			{
+				// A new identifier cannot compensate for decreasing an existing value.
 				name: "added identifier despite a decreased version",
 				original: { library: 2 },
 				updated: { library: 1, other: 0 },
@@ -319,6 +334,7 @@ describe("Schema Comparison", () => {
 				contentOnly: false,
 			},
 			{
+				// Replacing an identifier includes a removal, not just an addition.
 				name: "replaced library identifier",
 				original: { library: 1 },
 				updated: { other: 1 },

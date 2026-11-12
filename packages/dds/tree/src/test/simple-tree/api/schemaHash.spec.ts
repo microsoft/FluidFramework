@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import {
 	computeSchemaHash,
-	identifySchemaWithHashAlpha,
+	identifySchemaWithHash,
 	type IdentifySchemaWithHashOptions,
 	SchemaFactoryAlpha,
 	SchemaIdentityInternal,
@@ -27,7 +27,7 @@ describe("schema hash functions", () => {
 			{ expectedHash, schemaVersion: { test: 2 } },
 		];
 		for (const option of options) {
-			const identity = SchemaIdentityInternal.extract(identifySchemaWithHashAlpha(option));
+			const identity = SchemaIdentityInternal.extract(identifySchemaWithHash(option));
 			assert.equal(identity.expectedHash, option.expectedHash);
 			assert.equal(
 				identity.schemaHasher?.(toInitialSchema(sf.string, undefined, identity.schemaVersion)),

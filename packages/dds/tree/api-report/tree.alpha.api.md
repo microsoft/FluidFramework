@@ -691,7 +691,7 @@ export interface ICodecOptions {
 export type IdentifierIndex = TreeIndex<string, TreeNode>;
 
 // @alpha
-export function identifySchemaAlpha(options?: IdentifySchemaOptions): SchemaIdentity;
+export function identifySchema(options?: IdentifySchemaOptions): SchemaIdentity;
 
 // @alpha @input
 export interface IdentifySchemaOptions {
@@ -699,7 +699,7 @@ export interface IdentifySchemaOptions {
 }
 
 // @alpha
-export function identifySchemaWithHashAlpha(options?: IdentifySchemaWithHashOptions): SchemaIdentity;
+export function identifySchemaWithHash(options?: IdentifySchemaWithHashOptions): SchemaIdentity;
 
 // @alpha @input
 export interface IdentifySchemaWithHashOptions extends IdentifySchemaOptions {

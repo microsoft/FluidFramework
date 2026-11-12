@@ -16,8 +16,8 @@ import type { SchemaVersionMap, TreeStoredSchema } from "../../core/index.js";
  *
  * @remarks
  * An identity assigned to {@link ITreeViewConfigurationAlpha.schemaIdentity} configures versioning or hashing for a view.
- * {@link identifySchemaAlpha} creates identities with application-defined versions only,
- * while {@link identifySchemaWithHashAlpha} also enables hash checks and hash telemetry.
+ * {@link identifySchema} creates identities with application-defined versions only,
+ * while {@link identifySchemaWithHash} also enables hash checks and hash telemetry.
  * Only the application-defined versions are persisted; runtime hashes are not stored in the document.
  *
  * @sealed @alpha
@@ -27,7 +27,7 @@ export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.Sch
 	 * Contains the application-defined versions for the view schema.
 	 *
 	 * @remarks
-	 * {@link identifySchemaAlpha} and {@link identifySchemaWithHashAlpha} accept these versions
+	 * {@link identifySchema} and {@link identifySchemaWithHash} accept these versions
 	 * as a record of string library identifiers to non-negative safe integers,
 	 * or as a single number assigned to the identifier `"schemaVersion"`.
 	 * The configured versions are exposed as a read-only map.
@@ -48,16 +48,19 @@ export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.Sch
 	 * because the experimental format has no compatibility guarantee across releases.
 	 *
 	 * @example
-	 * Required string fields and identifier fields accept the same stored values, but changing between them
-	 * needs version ordering to prevent clients from repeatedly reversing the change.
-	 * The following configurations increase the version when changing from a required string to an identifier,
-	 * so the older configuration cannot reverse the upgrade by decreasing the stored version.
+	 * An application changes a required string field to an identifier field.
+	 * Both field kinds accept the same stored string values, so either direction preserves existing content.
+	 * Version ordering is needed to prevent older clients from repeatedly reversing the change.
+	 * The new configuration therefore increases the version, preventing the old configuration from restoring
+	 * the required string field by decreasing the stored version.
 	 *
-	 * The example first configures {@link configuredSharedTreeAlpha} to write the experimental format for this preview.
+	 * The application first configures {@link configuredSharedTreeAlpha} to write the experimental format for this preview.
 	 *
 	 * ```typescript
 	 * const SharedTree = configuredSharedTreeAlpha({
+	 * 	// Allow the preview format despite possible incompatibility with supported client versions.
 	 * 	allowPossiblyIncompatibleWriteVersionOverrides: true,
+	 * 	// Persist application-defined versions using the experimental schema format.
 	 * 	writeVersionOverrides: new Map([["Schema", "schemaVersion"]]),
 	 * });
 	 * ```
@@ -65,15 +68,15 @@ export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.Sch
 	 * Both view configurations then use the same stable library identifier, with an increased version for the new schema.
 	 *
 	 * ```typescript
-	 * const schemaFactory = new SchemaFactory("com.example");
 	 * const libraryId = "com.example";
+	 * const schemaFactory = new SchemaFactory(libraryId);
 	 * const oldConfig = new TreeViewConfigurationAlpha({
 	 * 	schema: schemaFactory.string,
-	 * 	schemaIdentity: identifySchemaAlpha({ schemaVersion: { [libraryId]: 0 } }),
+	 * 	schemaIdentity: identifySchema({ schemaVersion: { [libraryId]: 0 } }),
 	 * });
 	 * const newConfig = new TreeViewConfigurationAlpha({
 	 * 	schema: schemaFactory.identifier,
-	 * 	schemaIdentity: identifySchemaAlpha({ schemaVersion: { [libraryId]: 1 } }),
+	 * 	schemaIdentity: identifySchema({ schemaVersion: { [libraryId]: 1 } }),
 	 * });
 	 * ```
 	 */
@@ -81,7 +84,7 @@ export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.Sch
 }
 
 /**
- * Configures application-defined versions for {@link identifySchemaAlpha}.
+ * Configures application-defined versions for {@link identifySchema}.
  *
  * @alpha @input
  */
@@ -108,13 +111,13 @@ export interface IdentifySchemaOptions {
  * {@link SchemaIdentity.schemaVersion} describes version requirements and upgrade rules.
  *
  * This factory does not compute hashes or log hash telemetry, avoiding the bundle-size cost of schema hashing.
- * {@link identifySchemaWithHashAlpha} also supports hashing.
+ * {@link identifySchemaWithHash} also supports hashing.
  *
- * @see {@link identifySchemaWithHashAlpha} to enable hash checks and hash telemetry.
+ * @see {@link identifySchemaWithHash} to enable hash checks and hash telemetry.
  *
  * @alpha
  */
-export function identifySchemaAlpha(options: IdentifySchemaOptions = {}): SchemaIdentity {
+export function identifySchema(options: IdentifySchemaOptions = {}): SchemaIdentity {
 	return new SchemaIdentityInternal(undefined, undefined, options.schemaVersion);
 }
 
@@ -150,7 +153,7 @@ export class SchemaIdentityInternal
 	public static extract(identity: SchemaIdentity): SchemaIdentityInternal {
 		if (!(identity instanceof SchemaIdentityInternal)) {
 			throw new UsageError(
-				"schemaIdentity must be created with identifySchemaAlpha or identifySchemaWithHashAlpha.",
+				"schemaIdentity must be created with identifySchema or identifySchemaWithHash.",
 			);
 		}
 		return identity;

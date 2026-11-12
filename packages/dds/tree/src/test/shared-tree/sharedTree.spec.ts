@@ -84,7 +84,7 @@ import { stringKey } from "../../shared-tree-core/editManagerSummarizer.js";
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 import {
 	SchemaFactory,
-	identifySchemaAlpha,
+	identifySchema,
 	type TreeFieldFromImplicitField,
 	type TreeViewAlpha,
 	TreeViewConfiguration,
@@ -427,7 +427,7 @@ describe("SharedTree", () => {
 		const view = tree.viewWith(
 			new TreeViewConfigurationAlpha({
 				schema: numberSchema,
-				schemaIdentity: identifySchemaAlpha({ schemaVersion: { [libraryId]: 1 } }),
+				schemaIdentity: identifySchema({ schemaVersion: { [libraryId]: 1 } }),
 			}),
 		);
 

@@ -23,7 +23,7 @@ import {
 import {
 	type TreeNodeSchema,
 	type IdentifySchemaOptions,
-	identifySchemaAlpha,
+	identifySchema,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 } from "../../../simple-tree/index.js";
@@ -429,7 +429,7 @@ describe("simple-tree configuration", () => {
 			() =>
 				new TreeViewConfigurationAlpha({
 					schema: [],
-					schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: -1 } }),
+					schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: -1 } }),
 				}),
 			/non-negative safe integer/,
 		);
@@ -437,7 +437,7 @@ describe("simple-tree configuration", () => {
 			() =>
 				new TreeViewConfigurationAlpha({
 					schema: [],
-					schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: 1.5 } }),
+					schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: 1.5 } }),
 				}),
 			/non-negative safe integer/,
 		);
@@ -446,7 +446,7 @@ describe("simple-tree configuration", () => {
 	it("accepts zero as a schema version", () => {
 		const config = new TreeViewConfigurationAlpha({
 			schema: [],
-			schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: 0 } }),
+			schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: 0 } }),
 		});
 
 		assert.equal(config.schemaVersion?.get(testLibraryId), 0);
@@ -455,7 +455,7 @@ describe("simple-tree configuration", () => {
 
 	it("normalizes a single version using the schemaVersion identifier", () => {
 		const options: IdentifySchemaOptions = { schemaVersion: 1 };
-		const identity = identifySchemaAlpha(options);
+		const identity = identifySchema(options);
 		const config = new TreeViewConfigurationAlpha({ schema: [], schemaIdentity: identity });
 		assert.deepEqual(identity.schemaVersion, new Map([["schemaVersion", 1]]));
 		assert.equal(config.schemaVersion, identity.schemaVersion);
@@ -463,7 +463,7 @@ describe("simple-tree configuration", () => {
 
 	it("copies application versions into a map on the frozen schema identity", () => {
 		const versions = { [testLibraryId]: 1 };
-		const identity = identifySchemaAlpha({ schemaVersion: versions });
+		const identity = identifySchema({ schemaVersion: versions });
 		versions[testLibraryId] = 2;
 
 		assert.deepEqual(identity.schemaVersion, new Map([["test", 1]]));
@@ -474,19 +474,19 @@ describe("simple-tree configuration", () => {
 	});
 
 	it("normalizes empty records and object prototype names into map entries", () => {
-		const empty = identifySchemaAlpha({ schemaVersion: {} });
+		const empty = identifySchema({ schemaVersion: {} });
 		assert.deepEqual(empty.schemaVersion, new Map());
 		const versions = Object.fromEntries([
 			["__proto__", 0],
 			["constructor", 1],
 			["toString", 2],
 		]);
-		const identity = identifySchemaAlpha({ schemaVersion: versions });
+		const identity = identifySchema({ schemaVersion: versions });
 		assert.deepEqual(identity.schemaVersion, new Map(Object.entries(versions)));
 	});
 
 	it("preserves identities without application versions", () => {
-		const identity = identifySchemaAlpha();
+		const identity = identifySchema();
 		const config = new TreeViewConfigurationAlpha({ schema: [], schemaIdentity: identity });
 		assert.equal(identity.schemaVersion, undefined);
 		assert.equal(config.schemaVersion, undefined);
@@ -498,7 +498,7 @@ describe("simple-tree configuration", () => {
 			() =>
 				new TreeViewConfigurationAlpha({
 					schema: [],
-					schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: version } }),
+					schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: version } }),
 				}),
 			/non-negative safe integer/,
 		);

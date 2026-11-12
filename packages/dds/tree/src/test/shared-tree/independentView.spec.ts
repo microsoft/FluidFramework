@@ -36,7 +36,7 @@ import {
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 	asTreeViewAlpha,
-	identifySchemaAlpha,
+	identifySchema,
 	exportCompatibilitySchemaSnapshot,
 	importCompatibilitySchemaSnapshot,
 } from "../../simple-tree/index.js";
@@ -114,7 +114,7 @@ describe("independentView", () => {
 			const tree = createIndependentTreeAlpha({ idCompressor: testIdCompressor });
 			const config = new TreeViewConfigurationAlpha({
 				schema: SchemaFactory.number,
-				schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: 1 } }),
+				schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: 1 } }),
 			});
 			const view = asTreeViewAlpha(tree.viewWith(config));
 
@@ -136,7 +136,7 @@ describe("independentView", () => {
 				const tree = createIndependentTreeAlpha({ idCompressor: testIdCompressor });
 				const config = new TreeViewConfigurationAlpha({
 					schema: SchemaFactory.number,
-					schemaIdentity: identifySchemaAlpha({
+					schemaIdentity: identifySchema({
 						schemaVersion: versionState === "empty" ? {} : undefined,
 					}),
 				});
@@ -154,7 +154,7 @@ describe("independentView", () => {
 			const config = (version: number) =>
 				new TreeViewConfigurationAlpha({
 					schema: SchemaFactory.number,
-					schemaIdentity: identifySchemaAlpha({ schemaVersion: { test: version } }),
+					schemaIdentity: identifySchema({ schemaVersion: { test: version } }),
 				});
 			const view = asTreeViewAlpha(tree.viewWith(config(1)));
 			view.initialize(1);
@@ -185,7 +185,7 @@ describe("independentView", () => {
 			const testLibraryId = "test";
 			const tree = createIndependentTreeAlpha({ idCompressor: testIdCompressor });
 			for (const version of [1, 2]) {
-				const identity = identifySchemaAlpha({
+				const identity = identifySchema({
 					schemaVersion: { [testLibraryId]: version },
 				});
 				const view = asTreeViewAlpha(
@@ -221,7 +221,7 @@ describe("independentView", () => {
 		it("can initialize with application versions restored from a compatibility snapshot", () => {
 			const original = new TreeViewConfigurationAlpha({
 				schema: SchemaFactory.number,
-				schemaIdentity: identifySchemaAlpha({
+				schemaIdentity: identifySchema({
 					schemaVersion: { ["test"]: 1 },
 				}),
 			});
@@ -244,7 +244,7 @@ describe("independentView", () => {
 			const originalView = tree.viewWith(
 				new TreeViewConfigurationAlpha({
 					schema: factory.string,
-					schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: 1 } }),
+					schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: 1 } }),
 				}),
 			);
 			originalView.initialize("id");
@@ -254,7 +254,7 @@ describe("independentView", () => {
 				tree.viewWith(
 					new TreeViewConfigurationAlpha({
 						schema: factory.identifier,
-						schemaIdentity: identifySchemaAlpha({ schemaVersion: { [testLibraryId]: 2 } }),
+						schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: 2 } }),
 					}),
 				),
 			);
@@ -278,7 +278,7 @@ describe("independentView", () => {
 				const initial = tree.viewWith(
 					new TreeViewConfigurationAlpha({
 						schema: a,
-						schemaIdentity: identifySchemaAlpha({ schemaVersion }),
+						schemaIdentity: identifySchema({ schemaVersion }),
 					}),
 				);
 				initial.initialize(1);
@@ -288,7 +288,7 @@ describe("independentView", () => {
 					const view = tree.viewWith(
 						new TreeViewConfigurationAlpha({
 							schema,
-							schemaIdentity: identifySchemaAlpha({ schemaVersion }),
+							schemaIdentity: identifySchema({ schemaVersion }),
 						}),
 					);
 					let changes = 0;
@@ -303,7 +303,7 @@ describe("independentView", () => {
 				const advanced = tree.viewWith(
 					new TreeViewConfigurationAlpha({
 						schema: b,
-						schemaIdentity: identifySchemaAlpha({
+						schemaIdentity: identifySchema({
 							schemaVersion: { ["test"]: 2 },
 						}),
 					}),
@@ -318,7 +318,7 @@ describe("independentView", () => {
 				const older = tree.viewWith(
 					new TreeViewConfigurationAlpha({
 						schema: a,
-						schemaIdentity: identifySchemaAlpha({ schemaVersion }),
+						schemaIdentity: identifySchema({ schemaVersion }),
 					}),
 				);
 				assert.equal(older.compatibility.canUpgrade, false);
@@ -338,7 +338,7 @@ describe("independentView", () => {
 			const initial = tree.viewWith(
 				new TreeViewConfigurationAlpha({
 					schema: a,
-					schemaIdentity: identifySchemaAlpha({ schemaVersion }),
+					schemaIdentity: identifySchema({ schemaVersion }),
 				}),
 			);
 			initial.initialize(1);
@@ -346,7 +346,7 @@ describe("independentView", () => {
 			const upgraded = tree.viewWith(
 				new TreeViewConfigurationAlpha({
 					schema: b,
-					schemaIdentity: identifySchemaAlpha({ schemaVersion }),
+					schemaIdentity: identifySchema({ schemaVersion }),
 				}),
 			);
 			assert.equal(upgraded.compatibility.canUpgrade, true);

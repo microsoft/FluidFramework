@@ -55,6 +55,7 @@ export type SchemaFormatVersion = Values<typeof SchemaFormatVersion>;
  * Because these entries are persisted as part of the document's stored schema,
  * all clients must use the same identifier for a library and keep it stable across releases.
  * A globally unique name, such as a package name or a domain-based name, avoids conflicts with other libraries.
+ * A node schema's `identifier`, such as `Note.identifier`, can be used directly as a version-map key.
  *
  * {@link SchemaIdentity.schemaVersion} describes how these versions control schema upgrades.
  *
@@ -446,6 +447,12 @@ export interface TreeStoredSchema extends StoredSchemaCollection {
 
 	/**
 	 * Contains the application-defined versions for this schema.
+	 *
+	 * @remarks
+	 * An absent map means no application-defined versions were supplied.
+	 * An empty map explicitly records versioning with no identifiers.
+	 * These states are distinct: adding or removing even an empty map changes version ordering,
+	 * as described by {@link compareSchemaVersions}.
 	 */
 	readonly schemaVersion?: ReadonlyMap<string, number>;
 }
