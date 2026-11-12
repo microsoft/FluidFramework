@@ -23,6 +23,7 @@
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run prettier:fix",
+		"install-no-frozen": "node ../../scripts/install-no-frozen.cjs",
 		"lint": "fluid-build --task lint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",

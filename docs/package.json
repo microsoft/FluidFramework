@@ -12,6 +12,7 @@
 	"author": "Microsoft and contributors",
 	"scripts": {
 		"format": "npm run prettier:fix",
+		"install-no-frozen": "node ../scripts/install-no-frozen.cjs",
 		"preinstall": "node ../scripts/only-pnpm.cjs",
 		"lint": "concurrently npm:prettier npm:markdownlint",
 		"lint:fix": "npm run prettier:fix && npm run markdownlint:fix",

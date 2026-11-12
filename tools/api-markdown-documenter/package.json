@@ -41,6 +41,7 @@
 		"format": "npm run format:biome",
 		"format-and-build": "npm run format && npm run build",
 		"format:biome": "biome check . --write",
+		"install-no-frozen": "node ../../scripts/install-no-frozen.cjs",
 		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
 		"rebuild": "npm run clean && npm run build",
