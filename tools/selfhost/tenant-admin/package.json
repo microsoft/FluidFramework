@@ -18,8 +18,8 @@
 	"scripts": {
 		"build": "node scripts/build.js",
 		"clean": "rimraf --glob nyc",
-		"install-no-frozen": "node ../../../scripts/install-no-frozen.cjs",
 		"preinstall": "node ../../../scripts/only-pnpm.cjs",
+		"install-no-frozen": "node ../../../scripts/install-no-frozen.cjs",
 		"test": "node --test \"test/*.test.js\""
 	},
 	"dependencies": {
