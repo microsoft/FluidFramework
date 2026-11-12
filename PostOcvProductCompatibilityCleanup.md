@@ -194,7 +194,7 @@ No live real-service validation performed for this category.
 
 ### 5. Audience API polyfills
 
-**Status:** Pending decision. Strong candidate.
+**Status:** Cleanup approved and complete.
 
 - `packages/runtime/container-runtime/src/containerRuntime.ts`:
   synthesizes `audience.getSelf` and emits `selfChanged` if `getSelf` is missing.
@@ -205,7 +205,20 @@ No live real-service validation performed for this category.
 **Potential change:** Remove the pre-RC3 polyfill after verifying supported audience contracts.
 Validate connection, reconnection, client-ID changes, and event ordering.
 
-**Decision / changes / validation:** Not yet recorded.
+**Contract audit / decision:** `IAudience` is public and requires `getSelf()`; `IAudienceEvents`
+already declares `selfChanged`. The legacy/beta `IContainerContext.audience` supplies this interface.
+Installed `2.0.9` Audience implements `getSelf` and emits `selfChanged` from `setCurrentClientId`.
+Removing the branch for a missing required method does not alter conforming public or legacy/beta APIs.
+No deferred-list entry needed. Returning undefined from an implemented `getSelf()` remains valid.
+
+**Changes:** Remove runtime mutation of Audience and its synthetic connected-event listener; remove
+the two imports used only by the polyfill. Keep loader event generation, member lookup, reconnection
+behavior, and all getSelf result checks. No interface or API report changes.
+
+**Validation:** Runtime build passed, including ESM/CJS, type tests, lint/format, dependency checks,
+API reports, and docs model. Runtime and runtime-extension suites: 223 passing. E2E build passed.
+Local audience tests: OCV 8 passing; N-1/cross-client 56 passing, 8 pending; current 4 passing.
+No live real-service validation performed for this category.
 
 ### 6. Ancient event-signature guards
 
@@ -318,7 +331,7 @@ These are not cleanup targets merely because OCV advanced:
 
 Category 1 cleanup is approved and complete. Category 2 is deferred to preserve deprecated legacy/beta
 API behavior. Category 3 cleanup is approved and complete. Category 4 runtime cleanup is approved and complete,
-with loader-side routing deferred. Categories 5–11 remain pending decision.
+with loader-side routing deferred. Category 5 cleanup is approved and complete. Categories 6–11 remain pending decision.
 Retained/deferred categories should include the reason and any follow-up evidence needed.
 
 ## Deferred list 1: reachable through already-deprecated legacy/beta APIs

@@ -15,9 +15,7 @@ import {
 } from "@fluid-internal/client-utils";
 import type {
 	IAudience,
-	ISelf,
 	ICriticalContainerError,
-	IAudienceEvents,
 } from "@fluidframework/container-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import type {
@@ -2274,31 +2272,6 @@ export class ContainerRuntime
 		});
 
 		this._audience = audience;
-		if (audience.getSelf === undefined) {
-			// back-compat, added in 2.0 RC3.
-			// Purpose: deal with cases when we run against old loader that does not have newly added capabilities
-			audience.getSelf = () => {
-				const clientId = this._getClientId();
-				return clientId === undefined
-					? undefined
-					: ({
-							clientId,
-							client: audience.getMember(clientId),
-						} satisfies ISelf);
-			};
-
-			let oldClientId = this.clientId;
-			this.on("connected", () => {
-				const clientId = this.clientId;
-				assert(clientId !== undefined, 0x975 /* can't be undefined */);
-				(audience as unknown as TypedEventEmitter<IAudienceEvents>).emit(
-					"selfChanged",
-					{ clientId: oldClientId },
-					{ clientId, client: audience.getMember(clientId) },
-				);
-				oldClientId = clientId;
-			});
-		}
 
 		this.signalAudience = signalAudience;
 
