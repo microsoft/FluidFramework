@@ -15,8 +15,13 @@ Each active document owns a dedicated PostgreSQL connection with a session advis
 All journal operations use that connection; there is no connection pool, reconnect, or transparent retry.
 Connection loss invalidates the opening.
 A competing connection cannot acquire the same document lock until PostgreSQL has settled the old connection's work.
-Appends insert one checked record in an autocommit transaction with `synchronous_commit=on`.
+Appends insert one checked record or a bounded group in an autocommit transaction with `synchronous_commit=on`.
 The document row's record count advances in the same SQL statement as the insert.
+All records and the count update roll back together if any insertion in the group fails.
+Typed parameter queries avoid preparing a new statement in a separate round trip for each journal operation.
+Paged replay fetches the requested record ordinals in one query and rejects missing records or length mismatches.
+The held connection lock fences writes without a preceding probe.
+Authoritative heads and new read pages still probe the connection; a local cached head does not establish connection health.
 Recovery checks that record ordinals form the complete prefix described by that count.
 Database roles must not override durability settings or mutate data outside this backend.
 

@@ -14,6 +14,8 @@ use sea_core::{
     storage::{ArchiveStream, Snapshot},
 };
 use std::{
+    cell::Cell,
+    collections::VecDeque,
     pin::Pin,
     sync::Arc,
     task::{Context, Poll},
@@ -52,6 +54,8 @@ struct Cursor<J: Journal> {
     initialized: bool,
     /// Terminal result has already been delivered.
     done: bool,
+    /// Bounded validated page; only delivery advances the external cursor.
+    buffered: VecDeque<Entry>,
 }
 
 /// Stream progress can observe locally committed writes without polling the reader.
@@ -66,6 +70,8 @@ struct Reader<J: Journal> {
     stop: Option<EventPosition>,
     /// Last delivered progress, excluding merely fetched bytes.
     progress: MonitoredStreamProgress<EventPosition>,
+    /// Retains the highest observation when an in-flight provider request holds the state lock.
+    latest_observed: Cell<Option<EventPosition>>,
 }
 
 impl<J: Journal> Unpin for Reader<J> {}
@@ -74,14 +80,15 @@ impl<J: Journal> Stream for Reader<J> {
     type Item = Result<MonitoredStreamItem<Entry, EventPosition>, Error>;
     fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         let this = self.get_mut();
-        let result = this.source.as_mut().poll_next(cx);
-        match &result {
+        let mut result = this.source.as_mut().poll_next(cx);
+        match &mut result {
             Poll::Ready(Some(Ok(MonitoredStreamItem::Item(entry)))) => {
                 this.progress.previous = Some(entry.position());
                 this.progress.latest_known = this.progress.latest_known.max(this.progress.previous);
                 this.progress.status = MonitoredStreamStatus::StreamingBacklog;
             }
             Poll::Ready(Some(Ok(MonitoredStreamItem::Progress(progress)))) => {
+                *progress = this.observe(progress.clone());
                 this.progress = progress.clone();
             }
             _ => {}
@@ -95,7 +102,17 @@ impl<J: Journal> MonitoredStream for Reader<J> {
     type Position = EventPosition;
     type Error = Error;
     fn progress(&self) -> MonitoredStreamProgress<EventPosition> {
-        let mut progress = self.progress.clone();
+        self.observe(self.progress.clone())
+    }
+}
+
+impl<J: Journal> Reader<J> {
+    /// Merges local observations without moving progress backward when the state lock is busy.
+    fn observe(
+        &self,
+        mut progress: MonitoredStreamProgress<EventPosition>,
+    ) -> MonitoredStreamProgress<EventPosition> {
+        progress.latest_known = progress.latest_known.max(self.latest_observed.get());
         if let Ok(state) = self.opening.state.try_lock() {
             let head = if self.snapshots {
                 state
@@ -113,9 +130,10 @@ impl<J: Journal> MonitoredStream for Reader<J> {
                     .map(|(p, _)| *p)
             };
             progress.latest_known = progress.latest_known.max(head);
-            if progress.previous < progress.latest_known {
-                progress.status = MonitoredStreamStatus::FallenBehind;
-            }
+        }
+        self.latest_observed.set(progress.latest_known);
+        if progress.previous < progress.latest_known {
+            progress.status = MonitoredStreamStatus::FallenBehind;
         }
         progress
     }
@@ -135,6 +153,7 @@ fn read<J: Journal>(
         stop,
         initialized: false,
         done: false,
+        buffered: VecDeque::new(),
     };
     let source = stream::unfold(cursor, |mut cursor| async move {
         if cursor.done {
@@ -161,6 +180,7 @@ fn read<J: Journal>(
             latest_known: after,
             status: MonitoredStreamStatus::StreamingBacklog,
         },
+        latest_observed: Cell::new(after),
     })
 }
 
@@ -169,6 +189,11 @@ async fn next<J: Journal>(
     cursor: &mut Cursor<J>,
 ) -> crate::Result<Option<MonitoredStreamItem<Entry, EventPosition>>> {
     let mut state = cursor.opening.state.lock().await;
+    state.check_local()?;
+    if let Some(item) = cursor.buffered.pop_front() {
+        cursor.after = Some(item.position());
+        return Ok(Some(MonitoredStreamItem::Item(item)));
+    }
     state.check().await?;
     if matches!((cursor.after, cursor.stop), (Some(after), Some(stop)) if after >= stop) {
         return Ok(None);
@@ -202,10 +227,15 @@ async fn next<J: Journal>(
             .range(bounds)
             .next()
             .map(|(p, root)| Entry::Snapshot(*p, *root))
-    } else if let Some(position) = state.index.events.range(bounds).next().map(|(p, _)| *p) {
-        Some(Entry::Event(state.event(position).await?))
     } else {
-        None
+        cursor.buffered.extend(
+            state
+                .event_page(cursor.after, cursor.stop)
+                .await?
+                .into_iter()
+                .map(Entry::Event),
+        );
+        cursor.buffered.pop_front()
     };
     if let Some(item) = item {
         cursor.after = Some(item.position());

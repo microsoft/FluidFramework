@@ -8,7 +8,7 @@ use bytes::Bytes;
 use sea_core::{ErrorKind, storage::DocumentId};
 use sea_remote::{Error, Factory, Journal, Result};
 use tokio::task::JoinHandle;
-use tokio_postgres::{Client, Config};
+use tokio_postgres::{Client, Config, types::Type};
 
 /// PostgreSQL-backed SEA factory; provider dependencies remain opt-in.
 pub type PostgresStorage = sea_remote::Storage<PostgresFactory>;
@@ -207,39 +207,116 @@ impl Journal for PostgresJournal {
         Ok(())
     }
     async fn append(&mut self, record: Bytes) -> Result<u64> {
-        if self.records == i64::MAX {
+        self.append_batch(vec![record])
+            .await?
+            .into_iter()
+            .next()
+            .ok_or_else(|| {
+                Error::new(
+                    ErrorKind::Ambiguous,
+                    "PostgreSQL append returned no location",
+                )
+            })
+    }
+    async fn append_batch(&mut self, records: Vec<Bytes>) -> Result<Vec<u64>> {
+        sea_remote::batch_size(&records)?;
+        if records.is_empty() {
+            return Ok(Vec::new());
+        }
+        let count =
+            i64::try_from(records.len()).map_err(|_| Error::rejected("PostgreSQL batch count"))?;
+        if self.records.checked_add(count).is_none() {
             return Err(Error::rejected("PostgreSQL record ordinal exhausted"));
         }
-        let row = self.client()?.query_one(
+        let payloads: Vec<_> = records.iter().map(Bytes::as_ref).collect();
+        let rows = self.client()?.query_typed(
             "WITH next AS (
-                UPDATE sea_documents SET records=records+1 WHERE id=$1 AND records=$2 RETURNING records
-             ) INSERT INTO sea_records(document,ordinal,payload)
-               SELECT $1,records,$3 FROM next RETURNING ordinal",
-            &[&self.document, &self.records, &record.as_ref()]
+                UPDATE sea_documents SET records=records+cardinality($3) WHERE id=$1 AND records=$2 RETURNING records
+             ), inserted AS (
+                INSERT INTO sea_records(document,ordinal,payload)
+                SELECT $1, $2 + entry.ordinal, entry.payload
+                FROM next, unnest($3) WITH ORDINALITY AS entry(payload,ordinal)
+                RETURNING ordinal
+             ) SELECT ordinal FROM inserted ORDER BY ordinal",
+            &[(&self.document, Type::INT8), (&self.records, Type::INT8), (&payloads, Type::BYTEA_ARRAY)]
         ).await.map_err(|e| Error::new(ErrorKind::Ambiguous, format!("PostgreSQL append: {e}")))?;
-        self.records = row.get(0);
-        u64::try_from(self.records).map_err(|_| Error::corrupt("PostgreSQL record ordinal"))
+        if rows.len() != records.len() {
+            return Err(Error::new(
+                ErrorKind::Ambiguous,
+                "PostgreSQL committed group count mismatch",
+            ));
+        }
+        let mut locations = Vec::with_capacity(rows.len());
+        for (expected, row) in (self.records + 1..=self.records + count).zip(rows) {
+            let ordinal: i64 = row.get(0);
+            if ordinal != expected {
+                return Err(Error::new(
+                    ErrorKind::Ambiguous,
+                    "PostgreSQL committed group order mismatch",
+                ));
+            }
+            locations.push(
+                u64::try_from(ordinal)
+                    .map_err(|_| Error::new(ErrorKind::Ambiguous, "PostgreSQL record ordinal"))?,
+            );
+        }
+        self.records += count;
+        Ok(locations)
     }
     async fn read(&mut self, location: u64) -> Result<Bytes> {
         let ordinal =
             i64::try_from(location).map_err(|_| Error::corrupt("PostgreSQL record location"))?;
         let row = self
             .client()?
-            .query_opt(
+            .query_typed(
                 "SELECT payload FROM sea_records WHERE document=$1 AND ordinal=$2",
-                &[&self.document, &ordinal],
+                &[(&self.document, Type::INT8), (&ordinal, Type::INT8)],
             )
             .await
             .map_err(unavailable)?
+            .into_iter()
+            .next()
             .ok_or_else(|| Error::corrupt("missing PostgreSQL record"))?;
         Ok(Bytes::from(row.get::<_, Vec<u8>>(0)))
+    }
+    async fn read_batch(&mut self, records: &[(u64, usize)]) -> Result<Vec<Bytes>> {
+        sea_remote::validate_read_batch(records)?;
+        if records.is_empty() {
+            return Ok(Vec::new());
+        }
+        let ordinals: Vec<_> = records
+            .iter()
+            .map(|(location, _)| {
+                i64::try_from(*location).map_err(|_| Error::corrupt("PostgreSQL read location"))
+            })
+            .collect::<Result<_>>()?;
+        let rows = self.client()?.query_typed(
+            "SELECT ordinal,payload FROM sea_records WHERE document=$1 AND ordinal=ANY($2) ORDER BY ordinal",
+            &[(&self.document, Type::INT8), (&ordinals, Type::INT8_ARRAY)]
+        ).await.map_err(unavailable)?;
+        if rows.len() != records.len() {
+            return Err(Error::corrupt("missing PostgreSQL page record"));
+        }
+        rows.into_iter()
+            .zip(records)
+            .map(|(row, (location, length))| {
+                let ordinal: i64 = row.get(0);
+                let bytes: Vec<u8> = row.get(1);
+                if u64::try_from(ordinal).ok() != Some(*location) || bytes.len() != *length {
+                    return Err(Error::corrupt(
+                        "PostgreSQL page location or length mismatch",
+                    ));
+                }
+                Ok(Bytes::from(bytes))
+            })
+            .collect()
     }
     async fn scan(&mut self, after: Option<u64>) -> Result<Vec<(u64, Bytes)>> {
         let after = i64::try_from(after.unwrap_or(0))
             .map_err(|_| Error::corrupt("PostgreSQL scan cursor"))?;
-        let rows = self.client()?.query(
+        let rows = self.client()?.query_typed(
             "SELECT ordinal,payload FROM sea_records WHERE document=$1 AND ordinal>$2 ORDER BY ordinal LIMIT 16",
-            &[&self.document, &after]).await.map_err(unavailable)?;
+            &[(&self.document, Type::INT8), (&after, Type::INT8)]).await.map_err(unavailable)?;
         let mut page = Vec::with_capacity(rows.len());
         let mut expected = after;
         for row in rows {

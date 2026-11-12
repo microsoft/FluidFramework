@@ -21,7 +21,15 @@ use sea_core::{
 };
 use tokio::sync::{Mutex, watch};
 
-use crate::{Error, Factory, Journal, Result, record::Record};
+use crate::{Error, Factory, Journal, MAX_BATCH_BYTES, MAX_BATCH_RECORDS, Result, record::Record};
+
+/// A committed event's physical location and encoded size, used to bound replay pages.
+pub(crate) struct EventLocation {
+    /// Stable journal location.
+    location: u64,
+    /// Complete encoded record length, excluding provider framing.
+    bytes: usize,
+}
 
 /// Recovered indexes; payloads are read from the provider only when requested.
 #[derive(Default)]
@@ -29,7 +37,7 @@ pub(crate) struct Index {
     /// Validated complete trees and their record locations.
     blobs: HashMap<BlobTreeId, u64>,
     /// Consecutive event positions mapped to provider record locations.
-    pub(crate) events: BTreeMap<EventPosition, u64>,
+    pub(crate) events: BTreeMap<EventPosition, EventLocation>,
     /// Sparse snapshot positions and complete roots.
     pub(crate) snapshots: BTreeMap<EventPosition, BlobTreeId>,
     /// Latest independent recovery state.
@@ -72,7 +80,12 @@ impl Index {
     }
 
     /// Installs a validated durable record, returning its event position when applicable.
-    fn apply(&mut self, location: u64, record: Record) -> Result<Option<EventPosition>> {
+    fn apply(
+        &mut self,
+        location: u64,
+        record: Record,
+        bytes: usize,
+    ) -> Result<Option<EventPosition>> {
         self.validate(&record)?;
         match record {
             Record::Blob(payload) => {
@@ -90,7 +103,8 @@ impl Index {
                     .map_or(0, |(position, _)| position.get())
                     + 1;
                 let position = EventPosition::new(ordinal);
-                self.events.insert(position, location);
+                self.events
+                    .insert(position, EventLocation { location, bytes });
                 return Ok(Some(position));
             }
             Record::Snapshot(root, position) => {
@@ -134,14 +148,20 @@ impl Drop for Mutation<'_> {
 }
 
 impl<J: Journal> State<J> {
-    /// Rejects terminal openings and verifies provider ownership before observing state.
-    pub(crate) async fn check(&mut self) -> Result<()> {
+    /// Rejects known failure or shutdown without making a remote observation.
+    pub(crate) fn check_local(&self) -> Result<()> {
         if let Some(error) = &self.failure {
             return Err(error.clone());
         }
         if self.closed.load(Ordering::Acquire) {
             return Err(Error::rejected("storage is shut down"));
         }
+        Ok(())
+    }
+
+    /// Verifies provider ownership before making an authoritative observation.
+    pub(crate) async fn check(&mut self) -> Result<()> {
+        self.check_local()?;
         if let Err(error) = self.journal.check().await {
             self.failure = Some(error.clone());
             return Err(error);
@@ -151,26 +171,182 @@ impl<J: Journal> State<J> {
 
     /// Publishes once, poisoning the opening on failure or cancellation after admission.
     async fn publish(&mut self, record: Record) -> Result<Option<EventPosition>> {
-        self.check().await?;
+        self.check_local()?;
         self.index.validate(&record)?;
         let encoded = record.encode()?;
+        let bytes = encoded.len();
         let mut mutation = Mutation {
             failure: &mut self.failure,
             settled: false,
         };
         let location = self.journal.append(encoded).await?;
-        let position = self.index.apply(location, record)?;
+        let position = self.index.apply(location, record, bytes)?;
         mutation.settled = true;
         Ok(position)
     }
 
+    /// Publishes validated events as bounded groups, stopping at the first input or persistence failure.
+    async fn append_events(&mut self, values: Vec<Event>) -> Vec<Result<EventPosition>> {
+        let mut output = Vec::with_capacity(values.len());
+        let mut group = Vec::new();
+        let mut bytes = 0;
+        for event in values {
+            let record = Record::Event(event);
+            let prepared = self
+                .check_local()
+                .and_then(|()| self.index.validate(&record))
+                .and_then(|()| record.encode());
+            let encoded = match prepared {
+                Ok(encoded) => encoded,
+                Err(error) => {
+                    if self.commit_events(&mut group, &mut output).await {
+                        output.push(Err(error));
+                    }
+                    return output;
+                }
+            };
+            if (group.len() == MAX_BATCH_RECORDS || bytes + encoded.len() + 4 > MAX_BATCH_BYTES)
+                && !group.is_empty()
+            {
+                if !self.commit_events(&mut group, &mut output).await {
+                    return output;
+                }
+                bytes = 0;
+            }
+            bytes += encoded.len() + 4;
+            group.push((record, encoded));
+        }
+        self.commit_events(&mut group, &mut output).await;
+        output
+    }
+
+    /// Adds successful positions or the uncertain attempted prefix to the caller's results.
+    async fn commit_events(
+        &mut self,
+        group: &mut Vec<(Record, Bytes)>,
+        output: &mut Vec<Result<EventPosition>>,
+    ) -> bool {
+        if group.is_empty() {
+            return true;
+        }
+        let count = group.len();
+        match self.publish_events(std::mem::take(group)).await {
+            Ok(positions) => {
+                output.extend(positions.into_iter().map(Ok));
+                true
+            }
+            Err(error) => {
+                let count = if error.kind == ErrorKind::Ambiguous {
+                    count
+                } else {
+                    1
+                };
+                output.extend((0..count).map(|_| Err(error.clone())));
+                false
+            }
+        }
+    }
+
+    /// Commits a group once; interrupted publication poisons even already-prefetched readers.
+    async fn publish_events(&mut self, group: Vec<(Record, Bytes)>) -> Result<Vec<EventPosition>> {
+        self.check_local()?;
+        let head = self
+            .index
+            .events
+            .last_key_value()
+            .map_or(0, |(position, _)| position.get());
+        head.checked_add(group.len() as u64)
+            .ok_or_else(|| Error::rejected("event position exhausted"))?;
+        let mut mutation = Mutation {
+            failure: &mut self.failure,
+            settled: false,
+        };
+        let locations = self
+            .journal
+            .append_batch(group.iter().map(|(_, bytes)| bytes.clone()).collect())
+            .await?;
+        if locations.len() != group.len() || locations.windows(2).any(|pair| pair[0] >= pair[1]) {
+            return Err(Error::new(
+                ErrorKind::Ambiguous,
+                "committed group returned invalid locations",
+            ));
+        }
+        let mut positions = Vec::with_capacity(group.len());
+        for (location, (record, bytes)) in locations.into_iter().zip(group) {
+            let position = self
+                .index
+                .apply(location, record, bytes.len())
+                .map_err(|error| {
+                    Error::new(
+                        ErrorKind::Ambiguous,
+                        format!("committed group index: {error}"),
+                    )
+                })?
+                .ok_or_else(|| {
+                    Error::new(
+                        ErrorKind::Ambiguous,
+                        "committed group contained a non-event",
+                    )
+                })?;
+            positions.push(position);
+        }
+        mutation.settled = true;
+        Ok(positions)
+    }
+
+    /// Fetches a bounded page of indexed events, including sparse physical journal locations.
+    pub(crate) async fn event_page(
+        &mut self,
+        after: Option<EventPosition>,
+        stop: Option<EventPosition>,
+    ) -> Result<Vec<CommittedEvent>> {
+        let bounds = (
+            after.map_or(std::ops::Bound::Unbounded, std::ops::Bound::Excluded),
+            stop.map_or(std::ops::Bound::Unbounded, std::ops::Bound::Included),
+        );
+        let mut bytes = 0;
+        let indexed: Vec<_> = self
+            .index
+            .events
+            .range(bounds)
+            .take(MAX_BATCH_RECORDS)
+            .take_while(|(_, entry)| {
+                bytes += entry.bytes + 4;
+                bytes <= MAX_BATCH_BYTES
+            })
+            .map(|(position, entry)| (*position, (entry.location, entry.bytes)))
+            .collect();
+        if indexed.is_empty() {
+            return Ok(Vec::new());
+        }
+        let locations: Vec<_> = indexed.iter().map(|(_, location)| *location).collect();
+        let records = self.journal.read_batch(&locations).await?;
+        if records.len() != indexed.len() {
+            return Err(Error::corrupt("incomplete event page"));
+        }
+        records
+            .into_iter()
+            .zip(indexed)
+            .map(|(bytes, (position, (_, length)))| {
+                if bytes.len() != length {
+                    return Err(Error::corrupt("event page length mismatch"));
+                }
+                match Record::decode(&bytes)? {
+                    Record::Event(event) => Ok(CommittedEvent { position, event }),
+                    _ => Err(Error::corrupt("event page points to another record kind")),
+                }
+            })
+            .collect()
+    }
+
     /// Loads and validates a known event record.
     pub(crate) async fn event(&mut self, position: EventPosition) -> Result<CommittedEvent> {
-        let location = *self
+        let location = self
             .index
             .events
             .get(&position)
-            .ok_or_else(|| Error::corrupt("missing event index"))?;
+            .ok_or_else(|| Error::corrupt("missing event index"))?
+            .location;
         match Record::decode(&self.journal.read(location).await?)? {
             Record::Event(event) => Ok(CommittedEvent { position, event }),
             _ => Err(Error::corrupt("event index points to another record kind")),
@@ -297,7 +473,7 @@ impl<F: Factory> Storage<F> {
                         return Err(Error::corrupt("journal locations do not increase"));
                     }
                     index
-                        .apply(location, Record::decode(&bytes)?)
+                        .apply(location, Record::decode(&bytes)?, bytes.len())
                         .map_err(|error| {
                             Error::corrupt(format!("invalid recovered publication: {error}"))
                         })?;
@@ -623,6 +799,22 @@ impl<J: Journal> Archive for Events<J> {
             opening: self.0.clone(),
             id: position,
         })
+    }
+    async fn append_batch(&self, values: Vec<Event>) -> Vec<Result<Self::AppendResult>> {
+        self.0
+            .state
+            .lock()
+            .await
+            .append_events(values)
+            .await
+            .into_iter()
+            .map(|position| {
+                position.map(|id| Handle {
+                    opening: self.0.clone(),
+                    id,
+                })
+            })
+            .collect()
     }
     fn read(
         &self,

@@ -18,6 +18,8 @@ This keeps document-wide publication ordering under one writer instead of coordi
 The shared [remote adapter](../sea-remote/README.md) implements component semantics and validates record checksums and dependency closure.
 
 Segments roll over at 40,000 append blocks or 64 MiB, whichever comes first.
+An append block can contain a group of up to 128 framed records within the service's 4 MiB request limit.
+Grouping changes the number of service requests, not record locations or the retained format.
 The manifest records sealed segment lengths and the active segment identity.
 A rollover creates and leases a fresh segment, seals the old boundary in a lease-protected manifest update, and only then appends to the new segment.
 Failed or cancelled creation or rollover can leave unreachable blobs; collection is not implemented.
@@ -26,12 +28,20 @@ Use `with_segment_blocks` to lower the rollover threshold for tests.
 
 A document opening holds 60-second leases on the manifest and active segment.
 A heartbeat renews them every 15 seconds, renewing the manifest first.
-Ownership failures are terminal; foreground operations also renew and check ownership.
+Ownership failures are terminal.
+Authoritative observations renew the manifest lease; the heartbeat renews both leases.
+Each append is fenced by its active-segment lease ID and expected byte offset, without redundant lease-renewal requests before each write.
+Rollover still renews both leases before publishing a new active segment.
 A new opener acquires the manifest lease, breaks any previous active-segment lease, and acquires a fresh segment lease before recovering data.
 This fences delayed requests from the old opening, even while its Rust values remain alive.
 Components, streams, and handles retain ownership; orderly shutdown releases it.
 If the process or runtime disappears, leases expire server-side.
 Reads, writes, and release errors are surfaced to callers; no mutation is retried transparently.
+
+Event replay combines known record extents into bounded range requests within each segment.
+Ranges stop at segment boundaries or 4 MiB, and every returned frame length and record checksum is verified.
+Only requested records are retained, so gaps between event records do not inflate the reader's retained page.
+Buffered history can finish delivery before remote lease loss is discovered on the next page fetch; known invalidation and shutdown stop it immediately.
 
 Use an Azure account with zone-redundant storage (ZRS) for synchronous availability-zone replication.
 An Azurite instance provides only the emulator's local persistence, not replicated durability.

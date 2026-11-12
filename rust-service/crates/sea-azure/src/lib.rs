@@ -9,7 +9,7 @@ use bytes::{BufMut, Bytes, BytesMut};
 use http::{Headers, Http};
 use reqwest::{Method, StatusCode};
 use sea_core::{ErrorKind, storage::DocumentId};
-use sea_remote::{Error, Factory, Journal, MAX_RECORD_BYTES, Result};
+use sea_remote::{Error, Factory, Journal, MAX_BATCH_BYTES, MAX_RECORD_BYTES, Result};
 use std::{sync::Arc, time::Duration};
 use tokio::{sync::Mutex, task::JoinHandle};
 use uuid::Uuid;
@@ -162,8 +162,8 @@ struct Ownership {
 }
 
 impl Ownership {
-    /// Renews root first; never extends a segment after losing root authority.
-    async fn renew(&mut self) -> Result<()> {
+    /// Rejects terminal ownership without making a remote observation.
+    fn check_local(&self) -> Result<()> {
         if let Some(error) = &self.failure {
             return Err(error.clone());
         }
@@ -173,10 +173,23 @@ impl Ownership {
                 "Azure opening is closed",
             ));
         }
+        Ok(())
+    }
+
+    /// Checks the document authority before reporting an authoritative head or fetching a read page.
+    async fn renew_root(&mut self) -> Result<()> {
+        self.check_local()?;
+        let result = self.http.lease(&self.root, "renew", &self.root_lease).await;
+        if let Err(error) = &result {
+            self.failure = Some(error.clone());
+        }
+        result
+    }
+
+    /// Renews root first; never extends a segment after losing root authority.
+    async fn renew(&mut self) -> Result<()> {
+        self.renew_root().await?;
         let result: Result<()> = async {
-            self.http
-                .lease(&self.root, "renew", &self.root_lease)
-                .await?;
             if let Some((name, id)) = &self.active {
                 self.http.lease(name, "renew", id).await?;
             }
@@ -448,25 +461,35 @@ impl Factory for AzureFactory {
 #[async_trait]
 impl Journal for AzureJournal {
     async fn check(&mut self) -> Result<()> {
-        self.ownership.lock().await.renew().await
+        self.ownership.lock().await.renew_root().await
     }
     async fn append(&mut self, record: Bytes) -> Result<u64> {
-        if record.len() > MAX_RECORD_BYTES {
-            return Err(Error::rejected("Azure record exceeds limit"));
+        self.append_batch(vec![record])
+            .await?
+            .into_iter()
+            .next()
+            .ok_or_else(|| Error::new(ErrorKind::Ambiguous, "Azure append returned no location"))
+    }
+    async fn append_batch(&mut self, records: Vec<Bytes>) -> Result<Vec<u64>> {
+        let size = sea_remote::batch_size(&records)? as u64;
+        if records.is_empty() {
+            return Ok(Vec::new());
         }
-        let size = record.len() as u64 + 4;
         if self.blocks >= self.segment_blocks || self.length + size > SEGMENT_BYTES {
             self.rollover().await?;
         }
-        let mut frame = BytesMut::with_capacity(record.len() + 4);
-        frame.put_u32(
-            u32::try_from(record.len()).map_err(|_| Error::rejected("Azure record length"))?,
-        );
-        frame.extend_from_slice(&record);
-        let ownership = self.ownership.lock().await;
-        if let Some(error) = &ownership.failure {
-            return Err(error.clone());
+        let mut frame = BytesMut::with_capacity(usize::try_from(size).expect("bounded group"));
+        let base = (self.segments.len() as u64 - 1) * LOCATION_STRIDE + self.length;
+        let mut locations = Vec::with_capacity(records.len());
+        for record in records {
+            locations.push(base + frame.len() as u64);
+            frame.put_u32(
+                u32::try_from(record.len()).map_err(|_| Error::rejected("Azure record length"))?,
+            );
+            frame.extend_from_slice(&record);
         }
+        let ownership = self.ownership.lock().await;
+        ownership.check_local()?;
         let (name, lease) = ownership
             .active
             .as_ref()
@@ -488,10 +511,9 @@ impl Journal for AzureJournal {
             )
             .await?;
         Http::expect(response, StatusCode::CREATED)?;
-        let location = (self.segments.len() as u64 - 1) * LOCATION_STRIDE + self.length;
         self.length += size;
         self.blocks += 1;
-        Ok(location)
+        Ok(locations)
     }
     async fn read(&mut self, location: u64) -> Result<Bytes> {
         let index = usize::try_from(location / LOCATION_STRIDE)
@@ -538,6 +560,86 @@ impl Journal for AzureJournal {
             return Err(Error::corrupt("Azure truncated record"));
         }
         Ok(bytes)
+    }
+    async fn read_batch(&mut self, records: &[(u64, usize)]) -> Result<Vec<Bytes>> {
+        sea_remote::validate_read_batch(records)?;
+        let mut output = Vec::with_capacity(records.len());
+        let mut start = 0;
+        while start < records.len() {
+            let first = records[start].0;
+            let index = usize::try_from(first / LOCATION_STRIDE)
+                .map_err(|_| Error::corrupt("Azure page segment"))?;
+            if index >= self.segments.len() {
+                return Err(Error::corrupt("Azure unknown page segment"));
+            }
+            let mut end = start + 1;
+            let mut boundary = first
+                .checked_add(records[start].1 as u64 + 4)
+                .ok_or_else(|| Error::corrupt("Azure page boundary overflow"))?;
+            while let Some(&(location, length)) = records.get(end) {
+                let next = location
+                    .checked_add(length as u64 + 4)
+                    .ok_or_else(|| Error::corrupt("Azure page boundary overflow"))?;
+                if location / LOCATION_STRIDE != index as u64
+                    || next - first > MAX_BATCH_BYTES as u64
+                {
+                    break;
+                }
+                if location < boundary {
+                    return Err(Error::corrupt("overlapping Azure page records"));
+                }
+                boundary = next;
+                end += 1;
+            }
+            let extent = if index + 1 == self.segments.len() {
+                self.length
+            } else {
+                self.segments[index].sealed
+            };
+            if boundary - index as u64 * LOCATION_STRIDE > extent {
+                return Err(Error::corrupt("Azure page exceeds segment boundary"));
+            }
+            let response = self
+                .http
+                .request(
+                    Method::GET,
+                    &self.name(index),
+                    &[],
+                    Headers::from([(
+                        "range".into(),
+                        format!(
+                            "bytes={}-{}",
+                            first % LOCATION_STRIDE,
+                            boundary - index as u64 * LOCATION_STRIDE - 1
+                        ),
+                    )]),
+                    Bytes::new(),
+                )
+                .await?;
+            let size = usize::try_from(boundary - first).expect("bounded page");
+            let bytes =
+                Http::body(Http::expect(response, StatusCode::PARTIAL_CONTENT)?, size).await?;
+            if bytes.len() != size {
+                return Err(Error::corrupt("Azure truncated read page"));
+            }
+            for &(location, length) in &records[start..end] {
+                let offset = usize::try_from(location - first).expect("bounded relative location");
+                let encoded = u32::from_be_bytes(
+                    bytes[offset..offset + 4]
+                        .try_into()
+                        .expect("checked page range"),
+                ) as usize;
+                if encoded != length {
+                    return Err(Error::corrupt("Azure page frame length mismatch"));
+                }
+                // Do not retain unrelated gap bytes through small slices of a range response.
+                output.push(Bytes::copy_from_slice(
+                    &bytes[offset + 4..offset + 4 + length],
+                ));
+            }
+            start = end;
+        }
+        Ok(output)
     }
     async fn scan(&mut self, after: Option<u64>) -> Result<Vec<(u64, Bytes)>> {
         let mut index = usize::try_from(after.map_or(0, |p| p / LOCATION_STRIDE))
