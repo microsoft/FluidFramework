@@ -242,7 +242,7 @@ ContainerRuntime unit suite: 213 passing. No new tests added for this redundant 
 
 ### 7. Dispose versus close adapters
 
-**Status:** Pending decision. Additional proof required.
+**Status:** Deferred: reachable through non-deprecated legacy/beta APIs. No product changes.
 
 - `packages/runtime/container-runtime/src/containerRuntime.ts`: `disposeFn ?? closeFn`.
 
@@ -252,7 +252,19 @@ marks it optional. That optionality may accommodate custom implementations rathe
 **Potential change:** Require disposal only if the supported contract permits it. Preserve the semantic
 distinction between disposal and close/readonly behavior, including error propagation.
 
-**Decision / changes / validation:** Not yet recorded.
+**Contract audit / decision:** Retain the fallback. `IContainerContext` is non-deprecated `@legacy @beta`,
+and `disposeFn` is explicitly optional and not deprecated. The `closeFn` private remarks specifically
+describe its use as a fallback when `disposeFn` is omitted, including summarizer-initiated disposal
+without an error. This is a supported context shape, not merely an old first-party loader accident.
+
+Assigning the optional callback directly or making it required would break conforming custom contexts.
+The runtime uses the selected callback for summarizer termination and fatal-error paths, so replacing
+it with a no-op would also change behavior. Installed `2.0.9` providing the method does not eliminate
+these API obligations. Record future removal in deferred list 2; no smaller product cleanup is needed here.
+
+**Validation:** Read-only interface, runtime usage, installed-boundary, and existing mock audit.
+Existing runtime unit contexts intentionally omit `disposeFn` and supply `closeFn`; preserve them.
+No product or test changes, so no additional execution required for this decision.
 
 ### 8. Datastore attachment-event bridges
 
@@ -339,7 +351,7 @@ These are not cleanup targets merely because OCV advanced:
 Category 1 cleanup is approved and complete. Category 2 is deferred to preserve deprecated legacy/beta
 API behavior. Category 3 cleanup is approved and complete. Category 4 runtime cleanup is approved and complete,
 with loader-side routing deferred. Categories 5 and 6 cleanup are approved and complete;
-categories 7–11 remain pending decision.
+category 7 is deferred to preserve non-deprecated legacy/beta API behavior; categories 8–11 remain pending decision.
 Retained/deferred categories should include the reason and any follow-up evidence needed.
 
 ## Deferred list 1: reachable through already-deprecated legacy/beta APIs
@@ -353,8 +365,9 @@ These are candidates for a separately approved API-removal effort, not this clea
 
 ## Deferred list 2: reachable through non-deprecated legacy/beta APIs
 
-No candidates established yet. This does not mean the remaining categories are safe to remove; audit
-each category for exported contracts, observable behavior, and custom implementation support first.
+| Category / candidate | API preserving reachability | Non-deprecation evidence | Future action |
+| --- | --- | --- | --- |
+| 7. Runtime `disposeFn ?? closeFn` fallback | Optional `IContainerContext.disposeFn` and required `closeFn` on non-deprecated `@legacy @beta` IContainerContext | Neither member is deprecated; `closeFn` remarks explicitly document fallback when disposal is omitted | Establish and deprecate the optional-context contract before any separately approved breaking change. Preserve summarizer disposal and error propagation for conforming contexts meanwhile. |
 
 When adding an entry, identify the compatibility path, the API that makes it reachable, evidence that
 the API is not deprecated, and the prerequisite for a separate deprecation/removal effort. If a candidate
