@@ -394,6 +394,69 @@ list entry: this is necessary correctness behavior, not otherwise removable comp
 ordering, runtime processing, existing batching/staging tests, and PR history. Product change is comment-only;
 format/diff checks suffice. No new behavior tests or compatibility runs needed for the comment update.
 
+## Additional categories from structural capability-check scan
+
+This second scan examined optional calls, missing-member branches, fallback expressions, and shape
+checks across loader, runtime, datastore, shared-object, framework, and selected driver code. Findings
+are based on contracts and installed boundary implementations, not only migration comments.
+
+### 12. FluidContainer connection-method guards
+
+**Status:** Cleanup approved and complete.
+
+- `packages/framework/fluid-static/src/fluidContainer.ts`: `container.connect?.()` and `disconnect?.()`.
+- `IContainer` requires both methods. Verified actual installed `2.0.9` Container implements both.
+- Audit wrapper callers/mocks; replace with direct calls if no independent supported omission exists.
+
+**Contract audit / decision:** FluidContainer holds a required IContainer, whose connect/disconnect
+methods are required. Actual installed `2.0.9` Container implements both. The wrapper's internal
+construction path accepts IContainer, not a partial capability interface. Remove optional method calls;
+no conforming public/legacy/beta behavior or signatures change, and no deferred-list entry is needed.
+
+**Changes:** Use direct calls for connect and disconnect. Preserve the existing async wrapper signatures,
+event forwarding, disposal behavior, and error propagation.
+
+**Validation:** fluid-static build passed, including ESM/CJS, type tests, lint/format, API reports, and
+documentation model; no report changes. Existing package tests: 10 passing. These tests do not directly
+exercise connection forwarding; no new tests added for the mechanical required-method call change.
+Service-client connection/audience E2E tests require service setup and were not run for this category.
+
+### 13. Parent-context summarizer callback guard
+
+**Status:** Pending decision.
+
+- `packages/runtime/container-runtime/src/channelCollection.ts`, `formParentContext`:
+  `context.getCreateChildSummarizerNodeFn?.(...args)`.
+- `IFluidParentContext` requires this method; installed `2.0.9` runtime context implements it.
+- Audit wrapper callers/mocks before removal. Optional call can silently return undefined where a
+  callback is promised.
+
+**Decision / changes / validation:** Not yet recorded.
+
+### 14. Residual context attachment-event emitter infrastructure
+
+**Status:** Pending decision; follow-up to category 8.
+
+- `packages/runtime/container-runtime/src/dataStoreContext.ts`: attachment-only
+  `IFluidDataStoreContextEvents` and FluidDataStoreContext's TypedEventEmitter inheritance.
+- Category 8 removed attachment-event emitters/subscriptions. Initial scan found no remaining
+  subscriptions in the runtime package. Audit repository callers and package exports before removal.
+- Keep ContextDeltaManagerProxy's separate emitter: readonly notifications still use it.
+
+**Decision / changes / validation:** Not yet recorded.
+
+### Additional retained capability checks
+
+- Registry `getSync` and factory `createDataStore` are optional; retain async/capability handling.
+- `notifyReadOnlyState` is optional and its feature is not universal across retained versions; keep
+  readonly event bridging.
+- `getDataStorePackagePath` shape detection checks an internal capability not promised by its public
+  parameter type; retain it.
+- Snapshot APIs, optional disposal/replay hooks, newer connection-state APIs, and handle-encoding
+  feature detection have independent contracts or post-OCV introductions.
+- Missing-entryPoint/taggedLogger assertions validate inputs rather than provide old implementations.
+- Historical message, summary, registry-name, and stashed-state format readers remain necessary.
+
 ## Compatibility that remains necessary
 
 These are not cleanup targets merely because OCV advanced:
@@ -426,7 +489,8 @@ with loader-side routing deferred. Categories 5 and 6 cleanup are approved and c
 category 7 is deferred to preserve non-deprecated legacy/beta API behavior. Category 8 event-bridge
 cleanup is approved and complete, with visibility behavior deferred. Category 9 cleanup is approved and complete;
 category 10 is retained/deferred for storage lifecycle and API behavior. Category 11 is retained for
-current correctness, with its explanatory comment update approved and complete. All planned categories audited.
+current correctness, with its explanatory comment update approved and complete. Original categories audited;
+the structural scan added categories 12–14. Category 12 cleanup is approved and complete; categories 13–14 remain pending.
 Retained/deferred categories should include the reason and any follow-up evidence needed.
 
 ## Deferred list 1: reachable through already-deprecated legacy/beta APIs
@@ -438,6 +502,7 @@ These are candidates for a separately approved API-removal effort, not this clea
 | 2. Old loader-to-runtime request routing: ContainerRuntime's private `request()`, stored handler, and associated plumbing | `LoadContainerRuntimeParams.requestHandler` (`@legacy @beta`); Aqueduct `BaseContainerRuntimeFactoryProps.requestHandlers` (`@legacy @beta`) | Both properties have existing `@deprecated` notices tied to entry-point migration | Review partner usage and follow the legacy/beta breaking-change process; remove routing and configuration together. Preserve `resolveHandle` and any independently needed handle-resolution handlers. |
 | 4. Loader generic-submit summary routing: `submitContainerMessage` handling of `MessageType.Summarize` | `IContainerContext.submitFn` (`@legacy @beta`) | Method has `@deprecated` directing callers to `submitBatchFn` and `submitSummaryFn` | Preserve generic submission behavior until the deprecated API is separately approved for removal. The runtime's missing-`submitSummaryFn` fallback can be removed independently. |
 | 10. Storage-policy exception suppression (deprecated access path) | `IContainerStorageService.policies` (`@legacy @beta`) | Member has `@deprecated` directing runtimes toward maximumCacheDurationMs | Preserve undefined on unavailable storage. A separate lifecycle refactor or approved API removal is needed; see the non-deprecated path in list 2. |
+| Legacy summary-delay option location/precedence | `ISummaryRuntimeOptions.initialSummarizerDelayMs` (`@legacy @beta`) | Property is deprecated in favor of summaryConfigOverrides | Preserve the configured value and precedence until a separate approved option removal. |
 
 ## Deferred list 2: reachable through non-deprecated legacy/beta APIs
 
@@ -446,6 +511,8 @@ These are candidates for a separately approved API-removal effort, not this clea
 | 7. Runtime `disposeFn ?? closeFn` fallback | Optional `IContainerContext.disposeFn` and required `closeFn` on non-deprecated `@legacy @beta` IContainerContext | Neither member is deprecated; `closeFn` remarks explicitly document fallback when disposal is omitted | Establish and deprecate the optional-context contract before any separately approved breaking change. Preserve summarizer disposal and error propagation for conforming contexts meanwhile. |
 | 8. Automatic graph attachment when entering Attaching; existing duplicate Attached notifications | Non-deprecated `@legacy @beta` FluidDataStoreRuntime and IFluidDataStoreChannel attachment methods | Neither the runtime class nor attachment methods are deprecated | Audit and stage any new graph-visibility ordering requirement or notification-count change separately; retain current observable behavior in this cleanup. |
 | 10. Storage-policy exception suppression (cache-duration access path) | `IContainerStorageService.maximumCacheDurationMs` (`@legacy @beta`), implemented through the adapter's policies getter | Member is optional and not deprecated | Preserve undefined while storage is detached or initializing. Any cleanup must preserve this lifecycle behavior; advancing OCV does not make storage synchronously available. |
+| Missing absolute-URL callback handling | `IContainerContext.getAbsoluteUrl` (`@legacy @beta`) | Method is optional and not deprecated, despite an old migration TODO | Preserve missing-method handling; making the callback required needs separate contract review. |
+| Summarizer progress telemetry capability check | `ISummarizerNode.isSummaryInProgress` (`@legacy @beta`) | Method is optional and not deprecated | Preserve optional invocation for valid custom nodes; no first-party version check can remove that contract. |
 
 When adding an entry, identify the compatibility path, the API that makes it reachable, evidence that
 the API is not deprecated, and the prerequisite for a separate deprecation/removal effort. If a candidate
