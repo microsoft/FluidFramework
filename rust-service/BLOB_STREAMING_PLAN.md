@@ -2,13 +2,47 @@
 
 ## Status and execution location
 
-This is an implementation proposal, not a description of completed functionality.
-Implement in the main worktree, `/workspaces/FluidFramework`, on branch `rust-service`.
+This document records the implementation plan and its subsequent acceptance decisions.
+The streaming candidate is preserved on `rust-service-blob-streaming-experiment` at `0d4c939dff37a7199bea5150846da11a9fc33646`.
+Bounded demand preparation and WebSocket record coalescing complete the candidate on top of that commit.
+Final performance checks passed after the user reported unrelated builds on the shared machine had finished.
+The comparison baseline is the separately accepted hashing removal at `168ca13cd6d72392daf0b948a274b232c2b29b8f`.
+Implementation uses the main worktree, `/workspaces/FluidFramework`.
+
+### Acceptance amendments and current status
+
+- Performance acceptance covers durable-file storage; buffered-file correctness remains required.
+- The user accepted the measured mixed-event latency tradeoff under competing bandwidth-limited downloads.
+  The service has no traffic-priority policy, and this work does not introduce one.
+  The original event-p95 threshold below is therefore retained as historical methodology, not a current merge blocker.
+- Functional checks, extended native/browser recovery checks, and the application-buffer budget passed for the final candidate.
+  Final independent checkpoint review covered the complete preparation/coalescing change and returned no actionable findings.
+  The candidate is accepted for the authorized local integration under the amendments recorded here.
+  Actual QUIC/TLS allocation attribution remains a follow-up; measured application buffers are not a total-process memory bound.
+- Final real-application checks covered 1 MiB and 10 MiB SharedTree snapshots with a distinct 128 KiB application blob, lazy/eager loading, both transports, and verified zero/100 ms added round-trip time.
+  All 160 loads verified successfully.
+  A WebSocket startup regression was found and repaired by combining short writes into bounded 64 KiB records, including the frame prefix, and reducing socket read scratch space to 16 KiB.
+  In the final post-contention comparison, WebSocket 10 MiB loopback median tree-ready latency was 343.9/342.2 ms baseline/candidate for lazy loading and 354.3/353.6 ms for eager loading.
+  Every size, transport, policy, and RTT cell passed the 15% median-regression investigation threshold; the largest tree-ready increase was 5.8%.
+  Five independent pairs per cell support median comparison, not tail-latency claims.
+- Exact-candidate native large-download comparisons retained 1.38x, 1.94x, and 2.16x throughput at one, four, and eight independent clients.
+  These are warm-cache closed-loop measurements, not production capacity claims.
+- Ten alternating durable transfer pairs measured many-small throughput at 54.544/54.708 MiB/s baseline/candidate and pooled small-read p95 at 323.625/357.425 ms.
+  Both pass the original 0.90 throughput floor and 1.15 latency ceiling.
+  Mixed-event p95 remains higher, 264.264/356.696 ms, under the explicitly accepted bandwidth-sharing exception.
+- All 32 application-allocation cells passed the unchanged 256 KiB budget per active file transfer.
+  The largest single-transfer WebSocket peak was 242,809 bytes; four concurrent transfers peaked at 795,161 bytes in total.
+  These measurements cover both file modes, draining/stalled output, and 1 MiB/16 MiB bodies, and exclude actual QUIC/TLS allocation.
+
+The user subsequently authorized experimental preservation commits and local integration after final checks.
+No push is authorized.
+The remaining sections retain the original design and validation plan; the amendments above supersede conflicting scope and authorization statements.
+
 The original proposal inspected `5c6d41ce89e349279e2968b6bc9a597d93715c78`.
 The design was subsequently checked against `8e3db392ba4`, including bulk snapshot reads, byte-based opening credits, and direct SharedTree blob handles.
 These are inspection references, not a substitute for freezing the implementation's actual baseline.
 Recheck HEAD and local changes before implementation, and preserve unrelated work.
-This plan does not authorize commits or pushes.
+The original proposal did not authorize commits or pushes.
 
 ## Goal
 

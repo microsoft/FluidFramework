@@ -98,14 +98,21 @@ An oversized required snapshot root fails content delivery explicitly without en
 After the root is delivered, an oversized speculative descendant instead ends prefetch successfully; demand fetching remains available.
 Explicit `GetBlobTrees` requests use ordinary content streams and may return a bounded, incomplete descendant traversal.
 The transport's configured complete-frame limit applies to demand bodies; dispatch does not impose a separate default transport limit.
-While a demand frame is in flight, the sender may open one lookahead item.
-Its payload is not read until the preceding frame succeeds; cancellation or failure drops that queued ownership.
+Demand delivery prepares at most two queued items while sending the current frame.
+Only reader bodies at most 4 KiB are collected during preparation, bounding newly collected queued payloads to 8 KiB plus their bounded reader buffers.
+This bound excludes already-resident bodies and materialized directories, whose backing allocations can be larger.
+Larger bodies remain unread until their frame is sent.
+Preparation shares the frame's operation deadline and the existing filesystem-worker budget.
+Responses and failures stay in source order; cancellation or failure drops queued ownership.
+Opening delivery does not use this queue or read payloads while waiting for credit.
 The server-side `SeaContentStream` yields `SeaContentResponse`, separating ordinary wire messages from owned blob bodies.
 Session dispatch uses body traversal for both demand and opening content; directories remain materialized.
 `into_buffered` supports consumers that need the old wire-response representation and reports body-read failures as explicit errors.
-Both transport loops send checked framing followed by the exact owned body, without collecting file-backed payloads.
+Both transport loops send checked framing followed by the exact owned body, without collecting large file-backed payloads.
 Resident bytes are written directly; readers use bounded asynchronous copy.
-WebSocket writes retain at most one bounded Sea record before flushing it, without a producer queue.
+WebSocket writes assemble short writes into one Sea record of at most 64 KiB before flushing it, without a producer queue.
+The frame prefix can share that record with its body; each complete frame is flushed before the next response.
+The socket uses 16 KiB of read scratch space so record assembly stays within the application-buffer budget.
 One operation deadline covers the prefix, body, and final flush.
 Logical content cancellation takes effect between complete frames; a started frame finishes before its terminal marker, retaining live events.
 A body-read error, short read, peer stop, or deadline expiry aborts the physical direction without sending a completion marker.

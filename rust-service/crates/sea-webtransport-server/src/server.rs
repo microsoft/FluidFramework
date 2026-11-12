@@ -968,6 +968,7 @@ async fn serve_load_streams(
             response,
             limits,
             config.operation_timeout,
+            None,
             metrics,
         )
         .await?;
@@ -1284,7 +1285,8 @@ async fn serve_content_stream(
             Ok(responses) => responses,
             Err(response) => Box::pin(stream::once(async move { response.into() })),
         };
-        let mut responses = responses.peekable();
+        let mut responses =
+            prepare_demand_responses(responses, limits, config.operation_timeout).peekable();
         loop {
             let response = tokio::select! {
                 biased;
@@ -1294,6 +1296,7 @@ async fn serve_content_stream(
             let Some(response) = response else {
                 break;
             };
+            let (response, deadline) = response.inspect_err(|_| send.abort())?;
             let terminal = matches!(
                 response,
                 crate::SeaContentResponse::Message(protocol::Response::Error { .. })
@@ -1320,13 +1323,14 @@ async fn serve_content_stream(
                 response,
                 limits,
                 config.operation_timeout,
+                deadline,
                 metrics,
             );
             tokio::pin!(writing);
             if terminal {
                 writing.await?;
             } else {
-                // Overlap one item's opening with the current write, without reading its body.
+                // Preparation is bounded independently of a stalled network write.
                 let next = std::pin::Pin::new(&mut responses);
                 tokio::select! {
                     biased;
@@ -1350,6 +1354,55 @@ async fn serve_content_stream(
         .await?;
     }
     send.finish().await.map_err(transport_error)
+}
+
+/// Prepares two demand items in order, collecting only reader bodies of at most 4 KiB.
+///
+/// Preparation shares the frame's deadline and existing filesystem-worker admission.
+/// Dropping the stream cancels queued preparation; large bodies remain unread.
+/// Opening delivery does not use this queue, so payload reads still wait for opening credit.
+fn prepare_demand_responses(
+    responses: crate::SeaContentStream,
+    limits: protocol::Limits,
+    operation_timeout: Duration,
+) -> impl futures_util::Stream<
+    Item = Result<(crate::SeaContentResponse, Option<Instant>), WebTransportError>,
+> + Unpin {
+    responses
+        .map(move |response| async move {
+            if matches!(&response, crate::SeaContentResponse::Blob { .. })
+                && response
+                    .validate_frame(protocol::StreamRole::Content, limits)
+                    .is_ok()
+                && let crate::SeaContentResponse::Blob {
+                    id,
+                    body:
+                        sea_core::BlobBody::Reader {
+                            length: length @ 0..=4096,
+                            mut reader,
+                        },
+                } = response
+            {
+                let deadline = Instant::now() + operation_timeout;
+                let mut bytes = vec![0; usize::try_from(length).expect("small body fits usize")];
+                timeout_at(
+                    deadline,
+                    tokio::io::AsyncReadExt::read_exact(&mut reader, &mut bytes),
+                )
+                .await
+                .map_err(|_| WebTransportError::Timeout)?
+                .map_err(transport_error)?;
+                return Ok((
+                    crate::SeaContentResponse::Blob {
+                        id,
+                        body: sea_core::BlobBody::Bytes(bytes.into()),
+                    },
+                    Some(deadline),
+                ));
+            }
+            Ok((response, None))
+        })
+        .buffered(2)
 }
 
 async fn read_next_network_frame(
@@ -1437,6 +1490,7 @@ async fn write_content_response(
     response: crate::SeaContentResponse,
     limits: protocol::Limits,
     operation_timeout: Duration,
+    prepared_deadline: Option<Instant>,
     metrics: &Metrics,
 ) -> Result<(), WebTransportError> {
     let (id, body) = match response {
@@ -1459,13 +1513,20 @@ async fn write_content_response(
     };
     let prefix = protocol::encode_blob_tree_prefix(role, id, body.len(), limits)?;
     tokio::task::consume_budget().await;
+    if prepared_deadline.is_some_and(|deadline| deadline <= Instant::now()) {
+        send.abort();
+        return Err(WebTransportError::Timeout);
+    }
     let stopped = send.stopped();
-    let result = timeout(operation_timeout, async {
+    let deadline = prepared_deadline.unwrap_or_else(|| Instant::now() + operation_timeout);
+    let result = timeout_at(deadline, async {
         tokio::select! {
             biased;
             () = stopped => Err(WebTransportError::Disconnected),
             result = async {
-                send.write_all(prefix.as_bytes()).await?;
+                tokio::io::AsyncWriteExt::write_all(send, prefix.as_bytes())
+                    .await
+                    .map_err(transport_error)?;
                 body.copy_to(send).await.map_err(transport_error)?;
                 tokio::io::AsyncWriteExt::flush(send).await.map_err(transport_error)?;
                 Ok::<(), WebTransportError>(())
@@ -1773,7 +1834,9 @@ mod tests {
     }
 
     /// Returns an indefinitely pending reader with observable poll and drop boundaries.
-    fn pending_body() -> (
+    fn pending_body(
+        length: u64,
+    ) -> (
         crate::SeaContentResponse,
         Arc<tokio::sync::Notify>,
         Arc<AtomicBool>,
@@ -1805,7 +1868,7 @@ mod tests {
         let response = crate::SeaContentResponse::Blob {
             id: [0; 32],
             body: sea_core::BlobBody::Reader {
-                length: 1,
+                length,
                 reader: Box::pin(PendingBody {
                     polled: polled.clone(),
                     dropped: dropped.clone(),
@@ -1825,7 +1888,7 @@ mod tests {
                 reader: Box::pin(reader),
             },
         };
-        let (queued, _, dropped) = pending_body();
+        let (queued, _, dropped) = pending_body(1);
         let (event, ready) = tokio::sync::oneshot::channel();
         let mut harness = LoadHarness::start_bodies(
             Box::pin(stream::once(async move { ready.await.unwrap() }).chain(stream::pending())),
@@ -1866,7 +1929,7 @@ mod tests {
 
     #[tokio::test]
     async fn opening_peer_stop_aborts_a_started_pending_body() {
-        let (body, polled, dropped) = pending_body();
+        let (body, polled, dropped) = pending_body(1);
         let harness =
             LoadHarness::start_bodies(Box::pin(stream::pending()), Box::pin(stream::iter([body])))
                 .await;
@@ -1887,7 +1950,7 @@ mod tests {
 
     #[tokio::test(start_paused = true)]
     async fn cancellation_does_not_restart_the_started_frame_deadline() {
-        let (body, polled, dropped) = pending_body();
+        let (body, polled, dropped) = pending_body(1);
         let mut harness = LoadHarness::start_bodies_with_timeout(
             Box::pin(stream::pending()),
             Box::pin(stream::iter([body])),
@@ -1915,16 +1978,7 @@ mod tests {
 
     #[tokio::test]
     async fn rejected_body_is_not_polled_or_partially_sent() {
-        let (mut response, polled, dropped) = pending_body();
-        if let crate::SeaContentResponse::Blob {
-            body: sea_core::BlobBody::Reader { length, .. },
-            ..
-        } = &mut response
-        {
-            *length = u64::MAX;
-        } else {
-            unreachable!();
-        }
+        let (response, polled, dropped) = pending_body(u64::MAX);
         let (output, mut responses) = tokio::sync::mpsc::unbounded_channel();
         let (_stop, stopped) = watch::channel(false);
         let mut send = TestSend {
@@ -1941,6 +1995,7 @@ mod tests {
                 response,
                 protocol::Limits::default(),
                 Duration::from_secs(1),
+                None,
                 &Metrics::default()
             )
             .await
@@ -1971,19 +2026,19 @@ mod tests {
     #[tokio::test]
     async fn demand_body_failure_or_peer_stop_aborts_without_later_frames() {
         for cancel in [false, true] {
-            let (pending, polled, dropped) = pending_body();
+            let (pending, polled, dropped) = pending_body(8192);
             let first = if cancel {
                 pending
             } else {
                 crate::SeaContentResponse::Blob {
                     id: [0; 32],
                     body: sea_core::BlobBody::Reader {
-                        length: 1,
+                        length: 8192,
                         reader: Box::pin(std::io::Cursor::new(b"")),
                     },
                 }
             };
-            let (queued, queued_polled, queued_dropped) = pending_body();
+            let (queued, queued_polled, queued_dropped) = pending_body(8192);
             let admitted = Arc::new(AtomicU64::new(0));
             let count = admitted.clone();
             let content = Box::pin(stream::iter([first, queued, load_blob(1).into()]).inspect(
@@ -2045,13 +2100,13 @@ mod tests {
                     .await
                     .unwrap();
                 timeout(Duration::from_secs(1), async {
-                    while admitted.load(Ordering::SeqCst) < 2 {
+                    while admitted.load(Ordering::SeqCst) < 3 {
                         tokio::task::yield_now().await;
                     }
                 })
                 .await
                 .unwrap();
-                assert_eq!(admitted.load(Ordering::SeqCst), 2);
+                assert_eq!(admitted.load(Ordering::SeqCst), 3);
                 assert!(futures_util::poll!(Box::pin(queued_polled.notified())).is_pending());
                 stop.send(true).unwrap();
             }
@@ -2063,12 +2118,162 @@ mod tests {
                     .is_err()
             );
             assert!(queued_dropped.load(Ordering::SeqCst));
-            assert_eq!(admitted.load(Ordering::SeqCst), if cancel { 2 } else { 1 });
+            assert_eq!(admitted.load(Ordering::SeqCst), if cancel { 3 } else { 2 });
             assert_partial_demand_frame(responses).await;
             assert!(aborted.load(Ordering::SeqCst));
             assert!(!finished.load(Ordering::SeqCst));
             assert!(!cancel || dropped.load(Ordering::SeqCst));
         }
+    }
+
+    #[tokio::test]
+    async fn demand_preparation_overlaps_two_reads_and_cancels_both() {
+        let (first, first_polled, first_dropped) = pending_body(4096);
+        let (second, second_polled, second_dropped) = pending_body(4096);
+        let (third, third_polled, third_dropped) = pending_body(4096);
+        let mut prepared = prepare_demand_responses(
+            Box::pin(stream::iter([first, second, third])),
+            protocol::Limits::default(),
+            Duration::from_secs(1),
+        );
+        assert!(futures_util::poll!(prepared.next()).is_pending());
+        assert!(futures_util::poll!(Box::pin(first_polled.notified())).is_ready());
+        assert!(futures_util::poll!(Box::pin(second_polled.notified())).is_ready());
+        assert!(futures_util::poll!(Box::pin(third_polled.notified())).is_pending());
+        drop(prepared);
+        assert!(first_dropped.load(Ordering::SeqCst));
+        assert!(second_dropped.load(Ordering::SeqCst));
+        assert!(third_dropped.load(Ordering::SeqCst));
+    }
+
+    #[tokio::test]
+    async fn demand_preparation_preserves_order_and_reports_short_reads() {
+        let (mut source, reader) = tokio::io::duplex(16);
+        let first = crate::SeaContentResponse::Blob {
+            id: [0; 32],
+            body: sea_core::BlobBody::Reader {
+                length: 3,
+                reader: Box::pin(reader),
+            },
+        };
+        let second = crate::SeaContentResponse::Blob {
+            id: [1; 32],
+            body: sea_core::BlobBody::Reader {
+                length: 4,
+                reader: Box::pin(std::io::Cursor::new(b"bad")),
+            },
+        };
+        let mut prepared = prepare_demand_responses(
+            Box::pin(stream::iter([first, second])),
+            protocol::Limits::default(),
+            Duration::from_secs(1),
+        );
+        assert!(futures_util::poll!(prepared.next()).is_pending());
+        tokio::io::AsyncWriteExt::write_all(&mut source, b"abc")
+            .await
+            .unwrap();
+        let (first, deadline) = prepared.next().await.unwrap().unwrap();
+        assert!(deadline.is_some());
+        let crate::SeaContentResponse::Blob { id, body } = first else {
+            panic!("expected a prepared blob");
+        };
+        assert_eq!(id, [0; 32]);
+        assert!(matches!(body, sea_core::BlobBody::Bytes(_)));
+        assert_eq!(body.collect().await.unwrap(), b"abc"[..]);
+        assert!(prepared.next().await.unwrap().is_err());
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn demand_preparation_timeout_releases_pending_reader() {
+        let (response, _, dropped) = pending_body(1);
+        let mut prepared = prepare_demand_responses(
+            Box::pin(stream::iter([response])),
+            protocol::Limits::default(),
+            Duration::from_secs(1),
+        );
+        assert!(futures_util::poll!(prepared.next()).is_pending());
+        tokio::time::advance(Duration::from_secs(2)).await;
+        assert!(matches!(
+            prepared.next().await.unwrap(),
+            Err(WebTransportError::Timeout)
+        ));
+        assert!(dropped.load(Ordering::SeqCst));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn prepared_deadline_survives_cooperative_yield() {
+        for delay in [3, 6] {
+            tokio::spawn(async move {
+                let (response, _, dropped) = pending_body(1);
+                let (output, mut responses) = tokio::sync::mpsc::unbounded_channel();
+                let (_stop, stopped) = watch::channel(false);
+                let writes = Arc::new(AtomicUsize::new(0));
+                let mut send = TestSend {
+                    writes: writes.clone(),
+                    responses: Some(output),
+                    stopped,
+                    fail: Arc::default(),
+                    finished: Arc::default(),
+                };
+                let started = Instant::now();
+                let deadline = started + Duration::from_secs(5);
+                let metrics = Metrics::default();
+                let mut exhausted = false;
+                for _ in 0..256 {
+                    if futures_util::poll!(std::pin::pin!(tokio::task::consume_budget()))
+                        .is_pending()
+                    {
+                        exhausted = true;
+                        break;
+                    }
+                }
+                assert!(exhausted);
+                let mut writing = Box::pin(write_content_response(
+                    &mut send,
+                    protocol::StreamRole::Content,
+                    response,
+                    protocol::Limits::default(),
+                    Duration::from_secs(5),
+                    Some(deadline),
+                    &metrics,
+                ));
+                assert!(futures_util::poll!(&mut writing).is_pending());
+                assert_eq!(writes.load(Ordering::SeqCst), 0);
+                tokio::time::advance(Duration::from_secs(delay)).await;
+                assert!(matches!(writing.await, Err(WebTransportError::Timeout)));
+                assert_eq!(started.elapsed(), Duration::from_secs(delay.max(5)));
+                assert!(send.fail.load(Ordering::SeqCst));
+                assert!(!send.finished.load(Ordering::SeqCst));
+                assert!(dropped.load(Ordering::SeqCst));
+                drop(send);
+                if delay < 5 {
+                    let mut decoder =
+                        protocol::NetworkFrameDecoder::new(protocol::Limits::default());
+                    decoder.push(&responses.recv().await.unwrap());
+                    assert!(decoder.next_frame().unwrap().is_none());
+                    assert!(decoder.finish().is_err());
+                }
+                assert!(responses.recv().await.is_none());
+            })
+            .await
+            .unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn demand_preparation_leaves_larger_bodies_unread() {
+        let (response, polled, dropped) = pending_body(4097);
+        let mut prepared = prepare_demand_responses(
+            Box::pin(stream::iter([response])),
+            protocol::Limits::default(),
+            Duration::from_secs(1),
+        );
+        let (response, deadline) = prepared.next().await.unwrap().unwrap();
+        assert!(deadline.is_none());
+        assert!(futures_util::poll!(Box::pin(polled.notified())).is_pending());
+        assert!(!dropped.load(Ordering::SeqCst));
+        drop(response);
+        assert!(dropped.load(Ordering::SeqCst));
     }
 
     /// Requires a successful bind followed only by an incomplete demand frame.
