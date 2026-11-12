@@ -222,7 +222,7 @@ No live real-service validation performed for this category.
 
 ### 6. Ancient event-signature guards
 
-**Status:** Pending decision. Strong candidate.
+**Status:** Cleanup approved and complete.
 
 - `packages/runtime/container-runtime/src/connectionTelemetry.ts`:
   inbound `idle` handler checks `typeof count === "number"`; comment identifies pre-0.36 loaders
@@ -231,7 +231,14 @@ No live real-service validation performed for this category.
 **Potential change:** Remove historical argument-presence guards after verifying event signatures.
 Keep thresholds and other real telemetry conditions, such as `count >= 100`.
 
-**Decision / changes / validation:** Not yet recorded.
+**Contract audit / decision:** `IDeltaQueueEvents.idle` requires numeric count and duration; the
+non-deprecated legacy/beta queue contract does not allow omission. Installed `2.0.9` DeltaQueue emits
+both arguments. Remove the pre-0.36 count type check and its migration comment; keep `count >= 100`
+and the telemetry payload unchanged. No exported API or conforming behavior changes; no deferred-list entry.
+
+**Validation:** Runtime build passed, including ESM/CJS compilation, type tests, lint/format,
+dependency checks, API reports, and documentation model. No API report changes. Existing
+ContainerRuntime unit suite: 213 passing. No new tests added for this redundant type-guard removal.
 
 ### 7. Dispose versus close adapters
 
@@ -331,7 +338,8 @@ These are not cleanup targets merely because OCV advanced:
 
 Category 1 cleanup is approved and complete. Category 2 is deferred to preserve deprecated legacy/beta
 API behavior. Category 3 cleanup is approved and complete. Category 4 runtime cleanup is approved and complete,
-with loader-side routing deferred. Category 5 cleanup is approved and complete. Categories 6–11 remain pending decision.
+with loader-side routing deferred. Categories 5 and 6 cleanup are approved and complete;
+categories 7–11 remain pending decision.
 Retained/deferred categories should include the reason and any follow-up evidence needed.
 
 ## Deferred list 1: reachable through already-deprecated legacy/beta APIs
