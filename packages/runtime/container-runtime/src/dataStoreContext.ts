@@ -1411,13 +1411,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 					0x14d /* "Should move from detached to attaching" */,
 				);
 				this._attachState = AttachState.Attaching;
-				if (this.channel?.setAttachState) {
-					this.channel.setAttachState(attachState);
-				} else if (this.channel) {
-					// back-compat! To be removed in the future
-					// Added in "2.0.0-rc.2.0.0" timeframe.
-					this.emit("attaching");
-				}
+				this.channel?.setAttachState(attachState);
 				break;
 			}
 			case AttachState.Attached: {
@@ -1433,14 +1427,9 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 						0x14e /* "Should move from attaching to attached" */,
 					);
 					this._attachState = AttachState.Attached;
-					this.channel?.setAttachState?.(attachState);
-					if (this.channel?.setAttachState) {
-						this.channel.setAttachState(attachState);
-					} else if (this.channel) {
-						// back-compat! To be removed in the future
-						// Added in "2.0.0-rc.2.0.0" timeframe.
-						this.emit("attached");
-					}
+					this.channel?.setAttachState(attachState);
+					// TODO: AB#88995: Suspected duplicate notification; investigate removing the second call.
+					this.channel?.setAttachState(attachState);
 				}
 				break;
 			}

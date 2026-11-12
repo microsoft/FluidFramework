@@ -268,7 +268,7 @@ No product or test changes, so no additional execution required for this decisio
 
 ### 8. Datastore attachment-event bridges
 
-**Status:** Pending decision. Additional proof required.
+**Status:** Event-bridge cleanup approved and complete. Visibility accommodation deferred.
 
 - `packages/runtime/datastore/src/dataStoreRuntime.ts`, `attachListener`:
   subscribes through `(this.dataStoreContext as any).once?.(...)` to `attaching` and `attached`.
@@ -281,7 +281,29 @@ Still verify that supported container runtimes consistently invoke the newer att
 **Potential change:** Remove duplicate event bridges and, only with separate proof, obsolete attachment
 ordering accommodations. Validate detached creation, attachment, graph visibility, and event ordering.
 
-**Decision / changes / validation:** Not yet recorded.
+**Contract audit / decision:** `IFluidDataStoreChannel.setAttachState` is required on its
+non-deprecated legacy/beta interface. `IFluidDataStoreContext` does not expose attachment events.
+Installed `2.0.9` context implementations call the channel method directly when present, as supported
+datastore runtimes provide it. Remove the context-event fallback and the datastore runtime's matching
+subscriptions. Preserve checks for an unrealized channel, runtime attachment events, and listener limits.
+
+**Retained / deferred:** `FluidDataStoreRuntime.setAttachState` and `attachGraph` are reachable through
+the non-deprecated legacy/beta runtime class. The former currently establishes local visibility when
+necessary; removing that behavior would impose a new ordering precondition. Record it in deferred list 2.
+Also preserve the existing two method invocations on transition to Attached: eliminating the duplicate
+could change observable custom-channel/event behavior and is outside this guard-removal decision.
+The duplicate is tracked by AB#88995, with an inline TODO at the second invocation.
+The internal context event interface/emitter is left alone to keep this category narrowly scoped.
+
+**Changes:** Replace the datastore constructor's attachment-listener helper with its remaining
+setMaxListeners call placed directly after `super()`; remove its old context-event subscriptions. Call the required channel method
+directly through optional channel access on the context side, retaining the existing invocation count.
+No exported signatures or API reports change.
+
+**Validation:** Datastore/runtime builds passed, including ESM/CJS, type tests, lint/format, dependency
+checks, API reports, and documentation models. Datastore unit tests: 51 passing; runtime/context suites:
+237 passing. E2E build passed. Local attachment/visibility/aliasing selections: OCV 134 passing,
+2 pending; N-1/cross-client 1,040 passing, 48 pending. No live real-service validation performed.
 
 ### 9. Document-unique-ID fallbacks
 
@@ -351,7 +373,8 @@ These are not cleanup targets merely because OCV advanced:
 Category 1 cleanup is approved and complete. Category 2 is deferred to preserve deprecated legacy/beta
 API behavior. Category 3 cleanup is approved and complete. Category 4 runtime cleanup is approved and complete,
 with loader-side routing deferred. Categories 5 and 6 cleanup are approved and complete;
-category 7 is deferred to preserve non-deprecated legacy/beta API behavior; categories 8–11 remain pending decision.
+category 7 is deferred to preserve non-deprecated legacy/beta API behavior. Category 8 event-bridge
+cleanup is approved and complete, with visibility behavior deferred; categories 9–11 remain pending decision.
 Retained/deferred categories should include the reason and any follow-up evidence needed.
 
 ## Deferred list 1: reachable through already-deprecated legacy/beta APIs
@@ -368,6 +391,7 @@ These are candidates for a separately approved API-removal effort, not this clea
 | Category / candidate | API preserving reachability | Non-deprecation evidence | Future action |
 | --- | --- | --- | --- |
 | 7. Runtime `disposeFn ?? closeFn` fallback | Optional `IContainerContext.disposeFn` and required `closeFn` on non-deprecated `@legacy @beta` IContainerContext | Neither member is deprecated; `closeFn` remarks explicitly document fallback when disposal is omitted | Establish and deprecate the optional-context contract before any separately approved breaking change. Preserve summarizer disposal and error propagation for conforming contexts meanwhile. |
+| 8. Automatic graph attachment when entering Attaching; existing duplicate Attached notifications | Non-deprecated `@legacy @beta` FluidDataStoreRuntime and IFluidDataStoreChannel attachment methods | Neither the runtime class nor attachment methods are deprecated | Audit and stage any new graph-visibility ordering requirement or notification-count change separately; retain current observable behavior in this cleanup. |
 
 When adding an entry, identify the compatibility path, the API that makes it reachable, evidence that
 the API is not deprecated, and the prerequisite for a separate deprecation/removal effort. If a candidate

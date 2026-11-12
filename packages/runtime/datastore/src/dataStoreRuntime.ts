@@ -408,6 +408,7 @@ export class FluidDataStoreRuntime
 		policies?: Partial<IFluidDataStorePolicies>,
 	) {
 		super();
+		this.setMaxListeners(Number.MAX_SAFE_INTEGER);
 		this.sharedObjectRegistry = new LegacyTypeAwareRegistry(sharedObjectRegistry);
 
 		assert(
@@ -530,7 +531,6 @@ export class FluidDataStoreRuntime
 			this.objectsRoutingContext,
 		);
 
-		this.attachListener();
 		this._attachState = dataStoreContext.attachState;
 
 		/**
@@ -1521,24 +1521,6 @@ export class FluidDataStoreRuntime
 	private setChannelDirty(address: string): void {
 		this.verifyNotClosed();
 		this.dataStoreContext.setChannelDirty(address);
-	}
-
-	private attachListener(): void {
-		this.setMaxListeners(Number.MAX_SAFE_INTEGER);
-
-		// back-compat, to be removed in the future.
-		// Added in "2.0.0-rc.2.0.0" timeframe.
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-		(this.dataStoreContext as any).once?.("attaching", () => {
-			this.setAttachState(AttachState.Attaching);
-		});
-
-		// back-compat, to be removed in the future.
-		// Added in "2.0.0-rc.2.0.0" timeframe.
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-		(this.dataStoreContext as any).once?.("attached", () => {
-			this.setAttachState(AttachState.Attached);
-		});
 	}
 
 	private verifyNotClosed(): void {
