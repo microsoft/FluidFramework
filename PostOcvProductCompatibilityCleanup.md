@@ -423,7 +423,7 @@ Service-client connection/audience E2E tests require service setup and were not 
 
 ### 13. Parent-context summarizer callback guard
 
-**Status:** Pending decision.
+**Status:** Cleanup approved and complete.
 
 - `packages/runtime/container-runtime/src/channelCollection.ts`, `formParentContext`:
   `context.getCreateChildSummarizerNodeFn?.(...args)`.
@@ -431,7 +431,18 @@ Service-client connection/audience E2E tests require service setup and were not 
 - Audit wrapper callers/mocks before removal. Optional call can silently return undefined where a
   callback is promised.
 
-**Decision / changes / validation:** Not yet recorded.
+**Contract audit / decision:** `formParentContext` receives a context implementing the required
+IFluidParentContext method. Callers wrap ContainerRuntime or another required parent context, including
+the experimental composable collection. Current mocks supply the method where creation/summarization
+uses it. Installed `2.0.9` datastore context provides it. Remove the optional call without changing
+legacy/beta signatures or conforming behavior; no deferred-list entry needed.
+
+**Changes:** Forward directly to `context.getCreateChildSummarizerNodeFn(...args)`.
+
+**Validation:** Runtime build passed, including ESM/CJS, type tests, lint/format, dependency checks,
+API reports, and documentation model; no report changes. Runtime/channel/context/datastore-creation/
+summarizer-node suites: 289 passing. Local incremental summaries across OCV, N-1, and cross-client:
+36 passing. No live real-service validation performed.
 
 ### 14. Residual context attachment-event emitter infrastructure
 
@@ -490,7 +501,8 @@ category 7 is deferred to preserve non-deprecated legacy/beta API behavior. Cate
 cleanup is approved and complete, with visibility behavior deferred. Category 9 cleanup is approved and complete;
 category 10 is retained/deferred for storage lifecycle and API behavior. Category 11 is retained for
 current correctness, with its explanatory comment update approved and complete. Original categories audited;
-the structural scan added categories 12–14. Category 12 cleanup is approved and complete; categories 13–14 remain pending.
+the structural scan added categories 12–14. Category 12 cleanup is approved and complete; category 13
+cleanup is approved and complete; category 14 remains pending.
 Retained/deferred categories should include the reason and any follow-up evidence needed.
 
 ## Deferred list 1: reachable through already-deprecated legacy/beta APIs
