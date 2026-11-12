@@ -117,19 +117,6 @@ Use <ApiLink package="fluid-framework" api="TreeView.compatibility">`TreeView.co
 Generally, the most important properties of the `compatibility` object to monitor are <ApiLink package="fluid-framework" api="SchemaCompatibilityStatus.canView">`canView`</ApiLink> and <ApiLink package="fluid-framework" api="SchemaCompatibilityStatus.canUpgrade">`canUpgrade`</ApiLink>.
 `canView` indicates that the view schema is [compatible](./index.mdx#schema-compatibility) with the stored schema while `canUpgrade` indicates that it is valid to [upgrade the schema](./index.mdx#schema-upgrade-process).
 
-Use these flags together when opening a document: if `canView` is false but `canUpgrade` is true, apply the upgrade before accessing the view's data.
-A true `canUpgrade` means that it is possible to upgrade the schema in a way that preserves existing content and supports the requesting view; it does not necessarily mean that an upgrade is required or that calling `upgradeSchema()` will change the stored schema.
-
-Preserving enabled staged changes does not allow upgrades that omit existing optional fields from an object's view schema.
-A view that allows unknown optional fields can read such a document, but must declare those fields to upgrade it.
-
-To check compatibility across releases, use snapshot validation in addition to document-loading checks.
-The current schema must be able to upgrade documents from every historical snapshot, and historical schemas within `minVersionForCollaboration` must be able to view current documents without an upgrade.
-That second requirement is stricter than merely allowing an older client to upgrade a document.
-
-Passing snapshot validation does not apply upgrades for your application or test every feature-flag configuration.
-The [snapshot helpers](./testing-schema-upgrades.mdx#checking-schema-compatibility-in-tests) currently assume restrictive staging, so supplement them with live-document tests for other policies and for code that calls `upgradeSchema()` when viewing requires it.
-
 ### Monitoring Remote Schema Changes
 
 In collaborative applications, other clients may upgrade the document's schema while you're working.
