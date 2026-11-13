@@ -38,14 +38,15 @@ import {
 import {
 	getGCDeletedStateFromSummary,
 	getGCStateFromSummary,
+	// eslint-disable-next-line import-x/no-internal-modules -- Reuse the GC suite's summary decoders in this lifecycle test.
 } from "../gc/gcTestSummaryUtils.js";
 
 /** Creates reproducible, poorly compressible bytes without a live randomness source. */
 function createRandomBytes(length: number, seed: number): Uint8Array<ArrayBuffer> {
 	let state = seed;
 	return Uint8Array.from({ length }, () => {
-		state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
-		return state >>> 24;
+		state = (state * 1664525 + 1013904223) % 4294967296;
+		return Math.floor(state / 16777216);
 	});
 }
 
@@ -326,7 +327,8 @@ describeCompat("Native checkpoints", "NoCompat", (getTestObjectProvider, apis) =
 					assert.equal(typeof markedState.gcNodes[route]?.unreferencedTimestampMs, "number");
 				}
 				for (const route of retainedRoutes) {
-					const node = markedState.gcNodes[route];
+					const node: (typeof markedState.gcNodes)[string] | undefined =
+						markedState.gcNodes[route];
 					assert(node !== undefined);
 					assert.equal(node.unreferencedTimestampMs, undefined, `Retained root ${route}`);
 				}
