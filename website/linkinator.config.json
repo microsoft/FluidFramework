@@ -1,0 +1,13 @@
+{
+	"recurse": true,
+	"checkCss": true,
+	"checkFragments": true,
+	"concurrency": 20,
+	"retryErrors": true,
+	"verbosity": "error",
+	"skip": [
+		"^(?!http://127\\.0\\.0\\.1:3000(?:/|$))",
+		"^http://127\\.0\\.0\\.1:3000/assets/css/styles\\..*\\.css",
+		"^http://127\\.0\\.0\\.1:3000/pagefind/"
+	]
+}
