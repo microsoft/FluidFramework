@@ -408,6 +408,7 @@ export class FluidDataStoreRuntime
 		policies?: Partial<IFluidDataStorePolicies>,
 	) {
 		super();
+		this.setMaxListeners(Number.MAX_SAFE_INTEGER);
 		this.sharedObjectRegistry = new LegacyTypeAwareRegistry(sharedObjectRegistry);
 
 		assert(
@@ -530,7 +531,6 @@ export class FluidDataStoreRuntime
 			this.objectsRoutingContext,
 		);
 
-		this.attachListener();
 		this._attachState = dataStoreContext.attachState;
 
 		/**
@@ -705,10 +705,7 @@ export class FluidDataStoreRuntime
 				// In first two cases we will encode result as strings in more compact form, with leading underscore,
 				// to ensure no overlap with user-provided DDS names (see validateChannelId())
 				if (this.visibilityState === VisibilityState.GloballyVisible) {
-					// Due to back-compat, we could not depend yet on generateDocumentUniqueId() being there.
-					// We can remove the need to leverage uuid() as fall-back in couple releases.
-					const res =
-						this.dataStoreContext.containerRuntime.generateDocumentUniqueId?.() ?? uuid();
+					const res = this.dataStoreContext.containerRuntime.generateDocumentUniqueId();
 					id = typeof res === "number" ? encodeCompactIdToString(2 * res + 1, "_") : res;
 				} else {
 					// container is detached, only one client observes content, no way to hit collisions with other clients.
@@ -1521,24 +1518,6 @@ export class FluidDataStoreRuntime
 	private setChannelDirty(address: string): void {
 		this.verifyNotClosed();
 		this.dataStoreContext.setChannelDirty(address);
-	}
-
-	private attachListener(): void {
-		this.setMaxListeners(Number.MAX_SAFE_INTEGER);
-
-		// back-compat, to be removed in the future.
-		// Added in "2.0.0-rc.2.0.0" timeframe.
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-		(this.dataStoreContext as any).once?.("attaching", () => {
-			this.setAttachState(AttachState.Attaching);
-		});
-
-		// back-compat, to be removed in the future.
-		// Added in "2.0.0-rc.2.0.0" timeframe.
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-		(this.dataStoreContext as any).once?.("attached", () => {
-			this.setAttachState(AttachState.Attached);
-		});
 	}
 
 	private verifyNotClosed(): void {

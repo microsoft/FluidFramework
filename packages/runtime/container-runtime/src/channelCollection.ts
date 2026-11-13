@@ -258,7 +258,7 @@ export function formParentContext<
 			return context.addedGCOutboundRoute(...args);
 		},
 		getCreateChildSummarizerNodeFn: (...args) => {
-			return context.getCreateChildSummarizerNodeFn?.(...args);
+			return context.getCreateChildSummarizerNodeFn(...args);
 		},
 		deleteChildSummarizerNode: (...args) => {
 			return context.deleteChildSummarizerNode(...args);

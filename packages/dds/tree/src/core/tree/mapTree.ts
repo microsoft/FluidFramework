@@ -68,7 +68,11 @@ export function deepCopyMapTree(mapTree: MinimalMapTreeNodeView): ExclusiveMapTr
 					newField.push(childClone);
 					nexts.push([childClone.fields, child.fields]);
 				}
-				fields.set(key, newField);
+				// PERFORMANCE: This compacting copy removes spare backing-array capacity on V8.
+				// This trades copy time and spare capacity for lower retained memory, especially for single-child fields.
+				// This tradeoff should be reconsidered with other forest performance optimizations, especially
+				// those that change the storage format of single-child fields and could make exact sizing less worthwhile.
+				fields.set(key, [...newField]);
 			}
 		}
 	}

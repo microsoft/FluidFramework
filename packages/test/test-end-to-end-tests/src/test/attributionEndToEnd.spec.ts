@@ -31,7 +31,6 @@ import {
 	ITestObjectProvider,
 	createSummarizer,
 	summarizeNow,
-	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
 const stringId = "sharedStringKey";
@@ -113,7 +112,7 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	const sharedStringFromContainer = async (container: IContainer): Promise<SharedString> => {
-		const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		return dataObject.getSharedObject<SharedString>(stringId);
 	};
 

@@ -960,9 +960,6 @@ async function loadSummarizerContainerAndMakeSummaryInternal(
 			let summarySubmitted: SummarizeOnDemandResults["summarySubmitted"];
 			let summaryOpBroadcasted: SummarizeOnDemandResults["summaryOpBroadcasted"];
 			try {
-				if (container.getEntryPoint === undefined) {
-					throw new GenericError("container.getEntryPoint() is undefined");
-				}
 				const fluidObject = (await container.getEntryPoint()) as FluidObject<SummarizerLike>;
 				const summarizer = fluidObject?.ISummarizer;
 				if (summarizer === undefined) {

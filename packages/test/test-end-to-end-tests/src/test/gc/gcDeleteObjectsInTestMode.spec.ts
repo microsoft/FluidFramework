@@ -19,8 +19,6 @@ import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
-	getDataStoreEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
@@ -221,7 +219,7 @@ describeCompat("GC delete objects in test mode", "FullCompat", (getTestObjectPro
 				},
 			};
 			const container = await provider.makeTestContainer(testContainerConfig);
-			mainDataStore = await getContainerEntryPointBackCompat<ITestDataObject>(container);
+			mainDataStore = (await container.getEntryPoint()) as ITestDataObject;
 
 			// Send an op before GC runs. GC needs current timestamp to work with which is retrieved from ops. Without
 			// any op, GC will not run.
@@ -230,7 +228,7 @@ describeCompat("GC delete objects in test mode", "FullCompat", (getTestObjectPro
 
 			const summarizerContainer = await provider.loadTestContainer(testContainerConfig);
 			const summarizerMainDataStore =
-				await getContainerEntryPointBackCompat<ITestDataObject>(summarizerContainer);
+				(await summarizerContainer.getEntryPoint()) as ITestDataObject;
 			summarizerContainerRuntime = summarizerMainDataStore._context
 				.containerRuntime as ContainerRuntime;
 		});
@@ -248,7 +246,7 @@ describeCompat("GC delete objects in test mode", "FullCompat", (getTestObjectPro
 		it("marks non-root data stores as referenced / unreferenced correctly", async () => {
 			const dataStore =
 				await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
-			const dataObject = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore);
+			const dataObject = (await dataStore.entryPoint.get()) as ITestDataObject;
 			// Add data store's handle in root component and verify its marked as referenced.
 			mainDataStore._root.set("nonRootDS", dataObject.handle);
 			await validateDataStoreReferenceState(
@@ -287,7 +285,7 @@ describeCompat("GC delete objects in test mode", "FullCompat", (getTestObjectPro
 			// Create a non-root data store - dataStore1.
 			const dataStore1 =
 				await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
-			const dataObject1 = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore1);
+			const dataObject1 = (await dataStore1.entryPoint.get()) as ITestDataObject;
 			// Add dataStore1's handle in root component and verify its marked as referenced.
 			mainDataStore._root.set("nonRootDS1", dataObject1.handle);
 			await validateDataStoreReferenceState(
@@ -301,7 +299,7 @@ describeCompat("GC delete objects in test mode", "FullCompat", (getTestObjectPro
 			// Create another non-root data store - dataStore2.
 			const dataStore2 =
 				await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
-			const dataObject2 = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore2);
+			const dataObject2 = (await dataStore2.entryPoint.get()) as ITestDataObject;
 			// Add dataStore2's handle in dataStore1 and verify its marked as referenced.
 			dataObject1._root.set("nonRootDS2", dataObject2.handle);
 			await validateDataStoreReferenceState(

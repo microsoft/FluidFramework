@@ -65,6 +65,8 @@ export class OpSplitter {
 
 	constructor(
 		chunks: [string, string[]][],
+		// Callers that only reconstruct received or stored chunked messages do not need a submit callback.
+		// The callback is required only when splitting and sending an outgoing message.
 		private readonly submitBatchFn:
 			| ((batch: IBatchMessage[], referenceSequenceNumber?: number) => number)
 			| undefined,
@@ -192,7 +194,10 @@ export class OpSplitter {
 			socketSize >= this.maxBatchSizeInBytes,
 		);
 
-		assert(this.submitBatchFn !== undefined, 0x519 /* We don't support old loaders */);
+		assert(
+			this.submitBatchFn !== undefined,
+			0x519 /* Chunk submission requires a submit callback */,
+		);
 		// Send the first N-1 chunks immediately
 		for (const chunk of chunks.slice(0, -1)) {
 			this.submitBatchFn(
