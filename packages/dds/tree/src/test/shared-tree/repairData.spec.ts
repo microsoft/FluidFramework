@@ -349,6 +349,38 @@ describe("Repair Data", () => {
 			unsubscribe();
 		});
 	});
+
+	it("is only destroyed in the forest for trimmed commits that have it", () => {
+		const provider = new TestTreeProviderLite(2);
+		const config = new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation });
+		const view1 = provider.trees[0].kernel.viewWith(config);
+		view1.initialize(["A"]);
+		provider.synchronizeMessages();
+		const view2 = provider.trees[1].kernel.viewWith(config);
+
+		const forest = view2.checkout.forest;
+		let visitors = 0;
+		const acquireVisitor = forest.acquireVisitor.bind(forest);
+		forest.acquireVisitor = () => {
+			visitors++;
+			return acquireVisitor();
+		};
+
+		view1.root.removeAt(0);
+		provider.synchronizeMessages();
+		assert.equal(view2.checkout.getRemovedRoots().length, 1);
+
+		const insertCount = 5;
+		for (let index = 0; index < insertCount; index++) {
+			view1.root.insertAtEnd(`${index}`);
+			provider.synchronizeMessages();
+		}
+		assert.deepEqual([...view2.root], ["0", "1", "2", "3", "4"]);
+		assert.equal(view2.checkout.getRemovedRoots().length, 0);
+		// Each applied commit takes one visitor, and destroying the removal's repair data takes one more.
+		// Trimming the other commits, which have no repair data, takes none.
+		assert.equal(visitors, 1 + insertCount + 1);
+	});
 });
 
 function advanceCollabWindow(provider: TestTreeProviderLite, removeSequenceNumber: number) {
