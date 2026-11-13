@@ -6,7 +6,10 @@
 import { strict as assert } from "assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type {
+	IContainer,
+	IRuntimeFactory,
+} from "@fluidframework/container-definitions/internal";
 import {
 	captureFullContainerState,
 	createDetachedContainer,
@@ -16,6 +19,7 @@ import {
 	waitContainerToCatchUp,
 } from "@fluidframework/container-loader/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentService,
 	IDocumentServiceFactory,
@@ -33,9 +37,10 @@ import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
+	getRequiredPendingLocalState,
 	timeoutPromise,
 	type ITestFluidObject,
-	type LocalCodeLoader,
+	LocalCodeLoader,
 	type TestFluidObject,
 } from "@fluidframework/test-utils/internal";
 
@@ -207,6 +212,84 @@ const initialize = async (): Promise<{
 };
 
 describe("captureFullContainerState", () => {
+	const binarySummaryCaptureModes: ("inline" | "reference")[] = ["inline", "reference"];
+	for (const blobCaptureMode of binarySummaryCaptureModes) {
+		it(`preserves binary summary bytes through ${blobCaptureMode} capture, online/offline load, and reserialization`, async () => {
+			const deltaConnectionServer = LocalDeltaConnectionServer.create();
+			const { urlResolver, documentServiceFactory, codeDetails, runtimeFactory } =
+				createLoader({ deltaConnectionServer });
+			const binaryContents = new Uint8Array([0xff, 0xfe, 0x00, 0x80, 0xc0]);
+			let binaryLoads = 0;
+			const binaryRuntimeFactory: IRuntimeFactory = {
+				get IRuntimeFactory() {
+					return this;
+				},
+				instantiateRuntime: async (context, existing) => {
+					if (existing) {
+						const blobId = context.baseSnapshot?.blobs.binary;
+						assert(blobId !== undefined, "Expected binary summary blob");
+						const contents = await context.storage.readBlob(blobId);
+						assert.deepStrictEqual(new Uint8Array(contents), binaryContents);
+						binaryLoads++;
+					}
+					const runtime = await runtimeFactory.instantiateRuntime(context, existing);
+					const createSummary = runtime.createSummary.bind(runtime);
+					runtime.createSummary = (...args) => {
+						const summary = createSummary(...args);
+						summary.tree.binary = { type: SummaryType.Blob, content: binaryContents };
+						return summary;
+					};
+					return runtime;
+				},
+			};
+			const codeLoader = new LocalCodeLoader([[codeDetails, binaryRuntimeFactory]]);
+			const containers: IContainer[] = [];
+			try {
+				const container = await createDetachedContainer({
+					codeDetails,
+					codeLoader,
+					documentServiceFactory,
+					urlResolver,
+				});
+				containers.push(container);
+				await container.attach(urlResolver.createCreateNewRequest("binary-summary"));
+				const url = await container.getAbsoluteUrl("");
+				assert(url !== undefined);
+				const pendingLocalState = await captureFullContainerState({
+					urlResolver,
+					documentServiceFactory,
+					request: { url },
+					blobCaptureMode,
+				});
+				const online = await loadFrozenContainerFromPendingState({
+					codeLoader,
+					pendingLocalState,
+					urlResolver,
+					documentServiceFactory: makeFactoryWithFailingReadBlob(documentServiceFactory),
+					request: { url },
+				});
+				containers.push(online);
+				const offline = await loadFrozenContainerFromPendingState({
+					codeLoader,
+					pendingLocalState,
+				});
+				containers.push(offline);
+				const reserialized = await getRequiredPendingLocalState(offline);
+				const restored = await loadFrozenContainerFromPendingState({
+					codeLoader,
+					pendingLocalState: reserialized,
+				});
+				containers.push(restored);
+				assert.strictEqual(binaryLoads, 3);
+			} finally {
+				for (const container of containers) {
+					container.close();
+				}
+				await deltaConnectionServer.close();
+			}
+		});
+	}
+
 	it("captures state that can rehydrate a frozen container with matching data", async () => {
 		const { container, testFluidObject, urlResolver, codeLoader, documentServiceFactory } =
 			await initialize();

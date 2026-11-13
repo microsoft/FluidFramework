@@ -46,7 +46,10 @@ import { v4 as uuid } from "uuid";
 import { Container } from "../container.js";
 import { loadContainerToSequenceNumber } from "../loadContainerToSequenceNumber.js";
 import { Loader } from "../loader.js";
-import { getDetachedContainerStateFromSerializedContainer } from "../utils.js";
+import {
+	deserializeBlobContents,
+	getDetachedContainerStateFromSerializedContainer,
+} from "../utils.js";
 
 import { failProxy } from "./failProxy.js";
 import {
@@ -123,7 +126,7 @@ async function createSnapshot(sequenceNumber: number): Promise<ISnapshot> {
 	const blobContents = new Map(
 		Object.entries(state.snapshotBlobs).map(([id, content]) => [
 			id,
-			stringToBuffer(content, "utf8"),
+			deserializeBlobContents(content),
 		]),
 	);
 	const protocolAttributes = JSON.parse(

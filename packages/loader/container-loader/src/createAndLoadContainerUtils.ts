@@ -716,13 +716,10 @@ export async function captureFullContainerState({
 		const gcData = captureAttachmentPayloads
 			? await parseGcSnapshotData(baseSnapshot, storage)
 			: undefined;
-		// Structural snapshot blobs (JSON/text the runtime authored) are
-		// UTF-8-encoded; attachment blobs may carry arbitrary binary bytes
-		// and are base64-encoded. Keep them on separate fields of the
-		// pending state so the load side can apply the matching decoder
-		// without ambiguity. See IPendingContainerState.attachmentBlobContents.
+		// Structural blobs retain legacy text or explicitly tagged base64;
+		// attachments use a separate field of untagged base64.
 		const [snapshotBlobs, attachmentBlobContents] = await Promise.all([
-			readReferencedSnapshotBlobs(snapshot, storage), // utf8 encoded
+			readReferencedSnapshotBlobs(snapshot, storage),
 			captureAttachmentPayloads
 				? captureReferencedAttachmentBlobs(baseSnapshot, storage, gcData) // base64 encoded
 				: Promise.resolve({}),

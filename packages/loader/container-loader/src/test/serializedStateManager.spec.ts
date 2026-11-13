@@ -33,6 +33,7 @@ import {
 	type ISerializedStateManagerDocumentStorageService,
 	type SnapshotWithBlobs,
 } from "../serializedStateManager.js";
+import { deserializeBlobContents } from "../utils.js";
 
 import { failSometimeProxy } from "./failProxy.js";
 
@@ -90,7 +91,7 @@ class MockStorageAdapter implements ISerializedStateManagerDocumentStorageServic
 	constructor(pls: SnapshotWithBlobs = pendingLocalState) {
 		this.snapshot = pls.baseSnapshot;
 		for (const [id, blob] of Object.entries(pls.snapshotBlobs)) {
-			this.blobs.set(id, stringToBuffer(blob, "utf8"));
+			this.blobs.set(id, deserializeBlobContents(blob));
 		}
 	}
 	public cacheSnapshotBlobs(snapshotBlobs: Map<string, ArrayBuffer>): void {
@@ -180,6 +181,7 @@ const getAttributesFromPendingState = (
 	}
 	const attributesId = pendingState.baseSnapshot.trees[".protocol"].blobs.attributes;
 	const attributes = pendingState.snapshotBlobs[attributesId];
+	assert(typeof attributes === "string", "Protocol attributes should retain text encoding");
 	return JSON.parse(attributes) as IDocumentAttributes;
 };
 

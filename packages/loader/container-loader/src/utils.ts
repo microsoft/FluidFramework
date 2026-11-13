@@ -213,7 +213,7 @@ export function convertSnapshotToSnapshotInfo(snapshot: ISnapshot): SerializedSn
 	);
 	const snapshotBlobs: ISerializableBlobContents = {};
 	for (const [blobId, arrayBufferLike] of snapshot.blobContents.entries()) {
-		snapshotBlobs[blobId] = bufferToString(arrayBufferLike, "utf8");
+		snapshotBlobs[blobId] = serializeBlobContents(arrayBufferLike);
 	}
 	return {
 		baseSnapshot: snapshot.snapshotTree,
@@ -234,7 +234,7 @@ export function convertSnapshotInfoToSnapshot(
 ): ISnapshot {
 	const blobContents = new Map<string, ArrayBuffer>();
 	for (const [blobId, serializedContent] of Object.entries(snapshotInfo.snapshotBlobs)) {
-		blobContents.set(blobId, stringToBuffer(serializedContent, "utf8"));
+		blobContents.set(blobId, deserializeBlobContents(serializedContent));
 	}
 	return {
 		snapshotTree: snapshotInfo.baseSnapshot,
@@ -351,12 +351,43 @@ function isPendingDetachedContainerState(
 export function convertISnapshotToSnapshotWithBlobs(snapshot: ISnapshot): SnapshotWithBlobs {
 	const snapshotBlobs: ISerializableBlobContents = {};
 	for (const [id, blob] of snapshot.blobContents.entries()) {
-		snapshotBlobs[id] = bufferToString(blob, "utf8");
+		snapshotBlobs[id] = serializeBlobContents(blob);
 	}
 	return {
 		baseSnapshot: snapshot.snapshotTree,
 		snapshotBlobs,
 	};
+}
+
+/**
+ * Serializes summary blob bytes without changing the legacy representation of UTF-8 text.
+ * @param blob - Raw summary blob contents.
+ * @returns Text when the UTF-8 round-trip is lossless, otherwise tagged base64.
+ */
+export function serializeBlobContents(
+	blob: ArrayBufferLike,
+): ISerializableBlobContents[string] {
+	const text = bufferToString(blob, "utf8");
+	const originalBytes = new Uint8Array(blob);
+	const encodedBytes = new Uint8Array(stringToBuffer(text, "utf8"));
+	if (
+		originalBytes.length === encodedBytes.length &&
+		originalBytes.every((value, index) => value === encodedBytes[index])
+	) {
+		return text;
+	}
+	return { encoding: "base64", contents: bufferToString(blob, "base64") };
+}
+
+/**
+ * Decodes legacy text or explicitly encoded summary blob contents.
+ * @param blob - Serialized summary blob contents.
+ * @returns The original blob bytes.
+ */
+export function deserializeBlobContents(blob: ISerializableBlobContents[string]): ArrayBuffer {
+	return typeof blob === "string"
+		? stringToBuffer(blob, "utf8")
+		: stringToBuffer(blob.contents, blob.encoding);
 }
 
 /**

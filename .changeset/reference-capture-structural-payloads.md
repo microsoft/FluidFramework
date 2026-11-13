@@ -7,6 +7,8 @@ Reference-mode capture preserves structural snapshot contents
 `captureFullContainerState` with `blobCaptureMode: "reference"` now retains structural snapshot contents, attachment references, and saved operations while omitting attachment bytes.
 The default remains `"inline"`; no new mode is introduced.
 Reference captures can be larger and perform more structural reads than before.
+Structural summary blobs retain their original bytes, including non-UTF-8 binary contents.
+Text keeps its legacy serialized representation; binary entries use tagged base64 and require an updated loader to replay.
 
 Reference capture uses the same snapshot-subtree filtering as inline capture; this change does not fix existing capture-completeness limitations.
 Offline loading requires a URL accepted by `tryParseCompatibleResolvedUrl` and fails if an omitted attachment is accessed.
