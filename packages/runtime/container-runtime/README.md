@@ -36,6 +36,11 @@ Read the **@fluidframework/container-runtime** API documentation at <https://flu
 <!-- prettier-ignore-end -->
 <!-- markdown-magic:end -->
 
+## Design proposals
+
+[Runtime-controlled document history](RUNTIME_HISTORY.md) describes a proposed summary-owned timeline archive.
+This proposal is not implemented.
+
 ## Data Virtualization For DataStores (Work in Progress)
 
 It's a capability to exclude some content from initial snapshot (used when loading container) and thus improve boot
