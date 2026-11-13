@@ -136,3 +136,7 @@ export {
 	loaderSupportRequirementsForRuntime,
 	dataStoreSupportRequirementsForRuntime,
 } from "./runtimeLayerCompatState.js";
+export {
+	NativeCheckpointCoordinator,
+	type NativeCheckpointCoordinatorOptions,
+} from "./nativeCheckpointCoordinator.js";

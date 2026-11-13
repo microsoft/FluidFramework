@@ -1561,12 +1561,32 @@ export class ContainerRuntime
 		return checkpoint;
 	}
 
+	/**
+	 * Reads retained native content without changing the live document.
+	 * Shares capture's single-entry reconstruction cache; does not create a historical container.
+	 * Images remain attachment references and are not downloaded by this operation.
+	 */
+	public async loadNativeCheckpointSummary(id: string): Promise<ISummaryTree> {
+		const checkpoint = this.nativeCheckpointState?.checkpoints.find(
+			(entry) => entry.id === id,
+		);
+		if (checkpoint === undefined) {
+			throw new UsageError("Unknown native checkpoint");
+		}
+		const bytes =
+			this.nativeCheckpointBase?.checkpoint.route === checkpoint.route
+				? this.nativeCheckpointBase.bytes
+				: await this.loadNativeCheckpoint(checkpoint);
+		this.nativeCheckpointBase = { checkpoint, bytes };
+		return decodeNativeCheckpoint(bytes.buffer);
+	}
+
 	/** Resolves only the bounded attachment dependency chain, never historical summary handles. */
 	private async loadNativeCheckpoint(checkpoint: NativeCheckpoint): Promise<Uint8Array> {
 		assert(this.nativeCheckpointState !== undefined, "Checkpoint catalog must exist");
 		return loadNativeCheckpointBytes(
 			checkpoint,
-			this.nativeCheckpointState.checkpoints,
+			[...this.nativeCheckpointState.checkpoints],
 			async (route) => {
 				const storageId = this.lookupTemporaryBlobStorageId(route.slice("/_blobs/".length));
 				assert(storageId !== undefined, "Checkpoint blob must be attached");

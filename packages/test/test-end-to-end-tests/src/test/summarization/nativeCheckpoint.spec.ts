@@ -7,12 +7,14 @@ import { strict as assert } from "assert";
 
 import { enableOnNewFileKey, getRuntimeAttributor } from "@fluid-experimental/attributor";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { finishLoggingReport, ValueType } from "@fluid-tools/benchmark";
+import { finishLoggingReport, ValueType, type Measurement } from "@fluid-tools/benchmark";
 import { LoaderHeader, type IContainer } from "@fluidframework/container-definitions/internal";
 import { loadContainerAfterNativeCheckpointRestore } from "@fluidframework/container-loader/internal";
-import type {
-	ContainerRuntime as ContainerRuntimeType,
-	IGCRuntimeOptions,
+import {
+	NativeCheckpointCoordinator,
+	neverCancelledSummaryToken,
+	type ContainerRuntime as ContainerRuntimeType,
+	type IGCRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
@@ -26,7 +28,8 @@ import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
 import type { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
-import { spy, stub } from "sinon";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { spy, stub, useFakeTimers } from "sinon";
 import {
 	createSummarizer,
 	createTestConfigProvider,
@@ -113,6 +116,320 @@ describeCompat("Native checkpoints", "NoCompat", (getTestObjectProvider, apis) =
 		await assert.rejects(runtime.createNativeCheckpoint("pending"), /acknowledged/);
 		assert.deepEqual(runtime.getNativeCheckpoints(), []);
 	});
+
+	it("coordinates acknowledged capture and retention without leaking runtime listeners", async () => {
+		const provider = getTestObjectProvider();
+		const source = await provider.makeTestContainer(config);
+		await waitForContainerConnection(source);
+		const runtime = await getRuntime(source);
+		await provider.ensureSynchronized();
+		provider.opProcessingController.resumeProcessing();
+		const originalListeners = runtime.listenerCount("op");
+		const coordinator = new NativeCheckpointCoordinator(runtime);
+		try {
+			const checkpoint = await coordinator.capture("coordinated");
+			assert(
+				checkpoint.timestamp !== undefined && checkpoint.storeSequenceNumber !== undefined,
+			);
+			const firstSummary = await runtime.loadNativeCheckpointSummary(checkpoint.id);
+			const secondSummary = await runtime.loadNativeCheckpointSummary(checkpoint.id);
+			firstSummary.tree["caller-mutation"] = { type: SummaryType.Blob, content: "local" };
+			assert.deepEqual(
+				await runtime.loadNativeCheckpointSummary(checkpoint.id),
+				secondSummary,
+			);
+			assert.equal((await coordinator.prune({ minAgeMs: 0, targetCount: 0 })).length, 0);
+			await assert.rejects(runtime.loadNativeCheckpointSummary(checkpoint.id), /Unknown/);
+		} finally {
+			coordinator.dispose();
+		}
+		assert.equal(runtime.listenerCount("op"), originalListeners);
+		await assert.rejects(coordinator.capture("disposed"), /live connected/);
+	});
+
+	itExpects(
+		"keeps the restored snapshot latest when an older ordinary upload finishes afterward",
+		[
+			{
+				eventName: "fluid:telemetry:Container:ContainerDispose",
+				error: "Native checkpoint restored: reload without cached or pending state",
+			},
+			{
+				eventName: "fluid:telemetry:Container:ContainerDispose",
+				error: "Native checkpoint restored: reload without cached or pending state",
+			},
+			{
+				eventName: "fluid:telemetry:Container:ContainerClose",
+				error: "Native checkpoint restored: reload without cached or pending state",
+			},
+		],
+		async () => {
+			const provider = getTestObjectProvider({ syncSummarizer: true });
+			const source = await provider.makeTestContainer(config);
+			await waitForContainerConnection(source);
+			const entry = await getEntry(source);
+			entry.root.set("value", "checkpoint");
+			await provider.ensureSynchronized();
+			provider.opProcessingController.resumeProcessing();
+			const requester = new NativeCheckpointCoordinator(await getRuntime(source));
+			await requester.capture("before-race");
+			entry.root.set("value", "ordinary must not win");
+			await provider.ensureSynchronized();
+			const workers = await Promise.all(
+				[0, 1].map(async () =>
+					provider.loadTestContainer(config, {
+						[LoaderHeader.clientDetails]: {
+							capabilities: { interactive: false },
+							type: "summarizer",
+						},
+						[DriverHeader.summarizingClient]: true,
+					}),
+				),
+			);
+			await Promise.all(workers.map(async (worker) => waitForContainerConnection(worker)));
+			const [ordinary, restorer] = await Promise.all(
+				workers.map(async (worker) => getRuntime(worker)),
+			);
+			assert(ordinary !== undefined && restorer !== undefined);
+			await provider.ensureSynchronized();
+			provider.opProcessingController.resumeProcessing();
+			const uploadStarted = new Deferred<void>();
+			const releaseUpload = new Deferred<void>();
+			const originalUpload = ordinary.storage.uploadSummaryWithContext.bind(ordinary.storage);
+			const delayed = stub(ordinary.storage, "uploadSummaryWithContext").callsFake(
+				async (...args) => {
+					uploadStarted.resolve();
+					await releaseUpload.promise;
+					return originalUpload(...args);
+				},
+			);
+			const ordinaryDisposed = new Deferred<void>();
+			const restorerDisposed = new Deferred<void>();
+			const restorerOrdered = new Deferred<void>();
+			const onRestoreOp = (): void => {
+				if (restorer.getNativeCheckpointRestore()?.restore.id === "winning-restore") {
+					restorerOrdered.resolve();
+				}
+			};
+			restorer.on("op", onRestoreOp);
+			ordinary.once("dispose", () => ordinaryDisposed.resolve());
+			restorer.once("dispose", () => restorerDisposed.resolve());
+			const ordinaryResult = ordinary.submitSummary({
+				fullTree: true,
+				summaryLogger: createChildLogger({ logger: provider.logger }),
+				cancellationToken: neverCancelledSummaryToken,
+				latestSummaryRefSeqNum: 0,
+			});
+			try {
+				await timeoutAwait(uploadStarted.promise, {
+					errorMsg: "Ordinary upload did not start",
+				});
+				await requester.requestRestore("winning-restore", "before-race");
+				await timeoutAwait(restorerOrdered.promise, {
+					errorMsg: "Restorer did not observe the ordered boundary",
+				});
+				await provider.opProcessingController.pauseProcessing(source);
+				await restorer.publishNativeCheckpointRestore();
+				await restorerDisposed.promise;
+				releaseUpload.resolve();
+				await ordinaryResult;
+				await ordinaryDisposed.promise;
+				provider.opProcessingController.resumeProcessing(source);
+				await provider.ensureSynchronized();
+				const latest = await provider.loadTestContainer(config, {
+					[LoaderHeader.cache]: false,
+				});
+				assert.equal((await getEntry(latest)).root.get("value"), "checkpoint");
+				assert.equal(
+					(await getRuntime(latest)).getNativeCheckpointRestore()?.restore.id,
+					"winning-restore",
+				);
+			} finally {
+				releaseUpload.resolve();
+				await ordinaryResult;
+				restorer.off("op", onRestoreOp);
+				delayed.restore();
+				requester.dispose();
+			}
+		},
+	);
+
+	it("rejects the losing capture when two clients reuse a checkpoint ID", async () => {
+		const provider = getTestObjectProvider();
+		const source = await provider.makeTestContainer(config);
+		const peer = await provider.loadTestContainer(config);
+		await Promise.all(
+			[source, peer].map(async (container) => waitForContainerConnection(container)),
+		);
+		await provider.ensureSynchronized();
+		provider.opProcessingController.resumeProcessing();
+		const coordinators = await Promise.all(
+			[source, peer].map(
+				async (container) => new NativeCheckpointCoordinator(await getRuntime(container)),
+			),
+		);
+		try {
+			const results = await Promise.allSettled(
+				coordinators.map(async (coordinator) => coordinator.capture("same-id")),
+			);
+			assert.equal(results.filter((result) => result.status === "fulfilled").length, 1);
+			assert.equal(results.filter((result) => result.status === "rejected").length, 1);
+		} finally {
+			for (const coordinator of coordinators) {
+				coordinator.dispose();
+			}
+		}
+	});
+
+	it("bounds acknowledgement waits and cancels them on coordinator disposal", async () => {
+		const provider = getTestObjectProvider();
+		const source = await provider.makeTestContainer(config);
+		await waitForContainerConnection(source);
+		const runtime = await getRuntime(source);
+		await provider.ensureSynchronized();
+		provider.opProcessingController.resumeProcessing();
+		const seedCoordinator = new NativeCheckpointCoordinator(runtime);
+		const checkpoint = await seedCoordinator.capture("seed");
+		seedCoordinator.dispose();
+		const coordinator = new NativeCheckpointCoordinator(runtime, { ackTimeoutMs: 100 });
+		const createStub = stub(runtime, "createNativeCheckpoint").resolves(checkpoint);
+		const clock = useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+		try {
+			const timedOut = assert.rejects(coordinator.capture("timeout"), /timed out/);
+			await clock.tickAsync(100);
+			await timedOut;
+			const cancelled = assert.rejects(coordinator.capture("cancelled"), /interrupted/);
+			await assert.rejects(coordinator.prune(), /already has a catalog operation/);
+			coordinator.dispose();
+			await cancelled;
+			assert.equal(clock.countTimers(), 0);
+		} finally {
+			coordinator.dispose();
+			clock.restore();
+			createStub.restore();
+		}
+	});
+
+	it("reports the winner of concurrent distinct restore requests", async () => {
+		const provider = getTestObjectProvider();
+		const source = await provider.makeTestContainer(config);
+		const peer = await provider.loadTestContainer(config);
+		await Promise.all(
+			[source, peer].map(async (container) => waitForContainerConnection(container)),
+		);
+		await provider.ensureSynchronized();
+		provider.opProcessingController.resumeProcessing();
+		const first = new NativeCheckpointCoordinator(await getRuntime(source));
+		const second = new NativeCheckpointCoordinator(await getRuntime(peer));
+		try {
+			await first.capture("first-point");
+			(await getEntry(peer)).root.set("writer", true);
+			await provider.ensureSynchronized();
+			provider.opProcessingController.resumeProcessing();
+			const results = await Promise.allSettled([
+				first.requestRestore("first-request", "first-point"),
+				second.requestRestore("second-request", "first-point"),
+			]);
+			assert.equal(results.filter((result) => result.status === "fulfilled").length, 1);
+			const rejected = results.find((result) => result.status === "rejected");
+			assert(rejected?.status === "rejected");
+			assert.match(String(rejected.reason), /different native checkpoint restore won/);
+		} finally {
+			first.dispose();
+			second.dispose();
+		}
+	});
+
+	itExpects(
+		"recovers a transient coordinated upload failure and rejects offline pending edits",
+		[
+			{
+				eventName: "fluid:telemetry:Container:ContainerClose",
+				error: "Cannot replay pending edits across a native checkpoint restore",
+			},
+			{
+				eventName: "fluid:telemetry:Container:ContainerDispose",
+				error: "Native checkpoint restored: reload without cached or pending state",
+			},
+			{
+				eventName: "fluid:telemetry:Container:ContainerClose",
+				error: "Native checkpoint restored: reload without cached or pending state",
+			},
+		],
+		async () => {
+			const provider = getTestObjectProvider({ syncSummarizer: true });
+			const source = await provider.makeTestContainer(config);
+			await waitForContainerConnection(source);
+			const runtime = await getRuntime(source);
+			const entry = await getEntry(source);
+			entry.root.set("value", "checkpoint");
+			await provider.ensureSynchronized();
+			provider.opProcessingController.resumeProcessing();
+			const requester = new NativeCheckpointCoordinator(runtime);
+			await requester.capture("recoverable");
+			const peer = await provider.loadTestContainer(config);
+			await waitForContainerConnection(peer);
+			await provider.ensureSynchronized();
+			peer.disconnect();
+			(await getEntry(peer)).root.set("offline", "must not replay");
+			entry.root.set("value", "later");
+			await provider.ensureSynchronized(source);
+			const worker = await provider.loadTestContainer(config, {
+				[LoaderHeader.clientDetails]: {
+					capabilities: { interactive: false },
+					type: "summarizer",
+				},
+				[DriverHeader.summarizingClient]: true,
+			});
+			await waitForContainerConnection(worker);
+			const workerRuntime = await getRuntime(worker);
+			const failed = new Deferred<unknown>();
+			const upload = stub(workerRuntime.storage, "uploadSummaryWithContext").callThrough();
+			upload.onFirstCall().rejects(new Error("Injected transient checkpoint upload failure"));
+			const publisher = new NativeCheckpointCoordinator(workerRuntime, {
+				publishRestores: true,
+				onPublicationError: (error) => failed.resolve(error),
+			});
+			try {
+				provider.opProcessingController.resumeProcessing();
+				await requester.requestRestore("retry-restore", "recoverable");
+				assert.match(String(await failed.promise), /Injected transient/);
+				assert.equal(
+					upload.callCount,
+					1,
+					"Do not retry failed storage requests in an unbounded loop",
+				);
+				const peerClosed = new Deferred<void>();
+				peer.once("closed", () => peerClosed.resolve());
+				peer.connect();
+				await timeoutAwait(peerClosed.promise, {
+					errorMsg: "Offline client replayed old edits",
+				});
+				await provider.opProcessingController.pauseProcessing(source);
+				const workerDisposed = new Deferred<void>();
+				workerRuntime.once("dispose", () => workerDisposed.resolve());
+				const versions = await Promise.all([
+					publisher.publishRestore(),
+					publisher.publishRestore(),
+				]);
+				await workerDisposed.promise;
+				assert.equal(versions[0], versions[1]);
+				assert.equal(upload.callCount, 2, "Concurrent callers share the retry attempt");
+				provider.opProcessingController.resumeProcessing(source);
+				await provider.ensureSynchronized();
+				const restored = await provider.loadTestContainer(config, {
+					[LoaderHeader.version]: versions[0],
+				});
+				const restoredEntry = await getEntry(restored);
+				assert.equal(restoredEntry.root.get("value"), "checkpoint");
+				assert.equal(restoredEntry.root.get("offline"), undefined);
+			} finally {
+				requester.dispose();
+				publisher.dispose();
+				upload.restore();
+			}
+		},
+	);
 
 	it("sequences retention and releases only removed checkpoint and image GC roots", async () => {
 		const provider = getTestObjectProvider({ syncSummarizer: true });
@@ -895,6 +1212,7 @@ describeCompat("Native checkpoints", "NoCompat", (getTestObjectProvider, apis) =
 				const snapshots = new Map<string, typeof expected>();
 				const captureTimes: number[] = [];
 				const restoreTimes: number[] = [];
+				const pruneTimes: number[] = [];
 				const coldReadCounts: number[] = [];
 				let uploadedBytes = 0;
 				let sampledHeapPeak = process.memoryUsage().heapUsed;
@@ -1020,8 +1338,10 @@ describeCompat("Native checkpoints", "NoCompat", (getTestObjectProvider, apis) =
 							);
 							assert.deepEqual([...checkpoint.assets].sort(), [...imageRoutes].sort());
 							if (point % 6 === 5) {
+								const pruneStart = performance.now();
 								model.runtime.pruneNativeCheckpoints({ minAgeMs: 0, targetCount: 12 });
 								await provider.ensureSynchronized();
+								pruneTimes.push(performance.now() - pruneStart);
 								const retained = new Set(
 									model.runtime.getNativeCheckpoints().map((entry) => entry.id),
 								);
@@ -1185,6 +1505,13 @@ describeCompat("Native checkpoints", "NoCompat", (getTestObjectProvider, apis) =
 											units: "count",
 										},
 										{
+											name: "Pruning through acknowledgement mean",
+											value:
+												pruneTimes.reduce((total, value) => total + value, 0) /
+												pruneTimes.length,
+											units: "ms",
+										},
+										{
 											name: "Cumulative uploaded checkpoint payload",
 											value: uploadedBytes,
 											units: "bytes",
@@ -1264,6 +1591,96 @@ describeCompat("Native checkpoints", "NoCompat", (getTestObjectProvider, apis) =
 				const entry = await getEntry(source);
 				const runtime = await getRuntime(source);
 				const uploadSpy = spy(runtime.storage, "createBlob");
+				const accessMeasurements: Measurement[] = [];
+				async function measureAccess(version: string, label: string): Promise<void> {
+					if (process.env.FLUID_NATIVE_CHECKPOINT_METRICS_PREFIX === undefined) {
+						return;
+					}
+					const bootTimes: number[] = [];
+					const catalogTimes: number[] = [];
+					const coldTimes: number[] = [];
+					const warmTimes: number[] = [];
+					let maxReads = 0;
+					for (let sample = 0; sample < 7; sample++) {
+						const start = performance.now();
+						const loaded = await provider.loadTestContainer(config, {
+							[LoaderHeader.cache]: false,
+							[LoaderHeader.version]: version,
+							[LoaderHeader.loadMode]: { deltaConnection: "none", opsBeforeReturn: "cached" },
+						});
+						try {
+							const loadedRuntime = await getRuntime(loaded);
+							bootTimes.push(performance.now() - start);
+							const catalogStart = performance.now();
+							for (let repeat = 0; repeat < 100; repeat++) {
+								loadedRuntime.getNativeCheckpoints();
+							}
+							catalogTimes.push((performance.now() - catalogStart) / 100);
+							const checkpoint = [...loadedRuntime.getNativeCheckpoints()].sort(
+								(left, right) => (right.depth ?? 0) - (left.depth ?? 0),
+							)[0];
+							if (checkpoint !== undefined) {
+								const reads = spy(loadedRuntime.storage, "readBlob");
+								try {
+									const coldStart = performance.now();
+									const cold = await loadedRuntime.loadNativeCheckpointSummary(checkpoint.id);
+									coldTimes.push(performance.now() - coldStart);
+									maxReads = Math.max(maxReads, reads.callCount);
+									assert(reads.callCount > 0 && reads.callCount <= 5);
+									reads.resetHistory();
+									const warmStart = performance.now();
+									const warm = await loadedRuntime.loadNativeCheckpointSummary(checkpoint.id);
+									warmTimes.push(performance.now() - warmStart);
+									assert.deepEqual(warm, cold);
+									assert.equal(
+										reads.callCount,
+										0,
+										"One-entry cache must eliminate repeat reads",
+									);
+									warm.tree["caller-mutation"] = { type: SummaryType.Blob, content: "local" };
+									assert.deepEqual(
+										await loadedRuntime.loadNativeCheckpointSummary(checkpoint.id),
+										cold,
+										"Returned summary mutation must not affect cached checkpoint bytes",
+									);
+								} finally {
+									reads.restore();
+								}
+							}
+						} finally {
+							loaded.close();
+						}
+					}
+					for (const [operation, samples] of [
+						["Snapshot-only fresh-container boot", bootTimes],
+						["Catalog list", catalogTimes],
+						["Cold checkpoint reconstruction", coldTimes],
+						["Warm checkpoint reconstruction", warmTimes],
+					] satisfies [string, number[]][]) {
+						if (samples.length !== 0) {
+							accessMeasurements.push(
+								{
+									name: `${label} ${operation} mean`,
+									units: "ms",
+									value: samples.reduce((sum, value) => sum + value, 0) / samples.length,
+								},
+								{
+									name: `${label} ${operation} median`,
+									units: "ms",
+									value:
+										[...samples].sort((left, right) => left - right)[
+											Math.floor(samples.length / 2)
+										] ?? 0,
+								},
+							);
+						}
+					}
+					accessMeasurements.push({
+						name: `${label} maximum archive reads`,
+						value: maxReads,
+						units: "count",
+					});
+				}
 				let sourceCloseReason: string | undefined;
 				source.on("closed", (error) => {
 					sourceCloseReason = error?.message;
@@ -1284,6 +1701,10 @@ describeCompat("Native checkpoints", "NoCompat", (getTestObjectProvider, apis) =
 					});
 					const sizes: number[] = [];
 					const captureTimes: number[] = [];
+					await measureAccess(
+						(await summarizeNow(summarizer)).summaryVersion,
+						"Before history",
+					);
 					const beforeHistory = await runtime.summarize({
 						fullTree: true,
 						trackState: false,
@@ -1318,6 +1739,7 @@ describeCompat("Native checkpoints", "NoCompat", (getTestObjectProvider, apis) =
 						"An unchanged image must be uploaded only once",
 					);
 					const { summaryVersion } = await summarizeNow(summarizer);
+					await measureAccess(summaryVersion, "100 checkpoints");
 					const afterHistory = await runtime.summarize({
 						fullTree: true,
 						trackState: false,
@@ -1493,6 +1915,7 @@ describeCompat("Native checkpoints", "NoCompat", (getTestObjectProvider, apis) =
 													.reduce((total, call) => total + call.args[0].byteLength, 0),
 												units: "bytes",
 											},
+											...accessMeasurements,
 										],
 									},
 								],
