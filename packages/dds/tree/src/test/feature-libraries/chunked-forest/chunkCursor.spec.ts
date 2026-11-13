@@ -42,6 +42,7 @@ import {
  * Shared ChunkTraversal/ChunkCursor navigation and ChunkSequenceCursor's field-only contract.
  * SequenceChunk cursor integration is intentionally covered here, alongside mixed-format and nested-sequence traversal.
  * BasicChunk and UniformChunk cursor conformance suites remain in basicChunk.spec.ts and uniformChunk.spec.ts.
+ * Editing traversal and sequence write-back are covered in chunkEditTraversal.spec.ts.
  */
 describe("chunkCursor", () => {
 	describe("ChunkSequenceCursor", () => {

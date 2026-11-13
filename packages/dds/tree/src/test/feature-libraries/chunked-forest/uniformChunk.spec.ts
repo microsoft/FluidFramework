@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
+import type { StableId } from "@fluidframework/id-compressor";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -82,7 +83,121 @@ function arrayOfPoints(pointsPerArray: number): TreeShape {
 	]);
 }
 
+/**
+ * Cross-format cursor composition is covered in chunkCursor.spec.ts.
+ * Generic editing, ownership, and normalization around uniform chunks are covered in chunkEditTraversal.spec.ts.
+ */
 describe("uniformChunk", () => {
+	describe("editing", () => {
+		it("replaces a nested leaf without changing the chunk shape or values array", () => {
+			// Three points are stored as [x0, y0, x1, y1, x2, y2]. Editing the last point exercises a nonzero tree offset.
+			const values = [1, 2, 3, 4, 5, 6];
+			const chunk = new UniformChunk(pointShape.withTopLevelLength(3), values);
+			const shape = chunk.shape;
+			const incoming = new UniformChunk(numberShape.withTopLevelLength(1), [99]);
+			const cursor = chunk.cursor();
+			cursor.enterNode(2);
+			cursor.enterField(xField);
+			const removed = cursor.trySplice({ start: 0, end: 1 }, [incoming]);
+			assert(removed !== undefined);
+			// Value equality alone would also pass if the edit rebuilt the shape or replaced the backing array.
+			assert.equal(chunk.shape, shape);
+			assert.equal(chunk.values, values);
+			assert.deepEqual(values, [1, 2, 3, 4, 99, 6]);
+			assert.equal(cursor.getFieldLength(), 1);
+			assert.equal(incoming.isUnreferenced(), false);
+			const outgoing = removed[0];
+			assert(outgoing instanceof UniformChunk);
+			// The incoming chunk's storage is reused for the outgoing value, transferring its existing owned reference.
+			assert.equal(outgoing, incoming);
+			assert.deepEqual(outgoing.values, [5]);
+			assert.equal(outgoing.isShared(), false);
+		});
+		it("replaces a range of root leaves", () => {
+			// The range starts inside the chunk and leaves values on both sides, checking the root-field offset calculation.
+			const chunk = new UniformChunk(numberShape.withTopLevelLength(4), [0, 1, 2, 3]);
+			const incoming = new UniformChunk(numberShape.withTopLevelLength(2), [10, 11]);
+			const removed = chunk.cursor().trySplice({ start: 1, end: 3 }, [incoming]);
+			assert(removed?.[0] instanceof UniformChunk);
+			assert.deepEqual(removed[0].values, [1, 2]);
+			assert.deepEqual(chunk.values, [0, 10, 11, 3]);
+		});
+		it("does not consume content or mutate the chunk for unsupported edits", () => {
+			const chunk = new UniformChunk(numberShape.withTopLevelLength(2), [1, 2]);
+			const stringShape = new TreeShape(brand(stringSchema.identifier), true, []);
+			const incoming = new UniformChunk(stringShape.withTopLevelLength(1), ["text"]);
+			// Type-changing replacement and length-changing insertion must both leave the input available for fallback.
+			assert.equal(chunk.cursor().trySplice({ start: 0, end: 1 }, [incoming]), undefined);
+			assert.equal(chunk.cursor().trySplice({ start: 0, end: 0 }, [incoming]), undefined);
+			assert.deepEqual(chunk.values, [1, 2]);
+			assert.equal(incoming.isUnreferenced(), false);
+			assert.equal(incoming.isShared(), false);
+		});
+		it("accepts null leaf values", () => {
+			// Null is stored content, not a missing slot: a nullish fallback when reading values would incorrectly reject it.
+			const shape = new TreeShape(brand("null"), true, []);
+			const chunk = new UniformChunk(shape.withTopLevelLength(1), [null]);
+			const incoming = new UniformChunk(shape.withTopLevelLength(1), [null]);
+			assert.notEqual(chunk.cursor().trySplice({ start: 0, end: 1 }, [incoming]), undefined);
+			assert.deepEqual(chunk.values, [null]);
+		});
+		it("decodes incoming compressed IDs and retains the outgoing compressor", () => {
+			const shape = new TreeShape(brand(stringSchema.identifier), true, [], true);
+			const oldId = "00000000-0000-4000-8000-000000000001" as StableId;
+			const newId = "00000000-0000-4000-8000-000000000002" as StableId;
+			// Distinct compressors make raw ID swapping invalid. Each stub returns a different string so using the wrong decoder is observable.
+			const chunk = new UniformChunk(shape.withTopLevelLength(1), [11], {
+				decompress: () => oldId,
+			});
+			const incoming = new UniformChunk(shape.withTopLevelLength(1), [22], {
+				decompress: () => newId,
+			});
+			const removed = chunk.cursor().trySplice({ start: 0, end: 1 }, [incoming]);
+			assert(removed?.[0] instanceof UniformChunk);
+			assert.equal(removed[0].idCompressor, chunk.idCompressor);
+			const outgoingCursor = removed[0].cursor();
+			outgoingCursor.enterNode(0);
+			assert.equal(outgoingCursor.value, oldId);
+			const cursor = chunk.cursor();
+			cursor.enterNode(0);
+			assert.equal(cursor.value, newId);
+			// The incoming ID is stored decoded; outgoing storage retains its original compressor and compressed value.
+			assert.deepEqual(chunk.values, [newId]);
+		});
+		it("requires exclusive ownership", () => {
+			const chunk = new UniformChunk(numberShape.withTopLevelLength(1), [1]);
+			chunk.referenceAdded();
+			assert.throws(() => chunk.getEditCursor(), /exclusive chunk ownership/);
+		});
+		it("does not mutate shared incoming storage", () => {
+			const chunk = new UniformChunk(numberShape.withTopLevelLength(1), [1]);
+			const incoming = new UniformChunk(numberShape.withTopLevelLength(1), [2]);
+			// One reference is transferred into the edit; the second represents an owner whose content must remain unchanged.
+			incoming.referenceAdded();
+			const removed = chunk.cursor().trySplice({ start: 0, end: 1 }, [incoming]);
+			assert(removed?.[0] instanceof UniformChunk);
+			assert.notEqual(removed[0], incoming);
+			assert.deepEqual(removed[0].values, [1]);
+			assert.deepEqual(chunk.values, [2]);
+			assert.deepEqual(incoming.values, [2]);
+			// Consuming the edit's reference leaves the other owner alive and now exclusive.
+			assert.equal(incoming.isShared(), false);
+			assert.equal(incoming.isUnreferenced(), false);
+		});
+		it("swaps compatible compressed storage without decoding or changing reference counts", () => {
+			const shape = new TreeShape(brand(stringSchema.identifier), true, [], true);
+			// Matching compressor identity permits raw swaps. Throwing hooks catch hidden decoding or reference churn even if values remain correct.
+			const compressor = { decompress: (): never => assert.fail("Unexpected decompression") };
+			const chunk = new UniformChunk(shape.withTopLevelLength(1), [11], compressor);
+			const incoming = new UniformChunk(shape.withTopLevelLength(1), [22], compressor);
+			incoming.referenceRemoved = (): never => assert.fail("Unexpected reference removal");
+			incoming.referenceAdded = (): never => assert.fail("Unexpected reference addition");
+			const removed = chunk.cursor().trySplice({ start: 0, end: 1 }, [incoming]);
+			assert.deepEqual(removed, [incoming]);
+			assert.deepEqual(chunk.values, [22]);
+			assert.deepEqual(incoming.values, [11]);
+		});
+	});
 	describe("shapes", () => {
 		for (const tree of testData) {
 			it(`validate shape for ${tree.name}`, () => {

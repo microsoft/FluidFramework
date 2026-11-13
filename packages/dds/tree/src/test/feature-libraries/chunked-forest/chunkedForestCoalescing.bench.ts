@@ -18,6 +18,7 @@ import {
 	type CollectedData,
 } from "@fluid-tools/benchmark";
 
+import { asAlpha } from "../../../api.js";
 import type {
 	FieldKey,
 	IForestSubscription,
@@ -25,13 +26,18 @@ import type {
 	TreeNodeSchemaIdentifier,
 	TreeValue,
 } from "../../../core/index.js";
-import { EmptyKey } from "../../../core/index.js";
+import { EmptyKey, rootFieldKey, TreeStoredSchemaRepository } from "../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
+import {
+	buildChunkedForest,
+	ensureExclusiveBasicChunk,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
 	coalesceUniformChunks,
+	makeTreeChunker,
 	type ChunkPolicy,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
@@ -41,19 +47,28 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
+	defaultIncrementalEncodingPolicy,
+	defaultSchemaPolicy,
+} from "../../../feature-libraries/index.js";
+import {
 	ForestTypeOptimized,
 	createIndependentTreeAlpha,
 } from "../../../shared-tree/index.js";
 import {
 	SchemaFactory,
+	SchemaFactoryBeta,
 	TreeViewConfiguration,
 	booleanSchema,
 	numberSchema,
 	stringSchema,
+	toInitialSchema,
 } from "../../../simple-tree/index.js";
-import { PlainText } from "../../../text/index.js";
+import { FormattedText, PlainText } from "../../../text/index.js";
+import { configuredSharedTree } from "../../../treeFactory.js";
 import { brand } from "../../../util/index.js";
-import { configureBenchmarkHooks } from "../../utils.js";
+import { configureBenchmarkHooks, TestTreeProviderLite } from "../../utils.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
 
 /** Iteration counts for the memory benchmarks (mirrors the shared `iterationSettings` helper). */
 const iterationSettings = { keepIterations: 4, warmUpIterations: 2 };
@@ -77,10 +92,9 @@ const shallowShape = new TreeShape(
 );
 
 /**
- * A formatted-atom-like shape: a `content` string leaf plus a `CharacterFormat` object with five leaf
- * fields (bold, italic, underline, size, font), built from the real leaf primitives. `TreeShape.equals`
- * must recurse the whole nested structure, so this is the "deep shape" whose comparison dominates
- * coalescing's per-edit cost.
+ * A formatted-atom-like shape with a string leaf and five formatting properties.
+ * This exercises larger value arrays than the shallow shape.
+ * Homogeneous cases reuse the same shape instance, so equality uses its identity fast path rather than traversing these fields.
  */
 function makeDeepShape(typeName: string): TreeShape {
 	const boolLeaf = new TreeShape(
@@ -114,9 +128,8 @@ function makeDeepShape(typeName: string): TreeShape {
 		["format" as FieldKey, formatShape, 1],
 	]);
 }
-// `deepShapeA` and `deepShapeB` share an identical nested field structure but differ in top-level type,
-// so `equals` performs the full recursive field walk and only fails at the final type check — the most
-// expensive way for a comparison to return `false`.
+// These shapes have identical field layouts but different root types.
+// Equality rejects the type mismatch before comparing fields, measuring an unmergeable insertion rather than worst-case comparison cost.
 const deepShapeA = makeDeepShape("bench.formattedAtomA");
 const deepShapeB = makeDeepShape("bench.formattedAtomB");
 
@@ -142,9 +155,7 @@ function multiNodeChunk(
 
 /**
  * Splits a UniformChunk into two at `nodeIndex` by slicing its value array — the same operation
- * `splitFieldAtIndex` performs internally when an edit lands inside a multi-node chunk. (The real
- * `splitFieldAtIndex` re-chunks through the schema-driven chunker, so it only accepts schema-derived
- * shapes; splitting by hand here lets the benchmark exercise the edit on synthetic shapes.)
+ * `splitFieldAtIndex` performs internally when an edit lands inside a multi-node uniform chunk.
  */
 function splitUniformChunk(
 	chunk: UniformChunk,
@@ -180,11 +191,9 @@ function buildFragmentedField(
 const editChunkNodeCount = 20;
 
 /**
- * Performs one insert edit into the middle of a `editChunkNodeCount`-node UniformChunk of `fieldShape`:
- * split the chunk, splice in a single new node of `insertShape`, then optionally coalesce the seam
- * (exactly the split → splice → coalesce sequence the forest's `attachEdit` runs). When `insertShape`
- * matches `fieldShape` the seam coalesces back together; when it differs, coalescing does its full
- * (failing) structural comparison and merges nothing.
+ * Models an insertion into the middle of a uniform chunk by splitting its values and optionally coalescing the result.
+ * Matching shapes allow the pieces to merge; the heterogeneous fixture has a different root type and is rejected immediately.
+ * This measures chunk construction, value copying, and coalescing, not the forest visitor or application editing APIs.
  */
 function insertEdit(
 	fieldShape: TreeShape,
@@ -235,9 +244,10 @@ function countUniformChunks(forest: IForestSubscription): number {
 
 /**
  * Summarizes the chunk shape of a forest.
- * @returns the total chunk count, the number of non-uniform (e.g. basic) chunks — which rises by one
- * per shattered node — and the size (in nodes) of the largest UniformChunk, which shows how compactly
- * same-shape runs are batched.
+ * @returns The total chunk count, non-uniform chunk count, and largest uniform chunk's top-level node count.
+ * @remarks
+ * Includes the forest's synthetic root and detached content, not just the current document.
+ * The `basic` metric counts all non-uniform chunks; these fixtures use no sequence chunks.
  */
 function chunkStats(forest: IForestSubscription): {
 	total: number;
@@ -259,7 +269,7 @@ function chunkStats(forest: IForestSubscription): {
 
 // #endregion
 
-// #region Text-editor helpers (real insert path over the chunked forest).
+// #region Application editing fixtures.
 
 /**
  * Reaches the internal forest backing a view. The view is a `SchematizingSimpleTreeView` whose
@@ -284,12 +294,211 @@ function typeIntoChunkedDocument(size: number): IForestSubscription {
 	return forestFromView(view);
 }
 
-// A large array of same-shape objects batches into a few multi-node UniformChunks. Editing one field of
-// a node in the middle of such a chunk shatters the whole chunk into per-node BasicChunks (chunkedForest
-// `enterNode`), which coalescing does not undo — used to show the boundary of the coalescing win.
 const objectSchemaFactory = new SchemaFactory("bench.chunkedForestCoalescing");
 class Row extends objectSchemaFactory.object("Row", { v: objectSchemaFactory.number }) {}
 class ObjectArray extends objectSchemaFactory.array("ObjectArray", Row) {}
+class Point extends objectSchemaFactory.object("Point", {
+	x: objectSchemaFactory.number,
+	y: objectSchemaFactory.number,
+}) {}
+class PointArray extends objectSchemaFactory.array("PointArray", Point) {}
+
+const formatSchemaFactory = new SchemaFactoryBeta("bench.uniformLeafFormatting");
+class CharacterFormat extends formatSchemaFactory.object("CharacterFormat", {
+	bold: formatSchemaFactory.boolean,
+	italic: formatSchemaFactory.boolean,
+	underline: formatSchemaFactory.boolean,
+	size: formatSchemaFactory.number,
+	font: formatSchemaFactory.string,
+}) {}
+const FormattedDocument = FormattedText.createSchema(
+	formatSchemaFactory,
+	CharacterFormat,
+	[],
+	{
+		bold: false,
+		italic: false,
+		underline: false,
+		size: 12,
+		font: "Arial",
+	},
+);
+
+const formattedTextLength = currentBenchmarkMode === BenchmarkMode.Performance ? 1000 : 100;
+
+/**
+ * An initialized optimized-forest document and a single-use operation to measure.
+ * @remarks
+ * Fixture creation is outside the timing window; only `edit()` is timed, with `verify()` called afterward.
+ * Incoming-edit fixtures prepare the source change during setup, so `edit()` measures its application rather than its creation.
+ * The callbacks capture the view, so retaining the complete fixture also retains its editing history.
+ */
+interface LeafEditFixture {
+	readonly forest: IForestSubscription;
+	edit(): void;
+	verify(): void;
+}
+
+/**
+ * Prepares a local formatting operation whose timed call includes locating and editing all characters in the range.
+ */
+function formattedRangeFixture(): LeafEditFixture {
+	const view = createIndependentTreeAlpha({ forest: ForestTypeOptimized }).viewWith(
+		new TreeViewConfiguration({ schema: FormattedDocument }),
+	);
+	view.initialize(FormattedDocument.fromString("x".repeat(formattedTextLength)));
+	return {
+		forest: forestFromView(view),
+		edit: () => view.root.formatRange(0, formattedTextLength, { bold: true }),
+		verify: () => assert.equal(view.root.getUniformRun(0), formattedTextLength),
+	};
+}
+
+/**
+ * Locates the point during setup so the timed operation measures only its numeric field setter.
+ */
+function pointCoordinateFixture(): LeafEditFixture {
+	const view = createIndependentTreeAlpha({ forest: ForestTypeOptimized }).viewWith(
+		new TreeViewConfiguration({ schema: PointArray }),
+	);
+	view.initialize(
+		Array.from({ length: 1000 }, (_, index) => new Point({ x: index, y: index })),
+	);
+	const point = view.root[500];
+	// Retain the resolved node so the timed setter does not also measure array lookup and node materialization.
+	return {
+		forest: forestFromView(view),
+		edit: () => {
+			point.x = 1001;
+		},
+		verify: () => {
+			assert.equal(point.x, 1001);
+			assert.equal(point.y, 500);
+		},
+	};
+}
+
+/**
+ * Reads the known array representation of this benchmark's type-erased formatted-text schema.
+ */
+function formattedAtoms(root: object): readonly { readonly format: CharacterFormat }[] {
+	return (root as { readonly content: readonly { readonly format: CharacterFormat }[] })
+		.content;
+}
+
+/**
+ * Authors formatting on a fork before timing the receiving view's merge, including normal merge cleanup.
+ * The receiver has no concurrent local edits, so this is not a conflicting-rebase benchmark.
+ */
+function formattedBranchFixture(): LeafEditFixture {
+	const view = asAlpha(
+		createIndependentTreeAlpha({ forest: ForestTypeOptimized }).viewWith(
+			new TreeViewConfiguration({ schema: FormattedDocument }),
+		),
+	);
+	view.initialize(FormattedDocument.fromString("x".repeat(formattedTextLength)));
+	const branch = view.fork();
+	branch.root.formatRange(0, formattedTextLength, { bold: true });
+	assert.equal(formattedAtoms(view.root)[0].format.bold, false);
+	return {
+		forest: forestFromView(view),
+		edit: () => view.merge(branch),
+		verify: () => {
+			assert.equal(view.root.getUniformRun(0), formattedTextLength);
+			for (const atom of formattedAtoms(view.root)) {
+				assert.equal(atom.format.bold, true);
+			}
+		},
+	};
+}
+
+/**
+ * Prepares a point edit on a fork with the same merge-only timing boundary as {@link formattedBranchFixture}.
+ */
+function pointBranchFixture(): LeafEditFixture {
+	const view = asAlpha(
+		createIndependentTreeAlpha({ forest: ForestTypeOptimized }).viewWith(
+			new TreeViewConfiguration({ schema: PointArray }),
+		),
+	);
+	view.initialize(
+		Array.from({ length: 1000 }, (_, index) => new Point({ x: index, y: index })),
+	);
+	const branch = view.fork();
+	branch.root[500].x = 1001;
+	assert.equal(view.root[500].x, 500);
+	return {
+		forest: forestFromView(view),
+		edit: () => view.merge(branch),
+		verify: () => {
+			assert.equal(view.root[500].x, 1001);
+			assert.equal(view.root[500].y, 500);
+		},
+	};
+}
+
+const incomingEditFactory = configuredSharedTree({
+	forest: ForestTypeOptimized,
+	jsonValidator: FormatValidatorBasic,
+}).getFactory();
+
+/**
+ * Queues a formatting edit on a paused receiver while sequencing and sender acknowledgement finish during setup.
+ * The timed operation drains only the receiver's queue, including decoding and applying the change.
+ * Network delay and sender work are excluded; the receiver has no concurrent local edits.
+ */
+function formattedRemoteFixture(): LeafEditFixture {
+	const provider = new TestTreeProviderLite(2, incomingEditFactory);
+	const config = new TreeViewConfiguration({ schema: FormattedDocument });
+	const sender = provider.trees[0].viewWith(config);
+	sender.initialize(FormattedDocument.fromString("x".repeat(formattedTextLength)));
+	provider.synchronizeMessages();
+	const receiver = provider.trees[1].viewWith(config);
+	const runtime = provider.trees[1].containerRuntime;
+	runtime.pauseInboundProcessing();
+	sender.root.formatRange(0, formattedTextLength, { bold: true });
+	// Synchronization acknowledges the sender but only queues messages at the paused receiver.
+	provider.synchronizeMessages();
+	assert.equal(formattedAtoms(receiver.root)[0].format.bold, false);
+	return {
+		forest: forestFromView(receiver),
+		edit: () => runtime.resumeInboundProcessing(),
+		verify: () => {
+			assert.equal(receiver.root.getUniformRun(0), formattedTextLength);
+			for (const atom of formattedAtoms(receiver.root)) {
+				assert.equal(atom.format.bold, true);
+			}
+		},
+	};
+}
+
+/**
+ * Prepares a remote point edit with the same receiver-only timing boundary as {@link formattedRemoteFixture}.
+ */
+function pointRemoteFixture(): LeafEditFixture {
+	const provider = new TestTreeProviderLite(2, incomingEditFactory);
+	const config = new TreeViewConfiguration({ schema: PointArray });
+	const sender = provider.trees[0].viewWith(config);
+	sender.initialize(
+		Array.from({ length: 1000 }, (_, index) => new Point({ x: index, y: index })),
+	);
+	provider.synchronizeMessages();
+	const receiver = provider.trees[1].viewWith(config);
+	const runtime = provider.trees[1].containerRuntime;
+	runtime.pauseInboundProcessing();
+	sender.root[500].x = 1001;
+	// The unchanged value confirms that receiver-side application is still pending when setup returns.
+	provider.synchronizeMessages();
+	assert.equal(receiver.root[500].x, 500);
+	return {
+		forest: forestFromView(receiver),
+		edit: () => runtime.resumeInboundProcessing(),
+		verify: () => {
+			assert.equal(receiver.root[500].x, 1001);
+			assert.equal(receiver.root[500].y, 500);
+		},
+	};
+}
 
 /** Builds a chunked-forest array of `size` identical {@link Row} objects. */
 function buildObjectArray(size: number): { root: ObjectArray; forest: IForestSubscription } {
@@ -397,6 +606,193 @@ describe("chunked-forest coalescing benchmarks", () => {
 		});
 	});
 
+	describe("Incoming leaf edits", () => {
+		const cases = [
+			{
+				name: `bold ${formattedTextLength} characters: branch merge`,
+				setup: formattedBranchFixture,
+			},
+			{
+				name: "replace one coordinate in 1000 points: branch merge",
+				setup: pointBranchFixture,
+			},
+			{
+				name: `bold ${formattedTextLength} characters: remote receive`,
+				setup: formattedRemoteFixture,
+			},
+			{
+				name: "replace one coordinate in 1000 points: remote receive",
+				setup: pointRemoteFixture,
+			},
+		];
+		for (const { name, setup } of cases) {
+			benchmarkIt({
+				type: BenchmarkType.Measurement,
+				title: name,
+				...benchmarkDurationBatchless({
+					benchmarkFn: (state) => {
+						let running: boolean;
+						do {
+							const fixture = setup();
+							running = state.time(() => fixture.edit());
+							fixture.verify();
+						} while (running);
+					},
+					maxBenchmarkDurationSeconds,
+					minSampleCount: 30,
+				}),
+			});
+		}
+	});
+
+	describe("Application leaf edits", () => {
+		const cases = [
+			{
+				name: `bold ${formattedTextLength} characters`,
+				setup: formattedRangeFixture,
+				batchSize: 4,
+			},
+			{
+				name: "replace one coordinate in 1000 points",
+				setup: pointCoordinateFixture,
+				batchSize: 32,
+			},
+		];
+		for (const { name, setup, batchSize } of cases) {
+			benchmarkIt({
+				type: BenchmarkType.Measurement,
+				title: `${name}: edit time`,
+				...benchmarkDurationBatchless({
+					benchmarkFn: (state) => {
+						let running: boolean;
+						do {
+							const fixture = setup();
+							running = state.time(() => fixture.edit());
+							fixture.verify();
+						} while (running);
+					},
+					maxBenchmarkDurationSeconds,
+					minSampleCount: 30,
+				}),
+			});
+			// Each batch contains independent documents with one edit each, not repeated edits to a single document.
+			// Results are retained bytes for the entire batch after GC; divide by batchSize for per-document figures.
+			// Retaining fixtures keeps their views and histories alive. This is not peak memory or total allocations.
+			benchmarkIt({
+				type: BenchmarkType.Measurement,
+				title: `${name}: retained tree heap after ${batchSize} edits`,
+				// Collecting a heap left by earlier suites can exceed Mocha's default timeout.
+				correctnessTimeoutMs: 5000,
+				...benchmarkMemoryUse({
+					...memoryUseOfValue(() =>
+						Array.from({ length: batchSize }, () => {
+							const fixture = setup();
+							fixture.edit();
+							return fixture;
+						}),
+					),
+					warmUpIterations: 4,
+					keepIterations: 8,
+				}),
+			});
+			// Retain only the root-field chunks so views, history, and detached repair content can be collected.
+			// This separate storage-only measurement is not an additional amount to add to the full-view result.
+			benchmarkIt({
+				type: BenchmarkType.Measurement,
+				title: `${name}: attached-content heap after ${batchSize} edits`,
+				correctnessTimeoutMs: 5000,
+				...benchmarkMemoryUse({
+					...memoryUseOfValue(() =>
+						Array.from({ length: batchSize }, () => {
+							const fixture = setup();
+							fixture.edit();
+							// Do not return the fixture: its callbacks would keep the view and history alive and defeat storage isolation.
+							const roots = (fixture.forest as unknown as { roots: ChunkWithFields }).roots;
+							return roots.fields?.get(rootFieldKey);
+						}),
+					),
+					warmUpIterations: 4,
+					keepIterations: 8,
+				}),
+			});
+		}
+	});
+
+	// Compare two paths in the current implementation, not a historical implementation baseline.
+	// Setup creates the forest, incoming content, and optional snapshot outside timing; teardown is also excluded.
+	// Timing includes visitor acquisition, copy-on-write, optional forced BasicChunk conversion, and replacement.
+	// The snapshot keeps the original roots shared through the edit to exercise copy-on-write.
+	describe("Leaf replacement timing", () => {
+		const field: FieldKey = brand("v");
+		const incomingField: FieldKey = brand("incoming");
+		const outgoingField: FieldKey = brand("outgoing");
+		const shape = new TreeShape(brand(Row.identifier), false, [[field, shallowShape, 1]]);
+		for (const shared of [false, true]) {
+			for (const forceBasic of [false, true]) {
+				benchmarkIt({
+					type: BenchmarkType.Measurement,
+					title: `${shared ? "shared" : "exclusive"}, ${forceBasic ? "force BasicChunk conversion" : "retain uniform storage"}, 1000 nodes`,
+					...benchmarkDurationBatchless({
+						benchmarkFn: (state) => {
+							let running: boolean;
+							do {
+								const schema = new TreeStoredSchemaRepository(toInitialSchema(Row));
+								const forest = buildChunkedForest(
+									makeTreeChunker(
+										schema,
+										defaultSchemaPolicy,
+										defaultIncrementalEncodingPolicy,
+									),
+								);
+								// Seed one large chunk directly so every iteration starts identically, independent of initial chunk-size heuristics.
+								forest.roots.fields.set(rootFieldKey, [
+									new UniformChunk(
+										shape.withTopLevelLength(1000),
+										Array.from({ length: 1000 }, () => 1),
+									),
+								]);
+								forest.roots.fields.set(incomingField, [
+									new UniformChunk(shallowShape.withTopLevelLength(1), [2]),
+								]);
+								// Cloning roots shares both the destination and incoming storage, exercising safe handling of both sides of replacement.
+								const snapshot = shared ? forest.clone(schema) : undefined;
+								running = state.time(() => {
+									const visitor = forest.acquireVisitor();
+									if (forceBasic) {
+										// Conversion stays inside the timer because it is the additional work this comparison measures.
+										const roots = forest.roots.fields.get(rootFieldKey);
+										if (roots === undefined) {
+											throw new Error("Missing benchmark roots");
+										}
+										ensureExclusiveBasicChunk(roots, 500, {
+											policy: forest.chunker,
+											idCompressor: undefined,
+										});
+									}
+									visitor.enterField(rootFieldKey);
+									visitor.enterNode(500);
+									visitor.enterField(field);
+									visitor.replace(incomingField, { start: 0, end: 1 }, outgoingField, {
+										minor: 0,
+									});
+									visitor.exitField(field);
+									visitor.exitNode(500);
+									visitor.exitField(rootFieldKey);
+									visitor.free();
+								});
+								snapshot?.roots.referenceRemoved();
+								snapshot?.chunker.dispose();
+								forest.roots.referenceRemoved();
+								forest.chunker.dispose();
+							} while (running);
+						},
+						maxBenchmarkDurationSeconds,
+					}),
+				});
+			}
+		}
+	});
+
 	// After typing N characters through the real editor, coalescing keeps the field batched into few
 	// multi-node UniformChunks (~N/10) instead of one single-node chunk per character (~N).
 	describe("Uniform chunk count after typing", () => {
@@ -420,11 +816,8 @@ describe("chunked-forest coalescing benchmarks", () => {
 		}
 	});
 
-	// Per-edit overhead of coalescing. Each case performs a real insert edit — split a multi-node
-	// UniformChunk, splice in a new node, then (optionally) coalesce the seam — mirroring the forest's
-	// `attachEdit`. The "no coalesce" baseline does the split+splice edit without coalescing; the deltas
-	// above it are the coalescing overhead. "deep heterogeneous" is the worst case: the inserted node has
-	// a different (deep) shape, so the structural `equals` does maximal work and the seam never merges.
+	// The no-coalescing case is a within-run control for the shallow homogeneous insertion model.
+	// Deep cases also copy larger value arrays; the heterogeneous case rejects mismatched root types without a field walk.
 	describe("Per-edit coalescing time", () => {
 		const timeCase = (title: string, edit: () => void): void => {
 			benchmarkIt({
@@ -450,7 +843,7 @@ describe("chunked-forest coalescing benchmarks", () => {
 		timeCase("insert edit + coalesce, deep homogeneous", () =>
 			insertEdit(deepShapeA, deepValues, deepShapeA, deepValues, true),
 		);
-		timeCase("insert edit + coalesce, deep heterogeneous (worst case)", () =>
+		timeCase("insert edit + coalesce, deep heterogeneous (type mismatch)", () =>
 			insertEdit(deepShapeA, deepValues, deepShapeB, deepValues, true),
 		);
 	});
@@ -491,14 +884,10 @@ describe("chunked-forest coalescing benchmarks", () => {
 		}
 	});
 
-	// A large array of same-shape objects batches into a few multi-node UniformChunks. A single in-place
-	// edit to one field of a node shatters *only the one UniformChunk enclosing that node* into per-node
-	// BasicChunks (chunkedForest `enterNode`); the other chunks are untouched. Coalescing operates on
-	// attach/detach seams and only merges UniformChunks, so it neither causes nor undoes this pre-existing
-	// shatter. Metrics: `basicChunks` rises by the enclosing chunk's node count (the shatter's blast
-	// radius); `largestUniformChunkNodes` shows the compact run either destroyed (single-chunk array) or
-	// surviving (multi-chunk array — the edit is localized).
-	describe("In-place edit chunk shatter (not addressed by coalescing)", () => {
+	// Compatible leaf replacement should preserve uniform runs rather than converting their parent nodes to BasicChunks.
+	// Compare non-uniform counts and the largest uniform run before and after the edit.
+	// Total chunk count can increase because the forest also retains outgoing content for repair, not because the document fragmented.
+	describe("Chunk storage after leaf replacement", () => {
 		const report = (forest: IForestSubscription): CollectedData => {
 			const { total, basic, largestUniformNodes } = chunkStats(forest);
 			return [
