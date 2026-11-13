@@ -450,49 +450,70 @@ describe("Native checkpoint encoding", () => {
 			}
 		});
 
-		it("falls back to existing LZ4 without CompressionStream and reads legacy JSON", async () => {
-			const compression = stub(globalThis, "CompressionStream").value(undefined);
+		it("requires gzip support for capture and reports unavailable decompression explicitly", async () => {
 			const storage = createStore();
-			try {
-				const bytes = new TextEncoder().encode("repetitive text ".repeat(1000));
-				const compressedCheckpoint = await storage.store(bytes);
-				assert.equal(storage.blobs.get(compressedCheckpoint.route)?.[4], 2);
-				assert.deepEqual(
-					await loadNativeCheckpointBytes(
-						compressedCheckpoint,
-						storage.checkpoints,
-						storage.read,
-					),
-					bytes,
-				);
-			} finally {
-				compression.restore();
+			const bytes = new TextEncoder().encode("repetitive text ".repeat(1000));
+			const checkpoint = await storage.store(bytes);
+			assert.equal(storage.blobs.get(checkpoint.route)?.[4], 1);
+			for (const api of ["CompressionStream", "DecompressionStream"] as const) {
+				const missing = stub(globalThis, api).value(undefined);
+				try {
+					await assert.rejects(storage.store(bytes), /require gzip/);
+					if (api === "DecompressionStream") {
+						await assert.rejects(
+							loadNativeCheckpointBytes(checkpoint, storage.checkpoints, storage.read),
+							/require gzip DecompressionStream/,
+						);
+					} else {
+						assert.deepEqual(
+							await loadNativeCheckpointBytes(checkpoint, storage.checkpoints, storage.read),
+							bytes,
+						);
+					}
+				} finally {
+					missing.restore();
+				}
 			}
-			const legacy = new TextEncoder().encode(
-				JSON.stringify({
-					version: 1,
-					summary: {
-						type: SummaryType.Tree,
-						tree: { binary: { type: SummaryType.Blob, binary: [1, 255] } },
-					},
-				}),
+			const frame = storage.blobs.get(checkpoint.route);
+			assert(frame !== undefined);
+			frame[4] = 2;
+			await assert.rejects(
+				loadNativeCheckpointBytes(checkpoint, storage.checkpoints, storage.read),
+				/Unsupported native checkpoint compression/,
 			);
-			const checkpoint: NativeCheckpoint = {
-				id: "legacy",
-				sequenceNumber: 0,
-				route: "/_blobs/legacy",
-				bytes: legacy.length,
-				assets: [],
-			};
-			const loaded = await loadNativeCheckpointBytes(
-				checkpoint,
-				[checkpoint],
-				async () => legacy.buffer,
-			);
-			assert.deepEqual(decodeNativeCheckpoint(loaded.buffer), {
-				type: SummaryType.Tree,
-				tree: { binary: { type: SummaryType.Blob, content: new Uint8Array([1, 255]) } },
-			});
+		});
+
+		it("reads legacy uncompressed JSON without gzip APIs", async () => {
+			const decompression = stub(globalThis, "DecompressionStream").value(undefined);
+			try {
+				const legacy = new TextEncoder().encode(
+					JSON.stringify({
+						version: 1,
+						summary: {
+							type: SummaryType.Tree,
+							tree: { binary: { type: SummaryType.Blob, binary: [1, 255] } },
+						},
+					}),
+				);
+				const checkpoint: NativeCheckpoint = {
+					id: "legacy",
+					sequenceNumber: 0,
+					route: "/_blobs/legacy",
+					bytes: legacy.length,
+					assets: [],
+				};
+				const loaded = await loadNativeCheckpointBytes(
+					checkpoint,
+					[checkpoint],
+					async () => legacy.buffer,
+				);
+				assert.deepEqual(decodeNativeCheckpoint(loaded.buffer), {
+					type: SummaryType.Tree,
+					tree: { binary: { type: SummaryType.Blob, content: new Uint8Array([1, 255]) } },
+				});
+			} finally {
+				decompression.restore();
+			}
 		});
 	});
 

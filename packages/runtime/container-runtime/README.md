@@ -50,8 +50,9 @@ A chain has at most four delta edges: cold random access needs at most five atta
 This bounds read amplification and retention dependencies rather than claiming globally optimal deduplication.
 The warm capture cache holds only one materialized checkpoint.
 
-Compression uses the web-standard gzip streams, with the existing LZ4 dependency as a writer fallback.
-Readers of gzip payloads need `DecompressionStream`; integrity checks need Web Crypto.
+Compression uses only the web-standard gzip streams, retaining plain bytes when compression increases size.
+Capture requires both `CompressionStream` and `DecompressionStream`; integrity checks need Web Crypto.
+Unsupported environments fail explicitly rather than writing a codec that other clients cannot read.
 Frames carry explicit lengths, and SHA-256 validates both the base and reconstructed bytes.
 The prototype limits payloads and decompression to 64 MiB.
 Legacy JSON checkpoints remain readable; new summary binary blobs use base64 rather than numeric arrays.

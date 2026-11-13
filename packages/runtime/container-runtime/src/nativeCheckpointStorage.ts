@@ -5,7 +5,6 @@
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { compress, decompress } from "lz4js";
 
 import { isRecord, type NativeCheckpoint } from "./nativeCheckpoint.js";
 
@@ -130,17 +129,14 @@ async function encodeEnvelope(value: unknown): Promise<Uint8Array> {
 	if (plain.length > maxPayloadBytes) {
 		throw new UsageError("Native checkpoint exceeds size limit");
 	}
-	const useGzip = typeof CompressionStream !== "undefined";
-	const compressed = useGzip
-		? await readStream(
-				new Blob([plain]).stream().pipeThrough(new CompressionStream("gzip")),
-				maxPayloadBytes + 1024 * 1024,
-			)
-		: compress(plain);
+	const compressed = await readStream(
+		new Blob([plain]).stream().pipeThrough(new CompressionStream("gzip")),
+		maxPayloadBytes + 1024 * 1024,
+	);
 	const payload = compressed.length < plain.length ? compressed : plain;
 	const result = new Uint8Array(9 + payload.length);
 	result.set(magic);
-	result[4] = payload === plain ? 0 : useGzip ? 1 : 2;
+	result[4] = payload === plain ? 0 : 1;
 	new DataView(result.buffer).setUint32(5, plain.length);
 	result.set(payload, 9);
 	return result;
@@ -154,6 +150,11 @@ export async function encodeNativeCheckpointStorage(
 	bytes: Uint8Array,
 	base?: NativeCheckpointBase,
 ): Promise<EncodedNativeCheckpoint> {
+	if (typeof CompressionStream === "undefined" || typeof DecompressionStream === "undefined") {
+		throw new UsageError(
+			"Native checkpoints require gzip CompressionStream and DecompressionStream support",
+		);
+	}
 	if (bytes.length > maxPayloadBytes) {
 		throw new UsageError("Native checkpoint exceeds size limit");
 	}
@@ -201,16 +202,15 @@ async function decodeEnvelope(bytes: Uint8Array): Promise<unknown> {
 			break;
 		}
 		case 1: {
+			if (typeof DecompressionStream === "undefined") {
+				throw new UsageError("Native checkpoints require gzip DecompressionStream support");
+			}
 			plain = await readStream(
 				new Blob([new Uint8Array(payload)])
 					.stream()
 					.pipeThrough(new DecompressionStream("gzip")),
 				length,
 			);
-			break;
-		}
-		case 2: {
-			plain = decompress(payload, length);
 			break;
 		}
 		default: {
