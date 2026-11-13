@@ -77,6 +77,16 @@ export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
 	schema: TreeStoredSchemaRepository;
 }
 
+/**
+ * The local metadata of an op this tree submitted: the schema and policy it was encoded with, and the message it encodes.
+ * @remarks
+ * The message is what the op decodes to, so when the op is sequenced the tree takes it from here rather than decoding
+ * the op again. Ops applied from stashed state have no message here and are decoded.
+ */
+interface LocalOpMetadata<TChange> extends ClonableSchemaAndPolicy {
+	readonly message?: DecodedMessage<TChange>;
+}
+
 export interface SharedTreeCoreOptionsInternal extends CodecWriteOptions {
 	/**
 	 * See {@link SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode}.
@@ -450,11 +460,13 @@ export class SharedTreeCore<
 			idCompressor: this.idCompressor,
 			schema: schemaAndPolicy,
 		});
-		this.submitLocalMessage(encodedMessage, {
+		const localOpMetadata: LocalOpMetadata<TChange> = {
 			// Clone the schema to ensure that during resubmit the schema has not been mutated by later changes
 			schema: schemaAndPolicy.schema.clone(),
 			policy: schemaAndPolicy.policy,
-		});
+			message,
+		};
+		this.submitLocalMessage(encodedMessage, localOpMetadata);
 	}
 
 	/**
@@ -483,10 +495,16 @@ export class SharedTreeCore<
 
 		// Get a list of all the commits from the messages.
 		for (const messageContent of messagesContent) {
+			// A local op's message is the one it was encoded from, kept in its metadata; others are decoded.
 			// Empty context object is passed in, as our decode function is schema-agnostic.
-			const message = this.messageCodec.decode(messageContent.contents, {
-				idCompressor: this.idCompressor,
-			});
+			const message =
+				(local
+					? (messageContent.localOpMetadata as Partial<LocalOpMetadata<TChange>> | undefined)
+							?.message
+					: undefined) ??
+				this.messageCodec.decode(messageContent.contents, {
+					idCompressor: this.idCompressor,
+				});
 
 			if (messagesSessionId !== undefined) {
 				assert(
