@@ -22112,6 +22112,7 @@ packages:
   http-call@5.3.0:
     resolution: {integrity: sha512-ahwimsC23ICE4kPl9xTBjKB4inbRaeLyZeRunC/1Jy/Z6X8tv22MEAjK+KBOMSVLaqXPTTmd8638waVIKLGx2w==}
     engines: {node: '>=8.0.0'}
+    deprecated: Renamed to @heroku/http-call — please install @heroku/http-call instead.
 
   http-deceiver@1.2.7:
     resolution: {integrity: sha512-LmpOGxTfbpgtGVxJrj5k7asXHCgNZp5nLfp+hWc8QQRqtb7fUy6kRY3BO1h9ddF6yIPYUARgxGOwB42DnxIaNw==}
@@ -22206,6 +22207,7 @@ packages:
   image-size@0.5.5:
     resolution: {integrity: sha512-6TDAlDPZxUFCv+fuOkIoXT/V/f3Qbq8e37p+YOiYrUv3v9cc3/6x78VdfPgFVaB9dZYeLUfKgHRebpkm/oP2VQ==}
     engines: {node: '>=0.10.0'}
+    deprecated: Please migrate to image-size@2.x
     hasBin: true
 
   immutable@5.0.3:
@@ -22575,9 +22577,9 @@ packages:
   isomorphic-fetch@3.0.0:
     resolution: {integrity: sha512-qvUtwJ3j6qwsF3jLxkZ72qCgjMysPzDfeV240JHiGZsANBYd+EEuu35v7dfrJ9Up0Ak07D7GGSkGhCHTqg/5wA==}
 
-  isomorphic-git@1.27.2:
-    resolution: {integrity: sha512-nCiz+ieOkWb5kDJSSckDTiMjTcgkxqH2xuiQmw1Y6O/spwx4d6TKYSfGCd4f71HGvUYcRSUGqJEI+3uN6UQlOw==}
-    engines: {node: '>=12'}
+  isomorphic-git@1.44.12:
+    resolution: {integrity: sha512-Qfu5/YMcN1YyGqT3ZUmgFIlbj/bFwbwMbF4zlitrRGGyujyqtgMCOTy07mfca/iugH1ECpF6rlebFDceRs+MNg==}
+    engines: {node: '>=14.17'}
     hasBin: true
 
   issue-parser@7.0.1:
@@ -36356,7 +36358,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  isomorphic-git@1.27.2:
+  isomorphic-git@1.44.12:
     dependencies:
       async-lock: 1.4.1
       clean-git-ref: 2.0.1
@@ -36365,9 +36367,7 @@ snapshots:
       ignore: 5.3.2
       minimisted: 2.0.1
       pako: 1.0.11
-      path-browserify: 1.0.1
       pify: 4.0.1
-      readable-stream: 3.6.2
       sha.js: 2.4.12
       simple-get: 4.0.1
 
@@ -40519,7 +40519,7 @@ snapshots:
       cors: 2.8.5
       detect-port: 1.6.1(supports-color@10.2.2)
       express: 4.22.1(supports-color@10.2.2)
-      isomorphic-git: 1.27.2
+      isomorphic-git: 1.44.12
       json-stringify-safe: 5.0.1
       level: 8.0.1
       level-sublevel: 6.6.4
@@ -40560,7 +40560,7 @@ snapshots:
       cors: 2.8.5
       detect-port: 1.6.1(supports-color@10.2.2)
       express: 4.22.1(supports-color@10.2.2)
-      isomorphic-git: 1.27.2
+      isomorphic-git: 1.44.12
       json-stringify-safe: 5.0.1
       level: 8.0.1
       level-sublevel: 6.6.4
@@ -40601,7 +40601,7 @@ snapshots:
       cors: 2.8.5
       detect-port: 1.6.1(supports-color@10.2.2)
       express: 4.22.1(supports-color@10.2.2)
-      isomorphic-git: 1.27.2
+      isomorphic-git: 1.44.12
       json-stringify-safe: 5.0.1
       level: 8.0.1
       level-sublevel: 6.6.4
