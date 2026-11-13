@@ -22,6 +22,7 @@ import type {
 	IDocumentStorageService,
 	IResolvedUrl,
 	ISequencedDocumentMessage,
+	ISnapshotTree,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import type {
@@ -183,6 +184,7 @@ const initialize = async (): Promise<{
 	urlResolver: LocalResolver;
 	codeLoader: LocalCodeLoader;
 	documentServiceFactory: LocalDocumentServiceFactory;
+	deltaConnectionServer: ReturnType<typeof LocalDeltaConnectionServer.create>;
 }> => {
 	const deltaConnectionServer = LocalDeltaConnectionServer.create();
 	const { urlResolver, codeDetails, codeLoader, loaderProps, documentServiceFactory } =
@@ -200,6 +202,7 @@ const initialize = async (): Promise<{
 		urlResolver,
 		codeLoader,
 		documentServiceFactory,
+		deltaConnectionServer,
 	};
 };
 

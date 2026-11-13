@@ -17,7 +17,8 @@ const pendingLocalState = await captureFullContainerState({
 });
 ```
 
-Resuming structural state does not require historical structural blobs from storage.
+Structural capture uses the same snapshot-subtree filtering as inline capture; this option does not change structural completeness.
+Captured structural payloads are available without live storage, but this does not guarantee that every payload needed for continuation was captured.
 Offline structural loading can succeed, but dereferencing an omitted attachment later fails.
 The storage layer throws `UsageError`, which handle resolution may wrap.
 Offline reads of omitted attachments from newly captured structural state identify `blobCaptureMode: "structural"` in the error message.

@@ -541,6 +541,7 @@ export interface ICaptureFullContainerStateProps {
 	 * `"structural"` includes structural snapshot contents, attachment references,
 	 * and saved ops, but omits attachment payloads. Structural state can load offline;
 	 * accessing an omitted attachment fails without live storage.
+	 * It uses the same structural snapshot filtering as `"inline"`.
 	 * Online attachment access depends on the attachment remaining available.
 	 * This does not change garbage collection or retention.
 	 *
@@ -579,7 +580,8 @@ export interface ICaptureFullContainerStateProps {
  * used with the fully offline form of {@link loadFrozenContainerFromPendingState}.
  *
  * When `blobCaptureMode` is `"structural"`,
- * structural contents remain inlined, but attachment payloads are omitted.
+ * structural contents selected by the same filtering as `"inline"` remain
+ * inlined, but attachment payloads are omitted.
  * Attachment references and saved ops are preserved.
  * Structural state can load offline, but accessing an omitted attachment later
  * fails. The storage layer throws `UsageError`, which handle resolution may wrap.
