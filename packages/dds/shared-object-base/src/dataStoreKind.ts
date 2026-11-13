@@ -45,7 +45,8 @@ import type { ISharedObject } from "./types.js";
  * Inferred for homogeneous entries; specify a common type or union for heterogeneous entries.
  * @param entries - Kinds, or type identifiers and their lazy loaders.
  * @returns A registry that loads each lazy entry at most once and
- * rejects lookups for unknown types or loaders that return a kind with a different type.
+ * rejects lookups for unknown types or loaders that return a {@link @fluidframework/driver-definitions#DataStoreKind}
+ * with a different {@link @fluidframework/driver-definitions#RegistryKey."type" | type}.
  * @throws A usage error if the entries contain duplicate type identifiers.
  * @alpha
  */
