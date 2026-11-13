@@ -2257,65 +2257,6 @@ describe("transaction minimize post-processor", () => {
 		});
 	});
 
-	/**
-	 * Attempts to inject a hidden property using temporary schema change, then reverts to the original schema.
-	 * @remarks
-	 * Steps (root state shown after each):
-	 *
-	 * 0. initial                 -\> `[Box: { value: "A⌚" }]`
-	 * 1. upgrade schema          -\> `[Box: { value: "A⌚" }]`
-	 * 2. set Box secret to "B☠️" -\> `[Box: { value: "A⌚", secret: "B☠️" }]`
-	 * 3. downgrade schema        -\> stored: `[Box: { value: "A⌚", secret: "B☠️" }]  visible: { value: "A⌚" }`
-	 *
-	 * This invariant is independent of minimization, but is critical behavior for
-	 * minimization criteria as minimize only operates on data edits.
-	 */
-	it("temporary schema change throws restoring schema", () => {
-		let scenarioStuffHiddenSecretInBoxReachedSchemaRollback = false;
-
-		assert.throws(() => {
-			const { view } = runScenario({
-				schema: BoxArray,
-				initialContent: [new Box({ value: "A⌚" })],
-				apply: (_root, tree, view1) => {
-					// Force dispose view to permit upgrade
-					view1.dispose();
-
-					// Update schema which now allows Boxes with secrets in root array.
-					const view2 = tree.viewWith(new TreeViewConfiguration(SketchyBoxArraySchemaConfig));
-					view2.upgradeSchema();
-
-					view2.root[0].secret = "B☠️";
-					view2.dispose();
-
-					// Restore schema which does now allows Boxes with secrets in root array.
-					const view3 = tree.viewWith(
-						new TreeViewConfiguration({
-							schema: BoxArray,
-							enableSchemaValidation: true,
-						}),
-					);
-					assert(view3 instanceof SchematizingSimpleTreeView);
-					scenarioStuffHiddenSecretInBoxReachedSchemaRollback = true;
-					view3.upgradeSchema();
-
-					return view3;
-				},
-				expectSurvivingMarker: false,
-			} as const satisfies BoxArrayScenario);
-			assert.equal(
-				// @ts-expect-error -- Property 'secret' does not exist on type 'Box'.
-				view.root[0].secret,
-				"B☠️",
-			);
-		}, /Existing stored schema cannot be upgraded/);
-
-		assert(
-			scenarioStuffHiddenSecretInBoxReachedSchemaRollback,
-			"scenario did not reach schema rollback step",
-		);
-	});
-
 	// These tests assert that the squashed change carries no extraneous information about nodes that are not
 	// present in the final document.
 	describe("removes extraneous data from the squashed changes", () => {

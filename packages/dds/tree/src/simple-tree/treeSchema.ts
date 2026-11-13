@@ -414,20 +414,19 @@ export function toUpgradeSchema(
 }
 
 /**
- * Builds a candidate upgrade target while preserving staged upgrades already enabled at each stored location.
+ * Composes a candidate upgrade target from the view schema, existing stored schema, and configured staged-upgrade policy.
  *
  * @remarks
- * Start with the stored schema selected by the view and its policy, then preserve already-enabled upgrades at corresponding fields.
+ * Start with the stored schema selected by the view and its policy, then combine it with existing permissions at corresponding fields.
  * This separates the policy's decision to enable a staged upgrade from the need to preserve one already enabled.
  * Construction follows these rules:
  *
  * - Matching fields retain their stored allowed types and add types selected by the view and supplied policy.
  * - Already-optional fields stay optional when the corresponding view field supports missing content, including through staged optionality.
  * - Shared tokens do not make preservation global: an enabled change remains at its stored field, while other fields gain it only if the policy enables the token.
- * - Definitions required by retained allowed types are included, even when restrictive conversion excludes their staged references.
- * View-known types use their current declarations so incompatible changes are not hidden by an old stored definition.
- *
- * This does not retain object fields omitted from the view. Such omissions can still prevent an upgrade even when viewing is permitted.
+ * - For each included object type whose view allows unknown optional fields, omitted stored optional fields are retained with their allowed types and metadata.
+ * - Existing node definitions referenced by retained fields are included, along with the definitions they reference.
+ * Types known to the view use their current declarations with field permissions composed as above; types unknown to the view retain their stored definitions.
  *
  * The result is a proposal, not an approved upgrade.
  * Retaining an allowed type can still leave a candidate that the view cannot read, and other schema differences can still violate upgrade rules.
@@ -470,7 +469,7 @@ export function getSchemaUpgradeCandidate(
 			let candidate = nodeSchema.get(identifier);
 
 			if (candidate === undefined) {
-				// An already-enabled type can be omitted from the initial conversion because all view references to it are disabled by staging.
+				// A retained field can require a type omitted from the initial conversion because all view references to it are disabled by staging.
 				// Use the view's current declaration when available, so upgrade validation can detect incompatible changes instead of hiding them with the stored definition.
 				candidate =
 					viewNode === undefined
@@ -524,10 +523,11 @@ export function getSchemaUpgradeCandidate(
 }
 
 /**
- * Preserves enabled types and supported optionality in fields declared by the candidate object node.
+ * Composes fields of a stored object node and retains omitted optional fields when the view allows unknown optional fields.
  *
  * @remarks
- * The stored representation is shared by objects and arrays, so both preserve enabled upgrades for declared fields.
+ * The stored representation is shared by objects and arrays, but their view rules differ.
+ * Both preserve enabled upgrades for declared fields; only object views that allow unknown optional fields can also retain omitted fields.
  *
  * Field maps may belong to cached schemas, so this helper copies only the parts it changes rather than modifying either input.
  * It handles this node's fields only; the caller must follow their type references and validate the complete candidate.
@@ -563,10 +563,21 @@ function composeObjectNodeSchema(
 				fields ??= new Map(candidate.objectNodeFields);
 				fields.set(fieldKey, composed);
 			}
+		} else if (
+			viewObject?.allowUnknownOptionalFields === true &&
+			field.kind === FieldKinds.optional.identifier &&
+			propertyKey === undefined
+		) {
+			// The view omits this optional field but permits unknown optional fields.
+			// Retain the stored definition unchanged instead of composing a declared field.
+			// `candidate` may still reference a node from `toStoredSchema`'s cached result.
+			// Copy its fields before adding document-specific retained fields, so the cached conversion remains unchanged.
+			fields ??= new Map(candidate.objectNodeFields);
+			fields.set(fieldKey, field);
 		}
 	}
 
-	// At least one field changed, so replace the node while keeping its metadata.
+	// At least one field changed or was retained, so replace the node with the updated fields while keeping its metadata.
 	// Otherwise, reuse the original candidate without modifying a potentially cached node.
 	return fields === undefined
 		? candidate
