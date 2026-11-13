@@ -122,10 +122,6 @@ export interface IConnectableRuntime {
  */
 export interface ISummarizerRuntime extends IConnectableRuntime {
 	readonly baseLogger: ITelemetryBaseLogger;
-	/**
-	 * clientId of parent (non-summarizing) container that owns summarizer container
-	 */
-	readonly summarizerClientId: string | undefined;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	/**
 	 * Initiate disposal of the container.

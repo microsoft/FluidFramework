@@ -80,7 +80,6 @@ export class MockContainerRuntimeForSummarizer
 	implements ISummarizerRuntime, ISummarizerInternalsProvider
 {
 	public readonly baseLogger = createChildLogger();
-	public readonly summarizerClientId: string | undefined;
 	public readonly summarizer: Summarizer;
 
 	private readonly summaryManager: SummaryManager;
@@ -244,7 +243,7 @@ export class MockContainerRuntimeForSummarizer
 		super.setConnectedState(value);
 
 		this.connectedState.setConnectedState(value, this.clientId);
-		this.summarizerClientElection.setClientId(this.clientId);
+		this.summarizerClientElection.setElectedParentId(this.clientId);
 	}
 
 	public closeFn(): void {
@@ -265,17 +264,16 @@ class MockSummarizerClientElection
 	extends TypedEventEmitter<ISummarizerClientElectionEvents>
 	implements ISummarizerClientElection
 {
-	public electedClientId: string | undefined;
+	public summarizerExistsInQuorum = false;
 	public electedParentId: string | undefined;
 
-	constructor(clientId: string) {
+	constructor(parentId: string) {
 		super();
-		this.setClientId(clientId);
+		this.setElectedParentId(parentId);
 	}
 
-	public setClientId(clientId: string) {
-		this.electedClientId = clientId;
-		this.electedParentId = clientId;
+	public setElectedParentId(parentId: string) {
+		this.electedParentId = parentId;
 	}
 }
 
