@@ -1050,19 +1050,21 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		SharedTreeChangeProcessingContext
 	> {
 		return new SquashingTransactionStack(branch, this.mintRevisionTag, () => {
-			// When each transaction is started, make a restorable checkpoint of the current state of removed roots
-			const restoreRemovedRoots = this._removedRoots.createCheckpoint();
+			// When each transaction is started, make a point the removed roots can be restored to if it is aborted.
+			const removedRootsRestorePoint = this._removedRoots.createRestorePoint();
 			return (result, viewUpdate: SharedTreeChange | undefined) => {
 				const newHead = this.#transaction.branch.getHead();
 				switch (result) {
 					case InternalTransactionResult.Abort: {
-						restoreRemovedRoots();
+						removedRootsRestorePoint.restore();
+						removedRootsRestorePoint.release();
 						if (viewUpdate !== undefined) {
 							this.applyInternalChange(viewUpdate, newHead.revision);
 						}
 						break;
 					}
 					case InternalTransactionResult.Commit: {
+						removedRootsRestorePoint.release();
 						if (viewUpdate !== undefined) {
 							this.applyInternalChange(viewUpdate, newHead.revision);
 						}

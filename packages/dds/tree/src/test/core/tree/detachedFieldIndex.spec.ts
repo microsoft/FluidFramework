@@ -18,6 +18,7 @@ import {
 	type ForestRootId,
 	makeDetachedFieldIndex,
 	makeDetachedNodeId,
+	type RevisionTag,
 	RevisionTagCodec,
 } from "../../../core/index.js";
 import {
@@ -642,5 +643,135 @@ describe("DetachedFieldIndex methods", () => {
 			restore();
 			assert.deepEqual(index.getSummaryData(), originalData);
 		});
+	});
+
+	describe("restore points", () => {
+		/**
+		 * The index's content, in iteration order, including which roots each revision last touched.
+		 */
+		function snapshot(index: DetachedFieldIndex, revisions: readonly RevisionTag[]): unknown {
+			return {
+				entries: [...index.entries()],
+				summary: JSON.stringify([...index.getSummaryData().data].map(([k, v]) => [k, [...v]])),
+				maxId: index.getSummaryData().maxId,
+				byRevision: revisions.map((revision) => [
+					...index.getRootsLastTouchedByRevision(revision),
+				]),
+			};
+		}
+
+		it("restore every kind of change exactly, including iteration order", () => {
+			const index = makeDetachedFieldIndex();
+			const [r1, r2, r3] = [mintRevisionTag(), mintRevisionTag(), mintRevisionTag()];
+			index.createEntry(makeDetachedNodeId(r1, 1), r1, 2);
+			index.createEntry(makeDetachedNodeId(r2, 1), r2);
+			index.createEntry(makeDetachedNodeId(r3, 1), r3, 3);
+			const before = snapshot(index, [r1, r2, r3]);
+
+			const point = index.createRestorePoint();
+			index.deleteEntry(makeDetachedNodeId(r2, 1));
+			index.deleteEntry(makeDetachedNodeId(r1, 1));
+			index.updateLatestRevision(makeDetachedNodeId(r3, 2), r1);
+			index.createEntry(makeDetachedNodeId(r2, 5), r3);
+			index.deleteRootsLastTouchedByRevision(r3);
+			assert.notDeepEqual(snapshot(index, [r1, r2, r3]), before);
+
+			point.restore();
+			assert.deepEqual(snapshot(index, [r1, r2, r3]), before);
+			// A restore point can be restored again after more changes.
+			index.createEntry(makeDetachedNodeId(r2, 9), r2);
+			point.restore();
+			assert.deepEqual(snapshot(index, [r1, r2, r3]), before);
+			point.release();
+			assert.throws(() => point.restore());
+			assert.throws(() => point.release());
+		});
+
+		it("nest, keeping the changes of a released inner one for the outer one", () => {
+			const index = makeDetachedFieldIndex();
+			const [r1, r2] = [mintRevisionTag(), mintRevisionTag()];
+			index.createEntry(makeDetachedNodeId(r1, 1), r1);
+			const atOuter = snapshot(index, [r1, r2]);
+			const outer = index.createRestorePoint();
+			index.createEntry(makeDetachedNodeId(r2, 1), r2);
+			const atInner = snapshot(index, [r1, r2]);
+			const inner = index.createRestorePoint();
+			index.deleteEntry(makeDetachedNodeId(r1, 1));
+			inner.restore();
+			assert.deepEqual(snapshot(index, [r1, r2]), atInner);
+			index.deleteEntry(makeDetachedNodeId(r2, 1));
+			inner.release();
+			outer.restore();
+			assert.deepEqual(snapshot(index, [r1, r2]), atOuter);
+			outer.release();
+		});
+
+		it("restore many deletions from the same revision's entries, in order, at each level of nesting", () => {
+			const index = makeDetachedFieldIndex();
+			const [r1, r2] = [mintRevisionTag(), mintRevisionTag()];
+			index.createEntry(makeDetachedNodeId(r1, 0), r1, 8);
+			index.createEntry(makeDetachedNodeId(r2, 0), r2, 2);
+			const atOuter = snapshot(index, [r1, r2]);
+			const outer = index.createRestorePoint();
+			index.deleteEntry(makeDetachedNodeId(r1, 3));
+			index.deleteEntry(makeDetachedNodeId(r1, 0));
+			index.createEntry(makeDetachedNodeId(r1, 20), r1);
+			const atInner = snapshot(index, [r1, r2]);
+			const inner = index.createRestorePoint();
+			for (const minor of [7, 1, 5, 20]) {
+				index.deleteEntry(makeDetachedNodeId(r1, minor));
+			}
+			index.createEntry(makeDetachedNodeId(r1, 3), r1);
+			inner.restore();
+			assert.deepEqual(snapshot(index, [r1, r2]), atInner);
+			// Deleting every entry of the revision also removes its inner map.
+			for (const minor of [1, 2, 4, 5, 6, 7, 20]) {
+				index.deleteEntry(makeDetachedNodeId(r1, minor));
+			}
+			inner.restore();
+			assert.deepEqual(snapshot(index, [r1, r2]), atInner);
+			index.deleteEntry(makeDetachedNodeId(r1, 2));
+			inner.release();
+			outer.restore();
+			assert.deepEqual(snapshot(index, [r1, r2]), atOuter);
+			outer.release();
+		});
+
+		it("restore changes which replace the whole index", () => {
+			const index = makeDetachedFieldIndex();
+			const r1 = mintRevisionTag();
+			index.createEntry(makeDetachedNodeId(r1, 1), r1);
+			const before = snapshot(index, [r1]);
+			const point = index.createRestorePoint();
+			index.loadData({ data: new Map(), maxId: brand(10) });
+			index.purge();
+			point.restore();
+			assert.deepEqual(snapshot(index, [r1]), before);
+			point.release();
+		});
+
+		for (const [name, replace] of [
+			["purge", (index: DetachedFieldIndex) => index.purge()],
+			[
+				"loadData",
+				(index: DetachedFieldIndex) => index.loadData({ data: new Map(), maxId: brand(10) }),
+			],
+		] as const) {
+			it(`restore entry changes made before ${name}`, () => {
+				const index = makeDetachedFieldIndex();
+				const [r1, r2] = [mintRevisionTag(), mintRevisionTag()];
+				index.createEntry(makeDetachedNodeId(r1, 1), r1);
+				index.createEntry(makeDetachedNodeId(r2, 1), r2, 2);
+				const before = snapshot(index, [r1, r2]);
+				const point = index.createRestorePoint();
+				index.createEntry(makeDetachedNodeId(r1, 2), r1);
+				index.deleteEntry(makeDetachedNodeId(r2, 1));
+				index.deleteEntry(makeDetachedNodeId(r2, 2));
+				replace(index);
+				point.restore();
+				assert.deepEqual(snapshot(index, [r1, r2]), before);
+				point.release();
+			});
+		}
 	});
 });

@@ -88,6 +88,7 @@ export {
 	type DetachedFieldSummaryData,
 	type ReadOnlyDetachedFieldIndex,
 	type DetachedFieldIndexCheckpoint,
+	type DetachedFieldIndexRestorePoint,
 	type ForestRootId,
 	getDetachedFieldContainingPath,
 	aboveRootPlaceholder,
