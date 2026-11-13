@@ -113,6 +113,23 @@ If publication was already acknowledged or the restored snapshot was loaded, it 
 An acknowledgement timeout rejects the attempt without undoing the sequenced boundary.
 Reload and inspect the state before retrying; service upload failures are surfaced without hidden retries.
 
+`NativeCheckpointCoordinator` is an opt-in wrapper for acknowledged capture, policy pruning, and restore requests.
+It rejects a capture that loses a catalog race and reports a different winning restore request instead of waiting indefinitely for the losing request.
+Acknowledgement waits survive read-to-write connection upgrades, have a configurable timeout, and are canceled on disposal.
+A timeout is indeterminate, not cancellation of the storage request: inspect freshly loaded service state before retrying, and use unique checkpoint and restore IDs.
+Dispose the coordinator when its host is finished; it removes its listeners but does not dispose the host runtime.
+
+A summary-authorized worker can opt into automatic recovery with `{ publishRestores: true, onPublicationError }`.
+The callback must handle failed attempts.
+Concurrent explicit publication calls share one attempt; a failed automatic attempt is not retried on every incoming op.
+Retry explicitly, reconnect, or replace the worker.
+The host still owns worker creation, capture triggers, retention scheduling, user notification, and eviction/reload orchestration.
+This wrapper does not grant service summary authorization or make mutable editor-side capture atomic.
+
+`loadNativeCheckpointSummary(id)` reconstructs retained native content without restoring the live document.
+It returns a fresh decoded summary, reuses the single-entry reconstructed-byte cache, and does not download image content.
+It is a data-layer read API, not a rendered preview or a historical container loader.
+
 The loader's internal `loadContainerAfterNativeCheckpointRestore(props, boundary, clearPersistedState)` helper provides the host reload contract.
 Stop using the closed old container and await the host callback that clears document-scoped pending state and caches.
 The helper discards pending state and version headers, disables loader caching, and forces driver snapshot and version fetches to use `FetchSource.noCache`.
@@ -129,13 +146,19 @@ Its mixed lifecycle cases each execute 120 captures and 10 restores, with two ed
 An independent oracle checks text before every capture and all modeled content before restore and after reload.
 The fixture shares 4 MiB of image attachments across all checkpoints.
 
-The normally compiled Tinylicious service passed all 17 checkpoint cases without source-route substitution.
-The following measurements are from two deterministic mixed-lifecycle runs on this Windows machine, using Node 26 for the client and Node 22 for the service:
+All 23 checkpoint scenarios passed with the local driver and the normally compiled Tinylicious service, without source-route substitution.
+Additional cases cover coordinator disposal/timeouts, conflicting requests, duplicate checkpoint IDs, transient publication failure, rejected offline pending edits, and an ordinary summary upload that finishes after restore.
+The service run exposed a test synchronization error: acknowledgement on the requester does not imply the publishing worker has processed the restore request.
+The corrected test explicitly awaits that worker's ordered boundary and passed on both drivers.
+The old ordinary upload does not become the latest snapshot after restore in either tested driver.
+This result does not establish other services' summary publication semantics.
+
+The following measurements are from two deterministic mixed-lifecycle runs on a shared Windows x64 development machine with 16 exposed logical processors and 64 GiB RAM, using Node 26.13.0 for the client and Node 22 for the service:
 
 | Seed | Uploaded payload across all 120 captures (bytes) | Retained payload (bytes) | Retained checkpoints | Capture through acknowledgement mean / p95 (ms) | Cold restore through verified load mean (ms) |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| 17 | 2,707,501 | 314,221 | 15 | 25.7 / 46.9 | 311.0 |
-| 123 | 2,870,579 | 454,340 | 16 | 26.1 / 46.8 | 322.2 |
+| 17 | 2,707,480 | 314,223 | 15 | 32.0 / 47.4 | 445.8 |
+| 123 | 2,870,257 | 454,383 | 16 | 28.6 / 46.7 | 340.2 |
 
 These are whole-history totals, not per-checkpoint sizes.
 Payload totals exclude the original shared image bytes and service protocol/storage overhead.
@@ -144,6 +167,58 @@ The retention target was deliberately reduced to 12 with zero minimum age to exe
 The reporter also records stage-sampled heap/array-buffer growth and process-wide peak RSS, which includes the test harness and is not per-operation peak memory.
 Set `FLUID_NATIVE_CHECKPOINT_METRICS_PREFIX` when running the end-to-end suite to retain these measurements.
 These are development-machine measurements, not production-service latency or browser-memory guarantees.
+Pruning through acknowledgement averaged 11.6 and 13.4 ms.
+
+The native DDS model contains SharedString, SharedMap, SharedDirectory, SharedTree, aliases, cyclic datastore handles, dynamic datastores, and shared image references.
+It makes random edits, captures 27 checkpoints, and repeatedly restores and compares against an independent model.
+Tinylicious measurements show the cost of realizing a larger native graph:
+
+| Initial model | Total archive payload for 27 checkpoints (bytes) | Warm capture mean / p95 (ms) | Cold capture mean (ms) | Restore and validate mean (ms) |
+| --- | ---: | ---: | ---: | ---: |
+| 8 stores, 1,024 initial text characters per store | 110,259 | 42.4 / 55.0 | 103.9 | 1,160.0 |
+| 64 stores, 8,192 initial text characters per store | 510,779 | 148.0 / 216.1 | 448.8 | 4,797.9 |
+
+These totals exclude 131,072 bytes of original shared images.
+The 64-store model's structural summary starts at 1,083,828 bytes; its final boot catalog is 7,694 bytes.
+Restore timing includes modeled-content validation, not UI rendering.
+The larger case is not evidence of subsecond restore at application scale.
+
+For the smaller 100-point fixture, seven fresh-container samples per condition measure snapshot-only boot with and without history:
+
+| Tinylicious seed | Boot before history mean / median (ms) | Boot after 100 points mean / median (ms) | Cold native reconstruction mean (ms) | Warm reconstruction mean (ms) |
+| --- | ---: | ---: | ---: | ---: |
+| 1 | 23.55 / 14.87 | 38.56 / 12.71 | 2.62 | 0.04 |
+| 42 | 21.24 / 14.50 | 37.11 / 13.54 | 2.73 | 0.03 |
+
+The after-history means increased while medians decreased: seven samples on a shared machine do not establish a boot latency regression or improvement.
+These are warm-process, snapshot-only loads with collaboration disabled, not device-cold boot.
+Driver and operating-system caches may remain warm.
+The structural snapshot grows from 2,266 to about 36,102 bytes; archive payloads and image bytes are not embedded in that structure.
+Listing the 100-entry in-memory catalog averages about 0.005 ms.
+Cold reconstruction means a new runtime reconstruction cache, and its maximum five `readBlob` calls are logical storage reads, not a guaranteed count of uncached HTTP requests.
+The archive totals 77,202 and 77,304 bytes for all 100 checkpoints, plus the single original 1 MiB image upload.
+Full restore through fresh load takes 346 and 354 ms in these small fixtures.
+Returned summary objects are independently decoded and tested against caller mutation.
+
+The production codec also passed 13 targeted tests on supported Node.js 22.
+A real headless Edge 155 run of `src/test/nativeCheckpoint.browser.ts` reconstructed 12 checkpoints, exercised a four-edge delta chain and shared attachment identity, and rejected corrupted data.
+It used at most five reads and took 206 ms for the complete in-memory smoke workload.
+This establishes codec execution in that browser, not browser loader/restore or cross-browser coverage.
+
+Reproduce the driver-neutral scenarios from `packages/test/test-end-to-end-tests` after building dependencies:
+
+```shell
+pnpm run build:test:esm
+pnpm exec mocha --driver=local --compatVersion=0 --grep "Native checkpoint" --timeout=180000
+pnpm exec mocha --driver=t9s --compatVersion=0 --grep "Native checkpoint" --timeout=180000
+```
+
+Set `FLUID_NATIVE_CHECKPOINT_METRICS_PREFIX` to retain JSON results.
+The Tinylicious command requires the normally built service at its configured endpoint.
+From this package, run the focused codec tests with `pnpm exec mocha --no-config lib/test/nativeCheckpoint.spec.js`.
+For browser verification, bundle the compiled `lib/test/nativeCheckpoint.browser.js` with a browser target and global library name `NativeCheckpointBrowser`, then place the bundle as `native-checkpoint-browser.js` beside `src/test/nativeCheckpoint.browser.html`.
+Await the page's `checkpointSmoke` promise or its completed JSON result; merely loading the page is not a pass.
+No browser bundler or compression dependency is added by this prototype.
 
 ## Data Virtualization For DataStores (Work in Progress)
 
