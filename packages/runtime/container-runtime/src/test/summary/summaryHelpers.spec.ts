@@ -43,22 +43,30 @@ describe("formCreateSummarizerFn", () => {
 		sinon.assert.calledOnce(close);
 	});
 
-	for (const closeThrows of [false, true]) {
-		it(`closes the container and propagates the validation error${closeThrows ? " when close throws" : ""}`, async () => {
-			getEntryPoint.resolves({});
-			if (closeThrows) {
-				close.throws(new Error("Cleanup failed"));
-			}
+	it("closes the container and propagates the validation error", async () => {
+		getEntryPoint.resolves({});
 
-			await assert.rejects(
-				createSummarizer,
-				(error: unknown) =>
-					error instanceof UsageError &&
-					error.message === "Fluid object does not implement ISummarizer",
-			);
-			sinon.assert.calledOnce(close);
-		});
-	}
+		await assert.rejects(
+			createSummarizer,
+			(error: unknown) =>
+				error instanceof UsageError &&
+				error.message === "Fluid object does not implement ISummarizer",
+		);
+		sinon.assert.calledOnce(close);
+	});
+
+	it("propagates the validation error when close throws", async () => {
+		getEntryPoint.resolves({});
+		close.throws(new Error("Cleanup failed"));
+
+		await assert.rejects(
+			createSummarizer,
+			(error: unknown) =>
+				error instanceof UsageError &&
+				error.message === "Fluid object does not implement ISummarizer",
+		);
+		sinon.assert.calledOnce(close);
+	});
 
 	it("returns the summarizer without closing the container", async () => {
 		getEntryPoint.resolves({ ISummarizer: summarizer });
