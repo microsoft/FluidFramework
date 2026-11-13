@@ -1472,7 +1472,7 @@ export abstract class CheckoutBase implements ITreeCheckout {
 				// They will however be rebased over the rollback of the schema change. This rebasing will
 				// ensure that these data changes are muted if they would render some trees invalid under the
 				// original (reinstated) schema.
-				const newSchema = innerChange.innerChange.schema.new;
+				const newSchema = innerChange.innerChange.output;
 				const telemetryMetrics = getSchemaChangeTelemetryMetrics(
 					this.storedSchema,
 					newSchema,

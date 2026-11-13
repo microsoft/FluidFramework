@@ -6,10 +6,13 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type { CodecWriteOptions, JsonCodecPart } from "../../codec/index.js";
+import {
+	CompareAndSwapSchemaChangeset,
+	type SchemaChangeset,
+} from "../schema-change-family/index.js";
 import { schemaCodecBuilder } from "../schema-index/index.js";
 
 import { EncodedSchemaChange } from "./schemaChangeFormat.js";
-import type { SchemaChange } from "./schemaChangeTypes.js";
 
 /**
  * Creates a codec for schema changes.
@@ -18,27 +21,33 @@ import type { SchemaChange } from "./schemaChangeTypes.js";
  */
 export function makeSchemaChangeCodec(
 	options: CodecWriteOptions,
-): JsonCodecPart<SchemaChange, typeof EncodedSchemaChange> {
+): JsonCodecPart<SchemaChangeset, typeof EncodedSchemaChange> {
 	const schemaCodec = schemaCodecBuilder.build(options);
 	return {
-		encode: (schemaChange: SchemaChange): EncodedSchemaChange => {
+		encode: (schemaChange: SchemaChangeset): EncodedSchemaChange => {
+			// Other types of schema changes will be supported in the future
+			assert(
+				schemaChange instanceof CompareAndSwapSchemaChangeset,
+				"Only compare-and-swap schema changes may be encoded",
+			);
 			assert(
 				!schemaChange.isInverse,
 				0x933 /* Inverse schema changes should never be transmitted */,
 			);
+			assert(
+				!schemaChange.hasConflicts(),
+				"Conflicted schema changes should never be transmitted",
+			);
 			return {
-				new: schemaCodec.encode(schemaChange.schema.new),
-				old: schemaCodec.encode(schemaChange.schema.old),
+				new: schemaCodec.encode(schemaChange.output),
+				old: schemaCodec.encode(schemaChange.input),
 			};
 		},
-		decode: (encoded: EncodedSchemaChange): SchemaChange => {
-			return {
-				schema: {
-					new: schemaCodec.decode(encoded.new),
-					old: schemaCodec.decode(encoded.old),
-				},
-				isInverse: false,
-			};
+		decode: (encoded: EncodedSchemaChange): SchemaChangeset => {
+			return new CompareAndSwapSchemaChangeset(
+				schemaCodec.decode(encoded.old),
+				schemaCodec.decode(encoded.new),
+			);
 		},
 		encodedSchema: EncodedSchemaChange,
 	};

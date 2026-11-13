@@ -209,7 +209,7 @@ function makeSharedTreeChangeCodec(
 						changes.push({
 							schema: schemaChangeCodec.encode(decodedChange.innerChange),
 						});
-						updatedSchema = decodedChange.innerChange.schema.new;
+						updatedSchema = decodedChange.innerChange.output;
 					}
 				}
 				return changes;
