@@ -209,6 +209,7 @@ export const schemaCodecBuilder = VersionDispatchingCodecBuilder.build("Schema",
 		},
 	},
 	{
+		// This unstable format has no compatibility guarantee and must require an explicit write override.
 		minVersionForCollab: undefined,
 		formatVersion: SchemaFormatVersion.v3Experimental,
 		codec: {

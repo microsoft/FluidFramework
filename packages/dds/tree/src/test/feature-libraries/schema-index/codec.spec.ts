@@ -9,6 +9,7 @@ import { strict as assert } from "node:assert";
 
 import {
 	currentVersion,
+	FluidClientVersion,
 	makeCodecFamily,
 	type CodecWriteOptions,
 } from "../../../codec/index.js";
@@ -202,6 +203,24 @@ describe("SchemaIndex", () => {
 			assert.deepEqual(encoded, codec.encode(schema2));
 			assert.equal(codec.decode(encoded).schemaVersion, undefined);
 		}
+	});
+
+	it("does not select the experimental format through the collaboration version", () => {
+		for (const minVersionForCollab of [FluidClientVersion.v2_43, currentVersion]) {
+			const codec = schemaCodecBuilder.build({ ...codecOptions, minVersionForCollab });
+			assert.equal((codec.encode(schema2) as FormatV2).version, SchemaFormatVersion.v2);
+		}
+	});
+
+	it("rejects an experimental format override without allowing possible incompatibility", () => {
+		assert.throws(
+			() =>
+				schemaCodecBuilder.build({
+					...codecOptions,
+					writeVersionOverrides: versionedCodecOptions.writeVersionOverrides,
+				}),
+			/because it has minVersionForCollab undefined/,
+		);
 	});
 
 	it("accepts an explicit override to the experimental schema format", () => {
