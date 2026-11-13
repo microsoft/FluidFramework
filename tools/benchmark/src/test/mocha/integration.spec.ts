@@ -102,6 +102,84 @@ describe("mocha integration", () => {
 		},
 	});
 
+	describe("temporary ODSP lookup diagnostics", () => {
+		function runLookupFailure(extraArgs: string[] = []): string {
+			const { stdout, stderr } = integrationTest(
+				[...perfModeArgs, "--integrationOdspLookup", ...extraArgs],
+				true,
+				{
+					testName: "odsp-lookup-integration-inner",
+					env: { FLUID_TEST_PERF_MODE: "1", FLUID_TEST_VERBOSE: "1" },
+				},
+			);
+			assert.match(stdout, /×.+odsp-lookup-integration-inner/);
+			return `${stdout}\n${stderr}`;
+		}
+
+		it("logs allowlisted metadata through the actual performance reporter", () => {
+			const output = runLookupFailure();
+			const diagnostics = output
+				.split("\n")
+				.filter((line) => line.includes("ODSP lookup failure diagnostics:"));
+			assert.deepEqual(diagnostics, [
+				"Unable to get drive/item id from path; ODSP lookup failure diagnostics: " +
+					JSON.stringify({
+						statusCode: 429,
+						retryAfterSeconds: 10,
+						sprequestguid: "sharepoint-request",
+						requestId: "request",
+						clientRequestId: "client-request",
+					}),
+			]);
+			assert.match(output, /Unable to get drive\/item id from path/);
+			assert.doesNotMatch(output, /sensitive-value|private-document/);
+		});
+
+		it("omits missing and nonprimitive metadata without inventing retry details", () => {
+			const output = runLookupFailure(["--integrationOdspMinimal"]);
+			const diagnostics = output
+				.split("\n")
+				.filter((line) => line.includes("ODSP lookup failure diagnostics:"));
+			assert.deepEqual(diagnostics, [
+				'Unable to get drive/item id from path; ODSP lookup failure diagnostics: {"statusCode":404}',
+			]);
+			assert.doesNotMatch(output, /sensitive-value/);
+		});
+
+		it("does not add diagnostics for other failures", () => {
+			const output = runLookupFailure(["--integrationOdspUnrelated"]);
+			assert.match(output, /Unrelated failure/);
+			assert.doesNotMatch(output, /ODSP lookup failure diagnostics:/);
+		});
+	});
+
+	if (argv.includes("--integrationOdspLookup")) {
+		benchmarkIt({
+			title: "odsp-lookup-integration-inner",
+			run: (): CollectedData => {
+				const message = argv.includes("--integrationOdspUnrelated")
+					? "Unrelated failure"
+					: "Unable to get drive/item id from path";
+				const error = new Error(message);
+				throw Object.assign(
+					error,
+					argv.includes("--integrationOdspMinimal")
+						? { statusCode: 404, requestId: { sensitive: "sensitive-value" } }
+						: {
+								statusCode: 429,
+								retryAfterSeconds: 10,
+								sprequestguid: "sharepoint-request",
+								requestId: "request",
+								clientRequestId: "client-request",
+								url: "https://example.com/private-document",
+								headers: { Authorization: "sensitive-value" },
+								token: "sensitive-value",
+						  },
+				);
+			},
+		});
+	}
+
 	it("timeout message", () => {
 		// Run the timeout inner test (registered only when --integrationTimeout is passed)
 		// with a 1ms mocha timeout so it always times out before emitting benchmark data.
