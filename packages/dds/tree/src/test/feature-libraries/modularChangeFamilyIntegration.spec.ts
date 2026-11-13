@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
 import type { SessionId } from "@fluidframework/id-compressor";
 
 import {
@@ -19,6 +20,7 @@ import {
 	type TaggedChange,
 	makeAnonChange,
 	offsetChangeAtomId,
+	rebaseChangeOverChanges,
 	revisionMetadataSourceFromInfo,
 	tagChange,
 	tagRollbackInverse,
@@ -50,6 +52,7 @@ import {
 } from "../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import {
+	isChangesetValid,
 	removeAliases,
 	validateChangeset,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -58,6 +61,8 @@ import type {
 	NodeId,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/modular-schema/modularChangeTypes.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { optionalFieldEditor } from "../../feature-libraries/optional-field/optionalField.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { Changeset } from "../../feature-libraries/sequence-field/types.js";
 import { FluidClientVersion, FormatValidatorBasic } from "../../index.js";
@@ -1742,6 +1747,99 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			assertEqual(composed, expected);
+		});
+
+		// This test demonstrates an issue with the current composition behavior:
+		// This test succeeds so long as the current composition behavior is unchanged.
+		// This test will fail if the composition behavior is fixed. It may also fail for other reasons.
+		// See the TODO in src/feature-libraries/optional-field/optionalField.ts referencing this test.
+		it("clear node from optional field ○ rename node", () => {
+			const graveId1: ChangeAtomId = {
+				revision: tag1,
+				localId: brand(1),
+			};
+			const clearA = tagChange(
+				Change.build(
+					{
+						family,
+						maxId: graveId1.localId,
+						revisions: [{ revision: tag1 }],
+					},
+					Change.field(fieldA, optionalIdentifier, optionalFieldEditor.clear(false, graveId1)),
+				),
+				tag1,
+			);
+
+			const graveId2: ChangeAtomId = { revision: tag2, localId: brand(2) };
+			const rename = tagChange(
+				Change.build({
+					family,
+					maxId: graveId2.localId,
+					revisions: [{ revision: tag2 }],
+					renames: [
+						{
+							oldId: graveId1,
+							newId: graveId2,
+							count: 1,
+							detachLocation: undefined,
+						},
+					],
+				}),
+				tag2,
+			);
+
+			const graveIdForNodeInDestinationCellOfMoveAC: ChangeAtomId = {
+				revision: tag3,
+				localId: brand(0),
+			};
+			const moveIdOfMoveAC: ChangeAtomId = { revision: tag3, localId: brand(3) };
+			const moveAC = tagChange(
+				Change.build(
+					{
+						family,
+						maxId: moveIdOfMoveAC.localId,
+						revisions: [{ revision: tag3 }],
+					},
+					Change.field(fieldA, optionalIdentifier, optionalFieldEditor.detach(moveIdOfMoveAC)),
+					Change.field(
+						fieldC,
+						optionalIdentifier,
+						optionalFieldEditor.set(true, {
+							detach: graveIdForNodeInDestinationCellOfMoveAC,
+							fill: moveIdOfMoveAC,
+						}),
+					),
+				),
+				tag3,
+			);
+
+			// Act
+			const composed = family.compose([clearA, rename]);
+
+			// Verify
+			const metadata = revisionMetadataSourceFromInfo([
+				{ revision: tag3 },
+				{ revision: tag1 },
+				{ revision: tag2 },
+			]);
+			const rebaseOfComposition = family.rebase(makeAnonChange(composed), moveAC, metadata);
+			// This check demonstrates that the current composition behavior can produce an invalid changeset
+			assert.equal(isChangesetValid(rebaseOfComposition, family.fieldKinds), "");
+
+			// Verify
+			const rebasedClearA = tagChange(family.rebase(clearA, moveAC, metadata), tag1);
+			const rollbackClearA = tagChange(family.invert(clearA, true, tag4), tag4);
+			const rebasedRename = tagChange(
+				rebaseChangeOverChanges(family, rename, [rollbackClearA, moveAC, rebasedClearA]),
+				tag2,
+			);
+			const compositionOfRebase = family.compose([rebasedClearA, rebasedRename]);
+			// This check demonstrates that the current composition behavior breaks the following group axiom:
+			// (A ○ B) ↷ X <==> (A ↷ X) ○ (B ↷ (A⁻¹ ○ X ○ (A ↷ X)))
+			assert.throws(
+				() => assertModularChangesetsEqual(rebaseOfComposition, compositionOfRebase),
+				"Objects are not structurally equal",
+			);
 		});
 
 		it("move and modify with modify", () => {
