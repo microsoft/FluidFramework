@@ -2651,6 +2651,55 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		changes: EditDescription[],
 		maxIdOpt?: ChangesetLocalId,
 	): ModularChangeset {
+		const fieldEdits = changes.filter(
+			(change): change is FieldEditDescription => change.type === "field",
+		);
+		const [fieldEdit] = fieldEdits;
+		if (
+			fieldEdits.length === 1 &&
+			fieldEdit !== undefined &&
+			changes.every((change) => change.type === "field" || (change.renames ?? []).length === 0)
+		) {
+			// With one field edit, there is nothing to compose: the changeset is built from that edit,
+			// together with the content the other edits build.
+			const editRevisions: Set<RevisionTag> = new Set();
+			const builds = newChangeAtomIdBTree<TreeChunk>();
+			for (const change of changes) {
+				editRevisions.add(change.revision);
+				if (change.type === "global") {
+					for (const [key, chunk] of change.builds?.entries() ?? []) {
+						// As in composition, the earliest build of an ID is kept.
+						if (!builds.has(key)) {
+							builds.set(key, chunk);
+						}
+					}
+				}
+			}
+			const fieldChange: Mutable<ModularChangeset> = buildModularChangesetFromField({
+				rebaseVersion: this.rebaseVersion,
+				path: fieldEdit.field,
+				fieldChange: { fieldKind: fieldEdit.fieldKind, change: fieldEdit.change },
+				nodeChanges: newChangeAtomIdBTree(),
+				nodeToParent: newChangeAtomIdBTree(),
+				crossFieldKeys: newCrossFieldRangeTable(),
+				rootNodes: newRootTable(),
+				idAllocator: this.idAllocator,
+				localCrossFieldKeys: getChangeHandler(
+					this.fieldKinds,
+					fieldEdit.fieldKind,
+				).getCrossFieldKeys(fieldEdit.change),
+				revision: fieldEdit.revision,
+			});
+			if (builds.size > 0) {
+				fieldChange.builds = builds;
+			}
+			fieldChange.revisions = [...editRevisions].map((revision) => ({ revision }));
+			const singleMaxId: ChangesetLocalId = maxIdOpt ?? brand(this.idAllocator.getMaxId());
+			if (singleMaxId >= 0) {
+				fieldChange.maxId = singleMaxId;
+			}
+			return fieldChange;
+		}
 		const revisions: Set<RevisionTag> = new Set();
 		const changeMaps = changes.map((change) => {
 			revisions.add(change.revision);

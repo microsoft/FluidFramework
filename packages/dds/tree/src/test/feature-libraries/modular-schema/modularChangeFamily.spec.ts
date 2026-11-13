@@ -60,6 +60,7 @@ import {
 	type FieldChangeEncodingContext,
 	type FieldChangeDecodingContext,
 	intoDelta,
+	type GlobalEditDescription,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
@@ -461,6 +462,73 @@ const node1Chunk = chunkFromJsonTrees([1]);
 const nodesChunk = treeChunkFromCursor(fieldJsonCursor([{}, {}]));
 
 describe("ModularChangeFamily", () => {
+	describe("buildChanges", () => {
+		for (const [name, field] of [
+			["at the root", pathA],
+			["under a node", pathA0A],
+		] as const) {
+			it(`builds a single field edit ${name}, with built content, as composing them would`, () => {
+				const build: GlobalEditDescription = {
+					type: "global",
+					revision: tag1,
+					builds: newChangeAtomIdBTree([[[tag1, brand(0)], node1Chunk]]),
+				};
+				const edit: EditDescription = {
+					type: "field",
+					field,
+					fieldKind: valueField.identifier,
+					change: brand(valueChange1a),
+					revision: tag1,
+				};
+				// Each editor allocates node IDs from 0, so both changesets use the same IDs.
+				const built = family
+					.buildEditor(mintRevisionTag, () => undefined)
+					.buildChanges([build, edit]);
+				const separateEditor = family.buildEditor(mintRevisionTag, () => undefined);
+				const composed = family.compose([
+					makeAnonChange(separateEditor.buildChanges([build])),
+					makeAnonChange(separateEditor.buildChanges([edit])),
+				]);
+				assertEqual(
+					removeAliases(built),
+					removeAliases({ ...composed, revisions: [{ revision: tag1 }] }),
+				);
+				assert(built.builds?.size === 1);
+			});
+		}
+
+		it("keeps the earliest of several builds of the same ID, as composing them would", () => {
+			const builds = [node1Chunk, nodesChunk].map(
+				(chunk): GlobalEditDescription => ({
+					type: "global",
+					revision: tag1,
+					builds: newChangeAtomIdBTree([[[tag1, brand(0)], chunk]]),
+				}),
+			);
+			const edit: EditDescription = {
+				type: "field",
+				field: pathA,
+				fieldKind: valueField.identifier,
+				change: brand(valueChange1a),
+				revision: tag1,
+			};
+			const built = family
+				.buildEditor(mintRevisionTag, () => undefined)
+				.buildChanges([...builds, edit]);
+			const separateEditor = family.buildEditor(mintRevisionTag, () => undefined);
+			const composed = family.compose(
+				[...builds, edit].map((change) =>
+					makeAnonChange(separateEditor.buildChanges([change])),
+				),
+			);
+			assertEqual(
+				removeAliases(built),
+				removeAliases({ ...composed, revisions: [{ revision: tag1 }] }),
+			);
+			assert.equal(built.builds?.get([tag1, brand(0)]), node1Chunk);
+		});
+	});
+
 	describe("compose", () => {
 		const composedValues: ValueChangeset = { old: 0, new: 2 };
 
