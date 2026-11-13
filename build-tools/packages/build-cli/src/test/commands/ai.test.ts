@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
 import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { delimiter, join, resolve } from "node:path";
+import { mock } from "node:test";
+import { CopilotClient, type CopilotSession, type SessionConfig } from "@github/copilot-sdk";
 import { Config } from "@oclif/core";
 import { expect } from "chai";
 import execa from "execa";
@@ -18,20 +21,99 @@ import AiCommand, {
 	readAssetFile,
 	SUPPORTED_ALIASES,
 } from "../../commands/ai.js";
-import { launcherToolPolicy } from "../../library/ai/copilotSession.js";
+import { runAiSession } from "../../library/ai/copilotSession.js";
 
 describe("ai command", () => {
-	it("exposes only the recommendation and question tools to the launcher", () => {
-		expect(launcherToolPolicy.availableTools).to.deep.equal(["ask_user", "select_alias"]);
-	});
+	it("runs a recommendation-only session that denies permissions but can select an alias", async () => {
+		const proposal = {
+			alias: "dev",
+			extraMcpArgs: ["server with spaces"],
+			explanation: "Use the development profile.",
+		};
+		const executeRestrictedTool = mock.fn();
+		const prompt = mock.fn(async (question: string, choices?: string[]) => {
+			expect(question).to.equal("Which profile?");
+			expect(choices).to.deep.equal(["dev", "oce"]);
+			return " dev ";
+		});
+		const disconnect = mock.fn(async () => {});
 
-	it("denies permission requests outside the launcher's confirmation flow", async () => {
-		for (const kind of ["shell", "write", "mcp", "read", "url", "custom-tool"] as const) {
-			const result = await launcherToolPolicy.onPermissionRequest(
-				{ kind },
-				{ sessionId: "launcher-test" },
+		try {
+			mock.method(CopilotClient.prototype, "start", async () => {});
+			mock.method(CopilotClient.prototype, "ping", async () => ({
+				message: "offline",
+				timestamp: 0,
+			}));
+			mock.method(CopilotClient.prototype, "getAuthStatus", async () => ({
+				isAuthenticated: true,
+			}));
+			const stop = mock.method(CopilotClient.prototype, "stop", async () => []);
+			const createSession = mock.method(
+				CopilotClient.prototype,
+				"createSession",
+				async (config: SessionConfig) =>
+					({
+						on: () => () => {},
+						disconnect,
+						sendAndWait: async ({ prompt: sessionPrompt }) => {
+							expect(sessionPrompt).to.equal("Help me choose an agent.");
+							expect(config.availableTools).to.deep.equal(["ask_user", "select_alias"]);
+							expect(config.tools?.map((tool) => tool.name)).to.deep.equal(["select_alias"]);
+							assert(config.onUserInputRequest);
+							expect(
+								await config.onUserInputRequest(
+									{ question: "Which profile?", choices: ["dev", "oce"] },
+									{ sessionId: "launcher-test" },
+								),
+							).to.deep.equal({ answer: "dev", wasFreeform: false });
+
+							for (const kind of [
+								"shell",
+								"write",
+								"mcp",
+								"read",
+								"url",
+								"custom-tool",
+							] as const) {
+								const decision = await config.onPermissionRequest(
+									{ kind },
+									{ sessionId: "launcher-test" },
+								);
+								if (decision.kind === "approved") {
+									executeRestrictedTool();
+								}
+								expect(decision.kind).to.equal("denied-by-rules");
+							}
+							expect(executeRestrictedTool.mock.callCount()).to.equal(0);
+
+							const selectAlias = config.tools?.find((tool) => tool.name === "select_alias");
+							assert(selectAlias);
+							// The CLI bypasses permission requests only for tools with this flag.
+							assert.equal(selectAlias.skipPermission, true);
+							await selectAlias.handler(proposal, {
+								sessionId: "launcher-test",
+								toolCallId: "selection",
+								toolName: "select_alias",
+								arguments: proposal,
+							});
+							return undefined;
+						},
+					}) satisfies Pick<CopilotSession, "on" | "sendAndWait" | "disconnect">,
 			);
-			expect(result.kind).to.equal("denied-by-rules");
+
+			expect(
+				await runAiSession({
+					model: FALLBACK_MODEL,
+					prompt: "Help me choose an agent.",
+					ui: { output: () => {}, prompt },
+				}),
+			).to.deep.equal(proposal);
+			expect(createSession.mock.callCount()).to.equal(1);
+			expect(prompt.mock.callCount()).to.equal(1);
+			expect(disconnect.mock.callCount()).to.equal(1);
+			expect(stop.mock.callCount()).to.equal(1);
+		} finally {
+			mock.restoreAll();
 		}
 	});
 

@@ -42,4 +42,4 @@ Once your Codespace is running, see [GETTING_STARTED.md](../../../.devcontainer/
 The `flub ai` recommendation assistant can ask questions and select an alias.
 It cannot run shell commands, read or write repository files, or invoke MCP services.
 The user must confirm the recommendation before the launcher executes it.
-See [Copilot CLI commands and customization](Copilot-CLI-Slash-Commands.md) for skill discovery, runtime support, model selection, and permissions.
+See [Copilot CLI slash commands](Copilot-CLI-Slash-Commands.md) for common commands and how to list the commands supported by your installed version.
