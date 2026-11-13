@@ -99,11 +99,11 @@ You MUST complete each phase before proceeding to the next.
    ```bash
    # Layer 1: Workflow
    echo "=== Secrets available in workflow: ==="
-   echo "IDENTITY: ${IDENTITY:+SET}${IDENTITY:-UNSET}"
+   if [ -n "${IDENTITY:-}" ]; then echo "IDENTITY: SET"; else echo "IDENTITY: UNSET"; fi
 
    # Layer 2: Build script
    echo "=== Env vars in build script: ==="
-   env | grep IDENTITY || echo "IDENTITY not in environment"
+   if [ -n "${IDENTITY:-}" ]; then echo "IDENTITY: SET"; else echo "IDENTITY: UNSET"; fi
 
    # Layer 3: Signing script
    echo "=== Keychain state: ==="
@@ -115,6 +115,9 @@ You MUST complete each phase before proceeding to the next.
    ```
 
    **This reveals:** Which layer fails (secrets → workflow ✓, workflow → build ✗)
+
+   Log only presence and non-sensitive metadata.
+   Never print credential values, full environment dumps, tokens, or signing secrets.
 
 5. **Trace Data Flow**
 

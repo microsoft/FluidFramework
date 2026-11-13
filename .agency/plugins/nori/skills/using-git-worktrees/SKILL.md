@@ -6,6 +6,12 @@ description: Use this whenever you need to create an isolated workspace.
 <required>
 *CRITICAL* Add the following steps to your Todo list using TodoWrite:
 
+0. Check whether the runtime already supplied an isolated worktree.
+   If so, reuse it; do not create a nested worktree or edit another checkout.
+   Honor the user's chosen worktree path and branch name.
+   Use the runtime's branch-management tools when it owns the worktree.
+   Continue with only the setup and validation needed for the task.
+
 1. Find the worktrees directory.
 
 - Check existing directories using the Bash tool: `ls -d .worktrees 2>/dev/null`
@@ -24,14 +30,17 @@ grep -q "^\.worktrees/$" .gitignore || grep -q "^worktrees/$" .gitignore
 3. Create the worktree
 
 - Come up with a good branch name based on the request.
-- Create the worktree with the Bash tool: `git worktree add ".worktrees/$BRANCH_NAME" -b "$BRANCH_NAME"
+- Create the worktree with the Bash tool: `git worktree add ".worktrees/$BRANCH_NAME" -b "$BRANCH_NAME"`
 - cd into the newly created path with the Bash tool: `cd $path`
 
-4. Auto-detect and run project setup.
+4. Read the repository instructions and manifests before running project setup.
+   Use the declared package manager and the affected workspace.
+   In Fluid Framework, use pnpm, and install `build-tools/` from that separate workspace.
+   Install dependencies only when required for the selected validation and missing, or after dependency changes.
 
 ```bash
 # Node.js
-if [ -f package.json ]; then npm install; fi
+if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; fi
 
 # Rust
 if [ -f Cargo.toml ]; then cargo build; fi
@@ -46,11 +55,12 @@ if [ -f go.mod ]; then go mod download; fi
 
 - If there is no obvious project setup, you _MUST_ ask me.
 
-5. Run tests to ensure the worktree is clean.
+5. Run the smallest relevant existing tests to establish a baseline.
+   A clean Git status does not mean tests pass.
 
 ```bash
 # Examples - use project-appropriate command
-npm test
+pnpm test:mocha
 cargo test
 pytest
 go test ./...
@@ -119,7 +129,7 @@ Red Flags:
 | Situation                   | Action                     |
 | --------------------------- | -------------------------- |
 | `.worktrees/` exists        | Use it (verify .gitignore) |
-| `.worktree/s does not exist | Check CLAUDE.md → Ask user |
+| `.worktrees/` does not exist | Check repository instructions → Ask user |
 | Directory not in .gitignore | Add it immediately         |
 | Tests fail during baseline  | Report failures + ask      |
 | No package.json/Cargo.toml  | Skip dependency install    |
@@ -134,12 +144,12 @@ Red Flags:
 **Assuming directory location**
 
 - **Problem:** Creates inconsistency, violates project conventions
-- **Fix:** Follow priority: existing > CLAUDE.md > ask
+- **Fix:** Follow priority: runtime/user-selected worktree > existing directory > repository instructions > ask
 
 **Missing project installation**
 
 - **Problem:** Tests and lint will fail, breaking the project
-- **Fix:** Always install the project when creating a new worktree
+- **Fix:** Restore missing dependencies in the affected workspace when needed for validation
 
 **Proceeding with failing tests**
 
@@ -159,8 +169,8 @@ You: I'm using the Using Git Worktrees skill to set up an isolated workspace.
 [Check .worktrees/ - exists]
 [Verify .gitignore - contains .worktrees/]
 [Create worktree: git worktree add .worktrees/auth -b feature/auth]
-[Run npm install]
-[Run npm test - 47 passing]
+[Run pnpm install --frozen-lockfile if dependencies are missing]
+[Run the selected package tests - 47 passing]
 
 Worktree ready at myproject/.worktrees/auth
 Tests passing (47 tests, 0 failures)
@@ -175,11 +185,11 @@ Ready to implement auth feature
 - Skip baseline test verification
 - Proceed with failing tests without asking
 - Assume directory location when ambiguous
-- Skip CLAUDE.md check
+- Skip repository instructions
 
 **Always:**
 
-- Follow directory priority: existing > CLAUDE.md > ask
+- Follow directory priority: runtime/user selection > existing > repository instructions > ask
 - Verify .gitignore for project-local
 - Auto-detect and run project setup
 - Verify clean test baseline

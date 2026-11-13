@@ -6,12 +6,13 @@ description: Use this skill when faced with a difficult debugging task where you
 <required>
 *CRITICAL* Add the following steps to your Todo list using TodoWrite:
 
-<system-reminder>From this point on, ignore any existing tests until you have a working example validated through a new test file.</system-reminder>
+Read relevant existing tests first and reuse their fixtures and reproduction helpers when suitable.
 1. Write a script that interacts with the application *from the outside*. The script should not call any internals. It should only interact with the external interfaces.
-2. Check to see if you require authentication. If you do, ask me for credentials.
+2. Check whether authentication is required. Use an existing approved session or ask the user to sign in through the runtime's supported flow.
+   Never ask the user to paste credentials into chat or read credentials from another worktree.
 <system-reminder>Do NOT use mock mode or test harnesses. You should be testing the real thing.</system-reminder>
 3. Follow these steps in a loop until the bug is fixed:
-  - Add many logs to the application. You *MUST* do this on every loop.
+  - Add targeted, non-sensitive diagnostics only when needed to distinguish hypotheses.
   - Run the debug script.
   - Analyze the output: read logs, identify errors, do whatever you need to.
   - Update the debug script.
@@ -62,8 +63,8 @@ cd frontend && npm run dev&
 
 Call to the server using scripting language of choice.
 
-Do NOT get in a loop where you just keep running other tests. In this mode, you
-should ignore other tests entirely until it works.
+Do not repeatedly run unrelated tests instead of reproducing the failure.
+After the targeted reproduction passes, run the relevant regression tests.
 
 # Emulators for testing
 
