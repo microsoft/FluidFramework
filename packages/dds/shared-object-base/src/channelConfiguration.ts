@@ -401,10 +401,16 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 	/**
 	 * Cancels an unsent staged proposal without changing authoritative configuration.
 	 */
-	public rollback(localOpMetadata: unknown): void {
-		const pending = this.#pending.get(localOpMetadata);
-		this.#pending.delete(localOpMetadata);
-		pending?.reject(new Error("Channel configuration request was rolled back"));
+	public rollback(content: unknown, localOpMetadata: unknown): void {
+		try {
+			parseChannelConfigurationMessage(content);
+			const pending = this.#pending.get(localOpMetadata);
+			this.#pending.delete(localOpMetadata);
+			pending?.reject(new Error("Channel configuration request was rolled back"));
+		} catch (error) {
+			this.dispose(error);
+			throw error;
+		}
 	}
 
 	/**

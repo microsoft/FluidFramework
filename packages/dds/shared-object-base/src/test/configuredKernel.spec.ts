@@ -847,10 +847,15 @@ describe("configured kernel composition", () => {
 		assert.equal(requireConfig(shared).current.revision, 0);
 	});
 
-	it("rejects invalid marked configuration ops instead of passing them to the DDS", () => {
+	it("rejects invalid marked configuration ops and disposes pending requests", async () => {
 		const { runtime, services, delta } = harness();
 		const shared = makeKind({}).getFactory().create(runtime, "configured");
 		shared.connect(services);
+		const config = requireConfig(shared);
+		const pending = assert.rejects(
+			config.requestChange({ retain: true }),
+			/Invalid channel configuration message/,
+		);
 		assert.throws(
 			() =>
 				delta.processMessages(
@@ -863,6 +868,11 @@ describe("configured kernel composition", () => {
 						},
 					]),
 				),
+			/Invalid channel configuration message/,
+		);
+		await pending;
+		await assert.rejects(
+			config.requestChange({ retain: false }),
 			/Invalid channel configuration message/,
 		);
 		assert.deepEqual(shared.observed, [["initial", { revision: 0, values: {} }]]);

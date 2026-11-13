@@ -13,7 +13,6 @@ import {
 	type ChannelConfigurationAttachedContext,
 	type ChannelConfigurationDefinition,
 } from "./channelConfiguration.js";
-import type { ChannelConfigurationMessageV1 } from "./channelConfigurationFormat.js";
 import type { SharedObjectTransport } from "./sharedObject.js";
 import type { SharedObjectConfigurationOptions } from "./sharedObjectConfiguration.js";
 import type {
@@ -74,11 +73,11 @@ function makeConfiguredKernelSupport<TConfig extends ChannelConfiguration>(
 		configuration: handler.controller,
 		initialConfigurationSource: handler.initialConfigurationSource,
 		verifyCanSubmit: () => handler.verifyCanSubmit(),
-		processMessage: (message, context, localOpMetadata) =>
-			handler.processMessage(message, context, localOpMetadata),
-		applyStashedOp: (message) => handler.applyStashedOp(message),
-		reSubmit: (message, localOpMetadata) => handler.reSubmit(message, localOpMetadata),
-		rollback: (localOpMetadata) => handler.rollback(localOpMetadata),
+		processMessage: (content, context, localOpMetadata) =>
+			handler.processMessage(content, context, localOpMetadata),
+		applyStashedOp: (content) => handler.applyStashedOp(content),
+		reSubmit: (content, localOpMetadata) => handler.reSubmit(content, localOpMetadata),
+		rollback: (content, localOpMetadata) => handler.rollback(content, localOpMetadata),
 		completeInitialization: () => handler.completeInitialization(),
 		close: (error) => handler.close(error),
 	};
@@ -166,13 +165,13 @@ class ChannelConfigurationHandler<TConfig extends ChannelConfiguration> {
 	}
 
 	public processMessage(
-		message: ChannelConfigurationMessageV1,
+		content: unknown,
 		context: ChannelConfigurationAttachedContext,
 		localOpMetadata: unknown,
 	): void {
 		this.transport.verifyNotClosed();
 		this.controller.verifyCanSubmit();
-		const result = this.controller.process(message, context, localOpMetadata);
+		const result = this.controller.process(content, context, localOpMetadata);
 		this.host.logger.sendTelemetryEvent({
 			eventName: "ChannelConfiguration",
 			status: result.status,
@@ -190,16 +189,16 @@ class ChannelConfigurationHandler<TConfig extends ChannelConfiguration> {
 		});
 	}
 
-	public applyStashedOp(message: ChannelConfigurationMessageV1): void {
-		this.controller.applyStashedOp(message);
+	public applyStashedOp(content: unknown): void {
+		this.controller.applyStashedOp(content);
 	}
 
-	public reSubmit(message: ChannelConfigurationMessageV1, localOpMetadata: unknown): void {
-		this.controller.reSubmit(message, localOpMetadata);
+	public reSubmit(content: unknown, localOpMetadata: unknown): void {
+		this.controller.reSubmit(content, localOpMetadata);
 	}
 
-	public rollback(localOpMetadata: unknown): void {
-		this.controller.rollback(localOpMetadata);
+	public rollback(content: unknown, localOpMetadata: unknown): void {
+		this.controller.rollback(content, localOpMetadata);
 	}
 
 	public close(error: unknown): void {

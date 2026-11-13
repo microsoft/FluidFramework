@@ -403,8 +403,8 @@ describe("ChannelConfigurationController", () => {
 		const surviving = controller.requestChange({ enabled: false });
 		const rolledBackOp = submitted.at(0);
 		assert(rolledBackOp !== undefined);
-		controller.rollback(rolledBackOp.metadata);
-		controller.rollback(rolledBackOp.metadata);
+		controller.rollback(rolledBackOp.message, rolledBackOp.metadata);
+		controller.rollback(rolledBackOp.message, rolledBackOp.metadata);
 		await rolledBack;
 		assert.equal(controller.current.revision, 0);
 		const survivingOp = submitted.at(1);

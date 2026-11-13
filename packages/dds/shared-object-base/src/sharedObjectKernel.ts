@@ -34,8 +34,6 @@ import type {
 } from "./channelConfiguration.js";
 import {
 	hasChannelConfigurationMarker,
-	parseChannelConfigurationMessage,
-	type ChannelConfigurationMessageV1,
 	verifyOrdinaryChannelMessage,
 } from "./channelConfigurationFormat.js";
 import type { IFluidSerializer } from "./serializer.js";
@@ -155,13 +153,13 @@ export interface SharedKernelConfiguration<TConfig extends ChannelConfiguration>
 	readonly initialConfigurationSource: "explicit" | "default";
 	verifyCanSubmit(): void;
 	processMessage(
-		message: ChannelConfigurationMessageV1,
+		content: unknown,
 		context: ChannelConfigurationAttachedContext,
 		localOpMetadata: unknown,
 	): void;
-	applyStashedOp(message: ChannelConfigurationMessageV1): void;
-	reSubmit(message: ChannelConfigurationMessageV1, localOpMetadata: unknown): void;
-	rollback(localOpMetadata: unknown): void;
+	applyStashedOp(content: unknown): void;
+	reSubmit(content: unknown, localOpMetadata: unknown): void;
+	rollback(content: unknown, localOpMetadata: unknown): void;
 	completeInitialization(): void;
 	close(error: unknown): void;
 }
@@ -204,7 +202,7 @@ class KernelMessageRouter<TConfig extends ChannelConfiguration> implements IDelt
 			if (hasChannelConfigurationMarker(message.contents)) {
 				flush();
 				this.configuration.processMessage(
-					parseChannelConfigurationMessage(message.contents),
+					message.contents,
 					{
 						source: "sequenced",
 						sequenceNumber: messages.envelope.sequenceNumber,
@@ -223,7 +221,7 @@ class KernelMessageRouter<TConfig extends ChannelConfiguration> implements IDelt
 
 	public readonly applyStashedOp = (content: unknown): void => {
 		if (hasChannelConfigurationMarker(content)) {
-			this.configuration.applyStashedOp(parseChannelConfigurationMessage(content));
+			this.configuration.applyStashedOp(content);
 		} else {
 			this.wrappedDeltaHandler.applyStashedOp(content);
 		}
@@ -235,7 +233,7 @@ class KernelMessageRouter<TConfig extends ChannelConfiguration> implements IDelt
 		squash: boolean = false,
 	): void => {
 		if (hasChannelConfigurationMarker(content)) {
-			this.configuration.reSubmit(parseChannelConfigurationMessage(content), localOpMetadata);
+			this.configuration.reSubmit(content, localOpMetadata);
 		} else {
 			this.wrappedDeltaHandler.reSubmit(content, localOpMetadata, squash);
 		}
@@ -243,8 +241,7 @@ class KernelMessageRouter<TConfig extends ChannelConfiguration> implements IDelt
 
 	public readonly rollback = (content: unknown, localOpMetadata: unknown): void => {
 		if (hasChannelConfigurationMarker(content)) {
-			parseChannelConfigurationMessage(content);
-			this.configuration.rollback(localOpMetadata);
+			this.configuration.rollback(content, localOpMetadata);
 		} else {
 			this.wrappedDeltaHandler.rollback(content, localOpMetadata);
 		}
