@@ -19,10 +19,7 @@ import type {
 	JsonCompatibleReadOnly,
 	ReadableField,
 } from "@fluidframework/tree/alpha";
-import {
-	createIndependentTreeAlpha,
-	minimize as minimizeChange,
-} from "@fluidframework/tree/alpha";
+import { createIndependentTreeAlpha, minimize } from "@fluidframework/tree/alpha";
 
 import {
 	SchematizingSimpleTreeView,
@@ -146,8 +143,8 @@ const SketchyBoxArraySchemaConfig = {
 	enableSchemaValidation: true,
 } as const;
 
-/** Transaction parameters that request {@link minimizeChange | minimization} of the resulting change. */
-const minimizeParams = { postProcessor: minimizeChange } as const;
+/** Transaction parameters that request {@link minimize | minimization} of the resulting change. */
+const minimizeParams = { postProcessor: minimize } as const;
 
 type ViewableTreeAlpha = ReturnType<typeof createIndependentTreeAlpha>;
 
@@ -261,8 +258,8 @@ function runScenario<
 	scenario: TransactionScenario<TSchema, TApplyReturn>,
 	{
 		validateConsistency = false,
-		minimize = true,
-	}: { validateConsistency?: boolean; minimize?: boolean } = {},
+		doNotMinimize = false,
+	}: { validateConsistency?: boolean; doNotMinimize?: boolean } = {},
 ): {
 	tree: ViewableTreeAlpha;
 	view: TApplyReturn extends SchematizingSimpleTreeView<ImplicitFieldSchema>
@@ -285,7 +282,7 @@ function runScenario<
 	});
 	const result = view.runTransaction(
 		() => ({ value: scenario.apply(view.root, tree, view) }),
-		minimize ? minimizeParams : undefined,
+		doNotMinimize ? undefined : minimizeParams,
 	);
 	unsubscribe();
 	assert(changeJson !== undefined, "expected a change to be produced by the transaction");
@@ -312,7 +309,9 @@ function runScenario<
 	// Presence of surviving marker should be consistent regardless of minimize use.
 	// So assert within runScenario helper to test minimize expectations and also
 	// to catch any test configuration errors where the expectation is not set.
-	const survivingAssertionPreface = minimize ? "" : "This is a test configuration error: ";
+	const survivingAssertionPreface = doNotMinimize
+		? "This is a test configuration error: "
+		: "";
 	if (scenario.expectSurvivingMarker === true) {
 		assert.match(
 			stringifiedChange,
@@ -2165,7 +2164,7 @@ describe("transaction minimize post-processor", () => {
 		for (const [scenarioName, scenario] of Object.entries(arrayScenarios)) {
 			it(`for ${beautifyScenarioName(scenarioName)}`, () => {
 				const { tree: unminimizedTree, view: unminimizedView } = runScenario(scenario, {
-					minimize: false,
+					doNotMinimize: true,
 				});
 				const { tree: minimizedTree } = runScenario(scenario, {
 					validateConsistency: true,
@@ -2182,7 +2181,7 @@ describe("transaction minimize post-processor", () => {
 		for (const [scenarioName, scenario] of Object.entries(objectScenarios)) {
 			it(`for ${beautifyScenarioName(scenarioName)}`, () => {
 				const { tree: unminimizedTree, view: unminimizedView } = runScenario(scenario, {
-					minimize: false,
+					doNotMinimize: true,
 				});
 				const { tree: minimizedTree } = runScenario(scenario, {
 					validateConsistency: true,
@@ -2199,7 +2198,7 @@ describe("transaction minimize post-processor", () => {
 		for (const [scenarioName, scenario] of Object.entries(parallelObjectScenarios)) {
 			it(`for ${beautifyScenarioName(scenarioName)}`, () => {
 				const { tree: unminimizedTree, view: unminimizedView } = runScenario(scenario, {
-					minimize: false,
+					doNotMinimize: true,
 				});
 				const { tree: minimizedTree } = runScenario(scenario, {
 					validateConsistency: true,
@@ -2218,7 +2217,7 @@ describe("transaction minimize post-processor", () => {
 		)) {
 			it(`for ${beautifyScenarioName(scenarioName)}`, () => {
 				const { tree: unminimizedTree, view: unminimizedView } = runScenario(scenario, {
-					minimize: false,
+					doNotMinimize: true,
 				});
 				const { tree: minimizedTree } = runScenario(scenario, {
 					validateConsistency: true,
@@ -2239,7 +2238,7 @@ describe("transaction minimize post-processor", () => {
 					for (const [scenarioName, scenario] of Object.entries(scenarios)) {
 						it(scenarioName, () => {
 							const { tree: unminimizedTree, view: unminimizedView } = runScenario(scenario, {
-								minimize: false,
+								doNotMinimize: true,
 							});
 							const { tree: minimizedTree } = runScenario(scenario, {
 								validateConsistency: true,
@@ -2634,7 +2633,7 @@ describe("transaction minimize post-processor", () => {
 			scenarioName: string,
 		): void {
 			const { tree: unminimizedTree, view: unminimizedView } = runScenario(scenario, {
-				minimize: false,
+				doNotMinimize: true,
 			});
 			const { tree: minimizedTree, view: minimizedView } = runScenario(scenario, {
 				validateConsistency: true,
