@@ -128,7 +128,7 @@ export class ReplayControllerStatic extends ReplayController {
 			const replayNextOps = (): void => {
 				// Emit the ops from replay to the end every "deltainterval" milliseconds
 				// to simulate the socket stream
-				const currentOp = fetchedOps[current];
+				const currentOp = fetchedOps.at(current);
 				if (currentOp === undefined) {
 					reject(new Error(`No op found at replay index ${current}`));
 					return;
@@ -143,7 +143,7 @@ export class ReplayControllerStatic extends ReplayController {
 						// Emit more ops that is in the ReplayResolution window
 
 						while (current < fetchedOps.length) {
-							const op = fetchedOps[current];
+							const op = fetchedOps.at(current);
 							if (op === undefined) {
 								reject(new Error(`No op found at replay index ${current}`));
 								return;
@@ -343,7 +343,7 @@ export class ReplayDocumentDeltaConnection
 
 				const messages = result.value;
 				currentOp += messages.length;
-				const lastMessage = messages[messages.length - 1];
+				const lastMessage = messages.at(-1);
 				if (lastMessage === undefined) {
 					throw new Error("Delta storage returned an empty batch of messages");
 				}
