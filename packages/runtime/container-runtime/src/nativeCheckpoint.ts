@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	SummaryType,
 	type ISummaryTree,
@@ -23,6 +24,10 @@ export interface NativeCheckpoint {
 	readonly route: string;
 	readonly bytes: number;
 	readonly assets: readonly string[];
+	/** Immediate delta dependency. Omitted for independent anchors and legacy payloads. */
+	readonly baseId?: string;
+	/** Number of delta edges to an independent anchor. Legacy entries have depth zero. */
+	readonly depth?: number;
 }
 
 /** The application-state boundary, distinct from the service epoch. */
@@ -67,6 +72,14 @@ function parseCheckpoint(value: unknown): NativeCheckpoint {
 		typeof value.bytes !== "number" ||
 		!Number.isSafeInteger(value.bytes) ||
 		value.bytes < 0 ||
+		(value.baseId !== undefined && typeof value.baseId !== "string") ||
+		(value.depth !== undefined &&
+			(typeof value.depth !== "number" ||
+				!Number.isSafeInteger(value.depth) ||
+				value.depth < 0 ||
+				value.depth > 4)) ||
+		(value.baseId !== undefined && !(typeof value.depth === "number" && value.depth > 0)) ||
+		(value.baseId === undefined && (value.depth ?? 0) !== 0) ||
 		!Array.isArray(assets) ||
 		!assets.every(
 			(asset: unknown): asset is string =>
@@ -81,6 +94,8 @@ function parseCheckpoint(value: unknown): NativeCheckpoint {
 		route,
 		bytes: value.bytes,
 		assets,
+		baseId: value.baseId,
+		depth: value.depth,
 	};
 }
 
@@ -119,6 +134,14 @@ export function parseNativeCheckpointState(value: unknown): NativeCheckpointStat
 	const checkpoints = entries.map((checkpoint: unknown) => parseCheckpoint(checkpoint));
 	if (new Set(checkpoints.map((checkpoint) => checkpoint.id)).size !== checkpoints.length) {
 		throw new UsageError("Duplicate native checkpoint IDs");
+	}
+	for (const checkpoint of checkpoints) {
+		if (checkpoint.baseId !== undefined) {
+			const base = checkpoints.find((entry) => entry.id === checkpoint.baseId);
+			if (base === undefined || checkpoint.depth !== (base.depth ?? 0) + 1) {
+				throw new UsageError("Invalid native checkpoint catalog dependency");
+			}
+		}
 	}
 	if (value.restored === undefined) {
 		return { version: 1, checkpoints };
@@ -174,6 +197,13 @@ function decodeSummary(value: unknown): SummaryObject {
 			if (typeof value.content === "string") {
 				return { type: SummaryType.Blob, content: value.content };
 			}
+			if (typeof value.base64 === "string") {
+				const content = new Uint8Array(stringToBuffer(value.base64, "base64"));
+				if (bufferToString(content, "base64") !== value.base64) {
+					throw new UsageError("Invalid native checkpoint binary encoding");
+				}
+				return { type: SummaryType.Blob, content };
+			}
 			const binary: unknown = value.binary;
 			if (
 				Array.isArray(binary) &&
@@ -219,7 +249,7 @@ export function encodeNativeCheckpoint(summary: ISummaryTree): Uint8Array {
 			case SummaryType.Blob: {
 				return typeof node.content === "string"
 					? node
-					: { type: node.type, binary: [...node.content] };
+					: { type: node.type, base64: bufferToString(node.content, "base64") };
 			}
 			case SummaryType.Attachment: {
 				return node;
@@ -230,14 +260,14 @@ export function encodeNativeCheckpoint(summary: ISummaryTree): Uint8Array {
 		}
 	}
 	return new TextEncoder().encode(
-		JSON.stringify({ version: 1, summary: encodeNode(summary) }),
+		JSON.stringify({ version: 2, summary: encodeNode(summary) }),
 	);
 }
 
 /** Reads the versioned native package and creates independently owned summary nodes. */
 export function decodeNativeCheckpoint(bytes: ArrayBufferLike): ISummaryTree {
 	const value: unknown = JSON.parse(new TextDecoder().decode(new Uint8Array(bytes)));
-	if (!isRecord(value) || value.version !== 1) {
+	if (!isRecord(value) || (value.version !== 1 && value.version !== 2)) {
 		throw new UsageError("Unsupported native checkpoint format");
 	}
 	const summary = decodeSummary(value.summary);

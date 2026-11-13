@@ -19,6 +19,12 @@ import {
 	type NativeCheckpointRestore,
 	type NativeCheckpointState,
 } from "./nativeCheckpoint.js";
+import {
+	encodeNativeCheckpointStorage,
+	loadNativeCheckpointBytes,
+	maxNativeCheckpointDepth,
+	type NativeCheckpointBase,
+} from "./nativeCheckpointStorage.js";
 import { summarizeBlobManagerState } from "./blobManager/index.js";
 import { nativeCheckpointMessageType } from "./messageTypes.js";
 import {
@@ -1403,6 +1409,7 @@ export class ContainerRuntime
 	public readonly options: Record<string | number, unknown>;
 
 	private nativeCheckpointState: NativeCheckpointState | undefined;
+	private nativeCheckpointBase: NativeCheckpointBase | undefined;
 	private captureCheckpointProtocol: (() => ISummaryTree | undefined) | undefined;
 	private pendingCheckpointRestore:
 		| {
@@ -1493,21 +1500,51 @@ export class ContainerRuntime
 		} finally {
 			deltaManager.inbound.resume();
 		}
-		const handle = await this.blobManager.createBlob(bytes.buffer);
+		const previous = this.nativeCheckpointState.checkpoints.at(-1);
+		let base: NativeCheckpointBase | undefined;
+		if (previous !== undefined && (previous.depth ?? 0) < maxNativeCheckpointDepth) {
+			base =
+				this.nativeCheckpointBase?.checkpoint.route === previous.route
+					? this.nativeCheckpointBase
+					: { checkpoint: previous, bytes: await this.loadNativeCheckpoint(previous) };
+		}
+		const encoded = await encodeNativeCheckpointStorage(bytes, base);
+		const handle = await this.blobManager.createBlob(encoded.bytes.buffer);
+		this.verifyNotClosed();
+		if (this.pendingCheckpointRestore !== undefined || !this.connected) {
+			throw new UsageError("Native checkpoint capture interrupted");
+		}
 		handle.attachGraph();
 		const checkpoint: NativeCheckpoint = {
 			id,
 			sequenceNumber,
 			route: handle.absolutePath,
-			bytes: bytes.byteLength,
+			bytes: encoded.bytes.byteLength,
 			assets,
+			baseId: encoded.baseId,
+			depth: encoded.depth,
 		};
+		this.nativeCheckpointBase = { checkpoint, bytes };
 		this.submit({
 			type: nativeCheckpointMessageType,
 			contents: { action: "store", checkpoint },
 		});
 		this.flush();
 		return checkpoint;
+	}
+
+	/** Resolves only the bounded attachment dependency chain, never historical summary handles. */
+	private async loadNativeCheckpoint(checkpoint: NativeCheckpoint): Promise<Uint8Array> {
+		assert(this.nativeCheckpointState !== undefined, "Checkpoint catalog must exist");
+		return loadNativeCheckpointBytes(
+			checkpoint,
+			this.nativeCheckpointState.checkpoints,
+			async (route) => {
+				const storageId = this.lookupTemporaryBlobStorageId(route.slice("/_blobs/".length));
+				assert(storageId !== undefined, "Checkpoint blob must be attached");
+				return this.storage.readBlob(storageId);
+			},
+		);
 	}
 
 	/**
@@ -1541,15 +1578,16 @@ export class ContainerRuntime
 		if (pending === undefined || state === undefined) {
 			throw new UsageError("No ordered native checkpoint restore");
 		}
+		// Freeze the parent before asynchronous reconstruction: another publisher can win during it.
+		const summaryContext =
+			this.getCheckpointSummaryContext?.() ?? this.lastAckedSummaryContext;
+		const parent = summaryContext?.ackHandle ?? this.loadedFromVersionId;
 		const checkpoint = state.checkpoints.find(
 			(entry) => entry.id === pending.restore.checkpointId,
 		);
 		assert(checkpoint !== undefined, "Restore checkpoint must exist");
-		const storageId = this.lookupTemporaryBlobStorageId(
-			checkpoint.route.slice("/_blobs/".length),
-		);
-		assert(storageId !== undefined, "Checkpoint blob must be attached");
-		const summary = decodeNativeCheckpoint(await this.storage.readBlob(storageId));
+		const checkpointBytes = await this.loadNativeCheckpoint(checkpoint);
+		const summary = decodeNativeCheckpoint(checkpointBytes.buffer);
 		summary.tree[metadataBlobName] = pending.metadata;
 		summary.tree[blobsTreeName] = this.blobManager.summarize().summary;
 		summary.tree[nativeCheckpointKey] = {
@@ -1563,9 +1601,6 @@ export class ContainerRuntime
 						type: SummaryType.Tree,
 						tree: { ".app": summary, ".protocol": pending.protocol },
 					};
-		const summaryContext =
-			this.getCheckpointSummaryContext?.() ?? this.lastAckedSummaryContext;
-		const parent = summaryContext?.ackHandle ?? this.loadedFromVersionId;
 		const handle = await this.storage.uploadSummaryWithContext(upload, {
 			referenceSequenceNumber: pending.restore.sequenceNumber,
 			proposalHandle: summaryContext?.proposalHandle,
@@ -1658,6 +1693,18 @@ export class ContainerRuntime
 			}
 			if (state.checkpoints.some((checkpoint) => checkpoint.id === message.checkpoint.id)) {
 				return;
+			}
+			if (message.checkpoint.baseId !== undefined) {
+				const base = state.checkpoints.find(
+					(checkpoint) => checkpoint.id === message.checkpoint.baseId,
+				);
+				if (base === undefined) {
+					// A retention op may have won the race with a capture's attachment upload.
+					return;
+				}
+				if (message.checkpoint.depth !== (base.depth ?? 0) + 1) {
+					throw new UsageError("Invalid native checkpoint dependency depth");
+				}
 			}
 			state.checkpoints.push(message.checkpoint);
 			for (const route of [message.checkpoint.route, ...message.checkpoint.assets]) {

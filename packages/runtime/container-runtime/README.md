@@ -36,6 +36,27 @@ Read the **@fluidframework/container-runtime** API documentation at <https://flu
 <!-- prettier-ignore-end -->
 <!-- markdown-magic:end -->
 
+## Native checkpoints (experimental prototype)
+
+New documents created with `Fluid.ContainerRuntime.NativeCheckpoints` can store native checkpoints.
+This is an internal prototype, not a production persistence or backup contract.
+Capture requires acknowledged state; the returned catalog entry is durable only after its store op is acknowledged.
+
+Storage first computes a byte-range delta against the previous checkpoint.
+An aligned 32-byte base index finds unchanged ranges even when edits move subsequent bytes.
+Matches are verified byte-for-byte; collisions can reduce compression but cannot change reconstructed content.
+The writer compares the **compressed** full and delta payloads and stores the smaller representation.
+A chain has at most four delta edges: cold random access needs at most five attachment reads.
+This bounds read amplification and retention dependencies rather than claiming globally optimal deduplication.
+The warm capture cache holds only one materialized checkpoint.
+
+Compression uses the web-standard gzip streams, with the existing LZ4 dependency as a writer fallback.
+Readers of gzip payloads need `DecompressionStream`; integrity checks need Web Crypto.
+Frames carry explicit lengths, and SHA-256 validates both the base and reconstructed bytes.
+The prototype limits payloads and decompression to 64 MiB.
+Legacy JSON checkpoints remain readable; new summary binary blobs use base64 rather than numeric arrays.
+Image content stays in its original attachment: checkpoints retain routes, not duplicate image bytes.
+
 ## Data Virtualization For DataStores (Work in Progress)
 
 It's a capability to exclude some content from initial snapshot (used when loading container) and thus improve boot
