@@ -38,18 +38,15 @@ import type { ISharedObject } from "./types.js";
  */
 
 /**
- * Creates a {@link @fluidframework/driver-definitions#DataStoreRegistry} from data store kinds or lazy getters for them.
+ * A convenience helper for creating a {@link @fluidframework/driver-definitions#DataStoreRegistry} from an iterable of data store kinds or lazy getters for them.
  * @remarks
  * The iterable is consumed immediately, but each lazy getter runs only when its type is first requested.
- * Concurrent and subsequent lookups share the loaded kind or the loader's rejection.
- * Type identifiers must match exactly; aliases are not resolved.
- * This helper does not replace {@link sharedObjectRegistryFromIterable}, which registers shared object kinds.
  * @typeParam T - The output type shared by the registered kinds.
  * Inferred for homogeneous entries; specify a common type or union for heterogeneous entries.
  * @param entries - Kinds, or type identifiers and their lazy loaders.
- * @returns A registry that loads each lazy entry at most once.
+ * @returns A registry that loads each lazy entry at most once and
+ * rejects lookups for unknown types or loaders that return a kind with a different type.
  * @throws A usage error if the entries contain duplicate type identifiers.
- * The returned registry rejects lookups for unknown types or loaders that return a kind with a different type.
  * @alpha
  */
 export function dataStoreRegistryFromIterable<T = unknown>(
@@ -62,16 +59,19 @@ export function dataStoreRegistryFromIterable<T = unknown>(
 		if (map.has(entry.type)) {
 			throw new UsageError(`Duplicate data store type: ${entry.type}`);
 		}
-		// Cache the in-flight promise, including rejection, before invoking the loader.
-		let loaded: Promise<DataStoreKind<T>> | undefined;
-		map.set(
-			entry.type,
-			async () =>
-				(loaded ??=
-					"kind" in entry
-						? Promise.resolve().then(async () => entry.kind())
-						: Promise.resolve(entry)),
-		);
+
+		let mapEntry: () => Promise<DataStoreKind<T>>;
+		if (DataStoreKindImplementation.guard(entry)) {
+			mapEntry = async () => entry;
+		} else {
+			// Guard fails to fully exclude DataStoreKind<T> on this branch, so we need to cast, but it should be safe.
+			const loader = (entry as { type: string; kind: () => Promise<DataStoreKind<T>> }).kind;
+			// Only invoke the loader once, but do so lazily when first requested (not now).
+			// This requires a lazily populated cached promise:
+			let lazyLoadPromise: Promise<DataStoreKind<T>> | undefined;
+			mapEntry = async () => (lazyLoadPromise ??= Promise.resolve().then(loader));
+		}
+		map.set(entry.type, mapEntry);
 	}
 	return async (type) => {
 		const load = map.get(type);

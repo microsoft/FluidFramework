@@ -19,6 +19,17 @@ describe("dataStoreRegistryFromIterable", () => {
 		assert.equal(await registry(first.type), first);
 	});
 
+	it("recognizes eager kinds even when they have a kind property", async () => {
+		const kind = Object.assign(makeStubDataStoreKind("eager"), {
+			kind: async () => {
+				assert.fail("An eager kind must not be treated as a lazy loader");
+			},
+		});
+		const registry = dataStoreRegistryFromIterable([kind]);
+
+		assert.equal(await registry(kind.type), kind);
+	});
+
 	it("loads entries independently on demand and memoizes concurrent and later lookups", async () => {
 		const first = makeStubDataStoreKind("first");
 		const second = makeStubDataStoreKind("second");
