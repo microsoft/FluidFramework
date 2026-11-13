@@ -139,6 +139,7 @@ import {
 	SharedTreeChangeFamily,
 	getConstraintStatus,
 	hasSchemaChange,
+	hasUnviolatedNoChangeConstraint,
 } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
@@ -2117,13 +2118,18 @@ export abstract class CheckoutBase implements ITreeCheckout {
 			// The inverse may be rebased over newer commits which (despite being present in the history)
 			// have no net effect on the document state (e.g. an edit plus its undo).
 			// In that case, a no-change constraint should not be violated during rebase.
-			const diff = diffHistories(
-				this.changeFamily.rebaser,
-				commitToRevert,
-				headCommit,
-				this.mintRevisionTag,
-			);
-			const ignoreNoChangeViolation = !sharedTreeChangeHasApplicationFacingChanges(diff);
+			// Only an inverse with a no-change constraint which is not yet violated is affected, so the history's net
+			// effect is only computed for one.
+			const ignoreNoChangeViolation =
+				hasUnviolatedNoChangeConstraint(change.change) &&
+				!sharedTreeChangeHasApplicationFacingChanges(
+					diffHistories(
+						this.changeFamily.rebaser,
+						commitToRevert,
+						headCommit,
+						this.mintRevisionTag,
+					),
+				);
 
 			change = tagChange(
 				rebaseChange(

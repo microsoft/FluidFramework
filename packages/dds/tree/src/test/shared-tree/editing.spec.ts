@@ -3551,6 +3551,49 @@ describe("Editing", () => {
 				unsubscribe();
 			});
 
+			it("Should be violated when the revert is rebased over a later edit in its branch", () => {
+				const tree = makeTreeFromJsonSequence(["A", "B"], {
+					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+				});
+				const branch = tree.fork();
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(branch.events);
+
+				branch.transaction.start();
+				branch.editor.addNoChangeConstraintOnRevert();
+				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
+				branch.transaction.commit();
+				branch.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees(["Y"]));
+				expectJsonTree(branch, ["Y", "A", "X", "B"]);
+
+				const undoY = undoStack.pop() ?? assert.fail("Missing undo");
+				undoY.dispose();
+				const undoX = undoStack.pop() ?? assert.fail("Missing undo");
+				undoX.revert();
+
+				// The later insert of Y changed the document, so the constraint is violated and the revert does nothing.
+				expectJsonTree(branch, ["Y", "A", "X", "B"]);
+				unsubscribe();
+			});
+
+			it("Should not apply to reverts of commits without the constraint", () => {
+				const tree = makeTreeFromJsonSequence(["A", "B"], {
+					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+				});
+				const branch = tree.fork();
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(branch.events);
+
+				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
+				branch.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees(["Y"]));
+
+				const undoY = undoStack.pop() ?? assert.fail("Missing undo");
+				undoY.dispose();
+				const undoX = undoStack.pop() ?? assert.fail("Missing undo");
+				undoX.revert();
+
+				expectJsonTree(branch, ["Y", "A", "B"]);
+				unsubscribe();
+			});
+
 			it("Should not be violated when rebasing over inserts and their reversals", () => {
 				const tree = makeTreeFromJsonSequence(["A", "B"], {
 					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },

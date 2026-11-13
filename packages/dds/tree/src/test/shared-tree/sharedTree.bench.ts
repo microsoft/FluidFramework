@@ -15,14 +15,19 @@ import {
 } from "@fluid-tools/benchmark";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import { EmptyKey, rootFieldKey, type NormalizedUpPath } from "../../core/index.js";
+import {
+	EmptyKey,
+	rootFieldKey,
+	type NormalizedUpPath,
+	type Revertible,
+} from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	TreeCompressionStrategy,
 	jsonableTreeFromFieldCursor,
 } from "../../feature-libraries/index.js";
 import { Tree } from "../../shared-tree/index.js";
-import { TreeViewConfiguration } from "../../simple-tree/index.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import { makeArray } from "../../util/index.js";
 import {
@@ -350,6 +355,56 @@ describe("SharedTree benchmarks", () => {
 							running = state.time(() => {
 								provider.synchronizeMessages();
 							});
+						} while (running);
+					},
+				}),
+			});
+		}
+	});
+
+	describe("reverting a commit followed by later commits", () => {
+		const schemaFactory = new SchemaFactory("revertBenchmark");
+		class Item extends schemaFactory.object("Item", { value: schemaFactory.number }) {}
+		const config = new TreeViewConfiguration({ schema: Item });
+		for (const [laterCommitCount, benchmarkType] of [
+			[1, BenchmarkType.Perspective],
+			[60, BenchmarkType.Measurement],
+		] as const) {
+			benchmarkIt({
+				type: benchmarkType,
+				title: `with ${laterCommitCount} later commit${laterCommitCount === 1 ? "" : "s"}`,
+				...benchmarkDurationBatchless({
+					benchmarkFn: (state) => {
+						let running: boolean;
+						do {
+							// Setup
+							const provider = new TestTreeProviderLite(1, factory);
+							const view = provider.trees[0].viewWith(config);
+							view.initialize(new Item({ value: 0 }));
+							const revertibles: Revertible[] = [];
+							const unsubscribe = view.events.on("commitApplied", (_, getRevertible) => {
+								if (getRevertible !== undefined) {
+									revertibles.push(getRevertible());
+								}
+							});
+							for (let value = 1; value <= laterCommitCount + 1; value++) {
+								view.root.value = value;
+							}
+							unsubscribe();
+							const [firstEdit, ...laterEdits] = revertibles;
+							assert(firstEdit !== undefined);
+							assert.equal(laterEdits.length, laterCommitCount);
+
+							// Measure
+							running = state.time(() => {
+								firstEdit.revert();
+							});
+
+							// Cleanup
+							for (const revertible of laterEdits) {
+								revertible.dispose();
+							}
+							view.dispose();
 						} while (running);
 					},
 				}),

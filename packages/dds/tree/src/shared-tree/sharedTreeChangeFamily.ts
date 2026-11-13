@@ -272,6 +272,21 @@ export function hasSchemaChange(change: SharedTreeChange): boolean {
 }
 
 /**
+ * Whether any data change in `change` has a no-change constraint which is not violated.
+ * @remarks
+ * Only such a change is affected by the `ignoreNoChangeViolation` argument of {@link SharedTreeChangeFamily.rebase}:
+ * rebasing keeps a change's no-change constraint, and only marks one which is not yet violated as violated.
+ */
+export function hasUnviolatedNoChangeConstraint(change: SharedTreeChange): boolean {
+	return change.changes.some(
+		(innerChange) =>
+			innerChange.type === "data" &&
+			innerChange.innerChange.noChangeConstraint !== undefined &&
+			!innerChange.innerChange.noChangeConstraint.violated,
+	);
+}
+
+/**
  * Applies a mapping function to all data changes within a {@link SharedTreeChange}.
  * @param change - The change to map over.
  * @param map - The mapping function to apply to each data change.
