@@ -3,7 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import type { Context, TreeNodeSchema, TreeNodeSchemaInitializedData } from "./core/index.js";
+import type { TreeStoredSchema } from "../core/index.js";
+import { defaultSchemaPolicy } from "../feature-libraries/index.js";
+
+import {
+	Context,
+	UnhydratedContext,
+	type TreeNodeSchema,
+	type TreeNodeSchemaInitializedData,
+} from "./core/index.js";
 import type { ImplicitFieldSchema } from "./fieldSchema.js";
 import { getRootSchemaDerivedData, SchemaComponent } from "./treeSchema.js";
 
@@ -14,6 +22,22 @@ import { getRootSchemaDerivedData, SchemaComponent } from "./treeSchema.js";
  */
 export function getUnhydratedContext(schema: ImplicitFieldSchema): Context {
 	return getRootSchemaDerivedData(schema).context;
+}
+
+/**
+ * Utility for creating {@link Context}s for unhydrated nodes that use the provided stored schema.
+ * @remarks
+ * Unlike {@link getUnhydratedContext}, the resulting context uses `storedSchema`, not a stored schema derived from `schema`.
+ * Use this for nodes that must agree with the stored schema of a document, which can include unknown optional fields.
+ */
+export function getUnhydratedContextWithStoredSchema(
+	schema: ImplicitFieldSchema,
+	storedSchema: TreeStoredSchema,
+): Context {
+	return new Context(
+		new UnhydratedContext(defaultSchemaPolicy, storedSchema.nodeSchema),
+		getRootSchemaDerivedData(schema).definitions,
+	);
 }
 
 /**

@@ -184,7 +184,7 @@ describe("extensibleUnionNode", () => {
 
 		assert.throws(() => {
 			TreeAlpha.importVerbose(UnionUnknown, exported, {
-				// We disallow (including at compile time) allStoredKeys for imports: there is no way for this to be lossless currently:
+				// Importing with allStoredKeys requires a view of a document. This tree is not in a document, so use knownStoredKeys:
 				keys: KeyEncodingOptions.knownStoredKeys,
 			});
 		}, validateUsageError(

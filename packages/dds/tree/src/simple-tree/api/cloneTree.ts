@@ -4,16 +4,10 @@
  */
 
 import type { TreeFieldStoredSchema } from "../../core/index.js";
-import { defaultSchemaPolicy, FieldKinds } from "../../feature-libraries/index.js";
+import { FieldKinds } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
-import {
-	Context,
-	getKernel,
-	isTreeNode,
-	UnhydratedContext,
-	type Unhydrated,
-} from "../core/index.js";
-import { SchemaComponent } from "../treeSchema.js";
+import { getKernel, isTreeNode, type Unhydrated } from "../core/index.js";
+import { getUnhydratedContextWithStoredSchema } from "../createContext.js";
 import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../fieldSchema.js";
 
 import { createFromCursor } from "./create.js";
@@ -30,13 +24,9 @@ export function cloneTree<const TSchema extends ImplicitFieldSchema>(
 
 	const kernel = getKernel(node);
 	const cursor = kernel.getInnerNode().borrowCursor();
-	const flexContext = new UnhydratedContext(
-		defaultSchemaPolicy,
-		kernel.context.flexContext.schema.nodeSchema,
-	);
-	const context = new Context(
-		flexContext,
-		SchemaComponent.fromSchema(kernel.schema).definitions,
+	const context = getUnhydratedContextWithStoredSchema(
+		kernel.schema,
+		kernel.context.flexContext.schema,
 	);
 
 	const fieldSchema: TreeFieldStoredSchema = {

@@ -2070,7 +2070,7 @@ export interface TreeAlpha {
         idCompressor?: IIdCompressor;
     } & ICodecOptions): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
     importConcise<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: ConciseTree | undefined): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
-    importVerbose<const TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTree | undefined, options?: TreeParsingOptions): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+    importVerbose<const TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTree | undefined, options?: TreeImportOptions): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
     key2(node: TreeNode): string | number | undefined;
     // @deprecated
     on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(node: TNode, eventName: K, listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>): () => void;
@@ -2243,6 +2243,13 @@ export interface TreeIdentifierUtils {
     lengthen(view: UntypedTreeView, nodeIdentifier: number): string;
     shorten(view: UntypedTreeView, nodeIdentifier: string): number | undefined;
 }
+
+// @alpha @input
+export type TreeImportOptions = (TreeParsingOptions & {
+    readonly view?: never;
+}) | (Required<TreeEncodingOptions<KeyEncodingOptions.allStoredKeys>> & {
+    readonly view: UntypedTreeViewAlpha;
+});
 
 // @beta @sealed
 export interface TreeIndex<TKey, TValue> extends FluidReadonlyMap<TKey, TValue> {
