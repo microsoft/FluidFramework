@@ -37,13 +37,13 @@ export interface ChunkLocalCursor
 		"mode" | "atChunkRoot" | "getFieldKey" | "getFieldLength" | "getFieldPath"
 	> {
 	/**
-	 * Borrows the current field's child array, or returns undefined for inline content.
-	 * Requires fields mode. Navigation must not mutate the array or its reference counts.
+	 * Returns the current field's child array, or undefined for inline content.
+	 * Requires fields mode. Navigation must not mutate the array or change chunk reference counts.
 	 */
 	getFieldChunks?(): readonly TreeChunk[] | undefined;
 	/**
-	 * Copies this adapter's position into an independently navigable adapter.
-	 * Borrows the same storage without adding counted references.
+	 * Clones the cursor to produce a new independent cursor.
+	 * Does not add any counted references to any chunks.
 	 */
 	fork(): ChunkLocalCursor;
 }
