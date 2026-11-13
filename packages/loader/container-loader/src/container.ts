@@ -717,7 +717,7 @@ export class Container
 			throw new UsageError("The context is already disposed");
 		}
 		if (this._runtime !== undefined) {
-			return this._runtime.getEntryPoint?.();
+			return this._runtime.getEntryPoint();
 		}
 		return new Promise<FluidObject>((resolve, reject) => {
 			const runtimeInstantiatedHandler = (): void => {
@@ -725,7 +725,7 @@ export class Container
 					this._runtime !== undefined,
 					0x5a3 /* runtimeInstantiated fired but runtime is still undefined */,
 				);
-				resolve(this._runtime.getEntryPoint?.());
+				resolve(this._runtime.getEntryPoint());
 				this._lifecycleEvents.off("disposed", disposedHandler);
 			};
 			const disposedHandler = (): void => {

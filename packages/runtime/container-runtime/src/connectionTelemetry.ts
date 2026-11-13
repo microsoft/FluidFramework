@@ -286,9 +286,7 @@ class OpPerfTelemetry {
 			// We are more interested in aggregates, so logging only if we are processing some number of ops
 			// Cut-off is arbitrary - can be increased or decreased based on amount of data collected and questions we
 			// want to get answered
-			// back-compat: Once 0.36 loader version saturates (count & duration args were added there),
-			// we can remove typeof check.
-			if (typeof count === "number" && count >= 100) {
+			if (count >= 100) {
 				this.logger.sendPerformanceEvent({
 					eventName: "GetDeltas_OpProcessing",
 					count,

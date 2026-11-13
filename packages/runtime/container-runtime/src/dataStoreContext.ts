@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-	TypedEventEmitter,
-	type ILayerCompatDetails,
-	type IProvideLayerCompatDetails,
+import type {
+	ILayerCompatDetails,
+	IProvideLayerCompatDetails,
 } from "@fluid-internal/client-utils";
 import { AttachState, type IAudience } from "@fluidframework/container-definitions";
 import {
@@ -19,7 +18,6 @@ import type {
 	FluidObject,
 	IDisposable,
 	ITelemetryBaseProperties,
-	IEvent,
 } from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleContext,
@@ -192,12 +190,6 @@ export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContex
 	readonly snapshot: ISnapshotTree | ISnapshot | undefined;
 }
 
-// back-compat: To be removed in the future.
-// Added in "2.0.0-rc.2.0.0" timeframe (to support older builds).
-export interface IFluidDataStoreContextEvents extends IEvent {
-	(event: "attaching" | "attached", listener: () => void);
-}
-
 /**
  * Eventually we should remove the delta manger from being exposed to Datastore runtimes via the context. However to remove that exposure we need to add new
  * features, and those features themselves need forward and back compat. This proxy is here to enable that back compat. Each feature this proxy is used to
@@ -251,7 +243,6 @@ class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
  * {@link IFluidDataStoreContext} for the implementations of {@link IFluidDataStoreChannel} which powers the {@link IDataStore}s.
  */
 export abstract class FluidDataStoreContext
-	extends TypedEventEmitter<IFluidDataStoreContextEvents>
 	implements IFluidDataStoreContextPrivate, IDisposable, IProvideLayerCompatDetails
 {
 	public get packagePath(): PackagePath {
@@ -467,8 +458,6 @@ export abstract class FluidDataStoreContext
 		public readonly isLocalDataStore: boolean,
 		private readonly makeLocallyVisibleFn: () => void,
 	) {
-		super();
-
 		this._containerRuntime = props.parentContext.containerRuntime;
 		this.parentContext = props.parentContext;
 		this.oldestSupportedClient =
@@ -1411,13 +1400,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 					0x14d /* "Should move from detached to attaching" */,
 				);
 				this._attachState = AttachState.Attaching;
-				if (this.channel?.setAttachState) {
-					this.channel.setAttachState(attachState);
-				} else if (this.channel) {
-					// back-compat! To be removed in the future
-					// Added in "2.0.0-rc.2.0.0" timeframe.
-					this.emit("attaching");
-				}
+				this.channel?.setAttachState(attachState);
 				break;
 			}
 			case AttachState.Attached: {
@@ -1433,14 +1416,9 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 						0x14e /* "Should move from attaching to attached" */,
 					);
 					this._attachState = AttachState.Attached;
-					this.channel?.setAttachState?.(attachState);
-					if (this.channel?.setAttachState) {
-						this.channel.setAttachState(attachState);
-					} else if (this.channel) {
-						// back-compat! To be removed in the future
-						// Added in "2.0.0-rc.2.0.0" timeframe.
-						this.emit("attached");
-					}
+					this.channel?.setAttachState(attachState);
+					// TODO: AB#88995: Suspected duplicate notification; investigate removing the second call.
+					this.channel?.setAttachState(attachState);
 				}
 				break;
 			}
