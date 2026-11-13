@@ -15,6 +15,7 @@ import type {
 	IDocumentStorageService,
 } from "@fluidframework/driver-definitions/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
+import { wrapObjectAndOverride } from "@fluidframework/test-runtime-utils/internal";
 import {
 	getRequiredPendingLocalState,
 	toIDeltaManagerFull,
@@ -23,8 +24,6 @@ import {
 	type ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-
-import { wrapObjectAndOverride } from "../../mocking.js";
 
 type SharedObjCallback = (
 	container: IContainer,
