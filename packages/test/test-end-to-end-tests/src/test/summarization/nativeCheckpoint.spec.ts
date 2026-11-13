@@ -10,7 +10,10 @@ import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { finishLoggingReport, ValueType } from "@fluid-tools/benchmark";
 import { LoaderHeader, type IContainer } from "@fluidframework/container-definitions/internal";
 import { loadContainerAfterNativeCheckpointRestore } from "@fluidframework/container-loader/internal";
-import type { ContainerRuntime as ContainerRuntimeType } from "@fluidframework/container-runtime/internal";
+import type {
+	ContainerRuntime as ContainerRuntimeType,
+	IGCRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { DriverHeader, MessageType } from "@fluidframework/driver-definitions/internal";
@@ -18,6 +21,7 @@ import type { SharedString } from "@fluidframework/sequence/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
 import type { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { spy, stub } from "sinon";
 import {
 	createSummarizer,
@@ -30,6 +34,20 @@ import {
 	type ITestContainerConfig,
 	TestFluidObject,
 } from "@fluidframework/test-utils/internal";
+
+import {
+	getGCDeletedStateFromSummary,
+	getGCStateFromSummary,
+} from "../gc/gcTestSummaryUtils.js";
+
+/** Creates reproducible, poorly compressible bytes without a live randomness source. */
+function createRandomBytes(length: number, seed: number): Uint8Array<ArrayBuffer> {
+	let state = seed;
+	return Uint8Array.from({ length }, () => {
+		state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+		return state >>> 24;
+	});
+}
 
 /** Narrows the test entry point to its actual data object. */
 async function getEntry(container: IContainer): Promise<TestFluidObject> {
@@ -203,6 +221,190 @@ describeCompat("Native checkpoints", "NoCompat", (getTestObjectProvider, apis) =
 			source.off("op", onOp);
 		}
 	});
+
+	itExpects(
+		"prunes and sweeps history while cold-restoring retained deltas and historical-only images",
+		[
+			{
+				eventName: "fluid:telemetry:Container:ContainerDispose",
+				error: "Native checkpoint restored: reload without cached or pending state",
+			},
+		],
+		async () => {
+			const provider = getTestObjectProvider({ syncSummarizer: true });
+			const gcOptions: IGCRuntimeOptions = {
+				enableGCSweep: true,
+				inactiveTimeoutMs: 0,
+				sweepGracePeriodMs: 0,
+			};
+			const gcConfig: ITestContainerConfig = {
+				...config,
+				loaderProps: {
+					configProvider: createTestConfigProvider({
+						"Fluid.ContainerRuntime.NativeCheckpoints": true,
+						// Exercise the real mark/sweep protocol without waiting for wall-clock expiry.
+						"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs": 0,
+					}),
+				},
+				runtimeOptions: { ...config.runtimeOptions, gcOptions },
+			};
+			const source = await provider.makeTestContainer(gcConfig);
+			await waitForContainerConnection(source);
+			const entry = await getEntry(source);
+			const runtime = await getRuntime(source);
+			const liveBytes = createRandomBytes(64 * 1024, 17);
+			const historicalBytes = createRandomBytes(64 * 1024, 91);
+			const liveImage = await runtime.uploadBlob(liveBytes.buffer);
+			const discardedImage = await runtime.uploadBlob(createRandomBytes(64 * 1024, 42).buffer);
+			const discardedImageRoute = toFluidHandleInternal(discardedImage).absolutePath;
+			entry.root.set("liveImage", liveImage);
+			entry.root.set("historicalImage", discardedImage);
+			entry.root.set("noise", Buffer.from(createRandomBytes(32 * 1024, 1)).toString("base64"));
+			await provider.ensureSynchronized();
+			const discarded = await runtime.createNativeCheckpoint("discarded");
+			await provider.ensureSynchronized();
+
+			const historicalImage = await runtime.uploadBlob(historicalBytes.buffer);
+			const historicalRoute = toFluidHandleInternal(historicalImage).absolutePath;
+			entry.root.set("historicalImage", historicalImage);
+			entry.root.set("noise", Buffer.from(createRandomBytes(32 * 1024, 2)).toString("base64"));
+			let anchor = discarded;
+			for (let point = 0; point < 5; point++) {
+				entry.root.set("value", `anchor-${point}`);
+				await provider.ensureSynchronized();
+				anchor = await runtime.createNativeCheckpoint(`anchor-${point}`);
+				await provider.ensureSynchronized();
+				if (anchor.baseId === undefined) {
+					break;
+				}
+			}
+			assert.equal(
+				anchor.baseId,
+				undefined,
+				"A bounded chain must produce an independent anchor",
+			);
+			entry.root.set("value", "retained delta");
+			await provider.ensureSynchronized();
+			const delta = await runtime.createNativeCheckpoint("retained-delta");
+			await provider.ensureSynchronized();
+			assert.equal(delta.baseId, anchor.id);
+			entry.root.delete("historicalImage");
+			entry.root.set("value", "current content");
+			await provider.ensureSynchronized();
+			const all = runtime.getNativeCheckpoints();
+			runtime.pruneNativeCheckpoints({ minAgeMs: 0, targetCount: 1 });
+			await provider.ensureSynchronized();
+			const retained = runtime.getNativeCheckpoints();
+			assert.deepEqual(
+				retained.map((checkpoint) => checkpoint.id),
+				[anchor.id, delta.id],
+			);
+			const removedRoutes = [
+				...all
+					.filter((checkpoint) => !retained.some((keep) => keep.id === checkpoint.id))
+					.map((checkpoint) => checkpoint.route),
+				discardedImageRoute,
+			];
+			const retainedRoutes = [
+				anchor.route,
+				delta.route,
+				historicalRoute,
+				toFluidHandleInternal(liveImage).absolutePath,
+			];
+			const { summarizer } = await createSummarizer(provider, source, {
+				...gcConfig,
+				runtimeOptions: { gcOptions },
+			});
+			try {
+				const marked = await summarizeNow(summarizer, {
+					reason: "mark pruned history",
+					fullTree: true,
+				});
+				const markedState = getGCStateFromSummary(marked.summaryTree);
+				assert(markedState !== undefined);
+				for (const route of removedRoutes) {
+					assert.equal(typeof markedState.gcNodes[route]?.unreferencedTimestampMs, "number");
+				}
+				for (const route of retainedRoutes) {
+					const node = markedState.gcNodes[route];
+					assert(node !== undefined);
+					assert.equal(node.unreferencedTimestampMs, undefined, `Retained root ${route}`);
+				}
+				await summarizeNow(summarizer, { reason: "sweep pruned history", fullTree: true });
+				await provider.ensureSynchronized();
+				const swept = await summarizeNow(summarizer, {
+					reason: "persist swept history",
+					fullTree: true,
+				});
+				const deleted = getGCDeletedStateFromSummary(swept.summaryTree);
+				const sweptState = getGCStateFromSummary(swept.summaryTree);
+				assert(deleted !== undefined && sweptState !== undefined);
+				for (const route of removedRoutes) {
+					assert(deleted.includes(route), `Sweep must delete ${route}`);
+					assert.equal(sweptState.gcNodes[route], undefined);
+					assert.equal(
+						runtime.lookupTemporaryBlobStorageId(route.slice("/_blobs/".length)),
+						undefined,
+					);
+				}
+				for (const route of retainedRoutes) {
+					assert(!deleted.includes(route));
+					assert(sweptState.gcNodes[route] !== undefined);
+				}
+				source.close();
+				summarizer.close();
+				const worker = await provider.loadTestContainer(gcConfig, {
+					[LoaderHeader.cache]: false,
+					[LoaderHeader.version]: swept.summaryVersion,
+					[LoaderHeader.clientDetails]: {
+						capabilities: { interactive: false },
+						type: "summarizer",
+					},
+					[DriverHeader.summarizingClient]: true,
+				});
+				await waitForContainerConnection(worker);
+				await provider.ensureSynchronized();
+				const publisher = await getRuntime(worker);
+				assert.deepEqual(publisher.getNativeCheckpoints(), retained);
+				const reads = spy(publisher.storage, "readBlob");
+				publisher.requestNativeCheckpointRestore("restore-after-gc", delta.id);
+				await provider.ensureSynchronized();
+				provider.opProcessingController.resumeProcessing();
+				await publisher.publishNativeCheckpointRestore();
+				await provider.ensureSynchronized();
+				for (const checkpoint of retained) {
+					const storageId = publisher.lookupTemporaryBlobStorageId(
+						checkpoint.route.slice("/_blobs/".length),
+					);
+					assert(
+						reads.calledWith(storageId),
+						"Cold restore must reconstruct each retained delta dependency",
+					);
+				}
+				reads.restore();
+				const restored = await provider.loadTestContainer(gcConfig, {
+					[LoaderHeader.cache]: false,
+				});
+				await waitForContainerConnection(restored);
+				const restoredEntry = await getEntry(restored);
+				assert.equal(restoredEntry.root.get("value"), "retained delta");
+				for (const [key, bytes, original] of [
+					["historicalImage", historicalBytes, historicalImage],
+					["liveImage", liveBytes, liveImage],
+				] satisfies [string, Uint8Array, IFluidHandle<ArrayBufferLike>][]) {
+					const handle = restoredEntry.root.get<IFluidHandle<ArrayBufferLike>>(key);
+					assert(handle !== undefined);
+					assert.equal(
+						toFluidHandleInternal(handle).absolutePath,
+						toFluidHandleInternal(original).absolutePath,
+					);
+					assert.deepEqual(new Uint8Array(await handle.get()), bytes);
+				}
+			} finally {
+				summarizer.close();
+			}
+		},
+	);
 
 	itExpects(
 		"restores attribution keys and their runtime user/timestamp records",
