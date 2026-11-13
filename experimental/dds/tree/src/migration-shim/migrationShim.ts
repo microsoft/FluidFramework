@@ -26,7 +26,7 @@ import type {
 import { DataProcessingError, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils/internal';
 import type { ITree } from '@fluidframework/tree';
 
-import type { SharedTree as LegacySharedTree, SharedTreeFactory as LegacySharedTreeFactory } from '../SharedTree.js';
+import type { ISharedTree as LegacySharedTree } from '../ISharedTree.js';
 
 import { MigrationShimDeltaHandler } from './migrationDeltaHandler.js';
 import { type IShimChannelServices, NoDeltasChannelServices } from './shimChannelServices.js';
@@ -87,7 +87,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 	public constructor(
 		public readonly id: string,
 		private readonly runtime: IFluidDataStoreRuntime,
-		private readonly legacyTreeFactory: LegacySharedTreeFactory,
+		private readonly legacyTreeFactory: IChannelFactory<LegacySharedTree>,
 		private readonly newTreeFactory: IChannelFactory<ITree>,
 		private readonly populateNewSharedObjectFn: (legacyTree: LegacySharedTree, newTree: ITree) => void
 	) {
