@@ -54,14 +54,20 @@ export interface ChunkLocalCursor
  *
  * The omitted members are supplied by {@link ChunkLocalCursor},
  * by {@link SynchronousCursor} for cursor identification and pending-state handling,
- * or by {@link ChunkTraversal} for the convenience operations `firstNode` and `nextNode`.
+ * or by {@link ChunkTraversal} for the convenience operations `firstNode` and `nextNode`,
+ * unless the adapter supplies specialized inline implementations.
  */
 export interface ChunkInlineCursor
 	extends ChunkLocalCursor,
 		Omit<
 			ChunkedCursor,
 			keyof ChunkLocalCursor | keyof SynchronousCursor | "firstNode" | "nextNode"
-		> {}
+		> {
+	/** Optional specialized entry for an inline field; shared traversal handles exposed child arrays. */
+	firstNode?(): boolean;
+	/** Optional specialized sibling step within this chunk, exiting to its field when no node remains. */
+	nextNode?(): boolean;
+}
 
 /**
  * A chunk whose local cursor exposes child chunk boundaries without composing child cursors.
@@ -117,6 +123,8 @@ export abstract class ChunkTraversal
 	 * Inline ancestors remain in this adapter's state; separately stored ancestors are retained in parentStack.
 	 */
 	private current: ChunkLocalCursor | undefined;
+	/** Cached capability of the active adapter, refreshed only when crossing a chunk boundary. */
+	private currentInline: ChunkInlineCursor | undefined;
 
 	/**
 	 * Starts traversal at the root field exposed by an adapter.
@@ -124,7 +132,7 @@ export abstract class ChunkTraversal
 	 */
 	public constructor(local: ChunkLocalCursor) {
 		super();
-		this.current = local;
+		this.local = local;
 		this.rootLength = local.getFieldLength();
 	}
 
@@ -134,18 +142,26 @@ export abstract class ChunkTraversal
 	}
 	protected set local(cursor: ChunkLocalCursor) {
 		this.current = cursor;
+		this.currentInline = "enterNode" in cursor ? (cursor as ChunkInlineCursor) : undefined;
 	}
 
 	/** Requires inline content: sequence adapters are only active at fields with separately stored children. */
 	private get inline(): ChunkInlineCursor {
-		const local = this.local;
-		assert("enterNode" in local, "Expected an inline-node adapter");
-		return local as ChunkInlineCursor;
+		return this.currentInline ?? this.failInline();
+	}
+
+	/** Keeps invalid-state handling out of the frequently inlined adapter accessor. */
+	private failInline(): never {
+		if (this.current === undefined) {
+			fail("Cursor has been freed");
+		}
+		return fail("Expected an inline-node adapter");
 	}
 
 	/** Discards all adapters and boundary frames without changing counted references to content. */
 	protected clearTraversal(): void {
 		this.current = undefined;
+		this.currentInline = undefined;
 		this.parentStack.length = 0;
 	}
 
@@ -242,6 +258,10 @@ export abstract class ChunkTraversal
 	}
 
 	public firstNode(): boolean {
+		const inline = this.currentInline;
+		if (inline?.getFieldChunks === undefined && inline?.firstNode !== undefined) {
+			return inline.firstNode();
+		}
 		if (this.getFieldLength() === 0) {
 			return false;
 		}
@@ -275,7 +295,12 @@ export abstract class ChunkTraversal
 	}
 
 	public enterNode(index: number): void {
-		this.enterNodeAt(index);
+		if (this.local.getFieldChunks === undefined) {
+			// Entirely inline storage already validates and navigates its own fields.
+			this.inline.enterNode(index);
+		} else {
+			this.enterNodeAt(index);
+		}
 	}
 
 	/**
@@ -296,7 +321,8 @@ export abstract class ChunkTraversal
 		let selectedLocation = location;
 		let reusableFrame = reuseFrame;
 		for (;;) {
-			const chunks = this.local.getFieldChunks?.();
+			// A sibling seek already retains this field's owning array.
+			const chunks = reusableFrame?.chunks ?? this.local.getFieldChunks?.();
 			if (chunks === undefined) {
 				this.inline.enterNode(localIndex);
 				return;
@@ -348,32 +374,45 @@ export abstract class ChunkTraversal
 
 	public exitNode(): void {
 		const inline = this.inline;
-		assert(inline.mode === CursorLocationType.Nodes, "Expected a node");
 		if (!inline.atChunkRoot() || this.parentStack.length === 0) {
 			inline.exitNode();
 			return;
 		}
+		assert(inline.mode === CursorLocationType.Nodes, "Expected a node");
 		do {
 			this.restoreParent();
 		} while (this.local.atChunkRoot() && this.parentStack.length > 0);
 	}
 
 	public nextNode(): boolean {
+		const inline = this.inline;
+		if (inline.nextNode !== undefined) {
+			if (!inline.atChunkRoot() || this.parentStack.length === 0) {
+				return inline.nextNode();
+			}
+			// A failed forward step is exactly one past the chunk's last root node.
+			return inline.nextNode() || this.seekAcrossChunks(this.rootLength, inline);
+		}
 		return this.seekNodes(1);
 	}
 
 	public seekNodes(offset: number): boolean {
 		const inline = this.inline;
-		assert(inline.mode === CursorLocationType.Nodes, "Expected a node");
 		if (!inline.atChunkRoot()) {
 			return inline.seekNodes(offset);
 		}
-		let index = inline.fieldIndex + offset;
+		const index = inline.fieldIndex + offset;
 		if (index >= 0 && index < this.rootLength) {
 			return inline.seekNodes(offset);
 		}
 		// Only the exited adapter can be reused: ancestor adapters remain suspended in the stack.
 		inline.exitNode();
+		return this.seekAcrossChunks(index, inline);
+	}
+
+	/** Continues a seek after the active adapter has exited its root sequence. */
+	private seekAcrossChunks(localIndex: number, exited: ChunkInlineCursor): boolean {
+		let index = localIndex;
 		while (this.parentStack.length > 0) {
 			const frame = this.restoreParent();
 			const fieldIndex = frame.start + index;
@@ -389,7 +428,7 @@ export abstract class ChunkTraversal
 					this.enterNodeAt(
 						fieldIndex,
 						{ chunk, indexOfChunk: slot, indexWithinChunk: index },
-						inline,
+						exited,
 						frame,
 					);
 					return true;

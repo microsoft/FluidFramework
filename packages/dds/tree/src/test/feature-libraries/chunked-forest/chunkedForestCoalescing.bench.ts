@@ -18,6 +18,7 @@ import {
 	type CollectedData,
 } from "@fluid-tools/benchmark";
 
+import { FluidClientVersion } from "../../../codec/index.js";
 import type {
 	FieldKey,
 	IForestSubscription,
@@ -43,6 +44,8 @@ import {
 import {
 	ForestTypeOptimized,
 	createIndependentTreeAlpha,
+	TreeAlpha,
+	TreeBeta,
 } from "../../../shared-tree/index.js";
 import {
 	SchemaFactory,
@@ -290,6 +293,97 @@ function typeIntoChunkedDocument(size: number): IForestSubscription {
 const objectSchemaFactory = new SchemaFactory("bench.chunkedForestCoalescing");
 class Row extends objectSchemaFactory.object("Row", { v: objectSchemaFactory.number }) {}
 class ObjectArray extends objectSchemaFactory.array("ObjectArray", Row) {}
+class OptionalRow extends objectSchemaFactory.object("OptionalRow", {
+	v: objectSchemaFactory.number,
+	label: objectSchemaFactory.optional(objectSchemaFactory.string),
+}) {}
+class OptionalRows extends objectSchemaFactory.array("OptionalRows", OptionalRow) {}
+class NestedRow extends objectSchemaFactory.object("NestedRow", {
+	v: objectSchemaFactory.number,
+	children: objectSchemaFactory.array(objectSchemaFactory.number),
+}) {}
+class NestedRows extends objectSchemaFactory.array("NestedRows", NestedRow) {}
+
+/**
+ * Public-API read workloads using normal optimized-forest policies.
+ * Optional fields and nested arrays prevent uniform object chunking; fixed-shape rows provide a control.
+ */
+const applicationReadFixtures = [
+	{
+		name: "fixed-shape rows",
+		create: (size: number) => {
+			const view = createIndependentTreeAlpha({ forest: ForestTypeOptimized }).viewWith(
+				new TreeViewConfiguration({ schema: ObjectArray }),
+			);
+			const content = Array.from({ length: size }, (_, v) => ({ v }));
+			view.initialize(content);
+			const root = view.root;
+			return {
+				root,
+				content,
+				expectedSum: (size * (size - 1)) / 2,
+				scan: () => {
+					let sum = 0;
+					for (const row of root) {
+						sum += row.v;
+					}
+					return sum;
+				},
+			};
+		},
+	},
+	{
+		name: "optional-field rows",
+		create: (size: number) => {
+			const view = createIndependentTreeAlpha({ forest: ForestTypeOptimized }).viewWith(
+				new TreeViewConfiguration({ schema: OptionalRows }),
+			);
+			const content = Array.from({ length: size }, (_, v) =>
+				v % 2 === 0 ? { v, label: "even" } : { v },
+			);
+			view.initialize(content);
+			const root = view.root;
+			return {
+				root,
+				content,
+				expectedSum: (size * (size - 1)) / 2,
+				scan: () => {
+					let sum = 0;
+					for (const row of root) {
+						sum += row.v;
+					}
+					return sum;
+				},
+			};
+		},
+	},
+	{
+		name: "nested-array rows",
+		create: (size: number) => {
+			const view = createIndependentTreeAlpha({ forest: ForestTypeOptimized }).viewWith(
+				new TreeViewConfiguration({ schema: NestedRows }),
+			);
+			const content = Array.from({ length: size }, (_, v) => ({ v, children: [0, 1, 2, 3] }));
+			view.initialize(content);
+			const root = view.root;
+			return {
+				root,
+				content,
+				expectedSum: (size * (size - 1)) / 2 + size * 6,
+				scan: () => {
+					let sum = 0;
+					for (const row of root) {
+						sum += row.v;
+						for (const child of row.children) {
+							sum += child;
+						}
+					}
+					return sum;
+				},
+			};
+		},
+	},
+];
 
 /** Builds a chunked-forest array of `size` identical {@link Row} objects. */
 function buildObjectArray(size: number): { root: ObjectArray; forest: IForestSubscription } {
@@ -310,6 +404,67 @@ describe("chunked-forest coalescing benchmarks", () => {
 	const fragmentCounts = performanceMode ? [100, 1000] : [100];
 	const arraySizes = performanceMode ? [100, 1000] : [100];
 	const maxBenchmarkDurationSeconds = 5;
+
+	describe("Application read traversal", () => {
+		for (const { name, create } of applicationReadFixtures) {
+			for (const size of performanceMode ? [1000, 10000] : [10]) {
+				for (const warm of [false, true]) {
+					for (const operation of [
+						"iterate",
+						"export concise",
+						"export compressed",
+					] as const) {
+						benchmarkIt({
+							title: `${name}, ${size} rows, ${warm ? "repeated" : "first"} ${operation}`,
+							...benchmarkDurationBatchless({
+								benchmarkFn: (state) => {
+									const run = (fixture: ReturnType<typeof create>): unknown => {
+										switch (operation) {
+											case "iterate": {
+												return fixture.scan();
+											}
+											case "export concise": {
+												return TreeBeta.exportConcise(fixture.root);
+											}
+											case "export compressed": {
+												return TreeAlpha.exportCompressed(fixture.root, {
+													minVersionForCollab: FluidClientVersion.v2_0,
+												});
+											}
+											default: {
+												throw new Error("Unexpected read benchmark operation");
+											}
+										}
+									};
+									const reused = warm ? create(size) : undefined;
+									if (reused !== undefined) {
+										run(reused);
+									}
+									let running: boolean;
+									do {
+										const fixture = reused ?? create(size);
+										let result: unknown;
+										running = state.time(() => {
+											result = run(fixture);
+										});
+										if (operation === "iterate") {
+											assert.equal(result, fixture.expectedSum);
+										} else if (operation === "export concise") {
+											assert.deepEqual(result, fixture.content);
+										} else {
+											assert(result !== undefined);
+										}
+									} while (running);
+								},
+								maxBenchmarkDurationSeconds: 3,
+								minSampleCount: 12,
+							}),
+						});
+					}
+				}
+			}
+		}
+	});
 
 	describe("Sequence traversal depth", () => {
 		for (const depth of [0, 4, 8, 64]) {

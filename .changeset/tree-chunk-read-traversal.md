@@ -2,20 +2,27 @@
 "@fluidframework/tree": minor
 "__section": tree
 ---
-Improve traversal performance for some optimized SharedTree workloads
+Reduce view maintenance overhead for some SharedTree edits
 
 When configured with [ForestTypeOptimized](https://fluidframework.com/docs/api/v3/tree#foresttypeoptimized-variable),
-SharedTree reduces traversal overhead for some nested storage layouts.
-The effect depends on the document and workload; not all traversal patterns improve.
+SharedTree reduces the cost of clearing cached navigation state during edits and the memory retained by that cleared state.
+Results depend on the document schema, workload, and environment; not all operations improve.
 
 #### Example measurements
 
-Local benchmarks on Node.js 22.23.2 compare the previous implementation with this traversal change.
-The figures below are means across two runs per implementation, measured in an interleaved comparison:
+An application-level benchmark measures the first edit after initializing an array of 1,000 points with numeric `x` and `y` fields.
+It sets `point.x = 1001` on the middle point.
+Initialization leaves cached navigation state for many nodes, which this first edit clears.
+The comparison isolates this change from the subsequent in-place leaf-editing optimization.
 
-- Scanning 100 numeric nodes through four nested sequence-storage layers takes about 78% less time.
-- Descending and ascending a chain of 100 individually stored nodes takes about 28% less time.
-- Scanning 100 individually stored sibling nodes takes about 16% more time, increasing from 4.4 microseconds to 5.1 microseconds.
+| Metric | Before | After | Change |
+| --- | --- | --- | --- |
+| First local edit time after initialization | 0.780 ms | 0.655 ms | 16% less |
+| Memory retained by the tree view after that edit | 2.662 MiB | 2.532 MiB | 4.9% less |
 
-These are storage-level traversal measurements, not end-to-end application timings.
-Results depend on the document representation, workload, and environment.
+These results do not imply a comparable improvement for repeated edits to an already-edited document.
+The memory reduction comes from smaller retained navigation state, not a more compact representation of the document content.
+
+Measurements use Node.js 22.23.2 and report means across two runs per implementation in an interleaved comparison.
+Timing covers the property assignment, excluding document initialization, point lookup, and result verification.
+Memory figures are per document after garbage collection, including content and editing history retained by the tree view; they do not measure peak memory.

@@ -77,6 +77,39 @@ describe("chunkCursor", () => {
 	});
 
 	describe("ChunkCursor", () => {
+		it("refreshes inline capabilities after reset and releases them on clear without changing forks", () => {
+			class ResettableCursor extends ChunkCursor {
+				public select(chunk: TreeChunk): void {
+					this.reset(new ChunkSequenceCursor([chunk]));
+				}
+
+				public clear(): void {
+					this.clearTraversal();
+				}
+			}
+			const basic = numericBasicChunk(1);
+			const shape = new TreeShape(brand(numberSchema.identifier), true, []);
+			const uniform = new UniformChunk(shape.withTopLevelLength(2), [2, 3]);
+			const cursor = new ResettableCursor(new ChunkSequenceCursor([basic]));
+			assert(cursor.firstNode());
+			assert.equal(cursor.value, 1);
+			const basicFork = cursor.fork();
+			cursor.select(uniform);
+			assert.throws(() => cursor.value, /Expected an inline-node adapter/);
+			assert(cursor.firstNode());
+			assert.equal(cursor.value, 2);
+			const uniformFork = cursor.fork();
+			cursor.clear();
+			assert.throws(() => cursor.value, /Cursor has been freed/);
+			assert.equal(basicFork.value, 1);
+			assert.equal(uniformFork.value, 2);
+			cursor.select(basic);
+			assert(cursor.firstNode());
+			assert.equal(cursor.value, 1);
+			basic.referenceRemoved();
+			uniform.referenceRemoved();
+		});
+
 		it("atRoot, not nested", () => {
 			const chunk: BasicChunk = new BasicChunk(
 				brand("Foo"),
@@ -174,6 +207,36 @@ describe("chunkCursor", () => {
 		});
 
 		describe("sequence boundaries", () => {
+			it("reuses the owning field array while scanning siblings in both directions", () => {
+				let fieldLookups = 0;
+				class CountedFields extends Map<FieldKey, TreeChunk[]> {
+					public override get(key: FieldKey): TreeChunk[] | undefined {
+						fieldLookups++;
+						return super.get(key);
+					}
+				}
+				const children = Array.from({ length: 100 }, (_, index) => numericBasicChunk(index));
+				const root = new BasicChunk(
+					brand("parent"),
+					new CountedFields([[EmptyKey, children]]),
+				);
+				const cursor = root.cursor();
+				cursor.enterNode(0);
+				cursor.enterField(EmptyKey);
+				assert(cursor.firstNode());
+				for (let index = 0; index < children.length; index++) {
+					assert.equal(cursor.value, index);
+					assert.equal(cursor.nextNode(), index + 1 < children.length);
+				}
+				cursor.enterNode(children.length - 1);
+				for (let index = children.length - 1; index >= 0; index--) {
+					assert.equal(cursor.value, index);
+					assert.equal(cursor.seekNodes(-1), index > 0);
+				}
+				assert(fieldLookups < 10, `Expected bounded field lookups, observed ${fieldLookups}`);
+				root.referenceRemoved();
+			});
+
 			it("scans sibling chunks with linear length lookups in both directions", () => {
 				let lengthReads = 0;
 				/** Counts length queries to detect repeated scans of previously visited sibling chunks. */
