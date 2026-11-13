@@ -117,7 +117,6 @@ const legacyKinds = new WeakMap<IFluidDataStoreFactory, DataStoreKind>();
 /**
  * Uses a legacy data-store factory as a kind in the alpha {@link @fluidframework/driver-definitions#ServiceClient} APIs.
  * @remarks
- * Import from `@fluidframework/runtime-utils/legacy/alpha`.
  * Pass the returned kind to ServiceClient creation/loading APIs or register it in a data-store registry.
  *
  * This preserves the factory identity, entry point, child registry, named channels, and document format.
@@ -290,7 +289,6 @@ export abstract class ServiceContainerBase<TData, TOptions = unknown>
 /**
  * Exposes an attached legacy container through the alpha container API.
  * @remarks
- * Import from `@fluidframework/runtime-utils/legacy/alpha`.
  * Resolve the application's root using its existing legacy APIs and pass that value as `data`.
  * No root alias, named channel, handle, or document content is changed.
  * Closing the returned container closes the original container.
