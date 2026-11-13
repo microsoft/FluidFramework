@@ -38,6 +38,21 @@ Read the **@fluidframework/ordered-collection** API documentation at <https://fl
 <!-- prettier-ignore-end -->
 <!-- markdown-magic:end -->
 
+## Creation and instance types
+
+Use `ConsensusQueue.create(runtime)` to create a queue. Use `ConsensusQueue.getFactory()` to register its factory. For instance annotations, the `ConsensusQueue<T>` type is an alias for `IConsensusOrderedCollection<T>`.
+
+The package no longer exports `ConsensusQueueClass` or `ConsensusOrderedCollection`, so direct construction and inheritance from these implementation classes are no longer supported. The existing collection deprecation still applies.
+
+```typescript
+import {
+	ConsensusQueue,
+	type IConsensusOrderedCollection,
+} from "@fluidframework/ordered-collection/legacy";
+
+const queue: IConsensusOrderedCollection = ConsensusQueue.create(runtime);
+```
+
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
