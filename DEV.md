@@ -174,7 +174,7 @@ Therefore using a nonzero value here may arbitrarily block internal developers f
 
 #### Updating dependencies while respecting minimum release age
 
-Use `pnpm install-no-frozen` in the root or ESLint configuration workspace when updating dependencies.
+Use `pnpm install-no-frozen` in the affected workspace root when updating dependencies.
 The script checks pnpm's effective registry and sets a minimum release age of 10080 minutes (7 days) for `registry.npmjs.org`, or 0 for `publicPackages`, which applies its own package-age protections.
 It respects environment configuration and forwarded `--registry` arguments.
 For other registries, it leaves the configured minimum release age unchanged.

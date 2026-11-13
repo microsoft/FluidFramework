@@ -25,6 +25,7 @@
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run prettier:fix",
+		"install-no-frozen": "node ../../scripts/install-no-frozen.cjs",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"perf": "cross-env FLUID_TEST_VERBOSE=1 FLUID_TEST_PERF_MODE=1 mocha --v8-expose-gc --timeout 999999 --fgrep @Benchmark --reporter ./dist/mocha/Reporter.js",

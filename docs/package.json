@@ -13,6 +13,7 @@
 	"scripts": {
 		"format": "npm run prettier:fix",
 		"preinstall": "node ../scripts/only-pnpm.cjs",
+		"install-no-frozen": "node ../scripts/install-no-frozen.cjs",
 		"lint": "concurrently npm:prettier npm:markdownlint",
 		"lint:fix": "npm run prettier:fix && npm run markdownlint:fix",
 		"markdownlint": "markdownlint-cli2 \"**/*.md\"",
