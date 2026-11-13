@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import type { CodecAndSchema, IJsonCodec, Versioned } from "../codec/index.js";
 import type {
@@ -16,6 +16,7 @@ import {
 	type JsonCompatibleReadOnlyObject,
 	JsonCompatibleReadOnlySchema,
 	type Mutable,
+	unbrand,
 } from "../util/index.js";
 
 import type { MessageDecodingContext, MessageEncodingContext } from "./messageCodecs.js";
@@ -38,10 +39,11 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 		| typeof MessageFormatVersion.v3
 		| typeof MessageFormatVersion.v4
 		| typeof MessageFormatVersion.v6
-		| typeof MessageFormatVersion.v7,
+		| typeof MessageFormatVersion.v7
+		| typeof MessageFormatVersion.vDetachedRoots,
 ): CodecAndSchema<DecodedMessage<TChangeset>, MessageEncodingContext, MessageDecodingContext> {
-	// Persisted commit metadata was introduced in v7; older formats must not write the field.
-	const supportsCustomMetadata = version >= MessageFormatVersion.v7;
+	// Persisted commit metadata was introduced in v7; older formats must not write the field
+	const supportsCustomMetadata = doesVersionSupportCustomMetadata(version);
 	const schema = Message(
 		changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema,
 		supportsCustomMetadata,
@@ -110,4 +112,26 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 			};
 		},
 	};
+}
+
+function doesVersionSupportCustomMetadata(version: MessageFormatVersion): boolean {
+	switch (version) {
+		case unbrand(MessageFormatVersion.undefined):
+		case unbrand(MessageFormatVersion.v1):
+		case unbrand(MessageFormatVersion.v2):
+		case unbrand(MessageFormatVersion.v3):
+		case unbrand(MessageFormatVersion.v4):
+		case unbrand(MessageFormatVersion.v5):
+		case unbrand(MessageFormatVersion.v6): {
+			return false;
+		}
+		case unbrand(MessageFormatVersion.v7):
+		case unbrand(MessageFormatVersion.vSharedBranches):
+		case unbrand(MessageFormatVersion.vDetachedRoots): {
+			return true;
+		}
+		default: {
+			unreachableCase(version);
+		}
+	}
 }

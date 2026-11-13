@@ -96,7 +96,7 @@ describe("EditManagerSummarizer", () => {
 		class Added extends sf.object("Added", { value: sf.string }) {}
 		const oldConfig = new TreeViewConfiguration({ schema: sf.optional(sf.string) });
 		const newConfig = new TreeViewConfiguration({ schema: sf.optional([sf.string, Added]) });
-		const factory = new SharedTreeTestFactory(() => {}, undefined, {
+		const factory = SharedTreeTestFactory.build(() => {}, undefined, {
 			minVersionForCollab: currentVersion,
 		});
 		const provider = new TestTreeProviderLite(2, factory);

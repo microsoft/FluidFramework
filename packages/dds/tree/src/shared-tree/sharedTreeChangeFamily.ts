@@ -262,6 +262,12 @@ export class SharedTreeChangeFamily
 		);
 	}
 
+	public ensureCompatibility(change: SharedTreeChange): SharedTreeChange {
+		return mapDataChanges(change, (inner) =>
+			this.modularChangeFamily.rebaser.ensureCompatibility(inner),
+		);
+	}
+
 	public get rebaser(): ChangeRebaser<SharedTreeChange> {
 		return this;
 	}

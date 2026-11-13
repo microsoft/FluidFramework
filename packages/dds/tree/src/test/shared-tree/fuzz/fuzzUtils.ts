@@ -44,6 +44,10 @@ import {
 	type ValidateRecursiveSchema,
 	type ViewableTree,
 	type NodeBuilderData,
+	type ITreeViewConfiguration,
+	type TreeNodeApi,
+	treeNodeApi,
+	type ImplicitFieldSchema,
 } from "../../../simple-tree/index.js";
 import type { ISharedTree } from "../../../treeFactory.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
@@ -94,7 +98,7 @@ type _checkFuzzNode = ValidateRecursiveSchema<typeof FuzzNode>;
 
 export type FuzzNodeSchema = typeof FuzzNode;
 
-export const initialFuzzSchema = createFuzzSchema([]);
+export const initialFuzzSchema = createFuzzSchema([], (scope) => new SchemaFactory(scope));
 export const fuzzFieldSchema = FuzzNode.info.optionalChild;
 
 /**
@@ -106,7 +110,10 @@ export const fuzzFieldSchema = FuzzNode.info.optionalChild;
  * Built-in leaf types, `treeFuzz.node`, and `treeFuzz.arrayChildren` are already included.
  * @returns The tree's schema used for the fuzz view.
  */
-export function createFuzzSchema(nodeTypes: readonly string[]): typeof fuzzFieldSchema {
+export function createFuzzSchema(
+	nodeTypes: readonly string[],
+	schemaFactoryConstructor: SchemaFactoryConstructor,
+): typeof fuzzFieldSchema {
 	assertUnique(nodeTypes, "Duplicate fuzz node schema identifier");
 
 	const fuzzNodeTypePrefix = `${builder.scope}.`;
@@ -116,7 +123,7 @@ export function createFuzzSchema(nodeTypes: readonly string[]): typeof fuzzField
 		fullIdentifier.slice(fuzzNodeTypePrefix.length);
 	const commonNodes = new Set<string>([FuzzNode.identifier, ArrayChildren.identifier]);
 
-	const schemaFactory = new SchemaFactory(builder.scope);
+	const schemaFactory = schemaFactoryConstructor(builder.scope);
 	const guidNodeSchemas = [];
 	for (const nodeType of nodeTypes) {
 		assert(
@@ -171,17 +178,18 @@ export function nodeSchemaFromTreeSchema(
 	return nodeSchema;
 }
 
+// TODO: Consider removing this class.
 export class SharedTreeFuzzTestFactory extends SharedTreeTestFactory {
 	/**
 	 * @param onCreate - Called once for each created tree (not called for trees loaded from summaries).
 	 * @param onLoad - Called once for each tree that is loaded from a summary.
 	 */
-	public constructor(
-		protected override readonly onCreate: (tree: ISharedTree) => void,
-		protected override readonly onLoad?: (tree: ISharedTree) => void,
+	public static override build(
+		onCreate: (tree: ISharedTree) => void,
+		onLoad?: (tree: ISharedTree) => void,
 		options: SharedTreeOptionsInternal = {},
-	) {
-		super(onCreate, onLoad, {
+	): SharedTreeFuzzTestFactory {
+		return SharedTreeTestFactory.build(onCreate, onLoad, {
 			...options,
 			jsonValidator: FormatValidatorBasic,
 		});
@@ -316,3 +324,34 @@ export const populatedInitialState: NodeBuilderData<typeof FuzzNode> = {
 	requiredChild: "R",
 	optionalChild: undefined,
 } as unknown as NodeBuilderData<typeof FuzzNode>;
+
+export type SchemaFactoryConstructor = (scope: string) => SchemaFactory;
+
+export interface TreePackageStatics {
+	readonly newSchemaFactory: SchemaFactoryConstructor;
+	readonly newTreeViewConfiguration: <
+		TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
+	>(
+		props: ITreeViewConfiguration<TSchema>,
+	) => TreeViewConfiguration<TSchema>;
+	readonly nodeApi: TreeNodeApi;
+}
+
+export const treeToPackageStatics = new WeakMap<ISharedTree, TreePackageStatics>();
+
+const defaultSchemaFactoryConstructor = (scope: string) => new SchemaFactory(scope);
+const defaultTreeViewConfigurationConstructor = <
+	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
+>(
+	props: ITreeViewConfiguration<TSchema>,
+) => new TreeViewConfiguration(props);
+
+export const defaultTreePackageStatics: TreePackageStatics = {
+	newSchemaFactory: defaultSchemaFactoryConstructor,
+	newTreeViewConfiguration: defaultTreeViewConfigurationConstructor,
+	nodeApi: treeNodeApi,
+};
+
+export function getStaticsForTree(tree: ISharedTree): TreePackageStatics {
+	return treeToPackageStatics.get(tree) ?? defaultTreePackageStatics;
+}

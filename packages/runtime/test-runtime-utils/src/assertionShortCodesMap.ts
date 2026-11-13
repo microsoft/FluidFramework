@@ -1284,7 +1284,7 @@ export const shortCodeMap = {
 	"0x9c8": "Cross field key not registered in base or new change",
 	"0x9c9": "Expected node to have field changes",
 	"0x9ca": "Unknown node ID",
-	"0x9cb": "Parent field should be defined",
+	"0x9cb": "Location should be defined",
 	"0x9cc": "id should not include slashes",
 	"0x9cd": "id should not include slashes",
 	"0x9ce": "id is undefined in getBlobManagerTreeFromTree",

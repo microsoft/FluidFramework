@@ -142,8 +142,11 @@ export {
 
 export {
 	RangeMap,
+	type RangeMapEntry,
 	type RangeQueryResult,
+	type RangeQueryResultFragment,
 	newIntegerRangeMap,
+	areAdjacentIntegerRanges,
 } from "./rangeMap.js";
 
 export {
@@ -191,4 +194,4 @@ export {
 	type IdDecoderOptionsWithOriginator,
 } from "./compressedIds.js";
 
-export { merge, assertStructuralEquality, hasConflict } from "./objMerge.js";
+export { merge, hasConflict, type ObjectTransform } from "./objMerge.js";
