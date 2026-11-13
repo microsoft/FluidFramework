@@ -15,6 +15,7 @@ import { getGlobalTelemetryContext, Lumberjack } from "@fluidframework/server-se
 import { Router } from "express";
 import type { Provider } from "nconf";
 
+import type { InitialSummaryLifecycle } from "../customizations";
 import {
 	BaseGitRestTelemetryProperties,
 	checkSoftDeleted,
@@ -265,6 +266,7 @@ export function create(
 	store: Provider,
 	fileSystemManagerFactories: IFileSystemManagerFactories,
 	repoManagerFactory: IRepositoryManagerFactory,
+	initialSummaryLifecycle?: InitialSummaryLifecycle,
 ): Router {
 	const router: Router = Router();
 	const persistLatestFullSummary: boolean = store.get("git:persistLatestFullSummary") ?? false;
@@ -393,7 +395,7 @@ export function create(
 						repoPerDocEnabled,
 					);
 				}
-				return createSummary(
+				const result = await createSummary(
 					repoManager,
 					fsManager,
 					wholeSummaryPayload,
@@ -405,6 +407,10 @@ export function create(
 					enableLowIoWrite,
 					optimizeForInitialSummary,
 				);
+				if (isInitialSummary && initialSummaryLifecycle !== undefined) {
+					await initialSummaryLifecycle.onInitialSummaryWriteSuccess(repoManagerParams);
+				}
+				return result;
 			})().catch((error) => logAndThrowApiError(error, request, repoManagerParams));
 			handleResponse(resultP, response, undefined, undefined, 201);
 		});

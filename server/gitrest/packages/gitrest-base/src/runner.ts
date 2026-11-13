@@ -14,6 +14,7 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import type { Provider } from "nconf";
 
 import * as app from "./app";
+import type { InitialSummaryLifecycle } from "./customizations";
 import type { IFileSystemManagerFactories, IRepositoryManagerFactory } from "./utils";
 
 export class GitrestRunner implements IRunner {
@@ -28,6 +29,7 @@ export class GitrestRunner implements IRunner {
 		private readonly repositoryManagerFactory: IRepositoryManagerFactory,
 		private readonly startupCheck: IReadinessCheck,
 		private readonly readinessCheck?: IReadinessCheck,
+		private readonly initialSummaryLifecycle?: InitialSummaryLifecycle,
 	) {}
 
 	public async start(): Promise<void> {
@@ -39,6 +41,7 @@ export class GitrestRunner implements IRunner {
 			this.repositoryManagerFactory,
 			this.startupCheck,
 			this.readinessCheck,
+			this.initialSummaryLifecycle,
 		);
 		gitrest.set("port", this.port);
 

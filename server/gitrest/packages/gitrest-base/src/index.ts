@@ -4,6 +4,7 @@
  */
 
 export { ExternalStorageManager, IExternalStorageManager } from "./externalStorageManager";
+export type { InitialSummaryLifecycle } from "./customizations";
 export { configureGitRestLogging } from "./logger";
 export { create, IRoutes } from "./routes";
 export { GitrestRunner } from "./runner";
