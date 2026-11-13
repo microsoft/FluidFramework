@@ -81,13 +81,23 @@ compatibility window for a client toward the end of a Range can be up to ~24 mon
 1. **Document access enforcement**: Clients running a Fluid version older than what the document requires may be blocked from opening it, preventing data corruption or runtime errors. This applies even when only one client reads the document. See [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor) for the specific error signals.
 2. **Write format and feature selection**: It automatically enables or disables features based on the specified version so clients at that version or newer can interpret the resulting data format. For example, if `oldestSupportedClient` is set to `"2.0.0"`, features like grouped batching are safely enabled because all clients at version 2.0.0 or later can interpret that format.
 
-If `oldestSupportedClient` is not explicitly set, Client 3.0 uses `"2.0.0"`. Omission and explicitly passing `"2.0.0"` therefore select the same runtime defaults and validation. Passing a value below the supported floor or a prerelease value is not permitted — the runtime will fail to instantiate and throw a `UsageError` (see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor)). For details on the default value, see `defaultMinVersionForCollab` in [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts).
+Starting with Client 3.10, applications must make this compatibility choice explicitly when they configure the container runtime.
+Use `oldestSupportedClient` to select the oldest client version that must retain document access.
+This explicit choice prevents a default value from changing the compatibility requirements without the application's knowledge.
+
+During migration, existing beta callers can continue to use `minVersionForCollab` on the same parameter interfaces.
+Both properties remain optional in TypeScript to preserve existing declarations, but the runtime requires exactly one compatibility property.
+If callers supply neither property or both properties, runtime instantiation fails with a `UsageError`.
+Version validation also rejects unsupported values.
+For these errors, see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor).
 
 Client 3.0 accepts stable 2.x versions and 3.x minor checkpoints whose patch is zero. Before upgrading an application to Client 3.0, ensure every active deployment that must collaborate uses Fluid Framework 2.0.0 or later.
 
 ### What This Means for an Application
 
-As an application developer, you need to manage your Fluid Framework version upgrades carefully to ensure uninterrupted document access and collaboration for your users. It is **highly recommended** to explicitly configure `oldestSupportedClient` and monitor your client version distribution. Setting `oldestSupportedClient` explicitly surfaces version mismatches at build and verification time. This prevents a release from shipping and silently raising the floor, locking older clients out.
+Before you upgrade Fluid Framework, identify the oldest deployed client version that must retain document access.
+Set `oldestSupportedClient` to that version, then monitor your client version distribution as you deploy the upgrade.
+This explicit choice helps you detect version mismatches before a release prevents older clients from accessing documents.
 
 #### Encapsulated vs Declarative Models
 
@@ -151,10 +161,14 @@ const runtime = await loadContainerRuntime(loadContainerRuntimeParams);
 
 You may also set individual runtime options via `IContainerRuntimeOptions`, but they must be consistent with your `oldestSupportedClient` value. If there is a mismatch (e.g., enabling a feature introduced in 2.40.0 with `oldestSupportedClient: "2.0.0"`), a `UsageError` will be thrown (see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor)).
 
-If `oldestSupportedClient` is not explicitly set, Client 3.0 uses `"2.0.0"` (see `defaultMinVersionForCollab` in [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts)). Passing a value below the supported floor or a prerelease value is not permitted and will throw a `UsageError`.
+The beta loader requires an explicit compatibility choice at runtime.
+`LoadContainerRuntimeParams` keeps both properties optional so existing declarations and interface extensions remain compatible.
+If an existing beta caller still uses `minVersionForCollab`, it can keep that property on the same interface until migration.
+Do not supply both properties.
+The runtime rejects an ambiguous compatibility choice, just as it rejects an omitted choice.
 
-Setting `oldestSupportedClient` explicitly is **highly recommended**. Set it to the oldest Fluid Framework
-version your users are [saturated](#terminology) on. This will ensure:
+To select a version that preserves document access, use the oldest Fluid Framework version your users are [saturated](#terminology) on.
+This choice provides two benefits:
 
 1. Older clients can access documents written by newer clients, and multiple clients can collaborate safely.
 2. Your application can leverage new Fluid Framework features as soon as they become safe for cross-client collaboration.

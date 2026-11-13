@@ -5751,7 +5751,7 @@ describe("Runtime", () => {
 					(error: IErrorBase) =>
 						error.errorType === ContainerErrorTypes.usageError &&
 						error.message ===
-							"Runtime option createBlobPayloadPending:true requires runtime version 2.40.0. Please update minVersionForCollab (currently 2.0.0) to 2.40.0 or later to proceed.",
+							"Runtime option createBlobPayloadPending:true requires runtime version 2.40.0. Please update the compatibility version (currently 2.0.0) to 2.40.0 or later to proceed.",
 				);
 			});
 
@@ -5768,7 +5768,7 @@ describe("Runtime", () => {
 					(error: IErrorBase) =>
 						error.errorType === ContainerErrorTypes.usageError &&
 						error.message ===
-							"Runtime option createBlobPayloadPending:true requires runtime version 2.40.0. Please update minVersionForCollab (currently 2.0.0) to 2.40.0 or later to proceed.",
+							"Runtime option createBlobPayloadPending:true requires runtime version 2.40.0. Please update the compatibility version (currently 2.0.0) to 2.40.0 or later to proceed.",
 				);
 			});
 		});
