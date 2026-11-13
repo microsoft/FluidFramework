@@ -156,7 +156,6 @@ import {
 	TreeCompressionStrategy,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { FieldChangeDelta } from "../feature-libraries/modular-schema/index.js";
 import {
 	allowsFieldSuperset,
 	allowsTreeSuperset,
@@ -217,6 +216,9 @@ import {
 	tryGetFromNestedMap,
 	isReadonlyArray,
 	brand,
+	merge,
+	hasConflict,
+	type ObjectTransform,
 } from "../util/index.js";
 
 // eslint-disable-next-line import-x/no-internal-modules
@@ -640,7 +642,7 @@ export function assertUnique<T>(items: readonly T[], errorMessage: string): void
 /**
  * Assert two MarkList are equal, handling cursors.
  */
-export function assertFieldChangesEqual(a: FieldChangeDelta, b: FieldChangeDelta): void {
+export function assertFieldChangesEqual(a: DeltaFieldChanges, b: DeltaFieldChanges): void {
 	assert.deepStrictEqual(a, b);
 }
 
@@ -678,17 +680,28 @@ export class SharedTreeTestFactory implements IChannelFactory<ISharedTree> {
 	 * @param onLoad - Called once for each tree that is loaded from a summary.
 	 */
 	public constructor(
+		factory: IChannelFactory<ISharedTree>,
 		protected readonly onCreate: (tree: ISharedTree) => void,
 		protected readonly onLoad?: (tree: ISharedTree) => void,
-		options: SharedTreeOptionsInternal = {},
 	) {
+		this.inner = factory;
+	}
+
+	public static build(
+		onCreate: (tree: ISharedTree) => void,
+		onLoad?: (tree: ISharedTree) => void,
+		options: SharedTreeOptionsInternal = {},
+	): SharedTreeTestFactory {
 		const optionsUpdated: SharedTreeOptionsInternal = {
 			...options,
 			jsonValidator: FormatValidatorBasic,
 		};
-		this.inner = configuredSharedTreeInternal(
+
+		const factory = configuredSharedTreeInternal(
 			optionsUpdated,
 		).getFactory() as IChannelFactory<ISharedTree>;
+
+		return new SharedTreeTestFactory(factory, onCreate, onLoad);
 	}
 
 	public get type(): string {
@@ -807,15 +820,27 @@ export function validateViewConsistency(
 	);
 }
 
+export function assertStructuralEquality<T>(
+	actual: T,
+	expected: T,
+	options: {
+		readonly message?: string;
+		readonly transform?: ObjectTransform;
+	} = {},
+): void {
+	const diff = merge(actual, expected, options.transform);
+	assert(!hasConflict(diff), options.message ?? "Objects are not structurally equal");
+}
+
 export function validateSnapshotConsistency(
 	treeA: SharedTreeContentSnapshot,
 	treeB: SharedTreeContentSnapshot,
 	idDifferentiator: string | undefined = undefined,
 ): void {
-	assert.deepEqual(
+	assertStructuralEquality(
 		prepareTreeForCompare(treeA.tree),
 		prepareTreeForCompare(treeB.tree),
-		`Inconsistent document tree json representation: ${idDifferentiator}`,
+		{ message: `Inconsistent document tree json representation: ${idDifferentiator}` },
 	);
 
 	// Removed trees are garbage collected so we only enforce that whenever two
@@ -838,11 +863,9 @@ export function validateSnapshotConsistency(
 	forEachInNestedMap(mapA, (content, major, minor) => {
 		const mapBContent = tryGetFromNestedMap(mapB, major, minor);
 		if (mapBContent !== undefined) {
-			assert.deepEqual(
-				content,
-				mapBContent,
-				`Inconsistent removed trees json representation: ${idDifferentiator}`,
-			);
+			assertStructuralEquality(content, mapBContent, {
+				message: `Inconsistent removed trees json representation: ${idDifferentiator}`,
+			});
 		}
 	});
 	expectSchemaEqual(treeA.schema, treeB.schema, idDifferentiator);

@@ -26,13 +26,10 @@ import {
 	decodeChange,
 	getFieldChangesetCodecs,
 } from "./modularChangeCodecV1.js";
+import { areDeltaEquivalent } from "./modularChangeDelta.js";
 import { EncodedModularChangesetV2 } from "./modularChangeFormatV2.js";
 import type { ModularChangeset } from "./modularChangeTypes.js";
-import {
-	areEquivalent,
-	fieldKindsFromConfiguration,
-	isChangesetValid,
-} from "./modularChangeUtils.js";
+import { fieldKindsFromConfiguration, isChangesetValid } from "./modularChangeUtils.js";
 
 type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,
@@ -67,6 +64,7 @@ export function makeModularChangeCodecV2(
 			const encoded = encodeChange(
 				change,
 				context,
+				fieldKinds,
 				fieldChangesetCodecs,
 				revisionTagCodec,
 				fieldsCodec,
@@ -76,7 +74,7 @@ export function makeModularChangeCodecV2(
 			cheapRebaseValidation("V2 encode output", (): true | string => {
 				const decoded = modularChangeCodec.decode(encoded, context);
 				return (
-					areEquivalent(change, decoded, fieldKindsFromConfiguration(fieldKinds)) ||
+					areDeltaEquivalent(change, decoded, fieldKindsFromConfiguration(fieldKinds)) ||
 					"does not match decode output"
 				);
 			});

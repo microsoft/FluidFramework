@@ -85,7 +85,7 @@
                           "change": [
                             {
                               "data": {
-                                "maxId": 1,
+                                "maxId": 2,
                                 "changes": [
                                   {
                                     "fieldKey": "rootFieldKey",
@@ -133,7 +133,7 @@
                           "change": [
                             {
                               "data": {
-                                "maxId": 1,
+                                "maxId": 2,
                                 "changes": [
                                   {
                                     "fieldKey": "rootFieldKey",
@@ -188,7 +188,7 @@
                                 "change": [
                                   {
                                     "data": {
-                                      "maxId": 1,
+                                      "maxId": 2,
                                       "changes": [
                                         {
                                           "fieldKey": "rootFieldKey",
@@ -239,7 +239,7 @@
                                 "change": [
                                   {
                                     "data": {
-                                      "maxId": 1,
+                                      "maxId": 2,
                                       "changes": [
                                         {
                                           "fieldKey": "rootFieldKey",

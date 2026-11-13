@@ -5,12 +5,13 @@
 
 import {
 	makeChangeAtomId,
+	offsetChangeAtomId,
 	strictRebaseValidation,
 	type ChangeAtomId,
 	type FieldKindIdentifier,
 } from "../../core/index.js";
 import { brand, type RangeQueryResult } from "../../util/index.js";
-import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
+import { setInChangeAtomIdMap, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import {
 	EditFilterStatus,
 	type FilterAttachResult,
@@ -24,18 +25,22 @@ import type {
 	ModularChangeset,
 	NodeChangeset,
 	NodeId,
+	RootNodeTable,
 } from "./modularChangeTypes.js";
-import { isChangesetValid, makeChangesetInversions } from "./modularChangeUtils.js";
+import {
+	addNodeRename,
+	makeChangesetInversions,
+	newRootTable,
+	isChangesetValid,
+} from "./modularChangeUtils.js";
 import { pruneChangeset } from "./prune.js";
 
 export function removeAllDetachesFilter(
 	_id: ChangeAtomId,
 	count: number,
-	_rootId: ChangeAtomId | undefined,
-	_endpointId?: ChangeAtomId,
 ): RangeQueryResult<FilterDetachResult> {
 	return {
-		value: { action: EditFilterStatus.Remove, shouldRemoveChild: false },
+		value: { action: EditFilterStatus.Remove },
 		length: count,
 	};
 }
@@ -43,15 +48,31 @@ export function removeAllDetachesFilter(
 export function removeAllAttachesFilter(
 	_id: ChangeAtomId,
 	count: number,
-	_rootId: ChangeAtomId | undefined,
-	_endpointId?: ChangeAtomId,
 ): RangeQueryResult<FilterAttachResult> {
 	return { value: { action: EditFilterStatus.Remove }, length: count };
 }
 
+/**
+ * Returns a modified copy of the given changeset with field edits and renames filtered according to the provided functions.
+ * Note that the caller is responsible for ensuring that all removed detaches also have any associated renames removed,
+ * that preserved attaches of existing roots do not lose their associated renames.
+ */
 export function filterEdits(
 	change: ModularChangeset,
 	filterFieldEdits: (fieldChange: FieldChange, fieldId: FieldId) => FieldChange,
+	filterRename: (
+		oldId: ChangeAtomId,
+		newId: ChangeAtomId,
+		count: number,
+	) => RangeQueryResult<EditFilterStatus>,
+	adjustmentPass:
+		| ((
+				filteredFieldChanges: FieldChangeMap,
+				filteredRoots: RootNodeTable,
+				filteredNodeChanges: ChangeAtomIdBTree<NodeChangeset>,
+				nodeAliases: ChangeAtomIdBTree<NodeId>,
+		  ) => void)
+		| undefined,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): ModularChangeset {
 	strictRebaseValidation("Malformed filterEdits input", () =>
@@ -70,12 +91,21 @@ export function filterEdits(
 		),
 	);
 
+	const filteredRoots = filterRoots(change, filterRename);
+	adjustmentPass?.(
+		filteredFieldChanges,
+		filteredRoots,
+		filteredNodeChanges,
+		change.nodeAliases,
+	);
+
 	const { crossFieldKeys: filteredCrossFieldKeys, nodeToParent: filteredNodeToParent } =
 		makeChangesetInversions(
 			filteredFieldChanges,
+			filteredRoots,
 			filteredNodeChanges,
-			fieldKinds,
 			change.nodeAliases,
+			fieldKinds,
 		);
 
 	return pruneChangeset(
@@ -83,6 +113,7 @@ export function filterEdits(
 			...change,
 			fieldChanges: filteredFieldChanges,
 			nodeChanges: filteredNodeChanges,
+			rootNodes: filteredRoots,
 			crossFieldKeys: filteredCrossFieldKeys,
 			nodeToParent: filteredNodeToParent,
 		},
@@ -115,4 +146,59 @@ function filterNodeEdits(
 		...change,
 		fieldChanges: filterFieldMapEdits(change.fieldChanges, nodeId, filterFieldEdits),
 	};
+}
+
+/**
+ * Returns a filtered version of the RootNodeTable for `change`.
+ * Note that output detach locations are currently always dropped during filtering.
+ */
+function filterRoots(
+	change: ModularChangeset,
+	filterRename: (
+		oldId: ChangeAtomId,
+		newId: ChangeAtomId,
+		count: number,
+	) => RangeQueryResult<EditFilterStatus>,
+): RootNodeTable {
+	const filteredRoots = newRootTable();
+	for (const {
+		start: oldIdFirst,
+		value: newIdFirst,
+		length,
+	} of change.rootNodes.oldToNewId.entries()) {
+		let remainingLength = length;
+		let oldId = oldIdFirst;
+		let newId = newIdFirst;
+		while (remainingLength > 0) {
+			let countProcessed = remainingLength;
+			const filterResult = filterRename(oldId, newId, countProcessed);
+			countProcessed = filterResult.length;
+
+			if (filterResult.value === EditFilterStatus.Preserve) {
+				const detachLocationEntry = change.rootNodes.detachLocations.getFirst(
+					oldId,
+					countProcessed,
+				);
+
+				countProcessed = detachLocationEntry.length;
+				addNodeRename(filteredRoots, oldId, newId, countProcessed, detachLocationEntry.value);
+			}
+
+			oldId = offsetChangeAtomId(oldId, countProcessed);
+			newId = offsetChangeAtomId(newId, countProcessed);
+			remainingLength -= countProcessed;
+		}
+	}
+
+	for (const [rootIdKey, nodeId] of change.rootNodes.nodeChanges.entries()) {
+		const rootId = makeChangeAtomId(rootIdKey[1], rootIdKey[0]);
+		setInChangeAtomIdMap(filteredRoots.nodeChanges, rootId, nodeId);
+
+		const detachLocation = change.rootNodes.detachLocations.getFirst(rootId, 1).value;
+		if (detachLocation !== undefined) {
+			filteredRoots.detachLocations.set(rootId, 1, detachLocation);
+		}
+	}
+
+	return filteredRoots;
 }
