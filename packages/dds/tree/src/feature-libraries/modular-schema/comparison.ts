@@ -27,7 +27,7 @@ import { isNeverField, isNeverTree } from "./isNeverTree.js";
  *
  * @remarks
  * These modes separate content compatibility from the ordering needed to prevent upgrade cycles.
- * Neither mode compares schema versions itself; {@link allowsSchemaUpgrade} combines a content comparison with version checks.
+ * Neither mode compares schema versions itself.
  */
 export enum SchemaComparisonMode {
 	/**
@@ -42,9 +42,9 @@ export enum SchemaComparisonMode {
 	 * Instead, field-kind changes are checked with {@link allowsMultiplicitySuperset}, and fields with no valid content are treated as subsets of all fields.
 	 * This permits some changes between distinct schemas that allow the same content, but it can also permit their inverse.
 	 *
-	 * To prevent those cycles, {@link allowsSchemaUpgrade} uses this mode only when both version maps are present,
+	 * To prevent those cycles, upgrade validation must use this mode only when both version maps are present,
 	 * no versions decrease or disappear, and at least one version increases or a library identifier is added.
-	 * It checks these conditions with {@link compareSchemaVersions}.
+	 * These conditions can be checked with {@link compareSchemaVersions}.
 	 */
 	ContentOnly,
 }
@@ -172,7 +172,6 @@ export function allowsValueSuperset(
  *
  * @remarks
  * Schema versions are not checked here.
- * {@link allowsSchemaUpgrade} determines whether a schema upgrade is allowed.
  *
  * @privateRemarks
  * See also {@link FieldKindOptions.allowMonotonicUpgradeFrom} for constraints on the implementation.
@@ -279,41 +278,6 @@ export function allowsRepoSuperset(
 }
 
 /**
- * Returns whether `original` can be upgraded to `updated`.
- *
- * @remarks
- * Every upgrade must preserve existing version identifiers and must not decrease their values,
- * as checked by {@link compareSchemaVersions}.
- * Within that constraint, changes allowed by {@link SchemaComparisonMode.Monotonic} do not require a version increase.
- *
- * For other content-preserving changes, the version maps must provide the ordering that prevents inverse upgrades.
- * Both maps must therefore be present, with at least one increased version or added library identifier,
- * before the change is checked using {@link SchemaComparisonMode.ContentOnly}.
- * Adding the first version map alone does not enable this less restrictive comparison.
- */
-export function allowsSchemaUpgrade(
-	policy: FullSchemaPolicy,
-	original: TreeStoredSchema,
-	updated: TreeStoredSchema,
-): boolean {
-	const comparison = compareSchemaVersions(original.schemaVersion, updated.schemaVersion);
-	if (
-		comparison === SchemaVersionComparison.Decrease ||
-		comparison === SchemaVersionComparison.Incompatible
-	) {
-		return false;
-	}
-
-	return (
-		allowsRepoSuperset(policy, original, updated) ||
-		(comparison === SchemaVersionComparison.Increase &&
-			original.schemaVersion !== undefined &&
-			updated.schemaVersion !== undefined &&
-			allowsRepoSuperset(policy, original, updated, SchemaComparisonMode.ContentOnly))
-	);
-}
-
-/**
  * Describes the direction of a schema version change from the original map to the updated map.
  */
 export enum SchemaVersionComparison {
@@ -343,8 +307,8 @@ export enum SchemaVersionComparison {
  *
  * @remarks
  * An absent map differs from an empty map.
- * The comparison considers version ordering only; {@link allowsSchemaUpgrade} also checks allowed content
- * and prevents the first version map from enabling non-monotonic upgrades.
+ * The comparison considers version ordering only.
+ * Upgrade validation must also check allowed content and prevent the first version map from enabling non-monotonic upgrades.
  */
 export function compareSchemaVersions(
 	original: TreeStoredSchema["schemaVersion"],

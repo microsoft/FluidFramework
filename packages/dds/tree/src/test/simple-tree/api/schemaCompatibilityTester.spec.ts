@@ -201,6 +201,182 @@ describe("getSchemaIncompatibilityDetails", () => {
 });
 
 describe("isSchemaUpgradeAllowed", () => {
+	describe("version gating", () => {
+		const versionCases: {
+			name: string;
+			original: Readonly<Record<string, number>> | undefined;
+			updated: Readonly<Record<string, number>> | undefined;
+			monotonic: boolean;
+			contentOnly: boolean;
+		}[] = [
+			{
+				// Without versions, only monotonic changes provide upgrade ordering.
+				name: "absent versions",
+				original: undefined,
+				updated: undefined,
+				monotonic: true,
+				contentOnly: false,
+			},
+			{
+				// Opting into versioning cannot also unlock inverse changes.
+				name: "added version map",
+				original: undefined,
+				updated: { library: 1 },
+				monotonic: true,
+				contentOnly: false,
+			},
+			{
+				// Empty maps provide no increase to order inverse changes.
+				name: "empty version maps",
+				original: {},
+				updated: {},
+				monotonic: true,
+				contentOnly: false,
+			},
+			{
+				// Equal versions still require monotonic upgrades.
+				name: "equal versions",
+				original: { library: 1 },
+				updated: { library: 1 },
+				monotonic: true,
+				contentOnly: false,
+			},
+			{
+				// Increasing a version supplies ordering for inverse changes.
+				name: "increased version",
+				original: { library: 1 },
+				updated: { library: 2 },
+				monotonic: true,
+				contentOnly: true,
+			},
+			{
+				// Adding an identifier to an existing map also supplies ordering.
+				name: "added library identifier",
+				original: { library: 1 },
+				updated: { library: 1, other: 1 },
+				monotonic: true,
+				contentOnly: true,
+			},
+			{
+				// A decrease blocks even monotonic upgrades.
+				name: "decreased version",
+				original: { library: 2 },
+				updated: { library: 1 },
+				monotonic: false,
+				contentOnly: false,
+			},
+			{
+				// An increase cannot compensate for a removed identifier.
+				name: "removed library identifier despite another increase",
+				original: { library: 1, other: 1 },
+				updated: { library: 2 },
+				monotonic: false,
+				contentOnly: false,
+			},
+			{
+				// Changes in opposite directions do not provide upgrade ordering.
+				name: "decreased version despite another increase",
+				original: { library: 1, other: 2 },
+				updated: { library: 2, other: 1 },
+				monotonic: false,
+				contentOnly: false,
+			},
+			{
+				// Versioning cannot be discarded after it supplies upgrade ordering.
+				name: "removed version map",
+				original: { library: 1 },
+				updated: undefined,
+				monotonic: false,
+				contentOnly: false,
+			},
+			{
+				// Adding even an empty first map cannot unlock inverse changes.
+				name: "added empty version map",
+				original: undefined,
+				updated: {},
+				monotonic: true,
+				contentOnly: false,
+			},
+			{
+				// An empty version map is still persisted versioning state.
+				name: "removed empty version map",
+				original: {},
+				updated: undefined,
+				monotonic: false,
+				contentOnly: false,
+			},
+			{
+				// Identifier presence supplies ordering even at version zero.
+				name: "added zero version",
+				original: {},
+				updated: { library: 0 },
+				monotonic: true,
+				contentOnly: true,
+			},
+			{
+				// All existing identifiers must remain.
+				name: "removed library identifier",
+				original: { library: 1, other: 1 },
+				updated: { library: 1 },
+				monotonic: false,
+				contentOnly: false,
+			},
+			{
+				// A new identifier cannot compensate for a decreased value.
+				name: "added identifier despite a decreased version",
+				original: { library: 2 },
+				updated: { library: 1, other: 0 },
+				monotonic: false,
+				contentOnly: false,
+			},
+			{
+				// Replacing an identifier also removes the original identifier.
+				name: "replaced library identifier",
+				original: { library: 1 },
+				updated: { other: 1 },
+				monotonic: false,
+				contentOnly: false,
+			},
+		];
+
+		for (const { name, original, updated, monotonic, contentOnly } of versionCases) {
+			it(name, () => {
+				const stored: TreeStoredSchema = {
+					...toUpgradeSchema(factory.string),
+					schemaVersion:
+						original === undefined ? undefined : new Map(Object.entries(original)),
+				};
+				const updatedMap =
+					updated === undefined ? undefined : new Map(Object.entries(updated));
+				for (const [schema, expected] of [
+					[factory.optional(factory.string), monotonic],
+					[factory.identifier, contentOnly],
+				] as const) {
+					const view = new TreeViewConfigurationAlpha({ schema });
+					const candidate: TreeStoredSchema = {
+						...toUpgradeSchema(schema),
+						schemaVersion: updatedMap,
+					};
+					assert.equal(isSchemaUpgradeAllowed(view, stored, candidate), expected);
+				}
+			});
+		}
+
+		it("rejects content narrowing even with an increased version", () => {
+			const view = new TreeViewConfigurationAlpha({ schema: factory.string });
+			const stored: TreeStoredSchema = {
+				...toUpgradeSchema(factory.optional(factory.string)),
+				schemaVersion: new Map([["library", 1]]),
+			};
+			const candidate: TreeStoredSchema = {
+				...toUpgradeSchema(factory.string),
+				schemaVersion: new Map([["library", 2]]),
+			};
+			assert.equal(getSchemaIncompatibilityDetails(view, candidate), undefined);
+			assert.equal(isSchemaUpgradeAllowed(view, stored, candidate), false);
+		});
+	});
+
 	it("allows adding an optional field even when the current document cannot be viewed", () => {
 		class Before extends factory.object("Task", {
 			title: factory.string,

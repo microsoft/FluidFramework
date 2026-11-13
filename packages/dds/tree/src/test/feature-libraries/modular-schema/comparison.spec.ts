@@ -28,7 +28,6 @@ import {
 	allowsFieldSuperset,
 	allowsMultiplicitySuperset,
 	allowsRepoSuperset,
-	allowsSchemaUpgrade,
 	allowsTreeSchemaIdentifierSuperset,
 	allowsTreeSuperset,
 	allowsValueSuperset,
@@ -189,14 +188,12 @@ describe("Schema Comparison", () => {
 		);
 	});
 
-	describe("allowsSchemaUpgrade version gating", () => {
+	describe("compareSchemaVersions", () => {
 		const versionCases: {
 			name: string;
 			original: Readonly<Record<string, number>> | undefined;
 			updated: Readonly<Record<string, number>> | undefined;
 			comparison: SchemaVersionComparison;
-			monotonic: boolean;
-			contentOnly: boolean;
 		}[] = [
 			{
 				// Without versioning, only the existing monotonic upgrade rules provide ordering.
@@ -204,8 +201,6 @@ describe("Schema Comparison", () => {
 				original: undefined,
 				updated: undefined,
 				comparison: SchemaVersionComparison.Equal,
-				monotonic: true,
-				contentOnly: false,
 			},
 			{
 				// Opting into versioning cannot unlock non-monotonic changes on the same upgrade.
@@ -213,8 +208,6 @@ describe("Schema Comparison", () => {
 				original: undefined,
 				updated: { library: 1 },
 				comparison: SchemaVersionComparison.Increase,
-				monotonic: true,
-				contentOnly: false,
 			},
 			{
 				// Empty maps opt into versioning but provide no increase to order inverse changes.
@@ -222,8 +215,6 @@ describe("Schema Comparison", () => {
 				original: {},
 				updated: {},
 				comparison: SchemaVersionComparison.Equal,
-				monotonic: true,
-				contentOnly: false,
 			},
 			{
 				// Unchanged values still require monotonic content upgrades.
@@ -231,8 +222,6 @@ describe("Schema Comparison", () => {
 				original: { library: 1 },
 				updated: { library: 1 },
 				comparison: SchemaVersionComparison.Equal,
-				monotonic: true,
-				contentOnly: false,
 			},
 			{
 				// Increasing an existing version supplies ordering for content-preserving inverse changes.
@@ -240,8 +229,6 @@ describe("Schema Comparison", () => {
 				original: { library: 1 },
 				updated: { library: 2 },
 				comparison: SchemaVersionComparison.Increase,
-				monotonic: true,
-				contentOnly: true,
 			},
 			{
 				// Adding an identifier to an existing map also supplies an upgrade ordering.
@@ -249,8 +236,6 @@ describe("Schema Comparison", () => {
 				original: { library: 1 },
 				updated: { library: 1, other: 1 },
 				comparison: SchemaVersionComparison.Increase,
-				monotonic: true,
-				contentOnly: true,
 			},
 			{
 				// A decrease blocks even otherwise monotonic content upgrades.
@@ -258,8 +243,6 @@ describe("Schema Comparison", () => {
 				original: { library: 2 },
 				updated: { library: 1 },
 				comparison: SchemaVersionComparison.Decrease,
-				monotonic: false,
-				contentOnly: false,
 			},
 			{
 				// Increasing a retained version cannot compensate for removing another identifier.
@@ -267,8 +250,6 @@ describe("Schema Comparison", () => {
 				original: { library: 1, other: 1 },
 				updated: { library: 2 },
 				comparison: SchemaVersionComparison.Incompatible,
-				monotonic: false,
-				contentOnly: false,
 			},
 			{
 				// Changes in opposite directions make the maps incomparable.
@@ -276,8 +257,6 @@ describe("Schema Comparison", () => {
 				original: { library: 1, other: 2 },
 				updated: { library: 2, other: 1 },
 				comparison: SchemaVersionComparison.Incompatible,
-				monotonic: false,
-				contentOnly: false,
 			},
 			{
 				// Removing versioning would let unversioned clients undo previously ordered changes.
@@ -285,8 +264,6 @@ describe("Schema Comparison", () => {
 				original: { library: 1 },
 				updated: undefined,
 				comparison: SchemaVersionComparison.Decrease,
-				monotonic: false,
-				contentOnly: false,
 			},
 			{
 				// Even an empty first map is an increase, but it cannot bypass monotonic rules.
@@ -294,8 +271,6 @@ describe("Schema Comparison", () => {
 				original: undefined,
 				updated: {},
 				comparison: SchemaVersionComparison.Increase,
-				monotonic: true,
-				contentOnly: false,
 			},
 			{
 				// An empty map remains versioned state and cannot be removed by an upgrade.
@@ -303,8 +278,6 @@ describe("Schema Comparison", () => {
 				original: {},
 				updated: undefined,
 				comparison: SchemaVersionComparison.Decrease,
-				monotonic: false,
-				contentOnly: false,
 			},
 			{
 				// Identifier presence supplies ordering even when its first value is zero.
@@ -312,8 +285,6 @@ describe("Schema Comparison", () => {
 				original: {},
 				updated: { library: 0 },
 				comparison: SchemaVersionComparison.Increase,
-				monotonic: true,
-				contentOnly: true,
 			},
 			{
 				// Every existing identifier must remain, even if all retained values are unchanged.
@@ -321,8 +292,6 @@ describe("Schema Comparison", () => {
 				original: { library: 1, other: 1 },
 				updated: { library: 1 },
 				comparison: SchemaVersionComparison.Decrease,
-				monotonic: false,
-				contentOnly: false,
 			},
 			{
 				// A new identifier cannot compensate for decreasing an existing value.
@@ -330,8 +299,6 @@ describe("Schema Comparison", () => {
 				original: { library: 2 },
 				updated: { library: 1, other: 0 },
 				comparison: SchemaVersionComparison.Incompatible,
-				monotonic: false,
-				contentOnly: false,
 			},
 			{
 				// Replacing an identifier includes a removal, not just an addition.
@@ -339,65 +306,18 @@ describe("Schema Comparison", () => {
 				original: { library: 1 },
 				updated: { other: 1 },
 				comparison: SchemaVersionComparison.Incompatible,
-				monotonic: false,
-				contentOnly: false,
 			},
 		];
 
-		for (const {
-			name,
-			original,
-			updated,
-			comparison,
-			monotonic,
-			contentOnly,
-		} of versionCases) {
+		for (const { name, original, updated, comparison } of versionCases) {
 			it(name, () => {
 				const originalMap =
 					original === undefined ? undefined : new Map(Object.entries(original));
 				const updatedMap =
 					updated === undefined ? undefined : new Map(Object.entries(updated));
 				assert.equal(compareSchemaVersions(originalMap, updatedMap), comparison);
-				const stored: TreeStoredSchema = {
-					rootFieldSchema: fieldRequiredEmptyTree,
-					nodeSchema: new Map([[emptyTree.name, emptyTree.schema]]),
-					schemaVersion: originalMap,
-				};
-				const update = (rootFieldSchema: TreeFieldStoredSchema): TreeStoredSchema => ({
-					rootFieldSchema,
-					nodeSchema: stored.nodeSchema,
-					schemaVersion: updatedMap,
-				});
-				assert.equal(
-					allowsSchemaUpgrade(defaultSchemaPolicy, stored, update(fieldOptionalEmptyTree)),
-					monotonic,
-				);
-				assert.equal(
-					allowsSchemaUpgrade(
-						defaultSchemaPolicy,
-						stored,
-						update(fieldSchema(FieldKinds.identifier, [emptyTree.name])),
-					),
-					contentOnly,
-				);
 			});
 		}
-
-		it("rejects content narrowing even with an increased version", () => {
-			const stored: TreeStoredSchema = {
-				rootFieldSchema: fieldOptionalEmptyTree,
-				nodeSchema: new Map([[emptyTree.name, emptyTree.schema]]),
-				schemaVersion: new Map([["library", 1]]),
-			};
-			assert.equal(
-				allowsSchemaUpgrade(defaultSchemaPolicy, stored, {
-					...stored,
-					rootFieldSchema: fieldRequiredEmptyTree,
-					schemaVersion: new Map([["library", 2]]),
-				}),
-				false,
-			);
-		});
 
 		it("compares entries independently of insertion order and object prototype names", () => {
 			const original = new Map([

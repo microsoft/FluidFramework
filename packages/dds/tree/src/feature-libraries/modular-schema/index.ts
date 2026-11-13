@@ -7,7 +7,6 @@ export {
 	SchemaComparisonMode,
 	SchemaVersionComparison,
 	allowsRepoSuperset,
-	allowsSchemaUpgrade,
 	compareSchemaVersions,
 	allowsTreeSchemaIdentifierSuperset,
 	allowsFieldSuperset,

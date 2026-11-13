@@ -80,7 +80,7 @@ export {
 	FlexFieldKind,
 	type FullSchemaPolicy,
 	allowsRepoSuperset,
-	allowsSchemaUpgrade,
+	SchemaComparisonMode,
 	compareSchemaVersions,
 	SchemaVersionComparison,
 	type GenericChangeset,
