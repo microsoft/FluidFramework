@@ -756,17 +756,22 @@ export class GarbageCollector implements IGarbageCollector {
 		this.runtime.updateTombstonedRoutes(this.tombstones);
 
 		if (nodesToDelete.length > 0) {
-			// Do not send DDS node ids in the GC op. This is an optimization to reduce its size. Since GC applies to
-			// to data store only, all its DDSes are deleted along with it. The DDS ids will be retrieved from the
-			// local state when processing the op.
-			const sweepReadyDSAndBlobs = nodesToDelete.filter((nodeId) => {
+			// Children of swept data stores are recovered from local GC state when processing the op.
+			const sweepReadyRoots = nodesToDelete.filter((nodeId) => {
 				const nodeType = this.runtime.getNodeType(nodeId);
 
-				return nodeType === GCNodeType.DataStore || nodeType === GCNodeType.Blob;
+				return (
+					nodeType === GCNodeType.DataStore ||
+					nodeType === GCNodeType.Blob ||
+					(this.configs.ddsGCEnabled &&
+						nodeType === GCNodeType.SubDataStore &&
+						nodeId.split("/").length === 3 &&
+						!sweepReadyNodes.has(`/${nodeId.split("/")[1]}`))
+				);
 			});
 			const contents: GarbageCollectionMessage = {
 				type: GarbageCollectionMessageType.Sweep,
-				deletedNodeIds: sweepReadyDSAndBlobs,
+				deletedNodeIds: sweepReadyRoots,
 			};
 
 			const containerGCMessage: ContainerRuntimeGCMessage = {
@@ -904,6 +909,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 	public getMetadata(): IGCMetadata {
 		return {
+			...(this.configs.ddsGCEnabled ? { ddsGCEnabled: true as const } : {}),
 			/**
 			 * If GC is allowed, the GC data is written using the GC version in effect and that is the gcFeature that goes
 			 * into the metadata blob. If GC is disabled, the gcFeature is 0.
@@ -981,9 +987,8 @@ export class GarbageCollector implements IGarbageCollector {
 		// Use a set for lookup because its much faster than array or map.
 		const sweepReadyNodesSet: Set<string> = new Set(sweepReadyNodeIds);
 
-		// The ids in the sweep-ready nodes do not contain DDS node ids. This is an optimization to reduce the size
-		// of the GC op. Since GC applies to data store only, all its DDSes are deleted along with it. So, get the
-		// DDS nodes ID from the unreferenced nodes state.
+		// Sweep messages omit descendants of swept data stores and DDSs to reduce their size.
+		// Recover those descendants from local GC state.
 		const allSweepReadyNodeIds = [...sweepReadyNodeIds];
 		for (const [id] of this.unreferencedNodesState) {
 			// Ignore data store nodes since they would already be in the list.
@@ -995,7 +1000,12 @@ export class GarbageCollector implements IGarbageCollector {
 			// Get the data store id part. Note that this may include blobs but that's okay since the part would just
 			// be "_blobs" and it won't be found.
 			const dsId = `/${pathParts[1]}`;
-			if (sweepReadyNodesSet.has(dsId)) {
+			const ddsId = `/${pathParts[1]}/${pathParts[2]}`;
+			if (
+				!sweepReadyNodesSet.has(id) &&
+				(sweepReadyNodesSet.has(dsId) ||
+					(this.configs.ddsGCEnabled && sweepReadyNodesSet.has(ddsId)))
+			) {
 				allSweepReadyNodeIds.push(id);
 			}
 		}
@@ -1030,7 +1040,7 @@ export class GarbageCollector implements IGarbageCollector {
 			return;
 		}
 
-		// trackedId will be either DataStore or Blob ID (not sub-DataStore ID, since some of those are unrecognized by GC)
+		// DDS paths are tracked independently only in documents created with DDS GC.
 		const trackedId = node.path;
 		const isTombstoned = this.tombstones.includes(trackedId);
 		const fullPath = request === undefined ? trackedId : urlToGCNodePath(request.url);
@@ -1063,11 +1073,13 @@ export class GarbageCollector implements IGarbageCollector {
 
 		const nodeType = this.runtime.getNodeType(fullPath);
 
-		// Unless this is a Loaded event for a Blob or DataStore, we're done after telemetry tracking
-		const loadedBlobOrDataStore =
+		// Only collectible nodes require tombstone load enforcement.
+		const loadedCollectibleNode =
 			reason === "Loaded" &&
-			(nodeType === GCNodeType.Blob || nodeType === GCNodeType.DataStore);
-		if (!loadedBlobOrDataStore) {
+			(nodeType === GCNodeType.Blob ||
+				nodeType === GCNodeType.DataStore ||
+				(this.configs.ddsGCEnabled && nodeType === GCNodeType.SubDataStore));
+		if (!loadedCollectibleNode) {
 			return;
 		}
 

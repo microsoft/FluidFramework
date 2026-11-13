@@ -54,6 +54,8 @@ import {
 	type IEnvelope,
 	type IFluidDataStoreChannel,
 	type IFluidDataStoreContext,
+	type FluidDataStoreContextInternal,
+	type ChannelGC,
 	VisibilityState,
 	gcDataBlobKey,
 	type IInboundSignalMessage,
@@ -61,6 +63,7 @@ import {
 	type IRuntimeMessagesContent,
 	notifiesReadOnlyState,
 	encodeHandlesInContainerRuntime,
+	providesChannelGC,
 	type IFluidDataStorePolicies,
 	type OldestSupportedClientVersion,
 	currentSummarizeStepPrefix,
@@ -101,7 +104,11 @@ import {
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 import { v4 as uuid } from "uuid";
 
-import { type IChannelContext, summarizeChannel } from "./channelContext.js";
+import {
+	type IChannelContext,
+	channelRootBlobKey,
+	summarizeChannel,
+} from "./channelContext.js";
 import {
 	dataStoreCompatDetailsForRuntime,
 	validateRuntimeCompatibility,
@@ -121,6 +128,7 @@ type PickRequired<T extends Record<never, unknown>, K extends keyof T> = Omit<T,
 interface IFluidDataStoreContextFeaturesToTypes {
 	[encodeHandlesInContainerRuntime]: IFluidDataStoreContext; // No difference in typing with this feature
 	[notifiesReadOnlyState]: PickRequired<IFluidDataStoreContext, "isReadOnly">;
+	[providesChannelGC]: FluidDataStoreContextInternal;
 }
 
 function contextSupportsFeature<K extends keyof IFluidDataStoreContextFeaturesToTypes>(
@@ -326,6 +334,9 @@ export class FluidDataStoreRuntime
 	}
 
 	private readonly contexts = new Map<string, IChannelContext>();
+	private readonly rootChannels = new Set<string>();
+	private readonly deletedChannels = new Set<string>();
+	private readonly channelGC: ChannelGC | undefined;
 	private readonly pendingAttach = new Set<string>();
 
 	private readonly deferredAttached = new Deferred<void>();
@@ -451,8 +462,16 @@ export class FluidDataStoreRuntime
 		);
 		// We read this property here to avoid a compiler error (unused private member)
 		debugAssert(() => this.submitMessagesWithoutEncodingHandles !== undefined);
+		debugAssert(() => this.deleteSweepReadyNodes !== undefined);
 
 		this.id = dataStoreContext.id;
+		this.channelGC = (dataStoreContext as Partial<FluidDataStoreContextInternal>).channelGC;
+		if (
+			this.channelGC !== undefined &&
+			!contextSupportsFeature(dataStoreContext, providesChannelGC)
+		) {
+			throw new UsageError("DDS GC requires a supporting container runtime");
+		}
 		this.options = dataStoreContext.options;
 		this.deltaManagerInternal = dataStoreContext.deltaManager;
 		this.quorum = dataStoreContext.getQuorum();
@@ -466,6 +485,12 @@ export class FluidDataStoreRuntime
 				// Issue #4414
 				if (path === "_search") {
 					continue;
+				}
+				if (this.channelGC?.isDeleted(`${this.absolutePath}/${path}`) === true) {
+					continue;
+				}
+				if (subtree.blobs[channelRootBlobKey] !== undefined) {
+					this.rootChannels.add(path);
 				}
 
 				let channelContext: RemoteChannelContext | RehydratedLocalChannelContext;
@@ -617,8 +642,11 @@ export class FluidDataStoreRuntime
 				// Check for a data type reference first
 				const context = this.contexts.get(id);
 				if (context !== undefined && parser.isLeaf(1)) {
+					this.verifyChannelNotDeleted(id);
+					this.channelGC?.nodeUpdated(`${this.absolutePath}/${id}`, "Loaded", request);
 					try {
 						const channel = await context.getChannel();
+						this.verifyChannelNotDeleted(id);
 
 						return { mimeType: "fluid/object", status: 200, value: channel };
 					} catch (error) {
@@ -638,13 +666,46 @@ export class FluidDataStoreRuntime
 
 	public async getChannel(id: string): Promise<IChannel> {
 		this.verifyNotClosed();
+		this.verifyChannelNotDeleted(id);
+		this.channelGC?.nodeUpdated(`${this.absolutePath}/${id}`, "Loaded");
 
 		const context = this.contexts.get(id);
 		if (context === undefined) {
 			throw new LoggingError("Channel does not exist");
 		}
 
-		return context.getChannel();
+		const channel = await context.getChannel();
+		this.verifyChannelNotDeleted(id);
+		return channel;
+	}
+
+	private isChannelDeleted(id: string): boolean {
+		return (
+			this.deletedChannels.has(id) ||
+			this.channelGC?.isDeleted(`${this.absolutePath}/${id}`) === true
+		);
+	}
+
+	private verifyChannelNotDeleted(id: string): void {
+		if (this.isChannelDeleted(id)) {
+			throw new UsageError("Channel was deleted by garbage collection", { channelId: id });
+		}
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#FluidDataStoreChannelInternal.deleteSweepReadyNodes}
+	 */
+	private deleteSweepReadyNodes(routes: readonly string[]): void {
+		assert(this.channelGC !== undefined, "DDS collection must be enabled to delete channels");
+		for (const route of routes) {
+			const id = route.slice(1);
+			this.deletedChannels.add(id);
+			this.contexts.get(id)?.delete();
+			this.contexts.delete(id);
+			this.rootChannels.delete(id);
+			this.localChannelContextQueue.delete(id);
+			this.notBoundedChannelContextSet.delete(id);
+		}
 	}
 
 	/**
@@ -672,6 +733,7 @@ export class FluidDataStoreRuntime
 	public addChannel(channel: IChannel): void {
 		const id = channel.id;
 		this.validateChannelId(id);
+		this.verifyChannelNotDeleted(id);
 
 		this.verifyNotClosed();
 
@@ -683,6 +745,7 @@ export class FluidDataStoreRuntime
 			throw new Error(`Channel Factory ${type} not registered`);
 		}
 
+		this.rootChannels.add(id);
 		this.createChannelContext(channel);
 		// Channels (DDS) should not be created in summarizer client.
 		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
@@ -719,6 +782,7 @@ export class FluidDataStoreRuntime
 		}
 
 		this.verifyNotClosed();
+		this.verifyChannelNotDeleted(id);
 		assert(!this.contexts.has(id), 0x179 /* "createChannel() with existing ID" */);
 
 		assert(type !== undefined, 0x209 /* "Factory Type should be defined" */);
@@ -728,6 +792,9 @@ export class FluidDataStoreRuntime
 		}
 
 		const channel = factory.create(this, id);
+		if (idArg !== undefined) {
+			this.rootChannels.add(id);
+		}
 		this.createChannelContext(channel);
 		// Channels (DDS) should not be created in summarizer client.
 		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
@@ -948,6 +1015,17 @@ export class FluidDataStoreRuntime
 
 		for (const { contents, ...restOfMessagesContent } of messagesContent) {
 			const contentsEnvelope = contents as IEnvelope;
+			if (this.isChannelDeleted(contentsEnvelope.address)) {
+				this.mc.logger.sendErrorEvent({
+					eventName: "DeletedChannelOp",
+					...tagCodeArtifacts({ channelId: contentsEnvelope.address }),
+				});
+				continue;
+			}
+			this.channelGC?.nodeUpdated(
+				`${this.absolutePath}/${contentsEnvelope.address}`,
+				"Changed",
+			);
 
 			// If the address of the message changes while processing the batch, send the current bunch.
 			if (currentAddress !== contentsEnvelope.address) {
@@ -970,6 +1048,15 @@ export class FluidDataStoreRuntime
 		for (const { contents } of messagesContent) {
 			const attachMessage = contents as IAttachMessage;
 			const id = attachMessage.id;
+			this.verifyChannelNotDeleted(id);
+			if (attachMessage.snapshot.entries.some((entry) => entry.path === channelRootBlobKey)) {
+				this.rootChannels.add(id);
+				this.dataStoreContext.addedGCOutboundRoute(
+					this.absolutePath,
+					`${this.absolutePath}/${id}`,
+					envelope.timestamp,
+				);
+			}
 
 			// We need to process the GC Data for both local and remote attach messages
 			processAttachMessageGCData(attachMessage.snapshot, (nodeId, toPath) => {
@@ -1060,14 +1147,14 @@ export class FluidDataStoreRuntime
 	}
 
 	/**
-	 * Returns the outbound routes of this channel. Currently, all contexts in this channel are considered
-	 * referenced and are hence outbound. This will change when we have root and non-root channel contexts.
-	 * The only root contexts will be considered as referenced.
+	 * Roots explicitly named channels when DDS collection is enabled, and all channels in legacy documents.
 	 */
 	private getOutboundRoutes(): string[] {
 		const outboundRoutes: string[] = [];
 		for (const [contextId] of this.contexts) {
-			outboundRoutes.push(`${this.absolutePath}/${contextId}`);
+			if (this.channelGC === undefined || this.rootChannels.has(contextId)) {
+				outboundRoutes.push(`${this.absolutePath}/${contextId}`);
+			}
 		}
 		return outboundRoutes;
 	}
@@ -1079,6 +1166,15 @@ export class FluidDataStoreRuntime
 	 * @param builder - The builder that contains the GC nodes for this channel's children.
 	 */
 	private updateGCNodes(builder: GCDataBuilder): void {
+		if (this.channelGC !== undefined) {
+			// A reference to a node inside a DDS must retain the containing DDS.
+			for (const [nodeId, outboundRoutes] of Object.entries(builder.gcNodes)) {
+				const parts = nodeId.split("/");
+				if (parts.length > 2) {
+					builder.addNode(nodeId, [...outboundRoutes, `${this.absolutePath}/${parts[1]}`]);
+				}
+			}
+		}
 		// Add a back route to self in each child's GC nodes. If any child is referenced, then its parent should
 		// be considered referenced as well.
 		builder.addRouteToAllNodes(this.absolutePath);
@@ -1103,6 +1199,17 @@ export class FluidDataStoreRuntime
 		await this.visitContextsDuringSummary(
 			async (contextId: string, context: IChannelContext) => {
 				const contextSummary = await context.summarize(fullTree, trackState, telemetryContext);
+				if (
+					this.channelGC !== undefined &&
+					this.rootChannels.has(contextId) &&
+					contextSummary.summary.type === SummaryType.Tree
+				) {
+					addBlobToSummary(
+						{ summary: contextSummary.summary, stats: contextSummary.stats },
+						channelRootBlobKey,
+						"",
+					);
+				}
 				summaryBuilder.addWithStats(contextId, contextSummary);
 			},
 		);
@@ -1157,7 +1264,9 @@ export class FluidDataStoreRuntime
 
 		// Update the used routes in each context. Used routes is empty for unused context.
 		for (const [contextId, context] of this.contexts) {
-			context.updateUsedRoutes(usedContextRoutes.get(contextId) ?? []);
+			context.updateUsedRoutes(
+				this.channelGC === undefined ? [""] : (usedContextRoutes.get(contextId) ?? []),
+			);
 		}
 	}
 
@@ -1187,6 +1296,9 @@ export class FluidDataStoreRuntime
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						this.dataStoreContext.baseSnapshot.trees[contextId]!,
 					);
+				}
+				if (this.channelGC !== undefined && this.rootChannels.has(contextId)) {
+					addBlobToSummary(summaryTree, channelRootBlobKey, "");
 				}
 				summaryBuilder.addWithStats(contextId, summaryTree);
 			},
@@ -1317,6 +1429,9 @@ export class FluidDataStoreRuntime
 		// We need to include the channel's GC Data so remote clients can learn of this channel's outbound routes
 		const gcData = channel.getGCData(/* fullGC: */ true);
 		addBlobToSummary(summarizeResult, gcDataBlobKey, JSON.stringify(gcData));
+		if (this.channelGC !== undefined && this.rootChannels.has(channel.id)) {
+			addBlobToSummary(summarizeResult, channelRootBlobKey, "");
+		}
 
 		// Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
 		const snapshot = convertSummaryTreeToITree(summarizeResult.summary);
@@ -1334,6 +1449,7 @@ export class FluidDataStoreRuntime
 	}
 
 	private submitChannelOp(address: string, contents: unknown, localOpMetadata: unknown): void {
+		this.verifyChannelNotDeleted(address);
 		const envelope: IEnvelope = { address, contents };
 		this.verifyNotClosed();
 		this.submit({ type: DataStoreMessageType.ChannelOp, content: envelope }, localOpMetadata);
@@ -1386,6 +1502,7 @@ export class FluidDataStoreRuntime
 			case DataStoreMessageType.ChannelOp: {
 				// For Operations, find the right channel and trigger resubmission on it.
 				const envelope = content as IEnvelope;
+				this.verifyChannelNotDeleted(envelope.address);
 				const channelContext = this.contexts.get(envelope.address);
 				assert(!!channelContext, 0x183 /* "There should be a channel context for the op" */);
 
@@ -1438,6 +1555,7 @@ export class FluidDataStoreRuntime
 				case DataStoreMessageType.ChannelOp: {
 					// For Operations, find the right channel and trigger resubmission on it.
 					const envelope = content as IEnvelope;
+					this.verifyChannelNotDeleted(envelope.address);
 					const channelContext = this.contexts.get(envelope.address);
 					assert(!!channelContext, 0x2ed /* "There should be a channel context for the op" */);
 
@@ -1472,6 +1590,12 @@ export class FluidDataStoreRuntime
 				case DataStoreMessageType.Attach: {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					const attachMessage = content.content as IAttachMessage;
+					this.verifyChannelNotDeleted(attachMessage.id);
+					if (
+						attachMessage.snapshot.entries.some((entry) => entry.path === channelRootBlobKey)
+					) {
+						this.rootChannels.add(attachMessage.id);
+					}
 
 					const flatBlobs = new Map<string, ArrayBufferLike>();
 					const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
@@ -1494,6 +1618,14 @@ export class FluidDataStoreRuntime
 				case DataStoreMessageType.ChannelOp: {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					const envelope = content.content as IEnvelope;
+					if (this.isChannelDeleted(envelope.address)) {
+						this.mc.logger.sendErrorEvent({
+							eventName: "DeletedChannelStashedOp",
+							...tagCodeArtifacts({ channelId: envelope.address }),
+						});
+						--this.pendingOpCount.value;
+						return;
+					}
 					const channelContext = this.contexts.get(envelope.address);
 					assert(!!channelContext, 0x184 /* "There should be a channel context for the op" */);
 					await channelContext.getChannel();
@@ -1517,6 +1649,7 @@ export class FluidDataStoreRuntime
 	 */
 	private setChannelDirty(address: string): void {
 		this.verifyNotClosed();
+		this.verifyChannelNotDeleted(address);
 		this.dataStoreContext.setChannelDirty(address);
 	}
 

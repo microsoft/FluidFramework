@@ -132,6 +132,7 @@ import type {
 	IContainerRuntimeBaseInternal,
 	OldestSupportedClientVersion,
 	ContainerExtensionExpectations,
+	ChannelGC,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -217,6 +218,7 @@ import { DeltaScheduler } from "./deltaScheduler.js";
 import {
 	GCNodeType,
 	GarbageCollector,
+	getDDSGCEnabled,
 	type IGCRuntimeOptions,
 	type IGCStats,
 	type IGarbageCollector,
@@ -1250,6 +1252,22 @@ export class ContainerRuntime
 			compressionOptions.minimumBatchSizeInBytes !== Number.POSITIVE_INFINITY &&
 			compressionOptions.compressionAlgorithm === "lz4";
 
+		const ddsGCEnabled = getDDSGCEnabled(mc.config, existing, metadata);
+		if (
+			existing &&
+			(metadata?.ddsGCEnabled === true) !==
+				(metadata?.documentSchema?.runtime.ddsGCEnabled === true)
+		) {
+			throw new DataCorruptionError("DDS GC metadata does not match document schema", {});
+		}
+		if (
+			ddsGCEnabled &&
+			!explicitSchemaControl &&
+			metadata?.documentSchema?.runtime.explicitSchemaControl !== true
+		) {
+			throw new UsageError("DDS GC requires explicitSchemaControl");
+		}
+
 		const documentSchemaController = new DocumentsSchemaController(
 			existing,
 			protocolSequenceNumber,
@@ -1260,6 +1278,7 @@ export class ContainerRuntime
 				idCompressorMode,
 				opGroupingEnabled: enableGroupedBatching,
 				createBlobPayloadPending,
+				ddsGCEnabled: ddsGCEnabled ? true : undefined,
 				disallowedVersions: [],
 			},
 			(schema) => {
@@ -2145,6 +2164,7 @@ export class ContainerRuntime
 			async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
 			// Function to get the GC details from the base snapshot we loaded from.
 			async () => this.garbageCollector.getBaseGCDetails(),
+			this.garbageCollector.getMetadata().ddsGCEnabled === true,
 		);
 
 		const parentContext = formParentContext<IFluidRootParentContextPrivate>(this, {
@@ -4494,6 +4514,26 @@ export class ContainerRuntime
 		// Use the timestamp of the last message seen by this client as that is server generated. If no messages have
 		// been processed, use the timestamp of the message from the last summary.
 		return this.deltaManager.lastMessage?.timestamp ?? this.messageAtLastSummary?.timestamp;
+	}
+
+	/**
+	 * Connects data store runtimes to independent DDS collection.
+	 */
+	public get channelGC(): ChannelGC | undefined {
+		if (this.garbageCollector.getMetadata().ddsGCEnabled !== true) {
+			return undefined;
+		}
+		return {
+			isDeleted: (path) => this.garbageCollector.isNodeDeleted(path),
+			nodeUpdated: (path, reason, request) =>
+				this.garbageCollector.nodeUpdated({
+					node: { type: GCNodeType.SubDataStore, path },
+					reason,
+					timestampMs: this.getCurrentReferenceTimestampMs(),
+					request: request === undefined ? undefined : { ...request, url: path },
+					headerData: { allowTombstone: request?.headers?.allowTombstone === true },
+				}),
+		};
 	}
 
 	/**

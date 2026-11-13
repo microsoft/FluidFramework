@@ -72,6 +72,7 @@ describe("GC Telemetry Tracker", () => {
 			return GCNodeType.Other;
 		};
 		const configs: IGarbageCollectorConfigs = {
+			ddsGCEnabled: false,
 			gcAllowed: true,
 			sweepAllowed: false,
 			sweepEnabled: false,

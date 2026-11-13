@@ -42,6 +42,7 @@ import {
 	runSessionExpiryKey,
 	stableGCVersion,
 	disableThrowOnTombstoneLoadKey,
+	enableDDSGCKey,
 } from "../../gc/index.js";
 import type { ContainerRuntimeGCMessage } from "../../messageTypes.js";
 import { pkgVersion } from "../../packageVersion.js";
@@ -164,6 +165,38 @@ describe("Garbage Collection configurations", () => {
 
 	after(() => {
 		clock.restore();
+	});
+
+	describe("DDS collection", () => {
+		it("is disabled by default for new documents", () => {
+			gc = createGcWithPrivateMembers();
+			assert.equal(gc.configs.ddsGCEnabled, false);
+			assert.equal(gc.getMetadata().ddsGCEnabled, undefined);
+		});
+
+		it("persists opt-in when creating a document", () => {
+			configProvider.set(enableDDSGCKey, true);
+			gc = createGcWithPrivateMembers();
+			assert.equal(gc.configs.ddsGCEnabled, true);
+			assert.equal(gc.getMetadata().ddsGCEnabled, true);
+		});
+
+		it("cannot enable collection on an existing legacy document", () => {
+			configProvider.set(enableDDSGCKey, true);
+			gc = createGcWithPrivateMembers({ gcFeature: stableGCVersion });
+			assert.equal(gc.configs.ddsGCEnabled, false);
+			assert.equal(gc.getMetadata().ddsGCEnabled, undefined);
+		});
+
+		it("retains document opt-in when the loading client disables the config", () => {
+			configProvider.set(enableDDSGCKey, false);
+			gc = createGcWithPrivateMembers({
+				gcFeature: stableGCVersion,
+				ddsGCEnabled: true,
+			});
+			assert.equal(gc.configs.ddsGCEnabled, true);
+			assert.equal(gc.getMetadata().ddsGCEnabled, true);
+		});
 	});
 
 	describe("Existing container", () => {

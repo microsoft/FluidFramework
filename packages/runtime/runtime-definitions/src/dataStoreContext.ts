@@ -861,7 +861,49 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
  */
 export interface FluidDataStoreContextInternal
 	extends IFluidDataStoreContext,
-		ContainerExtensionProvider {}
+		ContainerExtensionProvider {
+	/**
+	 * Present only when the document was created with independent DDS collection enabled.
+	 */
+	readonly channelGC?: ChannelGC;
+}
+
+/**
+ * Connects DDS access to the container's existing GC enforcement.
+ * @internal
+ */
+export interface ChannelGC {
+	/**
+	 * Checks the persisted deletion ledger.
+	 * @param path - Absolute GC node path, for example `/dataStoreId/ddsId`.
+	 * @returns Whether this DDS or GC node has been permanently deleted.
+	 */
+	isDeleted(path: string): boolean;
+	/**
+	 * Reports access to a DDS for tombstone enforcement and telemetry.
+	 * @param path - Absolute GC node path, for example `/dataStoreId/ddsId`.
+	 * @param reason - Whether the DDS is being loaded or changed.
+	 * @param request - Original load request, including any tombstone-override header.
+	 * @throws If tombstone enforcement rejects the access.
+	 */
+	nodeUpdated(path: string, reason: "Loaded" | "Changed", request?: IRequest): void;
+}
+
+/**
+ * Data store operations required by independent DDS collection.
+ * @internal
+ */
+export interface FluidDataStoreChannelInternal extends IFluidDataStoreChannel {
+	/**
+	 * Removes DDS contexts after a sequenced sweep decision.
+	 * Already-deleted and unrealized DDSs can be included.
+	 * @param routes - DDS root paths relative to the owning data store, with a required leading `/`.
+	 * For example, `/ddsId`, not `/dataStoreId/ddsId` or `/ddsId/child`.
+	 * @throws If independent DDS collection is not enabled for this data store.
+	 * Later access, submission, resubmission, rollback, or recreation of these DDSs throws a usage error.
+	 */
+	deleteSweepReadyNodes(routes: readonly string[]): void;
+}
 
 /**
  * @legacy @beta

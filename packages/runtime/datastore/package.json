@@ -144,7 +144,6 @@
 		"typescript": "catalog:TypeScript"
 	},
 	"typeValidation": {
-		"broken": {},
 		"entrypoint": "legacy"
 	}
 }

@@ -149,6 +149,11 @@ export interface IDocumentSchemaFeatures {
 	idCompressorMode: IdCompressorMode;
 	opGroupingEnabled: boolean;
 	createBlobPayloadPending: true | undefined;
+	/**
+	 * Independent DDS collection, selected only when creating a document.
+	 * Once persisted, every session must support this capability.
+	 */
+	ddsGCEnabled?: true;
 
 	/**
 	 * List of disallowed versions of the runtime.
@@ -300,6 +305,7 @@ const documentSchemaSupportedConfigs = {
 	opGroupingEnabled: new TrueOrUndefined(),
 	compressionLz4: new TrueOrUndefined(),
 	createBlobPayloadPending: new TrueOrUndefined(),
+	ddsGCEnabled: new TrueOrUndefinedMax(),
 	disallowedVersions: new CheckVersions(),
 };
 
@@ -701,6 +707,7 @@ export class DocumentsSchemaController {
 				idCompressorMode: features.idCompressorMode,
 				opGroupingEnabled: boolToProp(features.opGroupingEnabled),
 				createBlobPayloadPending: features.createBlobPayloadPending,
+				ddsGCEnabled: features.ddsGCEnabled,
 				disallowedVersions: arrayToProp(features.disallowedVersions),
 				...retiredFeatureValues(),
 			},

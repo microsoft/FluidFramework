@@ -34,6 +34,7 @@ import type {
 import {
 	CreateSummarizerNodeSource,
 	channelsTreeName,
+	providesChannelGC,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -50,6 +51,7 @@ import {
 	MockFluidDataStoreRuntime,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
+import { spy } from "sinon";
 
 import {
 	type ChannelCollection,
@@ -58,10 +60,12 @@ import {
 } from "../channelCollection.js";
 import { channelToDataStore } from "../dataStore.js";
 import {
+	type FluidDataStoreContext,
 	LocalDetachedFluidDataStoreContext,
 	LocalFluidDataStoreContext,
 	RemoteFluidDataStoreContext,
 } from "../dataStoreContext.js";
+import { runtimeCompatDetailsForDataStore } from "../runtimeLayerCompatState.js";
 import { StorageServiceWithAttachBlobs } from "../storageServiceWithAttachBlobs.js";
 import {
 	type IRootSummarizerNodeWithGC,
@@ -80,7 +84,38 @@ import {
 describe("Data Store Context Tests", () => {
 	const dataStoreId = "Test1";
 	const emptyGCData: IGarbageCollectionData = { gcNodes: {} };
+	const unsupportedRuntimeCompatDetails = [
+		{ description: "without compatibility details", details: undefined },
+		{
+			description: "without DDS deletion support",
+			details: {
+				...runtimeCompatDetailsForDataStore,
+				supportedFeatures: new Set([providesChannelGC]),
+			},
+		},
+	];
 	let createSummarizerNodeFn: CreateChildSummarizerNodeFn;
+
+	function queueRemoteChannelOp(context: FluidDataStoreContext): void {
+		context.processMessages({
+			envelope: {
+				type: DataStoreMessageType.ChannelOp,
+				clientId: "remote",
+				sequenceNumber: 1,
+				referenceSequenceNumber: 0,
+				minimumSequenceNumber: 0,
+				timestamp: Date.now(),
+			},
+			local: false,
+			messagesContent: [
+				{
+					contents: { address: "dds", contents: {} },
+					clientSequenceNumber: 1,
+					localOpMetadata: undefined,
+				},
+			],
+		});
+	}
 
 	describe("LocalFluidDataStoreContext", () => {
 		let localDataStoreContext: LocalFluidDataStoreContext;
@@ -97,6 +132,40 @@ describe("Data Store Context Tests", () => {
 		});
 
 		describe("Initialization", () => {
+			for (const { description, details } of unsupportedRuntimeCompatDetails) {
+				it(`rejects a DDS runtime ${description} before applying pending ops and disposes it`, async () => {
+					const channel = new MockFluidDataStoreRuntime();
+					channel.ILayerCompatDetails = details;
+					const processMessages = spy(channel, "processMessages");
+					assert(parentContext.IFluidDataStoreRegistry !== undefined);
+					const entry = await parentContext.IFluidDataStoreRegistry.get("TestDataStore1");
+					assert(entry?.IFluidDataStoreFactory !== undefined);
+					entry.IFluidDataStoreFactory.instantiateDataStore = async () => channel;
+					parentContext = {
+						...parentContext,
+						channelGC: {
+							isDeleted: () => false,
+							nodeUpdated: () => {},
+						},
+					};
+					const context = new LocalFluidDataStoreContext({
+						id: dataStoreId,
+						pkg: ["TestDataStore1"],
+						parentContext,
+						storage,
+						scope,
+						createSummarizerNodeFn,
+						makeLocallyVisibleFn,
+						snapshotTree: undefined,
+					});
+					queueRemoteChannelOp(context);
+					await assert.rejects(context.realize(), /supporting data store runtime/);
+					assert.equal(processMessages.callCount, 0);
+					assert.equal(channel.disposed, true);
+					assert.equal(context.disposed, true);
+				});
+			}
+
 			it("rejects ids with forward slashes", async () => {
 				const invalidId = "beforeSlash/afterSlash";
 				const codeBlock = () =>
@@ -1051,6 +1120,36 @@ describe("Data Store Context Tests", () => {
 		});
 
 		describe("Initialization", () => {
+			for (const { description, details } of unsupportedRuntimeCompatDetails) {
+				it(`rejects a DDS runtime ${description} before synchronously applying pending ops and disposes it`, () => {
+					const channel = new MockFluidDataStoreRuntime();
+					channel.ILayerCompatDetails = details;
+					const processMessages = spy(channel, "processMessages");
+					const context = new LocalDetachedFluidDataStoreContext({
+						id: dataStoreId,
+						pkg: [factory.type],
+						parentContext: {
+							...parentContext,
+							channelGC: { isDeleted: () => false, nodeUpdated: () => {} },
+						},
+						storage,
+						scope,
+						createSummarizerNodeFn,
+						makeLocallyVisibleFn,
+						snapshotTree: undefined,
+						channelToDataStoreFn,
+					});
+					queueRemoteChannelOp(context);
+					assert.throws(
+						() => context.unsafe_AttachRuntimeSync(channel),
+						/supporting data store runtime/,
+					);
+					assert.equal(processMessages.callCount, 0);
+					assert.equal(channel.disposed, true);
+					assert.equal(context.disposed, true);
+				});
+			}
+
 			it("rejects ids with forward slashes", async () => {
 				const invalidId = "beforeSlash/afterSlash";
 				const codeBlock = () =>

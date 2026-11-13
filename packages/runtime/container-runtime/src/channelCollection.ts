@@ -30,6 +30,7 @@ import {
 import type {
 	AliasResult,
 	ContainerExtensionProvider,
+	ChannelGC,
 	FluidDataStoreMessage,
 	IAttachMessage,
 	IEnvelope,
@@ -151,6 +152,7 @@ export interface IFluidParentContextPrivate
 	extends IFluidParentContext,
 		ContainerExtensionProvider {
 	readonly isReadOnly: () => boolean;
+	readonly channelGC?: ChannelGC;
 	readonly oldestSupportedClient: OldestSupportedClientVersion;
 	readonly minVersionForCollab: OldestSupportedClientVersion;
 }
@@ -237,6 +239,7 @@ export function formParentContext<
 		scope: context.scope,
 		gcThrowOnTombstoneUsage: context.gcThrowOnTombstoneUsage,
 		gcTombstoneEnforcementAllowed: context.gcTombstoneEnforcementAllowed,
+		channelGC: context.channelGC,
 		getAbsoluteUrl: async (...args) => {
 			return context.getAbsoluteUrl(...args);
 		},
@@ -1519,10 +1522,26 @@ export class ChannelCollection
 			const pathParts = route.split("/");
 			const dataStoreId = pathParts[1];
 
-			// Ignore sub-data store routes because a data store and its sub-routes are deleted together, so, we only
-			// need to delete the data store.
-			// These routes will still be returned below as among the deleted routes
+			// A swept data store already removes its children. Otherwise, dispatch independent DDS deletion.
 			if (pathParts.length > 2) {
+				if (
+					this.parentContext.channelGC !== undefined &&
+					pathParts.length === 3 &&
+					!sweepReadyDataStoreRoutes.includes(`/${dataStoreId}`)
+				) {
+					const context = this.contexts.get(dataStoreId);
+					if (context === undefined) {
+						const alreadyDeleted = this.isDataStoreDeleted(`/${dataStoreId}`);
+						this.mc.logger.sendTelemetryEvent({
+							eventName: "DeletedChannelDataStoreNotFound",
+							category: alreadyDeleted ? "generic" : "error",
+							...tagCodeArtifacts({ id: dataStoreId }),
+							details: { alreadyDeleted },
+						});
+					} else {
+						context.deleteSweepReadyNodes([`/${pathParts[2]}`]);
+					}
+				}
 				continue;
 			}
 

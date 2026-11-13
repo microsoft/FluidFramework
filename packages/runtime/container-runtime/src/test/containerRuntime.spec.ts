@@ -20,6 +20,7 @@ import {
 	type IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { ContainerRuntime as PreviousContainerRuntime } from "@fluidframework/container-runtime-previous/internal";
 import type {
 	ConfigTypes,
 	FluidObject,
@@ -359,6 +360,98 @@ describe("Runtime", () => {
 	});
 
 	describe("Container Runtime", () => {
+		it("requires explicit document-schema control when opting into DDS GC", async () => {
+			await assert.rejects(
+				ContainerRuntime.loadRuntime2({
+					context: getMockContext({
+						settings: { "Fluid.GarbageCollection.EnableDDSGC": true },
+					}) as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: { explicitSchemaControl: false },
+					provideEntryPoint: mockProvideEntryPoint,
+				}),
+				/DDS GC requires explicitSchemaControl/,
+			);
+		});
+
+		for (const metadataEnabled of [false, true]) {
+			it(`rejects inconsistent DDS GC schema and metadata with metadata flag ${metadataEnabled}`, async () => {
+				const metadata: IContainerRuntimeMetadata = {
+					summaryFormatVersion: 1,
+					message: undefined,
+					gcFeature: 3,
+					ddsGCEnabled: metadataEnabled ? true : undefined,
+					documentSchema: {
+						version: 1,
+						refSeq: 0,
+						runtime: {
+							explicitSchemaControl: true,
+							ddsGCEnabled: metadataEnabled ? undefined : true,
+						},
+					},
+				};
+				const context = getMockContext({
+					baseSnapshot: {
+						trees: { ".channels": { trees: {}, blobs: {} } },
+						blobs: { [metadataBlobName]: "metadata-id" },
+					},
+					mockStorage: {
+						...defaultMockStorage,
+						readBlob: async () => stringToBuffer(JSON.stringify(metadata), "utf8"),
+					},
+				});
+				await assert.rejects(
+					ContainerRuntime.loadRuntime2({
+						context: context as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: true,
+						provideEntryPoint: mockProvideEntryPoint,
+					}),
+					/DDS GC metadata does not match document schema/,
+				);
+			});
+		}
+
+		it("a previous schema-aware runtime rejects the DDS GC document capability", async () => {
+			const metadata: IContainerRuntimeMetadata = {
+				summaryFormatVersion: 1,
+				message: undefined,
+				gcFeature: 3,
+				ddsGCEnabled: true,
+				documentSchema: {
+					version: 1,
+					refSeq: 0,
+					runtime: { explicitSchemaControl: true, ddsGCEnabled: true },
+				},
+			};
+			await assert.rejects(
+				PreviousContainerRuntime.loadRuntime2({
+					context: getMockContext({
+						baseSnapshot: {
+							trees: { ".channels": { trees: {}, blobs: {} } },
+							blobs: { [metadataBlobName]: "metadata-id" },
+						},
+						mockStorage: {
+							...defaultMockStorage,
+							readBlob: async () => stringToBuffer(JSON.stringify(metadata), "utf8"),
+						},
+					}) as IContainerContext,
+					registry: {
+						get IFluidDataStoreRegistry() {
+							return this;
+						},
+						get: async () => undefined,
+					},
+					existing: true,
+					provideEntryPoint: mockProvideEntryPoint,
+				}),
+				(error: unknown) =>
+					isFluidError(error) &&
+					error.getTelemetryProperties().property === "runtime/ddsGCEnabled",
+			);
+		});
+
 		describe("legacy loader compatibility", () => {
 			for (const [name, settings] of [
 				["strict compatibility enabled by default", {}],

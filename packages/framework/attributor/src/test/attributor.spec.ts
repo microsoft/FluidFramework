@@ -7,8 +7,10 @@ import { strict as assert } from "node:assert";
 
 import type { IUser } from "@fluidframework/driver-definitions";
 import type { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
+import { MockFluidDataStoreContext } from "@fluidframework/test-runtime-utils/internal";
 
 import { Attributor } from "../attributor.js";
+import { RuntimeAttributorDataStoreChannel } from "../runtimeAttributorDataStoreChannel.js";
 
 describe("Attributor", () => {
 	it("can retrieve user information from its initial entries", () => {
@@ -17,6 +19,19 @@ describe("Attributor", () => {
 		const user: IUser = { id: "user foo" };
 		const attributor = new Attributor([[key, { user, timestamp }]]);
 		assert.deepEqual(attributor.getAttributionInfo(key), { user, timestamp });
+	});
+
+	describe("RuntimeAttributorDataStoreChannel", () => {
+		it("rejects child DDS sweep routes", () => {
+			const channel = new RuntimeAttributorDataStoreChannel(
+				new MockFluidDataStoreContext(),
+				false,
+			);
+			assert.throws(
+				() => channel.deleteSweepReadyNodes(["/dds"]),
+				/The runtime attributor must not receive DDS sweep routes/,
+			);
+		});
 	});
 
 	it(".entries() retrieves all user information", () => {

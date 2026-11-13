@@ -23,6 +23,7 @@ import { dataStoreLoadTelemetryProps } from "@fluidframework/runtime-utils/inter
 import {
 	createChildLogger,
 	DataProcessingError,
+	UsageError,
 	tagCodeArtifacts,
 	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
@@ -43,6 +44,8 @@ import type { ISharedObjectRegistry } from "./dataStoreRuntime.js";
  */
 export abstract class LocalChannelContextBase implements IChannelContext {
 	private globallyVisible = false;
+	private referenced = true;
+	private deleted = false;
 	/**
 	 * Tracks the messages for this channel that are sent while it's not loaded
 	 */
@@ -65,10 +68,29 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 	}
 
 	public async getChannel(): Promise<IChannel> {
+		this.verifyNotDeleted();
 		if (this._channel === undefined) {
-			return this.channelP.then((c) => (this._channel = c));
+			const channel = await this.channelP;
+			this.verifyNotDeleted();
+			this._channel = channel;
 		}
 		return this.channelP;
+	}
+
+	protected verifyNotDeleted(): void {
+		if (this.deleted) {
+			throw new UsageError("Channel was deleted by garbage collection", {
+				channelId: this.id,
+			});
+		}
+	}
+
+	public delete(): void {
+		this.deleted = true;
+		this.pendingMessagesState = { messageCollections: [], pendingCount: 0 };
+		if (this.isLoaded && this.globallyVisible) {
+			this.services.value.deltaConnection.setConnectionState(false);
+		}
 	}
 
 	public get isLoaded(): boolean {
@@ -141,7 +163,17 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult> {
 		const channel = await this.getChannel();
-		return summarizeChannelAsync(channel, fullTree, trackState, telemetryContext);
+		const result = await summarizeChannelAsync(
+			channel,
+			fullTree,
+			trackState,
+			telemetryContext,
+		);
+		if (!this.referenced) {
+			result.summary.unreferenced = true;
+			result.stats.unreferencedBlobSize = result.stats.totalBlobSize;
+		}
+		return result;
 	}
 
 	/**
@@ -202,11 +234,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 	}
 
 	public updateUsedRoutes(usedRoutes: string[]): void {
-		/**
-		 * Currently, DDSes are always considered referenced and are not garbage collected.
-		 * Once we have GC at DDS level, this channel context's used routes will be updated as per the passed
-		 * value. See - https://github.com/microsoft/FluidFramework/issues/4611
-		 */
+		this.referenced = usedRoutes.includes("") || usedRoutes.includes("/");
 	}
 }
 
@@ -271,6 +299,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 						registry,
 					);
 					channelType = attributes.type;
+					this.verifyNotDeleted();
 					const channel = await loadChannel(
 						runtime,
 						attributes,
@@ -279,6 +308,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 						subLogger,
 						this.id,
 					);
+					this.verifyNotDeleted();
 					// Send all pending messages to the channel
 					for (const messageCollection of this.pendingMessagesState.messageCollections) {
 						this.services.value.deltaConnection.processMessages(messageCollection);

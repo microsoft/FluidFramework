@@ -21,6 +21,8 @@ export type {
 	AliasResult,
 	CreateChildSummarizerNodeFn,
 	FluidDataStoreContextInternal,
+	ChannelGC,
+	FluidDataStoreChannelInternal,
 	IContainerRuntimeBase,
 	IContainerRuntimeBaseEvents,
 	IDataStore,
@@ -70,6 +72,8 @@ export type {
 export {
 	encodeHandlesInContainerRuntime,
 	notifiesReadOnlyState,
+	providesChannelGC,
+	supportsChannelDeletion,
 } from "./runtimeLayerCompatFeatureNames.js";
 export type {
 	IVersionMarkResolver,

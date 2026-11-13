@@ -47,6 +47,8 @@ import type {
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
 	FluidDataStoreContextInternal,
+	ChannelGC,
+	FluidDataStoreChannelInternal,
 	FluidDataStoreRegistryEntry,
 	IContainerRuntimeBase,
 	IDataStore,
@@ -69,7 +71,10 @@ import type {
 	ContainerExtensionId,
 	ContainerExtensionExpectations,
 } from "@fluidframework/runtime-definitions/internal";
-import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
+import {
+	channelsTreeName,
+	supportsChannelDeletion,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
 	isSnapshotFetchRequiredForLoadingGroupId,
@@ -321,6 +326,32 @@ export abstract class FluidDataStoreContext
 	 * @deprecated NOT SUPPORTED - hardcoded to return false since it's deprecated.
 	 */
 	public readonly gcTombstoneEnforcementAllowed: boolean = false;
+
+	public get channelGC(): ChannelGC | undefined {
+		return this.parentContext.channelGC;
+	}
+
+	private readonly deletedChannelRoutes = new Set<string>();
+
+	public deleteSweepReadyNodes(routes: readonly string[]): void {
+		for (const route of routes) {
+			this.deletedChannelRoutes.add(route);
+			this.summarizerNode.deleteChild(route.slice(1));
+		}
+		this.summarizerNode.invalidate(this.deltaManager.lastSequenceNumber);
+		if (this.channel !== undefined) {
+			this.deleteChannels(this.channel, routes);
+		}
+	}
+
+	private deleteChannels(channel: IFluidDataStoreChannel, routes: readonly string[]): void {
+		const gcChannel: Partial<FluidDataStoreChannelInternal> = channel;
+		assert(
+			gcChannel.deleteSweepReadyNodes !== undefined,
+			"DDS GC requires a data store runtime that supports channel deletion",
+		);
+		gcChannel.deleteSweepReadyNodes(routes);
+	}
 
 	/**
 	 * If true, this means that this data store context and its children have been removed from the runtime
@@ -994,12 +1025,24 @@ export abstract class FluidDataStoreContext
 
 	protected completeBindingRuntime(channel: IFluidDataStoreChannel): void {
 		// Validate that the DataStore is compatible with this Runtime.
-		const maybeDataStoreCompatDetails = channel as FluidObject<ILayerCompatDetails>;
-		validateDatastoreCompatibility(
-			maybeDataStoreCompatDetails.ILayerCompatDetails,
-			this.dispose.bind(this),
-			this.mc,
-		);
+		const maybeDataStoreCompatDetails = (channel as FluidObject<ILayerCompatDetails>)
+			.ILayerCompatDetails;
+		const dispose = (): void => {
+			this.dispose();
+			channel.dispose();
+		};
+		validateDatastoreCompatibility(maybeDataStoreCompatDetails, dispose, this.mc);
+		if (
+			this.channelGC !== undefined &&
+			maybeDataStoreCompatDetails?.supportedFeatures.has(supportsChannelDeletion) !== true
+		) {
+			dispose();
+			throw new UsageError("DDS GC requires a supporting data store runtime");
+		}
+		this.processPendingOps(channel);
+		if (this.deletedChannelRoutes.size > 0) {
+			this.deleteChannels(channel, [...this.deletedChannelRoutes]);
+		}
 
 		// And now mark the runtime active
 		this.loaded = true;
@@ -1041,7 +1084,6 @@ export abstract class FluidDataStoreContext
 			await channel.entryPoint.get();
 		}
 
-		this.processPendingOps(channel);
 		this.completeBindingRuntime(channel);
 	}
 
@@ -1600,7 +1642,6 @@ export class LocalDetachedFluidDataStoreContext
 	 */
 	public unsafe_AttachRuntimeSync(channel: IFluidDataStoreChannel): IDataStore {
 		this.channelP = Promise.resolve(channel);
-		this.processPendingOps(channel);
 		this.completeBindingRuntime(channel);
 		return this.channelToDataStoreFn(channel);
 	}

@@ -166,7 +166,11 @@ export class GCTelemetryTracker {
 		// For sub data store (DDS) nodes, if they are changed, its data store will also be changed,
 		// so skip logging to make the telemetry less noisy.
 
-		if (nodeType === GCNodeType.SubDataStore && usageType === "Changed") {
+		if (
+			!this.configs.ddsGCEnabled &&
+			nodeType === GCNodeType.SubDataStore &&
+			usageType === "Changed"
+		) {
 			return false;
 		}
 

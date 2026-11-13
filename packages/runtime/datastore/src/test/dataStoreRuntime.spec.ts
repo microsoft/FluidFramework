@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import type { FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
 import type {
@@ -12,6 +13,11 @@ import type {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
+import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
+import {
+	providesChannelGC,
+	supportsChannelDeletion,
+} from "@fluidframework/runtime-definitions/internal";
 import type {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
@@ -19,8 +25,13 @@ import type {
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
+	ISummaryTreeWithStats,
 	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
+import {
+	convertSummaryTreeToITree,
+	SummaryTreeBuilder,
+} from "@fluidframework/runtime-utils/internal";
 import {
 	isFluidError,
 	MockLogger,
@@ -28,6 +39,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockFluidDataStoreContext,
+	MockHandle,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
@@ -38,6 +50,7 @@ import {
 	LegacyTypeAwareRegistry,
 	type ISharedObjectRegistry,
 } from "../dataStoreRuntime.js";
+import { dataStoreCoreCompatDetails } from "../dataStoreLayerCompatState.js";
 
 type Patch<T, U> = Omit<T, keyof U> & U;
 
@@ -47,7 +60,12 @@ type FluidDataStoreRuntime_ForTesting = Patch<
 	FluidDataStoreRuntime,
 	IFluidDataStoreRuntime & {
 		contexts: Map<unknown, unknown>;
+		deleteSweepReadyNodes(routes: readonly string[]): void;
 		submit(type: DataStoreMessageType, content: unknown, localOpMetadata?: unknown): void;
+		submit(
+			message: { type: DataStoreMessageType; content: unknown },
+			localOpMetadata?: unknown,
+		): void;
 	}
 >;
 
@@ -58,14 +76,14 @@ describe("FluidDataStoreRuntime Tests", () => {
 		context: IFluidDataStoreContext,
 		registry: ISharedObjectRegistry,
 		entrypointInitializationFn?: (rt: IFluidDataStoreRuntime) => Promise<FluidObject>,
-	): FluidDataStoreRuntime {
+	): FluidDataStoreRuntime_ForTesting {
 		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
 			context,
 			registry,
 			/* existing */ false,
 			entrypointInitializationFn ?? (async () => runtime),
 		);
-		return runtime;
+		return runtime as unknown as FluidDataStoreRuntime_ForTesting;
 	}
 
 	beforeEach(() => {
@@ -92,6 +110,176 @@ describe("FluidDataStoreRuntime Tests", () => {
 		};
 	});
 
+	describe("DDS collection", () => {
+		const logger = new MockLogger();
+		beforeEach(() => {
+			logger.clear();
+			dataStoreContext = new MockFluidDataStoreContext(
+				"dds-owner",
+				false,
+				logger.toTelemetryLogger(),
+			);
+			Object.assign(dataStoreContext, {
+				channelGC: { isDeleted: () => false, nodeUpdated: () => {} },
+				ILayerCompatDetails: {
+					...dataStoreCoreCompatDetails,
+					supportedFeatures: new Set([providesChannelGC]),
+				},
+			});
+		});
+
+		function createChannelMessage(id: string, local: boolean): IRuntimeMessageCollection {
+			return {
+				envelope: {
+					type: DataStoreMessageType.ChannelOp,
+					clientId: "remote",
+					sequenceNumber: 1,
+					referenceSequenceNumber: 0,
+					minimumSequenceNumber: 0,
+					timestamp: Date.now(),
+				},
+				local,
+				messagesContent: [
+					{
+						contents: { address: id, contents: {} },
+						clientSequenceNumber: 1,
+						localOpMetadata: undefined,
+					},
+				],
+			};
+		}
+
+		it("rejects a container runtime that does not advertise DDS GC support", () => {
+			Object.assign(dataStoreContext, {
+				ILayerCompatDetails: {
+					...dataStoreCoreCompatDetails,
+					supportedFeatures: new Set([supportsChannelDeletion]),
+				},
+			});
+			assert.throws(
+				() => createRuntime(dataStoreContext, sharedObjectRegistry),
+				/supporting container runtime/,
+			);
+		});
+
+		it("removes collected contexts, rejects access and ID reuse, and preserves live DDSs", async () => {
+			const runtime = createRuntime(dataStoreContext, sharedObjectRegistry);
+			runtime.createChannel("deleted", "SomeType");
+			const live = runtime.createChannel("live", "SomeType");
+			runtime.deleteSweepReadyNodes(["/deleted", "/not-realized"]);
+			runtime.deleteSweepReadyNodes(["/deleted"]);
+			await assert.rejects(runtime.getChannel("deleted"), /deleted by garbage collection/);
+			assert.throws(
+				() => runtime.createChannel("deleted", "SomeType"),
+				/deleted by garbage collection/,
+			);
+			assert.throws(
+				() => runtime.createChannel("not-realized", "SomeType"),
+				/deleted by garbage collection/,
+			);
+			assert.equal(await runtime.getChannel("live"), live);
+		});
+
+		it("drops remote and local late ops while balancing pending local ops", () => {
+			const runtime = createRuntime(dataStoreContext, sharedObjectRegistry);
+			runtime.createChannel("deleted", "SomeType");
+			runtime.submit({
+				type: DataStoreMessageType.ChannelOp,
+				content: { address: "deleted", contents: {} },
+			});
+			assert(runtime.isDirty);
+			runtime.deleteSweepReadyNodes(["/deleted"]);
+			runtime.processMessages(createChannelMessage("deleted", false));
+			assert(runtime.isDirty, "A remote late op must not consume the local pending op");
+			runtime.processMessages(createChannelMessage("deleted", true));
+			assert.equal(runtime.isDirty, false);
+			logger.assertMatchAny([{ eventName: "FluidDataStoreRuntime:DeletedChannelOp" }]);
+		});
+
+		it("drops stashed ops for deleted DDSs without leaving pending work", async () => {
+			const runtime = createRuntime(dataStoreContext, sharedObjectRegistry);
+			runtime.deleteSweepReadyNodes(["/deleted"]);
+			await runtime.applyStashedOp({
+				type: DataStoreMessageType.ChannelOp,
+				content: { address: "deleted", contents: {} },
+			});
+			assert.equal(runtime.isDirty, false);
+			logger.assertMatchAny([{ eventName: "FluidDataStoreRuntime:DeletedChannelStashedOp" }]);
+		});
+
+		for (const action of ["resubmit", "rollback"] as const) {
+			it(`rejects ${action} for a deleted DDS and balances pending ops`, () => {
+				const runtime = createRuntime(dataStoreContext, sharedObjectRegistry);
+				const content = { address: "deleted", contents: {} };
+				runtime.submit({ type: DataStoreMessageType.ChannelOp, content });
+				runtime.deleteSweepReadyNodes(["/deleted"]);
+				assert.throws(
+					() =>
+						action === "resubmit"
+							? runtime.reSubmit(DataStoreMessageType.ChannelOp, content, undefined, false)
+							: runtime.rollback?.(DataStoreMessageType.ChannelOp, content, undefined),
+					/deleted by garbage collection/,
+				);
+				assert.equal(runtime.isDirty, false);
+			});
+		}
+
+		it("round-trips explicit root markers through an attach snapshot", () => {
+			dataStoreContext.attachState = AttachState.Detached;
+			sinon.stub(dataStoreContext, "makeLocallyVisible").callsFake(() => {});
+			const registry: ISharedObjectRegistry = {
+				get: (type) => ({
+					type,
+					attributes: { type, snapshotFormatVersion: "0" },
+					create: (_runtime, id) => {
+						const getSummary = (): ISummaryTreeWithStats =>
+							new SummaryTreeBuilder().getSummaryTree();
+						const channel: IChannel = {
+							id,
+							attributes: { type, snapshotFormatVersion: "0" },
+							handle: new MockHandle(undefined),
+							get IFluidLoadable() {
+								return channel;
+							},
+							isAttached: () => false,
+							connect: () => {},
+							getAttachSummary: getSummary,
+							summarize: async () => getSummary(),
+							getGCData: () => ({ gcNodes: { "/": [] } }),
+						};
+						return channel;
+					},
+					load: async () => {
+						throw new Error("The round-trip must not realize DDSs");
+					},
+				}),
+			};
+			const runtime = createRuntime(dataStoreContext, registry);
+			const named = runtime.createChannel("named", "SomeType");
+			const anonymous = runtime.createChannel(undefined, "SomeType");
+			runtime.bindChannel(named);
+			runtime.bindChannel(anonymous);
+			runtime.attachGraph();
+			const summary = runtime.getAttachSummary().summary;
+			const namedSummary = summary.tree[named.id];
+			const anonymousSummary = summary.tree[anonymous.id];
+			assert(namedSummary?.type === SummaryType.Tree);
+			assert(anonymousSummary?.type === SummaryType.Tree);
+			assert(".gcRoot" in namedSummary.tree);
+			assert(!(".gcRoot" in anonymousSummary.tree));
+
+			dataStoreContext.baseSnapshot = buildSnapshotTree(
+				convertSummaryTreeToITree(summary).entries,
+				new Map(),
+			);
+			const restored = createRuntime(dataStoreContext, registry);
+			restored.attachGraph();
+			assert.deepEqual(restored.getAttachGCData().gcNodes["/"], [
+				`/${dataStoreContext.id}/${named.id}`,
+			]);
+		});
+	});
+
 	it("constructor rejects ids with forward slashes", () => {
 		const invalidId = "beforeSlash/afterSlash";
 		dataStoreContext = new MockFluidDataStoreContext(invalidId);
@@ -114,7 +302,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 
 	it("can create a data store runtime", () => {
 		let failed: boolean = false;
-		let dataStoreRuntime: FluidDataStoreRuntime | undefined;
+		let dataStoreRuntime: FluidDataStoreRuntime_ForTesting | undefined;
 		try {
 			dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
 		} catch {

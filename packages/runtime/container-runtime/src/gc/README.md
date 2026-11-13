@@ -10,9 +10,46 @@ It is the responsibility of the users of Fluid Framework to correctly add and re
 
 ## Referencing / unreferencing Fluid objects
 
-Currently, the only Fluid objects that are eligible for GC are data stores and attachment blobs. The following sections describe how you can mark them as referenced or unreferenced.
+By default, the Fluid objects eligible for GC are data stores and attachment blobs.
+Experimental independent DDS collection also makes anonymous DDSs eligible in newly created documents.
+The following sections describe how you can mark objects as referenced or unreferenced.
 
 These sections speak of a "referenced DDS" which refers to a DDS that is created by a referenced data store.
+When independent DDS collection is enabled, an anonymous DDS must instead be reachable through handles from a root.
+
+### Experimental DDS collection and persisted format
+
+The creation-only config setting `Fluid.GarbageCollection.EnableDDSGC` enables independent collection of anonymous DDSs.
+It is disabled by default and requires explicit document-schema control.
+This setting has no effect on existing documents, including documents created before the feature was deployed.
+Disabling the setting stops opt-in for new documents; it does not disable DDS collection for previously enabled documents.
+
+Enabled documents persist `ddsGCEnabled: true` both in the container GC metadata and in `documentSchema.runtime`.
+The schema capability is permanent.
+Older schema-aware runtimes that do not recognize it reject the document instead of editing or summarizing an unsupported format.
+The runtime rejects inconsistent GC metadata and schema flags.
+Applications must still deploy supporting code before enabling the setting and exclude clients that predate document-schema enforcement.
+
+The container runtime advertises `providesChannelGC` across the layer boundary.
+Enabled documents require every data store channel to advertise `supportsChannelDeletion` and implement the internal deletion hook.
+DDS-less channels such as the runtime attributor advertise this support explicitly; missing compatibility details do not exempt a channel from the check.
+Custom `IFluidDataStoreChannel` implementations that are not built on `FluidDataStoreRuntime` are rejected when their data store loads in enabled documents.
+The required deletion capability and hook are internal contracts, not supported public extension points for custom channels.
+
+DDSs created with an explicit ID are roots relative to their owning data store.
+Their summaries and attach snapshots contain an empty `.gcRoot` blob.
+Anonymous DDSs omit this blob and remain live only through reachability.
+Root identity does not depend on the shape of the ID.
+A summary handle reuses the entire previous DDS subtree, including its `.gcRoot` blob; the marker must not be dropped when a tree is reused.
+An unreachable data store can still be collected with all its DDSs.
+
+GC node paths are absolute, for example `/dataStoreId/ddsId`.
+The internal data-store sweep contract instead receives DDS root paths relative to that data store, with a leading `/`, for example `/ddsId`.
+Sub-DDS paths are not separate sweep targets.
+
+Production enablement remains blocked on ODSP and Routerlicious validation of nested unreferenced summaries, `.gcRoot` preservation, and summary-handle reuse.
+Pending-state capture must also preserve unreferenced content so that rehydration continues the original session without losing data.
+Local-driver coverage does not satisfy these service and offline-validation gates.
 
 ### Data stores
 
@@ -44,7 +81,9 @@ The GC algorithm runs in two phases:
 
 In this phase, the GC algorithm identifies all Fluid objects that are unreferenced and marks them as such:
 
-1. It starts at the root (aliased) data stores and marks them and all their DDSes as referenced.
+1. It starts at the root (aliased) data stores and marks them as referenced.
+   In legacy documents, all their DDSs are also referenced.
+   With independent DDS collection enabled, only their explicitly named DDSs are roots; anonymous DDSs require handle reachability.
 2. It recursively finds the handles stored in referenced DDSes and marks the objects corresponding to the handles as referenced until is has scanned all objects.
 3. All the objects in the system that are not marked as referenced are marked as unreferenced. The unreferenced state of the object and timestamp of when it is unreferenced is added to the summary. The timestamp is used to determine how long the object has been unreferenced for and is used for the sweep phase.
 

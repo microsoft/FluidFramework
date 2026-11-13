@@ -58,6 +58,10 @@ export const gcGenerationOptionName = "gcGeneration";
  */
 export const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 /**
+ * Experimental creation-only opt-in for independent DDS collection.
+ */
+export const enableDDSGCKey = "Fluid.GarbageCollection.EnableDDSGC";
+/**
  * Config key to expire a session after a set period of time. Defaults to true.
  */
 export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
@@ -130,6 +134,11 @@ export interface IGCMetadata_Deprecated {
  * @internal
  */
 export interface IGCMetadata {
+	/**
+	 * Enables independent DDS collection for the lifetime of a document.
+	 * Absent for documents created before opting in to DDS collection.
+	 */
+	readonly ddsGCEnabled?: true;
 	/**
 	 * The version of the GC code that was run to generate the GC data that is written in the summary.
 	 * If the persisted value doesn't match the current value in the code, saved GC data will be discarded and regenerated from scratch.
@@ -466,7 +475,7 @@ export interface IGCNodeUpdatedProps {
 	/**
 	 * Type and path of the updated node
 	 */
-	node: { type: (typeof GCNodeType)["DataStore" | "Blob"]; path: string };
+	node: { type: (typeof GCNodeType)["DataStore" | "SubDataStore" | "Blob"]; path: string };
 	/**
 	 * Whether the node (or a subpath) was loaded or changed.
 	 */
@@ -567,6 +576,10 @@ export interface IGCRuntimeOptions {
  * The configurations for Garbage Collector that determines what runs and how.
  */
 export interface IGarbageCollectorConfigs {
+	/**
+	 * Whether this document was created with independent DDS collection enabled.
+	 */
+	readonly ddsGCEnabled: boolean;
 	/**
 	 * Tracks if GC is allowed for this document. GC may not be allowed for old documents created pre-GC.
 	 * If GC is allowed for a document, it will always be enabled. It cannot be disabled per session.
