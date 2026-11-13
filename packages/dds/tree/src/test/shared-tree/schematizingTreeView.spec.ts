@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { asAlpha } from "../../api.js";
+import { asAlpha, asBeta } from "../../api.js";
 import { CommitKind, type RevertibleAlpha, type TransactionLabels } from "../../core/index.js";
 import {
 	jsonableTreeFromFieldCursor,
@@ -979,12 +979,15 @@ describe("SchematizingSimpleTreeView", () => {
 		// The view adds strings to the allowed root types, requiring a schema upgrade before viewing.
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, true);
+		assert.deepEqual(view.compatibility.upgrade, { isCompatible: true });
 		assert.deepEqual(view.compatibility.discrepancies, [
 			{
 				mismatch: "allowedTypes",
 				location: "root",
 				view: ["com.fluidframework.leaf.string"],
 				stored: [],
+				reason:
+					'Cannot view the root field: the view allows node types ["com.fluidframework.leaf.string"] that the stored schema does not allow.',
 			},
 		]);
 		assert.throws(
@@ -995,7 +998,7 @@ describe("SchematizingSimpleTreeView", () => {
 					error.message,
 					"TreeView.root is unavailable because the view schema is incompatible with the stored schema. The stored schema can be upgraded; call TreeView.upgradeSchema() before reading or writing TreeView.root.",
 				);
-				assert.deepEqual(error.getTelemetryProperties().schemaIncompatibilityDetails, {
+				assert.deepEqual(error.getTelemetryProperties().schemaViewIncompatibilityDetails, {
 					tag: TelemetryDataTag.SchemaArtifact,
 					value: JSON.stringify([
 						{
@@ -1003,6 +1006,8 @@ describe("SchematizingSimpleTreeView", () => {
 							location: "root",
 							view: ["com.fluidframework.leaf.string"],
 							stored: [],
+							reason:
+								'Cannot view the root field: the view allows node types ["com.fluidframework.leaf.string"] that the stored schema does not allow.',
 						},
 					]),
 				});
@@ -1017,6 +1022,7 @@ describe("SchematizingSimpleTreeView", () => {
 		// The upgrade enables strings, making the root available and clearing the viewing discrepancies.
 		assert.equal(view.compatibility.canView, true);
 		assert.equal(view.compatibility.discrepancies, undefined);
+		assert.deepEqual(view.compatibility.upgrade, { isCompatible: true });
 		assert.equal(view.root, 5);
 	});
 
@@ -1037,6 +1043,8 @@ describe("SchematizingSimpleTreeView", () => {
 				location: "root",
 				view: [],
 				stored: ["com.fluidframework.leaf.string"],
+				reason:
+					'Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
 			},
 		]);
 		assert.throws(
@@ -1047,7 +1055,7 @@ describe("SchematizingSimpleTreeView", () => {
 					error.message,
 					"TreeView.root is unavailable because the view schema is incompatible with the stored schema. The schemas cannot be upgraded automatically. Use a compatible view schema or explicitly migrate the document schema and data.",
 				);
-				assert.deepEqual(error.getTelemetryProperties().schemaIncompatibilityDetails, {
+				assert.deepEqual(error.getTelemetryProperties().schemaViewIncompatibilityDetails, {
 					tag: TelemetryDataTag.SchemaArtifact,
 					value: JSON.stringify([
 						{
@@ -1055,6 +1063,8 @@ describe("SchematizingSimpleTreeView", () => {
 							location: "root",
 							view: [],
 							stored: ["com.fluidframework.leaf.string"],
+							reason:
+								'Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
 						},
 					]),
 				});
@@ -1064,8 +1074,168 @@ describe("SchematizingSimpleTreeView", () => {
 
 		assert.throws(
 			() => view.upgradeSchema(),
-			(e) => e instanceof UsageError,
+			(error) => {
+				assert(error instanceof UsageError);
+				assert(!view.compatibility.upgrade.isCompatible);
+				assert.deepEqual(error.getTelemetryProperties().schemaUpgradeIncompatibilityDetails, {
+					tag: TelemetryDataTag.SchemaArtifact,
+					value: JSON.stringify(view.compatibility.upgrade.incompatibilities),
+				});
+				return true;
+			},
 		);
+	});
+
+	it("reports upgrade blockers on request when unknown optional fields permit viewing", () => {
+		class Stored extends schema.object("OnDemand", {
+			x: schema.number,
+			hidden: schema.optional(schema.number),
+		}) {}
+		class Viewed extends schema.object(
+			"OnDemand",
+			{ x: schema.number },
+			{ allowUnknownOptionalFields: true },
+		) {}
+		const checkout = checkoutWithInitialTree(new TreeViewConfiguration({ schema: Stored }), {
+			x: 1,
+		});
+		const view = asBeta(
+			new SchematizingSimpleTreeView(
+				checkout,
+				new TreeViewConfiguration({ schema: Viewed }),
+				new MockNodeIdentifierManager(),
+			),
+		);
+		const compatibility = view.compatibility;
+		assert.equal(compatibility.canView, true);
+		assert.equal(compatibility.canUpgrade, false);
+		assert.equal(compatibility.view.isCompatible, true);
+		assert(!compatibility.upgrade.isCompatible);
+		const expected = [
+			{
+				mismatch: "allowedTypes",
+				location: { nodeType: Viewed.identifier, fieldKey: "hidden" },
+				proposed: [],
+				stored: [schema.number.identifier],
+				reason:
+					'Cannot upgrade field "hidden" of node type "com.example.OnDemand": the proposed schema removes allowed node types ["com.fluidframework.leaf.number"].',
+			},
+			{
+				mismatch: "fieldKind",
+				location: { nodeType: Viewed.identifier, fieldKey: "hidden" },
+				proposed: "Forbidden",
+				stored: "Optional",
+				reason:
+					'Cannot upgrade field "hidden" of node type "com.example.OnDemand": changing from zero or one child to no children is not permitted by the schema upgrade rules.',
+			},
+		];
+		const incompatibilities = compatibility.upgrade.incompatibilities;
+		assert.deepEqual(incompatibilities, expected);
+		assert.equal(view.compatibility, compatibility);
+		assert.equal(view.root.x, 1);
+		assert.throws(
+			() => view.upgradeSchema(),
+			(error) => {
+				assert(error instanceof UsageError);
+				assert.deepEqual(error.getTelemetryProperties().schemaUpgradeIncompatibilityDetails, {
+					tag: TelemetryDataTag.SchemaArtifact,
+					value: JSON.stringify(expected),
+				});
+				return true;
+			},
+		);
+	});
+
+	it("updates upgrade diagnostics when a stored schema change prevents both viewing and upgrading", () => {
+		const checkout = checkoutWithInitialTree(config, 5);
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config,
+			new MockNodeIdentifierManager(),
+		);
+		const originalCompatibility = view.compatibility;
+		assert.equal(originalCompatibility.canView, true);
+		assert.equal(originalCompatibility.canUpgrade, true);
+		let schemaChanged = false;
+		view.events.on("schemaChanged", () => {
+			schemaChanged = true;
+		});
+
+		checkout.updateSchema(toUpgradeSchema(configGeneralized.schema));
+
+		assert.equal(schemaChanged, true);
+		assert.equal(view.compatibility.canView, false);
+		assert.equal(view.compatibility.canUpgrade, false);
+		assert.notEqual(view.compatibility, originalCompatibility);
+		assert(!view.compatibility.upgrade.isCompatible);
+		assert.deepEqual(view.compatibility.upgrade.incompatibilities, [
+			{
+				mismatch: "viewIncompatibleAfterUpgrade",
+				reason:
+					"Cannot upgrade: the resulting stored schema would still prevent the view from reading or writing the document.",
+				incompatibilities: [
+					{
+						mismatch: "allowedTypes",
+						location: "root",
+						view: [],
+						stored: [schema.string.identifier],
+						reason:
+							'Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
+					},
+				],
+			},
+		]);
+		assert.equal(originalCompatibility.canView, true);
+		assert.equal(originalCompatibility.canUpgrade, true);
+		assert.deepEqual(originalCompatibility.upgrade, { isCompatible: true });
+	});
+
+	it("computes upgrade incompatibilities from the original schema after schema changes and disposal", () => {
+		class Stored extends schema.object("DeferredDisposal", {
+			x: schema.number,
+			hidden: schema.optional(schema.number),
+		}) {}
+		class Viewed extends schema.object(
+			"DeferredDisposal",
+			{ x: schema.number },
+			{ allowUnknownOptionalFields: true },
+		) {}
+		const checkout = checkoutWithInitialTree(new TreeViewConfiguration({ schema: Stored }), {
+			x: 5,
+		});
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			new TreeViewConfiguration({ schema: Viewed }),
+			new MockNodeIdentifierManager(),
+		);
+		const previous = view.compatibility;
+		assert(previous.view.isCompatible);
+		assert(!previous.upgrade.isCompatible);
+
+		checkout.updateSchema(toUpgradeSchema([Stored, schema.string]));
+		assert.equal(view.compatibility.view.isCompatible, false);
+		assert.equal(view.compatibility.upgrade.isCompatible, false);
+		assert.notStrictEqual(view.compatibility, previous);
+		view.dispose();
+
+		assert.deepEqual(previous.upgrade.incompatibilities, [
+			{
+				mismatch: "allowedTypes",
+				location: { nodeType: Viewed.identifier, fieldKey: "hidden" },
+				proposed: [],
+				stored: [schema.number.identifier],
+				reason:
+					'Cannot upgrade field "hidden" of node type "com.example.DeferredDisposal": the proposed schema removes allowed node types ["com.fluidframework.leaf.number"].',
+			},
+			{
+				mismatch: "fieldKind",
+				location: { nodeType: Viewed.identifier, fieldKey: "hidden" },
+				proposed: "Forbidden",
+				stored: "Optional",
+				reason:
+					'Cannot upgrade field "hidden" of node type "com.example.DeferredDisposal": changing from zero or one child to no children is not permitted by the schema upgrade rules.',
+			},
+		]);
 	});
 
 	it("Open incompatible document", () => {
@@ -1085,7 +1255,7 @@ describe("SchematizingSimpleTreeView", () => {
 				error.message,
 				"TreeView.root is unavailable because the view schema is incompatible with the stored schema. The schemas cannot be upgraded automatically. Use a compatible view schema or explicitly migrate the document schema and data.",
 			);
-			assert.deepEqual(error.getTelemetryProperties().schemaIncompatibilityDetails, {
+			assert.deepEqual(error.getTelemetryProperties().schemaViewIncompatibilityDetails, {
 				tag: TelemetryDataTag.SchemaArtifact,
 				value: JSON.stringify([
 					{
@@ -1093,6 +1263,8 @@ describe("SchematizingSimpleTreeView", () => {
 						location: "root",
 						view: ["com.fluidframework.leaf.boolean"],
 						stored: ["com.fluidframework.leaf.string"],
+						reason:
+							'Cannot view the root field: the view allows node types ["com.fluidframework.leaf.boolean"] that the stored schema does not allow; the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
 					},
 				]),
 			});

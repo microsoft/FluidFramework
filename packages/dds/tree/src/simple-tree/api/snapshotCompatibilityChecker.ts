@@ -18,7 +18,7 @@ import {
 	decodeSchemaCompatibilitySnapshot,
 	encodeSchemaCompatibilitySnapshot,
 } from "./simpleSchemaCodec.js";
-import type { SchemaCompatibilityStatus } from "./tree.js";
+import type { SchemaCompatibilityStatusBeta } from "./tree.js";
 
 /**
  * Reports the ability of a client's view configuration to view and/or upgrade a document's stored schema
@@ -71,10 +71,11 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * @param clientViewConfiguration - Configuration with the view schema being used by the current client.
  * This function assumes the a stored schema derived from this view would be generated with the default restrictive staged upgrade policy.
  *
- * @returns The ability of `clientViewConfiguration.schema` to view and/or upgrade a document's stored schema.
- *
- * This is the same {@link SchemaCompatibilityStatus} a {@link TreeView} would report for this combination of schemas,
- * without `canInitialize`.
+ * @returns The compatibility status that a {@link TreeView} using `clientViewConfiguration.schema` would report for the document's stored schema.
+ * As with {@link SchemaCompatibilityStatusBeta}, check `view` to determine whether the document is accessible
+ * and `upgrade` to determine whether a schema upgrade is permitted.
+ * Each failed result includes its own `incompatibilities` to explain what prevents that operation.
+ * The status omits `canInitialize` because this function compares schemas without opening a document.
  *
  * @privateRemarks
  * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
@@ -84,7 +85,7 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
 export function checkCompatibility(
 	documentViewConfiguration: TreeViewConfiguration,
 	clientViewConfiguration: TreeViewConfiguration,
-): Omit<SchemaCompatibilityStatus, "canInitialize"> {
+): Omit<SchemaCompatibilityStatusBeta, "canInitialize"> {
 	const viewAsAlpha = new TreeViewConfigurationAlpha({
 		schema: clientViewConfiguration.schema,
 	});
@@ -236,11 +237,11 @@ export interface CombinedSchemaCompatibilityStatus {
 	/**
 	 * How a {@link TreeView} using the current schema would report its compatibility with the historical snapshot.
 	 */
-	readonly currentViewOfSnapshotDocument: Omit<SchemaCompatibilityStatus, "canInitialize">;
+	readonly currentViewOfSnapshotDocument: Omit<SchemaCompatibilityStatusBeta, "canInitialize">;
 	/**
 	 * How a {@link TreeView} using the snapshotted schema would report its compatibility with a document created with the current schema.
 	 */
-	readonly snapshotViewOfCurrentDocument: Omit<SchemaCompatibilityStatus, "canInitialize">;
+	readonly snapshotViewOfCurrentDocument: Omit<SchemaCompatibilityStatusBeta, "canInitialize">;
 
 	/**
 	 * Whether the view schemas produce identical compatibility snapshots.

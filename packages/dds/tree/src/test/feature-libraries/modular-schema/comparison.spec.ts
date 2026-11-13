@@ -20,7 +20,11 @@ import {
 	type TreeStoredSchema,
 	Multiplicity,
 } from "../../../core/index.js";
-import { FieldKinds, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
+import {
+	FieldKinds,
+	defaultSchemaPolicy,
+	type StoredSchemaUpgradeDiscrepancy,
+} from "../../../feature-libraries/index.js";
 import {
 	allowsFieldSuperset,
 	allowsMultiplicitySuperset,
@@ -264,8 +268,37 @@ describe("Schema Comparison", () => {
 	// influences the types of schema changes we allow
 	describe("allowsRepoSuperset", () => {
 		const compareTwoRepo = (a: TreeStoredSchema, b: TreeStoredSchema): boolean => {
-			return allowsRepoSuperset(defaultSchemaPolicy, a, b);
+			const compatible = allowsRepoSuperset(defaultSchemaPolicy, a, b);
+			const discrepancies: StoredSchemaUpgradeDiscrepancy[] = [];
+			assert.equal(allowsRepoSuperset(defaultSchemaPolicy, a, b, discrepancies), compatible);
+			assert.equal(discrepancies.length === 0, compatible);
+			return compatible;
 		};
+
+		it("identifies an impossible requirement for every map key", () => {
+			const stored = new TreeStoredSchemaRepository({
+				rootFieldSchema: fieldOptionalEmptyTree,
+				nodeSchema: new Map([[emptyTree.name, emptyTree.schema]]),
+			});
+			const proposed = new TreeStoredSchemaRepository({
+				rootFieldSchema: fieldOptionalEmptyTree,
+				nodeSchema: new Map([
+					[emptyTree.name, new MapNodeStoredSchema(fieldRequiredEmptyTree)],
+				]),
+			});
+			const discrepancies: StoredSchemaUpgradeDiscrepancy[] = [];
+			assert.equal(
+				allowsRepoSuperset(defaultSchemaPolicy, stored, proposed, discrepancies),
+				false,
+			);
+			assert.deepEqual(discrepancies, [
+				{
+					mismatch: "nodeSchemaCannotBeSatisfied",
+					identifier: emptyTree.name,
+					requirement: { kind: "requiredMapEntries" },
+				},
+			]);
+		});
 
 		it("Same rootFieldSchema with different TreeNodeStoredSchemas", () => {
 			// Test a bunch of different TreeStoredSchema which are all the same,

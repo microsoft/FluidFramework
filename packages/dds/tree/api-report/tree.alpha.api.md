@@ -194,7 +194,7 @@ export type ChangeMetadataBeta = CommitMetadata & ({
 });
 
 // @alpha
-export function checkCompatibility(documentViewConfiguration: TreeViewConfiguration, clientViewConfiguration: TreeViewConfiguration): Omit<SchemaCompatibilityStatus, "canInitialize">;
+export function checkCompatibility(documentViewConfiguration: TreeViewConfiguration, clientViewConfiguration: TreeViewConfiguration): Omit<SchemaCompatibilityStatusBeta, "canInitialize">;
 
 // @alpha
 export function cloneWithReplacements(root: unknown, rootKey: string, replacer: (key: string, value: unknown) => {
@@ -243,7 +243,15 @@ export enum CommitOutcome {
 export type CommitRevision = string;
 
 // @alpha
-export function comparePersistedSchema(persisted: JsonCompatible, view: ImplicitFieldSchema, options: ICodecOptions): Omit<SchemaCompatibilityStatus, "canInitialize">;
+export function comparePersistedSchema(persisted: JsonCompatible, view: ImplicitFieldSchema, options: ICodecOptions): Omit<SchemaCompatibilityStatusBeta, "canInitialize">;
+
+// @beta @sealed
+export type CompatibilityResult<TIncompatibility> = {
+    readonly isCompatible: true;
+} | {
+    readonly isCompatible: false;
+    readonly incompatibilities: readonly TIncompatibility[];
+};
 
 // @alpha
 export namespace Component {
@@ -1414,6 +1422,8 @@ export interface SchemaCompatibilityStatus {
 // @beta @sealed
 export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus {
     readonly discrepancies: readonly SchemaDiscrepancy[] | undefined;
+    readonly upgrade: CompatibilityResult<SchemaUpgradeIncompatibility>;
+    readonly view: CompatibilityResult<SchemaViewIncompatibility>;
 }
 
 // @beta @sealed
@@ -1615,6 +1625,56 @@ export class SchemaUpgrade {
     // (undocumented)
     protected _typeCheck: MakeNominal;
 }
+
+// @beta @sealed
+export type SchemaUpgradeIncompatibility = {
+    readonly mismatch: "allowedTypes";
+    readonly reason: string;
+    readonly location: "root" | {
+        readonly nodeType: string;
+        readonly fieldKey: string | undefined;
+    };
+    readonly proposed: readonly string[];
+    readonly stored: readonly string[];
+} | {
+    readonly mismatch: "fieldKind";
+    readonly reason: string;
+    readonly location: "root" | {
+        readonly nodeType: string;
+        readonly fieldKey: string | undefined;
+    };
+    readonly proposed: string;
+    readonly stored: string;
+} | {
+    readonly mismatch: "valueSchema";
+    readonly reason: string;
+    readonly nodeType: string;
+    readonly proposed: string | undefined;
+    readonly stored: string | undefined;
+} | {
+    readonly mismatch: "nodeKind";
+    readonly reason: string;
+    readonly nodeType: string;
+    readonly proposed: string;
+    readonly stored: string;
+} | {
+    readonly mismatch: "missingNodeSchema";
+    readonly reason: string;
+    readonly nodeType: string;
+} | {
+    readonly mismatch: "nodeSchemaCannotBeSatisfied";
+    readonly reason: string;
+    readonly nodeType: string;
+} | {
+    readonly mismatch: "viewIncompatibleAfterUpgrade";
+    readonly reason: string;
+    readonly incompatibilities: readonly SchemaViewIncompatibility[];
+};
+
+// @beta @sealed
+export type SchemaViewIncompatibility = SchemaDiscrepancy & {
+    readonly reason: string;
+};
 
 // @public @system
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
