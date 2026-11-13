@@ -22,6 +22,12 @@ export function convertToSummaryTreeWithStats(snapshot: ITree, fullTree?: boolea
 // @beta @legacy
 export const create404Response: (request: IRequest) => IResponse;
 
+// @alpha @legacy
+export function dataStoreKindFromFactory<T = unknown>(factory: IFluidDataStoreFactory): DataStoreKind<T>;
+
+// @alpha @legacy
+export function fluidContainerFromLegacy<T>(container: IContainer, data: T, registry: DataStoreRegistry, id: string): FluidContainerAttached<T>;
+
 // @beta @legacy
 export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
     // (undocumented)

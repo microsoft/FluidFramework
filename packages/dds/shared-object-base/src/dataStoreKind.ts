@@ -3,299 +3,305 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidLoadable, FluidObject } from "@fluidframework/core-interfaces";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 import {
-	type ISharedObjectRegistry,
 	FluidDataStoreRuntime,
+	legacySharedObjectTypeAliases,
+	type ISharedObjectRegistryInternal,
 } from "@fluidframework/datastore/internal";
-import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
-	type Registry,
+	type DataStoreCreator,
+	type DataStoreKey,
 	type DataStoreKind,
+	type DataStoreRegistry,
 	lookupInRegistry,
 } from "@fluidframework/driver-definitions/internal";
 import type {
+	FluidDataStoreContextInternal,
 	IFluidDataStoreContext,
 	IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions/internal";
-import { DataStoreKindImplementation } from "@fluidframework/runtime-utils/internal";
+import {
+	convertRegistry,
+	DataStoreKindImplementation,
+} from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-
-import type {
-	ISharedObjectKind,
-	SharedObjectKey,
-	SharedObjectKindAlpha,
-} from "./sharedObject.js";
 import type { ISharedObject } from "./types.js";
 
 /**
- * This file provides the implementation of {@link @fluidframework/driver-definitions#DataStoreKind}
- * and is therefore a key part of the implementation of the {@link @fluidframework/driver-definitions#ServiceClient} API surface.
- *
- * Note that much of the API surface beyond {@link defineDataStore} could be removed/deduplicated
- * if the unification noted in the TODOs in {@link SharedObjectRegistry} is implemented.
- */
-
-/**
- * A {@link @fluidframework/driver-definitions#Registry} of shared object kinds that can be created or loaded within a data store.
- * @remarks
- * Supports lazy code loading in a limited way (a single lazy load per registry).
- * @privateRemarks
- * TODO: The framework provided SharedObjects should be exposed in a way indistinguishable from custom sub-data stores.
- * This can be done by unifying the DataStoreKind and SharedObjectKindAlpha types.
- * For now, this would mean having DataStoreKind extend SharedObjectKindAlpha, since we can allow a data store in all places SharedObjects are allowed,
- * but do not allow SharedObjects at the root.
- * Fixing this, and allowing shared objects at the root (maybe use a trivial wrapper data store) could simplify things, allowing data stores and Containers to share some types (like how they create detached contents, have registries, have a root etc).
- *
- * Part of this unification could be to relax the output from the factories / registries. Allowing the output to be an arbitrary type, which might be a promise, and might not be one could help.
- * Removal of the IFluidLoadable requirement, and allowing the returned type to expose handles to itself however it wants (or not at all) might be viable and simplify typing and allow for strongly typed handles at creation time at least).
- * Maybe when Registry(type) gives a promise, it could instead give a factory which outputs a promise wrapped type? The check that the provided creation key is valid for that factory can be deferred until the promise resolves.
- *
- * Idea: creation key can have an interface that subsets the factory / SharedObjectKindAlpha / DataStoreKind so they can be used, or some branded key (string, and/or object with stronger identity what knows the type string) can be used.
- * Have Key interface contain validation function to check that the factory used (or maybe the value produced from it) is valid for that key.
- * During load, validation would simply check the factory's type string matches the key's type string.
- * When using SharedObjectKindAlpha or DataStoreKind, validation can check factory object identity against key.
- *
- * Goal: Mostly unify container, data store and shared object abstractions.
- * Maybe unify a bit with service client since it also has a way to create detached things with an initialized root then attach them.
- * SharedObjects are just built in leaf data stores.
- *
- * @input
+ * Creates a registry from kinds or lazy getters for kinds.
+ * @param entries - Kinds, or type identifiers and their lazy loaders.
+ * @returns A registry that loads each lazy entry at most once.
  * @alpha
  */
-export type SharedObjectRegistry = () => Promise<
-	Registry<SharedObjectKindAlpha<IFluidLoadable>>
->;
-
-/**
- * Creates a {@link SharedObjectRegistry} from an iterable of {@link SharedObjectKindAlpha}s or async getters for them.
- * @alpha
- */
-export function sharedObjectRegistryFromIterable(
-	entries: Iterable<
-		| SharedObjectKindAlpha<IFluidLoadable>
-		| { type: string; kind: () => Promise<SharedObjectKindAlpha<IFluidLoadable>> }
-	>,
-): SharedObjectRegistry {
-	return async () => {
-		const map = new Map<string, SharedObjectKindAlpha<IFluidLoadable>>();
-		for (const entry of entries) {
-			if ("kind" in entry) {
-				map.set(entry.type, await entry.kind());
-			} else {
-				map.set(asSharedObjectKind(entry).getFactory().type, entry);
+export function dataStoreRegistryFromIterable(
+	entries: Iterable<DataStoreKind | { type: string; kind: () => Promise<DataStoreKind> }>,
+): DataStoreRegistry {
+	const map = new Map<string, () => Promise<DataStoreKind>>();
+	for (const entry of entries) {
+		if (map.has(entry.type)) {
+			throw new UsageError(`Duplicate data store type: ${entry.type}`);
+		}
+		/**
+		 * Shared in-flight promise, including rejection, so concurrent lookups cannot load different kinds.
+		 */
+		let loaded: Promise<DataStoreKind> | undefined;
+		map.set(
+			entry.type,
+			async () =>
+				(loaded ??=
+					"kind" in entry
+						? Promise.resolve().then(async () => entry.kind())
+						: Promise.resolve(entry)),
+		);
+	}
+	return async (type) => {
+		let resolvedType = type;
+		let load = map.get(type);
+		if (load === undefined) {
+			for (const candidate of legacySharedObjectTypeAliases(type)) {
+				const aliasLoad = map.get(candidate);
+				if (aliasLoad !== undefined) {
+					const aliasKind = await aliasLoad();
+					DataStoreKindImplementation.narrowGeneric(aliasKind);
+					// Historical URL aliases apply only to DDS factories, not application-defined composite types.
+					if (aliasKind.channelFactory !== undefined) {
+						resolvedType = candidate;
+						load = aliasLoad;
+						break;
+					}
+				}
 			}
 		}
-		return (type: string) => {
-			const entry = map.get(type);
-			if (entry === undefined) {
-				throw new UsageError(`Unknown shared object type: ${type}`);
-			}
-			return entry;
-		};
+		if (load === undefined) {
+			throw new UsageError(`Unknown data store type: ${type}`);
+		}
+		const kind = await load();
+		if (kind.type !== resolvedType) {
+			throw new UsageError(`Mismatched data store type. Expected: ${type}, got: ${kind.type}`);
+		}
+		return kind;
 	};
 }
 
 /**
- * Options which define how to construct a particular {@link @fluidframework/driver-definitions#DataStoreKind}.
- * @remarks
- * Use {@link defineDataStore} to create a {@link @fluidframework/driver-definitions#DataStoreKind} from these options.
+ * Defines a data store's initialization and application-facing view.
+ * @typeParam TRoot - The value exposed by the root kind.
+ * @typeParam TOutput - The value exposed by this data store.
  * @input
  * @alpha
  */
-export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutput> {
+export interface DataStoreOptions<in out TRoot, out TOutput> {
 	/**
-	 * The type identifier for the data object factory.
-	 * @remarks
-	 * Persisted identifier which specifies which {@link @fluidframework/driver-definitions#DataStoreKind} to use when loading it.
-	 * @privateRemarks
-	 * Equivalent to `DataObjectFactoryProps.type`.
+	 * Persisted identifier for this kind.
 	 */
 	readonly type: string;
 
 	/**
-	 * The registry of shared object kinds (including other data stores) that can be loaded or created within this data store.
-	 *
-	 * TODO: actually allow this to contain data stores.
+	 * The kinds that can be created or loaded within this data store.
 	 */
-	readonly registry: SharedObjectRegistry;
+	readonly registry: DataStoreRegistry;
 
 	/**
-	 * Create the initial content of the data store, and return the root shared object.
-	 * @privateRemarks
-	 * TODO:
-	 * This requires the caller to produce a single root shared object (which is keyed by {@link rootSharedObjectId}).
-	 * This should be fine for new code, but code migrated from legacy APIs might need more flexibility.
-	 * Such use-cases could be accommodated providing a legacy alternative to `defineDataStore` where `instantiateFirstTime` and `view` directly expose access to named root shared objects.
-	 * This should be easy to implement, but is currently not included.
+	 * Creates and initializes the root using `rootCreator`.
+	 * @param rootCreator - Creates exactly one root.
+	 * @param context - Creates additional contents.
+	 * @returns The value created by `rootCreator`.
 	 */
 	instantiateFirstTime(
-		rootCreator: SharedObjectCreator<TRoot>,
+		rootCreator: DataStoreCreator<TRoot>,
 		context: DataStoreContext,
 	): Promise<TRoot>;
 
 	/**
-	 * Construct a view of the data store's root shared object.
-	 *
-	 * @param root - The root shared object of the data store, created by `instantiateFirstTime` (though possibly created by another client and loaded by this one).
-	 * @param context - A {@link DataStoreContext} that can be used to create additional shared objects.
+	 * Constructs the application-facing value from the root.
+	 * Neither the root nor the returned value needs to expose a handle or implement IFluidLoadable.
+	 * @param root - The created or loaded root value.
+	 * @param context - Creates additional contents.
+	 * @returns The application-facing value.
 	 */
 	view(root: TRoot, context: DataStoreContext): Promise<TOutput>;
 }
 
 /**
- * Creates a {@link @fluidframework/driver-definitions#DataStoreKind} from {@link DataStoreOptions}.
+ * Defines a data store whose root and additional contents can be leaf or composite kinds.
+ * @remarks
+ * Nested data stores require an oldest supported client version of at least 3.12.0.
+ * Older targets support shared-object children using the existing DDS representation.
+ * Loading an existing DDS-based data store preserves its DDS children and operation format.
+ * The framework-version target does not check application readiness; applications must coordinate use of new capabilities.
+ * Nested data stores share the garbage-collection lifetime of their container-level ancestor.
+ * A reachable descendant retains its ancestors and their attached children.
+ * Use the legacy factory bridge for application-defined legacy layouts.
+ * @param options - Initialization, registry, and view definition.
+ * @returns The data store kind.
  * @alpha
  */
-export function defineDataStore<T, TRoot extends IFluidLoadable>(
+export function defineDataStore<T, TRoot>(
 	options: DataStoreOptions<TRoot, T>,
 ): DataStoreKind<T> {
 	return new DataStoreKindImplementation<T>({
 		type: options.type,
-		async instantiateDataStore(
-			context: IFluidDataStoreContext,
-			existing: boolean,
-		): Promise<IFluidDataStoreChannel> {
-			return createDataStore(context, existing, options);
+		IFluidDataStoreRegistry: convertRegistry(options.registry),
+		async instantiateDataStore(context, existing) {
+			// Select by runtime capability, not the document's version target.
+			// Native collections also preserve legacy DDS layouts and gate new capabilities separately.
+			const native =
+				(context as FluidDataStoreContextInternal).createChannelCollection !== undefined;
+			return native
+				? createNativeDataStore(context, existing, options)
+				: createLegacyLayoutDataStore(context, existing, options);
 		},
 	});
 }
 
-/**
- * Casts a {@link SharedObjectKindAlpha} to its encapsulated {@link ISharedObjectKind} view.
- *
- * @remarks
- * {@link SharedObjectKindAlpha} is a sealed type,
- * so we can assume it implements {@link ISharedObjectKind} and down cast to it.
- */
-function asSharedObjectKind<T extends IFluidLoadable>(
-	kind: SharedObjectKindAlpha<T>,
-): ISharedObjectKind<T> {
-	const candidate = kind as unknown as Partial<ISharedObjectKind<T>>;
-	// Sanity check to help catch misuse since SharedObjectKindAlpha is typed structurally and seems implementable.
-	if (typeof candidate.getFactory !== "function" || typeof candidate.create !== "function") {
-		throw new UsageError(
-			"Invalid SharedObjectKindAlpha: this type is sealed and may not have custom implementations.",
-		);
-	}
-	return candidate as ISharedObjectKind<T>;
-}
-
-function convertRegistry(
-	lookup: Registry<SharedObjectKindAlpha<IFluidLoadable>>,
-): ISharedObjectRegistry {
-	return {
-		get: (type: string) => {
-			const entry = lookup(type);
-			return asSharedObjectKind(entry).getFactory();
-		},
-	};
+async function lookupKind<T>(
+	registry: DataStoreRegistry,
+	key: DataStoreKey<T>,
+): Promise<DataStoreKindImplementation<T>> {
+	const kind = await lookupInRegistry(registry, key);
+	DataStoreKindImplementation.narrowGeneric(kind);
+	return kind;
 }
 
 /**
- * Data stores keep their shared objects inside channels which get names.
- * This is the name of the channel which we conventionally use for the root shared object of a data store in most cases.
- * @remarks
- * There can be other named channels, or the root could use a different name, but we are trying to migrate away from such patterns.
- * Currently the DataStoreKind pattern used in this file follows and requires this convention,
- * but we may relax that in the future for interop with legacy data if necessary.
+ * Persisted child name used by defineDataStore in both native and legacy layouts.
+ * The root is bound at creation; additional children attach when referenced.
+ * Application-selected root names belong to the legacy factory bridge, not this convention.
  */
-const rootSharedObjectId = "root";
+const rootId = "root";
 
-/**
- * Creates a data store channel.
- * @param context - The data store context.
- * @param existing - Whether the data store already exists. When true, this loads it, when false a new one is created.
- * @param options - The data store options.
- * @returns A promise that resolves to the created data store channel.
- * @remarks
- * Currently this is limited to data stores which have a single named channel,
- * which must have the {@link rootSharedObjectId} and is attached at creation time.
- * This limitation may be relaxed in the future.
- */
-async function createDataStore<T, TRoot extends IFluidLoadable>(
+async function createNativeDataStore<T, TRoot>(
 	context: IFluidDataStoreContext,
 	existing: boolean,
 	options: DataStoreOptions<TRoot, T>,
 ): Promise<IFluidDataStoreChannel> {
-	const sharedObjectRegistry = await options.registry();
-	const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
-		context,
-		convertRegistry(sharedObjectRegistry),
-		existing,
-		async (runtimeInner: IFluidDataStoreRuntime) => {
-			const innerContext: DataStoreContext = {
-				async createSharedObject<T2 extends IFluidLoadable>(
-					key: SharedObjectKey<T2>,
-				): Promise<T2> {
-					const kind = lookupInRegistry(sharedObjectRegistry, key);
-					// Create detached channel.
-					return asSharedObjectKind(kind).create(runtimeInner);
-				},
-			};
-
-			let createdRoot: TRoot | undefined;
-
-			const rootCreator: SharedObjectCreator<TRoot> = {
-				async createSharedObject<T2 extends TRoot>(key: SharedObjectKey<T2>): Promise<T2> {
-					// Create named channel under the root id.
-					// Error if called twice.
-					if (createdRoot !== undefined) {
-						throw new UsageError("Root shared object already created");
-					}
-					const kind = lookupInRegistry(sharedObjectRegistry, key);
-					const result = asSharedObjectKind(kind).create(runtimeInner, rootSharedObjectId);
-
-					// Every shared object is also an ISharedObject;
-					const rootSharedObject = result as IFluidLoadable as ISharedObject;
-					// bind the newly created root so it becomes part of this data store.
-					rootSharedObject.bindToContext();
-
-					createdRoot = result;
-					return result;
-				},
-			};
-
-			let root: TRoot | undefined;
-			if (existing) {
-				// getChannel returns the type-erased IChannel; the registered root kind guarantees it is a TRoot.
-				root = (await runtimeInner.getChannel(rootSharedObjectId)) as IFluidLoadable as TRoot;
-			} else {
-				root = await options.instantiateFirstTime(rootCreator, innerContext);
-				if (root !== createdRoot) {
-					throw new UsageError(
-						"instantiateFirstTime did not return root created with rootCreator",
-					);
-				}
-			}
-
-			// view returns the data store's output type; the runtime only needs it as an opaque FluidObject entry point.
-			return (await options.view(root, innerContext)) as unknown as FluidObject;
-		},
-	);
-
-	return runtime;
+	const native = context as FluidDataStoreContextInternal;
+	if (native.createChannelCollection === undefined) {
+		throw new UsageError("This runtime does not support native channel collections");
+	}
+	return native.createChannelCollection(async (collection) => {
+		const inner: DataStoreContext = {
+			async createDataStore<TChild>(key: DataStoreKey<TChild>): Promise<TChild> {
+				const kind = await lookupKind(options.registry, key);
+				const store = await collection.createDataStore(kind.IFluidDataStoreFactory);
+				// The key validates the kind's output type; the runtime entry point erases it.
+				return (await store.entryPoint.get()) as TChild;
+			},
+		};
+		let root: TRoot;
+		if (existing) {
+			const handle = await collection.getDataStoreEntryPoint(rootId);
+			// Loading erases the root type; the application's registered root kind must still produce TRoot.
+			root = (await handle.get()) as TRoot;
+		} else {
+			root = await initializeRoot(options, inner, async (key) => {
+				const kind = await lookupKind(options.registry, key);
+				const store = await collection.createDataStore(kind.IFluidDataStoreFactory, rootId);
+				// Bind the channel identity, not its application value, which need not expose a handle.
+				collection.bind(store.entryPoint);
+				return (await store.entryPoint.get()) as TRoot;
+			});
+		}
+		// The runtime treats the view as an opaque entry point; it need not implement FluidObject.
+		return (await options.view(root, inner)) as FluidObject;
+	});
 }
 
-/**
- * Creates instances of SharedObjectKinds.
- * @privateRemarks
- * See IFluidContainer.create.
- * @sealed
- * @alpha
- */
-export interface SharedObjectCreator<TConstraint = IFluidLoadable> {
+async function initializeRoot<T, TRoot>(
+	options: DataStoreOptions<TRoot, T>,
+	context: DataStoreContext,
+	create: (key: DataStoreKey<TRoot>) => Promise<TRoot>,
+): Promise<TRoot> {
+	let started = false;
 	/**
-	 * Create an instance of `kind`, which must be registered in the registry of the surrounding data store.
+	 * Records completion separately from the value, since a completed creation may expose undefined.
 	 */
-	createSharedObject<T extends TConstraint>(kind: SharedObjectKey<T>): Promise<T>;
+	let created: { value: TRoot } | undefined;
+	const root = await options.instantiateFirstTime(
+		{
+			async createDataStore<TChild extends TRoot>(key: DataStoreKey<TChild>): Promise<TChild> {
+				if (started) {
+					throw new UsageError("Root already created");
+				}
+				// Reserve the root before awaiting factory loading to reject concurrent creation attempts.
+				started = true;
+				const value = await create(key);
+				created = { value };
+				return value as TChild;
+			},
+		},
+		context,
+	);
+	// Roots can be primitives: Object.is accepts NaN while distinguishing positive and negative zero.
+	if (created === undefined || !Object.is(root, created.value)) {
+		throw new UsageError(
+			"instantiateFirstTime did not return the root created with rootCreator",
+		);
+	}
+	return root;
+}
+
+async function createLegacyLayoutDataStore<T, TRoot>(
+	context: IFluidDataStoreContext,
+	existing: boolean,
+	options: DataStoreOptions<TRoot, T>,
+): Promise<IFluidDataStoreChannel> {
+	const factories = new Map<string, IChannelFactory>();
+	function registerFactory(kind: DataStoreKindImplementation<unknown>): IChannelFactory {
+		const factory = kind.channelFactory;
+		if (factory === undefined) {
+			throw new UsageError(
+				"Nested data stores require a native collection and oldestSupportedClient >= 3.12.0",
+			);
+		}
+		factories.set(kind.type, factory);
+		return factory;
+	}
+	async function loadFactory(type: string): Promise<IChannelFactory> {
+		const cached = factories.get(type);
+		if (cached !== undefined) {
+			return cached;
+		}
+		const kind = await options.registry(type);
+		DataStoreKindImplementation.narrowGeneric(kind);
+		return registerFactory(kind);
+	}
+	const registry: ISharedObjectRegistryInternal = {
+		get: (type) => factories.get(type),
+		getAsync: loadFactory,
+	};
+	return new FluidDataStoreRuntime(context, registry, existing, async (runtime) => {
+		async function create<TChild>(key: DataStoreKey<TChild>, id?: string): Promise<TChild> {
+			const kind = await lookupKind(options.registry, key);
+			// Resolve lazy kinds before entering the legacy runtime's synchronous factory lookup.
+			registerFactory(kind);
+			const channel = runtime.createChannel(id, kind.type);
+			// Named roots must be bound through the shared object so its own state stays in sync.
+			if (id !== undefined) {
+				const rootChannel = channel as ISharedObject;
+				if (typeof rootChannel.bindToContext !== "function") {
+					throw new UsageError("The root shared object does not support binding");
+				}
+				rootChannel.bindToContext();
+			}
+			return channel as TChild;
+		}
+		const inner: DataStoreContext = { createDataStore: create };
+		// As in the native path, the registered root kind supplies the type erased by channel loading.
+		const root = existing
+			? ((await runtime.getChannel(rootId)) as TRoot)
+			: await initializeRoot(options, inner, async (key) => create(key, rootId));
+		// The runtime only needs the application view as an opaque entry point.
+		return (await options.view(root, inner)) as FluidObject;
+	});
 }
 
 /**
- * Contextual information about a data store which is provided when instantiating or loading it.
- * @privateRemarks
- * TODO: this can expose more contextual information about the data store as needed.
+ * Context provided when creating or loading a data store.
+ * Creates physically nested contents, not container-level peers selected through a hierarchical factory registry.
  * @sealed
  * @alpha
  */
-export interface DataStoreContext extends SharedObjectCreator {}
+export interface DataStoreContext extends DataStoreCreator {}

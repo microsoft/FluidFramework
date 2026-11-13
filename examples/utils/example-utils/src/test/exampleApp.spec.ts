@@ -4,6 +4,10 @@
  */
 
 import { strict as assert } from "node:assert";
+import { mock } from "node:test";
+
+// eslint-disable-next-line import-x/no-internal-modules -- These are the types consumed by the example helper.
+import type { DataStoreKind } from "@fluidframework/driver-definitions/internal";
 
 import {
 	cleanupEphemeralService,
@@ -21,6 +25,7 @@ import {
 	ExampleErrorView,
 	ExampleLoadingView,
 	getExampleServiceClient,
+	createOrLoadExampleContainer,
 } from "../exampleApp.js";
 
 describe("example startup views", () => {
@@ -28,6 +33,88 @@ describe("example startup views", () => {
 
 	beforeEach(() => {
 		originalLocation = Object.getOwnPropertyDescriptor(globalThis, "location");
+	});
+
+	describe("createOrLoadExampleContainer initialization", () => {
+		// Factory calls are mocked; this key is only used to verify forwarding.
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- The mocked client does not instantiate this nominal key.
+		const kind = {} as DataStoreKind<{ initialized: boolean }>;
+
+		beforeEach(() => {
+			Object.defineProperty(globalThis, "location", {
+				configurable: true,
+				value: new URL("http://localhost/?fluidClient=ephemeral"),
+			});
+		});
+
+		afterEach(async () => {
+			mock.restoreAll();
+			await cleanupEphemeralService();
+		});
+
+		it("awaits initialization before attachment and publishing the document ID", async () => {
+			const client = getExampleServiceClient();
+			const data = { initialized: false };
+			const attached = { id: "created", data };
+			const calls: string[] = [];
+			mock.method(client, "createContainer", async (root) => {
+				assert.equal(root, kind);
+				return {
+					data,
+					close: () => assert.fail("Successful initialization should not close the container"),
+					attach: async () => {
+						assert(data.initialized);
+						calls.push("attach");
+						return attached;
+					},
+				};
+			});
+			const result = await createOrLoadExampleContainer(client, kind, async (root) => {
+				await Promise.resolve();
+				assert.equal(location.hash, "");
+				root.initialized = true;
+				calls.push("initialize");
+			});
+			assert.equal(result, attached);
+			assert.deepEqual(calls, ["initialize", "attach"]);
+			assert.equal(location.hash, "#created");
+		});
+
+		it("does not initialize a loaded document", async () => {
+			location.hash = "existing";
+			const client = getExampleServiceClient();
+			const loaded = { id: "existing", data: { initialized: true } };
+			mock.method(client, "loadContainer", async (id, root) => {
+				assert.equal(id, "existing");
+				assert.equal(root, kind);
+				return loaded;
+			});
+			const result = await createOrLoadExampleContainer(client, kind, () =>
+				assert.fail("Loading must not initialize the tree again"),
+			);
+			assert.equal(result, loaded);
+		});
+
+		it("closes a failed initialization without attaching or publishing its ID", async () => {
+			const client = getExampleServiceClient();
+			const error = new Error("Initialization failed");
+			let closed = false;
+			mock.method(client, "createContainer", async () => ({
+				data: { initialized: false },
+				close: () => {
+					closed = true;
+				},
+				attach: async () => assert.fail("Failed initialization must not attach"),
+			}));
+			await assert.rejects(
+				createOrLoadExampleContainer(client, kind, async () => {
+					throw error;
+				}),
+				(failure) => failure === error,
+			);
+			assert(closed);
+			assert.equal(location.hash, "");
+		});
 	});
 
 	afterEach(() => {

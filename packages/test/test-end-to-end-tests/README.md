@@ -47,6 +47,31 @@ _"`SharedMap` import from `@fluidframework/map/internal` is restricted from bein
 
 For a worked example of an entire test file written this way, see [`sharedStringEndToEndTests.spec.ts`](src/test/sharedStringEndToEndTests.spec.ts). That same [directory](src/test) contains more complex examples too.
 
+### Testing API and document-layout migrations
+
+Mixed-API tests using current packages do not establish compatibility with older framework versions.
+Record the writer and reader APIs, framework versions, factory identifiers, root-selection convention, and configured compatibility target in the fixture.
+Keep application feature rollout separate from framework-version checks.
+
+Exercise edits in both directions, summaries produced by both implementations, and legacy content created after the new implementation joins.
+Loading a historical snapshot alone does not establish live collaboration.
+Assert stable handle paths and meaningful summary structure, not byte-identical serialization.
+For garbage-collection changes, test tombstone and sweep behavior as well as the graph returned by the runtime.
+
+The [channel collection compatibility suite](src/test/channelCollectionCompat.spec.ts) exercises legacy DDS collections and native collections using the cross-client framework checkpoints.
+After building the tests, run it against the local driver from this package:
+
+```sh
+MOCHA_SPEC=lib/test/channelCollectionCompat.spec.js npm run test:realsvc:local -- --compatVersion=CROSS_CLIENT
+```
+
+The [native collection suite](src/test/nativeChannelCollections.spec.ts) covers native nesting, signal isolation, rejected operations, and aggregate tombstone/sweep lifetimes.
+Run it with `--compatVersion=0`; its GC lifecycle tests require the local driver.
+Also run the native leaf, native collection, incremental-summary, and legacy bridge suites against Tinylicious.
+The local driver can hide missing post-load synchronization because operations arrive faster.
+Synchronize newly loaded clients before inspecting state created by another client.
+These suites disable automatic summarizers on interactive clients and enable only the dedicated summarizers used by summary tests.
+
 ### Writing Tests That Take Summaries
 
 Many e2e tests need to drive **summaries** on demand — configuring interactive containers so they don't summarize on their own, spinning up a dedicated summarizer, taking summaries at controlled points, and loading new containers or summarizers from a specific summary. Doing this incorrectly is a common source of flaky tests.

@@ -96,14 +96,10 @@ export * from "@fluidframework/tree/alpha";
 // These are alpha APIs, but this package doesn't have an alpha entry point so they are imported from "internal".
 export {
 	defineDataStore,
-	sharedObjectRegistryFromIterable,
+	dataStoreRegistryFromIterable,
 } from "@fluidframework/shared-object-base/internal";
 export type {
 	DataStoreOptions,
-	SharedObjectCreator,
-	SharedObjectRegistry,
-	SharedObjectKey,
-	SharedObjectKindAlpha,
 	DataStoreContext,
 } from "@fluidframework/shared-object-base/internal";
 export type {
@@ -130,7 +126,7 @@ export {
 } from "@fluidframework/driver-definitions/internal";
 
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
-import type { SharedObjectKindAlpha } from "@fluidframework/shared-object-base/internal";
+import type { DataStoreKind } from "@fluidframework/driver-definitions/internal";
 import type { ITree } from "@fluidframework/tree";
 import {
 	SharedTree as OriginalSharedTree,
@@ -175,9 +171,7 @@ export const SharedTree: SharedObjectKind<ITree> = OriginalSharedTree;
  * ```
  * @alpha
  */
-export function configuredSharedTree(
-	options: SharedTreeOptions,
-): SharedObjectKindAlpha<ITree> {
+export function configuredSharedTree(options: SharedTreeOptions): DataStoreKind<ITree> {
 	return originalConfiguredSharedTree(options);
 }
 

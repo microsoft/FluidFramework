@@ -5,7 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { makeStubDataStoreKind } from "@fluidframework/shared-object-base/internal";
+import {
+	defineDataStore,
+	makeStubDataStoreKind,
+} from "@fluidframework/shared-object-base/internal";
 
 import {
 	cleanupEphemeralService,
@@ -51,6 +54,48 @@ describe("EphemeralService", () => {
 	});
 
 	describe("LocalServiceClient", () => {
+		for (const phase of ["create", "load"] as const) {
+			it(`releases resources when its entry point fails during ${phase}`, async () => {
+				const events: string[] = [];
+				const service = newService();
+				const client = service.newClient({
+					oldestSupportedClient: "3.12.0",
+					logger: { send: (event) => events.push(event.eventName) },
+				});
+				const error = new Error("Application view failed");
+				let fail = phase === "create";
+				const kind = defineDataStore({
+					type: "failing-entry-point",
+					registry: async () => stubFactory,
+					instantiateFirstTime: async (creator) => creator.createDataStore(stubFactory),
+					async view(root) {
+						if (fail) throw error;
+						return root;
+					},
+				});
+				let id: string | undefined;
+				if (phase === "load") {
+					const container = await client.createAttachedContainer(kind);
+					id = container.id;
+					await service.synchronize();
+					fail = true;
+				}
+				events.length = 0;
+				await assert.rejects(
+					id === undefined ? client.createContainer(kind) : client.loadContainer(id, kind),
+					phase === "load" ? (failure) => failure === error : /Application view failed/,
+				);
+				assert.equal(
+					events.filter(
+						(event) =>
+							event ===
+							`fluid:telemetry:Container:Container${phase === "load" ? "Close" : "Dispose"}`,
+					).length,
+					1,
+				);
+			});
+		}
+
 		it("forwards telemetry from created and loaded containers to the configured logger", async () => {
 			const events: string[] = [];
 			const client = newService().newClient({

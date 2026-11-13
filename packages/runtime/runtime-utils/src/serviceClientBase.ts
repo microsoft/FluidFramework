@@ -8,12 +8,13 @@ import { AttachState, type IContainer } from "@fluidframework/container-definiti
 import type { IRequest } from "@fluidframework/core-interfaces";
 import { ErasedTypeImplementation } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
 	type DataStoreKey,
 	type DataStoreKind,
+	type DataStoreRegistry,
 	type FluidContainerAttached,
 	type FluidContainerWithService,
-	type Registry,
 	lookupInRegistry,
 } from "@fluidframework/driver-definitions/internal";
 import type {
@@ -21,6 +22,8 @@ import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
+	IFluidDataStoreRegistry,
+	FluidDataStoreContextInternal,
 } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -67,8 +70,13 @@ export class DataStoreKindImplementation<T>
 	public constructor(
 		private readonly factory: Pick<
 			DataStoreKindImplementation<T>,
-			"type" | "instantiateDataStore" | "createDataStore"
-		>,
+			"type" | "createDataStore"
+		> &
+			Partial<Pick<IFluidDataStoreFactory, "instantiateDataStore">> &
+			Partial<Pick<IFluidDataStoreFactory, "IFluidDataStoreFactory">> & {
+				readonly IFluidDataStoreRegistry?: IFluidDataStoreRegistry | undefined;
+				readonly channelFactory?: IChannelFactory;
+			},
 	) {
 		super();
 		this.type = factory.type;
@@ -81,11 +89,34 @@ export class DataStoreKindImplementation<T>
 		context: IFluidDataStoreContext,
 		existing: boolean,
 	): Promise<IFluidDataStoreChannel> {
+		if (this.factory.channelFactory !== undefined) {
+			const native: FluidDataStoreContextInternal = context as FluidDataStoreContextInternal;
+			if (native.createLeafChannel === undefined) {
+				throw new UsageError("This runtime does not support native leaf hosting");
+			}
+			return native.createLeafChannel(this, existing);
+		}
+		if (this.factory.instantiateDataStore === undefined) {
+			throw new UsageError("The data-store kind has no factory");
+		}
 		return this.factory.instantiateDataStore(context, existing);
 	}
 
 	public get IFluidDataStoreFactory(): IFluidDataStoreFactory {
-		return this;
+		// Legacy creation must see the original factory identity and receiver, not the kind wrapper.
+		return this.factory.IFluidDataStoreFactory ?? this;
+	}
+
+	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined {
+		return this.factory.IFluidDataStoreRegistry;
+	}
+
+	public get channelFactory(): IChannelFactory | undefined {
+		return this.factory.channelFactory;
+	}
+
+	public get isLeafChannel(): boolean {
+		return this.channelFactory !== undefined;
 	}
 
 	public async adapt(value: Promise<DataStoreKind>): Promise<DataStoreKind<T>> {
@@ -100,6 +131,39 @@ export class DataStoreKindImplementation<T>
 			`Mismatched DataStoreKind type. Expected: ${this.type}, got: ${input.type}`,
 		);
 	}
+}
+
+const legacyKinds = new WeakMap<IFluidDataStoreFactory, DataStoreKind>();
+
+/**
+ * Uses a legacy data-store factory as a kind in the alpha ServiceClient APIs.
+ * @remarks
+ * This preserves the factory, its entry point, child registry, and persisted representation.
+ * It does not create an additional data store or adapt the entry-point value.
+ * Repeated calls with the same factory return the same kind.
+ *
+ * The caller must ensure that the factory's entry point is a `T`.
+ * Legacy factories do not encode that type, so this function cannot check it.
+ * Register the returned kind wherever the new APIs need the factory.
+ * Existing legacy registries can continue to register the original factory.
+ *
+ * This does not change the container's root-discovery convention.
+ * @typeParam T - The entry-point type produced by the legacy factory.
+ * @param factory - The existing data-store factory.
+ * @returns The kind for the factory, with the caller-specified entry-point type.
+ * @legacy
+ * @alpha
+ */
+export function dataStoreKindFromFactory<T = unknown>(
+	factory: IFluidDataStoreFactory,
+): DataStoreKind<T> {
+	let kind = legacyKinds.get(factory);
+	if (kind === undefined) {
+		kind = new DataStoreKindImplementation(factory);
+		legacyKinds.set(factory, kind);
+	}
+	// Legacy factories erase their entry-point type; the caller supplies it at this boundary.
+	return kind as DataStoreKind<T>;
 }
 
 /**
@@ -121,7 +185,7 @@ export abstract class ServiceContainerBase<TData, TOptions = unknown>
 	private startedAttach = false;
 
 	protected constructor(
-		public readonly registry: Registry<Promise<DataStoreKind<TData>>>,
+		public readonly registry: DataStoreRegistry,
 		public readonly options: TOptions,
 		public readonly container: IContainer,
 		public readonly data: TData,
@@ -228,6 +292,53 @@ export abstract class ServiceContainerBase<TData, TOptions = unknown>
 		// The data store's entry point type is erased at the registry boundary;
 		// the DataStoreKind<T> used to create it guarantees the entry point is a T.
 		return entryPoint as T;
+	}
+}
+
+/**
+ * Exposes an attached legacy container through the alpha container API.
+ * @remarks
+ * Resolve the application's root using its existing legacy APIs and pass that value as `data`.
+ * No root alias, named channel, handle, or document content is changed.
+ * Register the same factories in `registry` and the existing container runtime before using
+ * {@link @fluidframework/driver-definitions#DataStoreCreator.createDataStore}.
+ * Closing the returned container closes the original container.
+ * The caller supplies the ID used to reopen the document with its service.
+ * This need not equal `container.resolvedUrl.id`: for example, ODSP uses an item ID
+ * to reopen a document, while its resolved URL ID is a hash.
+ * @param container - The attached legacy container.
+ * @param data - The application-facing root value selected using legacy APIs.
+ * @param registry - Kinds whose factories are registered in the existing runtime.
+ * @param id - The service-facing ID used to reopen this document.
+ * @returns An alpha view of the same attached container.
+ * @throws If the container is not attached.
+ * @legacy
+ * @alpha
+ */
+export function fluidContainerFromLegacy<T>(
+	container: IContainer,
+	data: T,
+	registry: DataStoreRegistry,
+	id: string,
+): FluidContainerAttached<T> {
+	if (container.attachState !== AttachState.Attached) {
+		throw new UsageError("The legacy container must be attached");
+	}
+	return new LegacyServiceContainer(registry, container, data, id);
+}
+
+class LegacyServiceContainer<T> extends ServiceContainerBase<T> {
+	public constructor(
+		registry: DataStoreRegistry,
+		container: IContainer,
+		data: T,
+		public override readonly id: string,
+	) {
+		super(registry, undefined, container, data, id);
+	}
+
+	protected createAttachRequest(): IRequest {
+		throw new UsageError("The legacy container is already attached");
 	}
 }
 
