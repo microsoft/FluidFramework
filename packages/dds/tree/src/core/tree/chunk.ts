@@ -91,9 +91,8 @@ export function tryGetChunk(cursor: ITreeCursor): undefined | TreeChunk {
 }
 
 /**
- * Cursor for a chunk which can be wrapped by another cursor.
- *
- * @remarks See `BasicChunkCursor` which uses this.
+ * Complete synchronous tree cursor with chunk-boundary information and optional access to underlying chunk storage.
+ * Provides navigation over the logical tree, including descendants stored in separate child chunks.
  */
 export interface ChunkedCursor extends ITreeCursorSynchronous, WithChunk {
 	/**

@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import {
 	BenchmarkMode,
 	BenchmarkType,
 	benchmarkDurationBatchless,
+	benchmarkDuration,
 	benchmarkIt,
 	benchmarkMemoryUse,
 	currentBenchmarkMode,
@@ -15,6 +18,7 @@ import {
 	type CollectedData,
 } from "@fluid-tools/benchmark";
 
+import { FluidClientVersion } from "../../../codec/index.js";
 import type {
 	FieldKey,
 	IForestSubscription,
@@ -22,6 +26,11 @@ import type {
 	TreeNodeSchemaIdentifier,
 	TreeValue,
 } from "../../../core/index.js";
+import { EmptyKey } from "../../../core/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
 import {
 	coalesceUniformChunks,
 	type ChunkPolicy,
@@ -35,6 +44,8 @@ import {
 import {
 	ForestTypeOptimized,
 	createIndependentTreeAlpha,
+	TreeAlpha,
+	TreeBeta,
 } from "../../../shared-tree/index.js";
 import {
 	SchemaFactory,
@@ -282,6 +293,97 @@ function typeIntoChunkedDocument(size: number): IForestSubscription {
 const objectSchemaFactory = new SchemaFactory("bench.chunkedForestCoalescing");
 class Row extends objectSchemaFactory.object("Row", { v: objectSchemaFactory.number }) {}
 class ObjectArray extends objectSchemaFactory.array("ObjectArray", Row) {}
+class OptionalRow extends objectSchemaFactory.object("OptionalRow", {
+	v: objectSchemaFactory.number,
+	label: objectSchemaFactory.optional(objectSchemaFactory.string),
+}) {}
+class OptionalRows extends objectSchemaFactory.array("OptionalRows", OptionalRow) {}
+class NestedRow extends objectSchemaFactory.object("NestedRow", {
+	v: objectSchemaFactory.number,
+	children: objectSchemaFactory.array(objectSchemaFactory.number),
+}) {}
+class NestedRows extends objectSchemaFactory.array("NestedRows", NestedRow) {}
+
+/**
+ * Public-API read workloads using normal optimized-forest policies.
+ * Optional fields and nested arrays prevent uniform object chunking; fixed-shape rows provide a control.
+ */
+const applicationReadFixtures = [
+	{
+		name: "fixed-shape rows",
+		create: (size: number) => {
+			const view = createIndependentTreeAlpha({ forest: ForestTypeOptimized }).viewWith(
+				new TreeViewConfiguration({ schema: ObjectArray }),
+			);
+			const content = Array.from({ length: size }, (_, v) => ({ v }));
+			view.initialize(content);
+			const root = view.root;
+			return {
+				root,
+				content,
+				expectedSum: (size * (size - 1)) / 2,
+				scan: () => {
+					let sum = 0;
+					for (const row of root) {
+						sum += row.v;
+					}
+					return sum;
+				},
+			};
+		},
+	},
+	{
+		name: "optional-field rows",
+		create: (size: number) => {
+			const view = createIndependentTreeAlpha({ forest: ForestTypeOptimized }).viewWith(
+				new TreeViewConfiguration({ schema: OptionalRows }),
+			);
+			const content = Array.from({ length: size }, (_, v) =>
+				v % 2 === 0 ? { v, label: "even" } : { v },
+			);
+			view.initialize(content);
+			const root = view.root;
+			return {
+				root,
+				content,
+				expectedSum: (size * (size - 1)) / 2,
+				scan: () => {
+					let sum = 0;
+					for (const row of root) {
+						sum += row.v;
+					}
+					return sum;
+				},
+			};
+		},
+	},
+	{
+		name: "nested-array rows",
+		create: (size: number) => {
+			const view = createIndependentTreeAlpha({ forest: ForestTypeOptimized }).viewWith(
+				new TreeViewConfiguration({ schema: NestedRows }),
+			);
+			const content = Array.from({ length: size }, (_, v) => ({ v, children: [0, 1, 2, 3] }));
+			view.initialize(content);
+			const root = view.root;
+			return {
+				root,
+				content,
+				expectedSum: (size * (size - 1)) / 2 + size * 6,
+				scan: () => {
+					let sum = 0;
+					for (const row of root) {
+						sum += row.v;
+						for (const child of row.children) {
+							sum += child;
+						}
+					}
+					return sum;
+				},
+			};
+		},
+	},
+];
 
 /** Builds a chunked-forest array of `size` identical {@link Row} objects. */
 function buildObjectArray(size: number): { root: ObjectArray; forest: IForestSubscription } {
@@ -302,6 +404,153 @@ describe("chunked-forest coalescing benchmarks", () => {
 	const fragmentCounts = performanceMode ? [100, 1000] : [100];
 	const arraySizes = performanceMode ? [100, 1000] : [100];
 	const maxBenchmarkDurationSeconds = 5;
+
+	describe("Application read traversal", () => {
+		for (const { name, create } of applicationReadFixtures) {
+			for (const size of performanceMode ? [1000, 10000] : [10]) {
+				for (const warm of [false, true]) {
+					for (const operation of [
+						"iterate",
+						"export concise",
+						"export compressed",
+					] as const) {
+						benchmarkIt({
+							title: `${name}, ${size} rows, ${warm ? "repeated" : "first"} ${operation}`,
+							...benchmarkDurationBatchless({
+								benchmarkFn: (state) => {
+									const run = (fixture: ReturnType<typeof create>): unknown => {
+										switch (operation) {
+											case "iterate": {
+												return fixture.scan();
+											}
+											case "export concise": {
+												return TreeBeta.exportConcise(fixture.root);
+											}
+											case "export compressed": {
+												return TreeAlpha.exportCompressed(fixture.root, {
+													minVersionForCollab: FluidClientVersion.v2_0,
+												});
+											}
+											default: {
+												throw new Error("Unexpected read benchmark operation");
+											}
+										}
+									};
+									const reused = warm ? create(size) : undefined;
+									if (reused !== undefined) {
+										run(reused);
+									}
+									let running: boolean;
+									do {
+										const fixture = reused ?? create(size);
+										let result: unknown;
+										running = state.time(() => {
+											result = run(fixture);
+										});
+										if (operation === "iterate") {
+											assert.equal(result, fixture.expectedSum);
+										} else if (operation === "export concise") {
+											assert.deepEqual(result, fixture.content);
+										} else {
+											assert(result !== undefined);
+										}
+									} while (running);
+								},
+								maxBenchmarkDurationSeconds: 3,
+								minSampleCount: 12,
+							}),
+						});
+					}
+				}
+			}
+		}
+	});
+
+	describe("Sequence traversal depth", () => {
+		for (const depth of [0, 4, 8, 64]) {
+			let chunk: TreeChunk = new UniformChunk(
+				shallowShape.withTopLevelLength(100),
+				Array.from({ length: 100 }, (_, index) => index),
+			);
+			for (let layer = 0; layer < depth; layer++) {
+				chunk = new SequenceChunk([chunk]);
+			}
+			benchmarkIt({
+				title: `read current value, sequence depth ${depth}`,
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						const cursor = chunk.cursor();
+						cursor.enterNode(50);
+						state.timeAllBatches(() => {
+							assert.equal(cursor.value, 50);
+						});
+					},
+					maxBenchmarkDurationSeconds,
+				}),
+			});
+			benchmarkIt({
+				title: `scan 100 nodes, sequence depth ${depth}`,
+				...benchmarkDuration({
+					benchmarkFn: () => {
+						const reader = chunk.cursor();
+						let sum = 0;
+						for (let present = reader.firstNode(); present; present = reader.nextNode()) {
+							sum += reader.value as number;
+						}
+						assert.equal(sum, 4950);
+					},
+					maxBenchmarkDurationSeconds,
+				}),
+			});
+		}
+	});
+
+	describe("Basic chunk traversal", () => {
+		const children = Array.from(
+			{ length: 100 },
+			(_, index) => new BasicChunk(shallowShape.type, new Map(), index),
+		);
+		const flat = new BasicChunk(brand("parent"), new Map([[EmptyKey, children]]));
+		let deep = new BasicChunk(shallowShape.type, new Map(), 99);
+		for (let depth = 0; depth < 100; depth++) {
+			deep = new BasicChunk(brand("parent"), new Map([[EmptyKey, [deep]]]));
+		}
+		benchmarkIt({
+			title: "scan 100 BasicChunk siblings",
+			...benchmarkDuration({
+				benchmarkFn: () => {
+					const cursor = flat.cursor();
+					cursor.enterNode(0);
+					cursor.enterField(EmptyKey);
+					let sum = 0;
+					for (let present = cursor.firstNode(); present; present = cursor.nextNode()) {
+						sum += cursor.value as number;
+					}
+					assert.equal(sum, 4950);
+				},
+				maxBenchmarkDurationSeconds,
+			}),
+		});
+		benchmarkIt({
+			title: "descend and ascend 100 BasicChunk nodes",
+			...benchmarkDuration({
+				benchmarkFn: () => {
+					const cursor = deep.cursor();
+					cursor.enterNode(0);
+					for (let depth = 0; depth < 100; depth++) {
+						cursor.enterField(EmptyKey);
+						cursor.enterNode(0);
+					}
+					assert.equal(cursor.value, 99);
+					for (let depth = 0; depth < 100; depth++) {
+						cursor.exitNode();
+						cursor.exitField();
+					}
+				},
+				maxBenchmarkDurationSeconds,
+			}),
+		});
+	});
 
 	// After typing N characters through the real editor, coalescing keeps the field batched into few
 	// multi-node UniformChunks (~N/10) instead of one single-node chunk per character (~N).
