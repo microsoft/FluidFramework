@@ -32,6 +32,6 @@ const registry = async (type: string) => {
 	}
 	return kind;
 };
-const view = fluidContainerFromLegacy(container, root, registry, reloadId);
-const newDataStore = await view.createDataStore(kind);
+const container = fluidContainerFromLegacy(legacyContainer, root, registry, reloadId);
+const newDataStore = await container.createDataStore(kind);
 ```

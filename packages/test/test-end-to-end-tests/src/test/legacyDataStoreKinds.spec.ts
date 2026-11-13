@@ -82,6 +82,8 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 				new Map([[mapFactory.type, mapFactory]]),
 				existing,
 				async (inner) => {
+					// The entry point is a named channel, not a separate hosting object.
+					// Its name must survive creation and loading through either API.
 					const map = existing
 						? await inner.getChannel("application-selected-root")
 						: SharedMap.create(inner, "application-selected-root");
@@ -89,6 +91,7 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 					if (!existing) {
 						map.bindToContext();
 					}
+					// Keep test-only access to the internals without changing the map's entry-point shape.
 					contexts.set(map, context);
 					runtimes.set(map, runtime);
 					return map;
@@ -111,6 +114,7 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 			runtimeOptions: {
 				summaryOptions: {
 					summaryConfigOverrides: {
+						// Summary tests trigger summaries explicitly; other tests need no summarizer.
 						state: summarizer ? "disableHeuristics" : "disabled",
 						initialSummarizerDelayMs: 0,
 						maxAckWaitTime: 20000,
@@ -174,6 +178,7 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 					},
 				});
 				if (!parameters.existing) {
+					// Match ServiceClient's root convention without changing existing documents.
 					assert(parameters.newContainerRootType !== undefined);
 					const store = await runtime.createDataStore(parameters.newContainerRootType);
 					assert.equal(await store.trySetAlias("root"), "Success");
@@ -208,6 +213,7 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 			_options: undefined,
 			root: DataStoreKind<T>,
 		): Promise<FluidContainerWithService<T>> {
+			// Use the test provider for service-specific loading while exercising the shared client logic.
 			const container = await provider.createDetachedContainer(
 				await alphaFactory(registryKinds, root),
 			);
@@ -241,6 +247,7 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 	});
 
 	it("adopts an attached legacy container with an application-selected root alias", async () => {
+		// Bypass ServiceClient's "root" lookup: adoption receives the root resolved by legacy code.
 		const containerFactory = new LegacyCreatingFactory("application-root");
 		const container = await provider.createContainer(containerFactory);
 		const legacy = (await container.getEntryPoint()) as ISharedMap;
@@ -269,6 +276,7 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		const alpha = await client.loadContainer(provider.documentId, kind);
 		await provider.ensureSynchronized();
 		assert.equal(alpha.data.get("value"), 1);
+		// Equal contents alone would not detect a copied root at a different handle path.
 		assert.equal(
 			toFluidHandleInternal(alpha.data.handle).absolutePath,
 			toFluidHandleInternal(legacy.handle).absolutePath,
@@ -301,6 +309,8 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		alpha.data.set("created", created.handle);
 		const context = contexts.get(alpha.data);
 		assert(context !== undefined);
+		// The second path segment resolves through the first factory's child registry.
+		// Reusing the same type at both levels makes loss of that registry observable.
 		const child = await context.containerRuntime.createDataStore([factory.type, factory.type]);
 		const childMap = (await child.entryPoint.get()) as ISharedMap;
 		alpha.data.set("child-factory", childMap.handle);
@@ -324,6 +334,7 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 				return factory.instantiateDataStore(context, existing);
 			},
 			createDataStore(context: IFluidDataStoreContext) {
+				// Synchronous child creation returns the map directly; remote loading uses instantiateDataStore.
 				const runtime = new FluidDataStoreRuntime(
 					context,
 					new Map([[mapFactory.type, mapFactory]]),
@@ -357,6 +368,7 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 			async instantiateDataStore(context, existing) {
 				const runtime = await factory.instantiateDataStore(context, existing);
 				if (!existing) {
+					// The child registry must be available before parent instantiation completes.
 					assert(context.createChildDataStore !== undefined);
 					const child = context.createChildDataStore(childFactory);
 					child.map.set("value", 42);
@@ -374,6 +386,7 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		const alpha = fluidContainerFromLegacy(container, root, parentKinds, provider.documentId);
 		const additional = await alpha.createDataStore(parentKind);
 		assert.equal(additional.handle.isAttached, false);
+		// Publishing the parent handle must attach its initialized child as well.
 		root.set("additional", additional.handle);
 		await provider.ensureSynchronized();
 
@@ -457,12 +470,14 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 			assert(children?.type === SummaryType.Tree);
 			const named: SummaryObject | undefined = children.tree["application-selected-root"];
 			assert(named?.type === SummaryType.Tree);
+			// This must remain a channel summary, not an extra data-store layer around the channel.
 			assert(named.tree[".attributes"]?.type === SummaryType.Blob);
 			assert.equal(named.tree[".component"], undefined);
 			assert.equal(named.tree[".channels"], undefined);
 
 			const readerFactory = writer === "legacy" ? await alphaFactory(kinds) : legacyFactory;
 			const reader = await provider.loadContainer(readerFactory, undefined, {
+				// Read the exact summary just inspected, rather than a default or earlier version.
 				[LoaderHeader.version]: summaryVersion,
 			});
 			await provider.ensureSynchronized();
