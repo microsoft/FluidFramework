@@ -18,6 +18,7 @@ import {
 	type RevisionTag,
 	type TaggedChange,
 	makeAnonChange,
+	offsetChangeAtomId,
 	revisionMetadataSourceFromInfo,
 	tagChange,
 	tagRollbackInverse,
@@ -2990,6 +2991,53 @@ describe("ModularChangeFamily integration", () => {
 		const fieldAPath = { parent: rootPath, field: fieldA };
 		const fieldAId = { nodeId: undefined, field: fieldA };
 		const revisions = [{ revision: tag1 }];
+
+		describe("Can encode node restoration", () => {
+			for (const version of family.codecs.getSupportedFormats()) {
+				const codecForVersion = family.codecs.resolve(version);
+				for (const renameOffset of [0, 1, 3]) {
+					it(`version ${version}, rename at offset ${renameOffset}`, () => {
+						const graveIDs: ChangeAtomId = { revision: tag2, localId: brand(1) };
+						const oldRootId = offsetChangeAtomId(graveIDs, renameOffset);
+						const newRootId: ChangeAtomId = { revision: tag1, localId: brand(1) };
+						const destinationCell: ChangeAtomId = { revision: tag3, localId: brand(1) };
+						const marks: Changeset = [
+							{ count: 4, cellId: graveIDs },
+							MarkMaker.attach(1, destinationCell, {
+								id: newRootId.localId,
+								revision: newRootId.revision,
+							}),
+						];
+						const change = Change.build(
+							{
+								family,
+								maxId: 4,
+								revisions,
+								renames: [
+									{
+										oldId: oldRootId,
+										newId: newRootId,
+										count: 1,
+										detachLocation: fieldAId,
+									},
+								],
+							},
+							Change.field(fieldA, sequenceIdentifier, marks),
+						);
+
+						// Act
+						const encoded = codecForVersion.encode(change, context);
+						const decoded = codecForVersion.decode(encoded, context);
+
+						// Verify
+						validateChangeset(decoded, family.fieldKinds);
+						const decodedDelta = intoDelta(makeAnonChange(decoded), family.fieldKinds);
+						const expectedDelta = intoDelta(makeAnonChange(change), family.fieldKinds);
+						assertDeltaEqual(decodedDelta, expectedDelta);
+					});
+				}
+			}
+		});
 
 		const revive = Change.build(
 			{

@@ -40,6 +40,7 @@ import {
 	type Detach,
 	type Mark,
 	type MarkEffect,
+	type NoopMark,
 	NoopMarkType,
 	type Rename,
 } from "./types.js";
@@ -50,6 +51,7 @@ import {
 	isNoopMark,
 	splitMark,
 } from "./utils.js";
+import { MarkListFactory } from "./markListFactory.js";
 
 export function makeV2CodecHelpers(
 	revisionTagCodec: JsonCodecPart<
@@ -135,7 +137,7 @@ export function decodeSequenceChangeset(
 	>,
 	decodeMarkEffect: DecodeMarkEffect,
 ): Changeset {
-	const marks: Changeset = [];
+	const marks = new MarkListFactory();
 	for (const mark of changeset) {
 		const decodedMark: Mark = {
 			count: mark.count,
@@ -162,7 +164,7 @@ export function decodeSequenceChangeset(
 
 		marks.push(decodedMark);
 	}
-	return marks;
+	return marks.list;
 }
 
 function makeMarkEffectDecoder(
@@ -239,7 +241,7 @@ function makeMarkEffectDecoder(
 			count: number,
 			cellId: ChangeAtomId | undefined,
 			context: FieldChangeDecodingContext,
-		): Detach | Rename {
+		): Detach | Rename | NoopMark {
 			const { id, revision, idOverride } = encoded;
 
 			const cellRename =
@@ -262,7 +264,7 @@ function makeMarkEffectDecoder(
 			count: number,
 			cellId: ChangeAtomId | undefined,
 			context: FieldChangeDecodingContext,
-		): Detach | Rename {
+		): Detach | Rename | NoopMark {
 			const { id, idOverride, revision, finalEndpoint } = encoded;
 			const cellRename =
 				idOverride === undefined
@@ -326,10 +328,7 @@ function makeMarkEffectDecoder(
 				context.decodeMoveAndDetach(detachId, count);
 			}
 
-			return {
-				type: "Rename",
-				idOverride: detachId,
-			};
+			return { type: "Rename", idOverride: detachId };
 		},
 	};
 
@@ -344,14 +343,12 @@ function decodeDetach(
 	cellRename: ChangeAtomId | undefined,
 	endpoint: ChangeAtomId | undefined,
 	context: FieldChangeDecodingContext,
-): Detach | Rename {
+): Detach | Rename | NoopMark {
 	const detachId: ChangeAtomId = { revision, localId };
 	if (cellId !== undefined) {
 		context.decodeRootRename(cellId, endpoint ?? detachId, count, detachId, false);
-		return {
-			type: "Rename",
-			idOverride: cellRename ?? detachId,
-		};
+		const idOverride = cellRename ?? detachId;
+		return areEqualChangeAtomIds(idOverride, cellId) ? {} : { type: "Rename", idOverride };
 	} else if (endpoint !== undefined) {
 		context.decodeRootRename(detachId, endpoint, count, undefined, true);
 	}
@@ -578,6 +575,7 @@ function getLengthToSplitMark(mark: Mark, context: FieldChangeEncodingContext): 
 
 	if (mark.cellId !== undefined) {
 		count = context.getInputRootId(mark.cellId, count).length;
+		count = context.rootRenames.getFirst(mark.cellId, count).length;
 	}
 
 	switch (mark.type) {
@@ -642,6 +640,18 @@ function encodeSplitMark(
 		const nodeId = getFromChangeAtomIdMap(context.rootNodeChanges, mark.cellId);
 		if (nodeId !== undefined) {
 			encodedMark.changes = context.encodeNode(nodeId);
+		}
+		if (
+			isNoopMark(mark) &&
+			context.rootRenames.getFirst(mark.cellId, mark.count).value !== undefined
+		) {
+			// Encode root renames for roots whose corresponding (empty) cells are unchanged.
+			encodedMark.effect = encodeRename(
+				{ ...mark, type: "Rename", idOverride: mark.cellId },
+				context,
+				changeAtomIdCodec,
+				encodeRevision,
+			);
 		}
 	} else if (mark.changes !== undefined) {
 		encodedMark.changes = context.encodeNode(mark.changes);
