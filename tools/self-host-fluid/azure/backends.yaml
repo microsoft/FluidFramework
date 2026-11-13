@@ -1,0 +1,184 @@
+# In-cluster backends for full-stack Routerlicious on AKS.
+#
+# Storage choices (what was actually deployed and observed working):
+#   gitrest snapshots -> Azure Files PV (RWX SMB) via the custom StorageClass below.
+#     gitrest has NO Blob backend in OSS (only local-fs / mem / redis), so durable Azure
+#     storage = a filesystem PV. Azure Files is the zero-code managed option; Azure Blob
+#     (a common managed-service storage model) would need a new IFileSystemManager adapter.
+#   mongo (ops/metadata) -> in-cluster, on a managed-disk (block) PV. Mongo needs real file
+#     locking, so block storage, not SMB. The historically validated mongo:4 pin below is
+#     single-node, no-auth, and not a current production recommendation. Select and validate a
+#     supported MongoDB-compatible topology for production.
+#   redis -> in-cluster, NO auth, exposed only through a ClusterIP in this reference manifest.
+#     No NetworkPolicy isolation is provided. A managed authenticated/TLS service is an
+#     optional production replacement; wire its settings into the raw gitrest/historian
+#     Deployments and the Routerlicious Helm values.
+#
+# Replace <ACR> with your ACR resource name (for example, myregistry; do not include
+# .azurecr.io) and <IMAGE_TAG> with the unique immutable release tag created in README
+# Phase 1. Images are built from source and pushed to ACR.
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: azurefile-gitrest
+provisioner: file.csi.azure.com
+allowVolumeExpansion: true
+reclaimPolicy: Retain
+parameters:
+  skuName: Standard_LRS
+mountOptions:
+  - dir_mode=0777
+  - file_mode=0777
+  - uid=1000
+  - gid=1000
+  - mfsymlinks
+  - cache=strict
+  - actimeo=30
+  - nobrl
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gitrest-data
+spec:
+  accessModes: [ReadWriteMany]
+  storageClassName: azurefile-gitrest
+  resources:
+    requests: { storage: 16Gi }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  labels: { app: redis }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: redis } }
+  template:
+    metadata: { labels: { app: redis } }
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports: [{ containerPort: 6379 }]
+          resources:
+            requests: { cpu: "100m", memory: "128Mi" }
+            limits: { cpu: "500m", memory: "512Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: redis }
+spec:
+  selector: { app: redis }
+  ports: [{ port: 6379, targetPort: 6379 }]
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongo-data
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: managed-csi
+  resources:
+    requests: { storage: 16Gi }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo
+  labels: { app: mongo }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector: { matchLabels: { app: mongo } }
+  template:
+    metadata: { labels: { app: mongo } }
+    spec:
+      containers:
+        - name: mongo
+          image: mongo:4
+          ports: [{ containerPort: 27017 }]
+          volumeMounts:
+            - { name: data, mountPath: /data/db }
+          resources:
+            requests: { cpu: "250m", memory: "512Mi" }
+            limits: { cpu: "1", memory: "2Gi" }
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: mongo-data }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: mongo }
+spec:
+  selector: { app: mongo }
+  ports: [{ port: 27017, targetPort: 27017 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitrest
+  labels: { app: gitrest }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector: { matchLabels: { app: gitrest } }
+  template:
+    metadata: { labels: { app: gitrest } }
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: gitrest
+          image: <ACR>.azurecr.io/gitrest:<IMAGE_TAG>
+          ports: [{ containerPort: 3000 }]
+          env:
+            - { name: IS_FLUID_SERVER, value: "true" }
+            - { name: NODE_ENV, value: "production" }
+            - { name: redis__host, value: "redis" }
+            - { name: redis__port, value: "6379" }
+          volumeMounts:
+            - { name: data, mountPath: /home/node/documents }
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: gitrest-data }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: gitrest }
+spec:
+  selector: { app: gitrest }
+  ports: [{ port: 80, targetPort: 3000 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: historian
+  labels: { app: historian }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: historian } }
+  template:
+    metadata: { labels: { app: historian } }
+    spec:
+      containers:
+        - name: historian
+          image: <ACR>.azurecr.io/historian:<IMAGE_TAG>
+          ports: [{ containerPort: 3000 }]
+          env:
+            - { name: IS_FLUID_SERVER, value: "true" }
+            - { name: NODE_ENV, value: "production" }
+            - { name: riddler, value: "http://fluid-riddler" }
+            - { name: storageUrl, value: "http://gitrest" }
+            - { name: redis__host, value: "redis" }
+            - { name: redis__port, value: "6379" }
+            - { name: redisForThrottling__host, value: "redis" }
+            - { name: redisForThrottling__port, value: "6379" }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: historian }
+spec:
+  selector: { app: historian }
+  ports: [{ port: 80, targetPort: 3000 }]
