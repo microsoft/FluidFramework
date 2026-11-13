@@ -431,14 +431,14 @@ export function runTransaction<
 	treeOrNode: TNode | TreeView<TRoot>,
 	transaction:
 		| ((node: TNode) => TResult | typeof rollback)
-		| ((root: TRoot) => TResult | typeof rollback),
+		| ((root: TreeView<TRoot>["root"]) => TResult | typeof rollback),
 	preconditions: readonly TransactionConstraint[] = [],
 ): TResult | typeof rollback {
 	if (treeOrNode instanceof SchematizingSimpleTreeView) {
-		const t = transaction as (root: TRoot) => TResult | typeof rollback;
+		const t = transaction as (root: TreeView<TRoot>["root"]) => TResult | typeof rollback;
 		return runTransactionInCheckout(
 			treeOrNode.checkout,
-			() => t(treeOrNode.root as TRoot),
+			() => t(treeOrNode.root as TreeView<TRoot>["root"]),
 			preconditions,
 		);
 	} else {

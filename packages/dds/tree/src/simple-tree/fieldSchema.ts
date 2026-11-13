@@ -67,6 +67,46 @@ export enum FieldKind {
 	 * See {@link SchemaFactory.identifier} for more details.
 	 */
 	Identifier,
+	/**
+	 * An experimental object field containing one numeric leaf, edited through a {@link TreeCounter}.
+	 * @remarks
+	 * Construction accepts a number; property reads return an accessor rather than that number.
+	 * Direct assignment is forbidden at runtime. See {@link SchemaStaticsAlpha.counter}.
+	 * @alpha
+	 */
+	Counter,
+}
+
+/**
+ * An accessor for reading and adding to a numeric counter field on an object node.
+ * @remarks
+ * Repeated property reads return the same accessor, including after hydration or movement of the owning node.
+ * It follows that node, not the numeric leaf replaced by each addition.
+ *
+ * Uses JavaScript number arithmetic; rounding and overflow limit arithmetic consistency across different edit orders.
+ * The result of `add` is the local value, not a promise about the value after concurrent edits.
+ * Direct assignment to the containing property is rejected at runtime, including assignment of another accessor.
+ * The containing property is not compile-time readonly in this experiment.
+ * @alpha
+ */
+export interface TreeCounter {
+	/**
+	 * The current numeric value.
+	 * @remarks
+	 * A retained, removed node remains readable; a disposed owner does not.
+	 * Reading this property after the owner is disposed throws.
+	 */
+	readonly value: number;
+	/**
+	 * Adds an amount and returns the new local value.
+	 * @param amount - A finite number to add.
+	 * @returns The new local value.
+	 * @remarks
+	 * Supported before hydration and while the owning node is in the document.
+	 * A removed node must be restored before it can be edited.
+	 * @throws A usage error if the amount or local result is not finite, or the owner cannot be edited.
+	 */
+	add(amount: number): number;
 }
 
 /**
@@ -478,6 +518,9 @@ export class FieldSchemaAlpha<
 		super(kind, types, props);
 
 		const normalizedTypes = normalizeAllowedTypes(types);
+		if (kind === FieldKind.Identifier || kind === FieldKind.Counter) {
+			validateFixedLeaf(kind, normalizedTypes.evaluateIdentifiers());
+		}
 		this.allowedTypesFull = normalizedTypes;
 		this.propsAlpha = props as TProps;
 	}
@@ -616,7 +659,31 @@ function arePersistedMetadataEqual(
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 
 /**
- * Converts an `ImplicitFieldSchema` to a property type suitable for reading a field with this that schema.
+ * Checks the allowed type identifiers for kinds restricted to a specific built-in leaf.
+ * @param kind - The field kind; kinds without a fixed-leaf restriction are left unchecked.
+ * @param identifiers - The complete, normalized allowed-type set.
+ * @throws A usage error if an identifier field is not string-only or a counter field is not number-only.
+ * @remarks
+ * Shared by schema construction and reconstruction so both enforce the same content restriction.
+ * This does not select defaults, editing APIs, or schema upgrade policy.
+ */
+export function validateFixedLeaf(kind: FieldKind, identifiers: ReadonlySet<string>): void {
+	const expected =
+		kind === FieldKind.Identifier
+			? "com.fluidframework.leaf.string"
+			: kind === FieldKind.Counter
+				? "com.fluidframework.leaf.number"
+				: undefined;
+	if (expected !== undefined && (identifiers.size !== 1 || !identifiers.has(expected))) {
+		throw new UsageError(`Field kind ${kind} requires exactly ${expected}`);
+	}
+}
+
+/**
+ * Converts an `ImplicitFieldSchema` to the type returned when reading an object field.
+ * @remarks
+ * This can be a field accessor rather than stored content.
+ * Use {@link TreeRootFromImplicitField} when reading root content instead.
  *
  * @typeparam TSchema - When non-exact schemas are provided this errors on the side of returning too general of a type (a conservative union of all possibilities).
  * This is ideal for "output APIs" - i.e. it converts the schema type to the runtime type that a user will _read_ from the tree.
@@ -626,6 +693,26 @@ export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> =
 	TSchema extends FieldSchema<infer Kind, infer Types>
 		? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind>
+		: TSchema extends ImplicitAllowedTypes
+			? TreeNodeFromImplicitAllowedTypes<TSchema>
+			: TreeNode | TreeLeafValue | undefined;
+
+/**
+ * Raw root content, excluding live field accessors.
+ * @remarks
+ * Counter fields are supported only as object properties, not as roots.
+ * A counter root schema therefore produces `never`; an object containing counters still produces its node type.
+ * Unlike {@link TreeFieldFromImplicitField}, this type does not include accessor objects.
+ * @typeParam TSchema - The schema of the root content to read, construct, clone, or serialize.
+ * @system @public
+ */
+export type TreeRootFromImplicitField<TSchema extends ImplicitFieldSchema> =
+	TSchema extends FieldSchema<infer Kind, infer Types>
+		? {
+				[K in FieldKind]: K extends FieldKind.Counter
+					? never
+					: ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, K>;
+			}[Kind]
 		: TSchema extends ImplicitAllowedTypes
 			? TreeNodeFromImplicitAllowedTypes<TSchema>
 			: TreeNode | TreeLeafValue | undefined;
@@ -665,16 +752,15 @@ export type InsertableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownS
 		: never;
 
 /**
- * Content which could be read from a field within a tree.
+ * Raw content which could be read from a root field.
  *
  * @remarks
- * Extended version of {@link TreeFieldFromImplicitField} that also allows {@link (UnsafeUnknownSchema:type)}.
- * Since reading from fields with non-exact schema is still safe, this is only useful (compared to {@link TreeFieldFromImplicitField}) when the schema is also used as input and thus allows {@link (UnsafeUnknownSchema:type)}
- * for use
+ * Extended version of {@link TreeRootFromImplicitField} that also allows {@link (UnsafeUnknownSchema:type)}.
+ * Since reading from fields with non-exact schema is still safe, this is only useful (compared to {@link TreeRootFromImplicitField}) when the schema is also used as input and thus allows {@link (UnsafeUnknownSchema:type)}.
  * @system @alpha
  */
 export type ReadableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> =
-	TreeFieldFromImplicitField<ReadSchema<TSchema>>;
+	TreeRootFromImplicitField<ReadSchema<TSchema>>;
 
 /**
  * Adapter to remove {@link (UnsafeUnknownSchema:type)} from a schema type so it can be used with types for generating APIs for reading data.
@@ -698,6 +784,7 @@ export type ApplyKind<T, Kind extends FieldKind> = {
 	[FieldKind.Required]: T;
 	[FieldKind.Optional]: T | undefined;
 	[FieldKind.Identifier]: T;
+	[FieldKind.Counter]: { readonly value: number; add(amount: number): number };
 }[Kind];
 
 /**
@@ -708,7 +795,7 @@ export type ApplyKind<T, Kind extends FieldKind> = {
  */
 export type ApplyKindInput<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> = [
 	Kind,
-] extends [FieldKind.Required]
+] extends [FieldKind.Required | FieldKind.Counter]
 	? T
 	: [Kind] extends [FieldKind.Optional]
 		? T | undefined

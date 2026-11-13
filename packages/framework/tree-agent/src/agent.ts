@@ -4,17 +4,12 @@
  */
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type {
-	ImplicitFieldSchema,
-	TreeFieldFromImplicitField,
-	TreeNodeSchema,
-} from "@fluidframework/tree";
+import type { ImplicitFieldSchema, TreeNodeSchema } from "@fluidframework/tree";
 import { NodeKind, TreeNode } from "@fluidframework/tree";
 import type {
 	ReadableField,
 	FactoryContentObject,
 	InsertableContent,
-	ReadSchema,
 } from "@fluidframework/tree/alpha";
 import { ObjectNodeSchema, Tree, TreeAlpha } from "@fluidframework/tree/alpha";
 
@@ -181,7 +176,7 @@ export function createContext<TSchema extends ImplicitFieldSchema>(
 		get root(): ReadableField<TSchema> {
 			return subTree.field;
 		},
-		set root(value: TreeFieldFromImplicitField<ReadSchema<TSchema>>) {
+		set root(value: ReadableField<TSchema>) {
 			subTree.field = value;
 		},
 		create,

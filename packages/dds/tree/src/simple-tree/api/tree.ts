@@ -38,7 +38,7 @@ import type {
 	InsertableTreeFieldFromImplicitField,
 	ReadableField,
 	ReadSchema,
-	TreeFieldFromImplicitField,
+	TreeRootFromImplicitField,
 } from "../fieldSchema.js";
 import type {
 	SchemaType,
@@ -827,7 +827,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 * To get notified about changes to stored schema (which may affect compatibility between this view's schema and
 	 * the stored schema), use {@link TreeViewEvents.schemaChanged} via `view.events.on("schemaChanged", callback)`.
 	 */
-	get root(): TreeFieldFromImplicitField<TSchema>;
+	get root(): TreeRootFromImplicitField<TSchema>;
 
 	set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);
 

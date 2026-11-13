@@ -42,6 +42,23 @@ import { optional, type OptionalChangeset, required } from "../optional-field/in
 import { sequence, type CellId } from "../sequence-field/index.js";
 
 import { fieldKinds } from "./defaultFieldKinds.js";
+import { counter } from "../counter-field/index.js";
+
+/**
+ * Submits additive edits to a numeric counter field without reading its current content.
+ */
+export interface CounterFieldEditBuilder {
+	/**
+	 * Adds an amount in the input context described by `before`.
+	 * @param before - The field's current value immediately before this edit.
+	 * The caller must read it again for each edit, including consecutive edits in a transaction.
+	 * @param amount - The contribution to add, rather than an absolute replacement value.
+	 * @remarks
+	 * The caller must validate numeric input; this low-level editor does not check finiteness.
+	 * Rebasing adjusts the input context while preserving the contribution.
+	 */
+	add(before: number, amount: number): void;
+}
 
 export type DefaultChangeset = ModularChangeset;
 
@@ -145,6 +162,13 @@ export function relevantRemovedRoots(change: ModularChangeset): Iterable<DeltaDe
  * (Possibly by adding opt ins at the view schema layer).
  */
 export interface IDefaultEditBuilder<TContent = TreeChunk> {
+	/**
+	 * Gets an editor for additive changes to a counter field.
+	 * @param field - The path to the counter field in the edit's input context.
+	 * @returns An editor whose lifetime is bounded by this edit builder.
+	 * The caller must keep the path valid and supply the current value for each addition.
+	 */
+	counterField(field: NormalizedFieldUpPath): CounterFieldEditBuilder;
 	/**
 	 * @param field - the value field which is being edited under the parent node
 	 * @returns An object with methods to edit the given field of the given parent.
@@ -277,6 +301,25 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					revision,
 				};
 				this.modularBuilder.submitChanges([build, edit], revision);
+			},
+		};
+	}
+
+	/**
+	 * {@inheritDoc IDefaultEditBuilder.counterField}
+	 */
+	public counterField(field: NormalizedFieldUpPath): CounterFieldEditBuilder {
+		return {
+			add: (before, amount) => {
+				const revision = this.mintRevisionTag();
+				const fillId = { localId: this.modularBuilder.generateId(), revision };
+				const detachId = { localId: this.modularBuilder.generateId(), revision };
+				this.modularBuilder.submitChange(
+					field,
+					counter.identifier,
+					brand(counter.changeHandler.editor.add(before, amount, fillId, detachId)),
+					revision,
+				);
 			},
 		};
 	}

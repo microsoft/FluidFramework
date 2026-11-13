@@ -16,6 +16,8 @@ import {
 	type FieldSchemaAlpha,
 	FieldKind,
 	type FieldProps,
+	validateFixedLeaf,
+	createFieldSchema,
 } from "../fieldSchema.js";
 import type {
 	SchemaType,
@@ -77,6 +79,7 @@ function generateFieldSchema(
 	context: Context,
 	storedKey: string | undefined,
 ): FieldSchemaAlpha {
+	validateFixedLeaf(simple.kind, new Set(simple.simpleAllowedTypes.keys()));
 	const allowed = generateAllowedTypes(simple.simpleAllowedTypes, context);
 	const props: Omit<FieldProps, "defaultProvider"> = {
 		metadata: simple.metadata,
@@ -85,6 +88,9 @@ function generateFieldSchema(
 
 	// Using createFieldSchema could work, but would require setting up the default providers.
 	switch (simple.kind) {
+		case FieldKind.Counter: {
+			return createFieldSchema(FieldKind.Counter, allowed, props);
+		}
 		case FieldKind.Identifier: {
 			return SchemaFactoryAlpha.identifier(props);
 		}

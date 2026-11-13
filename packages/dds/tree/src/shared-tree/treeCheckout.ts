@@ -2448,6 +2448,15 @@ class EditLock {
 	public constructor(editor: ISharedTreeEditor) {
 		const checkLock = (): void => this.checkUnlocked("Editing the tree");
 		this.editor = {
+			counterField(...fieldArgs) {
+				const counterField = editor.counterField(...fieldArgs);
+				return {
+					add(...editArgs) {
+						checkLock();
+						counterField.add(...editArgs);
+					},
+				};
+			},
 			get schema() {
 				return editor.schema;
 			},

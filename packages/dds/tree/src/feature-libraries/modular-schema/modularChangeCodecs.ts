@@ -53,6 +53,7 @@ export function makeModularChangeCodecFamily(
 						),
 					];
 				}
+				case ModularChangeFormatVersion.counter:
 				case ModularChangeFormatVersion.v5: {
 					return [
 						version,
@@ -77,6 +78,11 @@ export function makeModularChangeCodecFamily(
  * The format version for `ModularChangeset`.
  */
 export const ModularChangeFormatVersion = strictEnum("ModularChangeFormatVersion", {
+	/**
+	 * Opt-in counter format using the v5 modular envelope with an additional counter field codec.
+	 * Existing formats retain their original field-kind sets.
+	 */
+	counter: "counter|v0.1",
 	/**
 	 * Introduced prior to 2.0 and used beyond.
 	 * Reading capability must be maintained for backwards compatibility.

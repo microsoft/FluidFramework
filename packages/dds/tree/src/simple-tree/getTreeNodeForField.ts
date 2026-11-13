@@ -12,12 +12,18 @@ import {
 	isFlexTreeNode,
 	type FlexTreeRequiredField,
 	type FlexTreeOptionalField,
+	type FlexTreeCounterField,
 } from "../feature-libraries/index.js";
 
 import { type TreeNode, getOrCreateNodeFromInnerNode } from "./core/index.js";
 
 /**
- * Retrieve the associated {@link TreeNode} for the given field's content.
+ * Reads stored field content, returning its associated {@link TreeNode} or unboxed leaf value.
+ * @remarks
+ * Counter fields return their numeric content, not a live counter accessor.
+ * Object-property access supplies accessors separately; content traversal and serialization use this function.
+ * @param field - The field to read.
+ * @returns Its node or leaf value, or `undefined` for an empty optional field.
  */
 export function tryGetTreeNodeForField(
 	field: FlexTreeField,
@@ -31,6 +37,9 @@ export function tryGetTreeNodeForField(
 			: maybeContent;
 	}
 	switch (field.schema) {
+		case FieldKinds.counter.identifier: {
+			return (field as FlexTreeCounterField).content;
+		}
 		case FieldKinds.required.identifier: {
 			const typedField = field as FlexTreeRequiredField;
 			return tryToUnboxLeaves(typedField);

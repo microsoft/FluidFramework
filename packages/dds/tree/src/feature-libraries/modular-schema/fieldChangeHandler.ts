@@ -9,6 +9,8 @@ import type {
 	ChangeEncodingContext,
 	ChangesetLocalId,
 	DeltaDetachedNodeChanges,
+	DeltaDetachedNodeBuild,
+	DeltaDetachedNodeDestruction,
 	DeltaDetachedNodeId,
 	DeltaDetachedNodeRename,
 	DeltaFieldChanges,
@@ -43,6 +45,22 @@ export interface ChildChangeInfo {
  * The return value of calling {@link FieldChangeHandler.intoDelta}.
  */
 export interface FieldChangeDelta {
+	/**
+	 * Content materialized by this field change.
+	 * @remarks
+	 * Builds from all nested fields are collected at the delta root and executed before field edits.
+	 * IDs must be reserved in the enclosing changeset's namespace, not scoped to this field.
+	 * Each returned chunk transfers one reference to the delta consumer.
+	 * Unlike outer modular builds, these builds are omitted when the enclosing change is conflicted.
+	 */
+	readonly build?: readonly DeltaDetachedNodeBuild[];
+	/**
+	 * Detached content to destroy after all field edits in the delta have been applied.
+	 * @remarks
+	 * Only destroy content that no later change needs to restore or edit.
+	 * A handler that destroys its previous value must be able to reconstruct undo results without that content.
+	 */
+	readonly destroy?: readonly DeltaDetachedNodeDestruction[];
 	/**
 	 * {@inheritdoc DeltaFieldChanges}
 	 */
@@ -195,6 +213,16 @@ export interface FieldChangeRebaser<TChangeset> {
 			filterDetach: FilterDetachFunc;
 			filterAttach: FilterAttachFunc;
 			preserveOtherEdits: boolean;
+			/**
+			 * Whether to preserve atomic value edits without independently movable children.
+			 * @remarks
+			 * Such edits are kept or dropped as a unit, even if their delta contains an attach and detach.
+			 * The structural filters do not independently select those implementation details.
+			 * Minimization uses this to separate edits folded into new trees from edits to existing trees,
+			 * without retaining structural repair bookkeeping controlled by `preserveOtherEdits`.
+			 * @defaultValue `preserveOtherEdits`
+			 */
+			preserveValueChanges?: boolean;
 		},
 	): TChangeset;
 }

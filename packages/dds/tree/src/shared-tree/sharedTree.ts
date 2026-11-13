@@ -112,7 +112,10 @@ import {
 import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
+import {
+	type SharedTreeEditBuilder,
+	validateCounterSchemaFormats,
+} from "./sharedTreeEditBuilder.js";
 import { type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
 import { createViewableTreeAlpha } from "./viewableTree.js";
 
@@ -211,7 +214,7 @@ export class SharedTreeKernel
 		lastSequenceNumber: () => number | undefined,
 		initialSequenceNumber: number,
 		idCompressor: IIdCompressor,
-		optionsParam: SharedTreeOptionsInternal,
+		private readonly optionsParam: SharedTreeOptionsInternal,
 	) {
 		const retainHistory = optionsParam.retainHistory;
 		if (
@@ -436,6 +439,7 @@ export class SharedTreeKernel
 
 	public override async loadCore(services: IChannelStorageService): Promise<void> {
 		await super.loadCore(services);
+		validateCounterSchemaFormats(this.storedSchema, this.optionsParam);
 		this.checkout.load();
 	}
 
@@ -545,6 +549,7 @@ export const changeFormatVersionForEditManager = DependentFormatVersion.fromPair
 	[EditManagerFormatVersion.vSharedBranches, SharedTreeChangeFormatVersion.v4],
 	[EditManagerFormatVersion.v6, SharedTreeChangeFormatVersion.v5],
 	[EditManagerFormatVersion.v7, SharedTreeChangeFormatVersion.v5],
+	[EditManagerFormatVersion.counter, SharedTreeChangeFormatVersion.counter],
 ]);
 
 /**
@@ -562,6 +567,7 @@ export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs<
 	[MessageFormatVersion.vSharedBranches, SharedTreeChangeFormatVersion.v4],
 	[MessageFormatVersion.v6, SharedTreeChangeFormatVersion.v5],
 	[MessageFormatVersion.v7, SharedTreeChangeFormatVersion.v5],
+	[MessageFormatVersion.counter, SharedTreeChangeFormatVersion.counter],
 ]);
 
 function getCodecTreeForEditManagerFormat(
@@ -790,6 +796,10 @@ function exportSimpleFieldSchemaStored(
 ): SimpleFieldSchema<SchemaType.Stored> {
 	let kind: FieldKind;
 	switch (schema.kind) {
+		case FieldKinds.counter.identifier: {
+			kind = FieldKind.Counter;
+			break;
+		}
 		case FieldKinds.identifier.identifier: {
 			kind = FieldKind.Identifier;
 			break;

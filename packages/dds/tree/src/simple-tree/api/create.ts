@@ -28,7 +28,7 @@ import {
 	createField,
 } from "../core/index.js";
 import { getUnhydratedContext } from "../createContext.js";
-import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../fieldSchema.js";
+import type { ImplicitFieldSchema, TreeRootFromImplicitField } from "../fieldSchema.js";
 
 import { unknownTypeError } from "./customTree.js";
 
@@ -43,7 +43,7 @@ export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
 	cursor: ITreeCursorSynchronous | undefined,
 	destinationSchema: TreeFieldStoredSchema,
 	contextForNewNodes?: Context,
-): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
+): Unhydrated<TreeRootFromImplicitField<TSchema>> {
 	const context = contextForNewNodes ?? getUnhydratedContext(schema);
 	assert(context.flexContext.isHydrated() === false, 0xbfe /* Expected unhydrated context */);
 	const mapTrees = cursor === undefined ? [] : [unhydratedFlexTreeFromCursor(context, cursor)];
@@ -57,7 +57,7 @@ export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
 	isFieldInSchema(mapTrees, destinationSchema, schemaAndPolicy, throwOutOfSchema);
 
 	if (mapTrees.length === 0) {
-		return undefined as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+		return undefined as Unhydrated<TreeRootFromImplicitField<TSchema>>;
 	}
 	assert(mapTrees.length === 1, 0xa11 /* unexpected field length */);
 	// Length asserted above, so this is safe. This assert is done instead of checking for undefined after indexing to ensure a length greater than 1 also errors.
@@ -65,7 +65,7 @@ export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
 	const mapTree = mapTrees[0]!;
 
 	return getOrCreateNodeFromInnerNode(mapTree) as Unhydrated<
-		TreeFieldFromImplicitField<TSchema>
+		TreeRootFromImplicitField<TSchema>
 	>;
 }
 

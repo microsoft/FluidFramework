@@ -1327,6 +1327,15 @@ export class SchemaFactoryAlpha<
 	TName extends number | string = string,
 > extends SchemaFactoryBeta<TScope, TName> {
 	/**
+	 * {@inheritDoc SchemaStaticsAlpha.counter}
+	 */
+	public readonly counter = schemaStaticsAlpha.counter;
+	/**
+	 * {@inheritDoc SchemaStaticsAlpha.counter}
+	 */
+	public static readonly counter = schemaStaticsAlpha.counter;
+
+	/**
 	 * This property stores factory options without the {@link SchemaFactory.scope | scope}.
 	 */
 	public override readonly settings: SchemaFactoryAlphaOptions;

@@ -7,6 +7,7 @@ import type { NormalizedFieldUpPath, NormalizedUpPath } from "../../core/index.j
 
 import type {
 	IDefaultEditBuilder,
+	CounterFieldEditBuilder,
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	ValueFieldEditBuilder,
@@ -20,6 +21,13 @@ export class MappedEditBuilder<TBase, TAdapted> implements IDefaultEditBuilder<T
 		private readonly baseBuilder: IDefaultEditBuilder<TBase>,
 		private readonly mapDelegate: (input: TAdapted) => TBase,
 	) {}
+	/**
+	 * {@inheritDoc IDefaultEditBuilder.counterField}
+	 */
+	public counterField(field: NormalizedFieldUpPath): CounterFieldEditBuilder {
+		// Counter edits carry numbers, not insertable content, so no content conversion is needed.
+		return this.baseBuilder.counterField(field);
+	}
 	public valueField(field: NormalizedFieldUpPath): ValueFieldEditBuilder<TAdapted> {
 		const baseField = this.baseBuilder.valueField(field);
 		return {

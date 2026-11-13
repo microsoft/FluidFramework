@@ -37,6 +37,20 @@ import { createSchemaGraph } from "./schemaTestUtils.js";
 // Configuration-specific validation is covered in api/configuration.spec.ts.
 // View-only stored conversion and context integration are covered in toStoredSchema.spec.ts and createContext.spec.ts.
 describe("treeSchema", () => {
+	it("rejects counter roots in both reference and cached schema analysis", () => {
+		const sf = new SchemaFactoryAlpha("counter-root-analysis");
+		for (const analyze of [createTreeSchema, getRootSchemaDerivedData]) {
+			const root = sf.counter(sf.number);
+			assert.throws(
+				() => analyze(root),
+				validateUsageError(
+					"Counter fields are supported only on object nodes, not at the root",
+				),
+			);
+			assert.equal(hasCachedRootSchemaDerivedDataForTesting(root), false);
+		}
+	});
+
 	describe("createTreeSchema", () => {
 		it("builds independent graphs without populating component analysis", () => {
 			const [a, b] = createSchemaGraph([[1], [0]]);

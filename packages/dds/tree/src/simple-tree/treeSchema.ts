@@ -34,6 +34,7 @@ import {
 	type FieldSchemaAlpha,
 	type ImplicitFieldSchema,
 	normalizeFieldSchema,
+	FieldKind,
 } from "./fieldSchema.js";
 import { isObjectNodeSchema, type ObjectNodeSchemaPrivate } from "./node-kinds/index.js";
 import type {
@@ -60,12 +61,27 @@ import { walkFieldSchema } from "./walkFieldSchema.js";
  * Does not populate derived-state or stored-schema result caches or initialize node contexts.
  * Lazy-reference evaluation retains its own existing memoization.
  * This independent graph-construction path supports reference conversions in tests.
+ * @param rootSchema - The schema to use at the tree root.
+ * @returns The normalized root field and its reachable node definitions.
+ * @throws A usage error for a counter root or conflicting node schema identifiers.
+ * Counter accessors are supported only on object fields.
  */
 export function createTreeSchema(rootSchema: ImplicitFieldSchema): TreeSchema {
-	const root = normalizeFieldSchema(rootSchema);
+	const root = normalizeRootSchema(rootSchema);
 	const definitions = new Map<string, SimpleNodeSchema<SchemaType.View> & TreeNodeSchema>();
 	walkFieldSchema(root, { node: (schema) => addDefinition(definitions, schema) });
 	return { root, definitions };
+}
+
+/**
+ * Normalizes a root field and rejects field kinds supported only on object properties.
+ */
+function normalizeRootSchema(rootSchema: ImplicitFieldSchema): FieldSchemaAlpha {
+	const root = normalizeFieldSchema(rootSchema);
+	if (root.kind === FieldKind.Counter) {
+		throw new UsageError("Counter fields are supported only on object nodes, not at the root");
+	}
+	return root;
 }
 
 /**
@@ -376,6 +392,7 @@ const schemaComponentCache = new WeakMap<TreeNodeSchema, SchemaComponent>();
  * @param rootSchema - The root schema to analyze.
  * Lazy schema references must be ready to evaluate, and schema definitions must remain unchanged after evaluation.
  * @returns Data derived from the schema, memoized by the original root identity.
+ * @throws A {@link UsageError} if the root is a counter field.
  * @throws A {@link UsageError} if distinct reachable schemas have the same identifier.
  * @throws A {@link UsageError} if a callback starts nested schema initialization.
  * @remarks
@@ -390,7 +407,7 @@ export function getRootSchemaDerivedData(
 ): RootSchemaDerivedData {
 	return getOrCreate(rootSchemaDerivedDataCache, rootSchema, () => {
 		const { root, types } = runSchemaInitialization(() => {
-			const field = normalizeFieldSchema(rootSchema);
+			const field = normalizeRootSchema(rootSchema);
 			return { root: field, types: field.allowedTypesFull.evaluate().types };
 		});
 		const components = new Set(types.map((type) => getOrCreateSchemaComponent(type.type)));

@@ -40,7 +40,8 @@ import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 /**
  * Format version for the envelope containing an encoded {@link SerializableChange}.
  * @remarks
- * This is independent from the nested SharedTree change format, whose newest supported version is selected dynamically.
+ * This is independent from the nested SharedTree change format, whose newest supported numeric version is selected dynamically.
+ * Experimental string versions, including counters, are not selected for standalone change serialization.
  */
 const serializedChangeFormatVersion = 2;
 
@@ -102,8 +103,8 @@ type EncodedSerializedChange = Static<
  * produced it.
  * It is not an op or summary format and is not intended for durable persistence.
  * The encoded envelope records the originating ID-compressor session, and the enclosed
- * {@link SharedTreeChange} is encoded using the newest change format supported by the supplied
- * {@link ChangeFamily}.
+ * {@link SharedTreeChange} is encoded using the newest numeric change format supported by the supplied
+ * {@link ChangeFamily}, not an experimental string version.
  */
 interface SerializableChange {
 	/** The SharedTree change and its revision. */
@@ -140,7 +141,7 @@ export type SerializedChangeCodec = IJsonCodec<
 >;
 
 /**
- * Gets the newest SharedTree change format supported by a codec family.
+ * Gets the newest numeric SharedTree change format, excluding opt-in experimental string versions.
  */
 function getLatestSharedTreeChangeFormatVersion(
 	supportedFormats: Iterable<FormatVersion>,
@@ -148,7 +149,8 @@ function getLatestSharedTreeChangeFormatVersion(
 	let latest: number | undefined;
 	for (const format of supportedFormats) {
 		if (typeof format !== "number") {
-			fail(0xd68 /* SharedTree change format versions must be numbers */);
+			// Experimental formats must not change the default standalone change format.
+			continue;
 		}
 		latest = latest === undefined ? format : Math.max(latest, format);
 	}

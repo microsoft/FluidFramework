@@ -72,6 +72,7 @@ export {
 	TreeNodeSchemaCore, 
 	TreeNodeSchemaNonClass, 
 	TreeObjectNode, 
+	TreeRootFromImplicitField,
 	TreeStatus, 
 	TreeView, 
 	TreeViewConfiguration, 

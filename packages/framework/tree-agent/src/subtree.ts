@@ -6,12 +6,7 @@
 import { fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { TreeNode, Tree, NodeKind } from "@fluidframework/tree";
-import type {
-	ImplicitFieldSchema,
-	TreeFieldFromImplicitField,
-	TreeMapNode,
-	TreeArrayNode,
-} from "@fluidframework/tree";
+import type { ImplicitFieldSchema, TreeMapNode, TreeArrayNode } from "@fluidframework/tree";
 import { TreeAlpha } from "@fluidframework/tree/alpha";
 import type {
 	ReadableField,
@@ -44,7 +39,10 @@ export class Subtree<TRoot extends ImplicitFieldSchema> {
 		return this.viewOrTree instanceof TreeNode ? this.viewOrTree : this.viewOrTree.root;
 	}
 
-	public set field(value: TreeFieldFromImplicitField<TRoot>) {
+	/**
+	 * Replaces subtree content; live object-field accessors are not insertable content.
+	 */
+	public set field(value: ReadableField<TRoot>) {
 		if (this.viewOrTree instanceof TreeNode) {
 			const parent = Tree.parent(this.viewOrTree);
 			if (parent === undefined) {
