@@ -239,6 +239,9 @@ const isServiceMessageType = (type: string): boolean =>
 	type === MessageType.SummaryAck ||
 	type === MessageType.SummaryNack;
 
+const isMessageTooLargeError = (error: unknown): boolean =>
+	isNetworkError(error) && error.code === 413;
+
 /**
  * @internal
  */
@@ -253,8 +256,11 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	private readonly clientSeqManager = new ClientSequenceNumberManager();
 	private minimumSequenceNumber = 0;
 	private readonly checkpointContext: CheckpointContext;
-	private lastSendP = Promise.resolve();
-	private lastNoClientP = Promise.resolve();
+	/**
+	 * Settles once every tracked send issued so far has settled.
+	 * Resolves to false if any of those sends failed.
+	 */
+	private allSendsSucceededP: Promise<boolean> = Promise.resolve(true);
 	private lastSentMSN = 0;
 	private lastHash: string;
 	private lastInstruction: InstructionType | undefined = InstructionType.NoOp;
@@ -510,8 +516,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 						this.documentCheckpointManager.getNoActiveClients() &&
 						!this.serviceConfiguration.deli.disableNoClientMessage
 					) {
-						this.lastNoClientP = this.sendToRawDeltas(
+						this.sendToRawDeltas(
 							this.createOpMessage(MessageType.NoClient),
+							true,
 						).catch((error) => {
 							const errorMsg = "Could not send no client message";
 							this.context.log?.error(`${errorMsg}: ${JSON.stringify(error)}`, {
@@ -665,6 +672,27 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			this.emit("noClient");
 		}
 
+		// Check if Deli is over the max ops since last summary nack limit
+		// Note: we are explicitly checking this after processing the entire boxcar in order to not break batches.
+		// This must happen before the checkpoint below so the checkpoint includes the nack state.
+		if (
+			sequencedMessageCount > 0 &&
+			this.serviceConfiguration.deli.summaryNackMessages.enable &&
+			!this.nackMessages.has(NackMessagesType.SummaryMaxOps)
+		) {
+			const opsSinceLastSummary = this.sequenceNumber - this.durableSequenceNumber;
+			if (opsSinceLastSummary > this.serviceConfiguration.deli.summaryNackMessages.maxOps) {
+				// this op brings us over the limit
+				// start nacking non-system ops and ops that are submitted by non-summarizers
+				this.updateNackMessages(NackMessagesType.SummaryMaxOps, {
+					identifier: NackMessagesType.SummaryMaxOps,
+					content: this.serviceConfiguration.deli.summaryNackMessages.nackContent,
+					allowSystemMessages: true,
+					allowedScopes: [ScopeType.SummaryWrite],
+				});
+			}
+		}
+
 		const checkpointReason = this.getCheckpointReason(this.lastMessageType);
 		if (checkpointReason === undefined) {
 			this.documentCheckpointManager.updateCheckpointIdleTimer(
@@ -681,39 +709,16 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		this.clearActivityIdleTimer();
 		this.setActivityIdleTimer();
 
-		if (sequencedMessageCount > 0) {
-			// Check if Deli is over the max ops since last summary nack limit
-			// Note: we are explicitly checking this after processing the entire boxcar in order to not break batches
-			if (
-				this.serviceConfiguration.deli.summaryNackMessages.enable &&
-				!this.nackMessages.has(NackMessagesType.SummaryMaxOps)
-			) {
-				const opsSinceLastSummary = this.sequenceNumber - this.durableSequenceNumber;
-				if (
-					opsSinceLastSummary > this.serviceConfiguration.deli.summaryNackMessages.maxOps
-				) {
-					// this op brings us over the limit
-					// start nacking non-system ops and ops that are submitted by non-summarizers
-					this.updateNackMessages(NackMessagesType.SummaryMaxOps, {
-						identifier: NackMessagesType.SummaryMaxOps,
-						content: this.serviceConfiguration.deli.summaryNackMessages.nackContent,
-						allowSystemMessages: true,
-						allowedScopes: [ScopeType.SummaryWrite],
-					});
-				}
-			}
+		// Update the op event idle & max ops counter if ops were just sequenced
+		if (sequencedMessageCount > 0 && this.serviceConfiguration.deli.opEvent.enable) {
+			this.updateOpIdleTimer();
 
-			// Update the op event idle & max ops counter if ops were just sequenced
-			if (this.serviceConfiguration.deli.opEvent.enable) {
-				this.updateOpIdleTimer();
+			const maxOps = this.serviceConfiguration.deli.opEvent.maxOps;
+			if (maxOps !== undefined) {
+				this.opEvent.sequencedMessagesSinceLastOpEvent += sequencedMessageCount;
 
-				const maxOps = this.serviceConfiguration.deli.opEvent.maxOps;
-				if (maxOps !== undefined) {
-					this.opEvent.sequencedMessagesSinceLastOpEvent += sequencedMessageCount;
-
-					if (this.opEvent.sequencedMessagesSinceLastOpEvent > maxOps) {
-						this.emitOpEvent(OpEventType.MaxOps);
-					}
+				if (this.opEvent.sequencedMessagesSinceLastOpEvent > maxOps) {
+					this.emitOpEvent(OpEventType.MaxOps);
 				}
 			}
 		}
@@ -745,32 +750,46 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		}
 	}
 
-	private produceMessage(producer: IProducer, message: ITicketedMessage): void {
-		this.lastSendP = producer
-			.send([message], message.tenantId, message.documentId)
-			.catch((error) => {
-				if (this.closed) {
-					return;
-				}
+	/**
+	 * Adds a send to the set that checkpoints wait on.
+	 * Checkpoints only cover state whose tracked sends all succeeded.
+	 */
+	private trackSend(sendP: Promise<unknown>): void {
+		const sentP = sendP.then(
+			() => true,
+			() => false,
+		);
+		this.allSendsSucceededP = Promise.all([this.allSendsSucceededP, sentP]).then(
+			([previousSendsSucceeded, sent]) => previousSendsSucceeded && sent,
+		);
+	}
 
-				const errorMsg = "Could not send message to producer";
-				this.context.log?.error(`${errorMsg}: ${JSON.stringify(error)}`, {
-					messageMetaData: {
-						documentId: this.documentId,
-						tenantId: this.tenantId,
-					},
-				});
-				Lumberjack.error(
-					errorMsg,
-					getLumberBaseProperties(this.documentId, this.tenantId),
-					error,
-				);
-				this.context.error(error, {
-					restart: true,
-					tenantId: this.tenantId,
+	private produceMessage(producer: IProducer, message: ITicketedMessage): void {
+		const sendP = producer.send([message], message.tenantId, message.documentId);
+		this.trackSend(sendP);
+		sendP.catch((error) => {
+			if (this.closed) {
+				return;
+			}
+
+			const errorMsg = "Could not send message to producer";
+			this.context.log?.error(`${errorMsg}: ${JSON.stringify(error)}`, {
+				messageMetaData: {
 					documentId: this.documentId,
-				});
+					tenantId: this.tenantId,
+				},
 			});
+			Lumberjack.error(
+				errorMsg,
+				getLumberBaseProperties(this.documentId, this.tenantId),
+				error,
+			);
+			this.context.error(error, {
+				restart: true,
+				tenantId: this.tenantId,
+				documentId: this.documentId,
+			});
+		});
 	}
 
 	private produceMessages(
@@ -778,7 +797,17 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		messages: ITicketedMessage[],
 		rawMessage: IQueuedMessage,
 	): void {
-		this.lastSendP = producer.send(messages, this.tenantId, this.documentId).catch((error) => {
+		const sendP = producer.send(messages, this.tenantId, this.documentId);
+		// An oversized message is dropped and the document is marked as corrupt instead of restarting.
+		// Kafka moves past it without reprocessing, so later checkpoints must still cover the messages after it.
+		this.trackSend(
+			sendP.catch((error) => {
+				if (!isMessageTooLargeError(error)) {
+					throw error;
+				}
+			}),
+		);
+		sendP.catch((error) => {
 			if (this.closed) {
 				return;
 			}
@@ -796,17 +825,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				error,
 			);
 
-			let restart = true;
-			let markAsCorrupt = false;
-
-			if (isNetworkError(error) && error.code === 413) {
-				// kafka message size too large
-				restart = false;
-				markAsCorrupt = true;
-			}
-
+			const markAsCorrupt = isMessageTooLargeError(error);
 			this.context.error(error, {
-				restart,
+				restart: !markAsCorrupt,
 				markAsCorrupt: markAsCorrupt ? rawMessage : undefined,
 				tenantId: this.tenantId,
 				documentId: this.documentId,
@@ -1424,10 +1445,22 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	/**
 	 * Sends a message to the rawdeltas queue.
 	 * This essentially sends the message to this deli lambda
+	 * @param trackForCheckpoint - Whether later checkpoints wait for this send and are skipped if it fails.
 	 */
-	private async sendToRawDeltas(message: IRawOperationMessage): Promise<void> {
+	private async sendToRawDeltas(
+		message: IRawOperationMessage,
+		trackForCheckpoint: boolean,
+	): Promise<void> {
 		try {
-			await this.rawDeltasProducer.send([message], message.tenantId, message.documentId);
+			const sendP = this.rawDeltasProducer.send(
+				[message],
+				message.tenantId,
+				message.documentId,
+			);
+			if (trackForCheckpoint) {
+				this.trackSend(sendP);
+			}
+			await sendP;
 		} catch (error) {
 			if (this.closed) {
 				return;
@@ -1465,7 +1498,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				idleClient.clientId,
 				idleClient.serverMetadata,
 			);
-			this.sendToRawDeltas(leaveMessage).catch((error) => {
+			this.sendToRawDeltas(leaveMessage, false).catch((error) => {
 				const lumberjackProperties = {
 					...getLumberBaseProperties(this.documentId, this.tenantId),
 					clientId: idleClient.clientId,
@@ -1493,7 +1526,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			// write client idle is handled by checkIdleWriteClients
 			if (client.mode === "read" && exp < currentTime) {
 				const leaveMessage = this.createLeaveMessage(clientId);
-				this.sendToRawDeltas(leaveMessage).catch((error) => {
+				this.sendToRawDeltas(leaveMessage, false).catch((error) => {
 					const lumberjackProperties = {
 						...getLumberBaseProperties(this.documentId, this.tenantId),
 						clientId,
@@ -1710,7 +1743,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		this.activityIdleTimer = setTimeout(() => {
 			if (!this.documentCheckpointManager.getNoActiveClients()) {
 				const noOpMessage = this.createOpMessage(MessageType.NoOp);
-				this.sendToRawDeltas(noOpMessage).catch((error) => {
+				this.sendToRawDeltas(noOpMessage, false).catch((error) => {
 					const lumberjackProperties = {
 						...getLumberBaseProperties(this.documentId, this.tenantId),
 					};
@@ -1753,7 +1786,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		this.noopEvent = setTimeout(() => {
 			if (!this.documentCheckpointManager.getNoActiveClients()) {
 				const noOpMessage = this.createOpMessage(MessageType.NoOp);
-				this.sendToRawDeltas(noOpMessage).catch((error) => {
+				this.sendToRawDeltas(noOpMessage, false).catch((error) => {
 					const lumberjackProperties = {
 						...getLumberBaseProperties(this.documentId, this.tenantId),
 					};
@@ -1901,16 +1934,27 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	}
 
 	/**
-	 * Checkpoints the current state once the pending kafka messages are produced
+	 * Checkpoints the current state once every tracked send issued so far has settled.
+	 * The checkpoint is skipped if any of those sends failed.
 	 */
 	private checkpoint(reason: CheckpointReason, globalCheckpointOnly: boolean): void {
 		this.documentCheckpointManager.resetCheckpointTimer();
 
-		Promise.all([this.lastSendP, this.lastNoClientP])
-			.then(() => {
-				const checkpointParams = this.generateCheckpoint(reason);
-				if (reason === CheckpointReason.ClearCache) {
-					checkpointParams.clear = true;
+		// Capture state now so the checkpoint only covers messages whose sends are awaited below.
+		const checkpointParams = this.generateCheckpoint(reason);
+		if (reason === CheckpointReason.ClearCache) {
+			checkpointParams.clear = true;
+		}
+
+		this.allSendsSucceededP
+			.then((allSendsSucceeded) => {
+				if (!allSendsSucceeded) {
+					Lumberjack.warning("Skipping checkpoint due to a producer send failure", {
+						...getLumberBaseProperties(this.documentId, this.tenantId),
+						checkpointReason: CheckpointReason[reason],
+						deliCheckpointOffset: checkpointParams.deliCheckpointMessage.offset,
+					});
+					return;
 				}
 				const lumberjackProperties: Record<string, any> = {
 					...getLumberBaseProperties(this.documentId, this.tenantId),
