@@ -42,6 +42,14 @@ New documents created with `Fluid.ContainerRuntime.NativeCheckpoints` can store 
 This is an internal prototype, not a production persistence or backup contract.
 Capture requires acknowledged state; the returned catalog entry is durable only after its store op is acknowledged.
 
+For editor-side capture, register SharedStrings with `configuredSharedString({ newMergeTreeSnapshotFormat: true })` in new checkpoint-enabled documents.
+The checkpoint tests use this existing flat snapshot format, including for attributed text.
+The legacy format's base-at-minimum-sequence plus catch-up-ops representation is not inherently incompatible with checkpoints.
+However, an independently reproduced legacy summarization defect drops acknowledged local edits when their reference sequence lags: local acknowledgement emits no delta for the catch-up-op transformation.
+Pausing inbound processing or waiting for acknowledgements does not repair that defect.
+Non-editing clients can still produce loadable legacy summaries; the prototype does not fix that DDS defect or automatically change application factories.
+The flat format avoids this catch-up-op path, and its existing loader preserves the selected format after reload.
+
 Storage first computes a byte-range delta against the previous checkpoint.
 An aligned 32-byte base index finds unchanged ranges even when edits move subsequent bytes.
 Matches are verified byte-for-byte; collisions can reduce compression but cannot change reconstructed content.
@@ -113,6 +121,29 @@ An older boundary, a mismatched ID at the same sequence number, a missing catalo
 Pass an unversioned document URL; a version embedded in the URL can still pin the request and will be rejected if stale.
 This does not assume ODSP's fire-and-forget cache eviction on error disposal has finished.
 ODSP live-service validation remains required; local and Tinylicious tests do not establish that service's restore authorization or cache semantics.
+
+### Lifecycle validation and sample measurements
+
+The driver-neutral end-to-end suite covers four publisher crash windows, host eviction and reload, resumed collaboration, and actual GC mark/sweep followed by cold restore of retained deltas and historical-only images.
+Its mixed lifecycle cases each execute 120 captures and 10 restores, with two editing clients, reconnects, pruning, random text/table/map edits, and complete replacements of poorly compressible content.
+An independent oracle checks text before every capture and all modeled content before restore and after reload.
+The fixture shares 4 MiB of image attachments across all checkpoints.
+
+The normally compiled Tinylicious service passed all 17 checkpoint cases without source-route substitution.
+The following measurements are from two deterministic mixed-lifecycle runs on this Windows machine, using Node 26 for the client and Node 22 for the service:
+
+| Seed | Uploaded payload across all 120 captures (bytes) | Retained payload (bytes) | Retained checkpoints | Capture through acknowledgement mean / p95 (ms) | Cold restore through verified load mean (ms) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 17 | 2,707,501 | 314,221 | 15 | 25.7 / 46.9 | 311.0 |
+| 123 | 2,870,579 | 454,340 | 16 | 26.1 / 46.8 | 322.2 |
+
+These are whole-history totals, not per-checkpoint sizes.
+Payload totals exclude the original shared image bytes and service protocol/storage overhead.
+Cold reconstruction used at most five archive reads; boot catalogs occupied 4,320 and 4,593 bytes, respectively.
+The retention target was deliberately reduced to 12 with zero minimum age to exercise pruning; dependency closure and the current restore boundary explain the larger retained counts.
+The reporter also records stage-sampled heap/array-buffer growth and process-wide peak RSS, which includes the test harness and is not per-operation peak memory.
+Set `FLUID_NATIVE_CHECKPOINT_METRICS_PREFIX` when running the end-to-end suite to retain these measurements.
+These are development-machine measurements, not production-service latency or browser-memory guarantees.
 
 ## Data Virtualization For DataStores (Work in Progress)
 

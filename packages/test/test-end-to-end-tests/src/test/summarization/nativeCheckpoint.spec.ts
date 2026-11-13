@@ -16,7 +16,11 @@ import type {
 } from "@fluidframework/container-runtime/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { DriverHeader, MessageType } from "@fluidframework/driver-definitions/internal";
+import {
+	DriverHeader,
+	MessageType,
+	SummaryType,
+} from "@fluidframework/driver-definitions/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
@@ -60,7 +64,8 @@ async function getEntry(container: IContainer): Promise<TestFluidObject> {
 describeCompat("Native checkpoints", "NoCompat", (getTestObjectProvider, apis) => {
 	const { ContainerRuntime } = apis.containerRuntime;
 	const { Loader } = apis.loader;
-	const { SharedString, SharedMatrix } = apis.dds;
+	const { SharedMatrix } = apis.dds;
+	const { configuredSharedString } = apis.dataRuntime.packages.sequence;
 	/** Gets the concrete runtime without depending on private container fields. */
 	async function getRuntime(container: IContainer): Promise<ContainerRuntimeType> {
 		const entry = await getEntry(container);
@@ -78,7 +83,7 @@ describeCompat("Native checkpoints", "NoCompat", (getTestObjectProvider, apis) =
 			summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
 		},
 		registry: [
-			["text", SharedString.getFactory()],
+			["text", configuredSharedString({ newMergeTreeSnapshotFormat: true }).getFactory()],
 			["table", SharedMatrix.getFactory()],
 		],
 	};
@@ -809,6 +814,433 @@ describeCompat("Native checkpoints", "NoCompat", (getTestObjectProvider, apis) =
 					assert.equal((await getEntry(restored)).root.get("peer"), "collaboration resumed");
 				} finally {
 					restored.close();
+				}
+			},
+		);
+	}
+
+	for (const seed of [17, 123]) {
+		const rounds = 10;
+		itExpects(
+			`mixes edits, pruning, cold reloads and restores with incompressible content (seed ${seed})`,
+			Array.from({ length: rounds * 3 }, (_value, index) => ({
+				eventName:
+					index % 3 === 0
+						? "fluid:telemetry:Container:ContainerDispose"
+						: "fluid:telemetry:Container:ContainerClose",
+				error: "Native checkpoint restored: reload without cached or pending state",
+			})),
+			async function () {
+				this.timeout(180_000);
+				const provider = getTestObjectProvider({ syncSummarizer: true });
+				async function loadModel(container: IContainer): Promise<{
+					entry: TestFluidObject;
+					runtime: ContainerRuntimeType;
+					text: SharedString;
+					table: SharedMatrix<string>;
+				}> {
+					const entry = await getEntry(container);
+					return {
+						entry,
+						runtime: await getRuntime(container),
+						text: await entry.getSharedObject<SharedString>("text"),
+						table: await entry.getSharedObject<SharedMatrix<string>>("table"),
+					};
+				}
+				let source = await provider.makeTestContainer(config);
+				await waitForContainerConnection(source);
+				let model = await loadModel(source);
+				const images = [
+					createRandomBytes(2 * 1024 * 1024, seed),
+					createRandomBytes(2 * 1024 * 1024, seed + 1),
+				];
+				const handles = await Promise.all(
+					images.map(async (bytes) => model.runtime.uploadBlob(bytes.buffer)),
+				);
+				const imageRoutes = handles.map(
+					(handle) => toFluidHandleInternal(handle).absolutePath,
+				);
+				model.entry.root.set("images", handles);
+				let expected = {
+					value: "initial",
+					text: Buffer.from(createRandomBytes(12 * 1024, seed + 2)).toString("base64"),
+					noise: Buffer.from(createRandomBytes(32 * 1024, seed + 3)).toString("base64"),
+					cells: [
+						["a", "b"],
+						["c", "d"],
+					],
+					image: 0,
+				};
+				model.entry.root.set("value", expected.value);
+				model.entry.root.set("noise", expected.noise);
+				model.entry.root.set("image", handles[0]);
+				model.text.insertText(0, expected.text);
+				model.table.insertRows(0, 2);
+				model.table.insertCols(0, 2);
+				for (const [row, cells] of expected.cells.entries()) {
+					for (const [column, value] of cells.entries()) {
+						model.table.setCell(row, column, value);
+					}
+				}
+				await provider.ensureSynchronized();
+				let peer = await provider.loadTestContainer(config);
+				await waitForContainerConnection(peer);
+				await provider.ensureSynchronized();
+				let peerModel = await loadModel(peer);
+				const baseline = await model.runtime.summarize({
+					fullTree: true,
+					trackState: false,
+					runGC: false,
+				});
+				const snapshots = new Map<string, typeof expected>();
+				const captureTimes: number[] = [];
+				const restoreTimes: number[] = [];
+				const coldReadCounts: number[] = [];
+				let uploadedBytes = 0;
+				let sampledHeapPeak = process.memoryUsage().heapUsed;
+				let sampledArrayBufferPeak = process.memoryUsage().arrayBuffers;
+				const initialHeap = sampledHeapPeak;
+				const initialArrayBuffers = sampledArrayBufferPeak;
+				function sampleMemory(): void {
+					const memory = process.memoryUsage();
+					sampledHeapPeak = Math.max(sampledHeapPeak, memory.heapUsed);
+					sampledArrayBufferPeak = Math.max(sampledArrayBufferPeak, memory.arrayBuffers);
+				}
+				let random = seed;
+				function getRandom(limit: number): number {
+					random = (random * 1664525 + 1013904223) % 4294967296;
+					return Math.floor((random / 4294967296) * limit);
+				}
+				async function validateModel(
+					current: Awaited<ReturnType<typeof loadModel>>,
+					context: string,
+				): Promise<void> {
+					assert.equal(current.entry.root.get("value"), expected.value);
+					assert.equal(current.entry.root.get("noise"), expected.noise);
+					const actualText = current.text.getText();
+					if (actualText !== expected.text) {
+						const offset = [...expected.text].findIndex(
+							(character, index) => actualText[index] !== character,
+						);
+						assert.fail(
+							`${context}: text mismatch at ${offset}; actual=${JSON.stringify(actualText.slice(Math.max(0, offset - 30), offset + 80))}; expected=${JSON.stringify(expected.text.slice(Math.max(0, offset - 30), offset + 80))}; lengths=${actualText.length}/${expected.text.length}`,
+						);
+					}
+					for (const [row, cells] of expected.cells.entries()) {
+						for (const [column, value] of cells.entries()) {
+							assert.equal(current.table.getCell(row, column), value);
+						}
+					}
+					const image = current.entry.root.get<IFluidHandle<ArrayBufferLike>>("image");
+					assert(image !== undefined);
+					assert.equal(toFluidHandleInternal(image).absolutePath, imageRoutes[expected.image]);
+					assert.deepEqual(new Uint8Array(await image.get()), images[expected.image]);
+				}
+				const loader = provider.makeTestLoader(config);
+				assert(loader instanceof Loader);
+				const request = { url: await provider.driver.createContainerUrl(provider.documentId) };
+				for (let round = 0; round < rounds; round++) {
+					const { summarizer } = await createSummarizer(provider, source, {
+						...config,
+						runtimeOptions: undefined,
+					});
+					try {
+						for (let point = 0; point < 12; point++) {
+							for (let edit = 0; edit < 3; edit++) {
+								const editor = getRandom(2) === 0 ? model : peerModel;
+								const value = `${round}:${point}:${edit}:${random}`;
+								switch (getRandom(6)) {
+									case 0: {
+										editor.entry.root.set("value", value);
+										expected.value = value;
+										break;
+									}
+									case 1: {
+										const offset = getRandom(expected.text.length - 32);
+										editor.text.replaceText(offset, offset + value.length, value);
+										expected.text =
+											expected.text.slice(0, offset) +
+											value +
+											expected.text.slice(offset + value.length);
+										break;
+									}
+									case 2: {
+										const row = getRandom(2);
+										const column = getRandom(2);
+										editor.table.setCell(row, column, value);
+										expected.cells[row][column] = value;
+										break;
+									}
+									case 3: {
+										// Include complete replacements, not only favorable small deltas.
+										expected.noise = Buffer.from(
+											createRandomBytes(32 * 1024, random),
+										).toString("base64");
+										editor.entry.root.set("noise", expected.noise);
+										break;
+									}
+									case 4: {
+										expected.image = getRandom(images.length);
+										const currentImages =
+											editor.entry.root.get<IFluidHandle<ArrayBufferLike>[]>("images");
+										assert(currentImages !== undefined);
+										editor.entry.root.set("image", currentImages[expected.image]);
+										break;
+									}
+									case 5: {
+										peer.disconnect();
+										peer.connect();
+										await waitForContainerConnection(peer);
+										break;
+									}
+									default: {
+										assert.fail("Unknown lifecycle operation");
+									}
+								}
+								await provider.ensureSynchronized();
+							}
+							const id = `${round}:${point}`;
+							assert(
+								model.text.getText() === expected.text,
+								`Text oracle before capture ${id}`,
+							);
+							assert(
+								peerModel.text.getText() === expected.text,
+								`Peer text oracle before capture ${id}`,
+							);
+							snapshots.set(id, structuredClone(expected));
+							const captureStart = performance.now();
+							const checkpoint = await model.runtime.createNativeCheckpoint(id);
+							await provider.ensureSynchronized();
+							captureTimes.push(performance.now() - captureStart);
+							uploadedBytes += checkpoint.bytes;
+							assert(
+								checkpoint.bytes < 128 * 1024,
+								"Archive payload must not contain the 4 MiB of images",
+							);
+							assert.deepEqual([...checkpoint.assets].sort(), [...imageRoutes].sort());
+							if (point % 6 === 5) {
+								model.runtime.pruneNativeCheckpoints({ minAgeMs: 0, targetCount: 12 });
+								await provider.ensureSynchronized();
+								const retained = new Set(
+									model.runtime.getNativeCheckpoints().map((entry) => entry.id),
+								);
+								for (const retainedId of snapshots.keys()) {
+									if (!retained.has(retainedId)) {
+										snapshots.delete(retainedId);
+									}
+								}
+							}
+							sampleMemory();
+						}
+						await validateModel(model, `Source before restore ${round}`);
+						await validateModel(peerModel, `Peer before restore ${round}`);
+						await summarizeNow(summarizer);
+						summarizer.close();
+						const worker = await provider.loadTestContainer(config, {
+							[LoaderHeader.cache]: false,
+							[LoaderHeader.clientDetails]: {
+								capabilities: { interactive: false },
+								type: "summarizer",
+							},
+							[DriverHeader.summarizingClient]: true,
+						});
+						await waitForContainerConnection(worker);
+						await provider.ensureSynchronized();
+						const publisher = await getRuntime(worker);
+						const choices = publisher.getNativeCheckpoints();
+						const selected =
+							choices[
+								round % 3 === 0
+									? 0
+									: round % 3 === 1
+										? choices.length - 1
+										: getRandom(choices.length)
+							];
+						assert(selected !== undefined);
+						const archived = snapshots.get(selected.id);
+						assert(archived !== undefined);
+						const payloadStorageIds = new Set(
+							choices.map((checkpoint) =>
+								publisher.lookupTemporaryBlobStorageId(
+									checkpoint.route.slice("/_blobs/".length),
+								),
+							),
+						);
+						const reads = spy(publisher.storage, "readBlob");
+						const start = performance.now();
+						model.runtime.requestNativeCheckpointRestore(`mixed-${round}`, selected.id);
+						await provider.ensureSynchronized();
+						const recovery = publisher.getNativeCheckpointRestore();
+						assert(recovery !== undefined);
+						const workerDisposed = new Deferred<void>();
+						const sourceClosed = new Deferred<void>();
+						const peerClosed = new Deferred<void>();
+						publisher.once("dispose", () => workerDisposed.resolve());
+						source.once("closed", () => sourceClosed.resolve());
+						peer.once("closed", () => peerClosed.resolve());
+						await provider.opProcessingController.pauseProcessing(source, peer);
+						try {
+							provider.opProcessingController.resumeProcessing(worker);
+							await publisher.publishNativeCheckpointRestore();
+							await timeoutAwait(workerDisposed.promise);
+							provider.opProcessingController.resumeProcessing(source);
+							await timeoutAwait(sourceClosed.promise);
+							provider.opProcessingController.resumeProcessing(peer);
+							await timeoutAwait(peerClosed.promise);
+							await provider.ensureSynchronized();
+							const payloadReads = reads
+								.getCalls()
+								.filter((call) => payloadStorageIds.has(call.args[0])).length;
+							assert.equal(payloadReads, (selected.depth ?? 0) + 1);
+							assert(
+								payloadReads <= 5,
+								"Cold reconstruction must remain bounded after pruning",
+							);
+							coldReadCounts.push(payloadReads);
+						} finally {
+							reads.restore();
+						}
+						assert(source.closed && peer.closed && worker.closed);
+						let evicted = false;
+						source = await loadContainerAfterNativeCheckpointRestore(
+							{ ...loader.services, logger: provider.logger, request },
+							recovery.restore,
+							async () => {
+								evicted = true;
+							},
+						);
+						assert(provider.opProcessingController instanceof LoaderContainerTracker);
+						provider.opProcessingController.addContainer(source);
+						await waitForContainerConnection(source);
+						assert(evicted);
+						model = await loadModel(source);
+						expected = structuredClone(archived);
+						await validateModel(model, `Source after restore ${round} to ${selected.id}`);
+						restoreTimes.push(performance.now() - start);
+						peer = await provider.loadTestContainer(config, { [LoaderHeader.cache]: false });
+						await waitForContainerConnection(peer);
+						await provider.ensureSynchronized();
+						peerModel = await loadModel(peer);
+						await validateModel(peerModel, `Peer after restore ${round} to ${selected.id}`);
+						// Every restored generation must remain editable, including the final round.
+						expected.value = `post-restore-${round}`;
+						model.entry.root.set("value", expected.value);
+						await provider.ensureSynchronized();
+						assert.equal(peerModel.entry.root.get("value"), expected.value);
+						sampleMemory();
+					} finally {
+						summarizer.close();
+					}
+				}
+				const finalSummary = await model.runtime.summarize({
+					fullTree: true,
+					trackState: false,
+					runGC: false,
+				});
+				assert(
+					finalSummary.stats.totalBlobSize - baseline.stats.totalBlobSize < 100 * 1024,
+					"Boot growth must be metadata, not archived content or image bytes",
+				);
+				const catalog: (typeof finalSummary.summary.tree)[string] | undefined =
+					finalSummary.summary.tree[".nativeCheckpoints"];
+				assert(catalog?.type === SummaryType.Blob && typeof catalog.content === "string");
+				const retainedBytes = model.runtime
+					.getNativeCheckpoints()
+					.reduce((total, checkpoint) => total + checkpoint.bytes, 0);
+				const metricsPrefix = process.env.FLUID_NATIVE_CHECKPOINT_METRICS_PREFIX;
+				if (metricsPrefix !== undefined) {
+					finishLoggingReport(
+						{
+							content: [
+								{
+									benchmarkName: `Native checkpoint mixed lifecycle (${provider.driver.type}, seed ${seed}, 120 captures, 10 restores)`,
+									data: [
+										{
+											name: "Capture through acknowledgement mean",
+											value:
+												captureTimes.reduce((total, value) => total + value, 0) /
+												captureTimes.length,
+											units: "ms",
+											type: ValueType.SmallerIsBetter,
+											significance: "Primary",
+										},
+										{
+											name: "Capture through acknowledgement p95",
+											value: [...captureTimes].sort((left, right) => left - right)[
+												Math.ceil(captureTimes.length * 0.95) - 1
+											],
+											units: "ms",
+										},
+										{
+											name: "Cold restore through verified load mean",
+											value:
+												restoreTimes.reduce((total, value) => total + value, 0) /
+												restoreTimes.length,
+											units: "ms",
+										},
+										{
+											name: "Cold restore payload reads maximum",
+											value: Math.max(...coldReadCounts),
+											units: "count",
+										},
+										{
+											name: "Cumulative uploaded checkpoint payload",
+											value: uploadedBytes,
+											units: "bytes",
+										},
+										{
+											name: "Retained checkpoint payload",
+											value: retainedBytes,
+											units: "bytes",
+										},
+										{
+											name: "Retained checkpoint count",
+											value: model.runtime.getNativeCheckpoints().length,
+											units: "count",
+										},
+										{
+											name: "Initial boot structural bytes",
+											value: baseline.stats.totalBlobSize,
+											units: "bytes",
+										},
+										{
+											name: "Final boot structural bytes",
+											value: finalSummary.stats.totalBlobSize,
+											units: "bytes",
+										},
+										{
+											name: "Catalog boot bytes",
+											value: Buffer.byteLength(catalog.content),
+											units: "bytes",
+										},
+										{
+											name: "Shared image bytes",
+											value: images.reduce((total, image) => total + image.byteLength, 0),
+											units: "bytes",
+										},
+										{
+											name: "Stage-sampled heap growth peak",
+											value: sampledHeapPeak - initialHeap,
+											units: "bytes",
+										},
+										{
+											name: "Stage-sampled array buffer growth peak",
+											value: sampledArrayBufferPeak - initialArrayBuffers,
+											units: "bytes",
+										},
+										{
+											name: "Process high-water RSS including test harness",
+											value: process.resourceUsage().maxRSS * 1024,
+											units: "bytes",
+										},
+									],
+								},
+							],
+						},
+						false,
+						`${metricsPrefix}-mixed-${seed}.json`,
+					);
 				}
 			},
 		);

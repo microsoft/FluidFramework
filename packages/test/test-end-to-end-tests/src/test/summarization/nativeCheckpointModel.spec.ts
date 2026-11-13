@@ -39,7 +39,8 @@ interface ExpectedStore {
 describeCompat("Native checkpoint model", "NoCompat", (getTestObjectProvider, apis) => {
 	const { ContainerRuntime, ContainerRuntimeFactoryWithDefaultDataStore } =
 		apis.containerRuntime;
-	const { SharedString, SharedMatrix, SharedDirectory, SharedTree } = apis.dds;
+	const { SharedMatrix, SharedDirectory, SharedTree } = apis.dds;
+	const { configuredSharedString } = apis.dataRuntime.packages.sequence;
 	const { DataObject, DataObjectFactory, FluidDataStoreRuntime } = apis.dataRuntime;
 	const { mixinSummaryHandler } = apis.dataRuntime.packages.datastore;
 	const { SchemaFactory, TreeViewConfiguration } = apis.dataRuntime.packages.tree;
@@ -49,7 +50,7 @@ describeCompat("Native checkpoint model", "NoCompat", (getTestObjectProvider, ap
 	const treeConfiguration = new TreeViewConfiguration({ schema: Items });
 
 	const registry = [
-		["text", SharedString.getFactory()],
+		["text", configuredSharedString({ newMergeTreeSnapshotFormat: true }).getFactory()],
 		["table", SharedMatrix.getFactory()],
 		["directory", SharedDirectory.getFactory()],
 		["block", SharedSummaryBlock.getFactory()],
