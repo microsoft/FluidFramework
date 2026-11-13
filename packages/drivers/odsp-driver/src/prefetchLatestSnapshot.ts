@@ -60,6 +60,8 @@ import {
  * @param _fetchBinarySnapshotFormat - Deprecated and not used.
  * @param _snapshotFormatFetchType - Deprecated and not used.
  * @param odspDocumentServiceFactory - factory to access the non persistent cache and store the prefetch promise.
+ * @param useEffectiveMethodForTokenFetch - Opts authorization into the effective GET method.
+ * Defaults to the supplied factory's setting, or false when no factory is supplied.
  *
  * @returns `true` if the snapshot is cached, `false` otherwise.
  * @legacy
@@ -76,6 +78,8 @@ export async function prefetchLatestSnapshot(
 	_fetchBinarySnapshotFormat?: boolean,
 	_snapshotFormatFetchType?: SnapshotFormatSupportType,
 	odspDocumentServiceFactory?: OdspDocumentServiceFactory,
+	useEffectiveMethodForTokenFetch: boolean = odspDocumentServiceFactory?.useEffectiveMethodForTokenFetch ??
+		false,
 ): Promise<boolean> {
 	const mc = createChildMonitoringContext({ logger, namespace: "PrefetchSnapshot" });
 	const odspLogger = createOdspLogger(mc.logger);
@@ -116,6 +120,7 @@ export async function prefetchLatestSnapshot(
 			undefined,
 			undefined,
 			odspDocumentServiceFactory?.requestHeaders,
+			useEffectiveMethodForTokenFetch,
 		);
 	};
 	const snapshotKey = createCacheSnapshotKey(odspResolvedUrl, useGroupIdsForSnapshotFetch);

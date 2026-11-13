@@ -150,6 +150,12 @@ export class OdspDocumentServiceFactoryCore
 	private readonly hostPolicy: HostStoragePolicy;
 	public readonly requestHeaders?: Readonly<Record<string, string>>;
 
+	/**
+	 * Whether the factory's token-fetching policy uses the effective GET method for multipart reads.
+	 * Undefined and false preserve the transport POST method.
+	 */
+	public readonly useEffectiveMethodForTokenFetch?: boolean;
+
 	public get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents> {
 		return this.nonPersistentCache.snapshotPrefetchResultCache;
 	}
@@ -316,6 +322,9 @@ export class OdspDocumentServiceFactoryCore
 		protected persistedCache: IPersistedCache = new LocalPersistentCache(),
 		hostPolicy: HostStoragePolicy = {},
 	) {
+		if (hostPolicy.useEffectiveMethodForTokenFetch !== undefined) {
+			this.useEffectiveMethodForTokenFetch = hostPolicy.useEffectiveMethodForTokenFetch;
+		}
 		this.requestHeaders = copyRequestHeaders(hostPolicy.hostProvidedRequestHeaders);
 		this.hostPolicy =
 			this.requestHeaders === undefined

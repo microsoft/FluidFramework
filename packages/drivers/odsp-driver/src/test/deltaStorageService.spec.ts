@@ -5,14 +5,19 @@
 
 import { strict as assert } from "node:assert";
 
+import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 import type {
 	IDeltasFetchResult,
 	IFileEntry,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
-import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import type {
+	IOdspResolvedUrl,
+	InstrumentedStorageTokenFetcher,
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { MockLogger, type TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
+import { type SinonStub, stub } from "sinon";
 
 import { EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
@@ -48,6 +53,154 @@ describe("DeltaStorageService", () => {
 		odspResolvedUrl: true,
 	} as unknown as IOdspResolvedUrl;
 	const fileEntry = { docId: "docId", resolvedUrl };
+
+	describe("Request-bound authorization", () => {
+		let epochTracker: EpochTracker;
+		let logger: TelemetryLoggerExt & ITelemetryLoggerExt;
+		let deltaStorageService: OdspDeltaStorageService;
+		let fetchStub: SinonStub<Parameters<typeof fetch>, ReturnType<typeof fetch>>;
+		let getAuthHeader: SinonStub<
+			Parameters<InstrumentedStorageTokenFetcher>,
+			ReturnType<InstrumentedStorageTokenFetcher>
+		>;
+
+		beforeEach(() => {
+			logger = new MockLogger().toTelemetryLogger();
+			epochTracker = createUtEpochTracker(fileEntry, logger);
+			epochTracker.setEpoch("epoch1", true, "test");
+			fetchStub = stub(globalThis, "fetch").callsFake(
+				async () =>
+					new Response(JSON.stringify({ value: [] }), {
+						headers: { "x-fluid-epoch": "epoch1" },
+					}),
+			);
+			getAuthHeader = stub<
+				Parameters<InstrumentedStorageTokenFetcher>,
+				ReturnType<InstrumentedStorageTokenFetcher>
+			>().callsFake(async (options) => {
+				assert(options.request !== undefined);
+				return `MSAuth1.0 popToken="${options.request.method} ${options.request.url}", type="AT_POP"`;
+			});
+			deltaStorageService = new OdspDeltaStorageService(
+				testDeltaStorageUrl,
+				getAuthHeader,
+				epochTracker,
+				logger,
+			);
+		});
+
+		afterEach(async () => {
+			fetchStub.restore();
+			await epochTracker.removeEntries();
+		});
+
+		for (const useEffectiveMethodForTokenFetch of [undefined, false, true]) {
+			for (const useBearer of [false, true]) {
+				it(`authorizes once with effective-method opt-in ${useEffectiveMethodForTokenFetch} and bearer ${useBearer}`, async () => {
+					const method = useEffectiveMethodForTokenFetch ? "GET" : "POST";
+					deltaStorageService = new OdspDeltaStorageService(
+						testDeltaStorageUrl,
+						getAuthHeader,
+						epochTracker,
+						logger,
+						useEffectiveMethodForTokenFetch,
+					);
+					if (useBearer) {
+						getAuthHeader.callsFake(async (tokenOptions) => {
+							assert.equal(tokenOptions.request?.method, method);
+							return "Bearer storage-token";
+						});
+					}
+					await deltaStorageService.get(3, 8, {}, "ops-test");
+
+					assert(fetchStub.calledOnce);
+					assert(getAuthHeader.calledOnce);
+					const [url, options] = fetchStub.firstCall.args;
+					assert(typeof url === "string" && options !== undefined);
+					assert.deepEqual(getAuthHeader.firstCall.args[0], {
+						refresh: false,
+						request: { url, method },
+					});
+					assert.equal(url, deltaStorageService.buildUrl(3, 8));
+					assert.equal(options.method, "POST");
+					const headers = new Headers(options.headers);
+					assert.equal(headers.has("authorization"), false);
+					assert.match(headers.get("content-type") ?? "", /^multipart\/form-data;boundary=/);
+					assert(typeof options.body === "string");
+					const authHeader = useBearer
+						? "Bearer storage-token"
+						: `MSAuth1.0 popToken="${method} ${url}", type="AT_POP"`;
+					for (const entry of [
+						`Authorization: ${authHeader}`,
+						"X-HTTP-Method-Override: GET",
+						"_post: 1",
+						"x-fluid-epoch: epoch1",
+						"ops-test",
+					]) {
+						assert(options.body.includes(entry), `Multipart body should contain ${entry}`);
+					}
+				});
+			}
+		}
+
+		for (const useEffectiveMethodForTokenFetch of [false, true]) {
+			it(`refreshes authorization once with effective-method opt-in ${useEffectiveMethodForTokenFetch}`, async () => {
+				const method = useEffectiveMethodForTokenFetch ? "GET" : "POST";
+				deltaStorageService = new OdspDeltaStorageService(
+					testDeltaStorageUrl,
+					getAuthHeader,
+					epochTracker,
+					logger,
+					useEffectiveMethodForTokenFetch,
+				);
+				const claims = '{"access_token":{"auth_time":{"essential":true}}}';
+				const tenantId = "test-tenant";
+				fetchStub.onFirstCall().resolves(
+					new Response(undefined, {
+						status: 401,
+						headers: {
+							"www-authenticate": `Bearer realm="${tenantId}", error="insufficient_claims", claims="${fromUtf8ToBase64(claims)}"`,
+						},
+					}),
+				);
+
+				await deltaStorageService.get(3, 8, {});
+
+				assert(fetchStub.calledTwice);
+				assert(getAuthHeader.calledTwice);
+				assert.equal(getAuthHeader.firstCall.args[0].refresh, false);
+				assert.equal(getAuthHeader.secondCall.args[0].refresh, true);
+				assert.equal(getAuthHeader.secondCall.args[0].claims, claims);
+				assert.equal(getAuthHeader.secondCall.args[0].tenantId, tenantId);
+				for (const [index, call] of getAuthHeader.getCalls().entries()) {
+					const [url, options] = fetchStub.getCall(index).args;
+					assert(typeof url === "string" && options !== undefined);
+					assert.deepEqual(call.args[0].request, { url, method });
+					assert.equal(options.method, "POST");
+					assert.equal(new URL(url).searchParams.get("ump"), "1");
+					assert(typeof options.body === "string");
+					assert(
+						options.body.includes(
+							`Authorization: MSAuth1.0 popToken="${method} ${url}", type="AT_POP"`,
+						),
+					);
+				}
+			});
+		}
+
+		it("does not send a request if authorization fails", async () => {
+			const error = new Error("Could not authorize the ops GET");
+			getAuthHeader.rejects(error);
+
+			await assert.rejects(
+				deltaStorageService.get(3, 8, {}),
+				(candidate: unknown) => candidate === error,
+			);
+
+			assert(getAuthHeader.calledOnce);
+			assert(fetchStub.notCalled);
+		});
+	});
 
 	it("Should build the correct sharepoint delta url with auth", async () => {
 		const loggerMock = new MockLogger();

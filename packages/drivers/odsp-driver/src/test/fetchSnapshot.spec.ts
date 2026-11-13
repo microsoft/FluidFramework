@@ -7,7 +7,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { stringToBuffer } from "@fluid-internal/client-utils";
+import { fromUtf8ToBase64, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	DriverErrorTypes,
 	type ISnapshot,
@@ -15,6 +15,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import {
 	type IOdspResolvedUrl,
+	type InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import type {
@@ -23,15 +24,18 @@ import type {
 } from "@fluidframework/telemetry-utils/internal";
 import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
-import { stub } from "sinon";
+import { type SinonStub, stub } from "sinon";
 
+import { currentReadVersion } from "../compactSnapshotParser.js";
 import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";
 import type { HostStoragePolicyInternal } from "../contracts.js";
+import { ClpCompliantAppHeader } from "../contractsPublic.js";
 import { createOdspUrl } from "../createOdspUrl.js";
 import { EpochTracker } from "../epochTracker.js";
 import {
 	downloadSnapshot,
 	type ISnapshotRequestAndResponseOptions,
+	SnapshotFormatSupportType,
 } from "../fetchSnapshot.js";
 import { mockify } from "../mockify.js";
 import { LocalPersistentCache, NonPersistentCache } from "../odspCache.js";
@@ -42,6 +46,7 @@ import {
 	type INewFileInfo,
 	type IOdspResponse,
 	createCacheSnapshotKey,
+	getWithRetryForTokenRefresh,
 } from "../odspUtils.js";
 
 import {
@@ -53,6 +58,246 @@ import {
 } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
+
+describe("Snapshot download authorization", () => {
+	let resolved: IOdspResolvedUrl;
+	let epochTracker: EpochTracker;
+	let fetchStub: SinonStub<Parameters<typeof fetch>, ReturnType<typeof fetch>>;
+	let getAuthHeader: SinonStub<
+		Parameters<InstrumentedStorageTokenFetcher>,
+		ReturnType<InstrumentedStorageTokenFetcher>
+	>;
+	const sharingLink = "https://example.com/share?key=value";
+	const hostHeaders = { "X-Agent-Id": "snapshot-agent" };
+
+	beforeEach(async () => {
+		resolved = {
+			...(await new OdspDriverUrlResolver().resolve({
+				url: createOdspUrl({
+					siteUrl: "https://microsoft.sharepoint.com/siteUrl",
+					driveId: "driveId",
+					itemId: "itemId",
+					dataStorePath: "/",
+				}),
+			})),
+			isClpCompliantApp: true,
+			shareLinkInfo: { sharingLinkToRedeem: sharingLink },
+		};
+		epochTracker = new EpochTracker(
+			createUtLocalCache(),
+			{ docId: resolved.hashedDocumentId, resolvedUrl: resolved },
+			createChildLogger({ logger: new MockLogger() }),
+			undefined,
+			hostHeaders,
+		);
+		epochTracker.setEpoch("epoch1", true, "test");
+		fetchStub = stub(globalThis, "fetch").resolves(
+			new Response("{}", { headers: { "x-fluid-epoch": "epoch1" } }),
+		);
+		getAuthHeader = stub<
+			Parameters<InstrumentedStorageTokenFetcher>,
+			ReturnType<InstrumentedStorageTokenFetcher>
+		>().callsFake(async (options) => {
+			assert(options.request !== undefined);
+			return `MSAuth1.0 popToken="${options.request.method} ${options.request.url}", type="AT_POP"`;
+		});
+	});
+
+	afterEach(async () => {
+		fetchStub.restore();
+		await epochTracker.removeEntries();
+	});
+
+	for (const [scheme, useEffectiveMethodForTokenFetch] of [
+		["Bearer", undefined],
+		["bearer", false],
+	] as const) {
+		it(`preserves the multipart request for ${scheme} authorization`, async () => {
+			const authHeader = `${scheme} storage-token`;
+			getAuthHeader.callsFake(async (tokenOptions) => {
+				assert.equal(tokenOptions.request?.method, "POST");
+				return authHeader;
+			});
+			await downloadSnapshot(
+				resolved,
+				getAuthHeader,
+				{ refresh: false },
+				undefined,
+				{ blobs: 2, timeout: 2000 },
+				undefined,
+				undefined,
+				undefined,
+				epochTracker,
+				undefined,
+				undefined,
+				useEffectiveMethodForTokenFetch,
+			);
+
+			assert(fetchStub.calledOnce);
+			assert(getAuthHeader.calledOnce);
+			const [url, options] = fetchStub.firstCall.args;
+			assert(typeof url === "string" && options !== undefined);
+			assert.deepEqual(getAuthHeader.firstCall.args[0].request, {
+				url,
+				method: "POST",
+			});
+			assert.equal(options.method, "POST");
+			assert.equal(new URL(url).searchParams.get("ump"), "1");
+			assert.equal(new URL(url).searchParams.get("blobs"), "2");
+			assert.equal(new URL(url).searchParams.has("timeout"), false);
+			const headers = new Headers(options.headers);
+			assert.match(headers.get("content-type") ?? "", /^multipart\/form-data;boundary=/);
+			assert.equal(headers.has("authorization"), false);
+			assert.equal(headers.get("x-agent-id"), "snapshot-agent");
+			assert(typeof options.body === "string");
+			for (const entry of [
+				`Authorization: ${authHeader}`,
+				"X-HTTP-Method-Override: GET",
+				"prefer: manualredirect",
+				`sl: ${sharingLink}`,
+				"x-fluid-epoch: epoch1",
+				`${ClpCompliantAppHeader.isClpCompliantApp}: true`,
+			]) {
+				assert(options.body.includes(entry), `Multipart body should contain ${entry}`);
+			}
+		});
+	}
+
+	for (const useEpochTracker of [false, true]) {
+		it(`authorizes the multipart GET once with epoch tracker ${useEpochTracker}`, async () => {
+			resolved.shareLinkInfo = {
+				sharingLinkToRedeem: sharingLink,
+				isRedemptionNonDurable: useEpochTracker,
+			};
+			const tokenFetchOptions = {
+				refresh: true,
+				claims: "claims-challenge",
+				tenantId: "tenant",
+			};
+			const controller = new AbortController();
+			const result = await downloadSnapshot(
+				resolved,
+				getAuthHeader,
+				tokenFetchOptions,
+				["group-a", "group b"],
+				{ blobs: 2, deltas: 1, timeout: 2000 },
+				undefined,
+				useEpochTracker ? SnapshotFormatSupportType.Binary : undefined,
+				controller,
+				useEpochTracker ? epochTracker : undefined,
+				"snapshot-test",
+				hostHeaders,
+				true,
+			);
+
+			assert(fetchStub.calledOnce);
+			assert(getAuthHeader.calledOnce);
+			const [url, options] = fetchStub.firstCall.args;
+			assert(typeof url === "string" && options !== undefined);
+			assert.equal(options.method, "POST");
+			assert(typeof options.body === "string");
+			assert.equal(options.signal, controller.signal);
+			assert.equal(result.requestUrl, url);
+			const parsedUrl = new URL(url);
+			assert.equal(parsedUrl.searchParams.get("ump"), "1");
+			assert.equal(parsedUrl.searchParams.get("blobs"), "2");
+			assert.equal(parsedUrl.searchParams.get("deltas"), "1");
+			assert.equal(parsedUrl.searchParams.get("groupId"), "group-a,group b");
+			assert.equal(parsedUrl.searchParams.has("timeout"), false);
+			assert.deepEqual(getAuthHeader.firstCall.args[0], {
+				...tokenFetchOptions,
+				request: { url, method: "GET" },
+			});
+
+			const headers = new Headers(options.headers);
+			assert.equal(headers.has("authorization"), false);
+			assert.match(headers.get("content-type") ?? "", /^multipart\/form-data;boundary=/);
+			assert.equal(headers.has("x-http-method-override"), false);
+			for (const entry of [
+				`Authorization: MSAuth1.0 popToken="GET ${url}", type="AT_POP"`,
+				"X-HTTP-Method-Override: GET",
+				`sl: ${sharingLink}`,
+				`prefer: ${useEpochTracker ? "manualredirect, nonDurableRedeem" : "manualredirect"}`,
+				`${ClpCompliantAppHeader.isClpCompliantApp}: true`,
+			]) {
+				assert(options.body.includes(entry), `Multipart body should contain ${entry}`);
+			}
+			assert.equal(headers.get("x-agent-id"), "snapshot-agent");
+			assert.equal(
+				headers.get("accept"),
+				`${useEpochTracker ? "" : "application/json, "}application/ms-fluid; v=${currentReadVersion}`,
+			);
+			if (useEpochTracker) {
+				assert(options.body.includes("x-fluid-epoch: epoch1"));
+				assert(options.body.includes("snapshot-test"));
+			}
+		});
+	}
+
+	for (const useEffectiveMethodForTokenFetch of [false, true]) {
+		it(`refreshes authorization once with effective-method opt-in ${useEffectiveMethodForTokenFetch}`, async () => {
+			const method = useEffectiveMethodForTokenFetch ? "GET" : "POST";
+			const claims = '{"access_token":{"auth_time":{"essential":true}}}';
+			const tenantId = "test-tenant";
+			fetchStub.onFirstCall().resolves(
+				new Response(undefined, {
+					status: 401,
+					headers: {
+						"www-authenticate": `Bearer realm="${tenantId}", error="insufficient_claims", claims="${fromUtf8ToBase64(claims)}"`,
+					},
+				}),
+			);
+
+			await getWithRetryForTokenRefresh(async (options) =>
+				downloadSnapshot(
+					resolved,
+					getAuthHeader,
+					options,
+					undefined,
+					{ blobs: 2 },
+					undefined,
+					undefined,
+					undefined,
+					undefined,
+					undefined,
+					undefined,
+					useEffectiveMethodForTokenFetch,
+				),
+			);
+
+			assert(fetchStub.calledTwice);
+			assert(getAuthHeader.calledTwice);
+			assert.equal(getAuthHeader.firstCall.args[0].refresh, false);
+			assert.equal(getAuthHeader.secondCall.args[0].refresh, true);
+			assert.equal(getAuthHeader.secondCall.args[0].claims, claims);
+			assert.equal(getAuthHeader.secondCall.args[0].tenantId, tenantId);
+			for (const [index, call] of getAuthHeader.getCalls().entries()) {
+				const [url, options] = fetchStub.getCall(index).args;
+				assert(typeof url === "string" && options !== undefined);
+				assert.deepEqual(call.args[0].request, { url, method });
+				assert.equal(options.method, "POST");
+				assert.equal(new URL(url).searchParams.get("ump"), "1");
+				assert(typeof options.body === "string");
+				assert(
+					options.body.includes(
+						`Authorization: MSAuth1.0 popToken="${method} ${url}", type="AT_POP"`,
+					),
+				);
+			}
+		});
+	}
+
+	it("does not send a request if authorization fails", async () => {
+		const error = new Error("Could not authorize the snapshot request");
+		getAuthHeader.rejects(error);
+		await assert.rejects(
+			downloadSnapshot(resolved, getAuthHeader, { refresh: false }, undefined, undefined),
+			(candidate: unknown) => candidate === error,
+		);
+		assert(getAuthHeader.calledOnce);
+		assert(fetchStub.notCalled);
+	});
+});
 
 describe("Tests1 for snapshot fetch", () => {
 	const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
