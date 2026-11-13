@@ -885,7 +885,7 @@ describe("captureFullContainerState", () => {
 						codeLoader,
 						pendingLocalState: legacyReferenceState,
 					}),
-				/Reference-only state.*requires online driver wiring/,
+				/Reference-only state.*3\.12.*requires online driver wiring.*Recapture/,
 				"Fully offline loading should clearly reject legacy reference-only state",
 			);
 
@@ -972,14 +972,76 @@ describe("captureFullContainerState", () => {
 		}
 	});
 
-	it("rejects at capture time when the resolver emits a non-conforming URL shape", async () => {
+	it("captures reference state with a driver-specific URL and rejects offline loading", async () => {
+		const {
+			container,
+			testFluidObject,
+			urlResolver,
+			codeLoader,
+			documentServiceFactory,
+			deltaConnectionServer,
+		} = await initialize();
+		try {
+			testFluidObject.root.set("baseline", "captured");
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			testFluidObject.root.set("afterSnapshot", "saved");
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined);
+			const resolvedUrl = await urlResolver.resolve({ url });
+			assert(resolvedUrl !== undefined);
+			const driverSpecificResolvedUrl: IResolvedUrl = {
+				...resolvedUrl,
+				url: "fluid://example.com/single-segment",
+			};
+			const driverSpecificResolver: IUrlResolver = {
+				resolve: async () => driverSpecificResolvedUrl,
+				getAbsoluteUrl: async () => url,
+			};
+			const driverSpecificFactory: IDocumentServiceFactory = {
+				createContainer: async (...args) => documentServiceFactory.createContainer(...args),
+				createDocumentService: async (requestedResolvedUrl, ...args) => {
+					assert.strictEqual(requestedResolvedUrl.url, driverSpecificResolvedUrl.url);
+					// The local driver needs its own URL shape to locate the test document.
+					return documentServiceFactory.createDocumentService(
+						{ ...requestedResolvedUrl, url: resolvedUrl.url },
+						...args,
+					);
+				},
+			};
+			const pendingLocalState = await captureFullContainerState({
+				urlResolver: driverSpecificResolver,
+				documentServiceFactory: driverSpecificFactory,
+				request: { url },
+				blobCaptureMode: "reference",
+			});
+			const parsed: {
+				url: string;
+				snapshotBlobs: Record<string, string>;
+				savedOps: ISequencedDocumentMessage[];
+			} = JSON.parse(pendingLocalState);
+			assert.strictEqual(parsed.url, driverSpecificResolvedUrl.url);
+			assert(Object.keys(parsed.snapshotBlobs).length > 0);
+			assert(parsed.savedOps.length > 0);
+			await assert.rejects(
+				loadFrozenContainerFromPendingState({ codeLoader, pendingLocalState }),
+				/pending state URL is not in a parseable form/,
+			);
+		} finally {
+			container.close();
+			await deltaConnectionServer.close();
+		}
+	});
+
+	it("rejects inline capture when the resolver emits a non-conforming URL shape", async () => {
 		const { container, documentServiceFactory, deltaConnectionServer } = await initialize();
 
 		// A resolver whose IResolvedUrl.url violates tryParseCompatibleResolvedUrl's
 		// required shape (`protocol://<string>/<tenantId>/<docId>(?...)`). The captured
-		// artifact would not be rehydratable via the offline form of
-		// loadFrozenContainerFromPendingState, so captureFullContainerState must fail
-		// fast at capture time rather than silently produce a poisoned artifact.
+		// inline artifact would not be rehydratable via the offline form of
+		// loadFrozenContainerFromPendingState, so preserve its capture-time rejection.
 		const malformedResolver: IUrlResolver = {
 			resolve: async (): Promise<IResolvedUrl> => ({
 				type: "fluid",
@@ -992,21 +1054,15 @@ describe("captureFullContainerState", () => {
 			getAbsoluteUrl: async (): Promise<string> => "",
 		};
 
-		const captureModes: ("inline" | "reference")[] = ["inline", "reference"];
 		try {
-			for (const blobCaptureMode of captureModes) {
-				await assert.rejects(
-					async () =>
-						captureFullContainerState({
-							urlResolver: malformedResolver,
-							documentServiceFactory,
-							request: { url: "https://example.com/anything" },
-							blobCaptureMode,
-						}),
-					/resolved URL is not in the shape required by tryParseCompatibleResolvedUrl/,
-					"Expected captureFullContainerState to reject a resolver emitting a non-conforming URL shape",
-				);
-			}
+			await assert.rejects(
+				captureFullContainerState({
+					urlResolver: malformedResolver,
+					documentServiceFactory,
+					request: { url: "https://example.com/anything" },
+				}),
+				/resolved URL is not in the shape required by tryParseCompatibleResolvedUrl/,
+			);
 		} finally {
 			container.close();
 			await deltaConnectionServer.close();
