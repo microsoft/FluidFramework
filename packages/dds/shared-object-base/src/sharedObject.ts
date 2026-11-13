@@ -75,6 +75,99 @@ interface ProcessTelemetryProperties {
 }
 
 /**
+ * Message transport exposed to internal SharedObject subclasses that compose an optional protocol.
+ * @internal
+ */
+export interface SharedObjectTransport {
+	isAttached(): boolean;
+	verifyNotClosed(): void;
+	prepareMessage(content: unknown): unknown;
+	submitMessage(content: unknown, metadata: unknown): void;
+}
+
+type SharedObjectMessageRouterFactory = (
+	wrappedDeltaHandler: Required<IDeltaHandler>,
+	transport: SharedObjectTransport,
+) => {
+	readonly deltaHandler: Required<IDeltaHandler>;
+	readonly close?: (error: unknown) => void;
+};
+
+/**
+ * Owns package-internal message routing without adding an extension point to
+ * {@link SharedObjectCore}'s beta API.
+ */
+class SharedObjectMessageRouting implements Required<IDeltaHandler> {
+	#deltaHandler: Required<IDeltaHandler>;
+	#close: ((error: unknown) => void) | undefined;
+	#routerInstalled = false;
+
+	public constructor(
+		ordinaryDeltaHandler: Required<IDeltaHandler>,
+		private readonly transport: SharedObjectTransport,
+		private readonly canInstallRouter: () => boolean,
+	) {
+		this.#deltaHandler = ordinaryDeltaHandler;
+	}
+
+	public installRouter(createRouter: SharedObjectMessageRouterFactory): void {
+		assert(this.canInstallRouter(), "Message routing must be installed before connecting");
+		assert(!this.#routerInstalled, "Message routing can only be installed once");
+		const { deltaHandler, close } = createRouter(this.#deltaHandler, this.transport);
+		this.#deltaHandler = deltaHandler;
+		this.#close = close;
+		this.#routerInstalled = true;
+	}
+
+	public close(error: unknown): void {
+		this.#close?.(error);
+	}
+
+	public readonly processMessages = (messagesCollection: IRuntimeMessageCollection): void => {
+		this.#deltaHandler.processMessages(messagesCollection);
+	};
+
+	public readonly setConnectionState = (connected: boolean): void => {
+		this.#deltaHandler.setConnectionState(connected);
+	};
+
+	public readonly reSubmit = (
+		content: unknown,
+		localOpMetadata: unknown,
+		squash: boolean,
+	): void => {
+		this.#deltaHandler.reSubmit(content, localOpMetadata, squash);
+	};
+
+	public readonly applyStashedOp = (content: unknown): void => {
+		this.#deltaHandler.applyStashedOp(content);
+	};
+
+	public readonly rollback = (content: unknown, localOpMetadata: unknown): void => {
+		this.#deltaHandler.rollback(content, localOpMetadata);
+	};
+}
+
+const messageRoutingBySharedObject = new WeakMap<
+	SharedObjectCore,
+	SharedObjectMessageRouting
+>();
+
+/**
+ * Installs package-internal message routing for a shared object.
+ * The weak association follows the sidecar pattern used by `TreeNodeKernel`.
+ * @internal
+ */
+export function installSharedObjectMessageRouter(
+	sharedObject: SharedObjectCore,
+	createRouter: SharedObjectMessageRouterFactory,
+): void {
+	const messageRouting = messageRoutingBySharedObject.get(sharedObject);
+	assert(messageRouting !== undefined, "Shared object message routing is not initialized");
+	messageRouting.installRouter(createRouter);
+}
+
+/**
  * Base class from which all {@link ISharedObject|shared objects} derive.
  * @remarks
  * This class implements common behaviors that implementations of {@link ISharedObject} may want to reuse.
@@ -139,6 +232,7 @@ export abstract class SharedObjectCore<
 	 * Tracks error that closed this object.
 	 */
 	private closeError?: ReturnType<typeof DataProcessingError.wrapIfUnrecognized>;
+	readonly #deltaHandler: SharedObjectMessageRouting;
 
 	/**
 	 * Gets the connection state
@@ -187,6 +281,39 @@ export abstract class SharedObjectCore<
 		const { opProcessingHelper, callbacksHelper } = this.setUpSampledTelemetryHelpers();
 		this.opProcessingHelper = opProcessingHelper;
 		this.callbacksHelper = callbacksHelper;
+
+		const messageRouting = new SharedObjectMessageRouting(
+			{
+				processMessages: (messagesCollection: IRuntimeMessageCollection) => {
+					this.processMessages(messagesCollection);
+				},
+				setConnectionState: (connected: boolean) => {
+					this.setConnectionState(connected);
+				},
+				reSubmit: (content: unknown, localOpMetadata: unknown, squash: boolean) => {
+					this.reSubmit(content, localOpMetadata, squash);
+				},
+				applyStashedOp: (content: unknown): void => {
+					this.applyStashedOp(parseHandles(content, this.serializer));
+				},
+				rollback: (content: unknown, localOpMetadata: unknown) => {
+					this.rollback(content, localOpMetadata);
+				},
+			},
+			{
+				isAttached: () => this.isAttached(),
+				verifyNotClosed: () => this.verifyNotClosed(),
+				prepareMessage: (content) => this.#prepareMessage(content),
+				submitMessage: (content, metadata) => this.#submitMessage(content, metadata),
+			},
+			() => this.services === undefined,
+		);
+		assert(
+			!messageRoutingBySharedObject.has(this),
+			"Shared object message routing is already initialized",
+		);
+		messageRoutingBySharedObject.set(this, messageRouting);
+		this.#deltaHandler = messageRouting;
 	}
 
 	/**
@@ -250,6 +377,7 @@ export abstract class SharedObjectCore<
 		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (this.closeError === undefined) {
 			this.closeError = error;
+			this.#deltaHandler.close(error);
 		}
 	}
 
@@ -527,24 +655,6 @@ export abstract class SharedObjectCore<
 			this.runtime.off("dispose", rejectBecauseDispose);
 		});
 	}
-
-	readonly #deltaHandler: IDeltaHandler = {
-		processMessages: (messagesCollection: IRuntimeMessageCollection) => {
-			this.processMessages(messagesCollection);
-		},
-		setConnectionState: (connected: boolean) => {
-			this.setConnectionState(connected);
-		},
-		reSubmit: (content: unknown, localOpMetadata: unknown, squash: boolean) => {
-			this.reSubmit(content, localOpMetadata, squash);
-		},
-		applyStashedOp: (content: unknown): void => {
-			this.applyStashedOp(parseHandles(content, this.serializer));
-		},
-		rollback: (content: unknown, localOpMetadata: unknown) => {
-			this.rollback(content, localOpMetadata);
-		},
-	};
 
 	private attachDeltaHandler(): void {
 		// Services should already be there in case we are attaching delta handler.
