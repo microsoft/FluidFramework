@@ -16,7 +16,7 @@ import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-librar
 import { LeafNodeSchema } from "../../../simple-tree/leafNodeSchema.js";
 import {
 	checkSchemaCompatibility,
-	getViewBlockers,
+	getSchemaIncompatibilityDetails,
 	getSchemaUpgradeCandidate,
 	isSchemaUpgradeAllowed,
 	type ImplicitFieldSchema,
@@ -76,28 +76,34 @@ function expectCompatibility(
 	// A permitted upgrade preserves existing content and produces a stored schema that the view can read and edit.
 	if (compatibility.canUpgrade) {
 		assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, candidate), true);
-		assert.equal(getViewBlockers(viewSchema, candidate), undefined);
+		assert.equal(getSchemaIncompatibilityDetails(viewSchema, candidate), undefined);
 	}
 
 	return compatibility;
 }
 
-describe("getViewBlockers", () => {
+describe("getSchemaIncompatibilityDetails", () => {
 	it("returns undefined for compatible schema", () => {
 		const schema = new TreeViewConfigurationAlpha({ schema: factory.number });
-		assert.equal(getViewBlockers(schema, toUpgradeSchema(factory.number)), undefined);
+		assert.equal(
+			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(factory.number)),
+			undefined,
+		);
 	});
 
 	it("formats an allowed types discrepancy", () => {
 		const schema = new TreeViewConfigurationAlpha({ schema: factory.string });
-		assert.deepEqual(getViewBlockers(schema, toUpgradeSchema(factory.number)), [
-			{
-				mismatch: "allowedTypes",
-				location: "root",
-				view: [factory.string.identifier],
-				stored: [factory.number.identifier],
-			},
-		]);
+		assert.deepEqual(
+			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(factory.number)),
+			[
+				{
+					mismatch: "allowedTypes",
+					location: "root",
+					view: [factory.string.identifier],
+					stored: [factory.number.identifier],
+				},
+			],
+		);
 	});
 
 	it("formats all discrepancies", () => {
@@ -105,7 +111,10 @@ describe("getViewBlockers", () => {
 			schema: factory.optional(factory.string),
 		});
 		assert.deepEqual(
-			getViewBlockers(schema, toUpgradeSchema(factory.required(factory.number))),
+			getSchemaIncompatibilityDetails(
+				schema,
+				toUpgradeSchema(factory.required(factory.number)),
+			),
 			[
 				{
 					mismatch: "allowedTypes",
@@ -128,7 +137,7 @@ describe("getViewBlockers", () => {
 		const viewLeaf = new LeafNodeSchema(identifier, ValueSchema.Number);
 		const storedLeaf = new LeafNodeSchema(identifier, ValueSchema.String);
 		const schema = new TreeViewConfigurationAlpha({ schema: viewLeaf });
-		assert.deepEqual(getViewBlockers(schema, toUpgradeSchema(storedLeaf)), [
+		assert.deepEqual(getSchemaIncompatibilityDetails(schema, toUpgradeSchema(storedLeaf)), [
 			{
 				mismatch: "valueSchema",
 				nodeType: identifier,
@@ -142,7 +151,7 @@ describe("getViewBlockers", () => {
 		class ViewNode extends factory.object("nodeKind", {}) {}
 		class StoredNode extends factory.map("nodeKind", []) {}
 		const schema = new TreeViewConfigurationAlpha({ schema: ViewNode });
-		assert.deepEqual(getViewBlockers(schema, toUpgradeSchema(StoredNode)), [
+		assert.deepEqual(getSchemaIncompatibilityDetails(schema, toUpgradeSchema(StoredNode)), [
 			{
 				mismatch: "nodeKind",
 				nodeType: ViewNode.identifier,
@@ -161,7 +170,7 @@ describe("getViewBlockers", () => {
 		}) {}
 		const schema = new TreeViewConfigurationAlpha({ schema: ViewNode });
 
-		assert.deepEqual(getViewBlockers(schema, toUpgradeSchema(StoredNode)), [
+		assert.deepEqual(getSchemaIncompatibilityDetails(schema, toUpgradeSchema(StoredNode)), [
 			{
 				mismatch: "allowedTypes",
 				location: {
@@ -182,7 +191,7 @@ describe("getViewBlockers", () => {
 		class StoredNode extends factory.objectAlpha("stagedOptionalDetails", {}) {}
 		const schema = new TreeViewConfigurationAlpha({ schema: ViewNode });
 
-		assert.deepEqual(getViewBlockers(schema, toUpgradeSchema(StoredNode)), [
+		assert.deepEqual(getSchemaIncompatibilityDetails(schema, toUpgradeSchema(StoredNode)), [
 			{
 				mismatch: "fieldKind",
 				location: {
@@ -213,7 +222,7 @@ describe("isSchemaUpgradeAllowed", () => {
 		const candidate = toUpgradeSchema(After);
 
 		// Viewing is blocked before the upgrade, but the candidate adds the missing optional field without removing anything.
-		assert.notEqual(getViewBlockers(view, stored), undefined);
+		assert.notEqual(getSchemaIncompatibilityDetails(view, stored), undefined);
 		assert.equal(isSchemaUpgradeAllowed(view, stored, candidate), true);
 	});
 
@@ -231,7 +240,7 @@ describe("isSchemaUpgradeAllowed", () => {
 		const candidate = toUpgradeSchema(After);
 
 		// A view-only target suits the new application but cannot safely replace the historical schema.
-		assert.equal(getViewBlockers(view, candidate), undefined);
+		assert.equal(getSchemaIncompatibilityDetails(view, candidate), undefined);
 		assert.equal(isSchemaUpgradeAllowed(view, stored, candidate), false);
 	});
 

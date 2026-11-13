@@ -33,7 +33,7 @@ import type { SchemaCompatibilityStatusBeta, SchemaDiscrepancy } from "./tree.js
  * @param storedSchema - The stored schema to check against the view.
  * @returns The viewing blockers, or `undefined` if `viewSchema` can view `storedSchema` as-is.
  */
-export function getViewBlockers(
+export function getSchemaIncompatibilityDetails(
 	viewSchema: TreeSchema,
 	storedSchema: TreeStoredSchema,
 ): readonly SchemaDiscrepancy[] | undefined {
@@ -60,7 +60,7 @@ export function isSchemaUpgradeAllowed(
 ): boolean {
 	return (
 		allowsRepoSuperset(defaultSchemaPolicy, storedSchema, candidate) &&
-		getViewBlockers(viewSchema, candidate) === undefined
+		getSchemaIncompatibilityDetails(viewSchema, candidate) === undefined
 	);
 }
 
