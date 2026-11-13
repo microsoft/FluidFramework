@@ -1216,7 +1216,7 @@ export interface SchemaCompatibilityStatus {
 	 * @deprecated
 	 * This property isn't needed as a part of application flows for loading a document.
 	 * Use {@link SchemaCompatibilityStatus.canView} to determine if a document can be viewed as-is.
-	 * Use {@link SchemaCompatibilityStatus.canUpgrade} to determine if the stored schema can be upgraded to support the view, when the document is not viewable as-is.
+	 * Use {@link SchemaCompatibilityStatus.canUpgrade} to determine if the stored schema can be upgraded to match the view schema, when the document is not viewable as-is.
 	 *
 	 * When diagnosing schema incompatibility issues, use {@link SchemaCompatibilityStatusBeta.discrepancies} to get detailed information about the incompatibilities.
 	 *
@@ -1242,6 +1242,7 @@ export interface SchemaCompatibilityStatus {
 	 * - A {@link SchemaStaticsAlpha.stagedOptional | staged-optional field} lets the view handle missing content where the stored field is already optional.
 	 *
 	 * These allowances determine whether the current document can be used; they do not by themselves determine {@link SchemaCompatibilityStatus.canUpgrade}.
+	 * For example, a view that tolerates unknown optional fields can read a document while still being unable to upgrade it because it omits those fields.
 	 *
 	 * When the set of documents allowed by the view schema is a strict superset of those allowed by the stored schema,
 	 * `canView` is false because writes to the document using the view schema could make the document violate its stored schema.
@@ -1274,6 +1275,9 @@ export interface SchemaCompatibilityStatus {
 	 * The target also retains existing allowed types and supported optionality at their stored locations, independently of that policy.
 	 *
 	 * The target is accepted only if it satisfies the stored-schema upgrade rules and gives the requesting view read/write access.
+	 * This preservation does not retain optional fields omitted from an object's view schema.
+	 * Adding an optional field can therefore let older views continue reading when they allow {@link ObjectSchemaOptions.allowUnknownOptionalFields}, while preventing those views from making further upgrades.
+	 * Keep the field in future view declarations if those clients need to upgrade documents that contain it.
 	 */
 	readonly canUpgrade: boolean;
 
