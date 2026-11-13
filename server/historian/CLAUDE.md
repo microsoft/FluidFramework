@@ -46,6 +46,6 @@ Runtime config is in `packages/historian/config.json` and loaded via nconf.
 
 ## Conventions
 
--   Follow the root repo's CLAUDE.md: use string literals (not hex codes) for new assert messages.
+-   Follow the repository-wide instructions in `../../.github/copilot-instructions.md`: use string literals (not hex codes) for new assert messages.
 -   TypeScript ~5.1.6. Do not upgrade without coordination.
 -   ESLint flat config (`eslint.config.mts` at root and per-package).

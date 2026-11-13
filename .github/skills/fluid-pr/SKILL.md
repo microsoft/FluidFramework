@@ -39,6 +39,7 @@ git push -u origin <feature-branch>
 
 # Create PR (option 1)
 gh pr create \
+  --repo microsoft/FluidFramework \
   --title "<title>" \
   --body "$(cat <<'EOF'
 <body>
@@ -47,6 +48,7 @@ EOF
 
 # Create draft PR (option 2) — add the --draft flag
 gh pr create \
+  --repo microsoft/FluidFramework \
   --draft \
   --title "<title>" \
   --body "$(cat <<'EOF'
@@ -59,17 +61,17 @@ After creating the PR, output the PR URL so the user can navigate to it.
 
 # Updating an existing PR description
 
-When asked to update an existing PR's title or body, use `gh pr edit` to apply the changes directly.
-
 Specify `--repo <owner/repo>` to avoid ambiguity between forks and upstream.
 
-For a description update, write the new body to a temp file, then apply it to the PR:
+Do not assume that the current account lacks permission to edit upstream PRs.
+Read the live PR from the explicit repository and verify it is open and unmerged.
+Read the current PR template, propose the revised title and body, and get the user's approval with `ask_user` before editing.
 
-```bash
-cat <<'EOF' > "$TMPDIR/pr-body.md"
-<new body content>
-EOF
-gh pr edit <number> --repo <owner/repo> --body-file "$TMPDIR/pr-body.md"
-```
+Prefer the runtime's supported PR-editing tool when available.
+Otherwise, use the REST endpoint with `gh api --method PATCH repos/microsoft/FluidFramework/pulls/<number>` and a JSON-serialized request body.
+Do not use a GraphQL failure from `gh pr edit` as proof that the REST endpoint is unavailable.
+Re-read the PR immediately before writing; if its title, body, state, or merge status changed, stop and reconcile instead of overwriting concurrent edits.
 
-To update the title, use `gh pr edit <number> --repo <owner/repo> --title "<new title>"`. After updating, output the PR URL.
+If authentication or permissions prevent the edit, report the actual failure.
+Write the approved description to a uniquely named temporary file only when needed for a manual copy-paste fallback, and report its exact path.
+After updating, output the PR URL.
