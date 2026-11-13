@@ -151,10 +151,13 @@ export class SchemaComponent implements TransitiveSchemaInfo {
 	 */
 	public static fromSchema(schema: TreeNodeSchema): SchemaComponent {
 		const component = getOrCreateSchemaComponent(schema);
-		assert(
-			component.definitions !== undefined,
-			0xd9f /* Expected a validated schema component */,
-		);
+		// Identifiers reachable from a component were validated if they were when building definitions which include them.
+		if (!componentsWithValidatedIdentifiers.has(component)) {
+			assert(
+				component.definitions !== undefined,
+				0xd9f /* Expected a validated schema component */,
+			);
+		}
 		return component;
 	}
 
@@ -782,8 +785,21 @@ function materializeDefinitions(roots: Iterable<SchemaComponent>): TreeSchema["d
 			components.add(dependency);
 		}
 	}
+	// Every component visited has all the components it reaches in `components`, whose identifiers are unique.
+	for (const component of components) {
+		componentsWithValidatedIdentifiers.add(component);
+	}
 	return definitions;
 }
+
+/**
+ * Components whose reachable schemas are known to have unique identifiers, because definitions including them all were built.
+ * @remarks
+ * {@link SchemaComponent.fromSchema} validates a component's reachable identifiers by building its definitions.
+ * A component in this set does not need to, which avoids building a map of the reachable definitions
+ * for each node schema first used in a tree whose schema was validated as a whole.
+ */
+const componentsWithValidatedIdentifiers = new WeakSet<SchemaComponent>();
 
 /**
  * Adds a schema to an identity-deduplicated graph, rejecting identifier collisions.

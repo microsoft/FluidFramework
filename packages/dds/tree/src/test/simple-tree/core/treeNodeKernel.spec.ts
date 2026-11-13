@@ -19,11 +19,12 @@ import {
 } from "../../../simple-tree/core/treeNodeKernel.js";
 import {
 	type ArrayNodeDeltaOp,
+	SchemaComponent,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
-import { getView } from "../../utils.js";
+import { TestTreeProviderLite, getView } from "../../utils.js";
 import { describeHydration, hydrate } from "../utils.js";
 
 describe("simple-tree proxies", () => {
@@ -129,6 +130,94 @@ describe("simple-tree proxies", () => {
 		assert.throws(
 			() => TreeBeta.on(node, "nodeChanged", () => {}),
 			validateAssertionError(/Cannot register events on a disposed node/),
+		);
+	});
+
+	it("a node created hydrated takes its context from its tree, without creating a context for its schema", () => {
+		const factory = new SchemaFactory("hydratedContext");
+		class Leaf extends factory.object("leaf", { n: factory.number }) {}
+		class Root extends factory.object("root", { leaf: Leaf }) {}
+
+		const descriptor =
+			Object.getOwnPropertyDescriptor(SchemaComponent.prototype, "context") ??
+			assert.fail("SchemaComponent has a context getter");
+		const leafContexts: SchemaComponent[] = [];
+		Object.defineProperty(SchemaComponent.prototype, "context", {
+			...descriptor,
+			get(this: SchemaComponent) {
+				if (this.members.includes(Leaf)) {
+					leafContexts.push(this);
+				}
+				return descriptor.get?.call(this) as unknown;
+			},
+		});
+		try {
+			const view = getView(new TreeViewConfiguration({ schema: Root }));
+			view.initialize({ leaf: { n: 1 } });
+			// A fork's nodes are created when first read, from its tree: hydrated from the start.
+			const branch = view.fork();
+			leafContexts.length = 0;
+			const leaf = branch.root.leaf;
+			assert.equal(leaf.n, 1);
+			assert(getKernel(leaf).isHydrated());
+			assert.equal(getKernel(leaf).context, getKernel(branch.root).context);
+			assert.deepEqual(leafContexts, []);
+		} finally {
+			Object.defineProperty(SchemaComponent.prototype, "context", descriptor);
+		}
+	});
+	it("a node created hydrated does not build definitions for its schema's component", () => {
+		function makeSchema() {
+			const factory = new SchemaFactory("hydratedDefinitions");
+			class Leaf extends factory.object("leaf", { n: factory.number }) {}
+			class Root extends factory.object("root", { leaf: Leaf }) {}
+			return { Leaf, Root };
+		}
+		// The writer's classes create the content, so the reader's classes are first used to read it: hydrated.
+		const writer = makeSchema();
+		const reader = makeSchema();
+
+		const descriptor =
+			Object.getOwnPropertyDescriptor(SchemaComponent.prototype, "definitions") ??
+			assert.fail("SchemaComponent has a definitions getter");
+		const leafDefinitions: SchemaComponent[] = [];
+		Object.defineProperty(SchemaComponent.prototype, "definitions", {
+			...descriptor,
+			get(this: SchemaComponent) {
+				if (this.members.includes(reader.Leaf)) {
+					leafDefinitions.push(this);
+				}
+				return descriptor.get?.call(this) as unknown;
+			},
+		});
+		try {
+			const provider = new TestTreeProviderLite(2);
+			const writerView = provider.trees[0].viewWith(
+				new TreeViewConfiguration({ schema: writer.Root }),
+			);
+			writerView.initialize(new writer.Root({ leaf: new writer.Leaf({ n: 1 }) }));
+			provider.synchronizeMessages();
+			// The reader's view schema, which includes the leaf's, is validated as a whole.
+			const readerView = provider.trees[1].viewWith(
+				new TreeViewConfiguration({ schema: reader.Root }),
+			);
+			leafDefinitions.length = 0;
+			assert.equal(readerView.root.leaf.n, 1);
+			assert.deepEqual(leafDefinitions, []);
+		} finally {
+			Object.defineProperty(SchemaComponent.prototype, "definitions", descriptor);
+		}
+	});
+
+	it("a node schema used alone still has its reachable identifiers validated", () => {
+		const factory = new SchemaFactory("collidingIdentifiers");
+		class A extends factory.object("same", { n: factory.number }) {}
+		const other = new SchemaFactory("collidingIdentifiers");
+		class B extends other.object("same", { s: other.string }) {}
+		class Holder extends factory.object("holder", { a: A, b: B }) {}
+		assert.throws(
+			() => new Holder({ a: new A({ n: 1 }), b: new B({ s: "x" }) }),
+			(error: Error) => error.message.includes("identifier"),
 		);
 	});
 });
