@@ -8,6 +8,8 @@ import { SummaryType, type ISummaryTree } from "@fluidframework/driver-definitio
 import {
 	decodeNativeCheckpoint,
 	encodeNativeCheckpoint,
+	parseNativeCheckpointState,
+	selectRetainedNativeCheckpoints,
 	type NativeCheckpoint,
 } from "../nativeCheckpoint.js";
 import {
@@ -117,6 +119,44 @@ describe("Native checkpoint encoding", () => {
 				assert.deepEqual(actual, storage.originals.get(checkpoint.id));
 				assert.equal(reads, (checkpoint.depth ?? 0) + 1);
 			}
+		});
+
+		it("retains dependency closure and the restore boundary without retaining unrelated image roots", async () => {
+			const storage = createStore();
+			const bytes = createNoise(12000);
+			for (let index = 0; index < 8; index++) {
+				bytes[index] = index;
+				await storage.store(bytes);
+			}
+			const checkpoints = storage.checkpoints.map((entry) => ({
+				...entry,
+				assets: [`/_blobs/image-${entry.id}`],
+			}));
+			const state = {
+				version: 1,
+				checkpoints,
+				restored: { id: "restore", checkpointId: "2", sequenceNumber: 9 },
+			} satisfies import("../nativeCheckpoint.js").NativeCheckpointState;
+			const retained = selectRetainedNativeCheckpoints(state, ["6"]);
+			assert.deepEqual(
+				retained.map((entry) => entry.id),
+				["0", "1", "2", "5", "6"],
+			);
+			assert(!retained.flatMap((entry) => entry.assets).includes("/_blobs/image-3"));
+			assert.doesNotThrow(() =>
+				parseNativeCheckpointState({ ...state, checkpoints: retained }),
+			);
+			const last = retained.at(-1);
+			assert(last !== undefined);
+			assert.deepEqual(
+				await loadNativeCheckpointBytes(last, retained, storage.read),
+				storage.originals.get("6"),
+			);
+			assert.deepEqual(selectRetainedNativeCheckpoints({ version: 1, checkpoints }, []), []);
+			assert.throws(
+				() => parseNativeCheckpointState({ version: 1, checkpoints: [checkpoints[1]] }),
+				/dependency/,
+			);
 		});
 
 		it("rejects missing bases, wrong depths, corrupted anchors and truncated frames", async () => {

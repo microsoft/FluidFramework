@@ -47,6 +47,7 @@ export interface NativeCheckpointState {
 /** Sequenced control messages. They must not be grouped with application edits. */
 export type NativeCheckpointMessage =
 	| { readonly action: "store"; readonly checkpoint: NativeCheckpoint }
+	| { readonly action: "retain"; readonly ids: readonly string[] }
 	| { readonly action: "restore"; readonly id: string; readonly checkpointId: string }
 	| { readonly action: "complete"; readonly id: string };
 
@@ -105,6 +106,14 @@ export function parseNativeCheckpointMessage(value: unknown): NativeCheckpointMe
 		if (value.action === "store") {
 			return { action: "store", checkpoint: parseCheckpoint(value.checkpoint) };
 		}
+		const ids: unknown = value.ids;
+		if (
+			value.action === "retain" &&
+			Array.isArray(ids) &&
+			ids.every((id: unknown): id is string => typeof id === "string")
+		) {
+			return { action: "retain", ids };
+		}
 		if (
 			value.action === "restore" &&
 			typeof value.id === "string" &&
@@ -117,6 +126,39 @@ export function parseNativeCheckpointMessage(value: unknown): NativeCheckpointMe
 		}
 	}
 	throw new UsageError("Invalid native checkpoint control message");
+}
+
+/**
+ * Retains requested entries, their bounded dependencies, and the current restore boundary.
+ * Removing catalog roots permits normal GC; it never deletes shared attachment storage directly.
+ */
+export function selectRetainedNativeCheckpoints(
+	state: NativeCheckpointState,
+	ids: readonly string[],
+): NativeCheckpoint[] {
+	const byId = new Map(state.checkpoints.map((checkpoint) => [checkpoint.id, checkpoint]));
+	const retained = new Set<string>();
+	function retain(id: string): void {
+		if (retained.has(id)) {
+			return;
+		}
+		const checkpoint = byId.get(id);
+		if (checkpoint === undefined) {
+			// A concurrent earlier retention op can already have removed this requested entry.
+			return;
+		}
+		retained.add(id);
+		if (checkpoint.baseId !== undefined) {
+			retain(checkpoint.baseId);
+		}
+	}
+	for (const id of ids) {
+		retain(id);
+	}
+	if (state.restored !== undefined) {
+		retain(state.restored.checkpointId);
+	}
+	return state.checkpoints.filter((checkpoint) => retained.has(checkpoint.id));
 }
 
 /** Validates the boot catalog independently of lazily downloaded checkpoint payloads. */

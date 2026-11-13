@@ -14,6 +14,7 @@ import {
 	isRecord,
 	parseNativeCheckpointMessage,
 	parseNativeCheckpointState,
+	selectRetainedNativeCheckpoints,
 	type NativeCheckpoint,
 	type NativeCheckpointMessage,
 	type NativeCheckpointRestore,
@@ -1548,6 +1549,33 @@ export class ContainerRuntime
 	}
 
 	/**
+	 * Retains these IDs and their dependency closure after this control op is acknowledged.
+	 * The current restore boundary is pinned. Retention never directly deletes attachment bytes.
+	 */
+	public retainNativeCheckpoints(ids: readonly string[]): void {
+		if (
+			this.nativeCheckpointState === undefined ||
+			this.pendingCheckpointRestore !== undefined
+		) {
+			throw new UsageError("Native checkpoint retention is unavailable");
+		}
+		if (
+			ids.some(
+				(id) =>
+					this.nativeCheckpointState?.checkpoints.some((entry) => entry.id === id) !== true,
+			)
+		) {
+			throw new UsageError("Unknown native checkpoint");
+		}
+		this.flush();
+		this.submit({
+			type: nativeCheckpointMessageType,
+			contents: { action: "retain", ids: [...ids] },
+		});
+		this.flush();
+	}
+
+	/**
 	 * Orders a replacement boundary. Call publishNativeCheckpointRestore after this op is observed.
 	 */
 	public requestNativeCheckpointRestore(id: string, checkpointId: string): void {
@@ -1687,53 +1715,81 @@ export class ContainerRuntime
 		if (state === undefined) {
 			throw new UsageError("Native checkpoints are not enabled for this document");
 		}
-		if (message.action === "store") {
-			if (this.pendingCheckpointRestore !== undefined) {
-				return;
-			}
-			if (state.checkpoints.some((checkpoint) => checkpoint.id === message.checkpoint.id)) {
-				return;
-			}
-			if (message.checkpoint.baseId !== undefined) {
-				const base = state.checkpoints.find(
-					(checkpoint) => checkpoint.id === message.checkpoint.baseId,
-				);
-				if (base === undefined) {
-					// A retention op may have won the race with a capture's attachment upload.
+		switch (message.action) {
+			case "store": {
+				if (this.pendingCheckpointRestore !== undefined) {
 					return;
 				}
-				if (message.checkpoint.depth !== (base.depth ?? 0) + 1) {
-					throw new UsageError("Invalid native checkpoint dependency depth");
+				if (state.checkpoints.some((checkpoint) => checkpoint.id === message.checkpoint.id)) {
+					return;
+				}
+				if (message.checkpoint.baseId !== undefined) {
+					const base = state.checkpoints.find(
+						(checkpoint) => checkpoint.id === message.checkpoint.baseId,
+					);
+					if (base === undefined) {
+						// A retention op may have won the race with a capture's attachment upload.
+						return;
+					}
+					if (message.checkpoint.depth !== (base.depth ?? 0) + 1) {
+						throw new UsageError("Invalid native checkpoint dependency depth");
+					}
+				}
+				state.checkpoints.push(message.checkpoint);
+				for (const route of [message.checkpoint.route, ...message.checkpoint.assets]) {
+					this.addedGCOutboundRoute("/", route, timestamp);
+				}
+
+				break;
+			}
+			case "retain": {
+				if (this.pendingCheckpointRestore !== undefined) {
+					return;
+				}
+				const retained = selectRetainedNativeCheckpoints(state, message.ids);
+				state.checkpoints.splice(0, state.checkpoints.length, ...retained);
+				if (
+					!retained.some(
+						(entry) => entry.route === this.nativeCheckpointBase?.checkpoint.route,
+					)
+				) {
+					this.nativeCheckpointBase = undefined;
+				}
+
+				break;
+			}
+			case "restore": {
+				if (this.pendingCheckpointRestore !== undefined || state.restored?.id === message.id) {
+					return;
+				}
+				if (!state.checkpoints.some((checkpoint) => checkpoint.id === message.checkpointId)) {
+					throw new UsageError("Restore references an unknown native checkpoint");
+				}
+				if (this.captureCheckpointProtocol === undefined) {
+					throw new UsageError("Native checkpoint restore requires a compatible loader");
+				}
+				const summary: ISummaryTree = { type: SummaryType.Tree, tree: {} };
+				const metadata = { summary, stats: calculateStats(summary) };
+				this.addMetadataToSummary(metadata);
+				const blob: SummaryObject | undefined = metadata.summary.tree[metadataBlobName];
+				assert(blob !== undefined, "Runtime metadata must exist");
+				this.pendingCheckpointRestore = {
+					restore: { id: message.id, checkpointId: message.checkpointId, sequenceNumber },
+					protocol: this.captureCheckpointProtocol?.(),
+					metadata: blob,
+				};
+
+				break;
+			}
+			default: {
+				if (this.pendingCheckpointRestore?.restore.id === message.id) {
+					this.closeFn(
+						new UsageError(
+							"Native checkpoint restored: reload without cached or pending state",
+						),
+					);
 				}
 			}
-			state.checkpoints.push(message.checkpoint);
-			for (const route of [message.checkpoint.route, ...message.checkpoint.assets]) {
-				this.addedGCOutboundRoute("/", route, timestamp);
-			}
-		} else if (message.action === "restore") {
-			if (this.pendingCheckpointRestore !== undefined || state.restored?.id === message.id) {
-				return;
-			}
-			if (!state.checkpoints.some((checkpoint) => checkpoint.id === message.checkpointId)) {
-				throw new UsageError("Restore references an unknown native checkpoint");
-			}
-			if (this.captureCheckpointProtocol === undefined) {
-				throw new UsageError("Native checkpoint restore requires a compatible loader");
-			}
-			const summary: ISummaryTree = { type: SummaryType.Tree, tree: {} };
-			const metadata = { summary, stats: calculateStats(summary) };
-			this.addMetadataToSummary(metadata);
-			const blob: SummaryObject | undefined = metadata.summary.tree[metadataBlobName];
-			assert(blob !== undefined, "Runtime metadata must exist");
-			this.pendingCheckpointRestore = {
-				restore: { id: message.id, checkpointId: message.checkpointId, sequenceNumber },
-				protocol: this.captureCheckpointProtocol?.(),
-				metadata: blob,
-			};
-		} else if (this.pendingCheckpointRestore?.restore.id === message.id) {
-			this.closeFn(
-				new UsageError("Native checkpoint restored: reload without cached or pending state"),
-			);
 		}
 	}
 

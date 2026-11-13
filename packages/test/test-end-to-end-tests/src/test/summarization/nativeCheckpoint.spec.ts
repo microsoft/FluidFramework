@@ -87,6 +87,62 @@ describeCompat("Native checkpoints", "NoCompat", (getTestObjectProvider, apis) =
 		assert.deepEqual(runtime.getNativeCheckpoints(), []);
 	});
 
+	it("sequences retention and releases only removed checkpoint and image GC roots", async () => {
+		const provider = getTestObjectProvider({ syncSummarizer: true });
+		const source = await provider.makeTestContainer(config);
+		await waitForContainerConnection(source);
+		const entry = await getEntry(source);
+		const runtime = await getRuntime(source);
+		const image = await runtime.uploadBlob(new Uint8Array(4096).fill(91).buffer);
+		entry.root.set("image", image);
+		await provider.ensureSynchronized();
+		const first = await runtime.createNativeCheckpoint("first");
+		await provider.ensureSynchronized();
+		entry.root.delete("image");
+		await provider.ensureSynchronized();
+		for (let index = 0; index < 6; index++) {
+			entry.root.set("value", index);
+			await provider.ensureSynchronized();
+			await runtime.createNativeCheckpoint(`point-${index}`);
+			await provider.ensureSynchronized();
+		}
+		const all = runtime.getNativeCheckpoints();
+		runtime.retainNativeCheckpoints(["point-5"]);
+		await provider.ensureSynchronized();
+		const retained = runtime.getNativeCheckpoints();
+		assert(retained.length < all.length);
+		const gcData = await runtime.getGCData(true);
+		for (const checkpoint of all) {
+			assert.equal(
+				gcData.gcNodes["/"].includes(checkpoint.route),
+				retained.some((candidate) => candidate.id === checkpoint.id),
+			);
+		}
+		assert.equal(
+			gcData.gcNodes["/"].includes(first.assets[0]),
+			retained.some((checkpoint) => checkpoint.assets.includes(first.assets[0])),
+		);
+		const { summarizer } = await createSummarizer(provider, source, {
+			...config,
+			runtimeOptions: undefined,
+		});
+		const { summaryVersion } = await summarizeNow(summarizer);
+		const peer = await provider.loadTestContainer(config, {
+			[LoaderHeader.version]: summaryVersion,
+		});
+		await waitForContainerConnection(peer);
+		const peerRuntime = await getRuntime(peer);
+		assert.deepEqual(peerRuntime.getNativeCheckpoints(), retained);
+		runtime.retainNativeCheckpoints([]);
+		await provider.ensureSynchronized();
+		assert.deepEqual(peerRuntime.getNativeCheckpoints(), []);
+		const emptyGCData = await runtime.getGCData(true);
+		assert(!emptyGCData.gcNodes["/"].includes(first.assets[0]));
+		for (const checkpoint of all) {
+			assert(!emptyGCData.gcNodes["/"].includes(checkpoint.route));
+		}
+	});
+
 	itExpects(
 		"restores attribution keys and their runtime user/timestamp records",
 		[

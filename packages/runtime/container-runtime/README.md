@@ -57,6 +57,14 @@ The prototype limits payloads and decompression to 64 MiB.
 Legacy JSON checkpoints remain readable; new summary binary blobs use base64 rather than numeric arrays.
 Image content stays in its original attachment: checkpoints retain routes, not duplicate image bytes.
 
+`retainNativeCheckpoints(ids)` sequences retention with capture and restore.
+It preserves the requested entries, their base chains, and the current restore boundary.
+Entries retained only as dependencies remain visible in the catalog.
+Other entries and their image roots leave the catalog; normal GC decides when unreferenced attachments can be collected.
+It does not delete shared image bytes or service history.
+Retention during an ordered restore is ignored, and capture whose base was concurrently removed does not enter the catalog.
+Callers must observe the acknowledged catalog, not assume a submitted capture or retention request won a race.
+
 ## Data Virtualization For DataStores (Work in Progress)
 
 It's a capability to exclude some content from initial snapshot (used when loading container) and thus improve boot
