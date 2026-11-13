@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import {
 	BenchmarkMode,
 	BenchmarkType,
 	benchmarkDurationBatchless,
+	benchmarkDuration,
 	benchmarkIt,
 	benchmarkMemoryUse,
 	currentBenchmarkMode,
@@ -22,6 +25,11 @@ import type {
 	TreeNodeSchemaIdentifier,
 	TreeValue,
 } from "../../../core/index.js";
+import { EmptyKey } from "../../../core/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
 import {
 	coalesceUniformChunks,
 	type ChunkPolicy,
@@ -302,6 +310,92 @@ describe("chunked-forest coalescing benchmarks", () => {
 	const fragmentCounts = performanceMode ? [100, 1000] : [100];
 	const arraySizes = performanceMode ? [100, 1000] : [100];
 	const maxBenchmarkDurationSeconds = 5;
+
+	describe("Sequence traversal depth", () => {
+		for (const depth of [0, 4, 8, 64]) {
+			let chunk: TreeChunk = new UniformChunk(
+				shallowShape.withTopLevelLength(100),
+				Array.from({ length: 100 }, (_, index) => index),
+			);
+			for (let layer = 0; layer < depth; layer++) {
+				chunk = new SequenceChunk([chunk]);
+			}
+			benchmarkIt({
+				title: `read current value, sequence depth ${depth}`,
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						const cursor = chunk.cursor();
+						cursor.enterNode(50);
+						state.timeAllBatches(() => {
+							assert.equal(cursor.value, 50);
+						});
+					},
+					maxBenchmarkDurationSeconds,
+				}),
+			});
+			benchmarkIt({
+				title: `scan 100 nodes, sequence depth ${depth}`,
+				...benchmarkDuration({
+					benchmarkFn: () => {
+						const reader = chunk.cursor();
+						let sum = 0;
+						for (let present = reader.firstNode(); present; present = reader.nextNode()) {
+							sum += reader.value as number;
+						}
+						assert.equal(sum, 4950);
+					},
+					maxBenchmarkDurationSeconds,
+				}),
+			});
+		}
+	});
+
+	describe("Basic chunk traversal", () => {
+		const children = Array.from(
+			{ length: 100 },
+			(_, index) => new BasicChunk(shallowShape.type, new Map(), index),
+		);
+		const flat = new BasicChunk(brand("parent"), new Map([[EmptyKey, children]]));
+		let deep = new BasicChunk(shallowShape.type, new Map(), 99);
+		for (let depth = 0; depth < 100; depth++) {
+			deep = new BasicChunk(brand("parent"), new Map([[EmptyKey, [deep]]]));
+		}
+		benchmarkIt({
+			title: "scan 100 BasicChunk siblings",
+			...benchmarkDuration({
+				benchmarkFn: () => {
+					const cursor = flat.cursor();
+					cursor.enterNode(0);
+					cursor.enterField(EmptyKey);
+					let sum = 0;
+					for (let present = cursor.firstNode(); present; present = cursor.nextNode()) {
+						sum += cursor.value as number;
+					}
+					assert.equal(sum, 4950);
+				},
+				maxBenchmarkDurationSeconds,
+			}),
+		});
+		benchmarkIt({
+			title: "descend and ascend 100 BasicChunk nodes",
+			...benchmarkDuration({
+				benchmarkFn: () => {
+					const cursor = deep.cursor();
+					cursor.enterNode(0);
+					for (let depth = 0; depth < 100; depth++) {
+						cursor.enterField(EmptyKey);
+						cursor.enterNode(0);
+					}
+					assert.equal(cursor.value, 99);
+					for (let depth = 0; depth < 100; depth++) {
+						cursor.exitNode();
+						cursor.exitField();
+					}
+				},
+				maxBenchmarkDurationSeconds,
+			}),
+		});
+	});
 
 	// After typing N characters through the real editor, coalescing keeps the field batched into few
 	// multi-node UniformChunks (~N/10) instead of one single-node chunk per character (~N).

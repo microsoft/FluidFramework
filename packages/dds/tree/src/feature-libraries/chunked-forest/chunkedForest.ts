@@ -31,12 +31,10 @@ import {
 	detachedFieldAsKey,
 	makeBreakingVisitor,
 	rootFieldKey,
-	type ChunkedCursor,
 	type TreeChunk,
 	type DeltaDetachedNodeId,
 } from "../../core/index.js";
 import {
-	assertNonNegativeSafeInteger,
 	brand,
 	getLast,
 	getOrAddEmptyToMap,
@@ -46,7 +44,9 @@ import {
 	type WithBreakable,
 } from "../../util/index.js";
 
-import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";
+import { BasicChunk } from "./basicChunk.js";
+import { ChunkCursor, ChunkSequenceCursor } from "./chunkCursor.js";
+import { getFieldLength, locateNodeInChunks } from "./chunkEditing.js";
 import {
 	type ChunkCompressor,
 	type IChunker,
@@ -61,38 +61,7 @@ function makeRoot(): BasicChunk {
 	return new BasicChunk(aboveRootPlaceholder, new Map());
 }
 
-/** Returns the number of top-level nodes represented by a field's chunks. */
-function getFieldLength(field: readonly TreeChunk[]): number {
-	return field.reduce((length, chunk) => length + chunk.topLevelLength, 0);
-}
-
-/**
- * Locates a top-level node within a field's chunk representation.
- * @param chunks - The chunks representing the field.
- * @param index - The node index within the field.
- * @returns The containing chunk, its array index, and the node's offset within it.
- */
-export function locateNodeInChunks(
-	chunks: readonly TreeChunk[],
-	index: number,
-): { chunk: TreeChunk; indexOfChunk: number; indexWithinChunk: number } {
-	assertNonNegativeSafeInteger(index);
-	// Remaining node offset while scanning chunks; afterward, the offset within the matched chunk.
-	let indexWithinChunk = index;
-	// Array index of the chunk currently being examined.
-	let indexOfChunk = 0;
-	while (true) {
-		const chunk = chunks[indexOfChunk] ?? oob();
-		if (indexWithinChunk < chunk.topLevelLength) {
-			return { chunk, indexOfChunk, indexWithinChunk };
-		}
-		indexWithinChunk -= chunk.topLevelLength;
-		indexOfChunk++;
-		if (indexOfChunk === chunks.length) {
-			fail(0xaf7 /* missing edited node */);
-		}
-	}
-}
+export { locateNodeInChunks } from "./chunkEditing.js";
 
 /**
  * Ensures the node at index `index` within the field represented by `chunks` is contained in a non-shared {@link BasicChunk}.
@@ -501,20 +470,7 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 
 	public allocateCursor(): Cursor {
 		this.breaker.use();
-		return new Cursor(
-			this,
-			ITreeSubscriptionCursorState.Cleared,
-			[],
-			[],
-			[],
-			[],
-			[],
-			[],
-			0,
-			0,
-			0,
-			undefined,
-		);
+		return new Cursor(this, ITreeSubscriptionCursorState.Cleared);
 	}
 
 	public tryMoveCursorToNode(
@@ -596,65 +552,22 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 	}
 }
 
-class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
+class Cursor extends ChunkCursor implements ITreeSubscriptionCursor {
 	public constructor(
 		public readonly forest: ChunkedForest,
 		public state: ITreeSubscriptionCursorState,
-		root: readonly TreeChunk[],
-		siblingStack: SiblingsOrKey[],
-		indexStack: number[],
-		indexOfChunkStack: number[],
-		indexWithinChunkStack: number[],
-		siblings: SiblingsOrKey,
-		index: number,
-		indexOfChunk: number,
-		indexWithinChunk: number,
-		nestedCursor: ChunkedCursor | undefined,
 	) {
-		super(
-			root,
-			siblingStack,
-			indexStack,
-			indexOfChunkStack,
-			indexWithinChunkStack,
-			siblings,
-			index,
-			indexOfChunk,
-			indexWithinChunk,
-			nestedCursor,
-		);
+		super(new ChunkSequenceCursor([]));
 	}
 
 	public setToDetachedSequence(key: FieldKey): void {
-		this.root = (this.forest.roots.fields.get(key) ?? []) as BasicChunk[];
-		this.siblingStack.length = 0;
-		this.indexStack.length = 0;
-		this.indexOfChunkStack.length = 0;
-		this.indexWithinChunkStack.length = 0;
-		this.siblings = [key];
-		this.index = 0;
-		this.indexOfChunk = 0;
-		this.indexWithinChunk = 0;
-		this.nestedCursor = undefined;
+		this.reset(new ChunkSequenceCursor(this.forest.roots.fields.get(key) ?? [], key));
 	}
 
 	public override fork(): Cursor {
-		// Siblings arrays are not modified during navigation and do not need be be copied.
-		// This allows this copy to be shallow, and `this.siblings` below to not be copied as all.
-		return new Cursor(
-			this.forest,
-			this.state,
-			this.root,
-			[...this.siblingStack],
-			[...this.indexStack],
-			[...this.indexOfChunkStack],
-			[...this.indexWithinChunkStack],
-			this.siblings,
-			this.index,
-			this.indexOfChunk,
-			this.indexWithinChunk,
-			this.nestedCursor?.fork(),
-		);
+		const cursor = new Cursor(this.forest, this.state);
+		this.copyTo(cursor);
+		return cursor;
 	}
 
 	public buildFieldAnchor(): FieldAnchor {
