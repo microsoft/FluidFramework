@@ -4,7 +4,18 @@
  */
 
 import { createRequire } from "node:module";
-import { approveAll, CopilotClient, defineTool } from "@github/copilot-sdk";
+import { CopilotClient, defineTool, type SessionConfig } from "@github/copilot-sdk";
+
+/**
+ * Tool policy for the recommendation-only launcher session.
+ */
+export const launcherToolPolicy: Pick<
+	SessionConfig,
+	"availableTools" | "onPermissionRequest"
+> = {
+	availableTools: ["ask_user", "select_alias"],
+	onPermissionRequest: () => ({ kind: "denied-by-rules", rules: [] }),
+};
 
 /**
  * A proposal from the AI for which alias to launch.
@@ -111,7 +122,7 @@ export async function runAiSession(
 			model,
 			streaming: true,
 			tools: [selectAliasTool],
-			onPermissionRequest: approveAll,
+			...launcherToolPolicy,
 			onUserInputRequest: async (request) => {
 				const answer = await ui.prompt(request.question, request.choices);
 				const trimmed = answer.trim();
@@ -158,8 +169,10 @@ export function resolveCopilotCliPath(): string {
 
 const AUTH_REMEDIATION =
 	"Try one of:\n" +
+	"  • copilot login          (authenticate the Copilot CLI)\n" +
 	"  • gh auth login          (authenticate the GitHub CLI)\n" +
-	"  • export GH_TOKEN=...    (set a personal access token)";
+	"  • export GH_TOKEN=...    (set a fine-grained token with Copilot Requests permission)\n" +
+	"Classic personal access tokens are not supported.";
 
 async function preflight(client: CopilotClient): Promise<void> {
 	try {

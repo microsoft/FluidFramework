@@ -2,7 +2,7 @@
 {
 	"name": "AI-enabled",
 	// Bump this version to force a Codespace prebuild rebuild. See .devcontainer/README.md.
-	// prebuild-version: 2
+	// prebuild-version: 3
 	"build": {
 		"dockerfile": "Dockerfile",
 		"args": {
