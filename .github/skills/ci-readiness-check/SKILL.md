@@ -52,7 +52,11 @@ bash .github/skills/ci-readiness-check/ci-readiness-check.sh [base-branch]
 
 The base branch defaults to `main`. Pass a different branch if needed (e.g., `next`).
 
-The script detects changed packages, installs dependencies if needed, runs `fluid-build --task checks:fix` (auto-fixing formatting, policy, syncpack, and build version consistency), verifies all checks pass, checks for a changeset, and reports uncommitted changes and build status.
+The script detects changed packages and restores root dependencies if `pnpm exec fluid-build --help` fails, including after an interrupted installation.
+It runs `fluid-build --task checks:fix` for packages registered in `fluidBuild.config.cjs`.
+Independent packages outside that registry use their declared `checks:fix` / `checks` scripts, or `lint:fix` / `lint` when those are the available checks.
+Missing check scripts and command failures are reported explicitly.
+The script then checks for a changeset and reports uncommitted changes and build status.
 
 # Step 3: Review output
 
