@@ -56,6 +56,7 @@ const visitorMethods: (keyof DeltaVisitor)[] = [
 	"destroy",
 	"attach",
 	"detach",
+	"replace",
 	"enterNode",
 	"exitNode",
 	"enterField",
@@ -642,17 +643,167 @@ describe("visitDelta", () => {
 			["create", mapTreeX, field0],
 			["create", mapTreeY, field1],
 			["enterField", rootKey],
-			["detach", { start: 0, end: 1 }, field2, { minor: 2 }, true],
-			["detach", { start: 0, end: 1 }, field3, { minor: 3 }, true],
+			["replace", field0, { start: 0, end: 1 }, field2, { minor: 2 }],
+			["replace", field1, { start: 1, end: 2 }, field3, { minor: 3 }],
 			["exitField", rootKey],
 			["enterField", rootKey],
-			["attach", field0, 1, 0],
-			["attach", field1, 1, 1],
 			["exitField", rootKey],
 		];
 
 		const index = makeDetachedFieldIndex("");
 		testDeltaVisit(delta, expected, index);
+		assert.deepEqual(
+			[...index.entries()],
+			[
+				{ id: { minor: 2 }, root: 2 },
+				{ id: { minor: 3 }, root: 3 },
+			],
+		);
+	});
+	it("keeps indexes aligned around replacements in both passes", () => {
+		const delta: DeltaRoot = {
+			build: [{ id: { minor: 0 }, trees: chunkXY }],
+			fields: new Map([
+				[
+					rootKey,
+					{
+						marks: [
+							{ count: 1, attach: { minor: 1 } },
+							{ count: 1, detach: { minor: 2 }, attach: { minor: 0 } },
+							{ count: 1, detach: { minor: 3 } },
+							{ count: 1, fields: new Map([[fooKey, { marks: [] }]]) },
+						],
+					},
+				],
+			]),
+		};
+		testDeltaVisit(delta, [
+			["create", mapTreeX, field0],
+			["create", mapTreeY, field1],
+			["enterField", rootKey],
+			["replace", field0, { start: 0, end: 1 }, field2, { minor: 2 }],
+			["detach", { start: 1, end: 2 }, field3, { minor: 3 }, false],
+			["enterNode", 1],
+			["enterField", fooKey],
+			["exitField", fooKey],
+			["exitNode", 1],
+			["exitField", rootKey],
+			["enterField", rootKey],
+			["attach", field1, 1, 0],
+			["enterNode", 2],
+			["enterField", fooKey],
+			["exitField", fooKey],
+			["exitNode", 2],
+			["exitField", rootKey],
+		]);
+	});
+
+	it("does not partially replace a range with an unavailable incoming root", () => {
+		const delta: DeltaRoot = {
+			build: [{ id: { minor: 0 }, trees: chunkX }],
+			fields: new Map([
+				[
+					rootKey,
+					{
+						marks: [
+							{ count: 2, detach: { minor: 2 }, attach: { minor: 0 } },
+							{ count: 1, detach: { minor: 1 } },
+						],
+					},
+				],
+			]),
+		};
+		testDeltaVisit(delta, [
+			["create", mapTreeX, field0],
+			["enterField", rootKey],
+			["detach", { start: 0, end: 1 }, field1, { minor: 2 }, true],
+			["detach", { start: 0, end: 1 }, field2, { minor: 3 }, true],
+			["detach", { start: 0, end: 1 }, field3, { minor: 1 }, false],
+			["exitField", rootKey],
+			["enterField", rootKey],
+			["attach", field0, 1, 0],
+			["attach", field3, 1, 1],
+			["exitField", rootKey],
+		]);
+	});
+	it("keeps replacement split when the incoming root has pending global changes", () => {
+		const delta: DeltaRoot = {
+			build: [{ id: { minor: 0 }, trees: chunkX }],
+			global: [{ id: { minor: 0 }, fields: new Map([[fooKey, { marks: [] }]]) }],
+			fields: new Map([
+				[rootKey, { marks: [{ count: 1, detach: { minor: 1 }, attach: { minor: 0 } }] }],
+			]),
+		};
+		testDeltaVisit(delta, [
+			["create", mapTreeX, field0],
+			["enterField", rootKey],
+			["detach", { start: 0, end: 1 }, field1, { minor: 1 }, true],
+			["exitField", rootKey],
+			["enterField", field0],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["exitField", fooKey],
+			["exitNode", 0],
+			["exitField", field0],
+			["enterField", rootKey],
+			["attach", field0, 1, 0],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["exitField", fooKey],
+			["exitNode", 0],
+			["exitField", rootKey],
+		]);
+	});
+	it("keeps replacement split when outgoing content is renamed", () => {
+		const delta: DeltaRoot = {
+			build: [{ id: { minor: 0 }, trees: chunkX }],
+			rename: [{ count: 1, oldId: { minor: 1 }, newId: { minor: 2 } }],
+			fields: new Map([
+				[rootKey, { marks: [{ count: 1, detach: { minor: 1 }, attach: { minor: 0 } }] }],
+			]),
+		};
+		const index = makeDetachedFieldIndex("");
+		testDeltaVisit(
+			delta,
+			[
+				["create", mapTreeX, field0],
+				["enterField", rootKey],
+				["detach", { start: 0, end: 1 }, field1, { minor: 1 }, true],
+				["exitField", rootKey],
+				["enterField", field1],
+				["detach", { start: 0, end: 1 }, field2, { minor: 2 }, false],
+				["exitField", field1],
+				["enterField", rootKey],
+				["attach", field0, 1, 0],
+				["exitField", rootKey],
+			],
+			index,
+		);
+		assert.deepEqual([...index.entries()], [{ id: { minor: 2 }, root: 2 }]);
+	});
+	it("destroys outgoing content after a combined replacement", () => {
+		const delta: DeltaRoot = {
+			build: [{ id: { minor: 0 }, trees: chunkX }],
+			destroy: [{ id: { minor: 1 }, count: 1 }],
+			fields: new Map([
+				[rootKey, { marks: [{ count: 1, detach: { minor: 1 }, attach: { minor: 0 } }] }],
+			]),
+		};
+		const index = makeDetachedFieldIndex("");
+		testDeltaVisit(
+			delta,
+			[
+				["create", mapTreeX, field0],
+				["enterField", rootKey],
+				["replace", field0, { start: 0, end: 1 }, field1, { minor: 1 }],
+				["exitField", rootKey],
+				["enterField", rootKey],
+				["exitField", rootKey],
+				["destroy", field1, 1],
+			],
+			index,
+		);
+		assert.deepEqual([...index.entries()], []);
 	});
 
 	it("changes under replaced node", () => {
@@ -1209,6 +1360,7 @@ describe("visitDelta", () => {
 			const replace: DeltaMark = {
 				count: 2,
 				detach: { minor: 2 },
+				attach: buildId,
 			};
 
 			const rootChanges: DeltaFieldChanges = { marks: [replace] };
@@ -1221,8 +1373,8 @@ describe("visitDelta", () => {
 				["create", mapTreeX, field0],
 				["create", mapTreeY, field1],
 				["enterField", rootKey],
-				["detach", { start: 0, end: 1 }, field2, { minor: 2 }, false],
-				["detach", { start: 0, end: 1 }, field3, { minor: 3 }, false],
+				["replace", field0, { start: 0, end: 1 }, field2, { minor: 2 }],
+				["replace", field1, { start: 1, end: 2 }, field3, { minor: 3 }],
 				["exitField", rootKey],
 				["enterField", rootKey],
 				["exitField", rootKey],
@@ -1231,10 +1383,13 @@ describe("visitDelta", () => {
 			const revision = mintRevisionTag();
 			const index = makeDetachedFieldIndex("");
 			testDeltaVisit(delta, expected, index, revision);
-			const iteratorResult = index.entries().next();
-			assert.equal(iteratorResult.done, false);
-			assert.deepEqual(iteratorResult.value.id, buildId);
-			assert.equal(iteratorResult.value.latestRelevantRevision, revision);
+			assert.deepEqual(
+				[...index.entries()],
+				[
+					{ id: { minor: 2 }, root: 2, latestRelevantRevision: revision },
+					{ id: { minor: 3 }, root: 3, latestRelevantRevision: revision },
+				],
+			);
 		});
 	});
 

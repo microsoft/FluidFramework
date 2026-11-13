@@ -397,7 +397,7 @@ describe("OpSplitter", () => {
 			}),
 		);
 
-		// Old loader
+		// Inbound-only splitter has no submission callback
 		assert.throws(() =>
 			new OpSplitter(
 				[],

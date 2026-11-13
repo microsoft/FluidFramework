@@ -59,7 +59,13 @@ export function testEditor(): void {
 
 		it("insert one node", () => {
 			const revision = mintRevisionTag();
-			const actual = sequenceFieldEditor.insert(42, 1, { localId: id, revision }, revision);
+			const actual = sequenceFieldEditor.insert(
+				42,
+				1,
+				{ localId: id, revision },
+				revision,
+				id,
+			);
 			const expected: Changeset = [
 				{ count: 42 },
 				Mark.revive(1, { localId: id, revision }, { revision }),
@@ -69,10 +75,16 @@ export function testEditor(): void {
 
 		it("insert multiple nodes", () => {
 			const revision = mintRevisionTag();
-			const actual = sequenceFieldEditor.insert(42, 2, { localId: id, revision }, revision);
+			const actual = sequenceFieldEditor.insert(
+				42,
+				2,
+				{ localId: id, revision },
+				revision,
+				id,
+			);
 			const expected: Changeset = [
 				{ count: 42 },
-				Mark.insert(2, { localId: id, revision }, { revision }),
+				Mark.attach(2, { localId: id, revision }, { revision }),
 			];
 			assert.deepEqual(actual, expected);
 		});
@@ -80,7 +92,7 @@ export function testEditor(): void {
 		it("remove", () => {
 			const revision = mintRevisionTag();
 			const actual = sequenceFieldEditor.remove(42, 3, id, revision);
-			const expected: Changeset = [{ count: 42 }, Mark.remove(3, id, { revision })];
+			const expected: Changeset = [{ count: 42 }, Mark.detach(3, id, { revision })];
 			assert.deepEqual(actual, expected);
 		});
 	});
