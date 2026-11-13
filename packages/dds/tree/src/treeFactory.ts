@@ -21,6 +21,8 @@ import { FluidClientVersion, type FormatVersion } from "./codec/index.js";
 import {
 	detachedFieldIndexCodecBuilder,
 	DetachedFieldIndexFormatVersion,
+	type SchemaAndPolicy,
+	type TreeNodeSchemaIdentifier,
 } from "./core/index.js";
 import {
 	SharedTreeKernel,
@@ -35,10 +37,11 @@ import {
 	EditManagerFormatVersion,
 	messageCodecName,
 	MessageFormatVersion,
+	type BranchId,
 } from "./shared-tree-core/index.js";
 import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
-import type { ITree } from "./simple-tree/index.js";
-import { Breakable, copyProperty } from "./util/index.js";
+import { handleSchema, type ITree } from "./simple-tree/index.js";
+import { brand, Breakable, copyProperty } from "./util/index.js";
 
 /**
  * {@link ITreePrivate} extended with ISharedObject.
@@ -46,6 +49,46 @@ import { Breakable, copyProperty } from "./util/index.js";
  * This is used when integration testing this package with the Fluid runtime as it exposes the APIs the runtime consumes to manipulate the tree.
  */
 export interface ISharedTree extends ISharedObject, ITreePrivate {}
+
+/**
+ * The identifier of the only node schema whose values are Fluid handles.
+ */
+const handleSchemaIdentifier: TreeNodeSchemaIdentifier = brand(handleSchema.identifier);
+
+/**
+ * Submits each of a tree's ops through `args`, without searching it for Fluid handles when it can't hold one.
+ * @remarks
+ * A tree holds Fluid handles only as values of the handle leaf schema.
+ * An op for the main branch is submitted once the main branch has applied it, so the stored schema in its local
+ * metadata includes any schema change the op makes: the op can hold a handle only if that schema includes the handle
+ * leaf schema. A stored schema can only be upgraded to one that allows all the content it allowed, so content removed
+ * under an earlier schema holds no handle either.
+ * The metadata of an op for any other branch holds the main branch's schema rather than that branch's, so such ops are
+ * always searched, as are ops whose metadata has no schema.
+ */
+function makeSubmitLocalMessage(
+	args: KernelArgs,
+): (content: unknown, localOpMetadata?: unknown) => void {
+	const { submitLocalMessage, submitLocalMessageWithoutHandles } = args;
+	if (submitLocalMessageWithoutHandles === undefined) {
+		return submitLocalMessage;
+	}
+	return (content, localOpMetadata) => {
+		const metadata = localOpMetadata as
+			| Partial<SchemaAndPolicy & { readonly branchId: BranchId }>
+			| undefined;
+		const schema = metadata?.schema;
+		if (
+			metadata?.branchId !== "main" ||
+			schema === undefined ||
+			schema.nodeSchema.has(handleSchemaIdentifier)
+		) {
+			submitLocalMessage(content, localOpMetadata);
+		} else {
+			submitLocalMessageWithoutHandles(content, localOpMetadata);
+		}
+	};
+}
 
 /**
  * Creates a factory for shared tree kernels with the given options.
@@ -81,7 +124,7 @@ function treeKernelFactory(
 			new Breakable("SharedTree", args.logger),
 			args.sharedObject,
 			args.serializer,
-			args.submitLocalMessage,
+			makeSubmitLocalMessage(args),
 			args.lastSequenceNumber,
 			args.initialSequenceNumber,
 			args.idCompressor,

@@ -22,7 +22,7 @@ import {
 	jsonableTreeFromFieldCursor,
 } from "../../feature-libraries/index.js";
 import { Tree } from "../../shared-tree/index.js";
-import { TreeViewConfiguration } from "../../simple-tree/index.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import { makeArray } from "../../util/index.js";
 import {
@@ -352,6 +352,65 @@ describe("SharedTree benchmarks", () => {
 							});
 						} while (running);
 					},
+				}),
+			});
+		}
+	});
+
+	describe("submitting a local edit", () => {
+		const submitFactory = configuredSharedTree({}).getFactory();
+		const schemaFactory = new SchemaFactory("submitBenchmark");
+		class Item extends schemaFactory.object("Item", { value: schemaFactory.number }) {}
+		class Items extends schemaFactory.array("Items", Item) {}
+		const config = new TreeViewConfiguration({ schema: Items });
+		for (const [nodeCount, benchmarkType] of [
+			[1, BenchmarkType.Perspective],
+			[100, BenchmarkType.Measurement],
+		] as const) {
+			benchmarkIt({
+				type: benchmarkType,
+				title: `that sets a field of each of ${nodeCount} node${nodeCount === 1 ? "" : "s"}`,
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						let duration: number;
+						do {
+							// Since this setup only collects data from one iteration, assert that this is what is expected.
+							assert.equal(state.iterationsPerBatch, 1);
+							const provider = new TestTreeProviderLite(1, submitFactory);
+							const [tree] = provider.trees;
+							const view = tree.viewWith(config);
+							view.initialize(makeArray(nodeCount, () => new Item({ value: 0 })));
+							provider.synchronizeMessages();
+
+							// Only the submission of the edit's op to the runtime is measured, not the edit itself.
+							duration = 0;
+							const methods = tree as unknown as Record<string, (...args: unknown[]) => void>;
+							for (const method of [
+								"submitLocalMessage",
+								"submitLocalMessageWithoutHandles",
+							]) {
+								const submit = methods[method]?.bind(tree);
+								if (submit !== undefined) {
+									methods[method] = (...args) => {
+										const before = state.timer.now();
+										submit(...args);
+										duration += state.timer.toSeconds(before, state.timer.now());
+									};
+								}
+							}
+							Tree.runTransaction(view, () => {
+								for (const item of view.root) {
+									item.value = 1;
+								}
+							});
+
+							provider.synchronizeMessages();
+							assert.equal(view.root[nodeCount - 1]?.value, 1);
+							view.dispose();
+						} while (state.recordBatch(duration));
+					},
+					// Force batch size of 1
+					minBatchDurationSeconds: 0,
 				}),
 			});
 		}
