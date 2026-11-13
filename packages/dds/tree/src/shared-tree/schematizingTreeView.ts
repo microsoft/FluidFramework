@@ -47,6 +47,7 @@ import {
 	type StagedSchemaUpgradePolicy,
 	type TreeViewConfiguration,
 	type TreeViewAlpha,
+	type TreeViewSchemaVersions,
 	type InsertableField,
 	type ReadableField,
 	type ReadSchema,
@@ -333,7 +334,7 @@ export class SchematizingSimpleTreeView<
 		return this.config.schema;
 	}
 
-	public get schemaVersion(): TreeViewAlpha<TRootSchema>["schemaVersion"] {
+	public get schemaVersion(): TreeViewSchemaVersions {
 		return {
 			view: this.viewSchema.schemaVersion,
 			stored: this.checkout.storedSchema.schemaVersion,

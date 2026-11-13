@@ -13,7 +13,7 @@ import {
 	FormatValidatorNoOp,
 	type FormatValidator,
 } from "../../codec/index.js";
-import type { ValueSchema } from "../../core/index.js";
+import type { SchemaVersions, ValueSchema } from "../../core/index.js";
 import { compareStrings, objectToMap, type JsonCompatibleReadOnly } from "../../util/index.js";
 import { createSchemaUpgrade, NodeKind, SchemaUpgrade } from "../core/index.js";
 import type { FieldKind } from "../fieldSchema.js";
@@ -134,7 +134,7 @@ export function decodeSchemaCompatibilitySnapshot(
 
 function decodeSchemaVersion(
 	encoded: readonly [string, number][] | undefined,
-): ReadonlyMap<string, number> | undefined {
+): SchemaVersions | undefined {
 	if (encoded === undefined) {
 		return undefined;
 	}

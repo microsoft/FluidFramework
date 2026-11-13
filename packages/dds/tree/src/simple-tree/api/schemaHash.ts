@@ -63,7 +63,7 @@ export interface IdentifySchemaWithHashOptions extends IdentifySchemaOptions {
  * The optional {@link IdentifySchemaWithHashOptions.expectedHash} enables checks for unintended schema changes when constructing a view.
  *
  * The {@link IdentifySchemaOptions.schemaVersion} option combines hashing with application-defined versions.
- * Those versions follow the rules in {@link SchemaIdentity.schemaVersion} but do not affect the runtime hash,
+ * Those versions follow the rules in {@link SchemaVersions} but do not affect the runtime hash,
  * so a version-only change does not require updating the expected hash.
  *
  * For versioning without hashing, {@link identifySchema} avoids the bundle-size cost of schema hashing.

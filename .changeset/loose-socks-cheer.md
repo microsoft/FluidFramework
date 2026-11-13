@@ -98,6 +98,11 @@ To make a change outside those rules, both the stored and new schemas must have 
 Even then, the new schema must still accept all content allowed by the stored schema.
 Adding a version map for the first time does not bypass the additive upgrade rules.
 
+`upgradeSchema` currently treats a version identifier missing from the view configuration as an attempt to remove that identifier from the stored schema.
+This includes configurations that declare no schema versions at all.
+Because upgrades cannot remove identifiers or decrease their values, an older application must declare every stored identifier with at least its stored version to make any schema upgrade, even an additive one.
+These version requirements apply to schema upgrades, not to reading or editing a document whose content is compatible with the view.
+
 The single-number shorthand uses the identifier `"schemaVersion"` and follows the same upgrade rules as other identifiers.
 This identifier is not reserved: an application can use `"schemaVersion"` explicitly in a version record, and that entry refers to the same version as the single-number shorthand.
 Switching from `schemaVersion: 3` to `schemaVersion: { schemaVersion: 3 }` therefore preserves the existing version rather than creating a new identifier.
@@ -131,8 +136,9 @@ const identity = identifySchemaWithHash({ expectedHash });
 #### Compatibility investigation
 
 A schema compatibility investigation can start by comparing the versions the application expects with those stored in the document.
-On [`TreeViewAlpha`](https://fluidframework.com/docs/api/fluid-framework/treeviewalpha-interface), [`schemaVersion`](https://fluidframework.com/docs/api/fluid-framework/treeviewalpha-interface#schemaversion-property) groups both maps under a single property: `schemaVersion.view` contains the configured versions, and `schemaVersion.stored` contains the document's current versions.
-Both are read-only maps, with `undefined` indicating that the corresponding schema has no application-defined versions.
+On [`TreeViewAlpha`](https://fluidframework.com/docs/api/fluid-framework/treeviewalpha-interface), [`schemaVersion`](https://fluidframework.com/docs/api/fluid-framework/treeviewalpha-interface#schemaversion-property) returns a [`TreeViewSchemaVersions`](https://fluidframework.com/docs/api/fluid-framework/treeviewschemaversions-interface) object: `schemaVersion.view` contains the configured versions, and `schemaVersion.stored` contains the document's current versions.
+Each map uses the shared read-only [`SchemaVersions`](https://fluidframework.com/docs/api/fluid-framework/schemaversions-typealias) type, which documents version ordering and upgrade rules.
+A map is `undefined` when its schema has no application-defined versions.
 The stored versions are also available through [`ViewableTreeAlpha.storedSchemaVersion`](https://fluidframework.com/docs/api/fluid-framework/viewabletreealpha-interface#storedschemaversion-property).
 
 ```typescript

@@ -85,6 +85,8 @@ export {
 	type ITreeViewConfiguration,
 	type ITreeViewConfigurationAlpha,
 	type SchemaVersionMap,
+	type SchemaVersions,
+	type TreeViewSchemaVersions,
 	type SchemaCompatibilityStatus,
 	type SchemaCompatibilityStatusBeta,
 	type SchemaDiscrepancy,

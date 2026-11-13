@@ -9,7 +9,7 @@ import {
 } from "@fluidframework/core-interfaces/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { SchemaVersionMap, TreeStoredSchema } from "../../core/index.js";
+import type { SchemaVersionMap, SchemaVersions, TreeStoredSchema } from "../../core/index.js";
 
 /**
  * Represents a schema identity for runtime hashing and application-defined versions.
@@ -30,18 +30,14 @@ export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.Sch
 	 * {@link identifySchema} and {@link identifySchemaWithHash} accept these versions
 	 * as a record of string library identifiers to non-negative safe integers,
 	 * or as a single number assigned to the identifier `"schemaVersion"`.
-	 * The configured versions are exposed as a read-only map.
+	 * The configured versions are exposed as {@link SchemaVersions}, which describes version ordering and upgrade rules.
 	 * The shorthand key `"schemaVersion"` is an ordinary identifier and follows the same rules as other keys.
 	 *
 	 * {@link TreeView.initialize} and {@link TreeView.upgradeSchema} store the configured versions in the document.
-	 * Once stored, version values cannot decrease and their identifiers cannot be removed.
-	 * This ordering prevents an older application from reversing a versioned schema upgrade.
-	 *
-	 * Within those version constraints, schema upgrades normally follow the additive upgrade rules without requiring a version increase.
-	 * To allow other changes, both the stored and new view schemas must have version maps,
-	 * and at least one version must increase or a library identifier must be added.
-	 * Even then, the new schema must still allow all content accepted by the stored schema.
-	 * In particular, adding a version map for the first time does not bypass the additive upgrade rules.
+	 * These operations use the configured versions rather than retaining newer values from the document.
+	 * As a result, an older application whose configured versions decrease a stored value cannot upgrade the schema,
+	 * even when its schema change would otherwise be additive.
+	 * This restriction does not itself prevent viewing or editing: those capabilities depend on content compatibility.
 	 *
 	 * Persisting versions requires an experimental stored schema format that is not suitable for production use.
 	 * For preview testing, all clients that load or collaborate on the document must use the same Fluid Framework version,
@@ -80,7 +76,7 @@ export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.Sch
 	 * });
 	 * ```
 	 */
-	readonly schemaVersion: ReadonlyMap<string, number> | undefined;
+	readonly schemaVersion: SchemaVersions | undefined;
 }
 
 /**
@@ -132,7 +128,7 @@ export class SchemaIdentityInternal
 	extends ErasedTypeImplementation<SchemaIdentity>
 	implements SchemaIdentity
 {
-	public readonly schemaVersion: ReadonlyMap<string, number> | undefined;
+	public readonly schemaVersion: SchemaVersions | undefined;
 
 	public constructor(
 		public readonly expectedHash: string | undefined,
@@ -165,7 +161,7 @@ export class SchemaIdentityInternal
  */
 function validateSchemaVersion(
 	schemaVersion: SchemaVersionMap | number | undefined,
-): ReadonlyMap<string, number> | undefined {
+): SchemaVersions | undefined {
 	if (schemaVersion === undefined) {
 		return undefined;
 	}

@@ -11,6 +11,7 @@ export {
 	type FieldKindData,
 	type TreeStoredSchema,
 	type SchemaVersionMap,
+	type SchemaVersions,
 	forbiddenFieldKindIdentifier,
 	identifierFieldKindIdentifier,
 	storedEmptyFieldSchema,

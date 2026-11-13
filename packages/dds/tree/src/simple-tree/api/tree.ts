@@ -15,6 +15,7 @@ import type {
 	RevertibleAlphaFactory,
 	RevertibleFactory,
 	RevertToOptionsAlpha,
+	SchemaVersions,
 } from "../../core/index.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
 import type { TreeStatus } from "../../feature-libraries/index.js";
@@ -134,10 +135,9 @@ export interface ViewableTreeAlpha extends ViewableTree {
 	 *
 	 * @remarks
 	 * This reads the document's current versions rather than the versions configured for a particular view.
-	 * It is `undefined` when the stored schema has no application-defined versions,
-	 * and can change when a {@link TreeViewAlpha} initializes or upgrades the stored schema.
+	 * These {@link SchemaVersions} can change when a {@link TreeViewAlpha} initializes or upgrades the stored schema.
 	 */
-	readonly storedSchemaVersion: ReadonlyMap<string, number> | undefined;
+	readonly storedSchemaVersion: SchemaVersions | undefined;
 
 	/**
 	 * Creates an independent branch from this tree's current state.
@@ -1129,6 +1129,27 @@ export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
 }
 
 /**
+ * The configured and stored application-defined schema versions available through a {@link TreeViewAlpha}.
+ *
+ * @remarks
+ * Comparing these maps helps identify differences between the application configuration and the document.
+ * The configured versions remain fixed for a view, while the stored versions follow changes to the document's schema.
+ * {@link SchemaVersions} describes the meaning of absent and empty maps and the rules for upgrading them.
+ *
+ * @sealed @alpha
+ */
+export interface TreeViewSchemaVersions {
+	/**
+	 * Versions from the view's configuration, used when initializing or upgrading the document.
+	 */
+	readonly view: SchemaVersions | undefined;
+	/**
+	 * Versions currently stored in the document.
+	 */
+	readonly stored: SchemaVersions | undefined;
+}
+
+/**
  * {@link TreeView} with proposed changes to the schema aware typing to allow use with `UnsafeUnknownSchema`.
  *
  * @see {@link TreeViewBeta} for beta APIs
@@ -1148,20 +1169,10 @@ export interface TreeViewAlpha<
 	 * Contains the configured and stored application-defined schema versions.
 	 *
 	 * @remarks
-	 * The configured versions remain fixed for this view, while the stored versions follow changes to the document's schema.
-	 * Either map is `undefined` when no application-defined versions are present in its schema.
+	 * {@link TreeViewSchemaVersions} describes how these maps relate to the view and document.
 	 * The {@link TreeViewEvents.schemaChanged} event reports updates to the stored schema.
 	 */
-	readonly schemaVersion: {
-		/**
-		 * Versions from this view's configuration, used when initializing or upgrading the document.
-		 */
-		readonly view: ReadonlyMap<string, number> | undefined;
-		/**
-		 * Versions currently stored in the document.
-		 */
-		readonly stored: ReadonlyMap<string, number> | undefined;
-	};
+	readonly schemaVersion: TreeViewSchemaVersions;
 
 	get root(): ReadableField<TSchema>;
 

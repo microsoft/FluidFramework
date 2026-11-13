@@ -1573,7 +1573,7 @@ const schemaIdentifierBrand: unique symbol;
 
 // @alpha @sealed
 export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.SchemaIdentity"> {
-    readonly schemaVersion: ReadonlyMap<string, number> | undefined;
+    readonly schemaVersion: SchemaVersions | undefined;
 }
 
 // @public @sealed @system
@@ -1630,6 +1630,9 @@ export class SchemaUpgrade {
 
 // @alpha
 export type SchemaVersionMap = Readonly<Record<string, number>>;
+
+// @alpha
+export type SchemaVersions = ReadonlyMap<string, number>;
 
 // @public @system
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
@@ -1727,7 +1730,7 @@ export interface SimpleRecordNodeSchema<Type extends SchemaType = SchemaType, ou
 export interface SimpleTreeSchema<Type extends SchemaType = SchemaType> {
     readonly definitions: ReadonlyMap<string, SimpleNodeSchema<Type>>;
     readonly root: SimpleFieldSchema<Type>;
-    readonly schemaVersion?: ReadonlyMap<string, number>;
+    readonly schemaVersion?: SchemaVersions;
 }
 
 // @beta
@@ -2405,7 +2408,7 @@ export interface TreeSchema extends SimpleTreeSchema<SchemaType.View> {
     readonly definitions: ReadonlyMap<string, SimpleNodeSchema<SchemaType.View> & TreeNodeSchema>;
     // (undocumented)
     readonly root: FieldSchemaAlpha;
-    readonly schemaVersion?: ReadonlyMap<string, number>;
+    readonly schemaVersion?: SchemaVersions;
 }
 
 // @alpha @input
@@ -2443,10 +2446,7 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
     // (undocumented)
     get root(): ReadableField<TSchema>;
     set root(newRoot: InsertableField<TSchema>);
-    readonly schemaVersion: {
-        readonly view: ReadonlyMap<string, number> | undefined;
-        readonly stored: ReadonlyMap<string, number> | undefined;
-    };
+    readonly schemaVersion: TreeViewSchemaVersions;
 }
 
 // @beta @sealed
@@ -2476,7 +2476,7 @@ export class TreeViewConfigurationAlpha<const TSchema extends ImplicitFieldSchem
     // (undocumented)
     readonly root: FieldSchemaAlpha;
     readonly schemaIdentity: ITreeViewConfigurationAlpha["schemaIdentity"];
-    get schemaVersion(): ReadonlyMap<string, number> | undefined;
+    get schemaVersion(): SchemaVersions | undefined;
     readonly stagedUpgradePolicy: StagedSchemaUpgradePolicy;
 }
 
@@ -2485,6 +2485,12 @@ export interface TreeViewEvents {
     commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
     rootChanged(): void;
     schemaChanged(): void;
+}
+
+// @alpha @sealed
+export interface TreeViewSchemaVersions {
+    readonly stored: SchemaVersions | undefined;
+    readonly view: SchemaVersions | undefined;
 }
 
 // @public @system
@@ -2622,7 +2628,7 @@ export interface ViewableTreeAlpha extends ViewableTree {
     exportSimpleSchema(): SimpleTreeSchema;
     exportVerbose(): VerboseTree | undefined;
     forkBranch(): TreeBranchHandleAlpha;
-    readonly storedSchemaVersion: ReadonlyMap<string, number> | undefined;
+    readonly storedSchemaVersion: SchemaVersions | undefined;
 }
 
 // @alpha

@@ -80,18 +80,20 @@ const versionedTestCases: EncodingTestData<TreeStoredSchema, FormatV3> = {
 describe("SchemaIndex", () => {
 	useSnapshotDirectory();
 
-	it("SchemaIndexFormat - schema v1", () => {
-		// Capture the json schema for the format as a snapshot, so any change to what schema is allowed shows up in this tests.
-		takeJsonSnapshot(FormatV1);
-	});
+	describe("SchemaIndexFormat", () => {
+		it("schema v1", () => {
+			// Capture the json schema for the format as a snapshot, so any change to what schema is allowed shows up in this tests.
+			takeJsonSnapshot(FormatV1);
+		});
 
-	it("SchemaIndexFormat - schema v2", () => {
-		// Capture the json schema for the format as a snapshot, so any change to what schema is allowed shows up in this tests.
-		takeJsonSnapshot(FormatV2);
-	});
+		it("schema v2", () => {
+			// Capture the json schema for the format as a snapshot, so any change to what schema is allowed shows up in this tests.
+			takeJsonSnapshot(FormatV2);
+		});
 
-	it("SchemaIndexFormat - experimental schema v3", () => {
-		takeJsonSnapshot(FormatV3);
+		it("experimental schema v3", () => {
+			takeJsonSnapshot(FormatV3);
+		});
 	});
 
 	it("encodes and decodes application schema versions in sorted order", () => {

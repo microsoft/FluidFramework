@@ -83,6 +83,8 @@ export {
 	type ITreeViewConfiguration,
 	type ITreeViewConfigurationAlpha,
 	type SchemaVersionMap,
+	type SchemaVersions,
+	type TreeViewSchemaVersions,
 	type ITreeConfigurationOptions,
 	type TreeView,
 	type TreeViewEvents,

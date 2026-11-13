@@ -15,6 +15,7 @@ import {
 	type TreeFieldStoredSchema,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
+	type SchemaVersions,
 	storedEmptyFieldSchema,
 } from "./schema.js";
 
@@ -63,7 +64,7 @@ export interface MutableTreeStoredSchema extends TreeStoredSchemaSubscription {
 export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 	protected nodeSchemaData: BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 	protected rootFieldSchemaData: TreeFieldStoredSchema;
-	protected schemaVersionData: ReadonlyMap<string, number> | undefined;
+	protected schemaVersionData: SchemaVersions | undefined;
 	protected readonly _events = createEmitter<SchemaEvents>();
 	public readonly events: Listenable<SchemaEvents> = this._events;
 
@@ -113,7 +114,7 @@ export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 		return this.rootFieldSchemaData;
 	}
 
-	public get schemaVersion(): ReadonlyMap<string, number> | undefined {
+	public get schemaVersion(): SchemaVersions | undefined {
 		return this.schemaVersionData;
 	}
 
@@ -146,8 +147,8 @@ export function schemaDataIsEmpty(data: TreeStoredSchema): boolean {
  * This copy preserves entry order because it is not an encoding step; the schema codec sorts entries before persisting them.
  */
 function cloneSchemaVersion(
-	schemaVersion: ReadonlyMap<string, number> | undefined,
-): ReadonlyMap<string, number> | undefined {
+	schemaVersion: SchemaVersions | undefined,
+): SchemaVersions | undefined {
 	return schemaVersion === undefined ? undefined : new Map(schemaVersion);
 }
 

@@ -201,6 +201,31 @@ describe("getSchemaIncompatibilityDetails", () => {
 });
 
 describe("isSchemaUpgradeAllowed", () => {
+	it("does not retain newer stored versions to permit an older view's additive upgrade", () => {
+		const stored = toUpgradeSchema(factory.string, undefined, new Map([[testLibraryId, 2]]));
+		const schemaIdentity = identifySchema({ schemaVersion: { [testLibraryId]: 1 } });
+		const olderView = new TreeViewConfigurationAlpha({
+			schema: factory.string,
+			schemaIdentity,
+		});
+		assert.equal(checkSchemaCompatibility(olderView, stored).canView, true);
+
+		const additiveView = new TreeViewConfigurationAlpha({
+			schema: factory.optional(factory.string),
+			schemaIdentity,
+		});
+		const candidate = getSchemaUpgradeCandidate(
+			additiveView,
+			stored,
+			StagedSchemaUpgradePolicy.restrictive,
+		);
+		assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, candidate), true);
+		assert.deepEqual(candidate.schemaVersion, new Map([[testLibraryId, 1]]));
+		assert.equal(isSchemaUpgradeAllowed(additiveView, stored, candidate), false);
+		assert.equal(checkSchemaCompatibility(additiveView, stored).canUpgrade, false);
+		assert.deepEqual(stored.schemaVersion, new Map([[testLibraryId, 2]]));
+	});
+
 	describe("version gating", () => {
 		const versionCases: {
 			name: string;

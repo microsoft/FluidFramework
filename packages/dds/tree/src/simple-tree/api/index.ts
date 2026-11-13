@@ -8,7 +8,7 @@ export type {
 	ITreeConfigurationOptions,
 	ITreeViewConfigurationAlpha,
 } from "./configuration.js";
-export type { SchemaVersionMap } from "../../core/index.js";
+export type { SchemaVersionMap, SchemaVersions } from "../../core/index.js";
 export {
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
@@ -35,6 +35,7 @@ export type {
 	SchemaCompatibilityStatusBeta,
 	SchemaDiscrepancy,
 	TreeViewAlpha,
+	TreeViewSchemaVersions,
 	TreeViewBeta,
 	UntypedTreeView,
 	UntypedTreeViewAlpha,

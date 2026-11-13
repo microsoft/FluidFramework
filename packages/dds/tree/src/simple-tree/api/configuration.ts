@@ -6,6 +6,7 @@
 import { assert, fail, oob, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+import type { SchemaVersions } from "../../core/index.js";
 import { getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import {
@@ -188,7 +189,7 @@ export interface ITreeViewConfigurationAlpha<
 	 * @remarks
 	 * {@link identifySchema} provides application-defined versions only,
 	 * while {@link identifySchemaWithHash} also enables hash checks and hash telemetry.
-	 * {@link SchemaIdentity.schemaVersion} describes application version requirements.
+	 * {@link SchemaVersions} describes application version requirements and upgrade rules.
 	 */
 	readonly schemaIdentity?: SchemaIdentity;
 }
@@ -308,7 +309,7 @@ export class TreeViewConfigurationAlpha<
 	 * Returns the application-defined versions configured through {@link TreeViewConfigurationAlpha.schemaIdentity},
 	 * or `undefined` if none were supplied.
 	 */
-	public get schemaVersion(): ReadonlyMap<string, number> | undefined {
+	public get schemaVersion(): SchemaVersions | undefined {
 		return this.schemaIdentity?.schemaVersion;
 	}
 

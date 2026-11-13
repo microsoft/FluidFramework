@@ -14,6 +14,7 @@ import {
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchema,
+	type SchemaVersions,
 } from "../core/index.js";
 import { defaultSchemaPolicy, FieldKinds } from "../feature-libraries/index.js";
 import { getOrCreate, oneFromIterable } from "../util/index.js";
@@ -409,7 +410,7 @@ export function getRootSchemaDerivedData(
 export function toUpgradeSchema(
 	root: ImplicitFieldSchema,
 	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
-	schemaVersion?: ReadonlyMap<string, number>,
+	schemaVersion?: SchemaVersions,
 ): TreeStoredSchema {
 	const stored = toStoredSchema(
 		root,
@@ -651,7 +652,7 @@ function composeFieldSchema(
 export function toInitialSchema(
 	root: ImplicitFieldSchema,
 	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
-	schemaVersion?: ReadonlyMap<string, number>,
+	schemaVersion?: SchemaVersions,
 ): TreeStoredSchema {
 	const stored = toStoredSchema(
 		root,
@@ -821,7 +822,7 @@ export interface TreeSchema extends SimpleTreeSchema<SchemaType.View> {
 	/**
 	 * Contains the application-defined versions for this schema.
 	 */
-	readonly schemaVersion?: ReadonlyMap<string, number>;
+	readonly schemaVersion?: SchemaVersions;
 
 	readonly root: FieldSchemaAlpha;
 
