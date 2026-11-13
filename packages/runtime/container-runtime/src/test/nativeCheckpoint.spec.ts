@@ -4,11 +4,15 @@
  */
 
 import { strict as assert } from "node:assert";
+import { finishLoggingReport, ValueType } from "@fluid-tools/benchmark";
 import { SummaryType, type ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	decodeNativeCheckpoint,
+	createNativeCheckpointPruneMessage,
 	encodeNativeCheckpoint,
+	parseNativeCheckpointMessage,
 	parseNativeCheckpointState,
+	selectNativeCheckpointsForRetentionPolicy,
 	selectRetainedNativeCheckpoints,
 	type NativeCheckpoint,
 } from "../nativeCheckpoint.js";
@@ -31,6 +35,126 @@ describe("Native checkpoint encoding", () => {
 			},
 		};
 		assert.deepEqual(decodeNativeCheckpoint(encodeNativeCheckpoint(tree).buffer), tree);
+	});
+
+	describe("Native checkpoint age/count retention", () => {
+		const day = 24 * 60 * 60 * 1000;
+		const now = 90 * day;
+
+		function createCheckpoint(index: number, timestamp: number): NativeCheckpoint {
+			return {
+				id: `${index}`,
+				sequenceNumber: index,
+				storeSequenceNumber: index + 1,
+				timestamp,
+				route: `/_blobs/${index}`,
+				bytes: 10,
+				assets: [],
+			};
+		}
+
+		it("keeps all recent history above the soft target and at least the latest 100 older points", () => {
+			const old = Array.from({ length: 160 }, (_, index) =>
+				createCheckpoint(index, now - 60 * day),
+			);
+			const recent = Array.from({ length: 120 }, (_, index) =>
+				createCheckpoint(160 + index, now - day),
+			);
+			const request = createNativeCheckpointPruneMessage(1000);
+			assert.deepEqual(
+				selectNativeCheckpointsForRetentionPolicy(
+					{ version: 1, checkpoints: [...old, ...recent] },
+					request,
+					now,
+				),
+				recent,
+			);
+			assert.deepEqual(
+				selectNativeCheckpointsForRetentionPolicy(
+					{ version: 1, checkpoints: old },
+					request,
+					now,
+				),
+				old.slice(-100),
+			);
+			const boundary = [
+				createCheckpoint(0, now - 30 * day),
+				createCheckpoint(1, now - 30 * day + 1),
+				createCheckpoint(2, now + day),
+			];
+			assert.deepEqual(
+				selectNativeCheckpointsForRetentionPolicy(
+					{ version: 1, checkpoints: boundary },
+					createNativeCheckpointPruneMessage(1000, { targetCount: 0 }),
+					now,
+				),
+				boundary.slice(1),
+			);
+		});
+
+		it("preserves legacy ages, delta bases, the restored boundary, and post-plan captures including reused IDs", () => {
+			const checkpoints: NativeCheckpoint[] = [
+				createCheckpoint(0, day),
+				{ ...createCheckpoint(1, now - day), baseId: "0", depth: 1 },
+				createCheckpoint(2, day),
+				{ ...createCheckpoint(3, day), timestamp: undefined },
+				{ ...createCheckpoint(4, day), storeSequenceNumber: undefined },
+				createCheckpoint(5, day),
+				// Even an old-looking timestamp cannot override the sequenced concurrency fence.
+				{ ...createCheckpoint(6, day), id: "reused-id", storeSequenceNumber: 101 },
+			];
+			const retained = selectNativeCheckpointsForRetentionPolicy(
+				{
+					version: 1,
+					checkpoints,
+					restored: { id: "restore", checkpointId: "2", sequenceNumber: 50 },
+				},
+				createNativeCheckpointPruneMessage(100, { targetCount: 0 }),
+				now,
+			);
+			assert.deepEqual(
+				retained.map((checkpoint) => checkpoint.id),
+				["0", "1", "2", "3", "4", "reused-id"],
+			);
+			assert.doesNotThrow(() =>
+				parseNativeCheckpointState({ version: 1, checkpoints: retained }),
+			);
+		});
+
+		it("round-trips sequenced metadata, preserves legacy entries, and rejects invalid retention inputs", () => {
+			const checkpoint = createCheckpoint(1, day);
+			const parsed = parseNativeCheckpointState({ version: 1, checkpoints: [checkpoint] });
+			assert.equal(parsed?.checkpoints[0].timestamp, day);
+			assert.equal(parsed?.checkpoints[0].storeSequenceNumber, 2);
+			const legacy = { ...checkpoint, timestamp: undefined, storeSequenceNumber: undefined };
+			assert.deepEqual(
+				selectNativeCheckpointsForRetentionPolicy(
+					{ version: 1, checkpoints: [legacy] },
+					createNativeCheckpointPruneMessage(100, { targetCount: 0, minAgeMs: 0 }),
+					now,
+				),
+				[legacy],
+			);
+			for (const value of [-1, 0.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+				for (const field of ["timestamp", "storeSequenceNumber"]) {
+					assert.throws(() =>
+						parseNativeCheckpointState({
+							version: 1,
+							checkpoints: [{ ...checkpoint, [field]: value }],
+						}),
+					);
+				}
+				for (const field of ["minAgeMs", "targetCount"]) {
+					assert.throws(() => createNativeCheckpointPruneMessage(100, { [field]: value }));
+					assert.throws(() =>
+						parseNativeCheckpointMessage({
+							...createNativeCheckpointPruneMessage(100),
+							[field]: value,
+						}),
+					);
+				}
+			}
+		});
 	});
 
 	describe("Native checkpoint delta storage", () => {
@@ -118,6 +242,103 @@ describe("Native checkpoint encoding", () => {
 				);
 				assert.deepEqual(actual, storage.originals.get(checkpoint.id));
 				assert.equal(reads, (checkpoint.depth ?? 0) + 1);
+			}
+		});
+
+		it("compares deltas plus compression with compression-only on identical structured history", async () => {
+			const storage = createStore();
+			const stores = Array.from({ length: 16 }, (_store, index) => ({
+				title: `Project ${index}`,
+				paragraphs: Array.from(
+					{ length: 64 },
+					(_paragraph, paragraph) =>
+						`Project ${index}, item ${paragraph}: review design, owners, milestones and risks. ` +
+						`Tracking ${index * 1009 + paragraph * 97}; assigned to team ${paragraph % 7}. 🌳`,
+				),
+				rows: Array.from({ length: 8 }, (_row, row) =>
+					Array.from({ length: 6 }, (_cell, column) => `cell ${index}:${row}:${column}`),
+				),
+				directory: { next: { type: "__fluid_handle__", url: `/store-${(index + 1) % 16}` } },
+			}));
+			let rawBytes = 0;
+			let compressedFullBytes = 0;
+			for (let point = 0; point < 27; point++) {
+				const edited = stores[(point * 7) % stores.length];
+				edited.title = `Reviewed ${point}`;
+				edited.paragraphs.splice(
+					point % edited.paragraphs.length,
+					1,
+					`Decision ${point}: proceed with validation.`,
+				);
+				edited.rows[point % 8][point % 6] = `updated-${point}`;
+				const summary: ISummaryTree = {
+					type: SummaryType.Tree,
+					tree: Object.fromEntries(
+						stores.map((store, index) => [
+							`store-${index}`,
+							{
+								type: SummaryType.Tree,
+								tree: {
+									title: { type: SummaryType.Blob, content: store.title },
+									text: { type: SummaryType.Blob, content: JSON.stringify(store.paragraphs) },
+									matrix: { type: SummaryType.Blob, content: JSON.stringify(store.rows) },
+									directory: {
+										type: SummaryType.Blob,
+										content: JSON.stringify(store.directory),
+									},
+									image: { type: SummaryType.Attachment, id: "shared-image" },
+								},
+							},
+						]),
+					),
+				};
+				const bytes = encodeNativeCheckpoint(summary);
+				rawBytes += bytes.length;
+				const compressedFull = await encodeNativeCheckpointStorage(bytes);
+				compressedFullBytes += compressedFull.bytes.length;
+				const checkpoint = await storage.store(bytes);
+				assert.deepEqual(
+					await loadNativeCheckpointBytes(checkpoint, storage.checkpoints, storage.read),
+					bytes,
+				);
+			}
+			const combinedBytes = storage.checkpoints.reduce(
+				(total, checkpoint) => total + checkpoint.bytes,
+				0,
+			);
+			assert(
+				combinedBytes < compressedFullBytes,
+				"Deltas must improve on compression alone for this history",
+			);
+			const metricsPrefix = process.env.FLUID_NATIVE_CHECKPOINT_METRICS_PREFIX;
+			if (metricsPrefix !== undefined) {
+				finishLoggingReport(
+					{
+						content: [
+							{
+								benchmarkName:
+									"Native checkpoint deterministic structured codec history (16 stores, 27 points)",
+								data: [
+									{
+										name: "Delta plus compression payload total",
+										value: combinedBytes,
+										units: "bytes",
+										type: ValueType.SmallerIsBetter,
+										significance: "Primary",
+									},
+									{
+										name: "Compression-only payload total",
+										value: compressedFullBytes,
+										units: "bytes",
+									},
+									{ name: "Uncompressed payload total", value: rawBytes, units: "bytes" },
+								],
+							},
+						],
+					},
+					false,
+					`${metricsPrefix}-codec-comparison.json`,
+				);
 			}
 		});
 

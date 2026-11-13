@@ -24,6 +24,10 @@ export interface NativeCheckpoint {
 	readonly route: string;
 	readonly bytes: number;
 	readonly assets: readonly string[];
+	/** Service timestamp (epoch milliseconds) of the acknowledged store op, not the client clock. */
+	readonly timestamp?: number;
+	/** Store op sequence number. Missing on legacy entries, which policy pruning preserves. */
+	readonly storeSequenceNumber?: number;
 	/** Immediate delta dependency. Omitted for independent anchors and legacy payloads. */
 	readonly baseId?: string;
 	/** Number of delta edges to an independent anchor. Legacy entries have depth zero. */
@@ -44,16 +48,55 @@ export interface NativeCheckpointState {
 	readonly restored?: NativeCheckpointRestore;
 }
 
+/** Host-triggered age/count policy. The age minimum takes precedence over the soft count target. */
+export interface NativeCheckpointRetentionPolicy {
+	/** Minimum age before removal, in milliseconds. Defaults to 30 days. */
+	readonly minAgeMs?: number;
+	/** Keep at least this many latest catalog entries, regardless of age. Defaults to 100. */
+	readonly targetCount?: number;
+}
+
+/** A policy request fenced at the caller's observed sequence number. */
+export interface NativeCheckpointPruneMessage {
+	readonly action: "prune";
+	readonly referenceSequenceNumber: number;
+	readonly minAgeMs: number;
+	readonly targetCount: number;
+}
+
 /** Sequenced control messages. They must not be grouped with application edits. */
 export type NativeCheckpointMessage =
 	| { readonly action: "store"; readonly checkpoint: NativeCheckpoint }
 	| { readonly action: "retain"; readonly ids: readonly string[] }
+	| NativeCheckpointPruneMessage
 	| { readonly action: "restore"; readonly id: string; readonly checkpointId: string }
 	| { readonly action: "complete"; readonly id: string };
 
 /** Returns whether a parsed value is a record. */
 export function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/** Checks a sequence number, epoch timestamp, duration, or count without coercion. */
+function isNonNegativeInteger(value: unknown): value is number {
+	return typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
+}
+
+/** Creates a validated policy request without consulting a client wall clock. */
+export function createNativeCheckpointPruneMessage(
+	referenceSequenceNumber: number,
+	policy: NativeCheckpointRetentionPolicy = {},
+): NativeCheckpointPruneMessage {
+	const minAgeMs = policy.minAgeMs ?? 30 * 24 * 60 * 60 * 1000;
+	const targetCount = policy.targetCount ?? 100;
+	if (
+		!isNonNegativeInteger(referenceSequenceNumber) ||
+		!isNonNegativeInteger(minAgeMs) ||
+		!isNonNegativeInteger(targetCount)
+	) {
+		throw new UsageError("Invalid native checkpoint retention policy");
+	}
+	return { action: "prune", referenceSequenceNumber, minAgeMs, targetCount };
 }
 
 /** Validates the catalog's explicit attachment roots. */
@@ -73,6 +116,9 @@ function parseCheckpoint(value: unknown): NativeCheckpoint {
 		typeof value.bytes !== "number" ||
 		!Number.isSafeInteger(value.bytes) ||
 		value.bytes < 0 ||
+		(value.timestamp !== undefined && !isNonNegativeInteger(value.timestamp)) ||
+		(value.storeSequenceNumber !== undefined &&
+			!isNonNegativeInteger(value.storeSequenceNumber)) ||
 		(value.baseId !== undefined && typeof value.baseId !== "string") ||
 		(value.depth !== undefined &&
 			(typeof value.depth !== "number" ||
@@ -95,6 +141,8 @@ function parseCheckpoint(value: unknown): NativeCheckpoint {
 		route,
 		bytes: value.bytes,
 		assets,
+		timestamp: value.timestamp,
+		storeSequenceNumber: value.storeSequenceNumber,
 		baseId: value.baseId,
 		depth: value.depth,
 	};
@@ -105,6 +153,17 @@ export function parseNativeCheckpointMessage(value: unknown): NativeCheckpointMe
 	if (isRecord(value)) {
 		if (value.action === "store") {
 			return { action: "store", checkpoint: parseCheckpoint(value.checkpoint) };
+		}
+		if (
+			value.action === "prune" &&
+			isNonNegativeInteger(value.referenceSequenceNumber) &&
+			isNonNegativeInteger(value.minAgeMs) &&
+			isNonNegativeInteger(value.targetCount)
+		) {
+			return createNativeCheckpointPruneMessage(value.referenceSequenceNumber, {
+				minAgeMs: value.minAgeMs,
+				targetCount: value.targetCount,
+			});
 		}
 		const ids: unknown = value.ids;
 		if (
@@ -159,6 +218,33 @@ export function selectRetainedNativeCheckpoints(
 		retain(state.restored.checkpointId);
 	}
 	return state.checkpoints.filter((checkpoint) => retained.has(checkpoint.id));
+}
+
+/**
+ * Applies age/count retention at the sequenced prune timestamp, retaining unknown ages and newer captures.
+ * The observed-sequence fence also protects a new capture that reuses a previously removed ID.
+ */
+export function selectNativeCheckpointsForRetentionPolicy(
+	state: NativeCheckpointState,
+	request: NativeCheckpointPruneMessage,
+	timestamp: number,
+): NativeCheckpoint[] {
+	if (!isNonNegativeInteger(timestamp)) {
+		return [...state.checkpoints];
+	}
+	const oldestRetainedTimestamp = timestamp - request.minAgeMs;
+	const latestStart = Math.max(0, state.checkpoints.length - request.targetCount);
+	const ids = state.checkpoints
+		.filter(
+			(checkpoint, index) =>
+				index >= latestStart ||
+				checkpoint.timestamp === undefined ||
+				checkpoint.storeSequenceNumber === undefined ||
+				checkpoint.timestamp > oldestRetainedTimestamp ||
+				checkpoint.storeSequenceNumber > request.referenceSequenceNumber,
+		)
+		.map((checkpoint) => checkpoint.id);
+	return selectRetainedNativeCheckpoints(state, ids);
 }
 
 /** Validates the boot catalog independently of lazily downloaded checkpoint payloads. */

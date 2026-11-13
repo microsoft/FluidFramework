@@ -57,7 +57,39 @@ The prototype limits payloads and decompression to 64 MiB.
 Legacy JSON checkpoints remain readable; new summary binary blobs use base64 rather than numeric arrays.
 Image content stays in its original attachment: checkpoints retain routes, not duplicate image bytes.
 
-`retainNativeCheckpoints(ids)` sequences retention with capture and restore.
+The codec test compares the same deterministic 27-point history in both storage modes.
+Its synthetic native-summary-shaped fixture has 16 stores with edited text, tables, directories, cyclic handle references, and a shared image reference.
+This is a codec comparison, not a live-service benchmark or actual DDS serialization benchmark.
+On Node 26.13.0 with gzip, the recorded payload totals were:
+
+| Storage mode | Total bytes |
+| --- | ---: |
+| Uncompressed structural payloads | 3,454,823 |
+| Compression-only independent checkpoints | 415,569 |
+| Bounded deltas plus compression | 100,466 |
+
+Deltas reduced storage by 75.8% relative to compression alone on this fixture, including required independent anchors.
+The test reconstructs every checkpoint and checks exact bytes.
+Set `FLUID_NATIVE_CHECKPOINT_METRICS_PREFIX` to a project-relative output prefix when running `nativeCheckpoint.spec.js` in this package to write the comparison through the existing benchmark reporter.
+
+`pruneNativeCheckpoints({ minAgeMs?, targetCount? })` provides **host-triggered** age/count retention.
+The defaults keep at least 30 days of history and the latest 100 catalog entries.
+The count is a soft target: recent history, unknown legacy ages, required delta bases, and the current restored checkpoint can keep the catalog above 100.
+No timer, capture hook, or background scheduler invokes this policy automatically.
+Without a host pruning call, history remains unbounded.
+Explicit options can change either default; both must be non-negative safe integers.
+
+Age starts at the service timestamp of the acknowledged checkpoint store op.
+The submitted capture result has no timestamp; read the acknowledged catalog for `timestamp` and `storeSequenceNumber`.
+Pruning uses the prune op's service timestamp, never a client wall clock.
+An entry becomes age-eligible at `minAgeMs`, including the exact boundary, but is removed only if it is also outside the latest `targetCount` entries and not otherwise protected.
+Legacy entries missing either timestamp or store sequence metadata are retained conservatively.
+The prune request records the caller's observed sequence number.
+Any capture stored after that boundary survives the stale request, even if it reuses a removed checkpoint ID.
+
+`retainNativeCheckpoints(ids)` remains a low-level explicit keep-list operation, not the age/count policy.
+It can remove recent history and does not provide the policy API's stale-request fence.
+Both operations sequence retention with capture and restore.
 It preserves the requested entries, their base chains, and the current restore boundary.
 Entries retained only as dependencies remain visible in the catalog.
 Other entries and their image roots leave the catalog; normal GC decides when unreferenced attachments can be collected.

@@ -145,6 +145,64 @@ describeCompat("Native checkpoints", "NoCompat", (getTestObjectProvider, apis) =
 		}
 	});
 
+	it("timestamps acknowledged captures and fences stale policy pruning from racing captures", async () => {
+		const provider = getTestObjectProvider();
+		const source = await provider.makeTestContainer(config);
+		const peer = await provider.loadTestContainer(config);
+		await Promise.all(
+			[source, peer].map(async (container) => waitForContainerConnection(container)),
+		);
+		const runtime = await getRuntime(source);
+		const peerRuntime = await getRuntime(peer);
+		const timestamps = new Map<number, number>();
+		const racingAcknowledged = new Deferred<void>();
+		const onOp = (
+			message: import("@fluidframework/driver-definitions/internal").ISequencedDocumentMessage,
+		): void => {
+			timestamps.set(message.sequenceNumber, message.timestamp);
+			if (runtime.getNativeCheckpoints().some((checkpoint) => checkpoint.id === "racing")) {
+				racingAcknowledged.resolve();
+			}
+		};
+		source.on("op", onOp);
+		try {
+			await provider.ensureSynchronized();
+			const submitted = await runtime.createNativeCheckpoint("first");
+			assert.equal(
+				submitted.timestamp,
+				undefined,
+				"Unacknowledged capture has no service time",
+			);
+			await provider.ensureSynchronized();
+			const first = runtime.getNativeCheckpoints()[0];
+			assert(first.storeSequenceNumber !== undefined && first.timestamp !== undefined);
+			assert.equal(first.timestamp, timestamps.get(first.storeSequenceNumber));
+			assert.deepEqual(peerRuntime.getNativeCheckpoints(), runtime.getNativeCheckpoints());
+
+			// Plan on the peer, but hold its outbound request while another capture wins sequencing.
+			await provider.opProcessingController.pauseProcessing(peer);
+			const plannedAt = peer.deltaManager.lastSequenceNumber;
+			peerRuntime.pruneNativeCheckpoints({ minAgeMs: 0, targetCount: 0 });
+			await runtime.createNativeCheckpoint("racing");
+			provider.opProcessingController.resumeProcessing(source);
+			await timeoutAwait(racingAcknowledged.promise, {
+				errorMsg: "Racing capture was not acknowledged",
+			});
+			const racing = runtime
+				.getNativeCheckpoints()
+				.find((checkpoint) => checkpoint.id === "racing");
+			assert(
+				racing?.storeSequenceNumber !== undefined && racing.storeSequenceNumber > plannedAt,
+			);
+			await provider.opProcessingController.processOutgoing(peer);
+			await provider.ensureSynchronized();
+			assert(runtime.getNativeCheckpoints().some((checkpoint) => checkpoint.id === "racing"));
+			assert.deepEqual(peerRuntime.getNativeCheckpoints(), runtime.getNativeCheckpoints());
+		} finally {
+			source.off("op", onOp);
+		}
+	});
+
 	itExpects(
 		"restores attribution keys and their runtime user/timestamp records",
 		[

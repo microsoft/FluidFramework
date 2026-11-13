@@ -9,15 +9,18 @@ import type {
 } from "@fluid-internal/client-utils";
 import {
 	decodeNativeCheckpoint,
+	createNativeCheckpointPruneMessage,
 	encodeNativeCheckpoint,
 	nativeCheckpointKey,
 	isRecord,
 	parseNativeCheckpointMessage,
 	parseNativeCheckpointState,
 	selectRetainedNativeCheckpoints,
+	selectNativeCheckpointsForRetentionPolicy,
 	type NativeCheckpoint,
 	type NativeCheckpointMessage,
 	type NativeCheckpointRestore,
+	type NativeCheckpointRetentionPolicy,
 	type NativeCheckpointState,
 } from "./nativeCheckpoint.js";
 import {
@@ -1600,6 +1603,28 @@ export class ContainerRuntime
 	}
 
 	/**
+	 * Requests host-triggered retention: keep at least 30 days and the latest 100 points by default.
+	 * Recent entries, legacy metadata, delta bases, and the restore boundary can exceed the soft count.
+	 * Uses sequenced service time and protects captures ordered after this client's observed boundary.
+	 * Returns after submission; observe the acknowledged catalog before relying on pruning.
+	 */
+	public pruneNativeCheckpoints(policy: NativeCheckpointRetentionPolicy = {}): void {
+		if (
+			this.nativeCheckpointState === undefined ||
+			this.pendingCheckpointRestore !== undefined
+		) {
+			throw new UsageError("Native checkpoint retention is unavailable");
+		}
+		const contents = createNativeCheckpointPruneMessage(
+			this.deltaManager.lastSequenceNumber,
+			policy,
+		);
+		this.flush();
+		this.submit({ type: nativeCheckpointMessageType, contents });
+		this.flush();
+	}
+
+	/**
 	 * Orders a replacement boundary. Call publishNativeCheckpointRestore after this op is observed.
 	 */
 	public requestNativeCheckpointRestore(id: string, checkpointId: string): void {
@@ -1788,18 +1813,27 @@ export class ContainerRuntime
 						throw new UsageError("Invalid native checkpoint dependency depth");
 					}
 				}
-				state.checkpoints.push(message.checkpoint);
+				// Neither capture age nor the concurrency fence may come from client-supplied contents.
+				state.checkpoints.push({
+					...message.checkpoint,
+					timestamp,
+					storeSequenceNumber: sequenceNumber,
+				});
 				for (const route of [message.checkpoint.route, ...message.checkpoint.assets]) {
 					this.addedGCOutboundRoute("/", route, timestamp);
 				}
 
 				break;
 			}
-			case "retain": {
+			case "retain":
+			case "prune": {
 				if (this.pendingCheckpointRestore !== undefined) {
 					return;
 				}
-				const retained = selectRetainedNativeCheckpoints(state, message.ids);
+				const retained =
+					message.action === "retain"
+						? selectRetainedNativeCheckpoints(state, message.ids)
+						: selectNativeCheckpointsForRetentionPolicy(state, message, timestamp);
 				state.checkpoints.splice(0, state.checkpoints.length, ...retained);
 				if (
 					!retained.some(
