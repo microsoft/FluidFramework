@@ -35,7 +35,7 @@ export function assertFlexTreeEntityNotFreed(entity: FlexTreeEntity): void {
  * This is a base class for lazy (cursor based) UntypedEntity implementations, which uniformly handles cursors and anchors.
  */
 export abstract class LazyEntity<TAnchor = unknown> implements FlexTreeEntity, IDisposable {
-	readonly #lazyCursor: ITreeSubscriptionCursor;
+	#lazyCursor: ITreeSubscriptionCursor;
 	public readonly anchor: TAnchor;
 
 	protected constructor(
@@ -105,15 +105,37 @@ export abstract class LazyEntity<TAnchor = unknown> implements FlexTreeEntity, I
 				this.anchor !== undefined,
 				0x779 /* FlexTree should have an anchor if it does not have a cursor */,
 			);
-			const result = this.tryMoveCursorToAnchor(this.#lazyCursor);
-			assert(
-				result === TreeNavigationResult.Ok,
-				0x77a /* It is invalid to access a FlexTree node which no longer exists */,
-			);
+			this.context.checkout.forest.breaker.use();
+			const forked = this.cursorFromAncestor();
+			if (forked === undefined) {
+				const result = this.tryMoveCursorToAnchor(this.#lazyCursor);
+				assert(
+					result === TreeNavigationResult.Ok,
+					0x77a /* It is invalid to access a FlexTree node which no longer exists */,
+				);
+			} else {
+				const cleared = this.#lazyCursor;
+				this.#lazyCursor = forked;
+				cleared.free();
+			}
 			this.context.withCursors.add(this);
 		}
 
 		return this.#lazyCursor;
+	}
+
+	/**
+	 * The cursor this entity holds, which may not be current.
+	 */
+	protected get heldCursor(): ITreeSubscriptionCursor {
+		return this.#lazyCursor;
+	}
+
+	/**
+	 * A new current cursor at this entity, forked from the cursor of an entity containing it, if one is cheaper to get that way than by moving a cursor from the root.
+	 */
+	protected cursorFromAncestor(): ITreeSubscriptionCursor | undefined {
+		return undefined;
 	}
 
 	protected abstract tryMoveCursorToAnchor(

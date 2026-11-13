@@ -14,12 +14,17 @@ import {
 	type FieldKey,
 	type ITreeSubscriptionCursor,
 	type MapTree,
+	compareUpPaths,
 	rootFieldKey,
 } from "../../../core/index.js";
 import { Context } from "../../../feature-libraries/flex-tree/context.js";
 import { LazyTreeNode } from "../../../feature-libraries/flex-tree/lazyNode.js";
 import { withObservation } from "../../../feature-libraries/flex-tree/observer.js";
-import type { FlexTreeField, FlexTreeNode } from "../../../feature-libraries/index.js";
+import {
+	type FlexTreeField,
+	type FlexTreeNode,
+	TreeStatus,
+} from "../../../feature-libraries/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import {
 	SchemaFactory,
@@ -210,6 +215,142 @@ describe("LazyNode", () => {
 			assert.throws(() => item.value);
 			source.dispose();
 			target.dispose();
+		});
+
+		describe(`reads after an edit (${name})`, () => {
+			const sf = new SchemaFactory("reads-after-edit");
+			class Offset extends sf.object("Offset", { x: sf.number, y: sf.number }) {}
+			class Transform extends sf.object("Transform", { off: sf.optional(Offset) }) {}
+			class Shape extends sf.object("Shape", { id: sf.number, xfrm: Transform }) {}
+			class Slide extends sf.object("Slide", { title: sf.string, shapes: sf.array(Shape) }) {}
+			function createSlide(count: number) {
+				const view = createIndependentTreeAlpha({ forest }).viewWith(
+					new TreeViewConfiguration({ schema: Slide }),
+				);
+				view.initialize({
+					title: "slide",
+					shapes: Array.from({ length: count }, (_, i) => ({
+						id: i,
+						xfrm: { off: { x: i, y: -i } },
+					})),
+				});
+				return view;
+			}
+
+			it("read non-leaf children already read without moving cursors", () => {
+				const view = createSlide(3);
+				const shapes = [...view.root.shapes];
+				const offsets = shapes.map((shape) => shape.xfrm.off);
+				view.root.title = "edited";
+
+				const root = getInnerNode(view.root);
+				assert(root instanceof LazyTreeNode);
+				const checkoutForest = root.context.checkout.forest;
+				let seeks = 0;
+				const tryMoveCursorToNode = checkoutForest.tryMoveCursorToNode.bind(checkoutForest);
+				const tryMoveCursorToField = checkoutForest.tryMoveCursorToField.bind(checkoutForest);
+				checkoutForest.tryMoveCursorToNode = (...args) => {
+					seeks++;
+					return tryMoveCursorToNode(...args);
+				};
+				checkoutForest.tryMoveCursorToField = (...args) => {
+					seeks++;
+					return tryMoveCursorToField(...args);
+				};
+
+				assert.deepEqual(
+					shapes.map((shape) => shape.xfrm.off),
+					offsets,
+				);
+				assert.equal(seeks, 0);
+				assert.deepEqual(
+					offsets.map((offset) => offset?.x),
+					[0, 1, 2],
+				);
+				view.dispose();
+			});
+
+			it("read leaves after an edit with cursors forked from an ancestor", () => {
+				/**
+				 * Reads every leaf of a slide with `count` shapes after an edit, returning how many cursors were moved from the root.
+				 */
+				function seeksToReadAfterEdit(count: number): number {
+					const view = createSlide(count);
+					const read = (): unknown =>
+						view.root.shapes.map((shape) => [shape.id, shape.xfrm.off?.x, shape.xfrm.off?.y]);
+					const before = read();
+					view.root.title = "edited";
+
+					const root = getInnerNode(view.root);
+					assert(root instanceof LazyTreeNode);
+					const checkoutForest = root.context.checkout.forest;
+					let seeks = 0;
+					const tryMoveCursorToNode = checkoutForest.tryMoveCursorToNode.bind(checkoutForest);
+					const tryMoveCursorToField =
+						checkoutForest.tryMoveCursorToField.bind(checkoutForest);
+					checkoutForest.tryMoveCursorToNode = (...args) => {
+						seeks++;
+						return tryMoveCursorToNode(...args);
+					};
+					checkoutForest.tryMoveCursorToField = (...args) => {
+						seeks++;
+						return tryMoveCursorToField(...args);
+					};
+					assert.deepEqual(read(), before);
+					const offset = view.root.shapes[count - 1]?.xfrm.off;
+					assert(offset !== undefined);
+					const node = getInnerNode(offset);
+					assert(node instanceof LazyTreeNode);
+					assert.equal(compareUpPaths(node.cursor.getPath(), node.anchorNode), true);
+					assert.equal(node.cursor.type, Offset.identifier);
+					view.dispose();
+					return seeks;
+				}
+				// Only the entities at the top of the tree move cursors from the root: the others fork them.
+				const seeksForFewShapes = seeksToReadAfterEdit(2);
+				assert(seeksForFewShapes <= 4);
+				assert.equal(seeksToReadAfterEdit(6), seeksForFewShapes);
+			});
+
+			it("read replaced, removed and moved children", () => {
+				const view = createSlide(3);
+				const [first, second, third] = view.root.shapes;
+				assert(first !== undefined && second !== undefined && third !== undefined);
+				const oldOffset = first.xfrm.off;
+				assert(oldOffset !== undefined);
+				first.xfrm.off = new Offset({ x: 10, y: 20 });
+				assert.notEqual(first.xfrm.off, oldOffset);
+				assert.equal(first.xfrm.off?.x, 10);
+				assert.equal(Tree.status(oldOffset), TreeStatus.Removed);
+				first.xfrm.off = undefined;
+				assert.equal(first.xfrm.off, undefined);
+
+				view.root.shapes.insertAtStart({ id: 9, xfrm: { off: { x: 9, y: 9 } } });
+				assert.equal(view.root.shapes[1], first);
+				assert.equal(view.root.shapes[2], second);
+				assert.equal(view.root.shapes[0]?.xfrm.off?.x, 9);
+				view.root.shapes.moveToEnd(1);
+				assert.deepEqual(
+					[...view.root.shapes].map((shape) => shape.id),
+					[9, 1, 2, 0],
+				);
+				assert.equal(view.root.shapes[3], first);
+				assert.equal(view.root.shapes[1], second);
+				assert.equal(view.root.shapes[2]?.xfrm.off?.y, -2);
+				view.dispose();
+			});
+
+			it("read leaves which have flex tree nodes as values", () => {
+				const view = createSlide(2);
+				const shape = view.root.shapes[0];
+				assert(shape !== undefined);
+				const node = getInnerNode(shape);
+				assert(node instanceof LazyTreeNode);
+				assert(node.getBoxed(brand("id")).boxedAt(0) instanceof LazyTreeNode);
+				view.root.title = "edited";
+				assert.equal(shape.id, 0);
+				view.dispose();
+			});
 		});
 	}
 
