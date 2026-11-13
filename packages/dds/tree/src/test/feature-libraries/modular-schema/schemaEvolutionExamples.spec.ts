@@ -512,6 +512,7 @@ describe("Schema Evolution Examples", () => {
 		 * V1 has `foo?: number`; V2 removes it.
 		 * For each direction, create the document with one version and open it with the other.
 		 * Only V1 opening a fresh V2 document needs an upgrade, to add the missing field schema.
+		 * After V2 reads and edits a V1 document without upgrading, an explicit upgrade must be a no-op that retains `foo`.
 		 */
 		describe("remove an optional field", () => {
 			// In this scenario, V2 removes the optional "foo" field
@@ -574,40 +575,20 @@ describe("Schema Evolution Examples", () => {
 							expectedFields: viewedWith === "V1" ? { foo: 42 } : {},
 						},
 					});
+
+					// Reading and editing without an upgrade must not prevent V2 from later requesting a safe no-op upgrade.
+					if (!requiresUpgrade) {
+						const storedBefore = readerTree.kernel.checkout.storedSchema.clone();
+						const contentBefore = TreeBeta.exportConcise(creator.root);
+						verifyNoOpUpgrade(provider, reader);
+						expectSchemaEqual(readerTree.kernel.checkout.storedSchema, storedBefore);
+						assert.deepEqual(TreeBeta.exportConcise(creator.root), contentBefore);
+					}
 					reader.dispose();
 					creator.dispose();
 					// #endregion Step 3
 				});
 			}
-
-			/**
-			 * Removing foo permits viewing without an upgrade.
-			 * Explicitly requesting an upgrade must also succeed without removing the stored field.
-			 */
-			it("V2 can request a no-op upgrade of a V1 document", () => {
-				const provider = new TestTreeProviderLite(2);
-				const [documentTree, readerTree] = provider.trees;
-				const creator = documentTree.viewWith(
-					new TreeViewConfiguration({ schema: TaskWithFoo }),
-				);
-				creator.initialize({ title: initialTitle, foo: 42 });
-				provider.synchronizeMessages();
-				const reader = readerTree.viewWith(
-					new TreeViewConfiguration({ schema: TaskWithoutFoo }),
-				);
-				const storedBefore = readerTree.kernel.checkout.storedSchema.clone();
-
-				assert.equal(reader.compatibility.canView, true);
-				verifyNoOpUpgrade(provider, reader);
-				expectSchemaEqual(readerTree.kernel.checkout.storedSchema, storedBefore);
-				verifyReadWrite({
-					provider,
-					creator: { view: creator, expectedFields: { foo: 42 } },
-					reader: { view: reader, expectedFields: {} },
-				});
-				reader.dispose();
-				creator.dispose();
-			});
 		});
 
 		/**
@@ -621,72 +602,9 @@ describe("Schema Evolution Examples", () => {
 				{ allowUnknownOptionalFields: true },
 			) {}
 
-			// In this scenario, V2 replaces foo with bar instead of using TaskWithoutFoo.
-			const schemas = { V1: TaskWithFoo, V2: TaskWithBar };
-
-			for (const [createdWith, viewedWith] of [
-				["V1", "V2"],
-				["V2", "V1"],
-			] as const) {
-				it(`${createdWith} document -> ${viewedWith} view (upgrade required)`, () => {
-					const provider = new TestTreeProviderLite(2);
-					const [documentTree, readerTree] = provider.trees;
-
-					// #region Step 1: Populate the field declared by the creating version.
-					const creator = documentTree.viewWith(
-						new TreeViewConfiguration({ schema: schemas[createdWith] }),
-					);
-					creator.initialize({
-						title: initialTitle,
-						...(createdWith === "V1" ? { foo: 42 } : { bar: "Retained label" }),
-					});
-					provider.synchronizeMessages();
-					// #endregion Step 1
-
-					// #region Step 2: Upgrade and write the other version's newly allowed field.
-					const reader = readerTree.viewWith(
-						new TreeViewConfiguration({ schema: schemas[viewedWith] }),
-					);
-					assert.equal(reader.compatibility.canView, false);
-					assert.equal(reader.compatibility.canUpgrade, true);
-					reader.upgradeSchema();
-					assert.equal(reader.compatibility.canView, true);
-
-					// Each row pairs opposite schemas: this guard selects V1 (foo), otherwise V2 (bar).
-					// The upgrade adds the reader's field schema but does not populate that field.
-					if ("foo" in reader.root) {
-						assert.equal(reader.root.foo, undefined);
-						reader.root.foo = 42;
-					} else {
-						assert.equal(reader.root.bar, undefined);
-						reader.root.bar = "Retained label";
-					}
-					provider.synchronizeMessages();
-					// #endregion Step 2
-
-					// #region Step 3: Both versions can edit without deleting the other's field.
-					assert.equal(creator.compatibility.canView, true);
-
-					// Both values are now stored, but each view exposes only its version's field.
-					verifyReadWrite({
-						provider,
-						creator: {
-							view: creator,
-							expectedFields: createdWith === "V1" ? { foo: 42 } : { bar: "Retained label" },
-						},
-						reader: {
-							view: reader,
-							expectedFields: viewedWith === "V1" ? { foo: 42 } : { bar: "Retained label" },
-						},
-					});
-					reader.dispose();
-					creator.dispose();
-					// #endregion Step 3
-				});
-			}
-
 			/**
 			 * After either version adds its field to the other's document, the stored schema has both.
+			 * The existing field keeps its value, while the newly added field starts empty.
 			 * Alternate upgrade requests from both clients. None may remove the other's field or
 			 * start another schema-change cycle. Both creation histories must reach the same schema.
 			 */
@@ -713,6 +631,10 @@ describe("Schema Evolution Examples", () => {
 					provider.synchronizeMessages();
 					assert.equal(viewV1.compatibility.canView, true);
 					assert.equal(viewV2.compatibility.canView, true);
+
+					// Adding the missing field schema neither populates it nor changes the creating version's field value.
+					assert.equal(viewV1.root.foo, createdWith === "V1" ? 42 : undefined);
+					assert.equal(viewV2.root.bar, createdWith === "V2" ? "Retained label" : undefined);
 					viewV1.root.foo = 43;
 					provider.synchronizeMessages();
 					viewV2.root.bar = "Updated label";
@@ -764,124 +686,48 @@ describe("Schema Evolution Examples", () => {
 
 		/**
 		 * V1 has `foo?: number`; V2 removes `foo`; V3 restores its original stored key and type.
-		 * Cover every cross-version pair on fresh documents, plus both V2 upgrade histories.
+		 * Create a fresh V2 document, restore the field through V3, then reopen with V1.
+		 * V1 must read and edit the restored value without another upgrade.
 		 */
-		describe("remove and restore the same optional field", () => {
-			const schemas = { V1: TaskWithFoo, V2: TaskWithoutFoo, V3: TaskWithFoo };
+		it("restores the same optional field and reopens it without another upgrade", () => {
+			const provider = new TestTreeProviderLite(2);
+			const [documentTree, readerTree] = provider.trees;
 
-			// Create with the first version, open with the second, and add foo only when the
-			// document was created with V2. V1 and V3 must read each other's data without upgrading.
-			for (const [createdWith, viewedWith, requiresUpgrade] of [
-				["V2", "V1", true],
-				["V3", "V1", false],
-				["V1", "V2", false],
-				["V3", "V2", false],
-				["V1", "V3", false],
-				["V2", "V3", true],
-			] as const) {
-				it(`${createdWith} document -> ${viewedWith} view (${requiresUpgrade ? "upgrade required" : "no upgrade"})`, () => {
-					const provider = new TestTreeProviderLite(2);
-					const [documentTree, readerTree] = provider.trees;
+			// #region Step 1: Create with V2, then explicitly upgrade to restore foo.
+			const original = documentTree.viewWith(
+				new TreeViewConfiguration({ schema: TaskWithoutFoo }),
+			);
+			original.initialize({ title: initialTitle });
+			provider.synchronizeMessages();
+			original.dispose();
 
-					// #region Step 1: Create a fresh document, not a document upgraded from V2.
-					const creator = documentTree.viewWith(
-						new TreeViewConfiguration({ schema: schemas[createdWith] }),
-					);
-					creator.initialize({
-						title: initialTitle,
-						...(createdWith === "V2" ? {} : { foo: 42 }),
-					});
-					provider.synchronizeMessages();
-					// #endregion Step 1
+			// V3 restores the same declaration used by V1.
+			const upgraded = documentTree.viewWith(
+				new TreeViewConfiguration({ schema: TaskWithFoo }),
+			);
+			assert.equal(upgraded.compatibility.canView, false);
+			assert.equal(upgraded.compatibility.canUpgrade, true);
+			upgraded.upgradeSchema();
+			assert.equal(upgraded.compatibility.canView, true);
+			assert.equal(upgraded.root.foo, undefined);
+			upgraded.root.foo = 42;
+			provider.synchronizeMessages();
+			// #endregion Step 1
 
-					// #region Step 2: Open the requested version and apply its expected upgrade.
-					const reader = readerTree.viewWith(
-						new TreeViewConfiguration({ schema: schemas[viewedWith] }),
-					);
-					assert.equal(reader.compatibility.canView, !requiresUpgrade);
-					if (requiresUpgrade) {
-						// Only fresh V2 documents need an upgrade here; the reader is V1 or V3.
-						// Both readers declare foo, but adding its schema does not create a value.
-						assert.equal(reader.compatibility.canUpgrade, true);
-						reader.upgradeSchema();
-						assert.equal(reader.compatibility.canView, true);
-						assert("foo" in reader.root);
-						assert.equal(reader.root.foo, undefined);
-					}
-
-					// V1 and V3 can write foo. A V2 reader leaves the existing value untouched.
-					if ("foo" in reader.root) {
-						reader.root.foo = 43;
-					}
-					provider.synchronizeMessages();
-					// #endregion Step 2
-
-					// #region Step 3: Verify shared edits, visible foo values, and hidden fields.
-					assert.equal(creator.compatibility.canView, true);
-
-					// A V2 reader preserves the initial 42; either other reader just wrote 43.
-					// V2 omits foo from its expected export even when the document contains that value.
-					const foo = viewedWith === "V2" ? 42 : 43;
-					verifyReadWrite({
-						provider,
-						creator: { view: creator, expectedFields: createdWith === "V2" ? {} : { foo } },
-						reader: { view: reader, expectedFields: viewedWith === "V2" ? {} : { foo } },
-					});
-					reader.dispose();
-					creator.dispose();
-					// #endregion Step 3
-				});
-			}
-
-			/**
-			 * Create with V2, let either V1 or V3 add foo, then open with the other version.
-			 * The final client must see the stored value without another upgrade.
-			 */
-			for (const [upgradedWith, viewedWith] of [
-				["V1", "V3"],
-				["V3", "V1"],
-			] as const) {
-				it(`V2 document -> ${upgradedWith} upgrade -> ${viewedWith} view (no further upgrade)`, () => {
-					const provider = new TestTreeProviderLite(2);
-					const [documentTree, readerTree] = provider.trees;
-
-					// #region Step 1: Create with V2, then explicitly upgrade to add foo.
-					const original = documentTree.viewWith(
-						new TreeViewConfiguration({ schema: TaskWithoutFoo }),
-					);
-					original.initialize({ title: initialTitle });
-					provider.synchronizeMessages();
-					original.dispose();
-					const upgraded = documentTree.viewWith(
-						new TreeViewConfiguration({ schema: schemas[upgradedWith] }),
-					);
-					assert.equal(upgraded.compatibility.canView, false);
-					assert.equal(upgraded.compatibility.canUpgrade, true);
-					upgraded.upgradeSchema();
-					assert.equal(upgraded.compatibility.canView, true);
-					upgraded.root.foo = 42;
-					provider.synchronizeMessages();
-					// #endregion Step 1
-
-					// #region Step 2: The other version reads and writes without upgrading.
-					// The row pairs V1 with V3, whose foo declarations are identical in this scenario.
-					const reader = readerTree.viewWith(
-						new TreeViewConfiguration({ schema: schemas[viewedWith] }),
-					);
-					assert.equal(reader.compatibility.canView, true);
-					assert.equal(reader.root.foo, 42);
-					reader.root.foo = 43;
-					provider.synchronizeMessages();
-					verifyReadWrite({
-						provider,
-						creator: { view: upgraded, expectedFields: { foo: 43 } },
-						reader: { view: reader, expectedFields: { foo: 43 } },
-					});
-					reader.dispose();
-					upgraded.dispose();
-					// #endregion Step 2
-				});
-			}
+			// #region Step 2: V1 reads and writes the restored field without upgrading.
+			const reader = readerTree.viewWith(new TreeViewConfiguration({ schema: TaskWithFoo }));
+			assert.equal(reader.compatibility.canView, true);
+			assert.equal(reader.root.foo, 42);
+			reader.root.foo = 43;
+			provider.synchronizeMessages();
+			verifyReadWrite({
+				provider,
+				creator: { view: upgraded, expectedFields: { foo: 43 } },
+				reader: { view: reader, expectedFields: { foo: 43 } },
+			});
+			reader.dispose();
+			upgraded.dispose();
+			// #endregion Step 2
 		});
 
 		/**
@@ -1024,7 +870,6 @@ describe("Schema Evolution Examples", () => {
 			for (const [createdWith, upgradedWith, viewedWith, canUpgrade] of [
 				["V1", undefined, "V3", true],
 				["V3", undefined, "V1", false],
-				["V2", undefined, "V1", true],
 				["V2", undefined, "V3", true],
 				["V2", "V1", "V3", true],
 				["V2", "V3", "V1", false],
@@ -1082,10 +927,9 @@ describe("Schema Evolution Examples", () => {
 						);
 						reader.root.foo = 43;
 
-						// Only V3 permits strings; the V1 reader must keep the numeric value.
-						if (reader.root instanceof TaskV3) {
-							reader.root.foo = "Now strings are allowed";
-						}
+						// Every successful row uses V3, which can write both numbers and strings.
+						assert(reader.root instanceof TaskV3);
+						reader.root.foo = "Now strings are allowed";
 						provider.synchronizeMessages();
 
 						// An observer with the final schema checks the newly enabled writes remotely.
@@ -1095,10 +939,7 @@ describe("Schema Evolution Examples", () => {
 						);
 						assert.equal(observer.compatibility.canView, true);
 
-						// Match the write selected by the reader's schema, not the creation schema.
-						const fields = {
-							foo: viewedWith === "V3" ? "Now strings are allowed" : 43,
-						};
+						const fields = { foo: "Now strings are allowed" };
 						verifyReadWrite({
 							provider,
 							creator: { view: observer, expectedFields: fields },
