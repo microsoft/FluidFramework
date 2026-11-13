@@ -9,7 +9,7 @@ import { strict as assert } from "node:assert";
 
 import type { IRequest } from "@fluidframework/core-interfaces";
 import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
-import { stub } from "sinon";
+import { type SinonStub, stub } from "sinon";
 
 import { SharingLinkHeader } from "../contractsPublic.js";
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
@@ -62,6 +62,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 	];
 	let urlResolverWithShareLinkFetcher: OdspDriverUrlResolverForShareLink;
 	let urlResolverWithoutShareLinkFetcher: OdspDriverUrlResolverForShareLink;
+	let fetchStub: SinonStub;
 	const mockResolvedUrl = {
 		siteUrl,
 		driveId,
@@ -70,11 +71,23 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 	} as unknown as IOdspResolvedUrl;
 
 	beforeEach(() => {
+		fetchStub = stub(globalThis, "fetch").rejects(
+			new Error("Unexpected network request in a resolver test"),
+		);
 		urlResolverWithShareLinkFetcher = new OdspDriverUrlResolverForShareLink({
 			tokenFetcher: async (): Promise<string> => "SharingLinkToken",
 			identityType: "Enterprise",
 		});
 		urlResolverWithoutShareLinkFetcher = new OdspDriverUrlResolverForShareLink();
+	});
+
+	afterEach(() => {
+		fetchStub.restore();
+		assert.strictEqual(
+			fetchStub.callCount,
+			0,
+			"Resolver tests must not make network requests",
+		);
 	});
 
 	async function mockGetFileLink<T>(
@@ -110,7 +123,9 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 					"Snapshot url should not be empty",
 				);
 			};
-			await runTest(urlResolverWithShareLinkFetcher);
+			await mockGetFileLink(Promise.resolve(sharelink), async () =>
+				runTest(urlResolverWithShareLinkFetcher),
+			);
 			await runTest(urlResolverWithoutShareLinkFetcher);
 		});
 
@@ -136,7 +151,9 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 					"Snapshot url should not be empty",
 				);
 			};
-			await runTest(urlResolverWithShareLinkFetcher);
+			await mockGetFileLink(Promise.resolve(sharelink), async () =>
+				runTest(urlResolverWithShareLinkFetcher),
+			);
 			await runTest(urlResolverWithoutShareLinkFetcher);
 		});
 
@@ -246,7 +263,9 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 				"Snapshot url should not be empty",
 			);
 		};
-		await runTest(urlResolverWithShareLinkFetcher);
+		await mockGetFileLink(Promise.resolve(sharelink), async () =>
+			runTest(urlResolverWithShareLinkFetcher),
+		);
 		await runTest(urlResolverWithoutShareLinkFetcher);
 	});
 

@@ -54,10 +54,7 @@ export interface IOutboxConfig {
 export interface IOutboxParameters {
 	readonly shouldSend: () => boolean;
 	readonly pendingStateManager: PendingStateManager;
-	readonly submitBatchFn:
-		| ((batch: IBatchMessage[], referenceSequenceNumber?: number) => number)
-		| undefined;
-	readonly legacySendBatchFn: (batch: OutboundBatch) => number;
+	readonly submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number) => number;
 	readonly config: IOutboxConfig;
 	readonly compressor: OpCompressor;
 	readonly splitter: OpSplitter;
@@ -547,10 +544,9 @@ export class Outbox {
 
 		if (
 			this.params.config.compressionOptions.minimumBatchSizeInBytes >
-				singletonBatch.contentSizeInBytes ||
-			this.params.submitBatchFn === undefined
+			singletonBatch.contentSizeInBytes
 		) {
-			// Nothing to do if compression is disabled, unnecessary or unsupported.
+			// Nothing to do if compression is disabled or unnecessary.
 			return singletonBatch;
 		}
 
@@ -589,28 +585,16 @@ export class Outbox {
 			throw this.makeBatchTooLargeError(batch, "CannotSend");
 		}
 
-		let clientSequenceNumber: number;
-		if (this.params.submitBatchFn === undefined) {
-			// Legacy path - supporting old loader versions. Can be removed only when LTS moves above
-			// version that has support for batches (submitBatchFn)
-			assert(
-				batch.messages[0].compression === undefined,
-				0x5a6 /* Compression should not have happened if the loader does not support it */,
-			);
-
-			clientSequenceNumber = this.params.legacySendBatchFn(batch);
-		} else {
-			assert(batch.referenceSequenceNumber !== undefined, 0x58e /* Batch must not be empty */);
-			clientSequenceNumber = this.params.submitBatchFn(
-				batch.messages.map<IBatchMessage>((message) => ({
-					contents: message.contents,
-					metadata: message.metadata,
-					compression: message.compression,
-					referenceSequenceNumber: message.referenceSequenceNumber,
-				})),
-				batch.referenceSequenceNumber,
-			);
-		}
+		assert(batch.referenceSequenceNumber !== undefined, 0x58e /* Batch must not be empty */);
+		let clientSequenceNumber = this.params.submitBatchFn(
+			batch.messages.map<IBatchMessage>((message) => ({
+				contents: message.contents,
+				metadata: message.metadata,
+				compression: message.compression,
+				referenceSequenceNumber: message.referenceSequenceNumber,
+			})),
+			batch.referenceSequenceNumber,
+		);
 
 		// Convert from clientSequenceNumber of last message in the batch to clientSequenceNumber of first message.
 		clientSequenceNumber -= length - 1;
