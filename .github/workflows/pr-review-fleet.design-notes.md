@@ -25,7 +25,11 @@ It's worth being precise about the architecture, because it's not a single workf
 
 So the isolation isn't "diff is passed across job boundaries from a privileged job to a less-privileged one." It's:
 
-1. The reviewer agent has **no shell or exec tools** — only `--allow-tool=read --allow-tool=write`. Even though `.git` is on disk, the agent can't invoke `git`.
+1. The reviewer explicitly denies `shell` and `url` permissions and grants only file read/write approvals.
+   It also disables built-in MCP servers and custom instruction loading from the PR checkout.
+   These flags control approvals and instruction loading, not operating-system isolation or tool visibility.
+   Do not treat them as a sandbox or assume they disable every hook or plugin configuration source.
+   Even though `.git` is on disk, no shell command, including `git`, is approved.
 2. Checkout uses `persist-credentials: false`, so the auth token isn't stashed in the local Git config for later steps to reuse.
 3. All git-derived context (the diff, the changed-files list, the reviewer prompt) is materialized **before** `COPILOT_GITHUB_TOKEN` enters the step's environment. Once that token is present, the model-influenced part of the job consumes fixed files instead of invoking git, resolving refs, or loading prompts through a path that attacker-controlled instructions could try to steer.
 
@@ -39,7 +43,9 @@ The diff isn't the only untrusted input the reviewer agent sees — the reviewer
 git show "origin/${BASE_REF}:.github/prompts/reviewers/${REVIEWER}.md" > "$PROMPT_FILE"
 ```
 
-That way a malicious PR can't rewrite the instructions an authenticated agent is about to execute.
+That keeps the explicit reviewer prompt under base-branch control.
+`--no-custom-instructions` also prevents instruction files in the PR checkout from being loaded as custom instructions.
+The diff and source content remain untrusted input.
 
 ## Output is untrusted too
 
@@ -64,7 +70,7 @@ There are guardrails on who can trigger the fleet:
 Conceptually, the goal is to split responsibilities:
 
 - `pull_request_target` handles classification / analysis using untrusted input, **without checking out PR head**.
-- Downstream workflows (triggered via `workflow_dispatch` / `workflow_run`) do the heavier work, but with PR code denied any path to credentials — via `persist-credentials: false`, no shell tools for the agent, prompts loaded from the base branch, and output scrubbed before posting.
-- Nothing ever blindly executes code from the PR itself.
+- Downstream workflows (triggered via `workflow_dispatch` / `workflow_run`) do the heavier work with layered restrictions: `persist-credentials: false`, explicit shell/URL denials, built-in MCP servers and custom instructions disabled, prompts loaded from the base branch, and output scrubbed before posting.
+- Deterministic workflow steps do not execute PR code. The credentialed CLI is not a sandbox; runtime hooks, plugins, and new configuration features must be assessed separately before enabling them.
 
 In practice, `pull_request` is the appropriate event for running untrusted PR code with limited privileges, while `pull_request_target` is appropriate for trusted repository-side automation that must not execute PR-controlled code. The key is to be precise about what is trusted, what is untrusted, and where credentials or elevated permissions are available — and to remember that "untrusted" includes the diff, any prompt loaded from the PR, **and** the model's own output.

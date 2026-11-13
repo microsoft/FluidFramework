@@ -2,6 +2,7 @@
 """Utilities for the PR review proposal flow.
 
 Subcommands:
+  metrics          Read git diff --numstat -z output and emit sizing metrics as JSON.
   build-comment    Build the markdown proposal comment body.
   parse-checkboxes Read a comment body file and emit the checked reviewer IDs as JSON.
   format-names     Convert a JSON reviewer-ID array to a display-name string.
@@ -22,6 +23,7 @@ import argparse
 import json
 import re
 import sys
+from pathlib import Path
 from typing import NamedTuple
 
 
@@ -57,6 +59,40 @@ _ID_TO_LABEL: dict[str, str] = {r.id: r.label for r in REVIEWERS}
 # literal substring — if this label changes, update the `contains()` checks in
 # .github/workflows/pr-review-confirm.yml to match.
 START_LABEL = "Start review"
+
+
+def diff_metrics(numstat: bytes) -> dict[str, int]:
+    """Count changed lines, files, and package areas in NUL-delimited numstat."""
+    records = iter(numstat.split(b"\0"))
+    lines = 0
+    files = 0
+    packages: set[bytes] = set()
+    for record in records:
+        if not record:
+            continue
+        added, deleted, path = record.split(b"\t", 2)
+        if not path:
+            # Renames and copies have separate source and destination records.
+            source = next(records)
+            path = next(records)
+            paths = [source, path]
+        else:
+            paths = [path]
+        if not path:
+            raise ValueError("Missing path in numstat record")
+        if (added, deleted) != (b"-", b"-"):
+            lines += int(added) + int(deleted)
+        files += 1
+        for changed_path in paths:
+            parts = changed_path.split(b"/")
+            if len(parts) > 2 and parts[0] in (b"packages", b"experimental", b"examples"):
+                packages.add(b"/".join(parts[:2]))
+    return {"lines": lines, "files": files, "packages": len(packages)}
+
+
+def cmd_metrics(args: argparse.Namespace) -> None:
+    """Print diff sizing metrics as JSON."""
+    print(json.dumps(diff_metrics(Path(args.numstat_file).read_bytes())))
 
 
 def get_selected(reviewer_count: int) -> set[str]:
@@ -189,6 +225,10 @@ def _build_parser() -> argparse.ArgumentParser:
         description="PR review confirmation flow utilities"
     )
     sub = parser.add_subparsers(dest="cmd", required=True)
+
+    p = sub.add_parser("metrics", help="Count NUL-delimited git numstat metrics")
+    p.add_argument("numstat_file", help="Path to git diff --numstat -z output")
+    p.set_defaults(func=cmd_metrics)
 
     p = sub.add_parser("build-comment", help="Build confirmation comment body")
     p.add_argument(
