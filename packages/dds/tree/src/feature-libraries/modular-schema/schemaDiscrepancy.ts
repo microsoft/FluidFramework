@@ -26,8 +26,9 @@ export interface StoredSchemaDiscrepancyLocation {
  * A failed stored-schema upgrade constraint, before formatting for an application.
  *
  * @remarks
- * `stored` describes the existing schema, and `proposed` describes the candidate upgrade.
- * These entries explain upgrade restrictions, not whether a view can access the document.
+ * The upgrade comparison records a failed constraint here so it can later be formatted for an application.
+ * Where an entry compares two definitions, `stored` describes the existing schema and `proposed` describes the candidate upgrade.
+ * This comparison concerns stored-schema upgrade rules; whether a view can access the document is checked separately.
  */
 export type StoredSchemaUpgradeDiscrepancy = {
 	/**
@@ -40,7 +41,7 @@ export type StoredSchemaUpgradeDiscrepancy = {
 				| {
 						/**
 						 * The proposed field removes at least one node type allowed by the stored field.
-						 * This compares node type identifiers, not the definitions of those nodes.
+						 * Because the failure concerns which node types the field allows, it compares their identifiers rather than their definitions.
 						 */
 						readonly mismatch: "allowedTypes";
 						/**
@@ -55,8 +56,8 @@ export type StoredSchemaUpgradeDiscrepancy = {
 				| {
 						/**
 						 * The transition between field kinds is not permitted by the comparison policy.
-						 * Field kinds specify how many children a field permits, such as exactly one or zero or one.
-						 * Upgrade rules also restrict some transitions to prevent repeated upgrades back and forth.
+						 * Because field kinds determine how many children a field permits, changing the kind can exclude previously allowed content.
+						 * The policy also restricts some transitions that would otherwise allow clients to upgrade repeatedly back and forth.
 						 */
 						readonly mismatch: "fieldKind";
 						/**
@@ -72,8 +73,9 @@ export type StoredSchemaUpgradeDiscrepancy = {
 	| {
 			/**
 			 * The proposed leaf value type does not accept all values allowed by the stored leaf.
-			 * For example, the same node identifier changes from string values to number values.
-			 * Changing a field between distinct number and string node identifiers instead produces `allowedTypes`.
+			 * For example, reusing the same node identifier for number values would stop accepting its previously allowed string values.
+			 * In contrast, changing a field between distinct number and string node identifiers changes which nodes the field allows,
+			 * so that change produces `allowedTypes` instead.
 			 */
 			readonly mismatch: "valueSchema";
 			/**
@@ -92,8 +94,9 @@ export type StoredSchemaUpgradeDiscrepancy = {
 	| {
 			/**
 			 * The proposed node representation is incompatible with the stored representation.
-			 * Representations are object, map, or leaf; arrays use the object representation.
-			 * For example, changing a map to an object is not permitted, though some object-to-map upgrades are.
+			 * Stored nodes use an object, map, or leaf representation, with arrays using the object representation.
+			 * Changing that representation must preserve previously allowed structures:
+			 * a map-to-object change fails this requirement, though some object-to-map upgrades are permitted.
 			 */
 			readonly mismatch: "nodeKind";
 			/**
@@ -123,7 +126,8 @@ export type StoredSchemaUpgradeDiscrepancy = {
 	| {
 			/**
 			 * The proposed node cannot be constructed when child types are resolved using existing stored definitions.
-			 * This does not necessarily mean it cannot be constructed using the complete proposed schema.
+			 * Because the comparison uses those existing definitions, this failure does not necessarily mean
+			 * the node cannot be constructed using the complete proposed schema.
 			 */
 			readonly mismatch: "nodeSchemaCannotBeSatisfied";
 			/**
@@ -150,8 +154,8 @@ export type StoredSchemaUpgradeDiscrepancy = {
 						 */
 						readonly fieldKey: FieldKey;
 						/**
-						 * All child types allowed by the proposed field.
-						 * The set is empty, or none of its types can be constructed using existing stored definitions.
+						 * All child types allowed by the proposed field, none of which can satisfy its requirement for a child.
+						 * Either the set is empty or every type in it cannot be constructed using existing stored definitions.
 						 */
 						readonly allowedTypes: TreeTypeSet;
 				  };

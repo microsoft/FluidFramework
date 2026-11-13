@@ -5,21 +5,21 @@
 ---
 New compatibility APIs explain viewing and upgrade incompatibilities
 
-The beta compatibility API adds `asBeta(view).compatibility.view` and `.upgrade`.
-Each `CompatibilityResult` groups the decision for an operation with the incompatibilities that prevent it.
-Successful results have `isCompatible: true`.
-Unsuccessful results have `isCompatible: false` and a nonempty `incompatibilities` list.
-The existing `canView` and `canUpgrade` properties remain available for checking viewing and upgrade compatibility, respectively.
-`discrepancies` and `SchemaDiscrepancy` continue to describe viewing incompatibilities.
+When your view schema is incompatible with a document's stored schema, you need to know whether you can view the document, upgrade its schema, or do neither.
+The new beta APIs, `asBeta(view).compatibility.view` and `.upgrade`, explain these two operations separately.
+Each returns a `CompatibilityResult`: `isCompatible: true` means the operation is permitted, while `isCompatible: false` includes a nonempty `incompatibilities` list explaining what prevents it.
 
-Check `compatibility.view.isCompatible` before accessing the tree root and `compatibility.upgrade.isCompatible` before requesting a schema upgrade.
-These results are independent: viewing can be permitted even when upgrading is blocked, and an allowed upgrade does not mean an upgrade is needed.
-When an operation is blocked, read its `incompatibilities` to find the schema constraints that prevent it.
-`SchemaViewIncompatibility` describes viewing failures and adds a human-readable `reason` to the existing `SchemaDiscrepancy` details.
-`SchemaUpgradeIncompatibility` describes upgrade failures.
-Each incompatibility in the new results includes a `reason` explaining the failed constraint and its location.
-Use it for logging and debugging; use `mismatch` and the structured fields for programmatic handling.
-The reason describes schema constraints, not application intent or a prescribed fix.
+Start by checking `compatibility.view.isCompatible` before accessing the tree root.
+If viewing is blocked, its `incompatibilities` explain why, and you can check `compatibility.upgrade.isCompatible` to see whether a schema upgrade would allow you to proceed.
+If upgrading is also blocked, its own `incompatibilities` explain the constraints that prevent that option.
+Because these permissions are independent, a viewable document can still have a blocked upgrade, and a permitted upgrade is not necessarily needed.
+
+To help you diagnose either failure, every `SchemaViewIncompatibility` and `SchemaUpgradeIncompatibility` includes a human-readable `reason` explaining the failed constraint and its location.
+Use these reasons for logging and debugging, or use `mismatch` and the structured fields when your application needs to handle a failure programmatically.
+The reasons describe schema constraints rather than application intent, so they do not prescribe a fix.
+
+You can adopt the new results without replacing existing compatibility checks: `canView` and `canUpgrade` remain available for their respective operations.
+The existing `discrepancies` and `SchemaDiscrepancy` also remain available for viewing failures; `SchemaViewIncompatibility` adds `reason` to those same details.
 
 Here's an example of how the new APIs can be used:
 
