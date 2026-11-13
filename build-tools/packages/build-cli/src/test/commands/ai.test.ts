@@ -39,7 +39,9 @@ describe("ai command", () => {
 		const aiSessionModule = await import("../../library/ai/copilotSession.js");
 		const resolver = Reflect.get(aiSessionModule, "resolveCopilotCliPath");
 		const result = await execa(process.execPath, [resolver(), "--version"]);
-		expect(result.stdout).to.match(/^GitHub Copilot CLI \d+\.\d+\.\d+\./mu);
+		expect(result.stdout).to.match(
+			/^GitHub Copilot CLI \d+\.\d+\.\d+(?:-[\dA-Za-z.-]+)?(?:\+[\dA-Za-z.-]+)?\.$/mu,
+		);
 	});
 
 	it("supports the configured Copilot launchers", () => {
