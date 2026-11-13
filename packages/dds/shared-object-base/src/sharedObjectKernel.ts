@@ -140,7 +140,19 @@ export interface SharedKernelConfigurationFactoryArgs {
  */
 export interface SharedKernelConfiguration<TConfig extends ChannelConfiguration> {
 	readonly configuration: ChannelConfigurationFacet<TConfig>;
-	readonly attributes: IChannelAttributes;
+	/**
+	 * Describes where this instance's initial configuration came from.
+	 *
+	 * @remarks
+	 * `"explicit"` means configuration was supplied when the instance was created or was
+	 * previously persisted in loaded channel attributes. It must therefore appear in this
+	 * instance's attributes immediately.
+	 *
+	 * `"default"` means the instance is using the factory's defaults and has not opted into
+	 * persisted configuration. Its attributes remain unmarked until the first configuration
+	 * change.
+	 */
+	readonly initialConfigurationSource: "explicit" | "default";
 	verifyCanSubmit(): void;
 	processMessage(
 		message: ChannelConfigurationMessageV1,
@@ -277,10 +289,12 @@ class SharedObjectFromKernel<
 		initializationKind: "create" | "load",
 		configurationFactory: SharedKernelConfigurationFactory<TConfig> | undefined,
 	) {
-		super(id, runtime, attributes, telemetryContextPrefix);
+		const instanceAttributes =
+			configurationFactory === undefined ? attributes : { ...attributes };
+		super(id, runtime, instanceAttributes, telemetryContextPrefix);
 
 		assert(
-			!("configuration" in attributes) ||
+			!("configuration" in instanceAttributes) ||
 				configurationFactory?.channelConfigurationProtocolVersion === 1,
 			"Factory does not support channel configuration",
 		);
@@ -291,7 +305,7 @@ class SharedObjectFromKernel<
 			installSharedObjectMessageRouter(this, (wrappedDeltaHandler, transport) => {
 				const createdConfiguration = configurationFactory.create({
 					initializationKind,
-					attributes,
+					attributes: instanceAttributes,
 					transport,
 					logger: extractTelemetryLoggerExt(this.logger),
 					isDisposed: () => runtime.disposed,
@@ -308,13 +322,25 @@ class SharedObjectFromKernel<
 				configuration !== undefined,
 				"Message router factory did not initialize channel configuration",
 			);
-			Object.defineProperty(this, "attributes", {
-				value: configuration.attributes,
-			});
+			const installedConfiguration = configuration;
+			const persistConfiguration = (): void => {
+				Object.defineProperty(instanceAttributes, "configuration", {
+					enumerable: true,
+					get: () => ({ version: 1, ...installedConfiguration.configuration.current }),
+				});
+				installedConfiguration.configuration.off("changed", persistConfiguration);
+			};
+			if (installedConfiguration.initialConfigurationSource === "explicit") {
+				persistConfiguration();
+			} else {
+				// Defaults do not opt the instance into persisted configuration. Register before
+				// constructing the DDS so its first changed callback sees persisted attributes.
+				installedConfiguration.configuration.on("changed", persistConfiguration);
+			}
 			Object.defineProperty(this, "channelConfigurationProtocolVersion", {
 				value: configurationFactory.channelConfigurationProtocolVersion,
 			});
-			this.#configuration = configuration;
+			this.#configuration = installedConfiguration;
 		}
 
 		// This cast is needed since IFluidDataStoreRuntimeInternalConfig does not extend IFluidDataStoreRuntime directly. This pattern

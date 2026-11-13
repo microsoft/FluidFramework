@@ -72,7 +72,7 @@ function makeConfiguredKernelSupport<TConfig extends ChannelConfiguration>(
 	handler.beginInitialization(args.initializationKind);
 	return {
 		configuration: handler.controller,
-		attributes: handler.attributes,
+		initialConfigurationSource: handler.initialConfigurationSource,
 		verifyCanSubmit: () => handler.verifyCanSubmit(),
 		processMessage: (message, context, localOpMetadata) =>
 			handler.processMessage(message, context, localOpMetadata),
@@ -85,13 +85,13 @@ function makeConfiguredKernelSupport<TConfig extends ChannelConfiguration>(
 }
 
 /**
- * Owns persisted configuration initialization, control operations, persistence, and disposal.
+ * Owns persisted configuration initialization, control operations, and disposal.
  */
 class ChannelConfigurationHandler<TConfig extends ChannelConfiguration> {
 	#initialized = false;
 	readonly #initializationKind: "create" | "load";
 	public readonly controller: ChannelConfigurationController<TConfig>;
-	public readonly attributes: IChannelAttributes;
+	public readonly initialConfigurationSource: "explicit" | "default";
 
 	public constructor(
 		{ definition, initialization }: SharedObjectConfigurationOptions<TConfig>,
@@ -99,10 +99,14 @@ class ChannelConfigurationHandler<TConfig extends ChannelConfiguration> {
 		private readonly host: ChannelConfigurationHost,
 	) {
 		this.#initializationKind = initialization.kind;
-		const hasConfiguration =
+		this.initialConfigurationSource =
 			initialization.kind === "load"
 				? "configuration" in host.attributes
-				: initialization.initialConfiguration !== undefined;
+					? "explicit"
+					: "default"
+				: initialization.initialConfiguration === undefined
+					? "default"
+					: "explicit";
 		const controller = new ChannelConfigurationController({
 			definition,
 			snapshot:
@@ -128,22 +132,6 @@ class ChannelConfigurationHandler<TConfig extends ChannelConfiguration> {
 			submit: (message, metadata) => this.#submitControlMessage(message, metadata),
 		});
 		this.controller = controller;
-		// Configuration-capable channels can add an instance-specific getter.
-		// Copy first so this does not change factory attributes or another channel's snapshot.
-		this.attributes = { ...host.attributes };
-		const persistConfiguration = (): void => {
-			Object.defineProperty(this.attributes, "configuration", {
-				enumerable: true,
-				get: () => ({ version: 1, ...controller.current }),
-			});
-			controller.off("changed", persistConfiguration);
-		};
-		if (hasConfiguration) {
-			persistConfiguration();
-		} else {
-			// Register before the DDS so its first changed callback sees persisted attributes.
-			controller.on("changed", persistConfiguration);
-		}
 		host.onDispose(() =>
 			this.close(new Error("Runtime disposed with pending configuration changes")),
 		);

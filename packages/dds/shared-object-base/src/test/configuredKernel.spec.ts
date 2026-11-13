@@ -754,6 +754,8 @@ describe("configured kernel composition", () => {
 		const first = factory.create(runtime, "first");
 		const second = factory.create(runtime, "second");
 		assert("channelConfigurationProtocolVersion" in first);
+		assert.notEqual(first.attributes, factory.attributes);
+		assert.notEqual(first.attributes, second.attributes);
 		const config = requireConfig(first);
 		assert.deepEqual(config.current, { revision: 0, values: { retain: false } });
 		assert.deepEqual(first.observed, [["initial", config.current]]);
