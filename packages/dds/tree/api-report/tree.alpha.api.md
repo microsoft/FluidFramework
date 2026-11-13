@@ -1629,6 +1629,7 @@ export interface SharedTreeFormatOptions {
 
 // @alpha @input
 export interface SharedTreeOptions extends SharedTreeOptionsBeta, Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions> {
+    readonly enableDetachedRootEditing?: boolean;
     readonly enableSharedBranches?: boolean;
     readonly retainHistory?: boolean | number;
     shouldEncodeIncrementally?: IncrementalEncodingPolicy;
@@ -1755,7 +1756,6 @@ export interface SnapshotSchemaCompatibilityOptions {
 
 // @alpha @input
 export interface StagedSchemaUpgradePolicy {
-    readonly includeAlreadyEnabledUpgrades?: boolean;
     includeStaged(upgrade: SchemaUpgrade): boolean;
     includeStagedOptional(upgrade: SchemaUpgrade): boolean;
 }

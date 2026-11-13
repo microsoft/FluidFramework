@@ -216,6 +216,11 @@ export const EditManagerFormatVersion = strictEnum("editManager.FormatVersion", 
 	 * Only used for testing shared branches.
 	 */
 	vSharedBranches: "shared-branches|v0.2",
+	/**
+	 * Not yet released.
+	 * Only used for testing detached roots.
+	 */
+	vDetachedRoots: "detached-roots|v0.1",
 });
 export type EditManagerFormatVersion = Values<typeof EditManagerFormatVersion>;
 export const supportedEditManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> =
@@ -225,6 +230,7 @@ export const supportedEditManagerFormatVersions: ReadonlySet<EditManagerFormatVe
 		EditManagerFormatVersion.v6,
 		EditManagerFormatVersion.v7,
 		EditManagerFormatVersion.vSharedBranches,
+		EditManagerFormatVersion.vDetachedRoots,
 	]);
 export const editManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> = new Set(
 	Object.values(EditManagerFormatVersion),

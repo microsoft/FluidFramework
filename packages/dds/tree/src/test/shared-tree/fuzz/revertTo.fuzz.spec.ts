@@ -28,11 +28,13 @@ import {
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
 
-const runsPerBatch = 20;
+const runsPerBatch = 200;
 const opsPerRun = 50;
 
 const weights: Partial<EditGeneratorOpWeights> = {
-	fieldSelection: { optional: 0, required: 0, sequence: 1, recurse: 1 },
+	fieldSelection: { optional: 1, required: 1, sequence: 1, recurse: 1 },
+	insert: 1,
+	clear: 1,
 	crossFieldMove: 6,
 	start: 1,
 	commit: 5,
@@ -51,7 +53,7 @@ describe("Fuzz - revertTo", () => {
 		DDSFuzzTestState<SharedTreeTestFactory>
 	> = {
 		workloadName: "revert to random past revision",
-		factory: new SharedTreeTestFactory(createOnCreate(populatedInitialState), undefined, {
+		factory: SharedTreeTestFactory.build(createOnCreate(populatedInitialState), undefined, {
 			forest: ForestTypeExpensiveDebug,
 		}),
 		generatorFactory,

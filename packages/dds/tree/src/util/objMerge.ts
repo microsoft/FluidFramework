@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { fail } from "@fluidframework/core-utils/internal";
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class Merged {}
@@ -35,15 +35,6 @@ export class Conflict extends Merged {
 }
 
 export type ObjectTransform = (item: object) => object;
-
-export function assertStructuralEquality<T>(
-	actual: T,
-	expected: T,
-	transform: ObjectTransform = identityTransform,
-): void {
-	const diff = merge(actual, expected, transform);
-	assert(!hasConflict(diff), 0xd8a /* Objects are not structurally equal */);
-}
 
 // TODO: In theory we should also look at object fields on maps and arrays.
 /**

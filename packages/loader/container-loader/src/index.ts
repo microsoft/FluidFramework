@@ -4,7 +4,12 @@
  */
 
 export { ConnectionState } from "./connectionState.js";
-export { type ContainerAlpha, waitContainerToCatchUp, asLegacyAlpha } from "./container.js";
+export {
+	type ContainerAlpha,
+	type ContainerSerializationOptions,
+	waitContainerToCatchUp,
+	asLegacyAlpha,
+} from "./container.js";
 export { createFrozenDocumentServiceFactory } from "./frozenServices.js";
 export {
 	captureFullContainerState,
