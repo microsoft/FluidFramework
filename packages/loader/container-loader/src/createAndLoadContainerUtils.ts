@@ -499,7 +499,8 @@ export async function loadFrozenContainerFromPendingState(
 
 /**
  * Properties for {@link captureFullContainerState}.
- * @legacy @alpha
+ * @input
+ * @legacy @beta
  */
 export interface ICaptureFullContainerStateProps {
 	/**
@@ -573,6 +574,9 @@ export interface ICaptureFullContainerStateProps {
  * is a known consumer and end-to-end coverage, the capture refuses rather
  * than silently producing pending state that omits group data.
  *
+ * @param input - Driver services, request, and options for capturing the container state.
+ * @returns The serialized pending container state.
+ *
  * @privateRemarks
  * Note: if a new snapshot lands between the snapshot fetch and delta catch-up,
  * the returned state may not reflect the very latest snapshot, but remains
@@ -584,7 +588,7 @@ export interface ICaptureFullContainerStateProps {
  * monitoring context to gate or attribute. If a future change introduces
  * config-gated behavior or runtime-attributed telemetry, add the wiring
  * back together with that change.
- * @legacy @alpha
+ * @legacy @beta
  */
 export async function captureFullContainerState({
 	urlResolver,
