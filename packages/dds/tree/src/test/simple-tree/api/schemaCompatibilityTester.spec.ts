@@ -851,7 +851,7 @@ describe("checkSchemaCompatibility", () => {
 
 				// The view tolerates the unknown archive flag and the existing required, numeric fields under either policy.
 				// Retaining `isArchived` permits upgrading but must not enable the staged changes by itself.
-				// Only the permissive policy adds new permissions, making the upgrade non-equivalent to the stored schema.
+				// Only the permissive policy enables new staged upgrades, changing the stored schema.
 				expectCompatibility(
 					{ view: After, stored: toInitialSchema(Before) },
 					{

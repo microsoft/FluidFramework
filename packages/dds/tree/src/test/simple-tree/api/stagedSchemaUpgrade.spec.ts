@@ -781,7 +781,7 @@ describe("optional field removal during staged upgrades", () => {
 	 * V1 must add `isApproved` before viewing, while retaining V2's unknown `notes` and already-enabled staged changes.
 	 * After upgrading, V1 must be able to edit its fields without deleting notes still used by V2.
 	 */
-	it("lets an older client restore its optional field while preserving newer fields and permissions", () => {
+	it("lets an older client restore its optional field while preserving newer fields and enabled upgrades", () => {
 		const factory = new SchemaFactoryAlpha("taskRollout");
 
 		class TaskV1 extends factory.object("Task", {
@@ -797,7 +797,7 @@ describe("optional field removal during staged upgrades", () => {
 			estimatedHours: factory.optional(factory.number),
 		}) {}
 
-		// V1 restores `isApproved` while retaining the V2 document's notes and enabled staged permissions.
+		// V1 restores `isApproved` while retaining the V2 document's notes and enabled staged upgrades.
 		class Expected extends factory.object("Task", {
 			notes: factory.optional(factory.string),
 			priority: [factory.number, factory.string],
@@ -825,7 +825,7 @@ describe("optional field removal during staged upgrades", () => {
 		expectSchemaEqual(treeV1.kernel.checkout.storedSchema, toUpgradeSchema(Expected));
 		assert.equal(older.compatibility.canView, true);
 
-		// V1 uses the stored permissions and restored approval field; V2 still sees its notes.
+		// V1 uses the already-enabled upgrades and restored approval field; V2 still sees its notes.
 		older.root.priority = "urgent";
 		older.root.estimatedHours = 4;
 		older.root.estimatedHours = undefined;
@@ -845,7 +845,7 @@ describe("optional field removal during staged upgrades", () => {
 	 * Both tokens must remain "partial": preserving changes at the primary fields must not enable them at the fallback fields.
 	 * Repeated upgrades by either version must be no-ops.
 	 * Then explicitly enable both tokens through V1 while another restrictive V1 client remains open.
-	 * That observer must receive the new permissions, report both tokens as "enabled", and be able to edit the fallback fields.
+	 * That observer must receive the new upgrades, report both tokens as "enabled", and be able to edit the fallback fields.
 	 */
 	it("preserves shared-token upgrades only at their existing locations until explicitly enabled", () => {
 		const factory = new SchemaFactoryAlpha("partialTaskRollout");
@@ -1054,7 +1054,7 @@ describe("optional field removal during staged upgrades", () => {
 		assert.equal(viewV1.root.detailedEstimate?.hours, 4);
 		assert.equal(viewV2.compatibility.canView, true);
 
-		// Retaining a definition is not permission to use it at the staged location.
+		// Retaining a definition does not enable its staged upgrade at another location.
 		assert.equal(viewV2.isStagedUpgradeEnabled(upgrade), "disabled");
 		assert.throws(() => {
 			viewV2.root.estimate = new EstimateV2({ hours: 6 });
