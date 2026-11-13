@@ -23,6 +23,7 @@ import {
 	createSummarizer,
 	createTestConfigProvider,
 	DataObjectFactoryType,
+	LoaderContainerTracker,
 	summarizeNow,
 	timeoutAwait,
 	waitForContainerConnection,
@@ -416,7 +417,13 @@ describeCompat("Native checkpoints", "NoCompat", (getTestObjectProvider, apis) =
 		},
 	);
 
-	for (const crashPoint of ["before-proposal", "after-ack"] as const) {
+	for (const crashPoint of [
+		"before-proposal",
+		"after-upload",
+		"after-proposal",
+		"after-ack",
+	]) {
+		const summaryAcknowledged = crashPoint === "after-proposal" || crashPoint === "after-ack";
 		itExpects(
 			`recovers a publisher crash ${crashPoint} from a fresh client`,
 			[
@@ -424,7 +431,7 @@ describeCompat("Native checkpoints", "NoCompat", (getTestObjectProvider, apis) =
 					eventName: "fluid:telemetry:Container:ContainerClose",
 					error: "Native checkpoint restored: reload without cached or pending state",
 				},
-				...(crashPoint === "before-proposal"
+				...(!summaryAcknowledged
 					? [
 							{
 								eventName: "fluid:telemetry:Container:ContainerDispose",
@@ -449,7 +456,7 @@ describeCompat("Native checkpoints", "NoCompat", (getTestObjectProvider, apis) =
 					...config,
 					runtimeOptions: undefined,
 				});
-				await summarizeNow(summarizer);
+				const { summaryVersion: staleVersion } = await summarizeNow(summarizer);
 				summarizer.close();
 				async function loadWorker(): Promise<IContainer> {
 					const loadedWorker = await provider.loadTestContainer(config, {
@@ -469,26 +476,58 @@ describeCompat("Native checkpoints", "NoCompat", (getTestObjectProvider, apis) =
 				publisher.requestNativeCheckpointRestore("recover-restore", "recover");
 				await provider.ensureSynchronized();
 				provider.opProcessingController.resumeProcessing();
-				if (crashPoint === "before-proposal") {
-					const upload = stub(publisher.storage, "uploadSummaryWithContext").rejects(
-						new Error("injected upload failure"),
+				if (!summaryAcknowledged) {
+					const uploadSummary = publisher.storage.uploadSummaryWithContext.bind(
+						publisher.storage,
+					);
+					const upload = stub(publisher.storage, "uploadSummaryWithContext").callsFake(
+						async (...args) => {
+							if (crashPoint === "before-proposal") {
+								throw new Error("injected upload failure");
+							}
+							const handle = await uploadSummary(...args);
+							worker.close();
+							return handle;
+						},
 					);
 					try {
-						await assert.rejects(
-							publisher.publishNativeCheckpointRestore(),
-							/injected upload failure/,
-						);
+						await assert.rejects(publisher.publishNativeCheckpointRestore());
 					} finally {
 						upload.restore();
 						worker.close();
 					}
 				} else {
-					worker.on("op", (message) => {
+					const acknowledged = new Deferred<void>();
+					const onSourceOp = (
+						message: import("@fluidframework/driver-definitions/internal").ISequencedDocumentMessage,
+					): void => {
 						if (message.type === MessageType.SummaryAck) {
+							acknowledged.resolve();
+						}
+					};
+					const onWorkerOp = (
+						message: import("@fluidframework/driver-definitions/internal").ISequencedDocumentMessage,
+					): void => {
+						if (
+							message.type ===
+							(crashPoint === "after-proposal"
+								? MessageType.Summarize
+								: MessageType.SummaryAck)
+						) {
 							worker.close();
 						}
-					});
-					await assert.rejects(publisher.publishNativeCheckpointRestore());
+					};
+					source.on("op", onSourceOp);
+					worker.on("op", onWorkerOp);
+					try {
+						await assert.rejects(publisher.publishNativeCheckpointRestore());
+						await timeoutAwait(acknowledged.promise, {
+							errorMsg: "Service did not acknowledge the crashed publisher's proposal",
+						});
+					} finally {
+						source.off("op", onSourceOp);
+						worker.off("op", onWorkerOp);
+					}
 				}
 				assert(!source.closed, "Without completion the old generation remains fenced");
 				const replacement = await loadWorker();
@@ -497,31 +536,73 @@ describeCompat("Native checkpoints", "NoCompat", (getTestObjectProvider, apis) =
 				assert(recovery !== undefined);
 				assert.equal(
 					recoveryRuntime.getNativeCheckpointRestore()?.phase,
-					crashPoint === "before-proposal" ? "ordered" : "restored",
+					summaryAcknowledged ? "restored" : "ordered",
 				);
 				const uploadSpy = spy(recoveryRuntime.storage, "uploadSummaryWithContext");
 				provider.opProcessingController.resumeProcessing();
 				await recoveryRuntime.publishNativeCheckpointRestore();
 				await provider.ensureSynchronized();
-				assert.equal(uploadSpy.callCount, crashPoint === "before-proposal" ? 1 : 0);
+				assert.equal(uploadSpy.callCount, summaryAcknowledged ? 0 : 1);
+				uploadSpy.restore();
 				assert(source.closed);
 				const loader = provider.makeTestLoader(config);
 				assert(loader instanceof Loader);
-				let persistedStateCleared = false;
-				const restored = await loadContainerAfterNativeCheckpointRestore(
-					{
-						...loader.services,
-						request: { url: await provider.driver.createContainerUrl(provider.documentId) },
+				const evictionStarted = new Deferred<void>();
+				const evictionComplete = new Deferred<void>();
+				const createService = spy(
+					loader.services.documentServiceFactory,
+					"createDocumentService",
+				);
+				const reloadProps = {
+					...loader.services,
+					request: {
+						url: await provider.driver.createContainerUrl(provider.documentId),
+						headers: { [LoaderHeader.version]: staleVersion, [LoaderHeader.cache]: true },
 					},
+					pendingLocalState: "stale pending state must not be parsed or replayed",
+				};
+				const loading = loadContainerAfterNativeCheckpointRestore(
+					reloadProps,
 					recovery.restore,
 					async () => {
-						persistedStateCleared = true;
+						evictionStarted.resolve();
+						await evictionComplete.promise;
 					},
 				);
+				async function verifyEviction(): Promise<void> {
+					try {
+						await timeoutAwait(evictionStarted.promise, {
+							errorMsg: "Host eviction did not start",
+						});
+						assert.equal(
+							createService.callCount,
+							0,
+							"Loading must await host cache and pending-state eviction",
+						);
+					} finally {
+						evictionComplete.resolve();
+						createService.restore();
+					}
+				}
+				const [restored] = await Promise.all([
+					loading.then((container) => {
+						assert(provider.opProcessingController instanceof LoaderContainerTracker);
+						provider.opProcessingController.addContainer(container);
+						return container;
+					}),
+					verifyEviction(),
+				]);
 				try {
 					await waitForContainerConnection(restored);
-					assert(persistedStateCleared);
 					assert.equal((await getEntry(restored)).root.get("value"), "checkpoint");
+					const peer = await provider.loadTestContainer(config);
+					await waitForContainerConnection(peer);
+					(await getEntry(restored)).root.set("value", "edited after recovery");
+					await provider.ensureSynchronized();
+					assert.equal((await getEntry(peer)).root.get("value"), "edited after recovery");
+					(await getEntry(peer)).root.set("peer", "collaboration resumed");
+					await provider.ensureSynchronized();
+					assert.equal((await getEntry(restored)).root.get("peer"), "collaboration resumed");
 				} finally {
 					restored.close();
 				}
