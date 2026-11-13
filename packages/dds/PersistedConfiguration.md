@@ -56,18 +56,19 @@ desired/session distinction, and one-proposal-per-session policy are not the req
 
 ## Ownership and scope
 
-Put a reusable `ChannelConfigurationController` in `shared-object-base`. It owns configuration
-state, CAS decisions, and configuration-request completion tracking.
-A configuration-specific message layer, `ChannelConfigurationDeltaHandler`,
-composes an ordinary DDS endpoint with the channel transport and lifecycle signals.
-It owns configuration routing, initialization, attribute persistence, and disposal.
-`SharedObjectFromKernel` receives this layer through an optional configuration factory.
+Put a reusable `ChannelConfigurationController` in `shared-object-base`.
+It owns configuration state, configuration-message parsing and validation, CAS decisions, configuration-request completion tracking, and disposal after fatal configuration failures.
+`ChannelConfigurationHandler` owns initialization, control-op submission, lifecycle checks, and telemetry around that controller.
+It receives raw message content from the router and does not assume that content is a valid configuration message.
+`KernelMessageRouter` owns only marker-based classification and ordered delivery between the configuration handler and the ordinary DDS endpoint.
+`SharedObjectFromKernel` installs this composition through an optional configuration factory and owns per-instance attribute persistence.
 Kernel implementations receive the typed facet in `KernelArgs` before the kernel factory constructs or loads the kernel.
 The generic `SharedObject` inheritance path does not construct configuration support.
 
 The integration is intentionally limited to the kernel-based path instead of adding configuration registration to the broad `SharedObject` inheritance path.
-`SharedObjectCore` provides only a package-internal, protocol-neutral routing seam.
-The seam lets the injected configuration factory compose with the existing lifecycle without adding a protected or public API for external subclasses.
+`SharedObjectCore` creates a protocol-neutral routing sidecar that initially delegates to its ordinary message path.
+A package-internal installer locates this sidecar through a `WeakMap` and replaces its delegate at most once, before service connection.
+This lets `SharedObjectFromKernel` install optional routing without adding a protected or public API for external subclasses and without exposing `SharedObjectCore` private state.
 
 The DDS owns the meaning and validation of its configuration, how it reacts to an accepted change,
 and how it processes ordinary ops, including optimistic local state and acknowledgements. It does
@@ -213,11 +214,14 @@ Keep the wire-format declaration independently versioned in a dedicated persiste
 the API types here must not make future API refactors silently change the wire format. An internal derived
 attributes type avoids requiring every legacy `IChannelAttributes` implementation to change.
 A persistently configured instance's `attributes.configuration` getter returns `{ version: 1, ...controller.current }`.
-The other attributes are preserved. Updating one instance must never mutate `factory.attributes` or another
-instance's attributes.
-The wrapper copies attributes for configuration-capable instances, before they can add the configuration getter.
-This shallow copy keeps the per-instance getter off the shared factory attributes.
-The getter is added at configured creation, configured load, or the first accepted replacement.
+The other attributes are preserved.
+Updating one instance must never mutate `factory.attributes` or another instance's attributes.
+`SharedObjectFromKernel` shallow-copies attributes only for configuration-capable instances.
+This keeps the per-instance getter off the shared factory attributes.
+The configuration factory reports whether the initial configuration source is `"explicit"` or `"default"`.
+Explicit creation values and loaded persisted configuration install the getter immediately.
+Factory defaults do not activate persistence.
+For a default-backed instance, `SharedObjectFromKernel` registers a listener before constructing the DDS and installs the getter on the first accepted configuration change, before DDS change listeners run.
 DDSes without injected configuration support keep the existing attributes behavior.
 
 ## Wire protocol and processing
@@ -239,7 +243,9 @@ export interface ChannelConfigurationMessageV1 {
 
 The injected configuration factory selects configuration-capable dispatch, including for unmarked instances.
 This dispatch uses the presence of an own top-level `isChannelConfigurationOp` property to classify a message as a configuration op.
-Any value reserves that property; the configuration parser requires its value to be `true`.
+Any value reserves that property.
+Marker presence identifies only a configuration candidate; it does not prove that the content is a valid `ChannelConfigurationMessageV1`.
+The router passes the raw content as `unknown` to configuration-owned parsing, which requires the marker value to be `true` and validates the remaining message shape.
 Nested application data can use the same name.
 The first accepted configuration op adds the attributes marker before notifying the DDS.
 Without injected configuration support, the kernel retains its existing ordinary dispatch and does not reserve this property.
@@ -249,7 +255,8 @@ For every incoming logical message on a configured channel, in order:
 1. If the reserved own top-level property is absent, decode and deliver the ordinary payload through the normal DDS data-op path.
    Preserve DDS op events, local metadata, and local/remote acknowledgement behavior.
    Add no configuration revision or provenance metadata.
-2. Otherwise, parse the configuration op and validate its expected revision as a non-negative safe integer.
+2. Otherwise, route the raw content to the configuration handler.
+   The controller parses the configuration op and validates its expected revision as a non-negative safe integer.
    An expected revision less than current is a CAS conflict.
    Consume the op without changing state or calling the DDS configuration callback.
 3. If the expected revision equals current, validate the proposed configuration and transition.
@@ -408,7 +415,7 @@ using existing pending local-op metadata; completion metadata is not part of the
 The facet is initialized once, before kernel construction.
 For load it exposes the snapshot's validated configuration, or the definition's defaults when unmarked, not the latest configuration from buffered ops.
 Reading that initial snapshot is not a configuration-change notification.
-The configuration layer distinguishes creation settings from configuration read from channel attributes on load.
+The configuration handler distinguishes creation settings from configuration read from channel attributes on load.
 Factory support is separate from these lifecycle states.
 The controller validates defaults, creation values, and loaded snapshots in the same way.
 It calls `validateTransition` with `previous === undefined` for each of these initial configurations.
@@ -488,18 +495,17 @@ CAS remains entirely in the shared configuration mechanism.
 ### Shared wrapper integration
 
 `SharedObjectCore` adapts its ordinary processing, stash, resubmission, rollback, and connection hooks once into an `IDeltaHandler`.
-It exposes that endpoint and the lower-level transport through a package-internal routing accessor.
-The accessor is not part of the protected or public `SharedObjectCore` API.
+It places that handler and the lower-level transport in a stable `SharedObjectMessageRouting` sidecar.
+The runtime remains connected to the sidecar, which initially delegates directly to the ordinary handler.
+The sidecar is associated with its `SharedObjectCore` through a package-internal `WeakMap`; it is not exposed through the protected or public `SharedObjectCore` API.
 
 `SharedObjectFromKernel` installs optional configuration routing before initialization or service connection.
 With no injected configuration factory, it retains the original ordinary message path and does not reserve configuration messages.
-When configuration support is injected, it composes the ordinary endpoint with `ChannelConfigurationDeltaHandler`.
-The runtime connects to the configuration layer,
-which routes control ops to the controller and ordinary collections to the original endpoint.
+When configuration support is injected, `SharedObjectFromKernel` uses the package-internal installer to replace the sidecar's delegate with `KernelMessageRouter`.
+The router classifies messages by marker presence, routes raw configuration content to `ChannelConfigurationHandler`, and routes ordinary collections to the original endpoint.
 It splits ordinary runs around control ops, preserving the original envelope, message metadata, and synchronous ordering.
 Kernel hooks remain downstream of ordinary handle decoding and DDS events.
-The layer routes configuration requests during resubmission, stashed-op restoration, and rollback,
-but delegates ordinary payloads to the stable DDS endpoint.
+The router also classifies resubmission, stashed-op restoration, and rollback content, but delegates ordinary payloads to the stable DDS endpoint.
 `submitLocalMessage` remains the ordinary submission entry point.
 Configuration-aware kernel-based channels guard ordinary submission, receive, stash, resubmit, and rollback
 against an own top-level `isChannelConfigurationOp` property.
@@ -517,12 +523,11 @@ Participating kernels validate the reserved marker before calling that path, so 
 still precedes handle binding or encoding.
 Both paths reach the original delta connection, preserving real stashed-op capture and pending metadata.
 
-The core retains a narrow package-internal installation accessor, lifecycle notifications, and the ordinary hook adapters.
-The configuration layer receives attachment and closed-state checks,
-transport preparation and submission, runtime disposal and read-only state,
-a disposal subscription, attributes, and a logger.
+The core retains the package-internal sidecar installation function, lifecycle notifications, and ordinary hook adapters.
+The configuration handler receives attachment and closed-state checks, transport preparation and submission, runtime disposal and read-only state, a disposal subscription, attributes, and a logger.
 It does not receive the entire runtime or protected subclass API.
-It prepares the readable facet and per-instance attributes before kernel construction and before `factory.create` or `factory.loadCore`.
+It prepares the readable facet before kernel construction and before `factory.create` or `factory.loadCore`.
+`SharedObjectFromKernel` owns the per-instance attributes clone and the enumerable configuration getter.
 The core records its first close error before notifying the layer to reject requests.
 The public channel object and its Fluid handle identity do not change.
 
@@ -540,7 +545,9 @@ Processing errors propagate to the existing `ChannelDeltaConnection` error bound
 Internal configuration contracts and invariants use assertions, not `UsageError`, which is for incorrect API use by external consumers.
 The existing op-processing boundary converts assertion failures to `DataProcessingError`.
 There is no configured-only error wrapper in `SharedObjectCore`.
-Configuration callback or validation failures reject pending configuration requests before rethrowing.
+Configuration parsing, validation, and callback failures dispose the controller and reject pending configuration requests before rethrowing.
+The same configuration-owned validation boundary applies to sequenced processing, resubmission, stashed-op restoration, and rollback.
+The router uses only the reserved marker to classify raw content and does not parse it before this cleanup boundary.
 Runtime disposal closes outstanding requests for other fatal failures.
 Normal rollback and runtime disposal use ordinary errors; a supplied failure is propagated unchanged.
 Existing DDS event-listener error handling is unchanged.
@@ -710,12 +717,11 @@ DDS-specific invalidation events and telemetry are outside this design.
 | Area | Current implementation |
 | --- | --- |
 | `datastore-definitions` | Internal persisted-state and wire-format types, without new required members on legacy channel contracts. |
-| `shared-object-base` | Package-internal SharedObject routing seam; optional injected configuration composition in `SharedObjectFromKernel`; kernel facet; per-instance configuration attributes; configuration-op dispatch and reserved-key guards for participating kernels; configuration-request completion tracking; normal DDS attachment state. |
+| `shared-object-base` | Package-internal `WeakMap` routing sidecar; optional configuration composition and per-instance attribute persistence in `SharedObjectFromKernel`; marker-only routing in `KernelMessageRouter`; configuration-owned parsing, validation, lifecycle handling, and request completion; kernel facet; reserved-key guards for participating kernels; normal DDS attachment state. |
 | Existing datastore/runtime paths | Retain instance-attribute persistence, lazy replay ordering, ordinary stashed-op handling, pending accounting, and summary invalidation; no compatibility gates are added. |
 | Test kernels | Exercise configured and unconfigured kernel factories, stable defaults, creation values, loaded state, synchronous change callbacks, and ordinary lifecycle behavior. |
 
-Share the existing base's serializer, telemetry, error handling, and summary support through
-the package-internal routing seam.
+Share the existing base's serializer, telemetry, error handling, and summary support through the package-internal routing sidecar.
 Do not duplicate the `SharedObjectCore` lifecycle or change the legacy inheritance dispatch path.
 Generated API reports are regenerated through existing build tasks, never hand-edited.
 
