@@ -714,6 +714,8 @@ describe("ModularChangeFamily", () => {
 
 			const expected: ModularChangeset = {
 				...Change.empty(),
+				// Cancelling the content does not reset the IDs already allocated by normalization.
+				maxId: brand(0),
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
 
@@ -749,6 +751,7 @@ describe("ModularChangeFamily", () => {
 
 			const expected: ModularChangeset = {
 				...Change.empty(),
+				maxId: brand(0),
 				revisions: [{ revision: tag2 }, { revision: tag1 }],
 			};
 
@@ -811,6 +814,7 @@ describe("ModularChangeFamily", () => {
 					[[tag3, brand(1)], 1],
 					[[tag3, brand(3)], 1],
 				]),
+				maxId: brand(3),
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
 
@@ -981,6 +985,7 @@ describe("ModularChangeFamily", () => {
 
 			const expectedRollback: ModularChangeset = {
 				...Change.empty(),
+				maxId: brand(0),
 				destroys: newChangeAtomIdBTree([
 					[[tag1 as RevisionTag | undefined, brand(0)], 1],
 					[[tag2, brand(1)], 1],
@@ -988,7 +993,7 @@ describe("ModularChangeFamily", () => {
 				revisions: [{ revision: revisionForInvert, rollbackOf: tag1 }],
 			};
 			const expectedUndo: ModularChangeset = tagChangeInline(
-				Change.empty(),
+				{ ...Change.empty(), maxId: brand(0) },
 				revisionForInvert,
 			).change;
 
@@ -1563,6 +1568,66 @@ describe("ModularChangeFamily", () => {
 		makeEncodingTestSuite(family.codecs, encodingTestDataV5Only, assertEquivalent, [
 			ModularChangeFormatVersion.v5,
 		]);
+	});
+
+	describe("changeRevision", () => {
+		it("does not add an allocation bound when no IDs are assigned", () => {
+			assert.equal(inlineRevision(Change.empty(), tag1).maxId, undefined);
+		});
+
+		it("preserves an input allocation bound larger than the replaced IDs", () => {
+			const input: ModularChangeset = {
+				...Change.empty(),
+				maxId: brand(10),
+				builds: newChangeAtomIdBTree([[[undefined, brand(0)], node1Chunk]]),
+			};
+			assert.equal(inlineRevision(input, tag1).maxId, 10);
+		});
+
+		it("accounts for IDs assigned by an earlier use of the same replacer", () => {
+			const replacer = new DefaultRevisionReplacer(tag1, new Set([undefined]));
+			replacer.getUpdatedAtomId({ localId: brand(5) }, 3);
+			const updated = family.changeRevision(Change.empty(), replacer);
+			assert.equal(updated.maxId, 7);
+		});
+
+		for (const component of ["builds", "refreshers", "destroys"] as const) {
+			it(`accounts for the full relocated range in ${component}`, () => {
+				const replacer = new DefaultRevisionReplacer(tag3, new Set([tag1, tag2, tag4]));
+				// Model an earlier component reserving IDs 0-2 in the replacement revision.
+				replacer.getUpdatedAtomId({ revision: tag1, localId: brand(0) }, 3);
+				const chunk = chunkFromJsonTrees([1, 2, 3]);
+				const input: Mutable<ModularChangeset> = {
+					...Change.empty(),
+					maxId: brand(2),
+				};
+				if (component === "destroys") {
+					input.destroys = newChangeAtomIdBTree([[[tag2, brand(0)], 3]]);
+				} else {
+					input[component] = newChangeAtomIdBTree([[[tag2, brand(0)], chunk]]);
+				}
+				// This synthetic input isolates the detached-content table. Editor-generated
+				// changes normally reference the range elsewhere, which can mask a missing count here.
+				deepFreeze(input);
+				const updated = family.changeRevision(input, replacer);
+
+				assert.equal(updated.maxId, 5);
+				assert.equal(
+					updated[component]?.get([tag3, brand(3)]),
+					component === "destroys" ? 3 : chunk,
+				);
+				assert.equal(
+					replacer.getUpdatedAtomId({ revision: tag2, localId: brand(2) }).localId,
+					5,
+				);
+				// A later colliding range must start after all three relocated IDs, not just the first.
+				assert.equal(
+					replacer.getUpdatedAtomId({ revision: tag4, localId: brand(0) }).localId,
+					6,
+				);
+				assert.equal(input.maxId, 2);
+			});
+		}
 	});
 
 	it("build child change", () => {

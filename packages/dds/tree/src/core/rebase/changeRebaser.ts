@@ -5,7 +5,7 @@
 
 import type { Invariant } from "../../util/index.js";
 
-import type { ChangeAtomId, RevisionTag } from "./types.js";
+import type { ChangeAtomId, ChangesetLocalId, RevisionTag } from "./types.js";
 
 /**
  * Rebasing logic for a particular kind of change.
@@ -119,6 +119,15 @@ export interface RevisionReplacer {
 	 * The revision to use in place of the obsolete revisions.
 	 */
 	readonly updatedRevision: RevisionTag;
+
+	/**
+	 * Returns the maximum local ID assigned to an obsolete atom by this replacer so far,
+	 * or -1 if none have been assigned.
+	 * @remarks
+	 * Includes reused local IDs and the entire range of each replacement.
+	 * Does not include unchanged IDs from other revisions.
+	 */
+	getMaxId(): ChangesetLocalId;
 
 	/**
 	 * Predicate to determine if a revision needs replacing.
