@@ -182,10 +182,9 @@ const frozenDocumentStorageServiceHandler = (): never => {
  */
 const frozenReadBlobOfflineHandler = async (attachmentsOmitted: boolean): Promise<never> => {
 	const captureGuidance = attachmentsOmitted
-		? 'This state was captured with blobCaptureMode: "structural", which omits attachment payloads. '
+		? 'This state was captured with blobCaptureMode: "reference", which omits attachment payloads. '
 		: "Use `captureFullContainerState` with " +
-			'blobCaptureMode: "inline" to capture eligible payloads; "structural" omits attachments ' +
-			'and "reference" omits all blob payloads. ';
+			'blobCaptureMode: "inline" to capture eligible payloads; "reference" omits attachment payloads. ';
 	throw new UsageError(
 		`Attempted to read a blob from a frozen-loaded container without a live storage service. The blob payload was not captured. ${captureGuidance}To read omitted blobs, use the online form of \`loadFrozenContainerFromPendingState\` with live driver wiring.`,
 	);

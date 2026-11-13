@@ -51,7 +51,6 @@ import {
 	snapshotHasLoadingGroups,
 	unreferencedAttachmentBlobLocalIds,
 	type IBlobAttachReference,
-	type IGcSnapshotData,
 } from "./captureReferencedContents.js";
 import { CatchUpMonitor } from "./catchUpMonitor.js";
 import { mixinDebugLogger } from "./debugLogger.js";
@@ -336,10 +335,10 @@ export async function loadExistingContainer(
  * storage to read blobs from, so every blob the runtime dereferences must
  * already be inlined into `pendingLocalState`. Use
  * {@link captureFullContainerState} with its default `"inline"` mode for
- * offline structural and attachment access. Its `"structural"` mode supports
+ * offline structural and attachment access. Its `"reference"` mode supports
  * offline structural loading, but omits attachment payloads: dereferencing an
  * omitted attachment later fails, even if loading succeeded.
- * Its `"reference"` mode requires online driver wiring. State from
+ * Legacy captures that omitted all blob payloads require online driver wiring. State from
  * `IContainer.getPendingLocalState` / `getRequiredPendingLocalState` may also
  * omit required payloads. Missing payloads trigger a storage `UsageError` when
  * read, either during load or subsequent access. Handle resolution may wrap
@@ -434,6 +433,7 @@ export async function loadFrozenContainerFromPendingState(
 		// returns a resolved URL whose `url` equals `pendingLocalState.url`, so the
 		// identity guard in `Loader.resolveCore` is trivially satisfied.
 		const pending = getAttachedContainerStateFromSerializedContainer(pendingLocalState);
+		// Legacy reference captures omitted structural payloads as well as attachments.
 		if (pending.blobContentsMode === "reference") {
 			throw new UsageError(
 				`${fnName}: pending state does not contain inlined snapshot blob contents. Reference-only state captured by ${captureFullContainerState.name} requires online driver wiring.`,
@@ -538,24 +538,19 @@ export interface ICaptureFullContainerStateProps {
 	 * contents, supporting offline access to captured contents with
 	 * {@link loadFrozenContainerFromPendingState}.
 	 *
-	 * `"structural"` includes structural snapshot contents, attachment references,
+	 * `"reference"` includes structural snapshot contents, attachment references,
 	 * and saved ops, but omits attachment payloads. Structural state can load offline;
 	 * accessing an omitted attachment fails without live storage.
 	 * It uses the same structural snapshot filtering as `"inline"`.
 	 * Online attachment access depends on the attachment remaining available.
 	 * This does not change garbage collection or retention.
 	 *
-	 * `"reference"` preserves blob IDs in the snapshot tree but omits their
-	 * payloads. This reduces the captured state size, but loading requires live
-	 * storage through {@link loadExistingContainer} or the online form of
-	 * {@link loadFrozenContainerFromPendingState}.
-	 *
-	 * `"inline"` and `"structural"` require the resolved URL to have the shape
+	 * Both modes require the resolved URL to have the shape
 	 * `protocol://<string>/<tenantId>/<docId>?<querystring>` accepted by
 	 * `tryParseCompatibleResolvedUrl`; otherwise capture throws `UsageError`,
-	 * even if the state will be loaded online. Use `"reference"` for other URL shapes.
+	 * even if the state will be loaded online.
 	 */
-	readonly blobCaptureMode?: "inline" | "structural" | "reference" | undefined;
+	readonly blobCaptureMode?: "inline" | "reference" | undefined;
 }
 
 /**
@@ -574,12 +569,7 @@ export interface ICaptureFullContainerStateProps {
  * combines delta-storage and delta-stream ops, so recently sequenced ops do
  * not need to have reached durable delta storage before capture.
  *
- * When `blobCaptureMode` is `"reference"`, the snapshot tree retains the blob
- * IDs needed to load the container, but structural and attachment payloads are
- * omitted. Reference-only state requires live storage during load and cannot be
- * used with the fully offline form of {@link loadFrozenContainerFromPendingState}.
- *
- * When `blobCaptureMode` is `"structural"`,
+ * When `blobCaptureMode` is `"reference"`,
  * structural contents selected by the same filtering as `"inline"` remain
  * inlined, but attachment payloads are omitted.
  * Attachment references and saved ops are preserved.
@@ -637,13 +627,9 @@ export async function captureFullContainerState({
 	}
 	const captureAttachmentPayloads = blobCaptureMode === "inline";
 
-	// Inline and structural state support the offline form of `loadFrozenContainerFromPendingState`,
+	// Both capture modes support the offline form of `loadFrozenContainerFromPendingState`,
 	// which requires `tryParseCompatibleResolvedUrl` to succeed on `pendingLocalState.url`.
-	// Reference-only state always uses the caller's live resolver, so it has no such constraint.
-	if (
-		blobCaptureMode !== "reference" &&
-		tryParseCompatibleResolvedUrl(resolvedUrl.url) === undefined
-	) {
+	if (tryParseCompatibleResolvedUrl(resolvedUrl.url) === undefined) {
 		throw new UsageError(
 			`${captureFullContainerState.name}: resolved URL is not in the shape required by tryParseCompatibleResolvedUrl (protocol://<string>/<tenantId>/<docId>?<querystring>); captured state would not rehydrate offline (${resolvedUrl.url})`,
 		);
@@ -722,25 +708,20 @@ export async function captureFullContainerState({
 			);
 		}
 		const attributes = await getDocumentAttributes(storage, baseSnapshot);
-		let gcData: IGcSnapshotData | undefined;
-		let snapshotBlobs = {};
-		let attachmentBlobContents = {};
+		const gcData = captureAttachmentPayloads
+			? await parseGcSnapshotData(baseSnapshot, storage)
+			: undefined;
 		// Structural snapshot blobs (JSON/text the runtime authored) are
 		// UTF-8-encoded; attachment blobs may carry arbitrary binary bytes
 		// and are base64-encoded. Keep them on separate fields of the
 		// pending state so the load side can apply the matching decoder
 		// without ambiguity. See IPendingContainerState.attachmentBlobContents.
-		if (blobCaptureMode !== "reference") {
-			gcData = captureAttachmentPayloads
-				? await parseGcSnapshotData(baseSnapshot, storage)
-				: undefined;
-			[snapshotBlobs, attachmentBlobContents] = await Promise.all([
-				readReferencedSnapshotBlobs(snapshot, storage), // utf8 encoded
-				captureAttachmentPayloads
-					? captureReferencedAttachmentBlobs(baseSnapshot, storage, gcData) // base64 encoded
-					: Promise.resolve({}),
-			]);
-		}
+		const [snapshotBlobs, attachmentBlobContents] = await Promise.all([
+			readReferencedSnapshotBlobs(snapshot, storage), // utf8 encoded
+			captureAttachmentPayloads
+				? captureReferencedAttachmentBlobs(baseSnapshot, storage, gcData) // base64 encoded
+				: Promise.resolve({}),
+		]);
 
 		const savedOps: ISequencedDocumentMessage[] = [];
 		const attachP = deltaManager.attachOpHandler(
@@ -782,12 +763,7 @@ export async function captureFullContainerState({
 			attached: true,
 			baseSnapshot,
 			snapshotBlobs,
-			blobContentsMode:
-				blobCaptureMode === "reference"
-					? "reference"
-					: blobCaptureMode === "structural"
-						? "attachmentsOmitted"
-						: undefined,
+			blobContentsMode: captureAttachmentPayloads ? undefined : "attachmentsOmitted",
 			attachmentBlobContents:
 				Object.keys(attachmentBlobContents).length === 0 ? undefined : attachmentBlobContents,
 			loadedGroupIdSnapshots: undefined,

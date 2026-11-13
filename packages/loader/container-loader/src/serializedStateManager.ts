@@ -78,10 +78,11 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	attached: true;
 	/**
 	 * Records the payload omission policy chosen by driver-level capture:
-	 * `"reference"` omits all blob payloads; `"attachmentsOmitted"` omits attachment payloads.
+	 * `"attachmentsOmitted"` omits attachment payloads but retains structural snapshot contents.
+	 * `"reference"` identifies legacy captures that omitted all blob payloads.
 	 *
 	 * Undefined for inline captures and state serialized without capture-policy metadata,
-	 * including legacy state. This is not a completeness guarantee; missing payloads
+	 * including older unmarked state. This is not a completeness guarantee; missing payloads
 	 * still require live storage when read.
 	 */
 	blobContentsMode?: "reference" | "attachmentsOmitted";

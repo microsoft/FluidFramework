@@ -287,7 +287,7 @@ describe("FrozenDocumentStorageService readBlob (no inner factory)", () => {
 			);
 			assert.match(error.message, /blob payload was not captured/);
 			assert.match(error.message, /captureFullContainerState.*blobCaptureMode: "inline"/);
-			assert.match(error.message, /"structural" omits attachments/);
+			assert.match(error.message, /"reference" omits attachment payloads/);
 			assert.match(
 				error.message,
 				/online form of `loadFrozenContainerFromPendingState` with live driver wiring/,
@@ -297,7 +297,7 @@ describe("FrozenDocumentStorageService readBlob (no inner factory)", () => {
 	});
 
 	for (const readOnly of [true, false]) {
-		it(`identifies structural attachment omission after wrapping with readOnly=${readOnly}`, async () => {
+		it(`identifies reference-mode attachment omission after wrapping with readOnly=${readOnly}`, async () => {
 			const factory = createFrozenDocumentServiceFactory(
 				new FrozenDocumentServiceFactory(true, undefined, true),
 				readOnly,
@@ -307,7 +307,7 @@ describe("FrozenDocumentStorageService readBlob (no inner factory)", () => {
 				const storage = await service.connectToStorage();
 				await assert.rejects(storage.readBlob("omitted-attachment"), (error: Error) => {
 					assert.strictEqual(error.constructor.name, "UsageError");
-					assert.match(error.message, /blobCaptureMode: "structural"/);
+					assert.match(error.message, /blobCaptureMode: "reference"/);
 					assert.match(error.message, /omits attachment payloads/);
 					assert.match(
 						error.message,
