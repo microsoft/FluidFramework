@@ -64,6 +64,7 @@ export type {
 } from './Identifiers.js';
 export { isDetachedSequenceId } from './Identifiers.js';
 export { initialTree } from './InitialTree.js';
+export type { ISharedTree } from './ISharedTree.js';
 export { LazyCheckout } from './LazyCheckout.js';
 export { LogViewer } from './LogViewer.js';
 export { NodeIdContext, NodeIdGenerator, NodeIdConverter } from './NodeIdUtilities.js';
@@ -129,13 +130,13 @@ export {
 	rangeFromStableRange,
 } from './TreeViewUtilities.js';
 export {
+	createSharedTree,
 	SharedTreeArgs,
 	SharedTreeOptions,
 	SharedTreeBaseOptions,
 	SharedTreeOptions_0_0_2,
 	SharedTreeOptions_0_1_1,
 	SharedTreeFactory,
-	SharedTree,
 	EditCommittedHandler,
 	SequencedEditAppliedHandler,
 	EditCommittedEventArguments,
@@ -144,6 +145,7 @@ export {
 	ISharedTreeEvents,
 	StashedLocalOpMetadata,
 } from './SharedTree.js';
+export { SharedTree } from './SharedTreeKind.js';
 export { StringInterner } from './StringInterner.js';
 export { SharedTreeAttributes, SharedTreeFactoryType } from './publicContracts.js';
 
