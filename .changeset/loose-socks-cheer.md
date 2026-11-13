@@ -147,5 +147,28 @@ The versions help explain the difference, but compatibility checks determine whe
 Version identifiers can also identify documents created by an experimental schema library, even after the experiment ends.
 Giving that library its own identifier distinguishes its documents from those that only use the rest of the application schema.
 
+#### Versioned compatibility snapshots
+
 For snapshot-based compatibility testing, [`exportCompatibilitySchemaSnapshot`](https://fluidframework.com/docs/api/fluid-framework/exportcompatibilityschemasnapshot-function) captures the configured versions alongside the schema.
 This lets compatibility checks between releases account for version changes as well as schema structure.
+
+After the earlier example increases `Note.version` to `4`, its snapshot contains the following version entries.
+
+```json
+{
+	"version": 2,
+	"schemaVersion": [
+		["com.example.Comment", 1],
+		["com.example.Note", 4]
+	]
+}
+```
+
+The top-level `version` identifies the snapshot format, not an application release or a node schema version.
+The application-defined versions appear in `schemaVersion`.
+
+[`snapshotSchemaCompatibility`](https://fluidframework.com/docs/api/fluid-framework/snapshotschemacompatibility-function) also associates each snapshot file with a separate release version supplied through [`SnapshotSchemaCompatibilityOptions.version`](https://fluidframework.com/docs/api/fluid-framework/snapshotschemacompatibilityoptions-interface#version-propertysignature), typically the application or package version.
+Increasing `Note.version` changes the snapshot, but does not automatically increase that release version.
+In `"assert"` mode, the check reports an out-of-date snapshot if the existing snapshot still contains the previous node schema version.
+To also prevent `"update"` mode from overwriting a snapshot under the same release version, set [`rejectSchemaChangesWithNoVersionChange`](https://fluidframework.com/docs/api/fluid-framework/snapshotschemacompatibilityoptions-interface#rejectschemachangeswithnoversionchange-propertysignature) to `true`.
+The application must then advance the snapshot release version before saving the changed schema and its versions.

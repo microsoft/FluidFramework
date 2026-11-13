@@ -1378,6 +1378,57 @@ Snapshots exist for versions: [
 			assert.deepEqual([...snapshots.keys()], ["1.0.0.json", "2.0.0.json"]);
 		});
 
+		it("detects node version changes without a snapshot release version change", () => {
+			const snapshotDirectory = "dir";
+			const [fileSystem, snapshots] = inMemorySnapshotFileSystem();
+			const factory = new SchemaFactory("test");
+			class Note extends factory.object("Note", { text: factory.string }) {}
+
+			const options = {
+				version: "1.0.0",
+				schema: new TreeViewConfigurationAlpha({
+					schema: Note,
+					schemaIdentity: identifySchema({ schemaVersion: { [Note.identifier]: 3 } }),
+				}),
+				fileSystem,
+				minVersionForCollaboration: "1.0.0",
+				snapshotDirectory,
+			};
+			snapshotSchemaCompatibility({ ...options, mode: "update" });
+			const originalSnapshots = new Map(snapshots);
+			const updatedOptions = {
+				...options,
+				schema: new TreeViewConfigurationAlpha({
+					schema: Note,
+					schemaIdentity: identifySchema({ schemaVersion: { [Note.identifier]: 4 } }),
+				}),
+			};
+
+			assert.throws(
+				() => snapshotSchemaCompatibility({ ...updatedOptions, mode: "assert" }),
+				/Snapshot for current version "1.0.0" is out of date/,
+			);
+			assert.throws(
+				() =>
+					snapshotSchemaCompatibility({
+						...updatedOptions,
+						mode: "update",
+						rejectSchemaChangesWithNoVersionChange: true,
+					}),
+				/Rejecting schema change without version change/,
+			);
+			assert.deepEqual(snapshots, originalSnapshots);
+
+			snapshotSchemaCompatibility({
+				...updatedOptions,
+				version: "1.1.0",
+				mode: "update",
+				rejectSchemaChangesWithNoVersionChange: true,
+			});
+			assert.deepEqual([...snapshots.keys()], ["1.0.0.json", "1.1.0.json"]);
+			assert.equal(snapshots.get("1.0.0.json"), originalSnapshots.get("1.0.0.json"));
+		});
+
 		it("rejectSchemaChangesWithNoVersionChange", () => {
 			const snapshotDirectory = "dir";
 			const [fileSystem] = inMemorySnapshotFileSystem();
