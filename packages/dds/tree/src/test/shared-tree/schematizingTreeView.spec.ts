@@ -1190,7 +1190,7 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.deepEqual(originalCompatibility.upgrade, { isCompatible: true });
 	});
 
-	it("retains deferred incompatibilities across schema changes and disposal", () => {
+	it("computes upgrade incompatibilities from the original schema after schema changes and disposal", () => {
 		class Stored extends schema.object("DeferredDisposal", {
 			x: schema.number,
 			hidden: schema.optional(schema.number),

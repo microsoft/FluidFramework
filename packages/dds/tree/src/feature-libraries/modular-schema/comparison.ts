@@ -24,11 +24,11 @@ import { compareSets } from "../../util/index.js";
 import type { FullSchemaPolicy } from "./fieldKind.js";
 import { isNeverField, isNeverTree } from "./isNeverTree.js";
 import type {
-	StoredSchemaDiscrepancyLocation,
+	SchemaDiscrepancyLocation,
 	StoredSchemaUpgradeDiscrepancy,
 } from "./schemaDiscrepancy.js";
 
-interface ComparisonDiagnostics extends StoredSchemaDiscrepancyLocation {
+interface ComparisonDiagnostics extends SchemaDiscrepancyLocation {
 	readonly discrepancies: StoredSchemaUpgradeDiscrepancy[];
 }
 
@@ -57,12 +57,11 @@ export function allowsTreeSuperset(
 		if (diagnostics !== undefined) {
 			if (superset === undefined) {
 				diagnostics.discrepancies.push({
-					operation: "upgrade",
 					mismatch: "missingNodeSchema",
 					identifier: diagnostics.identifier,
 				});
 			} else {
-				reportUnsatisfiedNodeConstraint(policy, originalData, superset, diagnostics);
+				reportUnsatisfiedNodeSchemaRequirement(policy, originalData, superset, diagnostics);
 			}
 		}
 		return false;
@@ -74,7 +73,6 @@ export function allowsTreeSuperset(
 			const leafCompatible = allowsValueSuperset(original.leafValue, superset.leafValue);
 			if (!leafCompatible && diagnostics !== undefined) {
 				diagnostics.discrepancies.push({
-					operation: "upgrade",
 					mismatch: "valueSchema",
 					identifier: diagnostics.identifier,
 					stored: original.leafValue,
@@ -150,7 +148,14 @@ export function allowsTreeSuperset(
 	return compatible && fieldsCompared;
 }
 
-function reportUnsatisfiedNodeConstraint(
+/**
+ * Records an immediate schema requirement that prevents the proposed node from being constructed.
+ *
+ * The caller has already established that construction is impossible.
+ * This helper identifies a required map entry or object field that explains the failure,
+ * resolving child types against the existing stored definitions as the upgrade comparison does.
+ */
+function reportUnsatisfiedNodeSchemaRequirement(
 	policy: FullSchemaPolicy,
 	originalData: TreeStoredSchema,
 	proposed: TreeNodeStoredSchema,
@@ -158,24 +163,22 @@ function reportUnsatisfiedNodeConstraint(
 ): void {
 	if (proposed instanceof MapNodeStoredSchema) {
 		diagnostics.discrepancies.push({
-			operation: "upgrade",
 			mismatch: "nodeSchemaCannotBeSatisfied",
 			identifier: diagnostics.identifier,
-			constraint: { kind: "requiredMapEntries" },
+			requirement: { kind: "requiredMapEntries" },
 		});
 		return;
 	}
 	assert(
 		proposed instanceof ObjectNodeStoredSchema,
-		"Only object and map node constraints can prevent construction of a defined node.",
+		"Only object and map node requirements can prevent construction of a defined node.",
 	);
 	for (const [fieldKey, field] of proposed.objectNodeFields) {
 		if (isNeverField(policy, originalData, field)) {
 			diagnostics.discrepancies.push({
-				operation: "upgrade",
 				mismatch: "nodeSchemaCannotBeSatisfied",
 				identifier: diagnostics.identifier,
-				constraint: {
+				requirement: {
 					kind: "requiredField",
 					fieldKey,
 					allowedTypes: field.types,
@@ -184,7 +187,7 @@ function reportUnsatisfiedNodeConstraint(
 			return;
 		}
 	}
-	fail("A node that cannot be constructed must have an unsatisfied constraint.");
+	fail("A node that cannot be constructed must have an unsatisfied schema requirement.");
 }
 
 function reportNodeKindMismatch(
@@ -193,7 +196,6 @@ function reportNodeKindMismatch(
 	diagnostics: NodeComparisonDiagnostics | undefined,
 ): false {
 	diagnostics?.discrepancies.push({
-		operation: "upgrade",
 		mismatch: "nodeKind",
 		identifier: diagnostics.identifier,
 		stored: original,
@@ -247,7 +249,6 @@ export function allowsFieldSuperset(
 			return false;
 		}
 		diagnostics.discrepancies.push({
-			operation: "upgrade",
 			mismatch: "allowedTypes",
 			identifier: diagnostics.identifier,
 			fieldKey: diagnostics.fieldKey,
@@ -270,7 +271,6 @@ export function allowsFieldSuperset(
 			);
 	if (!kindCompatible && diagnostics !== undefined) {
 		diagnostics.discrepancies.push({
-			operation: "upgrade",
 			mismatch: "fieldKind",
 			identifier: diagnostics.identifier,
 			fieldKey: diagnostics.fieldKey,
@@ -307,7 +307,7 @@ export function allowsTreeSchemaIdentifierSuperset(
  * however if any extra fields and fields with unconstrained types are reachable,
  * it would have to compare everything anyway.
  *
- * @param discrepancies - When provided, collect all failed upgrade constraints instead of stopping at the first one.
+ * @param discrepancies - When provided, collect failed upgrade requirements instead of stopping at the first one.
  */
 export function allowsRepoSuperset(
 	policy: FullSchemaPolicy,

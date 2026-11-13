@@ -397,7 +397,7 @@ export class SchematizingSimpleTreeView<
 
 		if (!isSchemaUpgradeAllowed(this.viewSchema, storedSchema, newSchema)) {
 			throw new UsageError(
-				"Existing stored schema cannot be upgraded to the requested schema (see TreeView.compatibility.upgrade.isCompatible).",
+				"Existing stored schema cannot be upgraded to the requested schema (see TreeView.compatibility.canUpgrade).",
 				tagSchemaArtifacts({
 					schemaUpgradeIncompatibilityDetails: JSON.stringify(
 						this.compatibility.upgrade.isCompatible

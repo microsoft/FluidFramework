@@ -935,7 +935,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
  * They compare the view schema with the document's existing stored schema, rather than checking its current content
  * or the proposed schema for an upgrade.
  *
- * To identify the failed constraint, use `mismatch` to distinguish the entry's shape and interpret its structured fields.
+ * To identify the failed schema requirement, use `mismatch` to distinguish the entry's shape and interpret its structured fields.
  * An entry can also include staging annotations that provide context without themselves preventing access.
  *
  * @sealed @beta
@@ -1078,7 +1078,7 @@ export type SchemaDiscrepancy =
 	  };
 
 /**
- * A constraint that prevents the proposed stored schema from being a permitted upgrade.
+ * A schema requirement that prevents the proposed stored schema from being a permitted upgrade.
  *
  * @remarks
  * Before upgrading a document, the view creates a proposed stored schema using its effective staged-upgrade policy.
@@ -1109,7 +1109,7 @@ export type SchemaUpgradeIncompatibility =
 			 */
 			readonly mismatch: "allowedTypes";
 			/**
-			 * A human-readable explanation of the failed constraint.
+			 * A human-readable explanation of the failed schema requirement.
 			 * Intended for diagnostics, not parsing or choosing an application-specific fix.
 			 */
 			readonly reason: string;
@@ -1145,7 +1145,7 @@ export type SchemaUpgradeIncompatibility =
 			 */
 			readonly mismatch: "fieldKind";
 			/**
-			 * A human-readable explanation of the failed constraint.
+			 * A human-readable explanation of the failed schema requirement.
 			 * Intended for diagnostics, not parsing or choosing an application-specific fix.
 			 */
 			readonly reason: string;
@@ -1181,7 +1181,7 @@ export type SchemaUpgradeIncompatibility =
 			 */
 			readonly mismatch: "valueSchema";
 			/**
-			 * A human-readable explanation of the failed constraint.
+			 * A human-readable explanation of the failed schema requirement.
 			 * Intended for diagnostics, not parsing or choosing an application-specific fix.
 			 */
 			readonly reason: string;
@@ -1211,7 +1211,7 @@ export type SchemaUpgradeIncompatibility =
 			 */
 			readonly mismatch: "nodeKind";
 			/**
-			 * A human-readable explanation of the failed constraint.
+			 * A human-readable explanation of the failed schema requirement.
 			 * Intended for diagnostics, not parsing or choosing an application-specific fix.
 			 */
 			readonly reason: string;
@@ -1238,7 +1238,7 @@ export type SchemaUpgradeIncompatibility =
 			 */
 			readonly mismatch: "missingNodeSchema";
 			/**
-			 * A human-readable explanation of the failed constraint.
+			 * A human-readable explanation of the failed schema requirement.
 			 * Intended for diagnostics, not parsing or choosing an application-specific fix.
 			 */
 			readonly reason: string;
@@ -1259,7 +1259,7 @@ export type SchemaUpgradeIncompatibility =
 			 */
 			readonly mismatch: "nodeSchemaCannotBeSatisfied";
 			/**
-			 * A human-readable explanation identifying the unsatisfied field or map constraint.
+			 * A human-readable explanation identifying the unsatisfied field or map requirement.
 			 * Intended for diagnostics, not parsing or choosing an application-specific fix.
 			 */
 			readonly reason: string;
@@ -1295,7 +1295,7 @@ export type SchemaUpgradeIncompatibility =
  *
  * @remarks
  * To help you diagnose the failure, this combines the structured details from {@link SchemaDiscrepancy} with a human-readable reason.
- * The reason explains the failed schema constraint, but cannot determine which change is appropriate for your application.
+ * The reason explains the failed schema requirement, but cannot determine which change is appropriate for your application.
  * Use it for diagnostics rather than programmatic handling: its wording is not stable API,
  * so application logic should use `mismatch` and the structured fields instead.
  *
@@ -1303,7 +1303,7 @@ export type SchemaUpgradeIncompatibility =
  */
 export type SchemaViewIncompatibility = SchemaDiscrepancy & {
 	/**
-	 * A human-readable explanation of the failed constraint and its location.
+	 * A human-readable explanation of the failed schema requirement and its location.
 	 * Intended for diagnostics, not parsing or choosing an application-specific fix.
 	 */
 	readonly reason: string;
@@ -1338,7 +1338,7 @@ export type CompatibilityResult<TIncompatibility> =
 			 * The nonempty list of incompatibilities that prevent the operation.
 			 *
 			 * @remarks
-			 * Each entry describes a failed schema constraint rather than an issue with the document's current content.
+			 * Each entry describes a failed schema requirement rather than an issue with the document's current content.
 			 * To identify the affected schema location, entries can include application-defined schema identifiers and stored field keys.
 			 *
 			 * The list can be computed lazily on first access, but is cached for this result
@@ -1358,7 +1358,7 @@ export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus
 	 *
 	 * @remarks
 	 * Check `isCompatible` before accessing {@link TreeView.root}, since root access throws when viewing is blocked.
-	 * In that case, the nonempty `incompatibilities` list explains the failed schema constraints.
+	 * In that case, the nonempty `incompatibilities` list explains the failed schema requirements.
 	 * An entry may also include staging context to help you interpret the failure, even when that context does not itself block access.
 	 *
 	 * Because this result concerns viewing, it does not list every schema difference or determine whether an upgrade is permitted.

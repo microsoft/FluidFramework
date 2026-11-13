@@ -11,7 +11,7 @@ export {
 	allowsMultiplicitySuperset,
 } from "./comparison.js";
 export type {
-	StoredSchemaDiscrepancyLocation,
+	SchemaDiscrepancyLocation,
 	StoredSchemaUpgradeDiscrepancy,
 } from "./schemaDiscrepancy.js";
 export { isNeverField, isNeverTree } from "./isNeverTree.js";

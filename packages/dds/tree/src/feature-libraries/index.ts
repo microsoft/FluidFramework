@@ -81,7 +81,7 @@ export {
 	type FullSchemaPolicy,
 	allowsRepoSuperset,
 	type StoredSchemaUpgradeDiscrepancy,
-	type StoredSchemaDiscrepancyLocation,
+	type SchemaDiscrepancyLocation,
 	type GenericChangeset,
 	genericFieldKind,
 	type HasFieldChanges,

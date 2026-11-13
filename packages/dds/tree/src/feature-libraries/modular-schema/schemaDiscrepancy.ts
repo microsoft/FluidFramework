@@ -15,7 +15,7 @@ import type {
 /**
  * The location of a field discrepancy, using stored schema identifiers and keys.
  */
-export interface StoredSchemaDiscrepancyLocation {
+export interface SchemaDiscrepancyLocation {
 	/** The containing node identifier, or undefined for the root field. */
 	readonly identifier: TreeNodeSchemaIdentifier | undefined;
 	/** The field key, or undefined for the root field or a map's implicit field. */
@@ -23,20 +23,14 @@ export interface StoredSchemaDiscrepancyLocation {
 }
 
 /**
- * A failed stored-schema upgrade constraint, before formatting for an application.
+ * A difference between the stored and proposed schemas that prevents the stored schema from being upgraded.
  *
  * @remarks
- * The upgrade comparison records a failed constraint here so it can later be formatted for an application.
  * Where an entry compares two definitions, `stored` describes the existing schema and `proposed` describes the candidate upgrade.
  * This comparison concerns stored-schema upgrade rules; whether a view can access the document is checked separately.
  */
-export type StoredSchemaUpgradeDiscrepancy = {
-	/**
-	 * Identifies an upgrade comparison rather than a viewing comparison.
-	 */
-	readonly operation: "upgrade";
-} & (
-	| (StoredSchemaDiscrepancyLocation &
+export type StoredSchemaUpgradeDiscrepancy =
+	| (SchemaDiscrepancyLocation &
 			(
 				| {
 						/**
@@ -137,7 +131,7 @@ export type StoredSchemaUpgradeDiscrepancy = {
 			/**
 			 * An immediate requirement that prevents construction, not a complete chain of child-type failures.
 			 */
-			readonly constraint:
+			readonly requirement:
 				| {
 						/**
 						 * The map requires a child for every possible key, which a finite tree cannot provide.
@@ -159,5 +153,4 @@ export type StoredSchemaUpgradeDiscrepancy = {
 						 */
 						readonly allowedTypes: TreeTypeSet;
 				  };
-	  }
-);
+	  };
