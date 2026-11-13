@@ -748,7 +748,9 @@ export function testRebaserAxioms(): void {
 				defaultFieldRebaser,
 				{
 					numberOfEditsToRebase: 2,
+					// TODO (AD#89011): investigate failures for numberOfEditsToRebaseOver > 3
 					numberOfEditsToRebaseOver: stressMode === StressMode.Short ? 2 : 3,
+					// TODO (AD#89011): investigate failures for numberOfEditsToVerifyAssociativity > 3
 					numberOfEditsToVerifyAssociativity: stressMode === StressMode.Short ? 2 : 3,
 					groupSubSuites: true,
 				},
