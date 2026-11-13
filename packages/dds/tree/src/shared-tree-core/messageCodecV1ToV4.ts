@@ -127,6 +127,7 @@ function doesVersionSupportCustomMetadata(version: MessageFormatVersion): boolea
 		}
 		case unbrand(MessageFormatVersion.v7):
 		case unbrand(MessageFormatVersion.vSharedBranches):
+		case unbrand(MessageFormatVersion.vHistoryCompaction):
 		case unbrand(MessageFormatVersion.vDetachedRoots): {
 			return true;
 		}

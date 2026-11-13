@@ -26,6 +26,7 @@ import type {
 } from "../core/index.js";
 
 import { makeV1ToV4CodecWithVersion } from "./messageCodecV1ToV4.js";
+import { makeHistoryCompactionMessageCodec } from "./messageCodecVHistoryCompaction.js";
 import { makeSharedBranchesCodecWithVersion } from "./messageCodecVSharedBranches.js";
 import { MessageFormatVersion } from "./messageFormat.js";
 import type { DecodedMessage } from "./messageTypes.js";
@@ -159,6 +160,19 @@ export function makeMessageCodecBuilder<TChangeset>(): VersionDispatchingCodecBu
 					),
 					options.revisionTagCodec,
 					MessageFormatVersion.vDetachedRoots,
+				),
+		},
+		{
+			minVersionForCollab: undefined,
+			formatVersion: MessageFormatVersion.vHistoryCompaction,
+			codec: (options: MessageCodecBuilderOptions<TChangeset>) =>
+				makeHistoryCompactionMessageCodec(
+					options.changeCodecs.resolve(
+						options.dependentChangeFormatVersion.lookup(
+							MessageFormatVersion.vHistoryCompaction,
+						),
+					),
+					options.revisionTagCodec,
 				),
 		},
 	];
