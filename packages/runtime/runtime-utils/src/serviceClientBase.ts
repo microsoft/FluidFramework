@@ -272,13 +272,16 @@ export abstract class ServiceContainerBase<TData, TOptions = unknown>
 		if (registry === undefined) {
 			throw new UsageError("The container runtime does not expose a data-store registry");
 		}
+		// Look up the runtime's registered factory to check it matches the requested kind.
+		// Prefer synchronous lookup, falling back to async lookup if unavailable or no entry is returned.
 		const registered = registry.getSync?.(kind.type) ?? (await registry.get(kind.type));
 		if (registered?.IFluidDataStoreFactory !== kind.IFluidDataStoreFactory) {
 			throw new UsageError(
 				"The data-store kind does not match the factory registered in the container runtime",
 			);
 		}
-		// Normal creation initializes the context's child registry before invoking the factory.
+		// Use the runtime's creation API rather than invoking the factory and attaching its runtime directly.
+		// This initializes the context's child registry before the factory runs, so it can create child stores.
 		const dataStore = await containerRuntime.createDataStore(kind.type);
 		const entryPoint = await dataStore.entryPoint.get();
 		// The data store's entry point type is erased at the registry boundary;
