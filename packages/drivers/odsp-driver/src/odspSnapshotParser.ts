@@ -28,6 +28,7 @@ function buildHierarchy(flatTree: IOdspSnapshotCommit): ISnapshotTree {
 		const entryPathBase = entry.path.slice(lastIndex + 1);
 
 		// ODSP snapshots are created breadth-first so we can assume we see tree nodes prior to their contents
+		// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access -- The breadth-first snapshot format guarantees the parent was added first.
 		const node = lookup[entryPathDir];
 
 		// Add in either the blob or tree
