@@ -29,6 +29,8 @@ import {
 	FieldKinds,
 	type FlexTreeRequiredField,
 	allowsRepoSuperset,
+	compareSchemaVersions,
+	SchemaVersionComparison,
 } from "../feature-libraries/index.js";
 import {
 	type ImplicitFieldSchema,
@@ -45,6 +47,7 @@ import {
 	type StagedSchemaUpgradePolicy,
 	type TreeViewConfiguration,
 	type TreeViewAlpha,
+	type TreeViewSchemaVersions,
 	type InsertableField,
 	type ReadableField,
 	type ReadSchema,
@@ -274,10 +277,15 @@ export class SchematizingSimpleTreeView<
 				: SchemaIdentityInternal.extract(configAlpha.schemaIdentity);
 		if (identity?.expectedHash !== undefined) {
 			const { expectedHash, schemaHasher: hasher } = identity;
+			assert(hasher !== undefined, "An expected schema hash requires a hasher.");
 			const actualHash = hasher(toInitialSchema(configAlpha.schema, this.stagedUpgradePolicy));
 			if (actualHash !== expectedHash) {
+				const versionSuggestion =
+					identity.schemaVersion !== undefined && identity.schemaVersion.size > 0
+						? " For an intentional schema change, consider increasing the relevant application-defined schema version."
+						: "";
 				throw new UsageError(
-					`Expected schema hash does not match the configured schema. Expected ${JSON.stringify(expectedHash)}, got ${JSON.stringify(actualHash)}.`,
+					`Expected schema hash does not match the configured schema. Expected ${JSON.stringify(expectedHash)}, got ${JSON.stringify(actualHash)}.${versionSuggestion}`,
 				);
 			}
 		}
@@ -326,6 +334,13 @@ export class SchematizingSimpleTreeView<
 		return this.config.schema;
 	}
 
+	public get schemaVersion(): TreeViewSchemaVersions {
+		return {
+			view: this.viewSchema.schemaVersion,
+			stored: this.checkout.storedSchema.schemaVersion,
+		};
+	}
+
 	public initialize(content: InsertableField<TRootSchema>): void {
 		this.ensureUndisposed();
 
@@ -334,7 +349,11 @@ export class SchematizingSimpleTreeView<
 			throw new UsageError("Tree cannot be initialized more than once.");
 		}
 
-		const schema = toInitialSchema(this.config.schema, this.stagedUpgradePolicy);
+		const schema = toInitialSchema(
+			this.config.schema,
+			this.stagedUpgradePolicy,
+			this.viewSchema.schemaVersion,
+		);
 		const schemaHash = this.computeSchemaHash(schema);
 		this.runSchemaEdit(() => {
 			// This has to be the contextless version, since when "initialize" is called (right after this),
@@ -403,19 +422,31 @@ export class SchematizingSimpleTreeView<
 		const upgradePolicy = this.stagedUpgradePolicy;
 		const storedSchema = this.checkout.storedSchema.clone();
 		const newSchema = getSchemaUpgradeCandidate(this.viewSchema, storedSchema, upgradePolicy);
-
+		// Version ordering can permit non-additive upgrades, which must bypass the checkout's additive-only assertion.
+		const isAdditiveSchemaUpgrade = allowsRepoSuperset(
+			defaultSchemaPolicy,
+			storedSchema,
+			newSchema,
+		);
 		if (!isSchemaUpgradeAllowed(this.viewSchema, storedSchema, newSchema)) {
 			throw new UsageError(
 				"Existing stored schema cannot be upgraded to the requested schema (see TreeView.compatibility.canUpgrade).",
 			);
 		}
-		if (allowsRepoSuperset(defaultSchemaPolicy, newSchema, storedSchema)) {
+		if (
+			isAdditiveSchemaUpgrade &&
+			allowsRepoSuperset(defaultSchemaPolicy, newSchema, storedSchema) &&
+			compareSchemaVersions(storedSchema.schemaVersion, newSchema.schemaVersion) ===
+				SchemaVersionComparison.Equal
+		) {
 			// No-op
 			return;
 		}
 
 		const schemaHash = this.computeSchemaHash(newSchema);
-		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
+		this.runSchemaEdit(() =>
+			this.checkout.updateSchema(newSchema, isAdditiveSchemaUpgrade ? undefined : true),
+		);
 		if (schemaHash !== undefined) {
 			this.breaker.logger?.sendTelemetryEvent({
 				eventName: "SchemaUpgraded",
@@ -428,7 +459,7 @@ export class SchematizingSimpleTreeView<
 		const identity = (this.config as Partial<ITreeViewConfigurationAlpha>).schemaIdentity;
 		return identity === undefined
 			? undefined
-			: SchemaIdentityInternal.extract(identity).schemaHasher(schema);
+			: SchemaIdentityInternal.extract(identity).schemaHasher?.(schema);
 	}
 
 	public isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus {

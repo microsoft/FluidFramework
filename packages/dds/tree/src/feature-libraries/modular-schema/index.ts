@@ -4,7 +4,10 @@
  */
 
 export {
+	SchemaComparisonMode,
+	SchemaVersionComparison,
 	allowsRepoSuperset,
+	compareSchemaVersions,
 	allowsTreeSchemaIdentifierSuperset,
 	allowsFieldSuperset,
 	allowsTreeSuperset,

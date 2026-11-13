@@ -1,0 +1,34 @@
+{
+  "version": "schemaVersion",
+  "nodes": {
+    "test.hasMinimalValueField": {
+      "kind": {
+        "object": {
+          "field": {
+            "kind": "Value",
+            "types": [
+              "test.minimal"
+            ]
+          }
+        }
+      }
+    },
+    "test.minimal": {
+      "kind": {
+        "object": {}
+      }
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "test.hasMinimalValueField"
+    ]
+  },
+  "schemaVersion": [
+    [
+      "com.fluidframework.test",
+      1
+    ]
+  ]
+}

@@ -25,6 +25,7 @@ import {
 	type NormalizedFieldUpPath,
 	LeafNodeStoredSchema,
 	type TreeNodeSchemaIdentifier,
+	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	ValueSchema,
 } from "../../core/index.js";
@@ -2305,6 +2306,44 @@ describe("sharedTreeView", () => {
 				oldRootAllowedTypeCount: oldSchema.rootFieldSchema.types.size,
 				newRootAllowedTypeCount: oldSchema.rootFieldSchema.types.size,
 			});
+		});
+
+		it("does not classify a version-only schema change as initialization", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				new SharedTreeTestFactory(() => {}, undefined, {
+					allowPossiblyIncompatibleWriteVersionOverrides: true,
+					writeVersionOverrides: new Map([["Schema", "schemaVersion"]]),
+				}),
+			);
+			const [tree] = provider.trees;
+			const view = tree.kernel.viewWith(
+				new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation }),
+			);
+			view.initialize([]);
+			const schema: TreeStoredSchema = {
+				rootFieldSchema: {
+					kind: FieldKinds.optional.identifier,
+					types: new Set(),
+					persistedMetadata: undefined,
+				},
+				nodeSchema: new Map(),
+			};
+			view.checkout.updateSchema(schema, true);
+			view.checkout.updateSchema({
+				rootFieldSchema: schema.rootFieldSchema,
+				nodeSchema: schema.nodeSchema,
+				schemaVersion: new Map([["com.fluidframework.test", 1]]),
+			});
+
+			const schemaChangeEvents = provider.logger
+				.events()
+				.filter((event) =>
+					event.eventName.endsWith(TreeCheckout.schemaChangeTelemetryEventName),
+				);
+			const versionChangeEvent = schemaChangeEvents.at(-1);
+			assert(versionChangeEvent !== undefined, "Expected schema change telemetry.");
+			assert.equal(parseCodeArtifactDetails(versionChangeEvent.details).changeKind, "upgrade");
 		});
 	});
 

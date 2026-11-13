@@ -150,6 +150,8 @@ export {
 	identifierFieldKindIdentifier,
 	storedEmptyFieldSchema,
 	type StoredSchemaCollection,
+	type SchemaVersionMap,
+	type SchemaVersions,
 	schemaFormatV1,
 	schemaFormatV2,
 	LeafNodeStoredSchema,

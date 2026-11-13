@@ -22,6 +22,9 @@ import {
 } from "../../../core/index.js";
 import { FieldKinds, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 import {
+	SchemaComparisonMode,
+	SchemaVersionComparison,
+	compareSchemaVersions,
 	allowsFieldSuperset,
 	allowsMultiplicitySuperset,
 	allowsRepoSuperset,
@@ -154,7 +157,7 @@ describe("Schema Comparison", () => {
 		const identifierField = fieldSchema(FieldKinds.identifier, [emptyTree.name]);
 		const sequenceField = fieldSchema(FieldKinds.sequence, [emptyTree.name]);
 		const compare = (a: TreeFieldStoredSchema, b: TreeFieldStoredSchema): boolean =>
-			allowsFieldSuperset(defaultSchemaPolicy, repo, a, b, false);
+			allowsFieldSuperset(defaultSchemaPolicy, repo, a, b, SchemaComparisonMode.ContentOnly);
 		testOrder(compare, [neverField, storedEmptyFieldSchema, fieldOptionalEmptyTree]);
 		testOrder(compare, [neverField, fieldRequiredEmptyTree]);
 		testOrder(compare, [fieldRequiredEmptyTree, fieldOptionalEmptyTree, sequenceField]);
@@ -183,6 +186,174 @@ describe("Schema Comparison", () => {
 				[identifierField, fieldRequiredEmptyTree],
 			],
 		);
+	});
+
+	describe("compareSchemaVersions", () => {
+		const versionCases: {
+			name: string;
+			original: Readonly<Record<string, number>> | undefined;
+			updated: Readonly<Record<string, number>> | undefined;
+			comparison: SchemaVersionComparison;
+		}[] = [
+			{
+				// Without versioning, only the existing monotonic upgrade rules provide ordering.
+				name: "absent versions",
+				original: undefined,
+				updated: undefined,
+				comparison: SchemaVersionComparison.Equal,
+			},
+			{
+				// Opting into versioning cannot unlock non-monotonic changes on the same upgrade.
+				name: "added version map",
+				original: undefined,
+				updated: { library: 1 },
+				comparison: SchemaVersionComparison.Increase,
+			},
+			{
+				// Empty maps opt into versioning but provide no increase to order inverse changes.
+				name: "empty version maps",
+				original: {},
+				updated: {},
+				comparison: SchemaVersionComparison.Equal,
+			},
+			{
+				// Unchanged values still require monotonic content upgrades.
+				name: "equal versions",
+				original: { library: 1 },
+				updated: { library: 1 },
+				comparison: SchemaVersionComparison.Equal,
+			},
+			{
+				// Increasing an existing version supplies ordering for content-preserving inverse changes.
+				name: "increased version",
+				original: { library: 1 },
+				updated: { library: 2 },
+				comparison: SchemaVersionComparison.Increase,
+			},
+			{
+				// Adding an identifier to an existing map also supplies an upgrade ordering.
+				name: "added library identifier",
+				original: { library: 1 },
+				updated: { library: 1, other: 1 },
+				comparison: SchemaVersionComparison.Increase,
+			},
+			{
+				// A decrease blocks even otherwise monotonic content upgrades.
+				name: "decreased version",
+				original: { library: 2 },
+				updated: { library: 1 },
+				comparison: SchemaVersionComparison.Decrease,
+			},
+			{
+				// Increasing a retained version cannot compensate for removing another identifier.
+				name: "removed library identifier despite another increase",
+				original: { library: 1, other: 1 },
+				updated: { library: 2 },
+				comparison: SchemaVersionComparison.Incompatible,
+			},
+			{
+				// Changes in opposite directions make the maps incomparable.
+				name: "decreased version despite another increase",
+				original: { library: 1, other: 2 },
+				updated: { library: 2, other: 1 },
+				comparison: SchemaVersionComparison.Incompatible,
+			},
+			{
+				// Removing versioning would let unversioned clients undo previously ordered changes.
+				name: "removed version map",
+				original: { library: 1 },
+				updated: undefined,
+				comparison: SchemaVersionComparison.Decrease,
+			},
+			{
+				// Even an empty first map is an increase, but it cannot bypass monotonic rules.
+				name: "added empty version map",
+				original: undefined,
+				updated: {},
+				comparison: SchemaVersionComparison.Increase,
+			},
+			{
+				// An empty map remains versioned state and cannot be removed by an upgrade.
+				name: "removed empty version map",
+				original: {},
+				updated: undefined,
+				comparison: SchemaVersionComparison.Decrease,
+			},
+			{
+				// Identifier presence supplies ordering even when its first value is zero.
+				name: "added zero version",
+				original: {},
+				updated: { library: 0 },
+				comparison: SchemaVersionComparison.Increase,
+			},
+			{
+				// Every existing identifier must remain, even if all retained values are unchanged.
+				name: "removed library identifier",
+				original: { library: 1, other: 1 },
+				updated: { library: 1 },
+				comparison: SchemaVersionComparison.Decrease,
+			},
+			{
+				// A new identifier cannot compensate for decreasing an existing value.
+				name: "added identifier despite a decreased version",
+				original: { library: 2 },
+				updated: { library: 1, other: 0 },
+				comparison: SchemaVersionComparison.Incompatible,
+			},
+			{
+				// Replacing an identifier includes a removal, not just an addition.
+				name: "replaced library identifier",
+				original: { library: 1 },
+				updated: { other: 1 },
+				comparison: SchemaVersionComparison.Incompatible,
+			},
+		];
+
+		for (const { name, original, updated, comparison } of versionCases) {
+			it(name, () => {
+				const originalMap =
+					original === undefined ? undefined : new Map(Object.entries(original));
+				const updatedMap =
+					updated === undefined ? undefined : new Map(Object.entries(updated));
+				assert.equal(compareSchemaVersions(originalMap, updatedMap), comparison);
+			});
+		}
+
+		it("compares entries independently of insertion order and object prototype names", () => {
+			const original = new Map([
+				["__proto__", 0],
+				["constructor", 1],
+				["toString", Number.MAX_SAFE_INTEGER],
+			]);
+			const reordered = new Map([...original].reverse());
+			assert.equal(compareSchemaVersions(original, reordered), SchemaVersionComparison.Equal);
+			reordered.set("__proto__", 1);
+			assert.equal(
+				compareSchemaVersions(original, reordered),
+				SchemaVersionComparison.Increase,
+			);
+			assert.equal(
+				compareSchemaVersions(reordered, original),
+				SchemaVersionComparison.Decrease,
+			);
+		});
+
+		it("copies caller-owned version maps when storing and applying schema", () => {
+			const schemaVersion = new Map([["library", 1]]);
+			const stored = {
+				rootFieldSchema: fieldRequiredEmptyTree,
+				nodeSchema: new Map([[emptyTree.name, emptyTree.schema]]),
+				schemaVersion,
+			};
+			const repository = new TreeStoredSchemaRepository(stored);
+			schemaVersion.set("library", 2);
+			assert.equal(repository.schemaVersion?.get("library"), 1);
+			const clone = repository.clone();
+			repository.apply(stored);
+			schemaVersion.set("library", 3);
+			assert.equal(repository.schemaVersion?.get("library"), 2);
+			assert.equal(clone.schemaVersion?.get("library"), 1);
+		});
 	});
 
 	it("allowsFieldSuperset-monotonic", () => {

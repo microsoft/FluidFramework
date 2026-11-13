@@ -25,42 +25,75 @@ import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js"
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import { toInitialSchema } from "../treeSchema.js";
 
-import { SchemaIdentityInternal, type SchemaIdentity } from "./schemaIdentity.js";
+import {
+	SchemaIdentityInternal,
+	type IdentifySchemaOptions,
+	type SchemaIdentity,
+} from "./schemaIdentity.js";
+
+/**
+ * Configures hashing and application-defined versions for {@link identifySchemaWithHash}.
+ *
+ * @remarks
+ * Inherits version configuration from {@link IdentifySchemaOptions} and adds an optional expected hash for schema checks.
+ *
+ * @alpha @input
+ */
+export interface IdentifySchemaWithHashOptions extends IdentifySchemaOptions {
+	/**
+	 * An optional hash used to detect unintended schema changes.
+	 *
+	 * @remarks
+	 * When provided, view construction compares this value with a hash of the view schema and configured staged upgrade policy,
+	 * independent of the document, and throws a UsageError with both hashes if they differ.
+	 * If the change is intentional, this value can be updated with the actual hash from the error;
+	 * when versions are configured, the error also suggests considering an increase to the relevant version.
+	 *
+	 * Omitting this value skips the construction check but still enables hash telemetry.
+	 */
+	readonly expectedHash?: string;
+}
 
 /**
  * Enables schema hash telemetry and optional checks when constructing a view.
- * @remarks
- * Pass the result as {@link ITreeViewConfigurationAlpha.schemaIdentity}.
- * Telemetry identifies the stored schema applied by initialization or upgrade, including schema retained from the existing document.
  *
- * Import this function only when hashing is needed so the hash algorithm can be removed from other bundles.
- * @param options - Options for checking the schema hash.
- * @returns An immutable schema identity that uses SHA-256 hashing.
+ * @remarks
+ * Assigning the result to {@link ITreeViewConfigurationAlpha.schemaIdentity} enables runtime hash logging during initialization and schema upgrades.
+ * Telemetry identifies the stored schema applied by initialization or upgrade, including schema retained from the existing document.
+ * The optional {@link IdentifySchemaWithHashOptions.expectedHash} enables checks for unintended schema changes when constructing a view.
+ *
+ * The {@link IdentifySchemaOptions.schemaVersion} option combines hashing with application-defined versions.
+ * Those versions follow the rules in {@link SchemaVersions} but do not affect the runtime hash,
+ * so a version-only change does not require updating the expected hash.
+ *
+ * For versioning without hashing, {@link identifySchema} avoids the bundle-size cost of schema hashing.
+ *
+ * @param options - Optional expected hash and application-defined versions.
+ *
+ * @returns An immutable schema identity with hashing enabled.
+ *
+ * @see {@link identifySchema} to use application versions without hashing.
+ *
  * @alpha
  */
-export function identifySchemaAlpha(
-	options: {
-		/**
-		 * An optional hash used to detect unintended schema changes.
-		 * @remarks
-		 * The hash uses the view schema and configured staged upgrade policy, independent of the document.
-		 * View construction throws a UsageError containing the expected and actual hashes if they differ.
-		 * If the schema change is intentional, update this value with the actual hash from the error.
-		 * Omit this value to enable telemetry without a construction check.
-		 */
-		readonly expectedHash?: string;
-	} = {},
+export function identifySchemaWithHash(
+	options: IdentifySchemaWithHashOptions = {},
 ): SchemaIdentity {
-	return new SchemaIdentityInternal(options.expectedHash, computeStoredSchemaHash);
+	return new SchemaIdentityInternal(
+		options.expectedHash,
+		computeStoredSchemaHash,
+		options.schemaVersion,
+	);
 }
 
 /**
  * Computes a hash from a view schema.
  *
  * @remarks
- * The hash includes the schema structure and persisted metadata, with the provided
- * enabled staged upgrades.
- * Object key order and allowed-type order do not affect the hash, but metadata array order does.
+ * The hash includes schema structure and persisted metadata after applying the provided staged upgrade policy.
+ * It excludes application-defined versions, so version-only updates leave the hash unchanged.
+ * To keep the result stable across equivalent schema definitions, object keys and allowed types are sorted before hashing;
+ * metadata array order is preserved and therefore does affect the hash.
  *
  * @param schema - the view schema to hash
  * @param stagedSchemaUpgrades - the {@link SchemaUpgrade | staged upgrades} to include,

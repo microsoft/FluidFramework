@@ -17,6 +17,8 @@ import {
 	isObjectNodeSchema,
 	SchemaFactoryAlpha,
 	SchemaUpgrade,
+	decodeSchemaCompatibilitySnapshot,
+	encodeSchemaCompatibilitySnapshot,
 } from "../../../simple-tree/index.js";
 import { testTreeSchema } from "../../cursorTestSuite.js";
 import { AllowsUnknownOptionalFields, testSimpleTrees } from "../../testTrees.js";
@@ -48,6 +50,26 @@ describe("schemaFromSimple", () => {
 		it("empty", () => {
 			roundtrip([]);
 		});
+
+		for (const schemaVersion of [
+			undefined,
+			new Map(),
+			new Map([["com.example", 1]]),
+			new Map([["__proto__", 2]]),
+		] satisfies (ReadonlyMap<string, number> | undefined)[]) {
+			it(`preserves schema versions ${JSON.stringify(schemaVersion === undefined ? undefined : [...schemaVersion])} through snapshots`, () => {
+				const simple = {
+					...getSimpleSchema([]),
+					...(schemaVersion === undefined ? {} : { schemaVersion }),
+				};
+				const snapshot = encodeSchemaCompatibilitySnapshot(simple);
+				const decoded = decodeSchemaCompatibilitySnapshot(snapshot);
+				const generated = generateSchemaFromSimpleSchema(decoded);
+				assert.deepEqual(generated.schemaVersion, schemaVersion);
+				assert.equal(Object.hasOwn(generated, "schemaVersion"), schemaVersion !== undefined);
+				assert.deepEqual(encodeSchemaCompatibilitySnapshot(generated), snapshot);
+			});
+		}
 
 		it("recursive", () => {
 			const schema = new SchemaFactory("com.example");

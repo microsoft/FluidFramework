@@ -52,7 +52,7 @@ import {
 	TreeViewConfigurationAlpha,
 	StagedSchemaUpgradePolicy,
 	computeSchemaHash,
-	identifySchemaAlpha,
+	identifySchemaWithHash,
 	FieldKind,
 	isTreeNode,
 } from "../../simple-tree/index.js";
@@ -149,7 +149,9 @@ describe("SchematizingSimpleTreeView", () => {
 				const view = getView(
 					new TreeViewConfigurationAlpha({
 						schema: root,
-						schemaIdentity: identifySchemaAlpha({ expectedHash: computeSchemaHash(root) }),
+						schemaIdentity: identifySchemaWithHash({
+							expectedHash: computeSchemaHash(root),
+						}),
 					}),
 				);
 
@@ -160,7 +162,7 @@ describe("SchematizingSimpleTreeView", () => {
 			it("rejects an incorrect hash when constructing the view", () => {
 				const viewConfig = new TreeViewConfigurationAlpha({
 					schema: root,
-					schemaIdentity: identifySchemaAlpha({
+					schemaIdentity: identifySchemaWithHash({
 						expectedHash: computeSchemaHash(schema.string),
 					}),
 				});
@@ -182,17 +184,67 @@ describe("SchematizingSimpleTreeView", () => {
 				assert.deepEqual(jsonTreeFromCheckout(checkout), beforeContent);
 			});
 
+			it("suggests increasing a version on hash mismatch without hashing versions", () => {
+				const libraryId = "test";
+				const previousHash = computeSchemaHash(schema.number);
+				const actualHash = computeSchemaHash(root);
+				const checkout = checkoutWithInitialTree(config, 5);
+				const beforeSchema = checkout.storedSchema.clone();
+				const beforeContent = jsonTreeFromCheckout(checkout);
+				for (const version of [1, 2]) {
+					const schemaVersion = { [libraryId]: version };
+					const viewConfig = new TreeViewConfigurationAlpha({
+						schema: root,
+						schemaIdentity: identifySchemaWithHash({
+							expectedHash: previousHash,
+							schemaVersion,
+						}),
+					});
+					assert.throws(
+						() =>
+							new SchematizingSimpleTreeView(
+								checkout,
+								viewConfig,
+								new MockNodeIdentifierManager(),
+							),
+						validateUsageError(
+							`Expected schema hash does not match the configured schema. Expected "${previousHash}", got "${actualHash}". For an intentional schema change, consider increasing the relevant application-defined schema version.`,
+						),
+					);
+					assert.deepEqual(checkout.storedSchema.clone(), beforeSchema);
+					assert.deepEqual(jsonTreeFromCheckout(checkout), beforeContent);
+					const updatedViewConfig = new TreeViewConfigurationAlpha({
+						schema: root,
+						schemaIdentity: identifySchemaWithHash({
+							expectedHash: actualHash,
+							schemaVersion,
+						}),
+					});
+					const view = new SchematizingSimpleTreeView(
+						checkout,
+						updatedViewConfig,
+						new MockNodeIdentifierManager(),
+					);
+					assert.deepEqual(
+						updatedViewConfig.schemaVersion,
+						new Map(Object.entries(schemaVersion)),
+					);
+					assert.equal(view.compatibility.canView, true);
+					view.dispose();
+				}
+			});
+
 			it("skips the construction check when no expected hash is provided", () => {
 				const view = getView(
 					new TreeViewConfigurationAlpha({
 						schema: root,
-						schemaIdentity: identifySchemaAlpha(),
+						schemaIdentity: identifySchemaWithHash(),
 					}),
 				);
 				view.dispose();
 			});
 
-			it("requires schema identity to be created with identifySchemaAlpha", () => {
+			it("requires schema identity to be created with identifySchema", () => {
 				assert.throws(
 					() =>
 						new TreeViewConfigurationAlpha({
@@ -200,7 +252,7 @@ describe("SchematizingSimpleTreeView", () => {
 							// @ts-expect-error Schema identity is opaque.
 							schemaIdentity: {},
 						}),
-					validateUsageError(/schemaIdentity must be created with identifySchemaAlpha/),
+					validateUsageError(/schemaIdentity must be created with identifySchema/),
 				);
 			});
 		});
@@ -213,7 +265,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const view = tree.viewWith(
 				new TreeViewConfigurationAlpha({
 					schema: schema.number,
-					schemaIdentity: identifySchemaAlpha(),
+					schemaIdentity: identifySchemaWithHash(),
 				}),
 			);
 
@@ -240,7 +292,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const view = tree.viewWith(
 				new TreeViewConfigurationAlpha({
 					schema: upgradedSchema,
-					schemaIdentity: identifySchemaAlpha(),
+					schemaIdentity: identifySchemaWithHash(),
 				}),
 			);
 
@@ -288,7 +340,7 @@ describe("SchematizingSimpleTreeView", () => {
 				new TreeViewConfigurationAlpha({
 					schema: schemaV2,
 					stagedUpgradePolicy: policy,
-					schemaIdentity: identifySchemaAlpha({ expectedHash: configuredHash }),
+					schemaIdentity: identifySchemaWithHash({ expectedHash: configuredHash }),
 				}),
 			);
 			viewV2.upgradeSchema();
@@ -326,6 +378,45 @@ describe("SchematizingSimpleTreeView", () => {
 					).length,
 				0,
 			);
+			view.dispose();
+		});
+
+		it("increases versions while retaining staged types and skips repeated upgrades", () => {
+			const logger = createMockLoggerExt();
+			const tree = createIndependentTreeAlpha({ logger });
+			const original = tree.viewWith(
+				new TreeViewConfigurationAlpha({
+					schema: [schema.number, schema.string],
+					schemaIdentity: identifySchemaWithHash({ schemaVersion: 1 }),
+				}),
+			);
+			original.initialize("retained string");
+			original.dispose();
+
+			const stagedSchema = schema.types([schema.number, schema.staged(schema.string)]);
+			const view = tree.viewWith(
+				new TreeViewConfigurationAlpha({
+					schema: stagedSchema,
+					schemaIdentity: identifySchemaWithHash({
+						expectedHash: computeSchemaHash(schema.number),
+						schemaVersion: 2,
+					}),
+				}),
+			);
+			assert.equal(view.compatibility.canUpgrade, true);
+			view.upgradeSchema();
+			assert.equal(view.root, "retained string");
+			assert.deepEqual(asAlpha(view).schemaVersion.stored, new Map([["schemaVersion", 2]]));
+			view.upgradeSchema();
+
+			const events = logger
+				.events()
+				.filter((event) => event.eventName.endsWith("SchemaUpgraded"));
+			assert.equal(events.length, 1);
+			assert.deepEqual(events[0]?.schemaHash, {
+				value: computeSchemaHash([schema.number, schema.string]),
+				tag: TelemetryDataTag.SchemaArtifact,
+			});
 			view.dispose();
 		});
 	});

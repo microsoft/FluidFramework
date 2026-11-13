@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ValueSchema } from "../core/index.js";
+import type { SchemaVersions, ValueSchema } from "../core/index.js";
 import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
 
 import type { NodeKind, SchemaUpgrade, SimpleNodeSchemaBase } from "./core/index.js";
@@ -318,6 +318,11 @@ export interface SimpleFieldSchema<Type extends SchemaType = SchemaType> {
  * @sealed
  */
 export interface SimpleTreeSchema<Type extends SchemaType = SchemaType> {
+	/**
+	 * Contains the application-defined versions for this schema.
+	 */
+	readonly schemaVersion?: SchemaVersions;
+
 	/**
 	 * The tree field representing the root of the tree.
 	 */

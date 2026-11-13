@@ -13,7 +13,13 @@ import {
 } from "../../core/index.js";
 import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js";
 import { NodeKind } from "../core/index.js";
-import { allowsRepoSuperset, defaultSchemaPolicy } from "../../feature-libraries/index.js";
+import {
+	allowsRepoSuperset,
+	SchemaComparisonMode,
+	compareSchemaVersions,
+	SchemaVersionComparison,
+	defaultSchemaPolicy,
+} from "../../feature-libraries/index.js";
 import { resolveStoredSchemaGenerationOptions } from "../toStoredSchema.js";
 import { getSchemaUpgradeCandidate, toInitialSchema, type TreeSchema } from "../treeSchema.js";
 
@@ -48,6 +54,19 @@ export function getSchemaIncompatibilityDetails(
 /**
  * Checks whether an upgrade candidate would enable the view to access the document.
  *
+ * @remarks
+ * An upgrade must preserve all content allowed by the stored schema and prevent clients from repeatedly reversing each other's schema changes.
+ * Monotonic upgrades provide that ordering through the content comparison rules, so they do not require a version increase.
+ * They must still retain every stored version identifier without decreasing its value.
+ *
+ * For content-preserving changes that are not monotonic, application-defined versions must instead provide the ordering.
+ * Both the stored schema and the candidate must therefore have version maps, with no removed identifiers or decreased values,
+ * and at least one increased value or added identifier.
+ * Requiring both maps prevents the first addition of versioning from also enabling a non-monotonic change.
+ *
+ * These checks establish whether the stored schema can safely change to the candidate.
+ * For that change to be useful to the requesting view, the view must also be able to read and edit documents using the resulting schema.
+ *
  * @param viewSchema - The view schema that must be able to use the document after the upgrade.
  * @param storedSchema - The document's stored schema before the upgrade.
  * @param candidate - The proposed stored schema after the upgrade.
@@ -58,8 +77,28 @@ export function isSchemaUpgradeAllowed(
 	storedSchema: TreeStoredSchema,
 	candidate: TreeStoredSchema,
 ): boolean {
+	const comparison = compareSchemaVersions(
+		storedSchema.schemaVersion,
+		candidate.schemaVersion,
+	);
+	if (
+		comparison === SchemaVersionComparison.Decrease ||
+		comparison === SchemaVersionComparison.Incompatible
+	) {
+		return false;
+	}
+
 	return (
-		allowsRepoSuperset(defaultSchemaPolicy, storedSchema, candidate) &&
+		(allowsRepoSuperset(defaultSchemaPolicy, storedSchema, candidate) ||
+			(comparison === SchemaVersionComparison.Increase &&
+				storedSchema.schemaVersion !== undefined &&
+				candidate.schemaVersion !== undefined &&
+				allowsRepoSuperset(
+					defaultSchemaPolicy,
+					storedSchema,
+					candidate,
+					SchemaComparisonMode.ContentOnly,
+				))) &&
 		getSchemaIncompatibilityDetails(viewSchema, candidate) === undefined
 	);
 }
@@ -207,11 +246,17 @@ export function checkSchemaCompatibility(
 	const canUpgrade = isSchemaUpgradeAllowed(viewSchema, stored, wouldUpgradeTo);
 
 	// `isEquivalent` (deprecated) compares the view's generated schema, independently of upgrades already enabled in this document.
-	const viewStoredSchema = toInitialSchema(viewSchema.root, configuredPolicy);
+	const viewStoredSchema = toInitialSchema(
+		viewSchema.root,
+		configuredPolicy,
+		viewSchema.schemaVersion,
+	);
 	const isEquivalent =
 		canView &&
 		allowsRepoSuperset(policy, stored, viewStoredSchema) &&
-		allowsRepoSuperset(policy, viewStoredSchema, stored);
+		allowsRepoSuperset(policy, viewStoredSchema, stored) &&
+		compareSchemaVersions(stored.schemaVersion, viewStoredSchema.schemaVersion) ===
+			SchemaVersionComparison.Equal;
 
 	return {
 		canView,

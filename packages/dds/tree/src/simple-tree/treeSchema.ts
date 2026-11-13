@@ -14,6 +14,7 @@ import {
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchema,
+	type SchemaVersions,
 } from "../core/index.js";
 import { defaultSchemaPolicy, FieldKinds } from "../feature-libraries/index.js";
 import { getOrCreate, oneFromIterable } from "../util/index.js";
@@ -409,8 +410,13 @@ export function getRootSchemaDerivedData(
 export function toUpgradeSchema(
 	root: ImplicitFieldSchema,
 	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
+	schemaVersion?: SchemaVersions,
 ): TreeStoredSchema {
-	return toStoredSchema(root, resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades));
+	const stored = toStoredSchema(
+		root,
+		resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades),
+	);
+	return schemaVersion === undefined ? stored : { ...stored, schemaVersion };
 }
 
 /**
@@ -519,7 +525,7 @@ export function getSchemaUpgradeCandidate(
 			}
 		}
 
-		return { rootFieldSchema, nodeSchema };
+		return { rootFieldSchema, nodeSchema, schemaVersion: viewSchema.schemaVersion };
 	});
 }
 
@@ -646,8 +652,13 @@ function composeFieldSchema(
 export function toInitialSchema(
 	root: ImplicitFieldSchema,
 	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
+	schemaVersion?: SchemaVersions,
 ): TreeStoredSchema {
-	return toStoredSchema(root, resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades));
+	const stored = toStoredSchema(
+		root,
+		resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades),
+	);
+	return schemaVersion === undefined ? stored : { ...stored, schemaVersion };
 }
 
 /**
@@ -808,6 +819,11 @@ function addDefinition(
  * @sealed @alpha
  */
 export interface TreeSchema extends SimpleTreeSchema<SchemaType.View> {
+	/**
+	 * Contains the application-defined versions for this schema.
+	 */
+	readonly schemaVersion?: SchemaVersions;
+
 	readonly root: FieldSchemaAlpha;
 
 	readonly definitions: ReadonlyMap<
