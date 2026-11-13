@@ -17,6 +17,8 @@ import type {
 	ISocketStorageDiscovery,
 } from "@fluidframework/odsp-driver-definitions/internal";
 
+import { JoinSessionCache } from "./joinSessionCache.js";
+
 /**
  * Similar to IPersistedCache, but exposes cache interface for single file
  * @legacy
@@ -135,10 +137,7 @@ export interface IOdspCache extends INonPersistentCache {
 }
 
 export class NonPersistentCache implements INonPersistentCache {
-	public readonly sessionJoinCache = new PromiseCache<
-		string,
-		{ entryTime: number; joinSessionResponse: ISocketStorageDiscovery }
-	>();
+	public readonly sessionJoinCache = new JoinSessionCache();
 
 	public readonly fileUrlCache = new PromiseCache<string, IOdspResolvedUrl>();
 
