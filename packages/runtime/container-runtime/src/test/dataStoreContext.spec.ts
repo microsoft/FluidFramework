@@ -50,6 +50,7 @@ import {
 	MockFluidDataStoreRuntime,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
+import sinon from "sinon";
 
 import {
 	type ChannelCollection,
@@ -94,6 +95,53 @@ describe("Data Store Context Tests", () => {
 			({ summarizerNode, createSummarizerNodeFn } =
 				createSummarizerNodeAndGetCreateFn(dataStoreId));
 			parentContext = createParentContext();
+		});
+
+		describe("setAttachState", () => {
+			let channel: IFluidDataStoreChannel;
+
+			beforeEach(async () => {
+				localDataStoreContext = new LocalFluidDataStoreContext({
+					id: dataStoreId,
+					pkg: ["TestDataStore1"],
+					parentContext,
+					storage,
+					scope,
+					createSummarizerNodeFn,
+					makeLocallyVisibleFn,
+					snapshotTree: undefined,
+				});
+				channel = await localDataStoreContext.realize();
+			});
+
+			it("notifies the channel once for each attachment transition", () => {
+				const setAttachState = sinon.stub(channel, "setAttachState");
+				assert.equal(localDataStoreContext.attachState, AttachState.Detached);
+
+				localDataStoreContext.setAttachState(AttachState.Attaching);
+				assert.equal(localDataStoreContext.attachState, AttachState.Attaching);
+				assert.deepEqual(setAttachState.args, [[AttachState.Attaching]]);
+
+				localDataStoreContext.setAttachState(AttachState.Attached);
+				assert.equal(localDataStoreContext.attachState, AttachState.Attached);
+				assert.deepEqual(setAttachState.args, [
+					[AttachState.Attaching],
+					[AttachState.Attached],
+				]);
+			});
+
+			it("does not notify the channel again for repeated Attached transitions", () => {
+				const setAttachState = sinon.stub(channel, "setAttachState");
+				localDataStoreContext.setAttachState(AttachState.Attaching);
+				setAttachState.resetHistory();
+
+				localDataStoreContext.setAttachState(AttachState.Attached);
+				localDataStoreContext.setAttachState(AttachState.Attached);
+				localDataStoreContext.setAttachState(AttachState.Attached);
+
+				assert.equal(localDataStoreContext.attachState, AttachState.Attached);
+				assert.deepEqual(setAttachState.args, [[AttachState.Attached]]);
+			});
 		});
 
 		describe("Initialization", () => {
