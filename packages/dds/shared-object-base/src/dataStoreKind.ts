@@ -65,7 +65,7 @@ export function dataStoreRegistryFromIterable<T = unknown>(
 			mapEntry = async () => entry;
 		} else {
 			// Guard fails to fully exclude DataStoreKind<T> on this branch, so we need to cast, but it should be safe.
-			const loader = (entry as { type: string; kind: () => Promise<DataStoreKind<T>> }).kind;
+			const loader = (entry as { kind: () => Promise<DataStoreKind<T>> }).kind.bind(entry);
 			// Only invoke the loader once, but do so lazily when first requested (not now).
 			// This requires a lazily populated cached promise:
 			let lazyLoadPromise: Promise<DataStoreKind<T>> | undefined;
