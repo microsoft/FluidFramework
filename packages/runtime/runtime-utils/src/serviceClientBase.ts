@@ -112,26 +112,27 @@ export class DataStoreKindImplementation<T>
 	}
 }
 
+/**
+ * Cache for {@link dataStoreKindFromFactory}.
+ */
 const legacyKinds = new WeakMap<IFluidDataStoreFactory, DataStoreKind>();
 
 /**
- * Uses a legacy data-store factory as a kind in the alpha {@link @fluidframework/driver-definitions#ServiceClient} APIs.
+ * Adapt an {@link @fluidframework/runtime-definitions#IFluidDataStoreFactory} into a {@link @fluidframework/driver-definitions#DataStoreKind}.
  * @remarks
- * Pass the returned kind to ServiceClient creation/loading APIs or register it in a data-store registry.
+ * This allows use of some of the `@legacy` API surface with the new {@link @fluidframework/driver-definitions#ServiceClient} APIs,
+ * helping enable incremental migration to the new API surface.
  *
- * This preserves the factory identity, entry point, child registry, named channels, and document format.
- * Factories can create registered child data stores during initialization.
- * No additional hosting object is persisted, and the entry-point value is not adapted.
  * Repeated calls with the same factory return the same kind.
  * Different factories remain different kinds, even if they have the same type identifier.
  *
  * The caller must ensure that the factory's entry point is a `T`.
  * Legacy factories do not encode that type, so this function cannot check it.
- * Existing legacy registries can continue to register the original factory.
  *
- * This does not change root discovery: ServiceClient currently expects the `root` data-store alias.
+ * This does not change root discovery: {@link @fluidframework/driver-definitions#ServiceClient} currently expects the `root` data-store alias.
  * For other conventions, load and resolve the root with your existing legacy APIs, then use {@link fluidContainerFromLegacy}.
- * @typeParam T - The entry-point type produced by the legacy factory.
+ * @typeParam T - The value type returned by the legacy factory's
+ * {@link @fluidframework/runtime-definitions#IFluidDataStoreChannel.entryPoint | entry-point handle}.
  * @param factory - The existing data-store factory.
  * @returns The kind for the factory, with the caller-specified entry-point type.
  * @legacy
