@@ -3,11 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import { performanceNow } from "@fluid-internal/client-utils";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor, StableId } from "@fluidframework/id-compressor";
-import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
+import type {
+	IExperimentalIncrementalSummaryContext,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+	OldestSupportedClientVersion,
+} from "@fluidframework/runtime-definitions/internal";
 import type {
 	IChannelView,
 	IFluidSerializer,
@@ -26,6 +32,7 @@ import {
 	type ICodecOptions,
 } from "../codec/index.js";
 import {
+	type CustomMetadataTree,
 	type FieldKey,
 	type GraphCommit,
 	type JsonableTree,
@@ -43,6 +50,7 @@ import {
 	moveToDetachedField,
 } from "../core/index.js";
 import {
+	DefaultRevisionReplacer,
 	DetachedFieldIndexSummarizer,
 	FieldBatchDecodingContext,
 	FieldKinds,
@@ -67,6 +75,7 @@ import {
 	makeMessageCodecBuilder,
 	type SharedTreeCoreOptionsInternal,
 	MessageFormatVersion,
+	messageCodecName,
 	SharedTreeCore,
 	EditManagerFormatVersion,
 	makeEditManagerCodecBuilder,
@@ -90,10 +99,14 @@ import {
 	type SimpleObjectFieldSchema,
 	type SimpleAllowedTypeAttributes,
 	type SchemaType,
+	type CanCompactCommit,
+	type SummaryHistoryCompactionOptions,
+	type CommitRevision,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
 	breakingClass,
+	isJsonObject,
 	type JsonCompatible,
 	throwIfBroken,
 } from "../util/index.js";
@@ -105,6 +118,7 @@ import type {
 	ForestTypeOptimized,
 } from "./forestTypeOptimized.js";
 import { ForestTypeReference } from "./forestTypeReference.js";
+import { LazyTreeBranchCommitMetadata } from "./history.js";
 import {
 	getCodecTreeForChangeFormat,
 	SharedTreeChangeFormatVersion,
@@ -195,6 +209,21 @@ export class SharedTreeKernel
 	private readonly checkouts: Map<BranchId, TreeCheckout> = new Map();
 
 	/**
+	 * Compaction policy run before each summary, from {@link SharedTreeOptions.historyCompaction}.
+	 */
+	private readonly summaryCompactionPolicy: CanCompactCommit | undefined;
+
+	/**
+	 * Metadata composer used with {@link SharedTreeKernel.summaryCompactionPolicy}, from {@link SharedTreeOptions.historyCompaction}.
+	 */
+
+	/**
+	 * Whether this tree writes the message format that can carry preserved revisions.
+	 * @remarks See {@link SummaryHistoryCompactionOptions.enableRevisionPreservation}.
+	 */
+	private readonly supportsRevisionPreservation: boolean;
+
+	/**
 	 * The app-facing API for SharedTree implemented by this Kernel.
 	 * @remarks
 	 * This is the API grafted onto the ISharedObject which apps can access.
@@ -221,7 +250,7 @@ export class SharedTreeKernel
 		) {
 			throw new UsageError("retainHistory must be a boolean or a nonnegative safe integer");
 		}
-		const options: Required<SharedTreeOptionsInternal> = {
+		const options: Required<Omit<SharedTreeOptionsInternal, "historyCompaction">> = {
 			...defaultSharedTreeOptions,
 			...optionsParam,
 			retainHistory: retainHistory ?? defaultSharedTreeOptions.retainHistory,
@@ -350,8 +379,144 @@ export class SharedTreeKernel
 			createSharedBranch: this.createSharedBranch.bind(this),
 			getSharedBranchName: this.getSharedBranchName.bind(this),
 			getSharedBranchIds: this.getSharedBranchIds.bind(this),
+			historyCompaction: {
+				requestCompaction: (canCompactCommit) => this.requestCompaction(canCompactCommit),
+				setRevisionPreserved: (revision, preserved) =>
+					this.setCommitRevisionPreserved(revision, preserved),
+				isRevisionPreserved: (revision) => this.isCommitRevisionPreserved(revision),
+			},
 			kernel: this,
 		};
+		this.summaryCompactionPolicy = optionsParam.historyCompaction?.canCompactCommit;
+		this.supportsRevisionPreservation =
+			options.writeVersionOverrides.get(messageCodecName) ===
+			MessageFormatVersion.vHistoryCompaction;
+	}
+
+	// Usage errors are reported before any state changes, so they do not need to break the tree.
+	@throwIfBroken
+	private setCommitRevisionPreserved(revision: CommitRevision, preserved: boolean): void {
+		if (!this.supportsRevisionPreservation) {
+			throw new UsageError(
+				"setRevisionPreserved requires SharedTreeOptions.historyCompaction.enableRevisionPreservation (and is not supported with shared branches or detached-root editing)",
+			);
+		}
+		const tag = this.idCompressor.tryRecompress(revision as StableId);
+		if (tag === undefined) {
+			if (!preserved) {
+				return;
+			}
+			throw new UsageError(`Unknown revision: ${revision}`);
+		}
+		if (!this.setRevisionPreserved(tag, preserved)) {
+			throw new UsageError(
+				`Revision ${revision} cannot be preserved because it is not in the main branch's history`,
+			);
+		}
+	}
+
+	@throwIfBroken
+	private isCommitRevisionPreserved(revision: CommitRevision): boolean {
+		const tag = this.idCompressor.tryRecompress(revision as StableId);
+		return tag !== undefined && this.isRevisionPreserved(tag);
+	}
+
+	public override summarizeCore(
+		serializer: IFluidSerializer,
+		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
+		fullTree?: boolean,
+	): ISummaryTreeWithStats {
+		this.compactHistoryForSummary();
+		return super.summarizeCore(
+			serializer,
+			telemetryContext,
+			incrementalSummaryContext,
+			fullTree,
+		);
+	}
+
+	/**
+	 * Runs the configured summary compaction policy, if any.
+	 * @remarks
+	 * A faulty policy must not block summarization or break the tree.
+	 * Policy errors are caught inside the decision callback in {@link SharedTreeKernel.runCompaction},
+	 * before escaping any breaker-wrapped method.
+	 */
+	private compactHistoryForSummary(): void {
+		const policy = this.summaryCompactionPolicy;
+		if (policy === undefined) {
+			return;
+		}
+		this.runCompaction(policy, "summary");
+	}
+
+	private requestCompaction(canCompactCommit: CanCompactCommit): number {
+		return this.runCompaction(canCompactCommit, "manual");
+	}
+
+	private runCompaction(policy: CanCompactCommit, trigger: "manual" | "summary"): number {
+		const started = performanceNow();
+		const statistics = {
+			removedCount: 0,
+			policyCallCount: 0,
+			rejectedPairCount: 0,
+			defaultMergeCount: 0,
+			replacementMergeCount: 0,
+		};
+		let replacesMetadata = false;
+		let failureSource: "policy" | "engine" | undefined;
+		try {
+			return this.compactHistory(
+				(current, target) => {
+					if (failureSource !== undefined) {
+						return false;
+					}
+					statistics.policyCallCount++;
+					try {
+						const decision = decideCompaction(current, target, this.idCompressor, policy);
+						if (decision === false) {
+							statistics.rejectedPairCount++;
+						}
+						replacesMetadata = typeof decision !== "boolean";
+						return decision;
+					} catch (error: unknown) {
+						failureSource = "policy";
+						if (trigger === "manual") {
+							throw error;
+						}
+						return false;
+					}
+				},
+				(updated, obsolete) => new DefaultRevisionReplacer(updated, obsolete),
+				() => {
+					statistics.removedCount++;
+					if (replacesMetadata) {
+						statistics.replacementMergeCount++;
+					} else {
+						statistics.defaultMergeCount++;
+					}
+				},
+			);
+		} catch (error: unknown) {
+			failureSource ??= "engine";
+			throw error;
+		} finally {
+			const event = {
+				eventName: "HistoryCompaction",
+				trigger,
+				status: failureSource === undefined ? "success" : "failure",
+				failureSource,
+				durationMs: performanceNow() - started,
+				...statistics,
+			};
+			if (failureSource === undefined) {
+				this.breaker.logger?.sendTelemetryEvent(event);
+			} else {
+				// Policy errors can contain application data, so only report the failure category.
+				this.breaker.logger?.sendErrorEvent(event);
+			}
+		}
 	}
 
 	private registerCheckout(branchId: BranchId, checkout: TreeCheckout): void {
@@ -546,6 +711,7 @@ export const changeFormatVersionForEditManager = DependentFormatVersion.fromPair
 	[EditManagerFormatVersion.v6, SharedTreeChangeFormatVersion.v5],
 	[EditManagerFormatVersion.v7, SharedTreeChangeFormatVersion.v5],
 	[EditManagerFormatVersion.vDetachedRoots, SharedTreeChangeFormatVersion.vDetachedRoots],
+	[EditManagerFormatVersion.vHistoryCompaction, SharedTreeChangeFormatVersion.v5],
 ]);
 
 /**
@@ -564,6 +730,7 @@ export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs<
 	[MessageFormatVersion.v6, SharedTreeChangeFormatVersion.v5],
 	[MessageFormatVersion.v7, SharedTreeChangeFormatVersion.v5],
 	[MessageFormatVersion.vDetachedRoots, SharedTreeChangeFormatVersion.vDetachedRoots],
+	[MessageFormatVersion.vHistoryCompaction, SharedTreeChangeFormatVersion.v5],
 ]);
 
 function getCodecTreeForEditManagerFormat(
@@ -731,6 +898,20 @@ export interface SharedTreeOptions
 	 * We recommend {@link ForestOptions.forest|configuring SharedTree} with the {@link ForestTypeOptimized|optimized forest implementation} to reduce the performance impact of this validation.
 	 */
 	readonly validateRebasedCommitsBeforeResubmission?: boolean;
+
+	/**
+	 * Application-guided history compaction that runs each time this SharedTree writes a summary.
+	 *
+	 * @defaultValue `undefined` (no compaction when summarizing)
+	 *
+	 * @remarks
+	 * Only has an effect when {@link SharedTreeOptions.retainHistory} keeps history beyond the collaboration window.
+	 * Like `retainHistory`, this option is local to each SharedTree instance; it is not stored in the document.
+	 * Because the summarizer client is created from the same application code, it receives the same policy,
+	 * and the compacted history is what gets persisted.
+	 * See {@link SummaryHistoryCompactionOptions}.
+	 */
+	readonly historyCompaction?: SummaryHistoryCompactionOptions;
 }
 
 export interface SharedTreeOptionsInternal
@@ -760,7 +941,9 @@ export interface SharedTreeFormatOptions {
 	treeEncodeType: TreeCompressionStrategy;
 }
 
-export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
+export const defaultSharedTreeOptions: Required<
+	Omit<SharedTreeOptionsInternal, "historyCompaction">
+> = {
 	jsonValidator: FormatValidatorNoOp,
 	minVersionForCollab: FluidClientVersion.v2_0,
 	forest: ForestTypeReference,
@@ -883,4 +1066,39 @@ function exportSimpleNodeSchemaStored(
 		};
 	}
 	fail(0xacb /* invalid schema kind */);
+}
+
+/**
+ * Asks the application whether to combine `current` into `target` and, if so, with what metadata.
+ * @remarks
+ * This is not a method of {@link SharedTreeKernel} because its methods are wrapped so that any error breaks the tree,
+ * and errors from application callbacks must be catchable by the summary compaction path without breaking it.
+ * @returns `false` to keep both commits, `true` for the default metadata merge,
+ * or the metadata tree that replaces the metadata of both commits.
+ */
+function decideCompaction(
+	current: GraphCommit<SharedTreeChange>,
+	target: GraphCommit<SharedTreeChange>,
+	idCompressor: IIdCompressor,
+	canCompactCommit: CanCompactCommit,
+): boolean | CustomMetadataTree {
+	// Reverting is not offered: the application must not edit the tree while its history is being rewritten.
+	const commits = {
+		current: new LazyTreeBranchCommitMetadata(current, idCompressor, () => undefined),
+		target: new LazyTreeBranchCommitMetadata(target, idCompressor, () => undefined),
+	};
+	const decision = canCompactCommit(commits);
+	if (decision === false) {
+		return false;
+	}
+	if (decision === true) {
+		return true;
+	}
+	if (!isJsonObject(decision)) {
+		throw new UsageError(
+			"canCompactCommit must return a boolean or a JSON object to use as the combined commit's metadata",
+		);
+	}
+	// The returned object replaces the metadata of both commits, so the combined commit has a single metadata node.
+	return { metadata: decision, children: [] };
 }

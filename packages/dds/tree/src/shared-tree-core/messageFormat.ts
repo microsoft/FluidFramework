@@ -67,6 +67,13 @@ export const MessageFormatVersion = strictEnum("MessageFormatVersion", {
 	 * Only used for testing detached roots.
 	 */
 	vDetachedRoots: "detached-roots|v0.1",
+	/**
+	 * Not yet released.
+	 * Only used for testing history compaction's preserved revisions (`setRevisionPreserved`).
+	 * Builds on {@link MessageFormatVersion.v7} and adds the preserved revisions.
+	 * Selected only when `SharedTreeOptions.historyCompaction.enableRevisionPreservation` is `true`.
+	 */
+	vHistoryCompaction: "history-compaction|v0.1",
 });
 export type MessageFormatVersion = Values<typeof MessageFormatVersion>;
 export const supportedMessageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set([
@@ -76,4 +83,5 @@ export const supportedMessageFormatVersions: ReadonlySet<MessageFormatVersion> =
 	MessageFormatVersion.v7,
 	MessageFormatVersion.vSharedBranches,
 	MessageFormatVersion.vDetachedRoots,
+	MessageFormatVersion.vHistoryCompaction,
 ]);

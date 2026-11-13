@@ -13,6 +13,7 @@ import {
 	type ChangeFamilyEditor,
 	CommitKind,
 	type GraphCommit,
+	type RevisionReplacer,
 	type RevisionTag,
 } from "../../../core/index.js";
 import type {
@@ -1512,6 +1513,232 @@ export function testCorrectness(): void {
 					}
 				}
 			}
+		});
+
+		describe("compactHistory", () => {
+			// `TestChange` has no revision-scoped IDs, so it ignores the replacer.
+			const testRevisionReplacer = (updatedRevision: RevisionTag): RevisionReplacer => ({
+				updatedRevision,
+				isObsolete: () => false,
+				getUpdatedAtomId: (id) => id,
+			});
+
+			/**
+			 * Sequences `count` peer commits on a manager that retains all history, then advances the minimum sequence number to `msn`.
+			 */
+			function setupRetainedHistory(count: number, msn: number): TestEditManager {
+				const { manager } = testChangeEditManagerFactory({ historyRetention: true });
+				sequencePeerCommits(manager, count, 1, 1);
+				manager.advanceMinimumSequenceNumber(brand(msn));
+				assert.equal(manager.getTrunkCommits("main").length, count);
+				return manager;
+			}
+
+			function trunkIntentions(manager: TestEditManager): number[][] {
+				return manager
+					.getTrunkChanges("main")
+					.map((change) => (TestChange.isNonEmptyChange(change) ? change.intentions : []));
+			}
+
+			it("does nothing when no history is retained beyond the collaboration window", () => {
+				const { manager } = testChangeEditManagerFactory({ historyRetention: false });
+				sequencePeerCommits(manager, 3, 1, 1);
+				manager.advanceMinimumSequenceNumber(brand(3));
+				const removed = manager.compactHistory(
+					() => assert.fail("Should not be called"),
+					testRevisionReplacer,
+				);
+				assert.equal(removed, 0);
+			});
+
+			it("does nothing when all retained history is inside the collaboration window", () => {
+				const manager = setupRetainedHistory(3, 0);
+				const removed = manager.compactHistory(
+					() => assert.fail("Should not be called"),
+					testRevisionReplacer,
+				);
+				assert.equal(removed, 0);
+				assert.equal(manager.getTrunkCommits("main").length, 3);
+			});
+
+			it("offers adjacent pairs oldest first and keeps commits the policy rejects", () => {
+				const manager = setupRetainedHistory(4, 4);
+				const revisions = manager.getTrunkCommits("main").map((c) => c.revision);
+				const offered: [RevisionTag, RevisionTag][] = [];
+				const removed = manager.compactHistory((before, after) => {
+					offered.push([before.revision, after.revision]);
+					return false;
+				}, testRevisionReplacer);
+				assert.equal(removed, 0);
+				assert.deepEqual(offered, [
+					[revisions[0], revisions[1]],
+					[revisions[1], revisions[2]],
+					[revisions[2], revisions[3]],
+				]);
+				assert.deepEqual(trunkIntentions(manager), [[1], [2], [3], [4]]);
+			});
+
+			it("composes all eligible history into the newest eligible commit", () => {
+				const manager = setupRetainedHistory(4, 4);
+				const newest = manager.getTrunkHead("main");
+				const removed = manager.compactHistory(() => true, testRevisionReplacer);
+				assert.equal(removed, 3);
+				const trunk = manager.getTrunkCommits("main");
+				assert.equal(trunk.length, 1);
+				assert.equal(trunk[0], newest, "The newest eligible commit survives in place");
+				assert.deepEqual(trunkIntentions(manager), [[1, 2, 3, 4]]);
+				checkChangeList(manager, [1, 2, 3, 4]);
+			});
+
+			it("leaves preserved commits unchanged while compacting on either side", () => {
+				const manager = setupRetainedHistory(7, 7);
+				const original = manager.getTrunkCommits("main");
+				const pinned = [original[2], original[4]];
+				const changes = pinned.map((commit) => commit.change);
+				for (const commit of pinned) {
+					assert(manager.setRevisionPreserved(commit.revision, true));
+				}
+				const removed = manager.compactHistory((current, target) => {
+					assert(!pinned.includes(current));
+					assert(!pinned.includes(target));
+					return true;
+				}, testRevisionReplacer);
+				assert.equal(removed, 2);
+				assert.deepEqual(trunkIntentions(manager), [[1, 2], [3], [4], [5], [6, 7]]);
+				assert.deepEqual(
+					manager.getTrunkCommits("main").map((commit) => commit.revision),
+					[original[1], original[2], original[3], original[4], original[6]].map(
+						(commit) => commit.revision,
+					),
+				);
+				for (const [index, commit] of pinned.entries()) {
+					assert.equal(commit.change, changes[index]);
+				}
+				checkChangeList(manager, [1, 2, 3, 4, 5, 6, 7]);
+
+				for (const commit of pinned) {
+					manager.setRevisionPreserved(commit.revision, false);
+				}
+				assert.equal(
+					manager.compactHistory(() => true, testRevisionReplacer),
+					4,
+				);
+				assert.deepEqual(trunkIntentions(manager), [[1, 2, 3, 4, 5, 6, 7]]);
+				checkChangeList(manager, [1, 2, 3, 4, 5, 6, 7]);
+			});
+
+			it("offers an already-composed commit as the next `before`", () => {
+				const manager = setupRetainedHistory(4, 4);
+				const revisions = manager.getTrunkCommits("main").map((c) => c.revision);
+				const offeredBefore: number[][] = [];
+				manager.compactHistory((before) => {
+					offeredBefore.push(
+						TestChange.isNonEmptyChange(before.change) ? before.change.intentions : [],
+					);
+					return true;
+				}, testRevisionReplacer);
+				assert.deepEqual(offeredBefore, [[1], [1, 2], [1, 2, 3]]);
+				assert.equal(manager.getTrunkHead("main").revision, revisions[3]);
+			});
+
+			it("composes only the pairs the policy accepts", () => {
+				const manager = setupRetainedHistory(5, 5);
+				const revisions = manager.getTrunkCommits("main").map((c) => c.revision);
+				// Combine 1 into 2, and 3 into 4, but keep the boundaries between 2 and 3, and 4 and 5.
+				const removed = manager.compactHistory(
+					(_, after) => after.revision === revisions[1] || after.revision === revisions[3],
+					testRevisionReplacer,
+				);
+				assert.equal(removed, 2);
+				assert.deepEqual(trunkIntentions(manager), [[1, 2], [3, 4], [5]]);
+				assert.deepEqual(
+					manager.getTrunkCommits("main").map((c) => c.revision),
+					[revisions[1], revisions[3], revisions[4]],
+				);
+				checkChangeList(manager, [1, 2, 3, 4, 5]);
+			});
+
+			it("never offers commits inside the collaboration window", () => {
+				const manager = setupRetainedHistory(6, 3);
+				const revisions = manager.getTrunkCommits("main").map((c) => c.revision);
+				const offeredAfter: RevisionTag[] = [];
+				const removed = manager.compactHistory((_, after) => {
+					offeredAfter.push(after.revision);
+					return true;
+				}, testRevisionReplacer);
+				assert.equal(removed, 2);
+				assert.deepEqual(offeredAfter, [revisions[1], revisions[2]]);
+				assert.deepEqual(trunkIntentions(manager), [[1, 2, 3], [4], [5], [6]]);
+				checkChangeList(manager, [1, 2, 3, 4, 5, 6]);
+			});
+
+			it("never offers commits needed by a local fork", () => {
+				const { manager } = testChangeEditManagerFactory({ historyRetention: true });
+				sequencePeerCommits(manager, 3, 1, 1);
+				const fork = manager.getLocalBranch("main").fork();
+				sequencePeerCommits(manager, 3, 4, 4);
+				manager.advanceMinimumSequenceNumber(brand(6));
+				const forkBase = fork.getHead();
+				const forkBaseChange = forkBase.change;
+				const removed = manager.compactHistory(() => true, testRevisionReplacer);
+				// The fork's base commit must keep its original change, so only commits before it can be composed.
+				assert.equal(removed, 1);
+				assert.deepEqual(trunkIntentions(manager), [[1, 2], [3], [4], [5], [6]]);
+				assert.equal(manager.getTrunkCommits("main")[1], forkBase);
+				assert.equal(forkBase.change, forkBaseChange);
+			});
+
+			it("merges metadata so that the newer commit wins", () => {
+				const { manager } = testChangeEditManagerFactory({ historyRetention: true });
+				const metadata = [
+					{ metadata: { label: "first", keep: true }, children: [] },
+					undefined,
+					{ metadata: { label: "third" }, children: [] },
+				];
+				for (const [index, customMetadata] of metadata.entries()) {
+					const intention = index + 1;
+					manager.addSequencedChanges(
+						[
+							{
+								change: TestChange.mint(
+									makeArray(index, (j) => j + 1),
+									[intention],
+								),
+								revision: mintRevisionTag(),
+								customMetadata,
+							},
+						],
+						peer1,
+						brand(intention),
+						brand(index),
+						"main",
+					);
+				}
+				manager.advanceMinimumSequenceNumber(brand(3));
+				manager.compactHistory(() => true, testRevisionReplacer);
+				const [composed] = manager.getTrunkCommits("main");
+				assert.deepEqual(composed?.customMetadata, {
+					metadata: undefined,
+					children: [metadata[0], metadata[2]],
+				});
+			});
+
+			it("supports sequencing, trimming, and summarizing after compaction", () => {
+				const manager = setupRetainedHistory(4, 4);
+				manager.compactHistory(() => true, testRevisionReplacer);
+				sequencePeerCommits(manager, 2, 5, 5);
+				manager.advanceMinimumSequenceNumber(brand(6));
+				checkChangeList(manager, [1, 2, 3, 4, 5, 6]);
+				assert.deepEqual(trunkIntentions(manager), [[1, 2, 3, 4], [5], [6]]);
+
+				const { manager: loader } = testChangeEditManagerFactory({ historyRetention: true });
+				loader.loadSummaryData(manager.getSummaryData());
+				checkChangeList(loader, [1, 2, 3, 4, 5, 6]);
+				assert.deepEqual(trunkIntentions(loader), [[1, 2, 3, 4], [5], [6]]);
+
+				manager.setHistoryRetention(false);
+				assert.equal(manager.getTrunkCommits("main").length, 0);
+			});
 		});
 	});
 }

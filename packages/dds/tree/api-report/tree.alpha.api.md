@@ -178,6 +178,12 @@ export function asAlpha<TAllowedTypes extends ImplicitAllowedTypes, TNode extend
 // @beta
 export function asBeta<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewBeta<TSchema>;
 
+// @alpha @input
+export type CanCompactCommit = (candidate: {
+    readonly current: TreeBranchCommitMetadata;
+    readonly target: TreeBranchCommitMetadata;
+}) => boolean | JsonCompatibleReadOnlyObject;
+
 // @alpha @sealed
 export interface CapturedTreeLocation extends ErasedType<"@fluidframework/tree.CapturedTreeLocation"> {
 }
@@ -832,6 +838,7 @@ export interface ITreeAlpha extends ITree, ViewableTreeAlpha {
     createSharedBranch(name?: string): string;
     getSharedBranchIds(): string[];
     getSharedBranchName(branchId: string): string | undefined;
+    readonly historyCompaction: TreeHistoryCompaction;
     viewSharedBranchWith<TRoot extends ImplicitFieldSchema>(branchId: string, config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
 }
 
@@ -1631,6 +1638,7 @@ export interface SharedTreeFormatOptions {
 export interface SharedTreeOptions extends SharedTreeOptionsBeta, Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions> {
     readonly enableDetachedRootEditing?: boolean;
     readonly enableSharedBranches?: boolean;
+    readonly historyCompaction?: SummaryHistoryCompactionOptions;
     readonly retainHistory?: boolean | number;
     shouldEncodeIncrementally?: IncrementalEncodingPolicy;
     readonly validateCommitsOnFirstSubmission?: boolean;
@@ -1775,6 +1783,12 @@ export type StagedUpgradeStatus = "disabled" | "partial" | "enabled";
 
 // @alpha @sealed @system
 export type StringSchema = LeafSchema<"string", string> & SimpleLeafNodeSchema;
+
+// @alpha @input
+export interface SummaryHistoryCompactionOptions {
+    readonly canCompactCommit?: CanCompactCommit;
+    readonly enableRevisionPreservation?: boolean;
+}
 
 // @beta @system
 export namespace System_TableSchema {
@@ -2234,6 +2248,13 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 export interface TreeGapCaptureOptions {
     readonly affinity?: "before" | "after" | undefined;
     readonly movePolicy?: "follow" | undefined;
+}
+
+// @alpha @sealed
+export interface TreeHistoryCompaction {
+    isRevisionPreserved(revision: CommitRevision): boolean;
+    requestCompaction(canCompactCommit: CanCompactCommit): number;
+    setRevisionPreserved(revision: CommitRevision, preserved: boolean): void;
 }
 
 // @alpha @sealed

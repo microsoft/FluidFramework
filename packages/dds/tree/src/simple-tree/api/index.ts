@@ -38,6 +38,11 @@ export type {
 } from "./tree.js";
 export { asTreeViewAlpha } from "./tree.js";
 export type {
+	CanCompactCommit,
+	SummaryHistoryCompactionOptions,
+	TreeHistoryCompaction,
+} from "./historyCompaction.js";
+export type {
 	TreeLocation,
 	TextLocationNode,
 	CapturedTreeLocation,

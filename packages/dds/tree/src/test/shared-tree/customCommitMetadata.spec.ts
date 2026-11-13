@@ -1038,6 +1038,120 @@ describe("custom commit metadata", () => {
 		});
 	});
 
+	describe("History compaction", () => {
+		/**
+		 * Creates two connected trees that retain history, makes annotated edits on the first,
+		 * and then advances the collaboration window past them so that they become eligible for compaction.
+		 */
+		function generateAnnotatedHistory(steps: readonly string[]): {
+			provider: TestTreeProviderLite;
+			view: TreeViewAlpha<typeof StringArray>;
+		} {
+			const {
+				provider,
+				views: [view1, view2],
+			} = createConnectedViews(2, { retainHistory: true });
+			for (const [index, step] of steps.entries()) {
+				view1.runTransaction(
+					() => {
+						view1.root.insertAtEnd(`${index}`);
+					},
+					{ customMetadata: { step } },
+				);
+			}
+			provider.synchronizeMessages();
+			// These edits have ref numbers after the annotated edits, which advances the collaboration window past them.
+			view1.root.insertAtStart("x");
+			view2.root.insertAtStart("y");
+			provider.synchronizeMessages();
+			return { provider, view: view1 };
+		}
+
+		it("is available on the tree rather than on its views", () => {
+			// Example: the app calls tree.historyCompaction, not view.historyCompaction.
+			// A policy that declines every pair removes zero commits.
+			const { provider } = generateAnnotatedHistory([]);
+			const result = asAlpha(provider.trees[0]).historyCompaction.requestCompaction(
+				() => false,
+			);
+			assert.equal(result, 0);
+		});
+
+		it("combines adjacent commits that the application allows", async () => {
+			// Example, oldest first: A(draft) -> B(draft) -> C(draft) -> D(publish).
+			// Accept (A, B), then (A+B, C); decline (A+B+C, D).
+			// The result is (A+B+C)(draft) -> D(publish): two commits removed, no content lost.
+			// Metadata assertions below list the newest commit first; a reload must keep the same history.
+			const { provider, view } = generateAnnotatedHistory([
+				"draft",
+				"draft",
+				"draft",
+				"publish",
+			]);
+			const tree = provider.trees[0];
+			const contentBefore = [...view.root];
+			assert.deepEqual(
+				allMetadata(view.branchHistory)
+					.filter((m) => m !== undefined)
+					.map((m) => m.step),
+				["publish", "draft", "draft", "draft"],
+			);
+
+			const result = asAlpha(tree).historyCompaction.requestCompaction(
+				({ current, target }) =>
+					current.custom?.step === "draft" && target.custom?.step === "draft",
+			);
+
+			assert.equal(result, 2);
+			assert.deepEqual([...view.root], contentBefore, "Compaction does not change content");
+			const steps = (history: TreeBranchHistory): unknown[] =>
+				allMetadata(history)
+					.filter((m) => m !== undefined)
+					.map((m) => m.step);
+			assert.deepEqual(steps(view.branchHistory), ["publish", "draft"]);
+
+			// The compacted history is what gets summarized.
+			const loaded = await loadFreshClient(
+				tree,
+				makeFactory({ retainHistory: true }),
+				provider.getCompressor(tree),
+			);
+			assert.deepEqual(steps(loaded.kernel.checkout.branchHistory), ["publish", "draft"]);
+			assert.deepEqual(
+				[...loaded.viewWith(config).root],
+				contentBefore,
+				"The loaded client has the same content",
+			);
+		});
+
+		it("never offers commits that are still inside the collaboration window", () => {
+			// Example: A(draft) -> B(draft) have been sequenced, but the minimum sequence number
+			// has not advanced past them. Even an always-true policy must not be asked about them.
+			const {
+				provider,
+				views: [view1],
+			} = createConnectedViews(2, { retainHistory: true });
+			for (const step of ["draft", "draft"]) {
+				view1.runTransaction(
+					() => {
+						view1.root.insertAtEnd(step);
+					},
+					{ customMetadata: { step } },
+				);
+			}
+			provider.synchronizeMessages();
+			const offered: unknown[] = [];
+			asAlpha(provider.trees[0]).historyCompaction.requestCompaction(({ target }) => {
+				offered.push(target.custom?.step);
+				return true;
+			});
+			assert(
+				!offered.includes("draft"),
+				"Commits in the collaboration window are not eligible",
+			);
+		});
+	});
+
 	describe("Op rollback", () => {
 		it("is removed along with its commit when the op is rolled back", () => {
 			const runtimeFactory = new MockContainerRuntimeFactory({

@@ -18,6 +18,8 @@ import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	CommitKind,
+	type CustomMetadataTree,
+	type RevisionReplacer,
 	type GraphCommit,
 	type RevisionTag,
 	findAncestor,
@@ -80,6 +82,12 @@ export class EditManager<
 > {
 	private readonly trimmer = createEmitter<BranchTrimmingEvents>();
 	private readonly trimState = { trimmedCommitCount: 0 };
+
+	/**
+	 * Main-branch revisions that history compaction must not remove.
+	 * @remarks See {@link EditManager.setRevisionPreserved}.
+	 */
+	private readonly preservedRevisions = new Set<RevisionTag>();
 
 	private readonly sharedBranches = new Map<
 		BranchId,
@@ -425,6 +433,11 @@ export class EditManager<
 			GraphCommit<TChangeset>
 		>[];
 		const trimmedRevisions = trimmedCommits.map((c) => c.revision);
+		// A preserved revision only protects a commit from compaction, not from the retention limit.
+		// Once the commit is trimmed there is nothing left to preserve.
+		for (const revision of trimmedRevisions) {
+			this.preservedRevisions.delete(revision);
+		}
 
 		// The minimum sequence number informs us that all peer branches are at least caught up to the tail commit,
 		// so rebase them accordingly. This is necessary to prevent peer branches from referencing any evicted commits.
@@ -469,6 +482,108 @@ export class EditManager<
 		this.trimmer.emit("ancestryTrimmed", trimmedRevisions);
 	}
 
+	/**
+	 * Compacts sequenced main-branch history by composing adjacent commits that are no longer needed for correctness.
+	 *
+	 * @param canCompact - Decides, for each adjacent pair of eligible commits (oldest pair first), whether `current` may be composed into `target`.
+	 * When it returns `true` or a metadata tree, `target` is updated in place to contain the composition of both changes and `current` is removed from the history.
+	 * A returned metadata tree replaces the metadata of both commits; `true` keeps the metadata of both (see {@link SharedBranch.composeTrunkCommits}).
+	 * The next pair considered is then the composed `target` and its child, which lets a run of approvals compose more than two commits.
+	 * @param createRevisionReplacer - Creates the replacer used to give each composed change the single revision of `target`.
+	 * @param onCommitCompacted - Called after each completed composition, including those before a later failure.
+	 * @returns The number of commits removed from the history.
+	 *
+	 * @remarks
+	 * Only commits that are retained by the {@link EditManager.setHistoryRetention | retention policy} are eligible.
+	 * History that is still needed for collaboration (the collaboration window) or by registered branches (local forks) is never compacted.
+	 * The newest eligible commit can absorb older commits, but is never itself removed, because later commits depend on its output state.
+	 *
+	 * Composition happens in place: the composed commit keeps the revision, sequence ID, and object identity of `target`,
+	 * so commits based on `target` remain linked to it.
+	 *
+	 * A pair whose `current` or `target` is {@link EditManager.setRevisionPreserved | preserved} is skipped without calling `canCompact`,
+	 * so a preserved commit's change and metadata remain unchanged by compaction.
+	 */
+	public compactHistory(
+		canCompact: (
+			current: GraphCommit<TChangeset>,
+			target: GraphCommit<TChangeset>,
+		) => boolean | CustomMetadataTree,
+		createRevisionReplacer: RevisionReplacerFactory,
+		onCommitCompacted?: () => void,
+	): number {
+		const mainBranch = this.getSharedBranch("main");
+		const correctnessBound = minSequenceId(
+			this.getUpperTrimmingBoundForMinimumSequenceNumber(),
+			this.getUpperTrimmingBoundForLocalForks(),
+		);
+		const newestEligible = mainBranch.sequenceIdToCommit.getPairOrNextLower(correctnessBound);
+		if (newestEligible === undefined) {
+			return 0;
+		}
+
+		const eligible = getPathFromBase(newestEligible[1], this.trunkBase);
+		let removedCount = 0;
+		for (let index = 1; index < eligible.length; index++) {
+			// If the previous pair was composed, `current` is the composed commit, because composition mutates `target` in place.
+			const current =
+				eligible[index - 1] ?? fail("Expected an eligible commit before the candidate");
+			const target = eligible[index] ?? fail("Expected an eligible candidate commit");
+			if (
+				this.preservedRevisions.has(current.revision) ||
+				this.preservedRevisions.has(target.revision)
+			) {
+				continue;
+			}
+			const decision = canCompact(current, target);
+			if (decision !== false) {
+				mainBranch.composeTrunkCommits(
+					current,
+					target,
+					createRevisionReplacer,
+					decision === true ? undefined : decision,
+				);
+				removedCount++;
+				onCommitCompacted?.();
+			}
+		}
+		return removedCount;
+	}
+
+	/**
+	 * Marks or unmarks a main-branch revision as preserved, so that {@link EditManager.compactHistory} never combines it with another commit.
+	 * @param revision - The revision of a commit on the main branch's trunk or in its local (not yet sequenced) commits.
+	 * @param preserved - Whether the revision should be preserved.
+	 * @returns `false` if `preserved` is `true` but the revision is not in the main branch's history
+	 * (for example because it was already trimmed or compacted away), in which case nothing changes. Otherwise `true`.
+	 * @remarks
+	 * Preserving a revision does not keep it beyond the retention limit: it is dropped when its commit is trimmed.
+	 * This method is idempotent so it can be applied both optimistically and again when the corresponding op is sequenced.
+	 */
+	public setRevisionPreserved(revision: RevisionTag, preserved: boolean): boolean {
+		if (!preserved) {
+			this.preservedRevisions.delete(revision);
+			return true;
+		}
+		const mainBranch = this.getSharedBranch("main");
+		if (
+			!mainBranch.hasTrunkCommit(revision) &&
+			!mainBranch.getLocalCommits().some((commit) => commit.revision === revision)
+		) {
+			return false;
+		}
+		this.preservedRevisions.add(revision);
+		return true;
+	}
+
+	/**
+	 * Whether the given revision is preserved from history compaction.
+	 * @remarks See {@link EditManager.setRevisionPreserved}.
+	 */
+	public isRevisionPreserved(revision: RevisionTag): boolean {
+		return this.preservedRevisions.has(revision);
+	}
+
 	public isEmpty(): boolean {
 		for (const branch of this.sharedBranches.values()) {
 			if (!branch.isEmpty(this.trunkBase)) {
@@ -506,7 +621,15 @@ export class EditManager<
 			}
 		}
 		const mainSummary = mainBranch.getSummaryData(minBaseSeqId, this.trunkBase.revision);
-		return { main: mainSummary, branches, originator: this.localSessionId };
+		const preservedRevisions = mainSummary.trunk
+			.map((commit) => commit.revision)
+			.filter((revision) => this.preservedRevisions.has(revision));
+		return {
+			main: mainSummary,
+			branches,
+			originator: this.localSessionId,
+			...(preservedRevisions.length > 0 ? { preservedRevisions } : {}),
+		};
 	}
 
 	public loadSummaryData(data: SummaryData<TChangeset>): void {
@@ -521,6 +644,9 @@ export class EditManager<
 		const mainBranch =
 			this.sharedBranches.get("main") ?? fail(0xc58 /* Main branch must exist */);
 		mainBranch.loadSummaryData(data.main, trunkRevisionCache);
+		for (const revision of data.preservedRevisions ?? []) {
+			this.preservedRevisions.add(revision);
+		}
 		if (data.branches !== undefined) {
 			for (const [branchId, branchData] of data.branches) {
 				const baseCommit =
@@ -777,6 +903,11 @@ export interface SummaryData<TChangeset> {
 	readonly originator?: SessionId;
 	readonly main: SharedBranchSummaryData<TChangeset>;
 	readonly branches?: ReadonlyMap<BranchId, SharedBranchSummaryData<TChangeset>>;
+	/**
+	 * Main-branch revisions that are preserved from history compaction (see {@link EditManager.setRevisionPreserved}).
+	 * @remarks Only encoded by {@link EditManagerFormatVersion.vHistoryCompaction}; other formats drop it.
+	 */
+	readonly preservedRevisions?: readonly RevisionTag[];
 }
 
 export interface SharedBranchSummaryData<TChangeset> {
@@ -1053,6 +1184,44 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 		);
 	}
 
+	/**
+	 * Composes `current` into its child `target`, removing `current` from this branch's trunk.
+	 * @remarks
+	 * `target` is mutated in place, so that commits which have `target` as their parent remain linked to it.
+	 * It keeps its revision and sequence ID, and its change refers only to that revision.
+	 * Its metadata becomes `mergedMetadata` if provided.
+	 * Otherwise it becomes the metadata of both commits as siblings, so that flattening the metadata lets `target`'s metadata win where both commits use the same property.
+	 */
+	public composeTrunkCommits(
+		current: GraphCommit<TChangeset>,
+		target: GraphCommit<TChangeset>,
+		createRevisionReplacer: RevisionReplacerFactory,
+		mergedMetadata?: CustomMetadataTree,
+	): void {
+		assert(target.parent === current, "Only adjacent commits can be composed");
+		assert(current.parent !== undefined, "The trunk base cannot be composed away");
+		const currentMetadata = this.commitMetadata.get(current.revision);
+		assert(currentMetadata !== undefined, "Only sequenced trunk commits can be composed");
+
+		const composed = target as Mutable<GraphCommit<TChangeset>>;
+		const { rebaser } = this.changeFamily;
+		const composedChange = rebaser.compose([
+			tagChange(current.change, current.revision),
+			tagChange(target.change, target.revision),
+		]);
+		// A persisted commit's change may only refer to the commit's own revision, so the composed change is re-tagged with `target`'s revision.
+		composed.change = rebaser.changeRevision(
+			composedChange,
+			createRevisionReplacer(target.revision, new Set([current.revision, target.revision])),
+		);
+		composed.customMetadata =
+			mergedMetadata ?? composeCustomMetadata(current.customMetadata, target.customMetadata);
+		composed.parent = current.parent;
+
+		this.sequenceIdToCommit.delete(currentMetadata.sequenceId);
+		this.commitMetadata.delete(current.revision);
+	}
+
 	private rebasePeers(commit: GraphCommit<TChangeset>): void {
 		for (const [, branch] of this.peerLocalBranches) {
 			branch.rebaseOnto(this.trunk, commit);
@@ -1064,6 +1233,13 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 
 	public getLocalCommits(): readonly GraphCommit<TChangeset>[] {
 		return this.localCommits;
+	}
+
+	/**
+	 * Whether a sequenced commit with the given revision is in this branch's trunk (excluding the trunk base).
+	 */
+	public hasTrunkCommit(revision: RevisionTag): boolean {
+		return this.commitMetadata.has(revision);
 	}
 
 	/**
@@ -1337,3 +1513,30 @@ type OnSequenceCommit<TChangeset> = (
 	sequenceId: SequenceId,
 	prevSequenceId: SequenceId,
 ) => void;
+
+/**
+ * Creates a {@link RevisionReplacer} that replaces the `obsolete` revisions with `updated`.
+ */
+export type RevisionReplacerFactory = (
+	updated: RevisionTag,
+	obsolete: Set<RevisionTag | undefined>,
+) => RevisionReplacer;
+
+/**
+ * Combines the metadata of two composed commits by making them siblings in a new metadata tree.
+ * @remarks
+ * Sibling order matches commit order, so when the result is flattened the later commit's metadata wins.
+ * If only one commit has metadata, that metadata is used unchanged.
+ */
+function composeCustomMetadata(
+	before: CustomMetadataTree | undefined,
+	after: CustomMetadataTree | undefined,
+): CustomMetadataTree | undefined {
+	if (before === undefined) {
+		return after;
+	}
+	if (after === undefined) {
+		return before;
+	}
+	return { metadata: undefined, children: [before, after] };
+}

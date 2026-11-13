@@ -162,7 +162,28 @@ describe("message codec", () => {
 		MessageFormatVersion.v7,
 		MessageFormatVersion.vSharedBranches,
 		MessageFormatVersion.vDetachedRoots,
+		MessageFormatVersion.vHistoryCompaction,
 	]);
+	makeEncodingTestSuite(
+		family,
+		{
+			successes: [
+				...testCases.successes,
+				...[true, false].map((preserved): (typeof testCases.successes)[number] => [
+					`Preserve revision message (preserved: ${preserved})`,
+					{
+						type: "preserveRevision",
+						sessionId: testIdCompressor.localSessionId,
+						revision: commit1.revision,
+						preserved,
+					},
+					dummyContext,
+				]),
+			],
+		},
+		undefined,
+		[MessageFormatVersion.vHistoryCompaction],
+	);
 	makeDiscontinuedEncodingTestSuite(family, [
 		undefined,
 		MessageFormatVersion.v1,

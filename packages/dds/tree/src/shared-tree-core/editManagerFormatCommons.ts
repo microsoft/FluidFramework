@@ -221,6 +221,13 @@ export const EditManagerFormatVersion = strictEnum("editManager.FormatVersion", 
 	 * Only used for testing detached roots.
 	 */
 	vDetachedRoots: "detached-roots|v0.1",
+	/**
+	 * Not yet released.
+	 * Only used for testing history compaction's preserved revisions (`setRevisionPreserved`).
+	 * Builds on {@link EditManagerFormatVersion.v7} and adds the preserved revisions.
+	 * Selected only when `SharedTreeOptions.historyCompaction.enableRevisionPreservation` is `true`.
+	 */
+	vHistoryCompaction: "history-compaction|v0.1",
 });
 export type EditManagerFormatVersion = Values<typeof EditManagerFormatVersion>;
 export const supportedEditManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> =
@@ -231,6 +238,7 @@ export const supportedEditManagerFormatVersions: ReadonlySet<EditManagerFormatVe
 		EditManagerFormatVersion.v7,
 		EditManagerFormatVersion.vSharedBranches,
 		EditManagerFormatVersion.vDetachedRoots,
+		EditManagerFormatVersion.vHistoryCompaction,
 	]);
 export const editManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> = new Set(
 	Object.values(EditManagerFormatVersion),

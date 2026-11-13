@@ -25,6 +25,7 @@ import type {
 	EditManagerEncodingContext,
 } from "./editManagerCodecsCommons.js";
 import { makeV1toV4andV6CodecWithVersion } from "./editManagerCodecsV1toV4.js";
+import { makeHistoryCompactionEditManagerCodec } from "./editManagerCodecsVHistoryCompaction.js";
 import { makeSharedBranchesCodecWithVersion } from "./editManagerCodecsVSharedBranches.js";
 import { EditManagerFormatVersion } from "./editManagerFormatCommons.js";
 
@@ -146,6 +147,19 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 					),
 					options.revisionTagCodec,
 					EditManagerFormatVersion.vDetachedRoots,
+				),
+		},
+		{
+			minVersionForCollab: undefined,
+			formatVersion: EditManagerFormatVersion.vHistoryCompaction,
+			codec: (options: EditManagerCodecOptions<TChangeset>) =>
+				makeHistoryCompactionEditManagerCodec(
+					options.changeCodecs.resolve(
+						options.dependentChangeFormatVersion.lookup(
+							EditManagerFormatVersion.vHistoryCompaction,
+						),
+					),
+					options.revisionTagCodec,
 				),
 		},
 	];

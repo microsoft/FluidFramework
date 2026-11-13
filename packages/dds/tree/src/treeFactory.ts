@@ -238,8 +238,24 @@ function resolveFormatOptions(options: SharedTreeOptions): SharedTreeOptionsInte
 	if (options.enableDetachedRootEditing === true) {
 		return detachRootEditingOptions;
 	}
+
+	if (options.historyCompaction?.enableRevisionPreservation === true) {
+		return historyCompactionOptions;
+	}
+
 	return {};
 }
+
+/**
+ * Selects the unreleased formats that can carry preserved revisions (see `TreeHistoryCompaction.setRevisionPreserved`).
+ */
+const historyCompactionOptions: SharedTreeOptionsInternal = {
+	writeVersionOverrides: new Map<string, FormatVersion>([
+		[editManagerCodecName, EditManagerFormatVersion.vHistoryCompaction],
+		[messageCodecName, MessageFormatVersion.vHistoryCompaction],
+	]),
+	allowPossiblyIncompatibleWriteVersionOverrides: true,
+};
 
 const sharedBranchesOptions: SharedTreeOptionsInternal = {
 	writeVersionOverrides: new Map<string, FormatVersion>([

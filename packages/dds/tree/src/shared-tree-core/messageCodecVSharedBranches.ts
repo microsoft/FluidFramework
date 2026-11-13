@@ -4,6 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import * as Type from "typebox/type";
 import type { TSchema } from "typebox";
 
@@ -76,6 +77,11 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 						branchName: message.branchName,
 						version,
 					};
+				}
+				case "preserveRevision": {
+					throw new UsageError(
+						"Preserving revisions is not supported together with shared branches",
+					);
 				}
 				default: {
 					unreachableCase(type);

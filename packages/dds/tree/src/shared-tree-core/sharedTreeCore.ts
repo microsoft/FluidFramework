@@ -32,6 +32,7 @@ import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	CommitKind,
+	type CustomMetadataTree,
 	type GraphCommit,
 	replaceChange,
 	type RevisionTag,
@@ -54,7 +55,11 @@ import type { BranchId, SharedTreeBranch } from "./branch.js";
 import { BranchCommitEnricher } from "./branchCommitEnricher.js";
 import type { ChangeEnricher } from "./changeEnricher.js";
 import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
-import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
+import {
+	EditManager,
+	minimumPossibleSequenceNumber,
+	type RevisionReplacerFactory,
+} from "./editManager.js";
 import { makeEditManagerCodecBuilder } from "./editManagerCodecs.js";
 import type { EditManagerFormatVersion, SeqNumber } from "./editManagerFormatCommons.js";
 import { EditManagerSummarizer } from "./editManagerSummarizer.js";
@@ -519,6 +524,17 @@ export class SharedTreeCore<
 					);
 					break;
 				}
+				case "preserveRevision": {
+					// Commits earlier in this bunch must be in the trunk before the revision is looked up.
+					if (branchId !== undefined) {
+						processBunch(branchId);
+					}
+					// Applied for local messages too: this is idempotent with the optimistic local application,
+					// and re-applies it if the commit had not been sequenced yet when the pin was requested.
+					// The result is ignored: a remote client may preserve a revision this client has already trimmed or compacted.
+					this.editManager.setRevisionPreserved(message.revision, message.preserved);
+					break;
+				}
 				default: {
 					unreachableCase(type);
 				}
@@ -569,6 +585,57 @@ export class SharedTreeCore<
 			.filter((id): id is SessionSpaceCompressedId => id !== "main")
 			.map((id) => this.idCompressor.decompress(id));
 	}
+	/**
+	 * Compacts the main branch's retained history.
+	 * @remarks See {@link EditManager.compactHistory}.
+	 */
+	public compactHistory(
+		canCompact: (
+			current: GraphCommit<TChange>,
+			target: GraphCommit<TChange>,
+		) => boolean | CustomMetadataTree,
+		createRevisionReplacer: RevisionReplacerFactory,
+		onCommitCompacted?: () => void,
+	): number {
+		return this.editManager.compactHistory(
+			canCompact,
+			createRevisionReplacer,
+			onCommitCompacted,
+		);
+	}
+
+	/**
+	 * Marks or unmarks a main-branch revision as preserved from history compaction, locally and for all other clients.
+	 * @returns `false` (and sends nothing) if the revision is not in the main branch's history.
+	 * @remarks
+	 * The change is applied locally right away and sent as an op, so every client (including the summarizer) applies it.
+	 * The current message format must support "preserveRevision" messages, which the caller is responsible for checking.
+	 * See {@link EditManager.setRevisionPreserved}.
+	 */
+	public setRevisionPreserved(revision: RevisionTag, preserved: boolean): boolean {
+		if (!this.editManager.setRevisionPreserved(revision, preserved)) {
+			return false;
+		}
+		this.submitMessage(
+			{
+				type: "preserveRevision",
+				sessionId: this.editManager.localSessionId,
+				revision,
+				preserved,
+			},
+			this.schemaAndPolicy,
+		);
+		return true;
+	}
+
+	/**
+	 * Whether the given revision is preserved from history compaction.
+	 * @remarks See {@link EditManager.isRevisionPreserved}.
+	 */
+	public isRevisionPreserved(revision: RevisionTag): boolean {
+		return this.editManager.isRevisionPreserved(revision);
+	}
+
 	public createSharedBranch(branchName?: string): string {
 		if (branchName !== undefined && branchName.length > SharedTreeCore.maxBranchNameLength) {
 			throw new UsageError(
@@ -642,6 +709,10 @@ export class SharedTreeCore<
 				this.submitBranchCreation(message.branchId, message.branchName);
 				break;
 			}
+			case "preserveRevision": {
+				this.submitMessage(message, this.schemaAndPolicy);
+				break;
+			}
 			default: {
 				unreachableCase(type);
 			}
@@ -673,6 +744,11 @@ export class SharedTreeCore<
 				this.editManager.removeBranch(message.branchId);
 				break;
 			}
+			case "preserveRevision": {
+				// Approximation: this restores the opposite state, which is wrong if the request did not change the state.
+				this.editManager.setRevisionPreserved(message.revision, !message.preserved);
+				break;
+			}
 			default: {
 				unreachableCase(type);
 			}
@@ -699,6 +775,10 @@ export class SharedTreeCore<
 			}
 			case "branch": {
 				this.editManager.addNewBranch(message.branchId, message.branchName);
+				break;
+			}
+			case "preserveRevision": {
+				this.editManager.setRevisionPreserved(message.revision, message.preserved);
 				break;
 			}
 			default: {
