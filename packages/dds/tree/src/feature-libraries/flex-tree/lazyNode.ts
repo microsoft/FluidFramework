@@ -27,12 +27,14 @@ import type { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
 	type FlexTreeField,
+	type FlexTreeUnknownUnboxed,
 	type HydratedFlexTreeNode,
 	flexTreeMarker,
 	flexTreeSlot,
+	notLeafContent,
 } from "./flexTreeTypes.js";
 import { LazyEntity } from "./lazyEntity.js";
-import { getCachedField, makeField } from "./lazyField.js";
+import { getCachedField, makeField, unboxedFlexNode } from "./lazyField.js";
 import { currentObserver } from "./observer.js";
 
 /**
@@ -116,22 +118,30 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 		return this.cursor.value;
 	}
 
-	public readonly fields: Pick<Map<FieldKey, FlexTreeField>, typeof Symbol.iterator | "get"> =
-		{
-			get: (key: FieldKey): FlexTreeField | undefined => this.tryGetField(key),
-			[Symbol.iterator]: (): IterableIterator<[FieldKey, FlexTreeField]> => {
-				currentObserver?.observeNodeFields(this);
+	/**
+	 * A view of the non-empty fields of this node.
+	 * @remarks
+	 * A new (small) view is returned on each access, so nodes which are never enumerated do not keep one.
+	 */
+	public get fields(): Pick<Map<FieldKey, FlexTreeField>, typeof Symbol.iterator | "get"> {
+		return new LazyNodeFields(this);
+	}
 
-				return mapCursorFields(this.cursor, (cursor) => {
-					const key: FieldKey = cursor.getFieldKey();
-					const pair: [FieldKey, FlexTreeField] = [
-						key,
-						makeField(this.context, this.storedSchema.getFieldSchema(key).kind, cursor),
-					];
-					return pair;
-				}).values();
-			},
-		};
+	/**
+	 * Implementation of iterating {@link LazyTreeNode.fields}.
+	 */
+	public fieldEntries(): IterableIterator<[FieldKey, FlexTreeField]> {
+		currentObserver?.observeNodeFields(this);
+
+		return mapCursorFields(this.cursor, (cursor) => {
+			const key: FieldKey = cursor.getFieldKey();
+			const pair: [FieldKey, FlexTreeField] = [
+				key,
+				makeField(this.context, this.storedSchema.getFieldSchema(key).kind, cursor),
+			];
+			return pair;
+		}).values();
+	}
 
 	public tryGetField(fieldKey: FieldKey): FlexTreeField | undefined {
 		currentObserver?.observeNodeField(this, fieldKey);
@@ -143,6 +153,31 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 			}
 			return getCachedField(this, fieldKey) ?? makeField(this.context, schema.kind, cursor);
 		});
+	}
+
+	public tryGetSingleContent(
+		key: FieldKey,
+	): FlexTreeUnknownUnboxed | undefined | typeof notLeafContent {
+		currentObserver?.observeNodeField(this, key);
+
+		if (getCachedField(this, key) !== undefined) {
+			return notLeafContent;
+		}
+		const cursor = this.cursor;
+		cursor.enterField(key);
+		let result: FlexTreeUnknownUnboxed | undefined | typeof notLeafContent;
+		const length = cursor.getFieldLength();
+		if (length === 0) {
+			result = undefined;
+		} else if (length === 1) {
+			cursor.enterNode(0);
+			result = unboxedFlexNode(this.context, cursor, { parent: this.anchor, fieldKey: key });
+			cursor.exitNode();
+		} else {
+			result = notLeafContent;
+		}
+		cursor.exitField();
+		return result;
 	}
 
 	public getBoxed(key: FieldKey): FlexTreeField {
@@ -235,5 +270,22 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 
 	public keys(): IterableIterator<FieldKey> {
 		return mapCursorFields(this.cursor, (cursor) => cursor.getFieldKey()).values();
+	}
+}
+
+/**
+ * {@link LazyTreeNode.fields}.
+ */
+class LazyNodeFields
+	implements Pick<Map<FieldKey, FlexTreeField>, typeof Symbol.iterator | "get">
+{
+	public constructor(private readonly node: LazyTreeNode) {}
+
+	public get(key: FieldKey): FlexTreeField | undefined {
+		return this.node.tryGetField(key);
+	}
+
+	public [Symbol.iterator](): IterableIterator<[FieldKey, FlexTreeField]> {
+		return this.node.fieldEntries();
 	}
 }

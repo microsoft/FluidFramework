@@ -13,6 +13,8 @@ import {
 	TEST_activeBufferCount,
 	getKernel,
 	isTreeNode,
+	kernelSlot,
+	tryGetTreeNodeSchema,
 	withBufferedTreeEvents,
 	// TODO: test other things from "treeNodeKernel" file.
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -21,6 +23,7 @@ import {
 	type ArrayNodeDeltaOp,
 	SchemaFactory,
 	SchemaFactoryAlpha,
+	type TreeNode,
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
 import { getView } from "../../utils.js";
@@ -52,6 +55,57 @@ describe("simple-tree proxies", () => {
 		assert(isTreeNode(hydrate(Schema, initialTree)));
 		// Hydrated existing node:
 		assert(isTreeNode(hydrate(ChildSchema, new ChildSchema({ content: 5 }))));
+	});
+
+	it("isTreeNode - objects inheriting from a node are not nodes", () => {
+		for (const node of [
+			new ChildSchema({ content: 5 }),
+			hydrate(Schema, initialTree),
+			hydrate(Schema, initialTree).object,
+		]) {
+			const derived: unknown = Object.create(node);
+			assert(isTreeNode(node));
+			assert(!isTreeNode(derived));
+			assert.equal(tryGetTreeNodeSchema(derived), undefined);
+		}
+	});
+
+	describeHydration("the kernel slot is internal", (init) => {
+		const sf = new SchemaFactoryAlpha("kernelSlot");
+		class CustomObject extends sf.object("CustomObject", { a: sf.number }) {}
+		class CustomRecord extends sf.record("CustomRecord", sf.number) {}
+		class CustomArray extends sf.array("CustomArray", sf.number) {}
+		class CustomMap extends sf.map("CustomMap", sf.number) {}
+		const PojoObject = sf.object("PojoObject", { a: sf.number });
+		const PojoRecord = sf.record(sf.number);
+		const PojoArray = sf.array(sf.number);
+
+		const cases: [string, () => object, object][] = [
+			["customizable object", () => init(CustomObject, { a: 1 }), { a: 1 }],
+			["object", () => init(PojoObject, { a: 1 }), { a: 1 }],
+			["customizable record", () => init(CustomRecord, { a: 1 }), { a: 1 }],
+			["record", () => init(PojoRecord, { a: 1 }), { a: 1 }],
+			["customizable array", () => init(CustomArray, [1]), [1]],
+			["array", () => init(PojoArray, [1]), [1]],
+		];
+		for (const [name, create, plain] of cases) {
+			it(name, () => {
+				const node = create();
+				assert.equal(getKernel(node as TreeNode).node, node);
+				assert.equal(kernelSlot in node, false);
+				assert(!Reflect.ownKeys(node).includes(kernelSlot));
+				assert.equal(Object.getOwnPropertyDescriptor(node, kernelSlot), undefined);
+				assert.deepEqual({ ...node }, { ...plain });
+			});
+		}
+
+		it("map", () => {
+			// Map nodes are not proxies: the slot is a non-enumerable own property.
+			const node = init(CustomMap, new Map([["a", 1]]));
+			assert.equal(getKernel(node).node, node);
+			assert.equal(Object.getOwnPropertyDescriptor(node, kernelSlot)?.enumerable, false);
+			assert(!Reflect.ownKeys({ ...node }).includes(kernelSlot));
+		});
 	});
 
 	it("isTreeNode - inserted", () => {
@@ -163,6 +217,29 @@ describe("withBufferedTreeEvents", () => {
 					assert.deepEqual(eventLog, []);
 				});
 				assert.deepEqual(eventLog, ['nodeChanged: ["foo","baz"]', "treeChanged"]);
+			});
+
+			it("buffers each window's changes separately", () => {
+				const myObject = init(MyObject, new MyObject({ foo: "hi", bar: true }));
+				const changes: ReadonlySet<string>[] = [];
+				TreeBeta.on(myObject, "nodeChanged", ({ changedProperties }) => {
+					changes.push(changedProperties);
+				});
+
+				withBufferedTreeEvents(() => {
+					myObject.foo = "hello";
+					myObject.baz = 5;
+				});
+				withBufferedTreeEvents(() => {
+					// A window with no changes to the node emits nothing.
+				});
+				withBufferedTreeEvents(() => {
+					myObject.bar = false;
+				});
+				assert.deepEqual(
+					changes.map((changed) => [...changed]),
+					[["foo", "baz"], ["bar"]],
+				);
 			});
 		},
 	);
