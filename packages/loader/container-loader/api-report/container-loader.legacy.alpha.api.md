@@ -27,6 +27,12 @@ export enum ConnectionState {
 // @alpha @sealed @legacy
 export interface ContainerAlpha extends IContainer {
     getPendingLocalState(): Promise<string>;
+    serializeAttached(options: ContainerSerializationOptions): Promise<string>;
+}
+
+// @alpha @legacy
+export interface ContainerSerializationOptions {
+    readonly includePendingLocalState: boolean;
 }
 
 // @beta @legacy
