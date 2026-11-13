@@ -72,6 +72,15 @@ If publication was already acknowledged or the restored snapshot was loaded, it 
 An acknowledgement timeout rejects the attempt without undoing the sequenced boundary.
 Reload and inspect the state before retrying; service upload failures are surfaced without hidden retries.
 
+The loader's internal `loadContainerAfterNativeCheckpointRestore(props, boundary, clearPersistedState)` helper provides the host reload contract.
+Stop using the closed old container and await the host callback that clears document-scoped pending state and caches.
+The helper discards pending state and version headers, disables loader caching, and forces driver snapshot and version fetches to use `FetchSource.noCache`.
+It verifies the restored boundary in the downloaded catalog before starting the runtime.
+An older boundary, a mismatched ID at the same sequence number, a missing catalog, or failed host eviction rejects the load.
+Pass an unversioned document URL; a version embedded in the URL can still pin the request and will be rejected if stale.
+This does not assume ODSP's fire-and-forget cache eviction on error disposal has finished.
+ODSP live-service validation remains required; local and Tinylicious tests do not establish that service's restore authorization or cache semantics.
+
 ## Data Virtualization For DataStores (Work in Progress)
 
 It's a capability to exclude some content from initial snapshot (used when loading container) and thus improve boot

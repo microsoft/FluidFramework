@@ -9,6 +9,7 @@ import { enableOnNewFileKey, getRuntimeAttributor } from "@fluid-experimental/at
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { finishLoggingReport, ValueType } from "@fluid-tools/benchmark";
 import { LoaderHeader, type IContainer } from "@fluidframework/container-definitions/internal";
+import { loadContainerAfterNativeCheckpointRestore } from "@fluidframework/container-loader/internal";
 import type { ContainerRuntime as ContainerRuntimeType } from "@fluidframework/container-runtime/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
@@ -38,6 +39,7 @@ async function getEntry(container: IContainer): Promise<TestFluidObject> {
 
 describeCompat("Native checkpoints", "NoCompat", (getTestObjectProvider, apis) => {
 	const { ContainerRuntime } = apis.containerRuntime;
+	const { Loader } = apis.loader;
 	const { SharedString, SharedMatrix } = apis.dds;
 	/** Gets the concrete runtime without depending on private container fields. */
 	async function getRuntime(container: IContainer): Promise<ContainerRuntimeType> {
@@ -433,6 +435,8 @@ describeCompat("Native checkpoints", "NoCompat", (getTestObjectProvider, apis) =
 				assert(!source.closed, "Without completion the old generation remains fenced");
 				const replacement = await loadWorker();
 				const recoveryRuntime = await getRuntime(replacement);
+				const recovery = recoveryRuntime.getNativeCheckpointRestore();
+				assert(recovery !== undefined);
 				assert.equal(
 					recoveryRuntime.getNativeCheckpointRestore()?.phase,
 					crashPoint === "before-proposal" ? "ordered" : "restored",
@@ -443,9 +447,26 @@ describeCompat("Native checkpoints", "NoCompat", (getTestObjectProvider, apis) =
 				await provider.ensureSynchronized();
 				assert.equal(uploadSpy.callCount, crashPoint === "before-proposal" ? 1 : 0);
 				assert(source.closed);
-				const restored = await provider.loadTestContainer(config);
-				await waitForContainerConnection(restored);
-				assert.equal((await getEntry(restored)).root.get("value"), "checkpoint");
+				const loader = provider.makeTestLoader(config);
+				assert(loader instanceof Loader);
+				let persistedStateCleared = false;
+				const restored = await loadContainerAfterNativeCheckpointRestore(
+					{
+						...loader.services,
+						request: { url: await provider.driver.createContainerUrl(provider.documentId) },
+					},
+					recovery.restore,
+					async () => {
+						persistedStateCleared = true;
+					},
+				);
+				try {
+					await waitForContainerConnection(restored);
+					assert(persistedStateCleared);
+					assert.equal((await getEntry(restored)).root.get("value"), "checkpoint");
+				} finally {
+					restored.close();
+				}
 			},
 		);
 	}
