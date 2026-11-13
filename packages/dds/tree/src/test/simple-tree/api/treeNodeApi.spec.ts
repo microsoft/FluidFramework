@@ -88,7 +88,10 @@ import {
 import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
 import { ajvValidator } from "../../codec/index.js";
 import {
+	AllowsUnknownOptionalFields,
+	AllowsUnknownOptionalFieldsV2,
 	hasUnknownOptionalFieldsDocument,
+	Minimal,
 	testDocumentIndependentView,
 	testDocuments,
 	testSimpleTrees,
@@ -4116,6 +4119,15 @@ describe("treeNodeApi", () => {
 
 					assert.deepEqual(exportedKnown, exportedCloneKnown);
 
+					const exportedUnknown = TreeBeta.exportConcise(view.root, {
+						keys: KeyEncodingOptions.unknownStoredKeys,
+					});
+					const exportedCloneUnknown = TreeBeta.exportConcise(clone, {
+						keys: KeyEncodingOptions.unknownStoredKeys,
+					});
+
+					assert.deepEqual(exportedUnknown, exportedCloneUnknown);
+
 					if (testCase.hasUnknownOptionalFields) {
 						assert.notDeepEqual(exported, exportedKnown);
 					} else {
@@ -4284,6 +4296,97 @@ describe("treeNodeApi", () => {
 					{
 						type: PointUnknown.identifier,
 						fields: {},
+					},
+				);
+
+				assert.deepEqual(
+					TreeAlpha.exportVerbose(node, { keys: KeyEncodingOptions.unknownStoredKeys }),
+					{
+						type: PointUnknown.identifier,
+						fields: { x: 1 },
+					},
+				);
+			});
+
+			it("unknownStoredKeys", () => {
+				// The fields of `AllowsUnknownOptionalFieldsV2` are unknown to `AllowsUnknownOptionalFields`.
+				const sf = new SchemaFactoryAlpha("com.example");
+				class Holder extends sf.object("Holder", {
+					name: sf.string,
+					other: AllowsUnknownOptionalFields,
+					known: AllowsUnknownOptionalFields,
+					list: sf.array([AllowsUnknownOptionalFields, sf.string]),
+					map: sf.map([AllowsUnknownOptionalFields, sf.number]),
+				}) {}
+				const sfV2 = new SchemaFactoryAlpha("com.example");
+				class HolderV2 extends sfV2.object("Holder", {
+					name: sfV2.string,
+					other: AllowsUnknownOptionalFieldsV2,
+					known: AllowsUnknownOptionalFieldsV2,
+					list: sfV2.array([AllowsUnknownOptionalFieldsV2, sfV2.string]),
+					map: sfV2.map([AllowsUnknownOptionalFieldsV2, sfV2.number]),
+				}) {}
+
+				const view = testDocumentIndependentView({
+					ambiguous: false,
+					schema: Holder,
+					schemaData: toInitialSchema(HolderV2),
+					treeFactory: () =>
+						jsonableTreeFromFieldCursor(
+							fieldCursorFromInsertable(HolderV2, {
+								name: "x",
+								other: new AllowsUnknownOptionalFieldsV2({}),
+								known: new AllowsUnknownOptionalFieldsV2({
+									leaf: "a",
+									minimal: new Minimal({}),
+								}),
+								list: [
+									"s",
+									new AllowsUnknownOptionalFieldsV2({}),
+									new AllowsUnknownOptionalFieldsV2({ leaf: "b" }),
+								],
+								map: new Map<string, AllowsUnknownOptionalFieldsV2 | number>([
+									["a", new AllowsUnknownOptionalFieldsV2({ leaf: "c" })],
+									["b", new AllowsUnknownOptionalFieldsV2({})],
+									["c", 1],
+								]),
+							}),
+						),
+				});
+				const root = view.root;
+				assert(Tree.is(root, Holder));
+
+				const type = AllowsUnknownOptionalFields.identifier;
+				assert.deepEqual(
+					TreeAlpha.exportVerbose(root, { keys: KeyEncodingOptions.unknownStoredKeys }),
+					{
+						type: Holder.identifier,
+						fields: {
+							// Known fields are kept only to hold the unknown optional fields under them.
+							// Unknown optional fields are exported in full, even though `Minimal` is not in the view schema.
+							known: {
+								type,
+								fields: { leaf: "a", minimal: { type: Minimal.identifier, fields: {} } },
+							},
+							// Arrays and maps keep every element and entry.
+							list: {
+								type: Tree.schema(root.list).identifier,
+								fields: ["s", { type, fields: {} }, { type, fields: { leaf: "b" } }],
+							},
+							map: {
+								type: Tree.schema(root.map).identifier,
+								fields: { a: { type, fields: { leaf: "c" } }, b: { type, fields: {} }, c: 1 },
+							},
+						},
+					},
+				);
+
+				assert.deepEqual(
+					TreeBeta.exportConcise(root, { keys: KeyEncodingOptions.unknownStoredKeys }),
+					{
+						known: { leaf: "a", minimal: {} },
+						list: ["s", {}, { leaf: "b" }],
+						map: { a: { leaf: "c" }, b: {}, c: 1 },
 					},
 				);
 			});

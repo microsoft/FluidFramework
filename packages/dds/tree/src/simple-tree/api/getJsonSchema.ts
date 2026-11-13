@@ -14,7 +14,7 @@ import { toJsonSchema } from "./simpleSchemaToJsonSchema.js";
  * Options for how to interpret or encode a tree when schema information is available.
  * @remarks
  * This currently extends {@link TreeParsingOptions},
- * removing the option to declare {@link KeyEncodingOptions.allStoredKeys} since this option is currently not supported.
+ * removing the options to declare {@link KeyEncodingOptions.allStoredKeys} and {@link KeyEncodingOptions.unknownStoredKeys} since these options are currently not supported.
  * @input
  * @alpha
  */

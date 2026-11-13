@@ -847,6 +847,7 @@ export type JsonCompatibleObject<TExtra = never> = {
 export enum KeyEncodingOptions {
     allStoredKeys = "allStoredKeys",
     knownStoredKeys = "knownStoredKeys",
+    unknownStoredKeys = "unknownStoredKeys",
     usePropertyKeys = "usePropertyKeys"
 }
 
