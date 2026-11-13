@@ -42,7 +42,7 @@ export interface IBaseProtocolHandler {
     snapshot(): IQuorumSnapshot;
 }
 
-// @beta @legacy
+// @beta @legacy @input
 export interface ICaptureFullContainerStateProps {
     readonly blobCaptureMode?: "inline" | "reference" | undefined;
     readonly documentServiceFactory: IDocumentServiceFactory;

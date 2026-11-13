@@ -499,6 +499,7 @@ export async function loadFrozenContainerFromPendingState(
 
 /**
  * Properties for {@link captureFullContainerState}.
+ * @input
  * @legacy @beta
  */
 export interface ICaptureFullContainerStateProps {

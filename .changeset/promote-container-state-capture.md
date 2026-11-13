@@ -4,7 +4,7 @@
 ---
 Container state capture is available on the legacy beta API surface
 
-You can now import `captureFullContainerState` and `ICaptureFullContainerStateProps` from `@fluidframework/container-loader/legacy`.
+You can now import [`captureFullContainerState`](https://fluidframework.com/docs/api/container-loader/#capturefullcontainerstate-function) and [`ICaptureFullContainerStateProps`](https://fluidframework.com/docs/api/container-loader/icapturefullcontainerstateprops-interface) from `@fluidframework/container-loader/legacy`.
 These APIs capture container state using driver services without loading a runtime.
 Their behavior is unchanged, and they remain available from the legacy alpha entrypoint.
 
