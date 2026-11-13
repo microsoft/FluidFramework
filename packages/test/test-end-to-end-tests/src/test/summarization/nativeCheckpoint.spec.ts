@@ -12,7 +12,7 @@ import { LoaderHeader, type IContainer } from "@fluidframework/container-definit
 import type { ContainerRuntime as ContainerRuntimeType } from "@fluidframework/container-runtime/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { DriverHeader } from "@fluidframework/driver-definitions/internal";
+import { DriverHeader, MessageType } from "@fluidframework/driver-definitions/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
@@ -355,6 +355,100 @@ describeCompat("Native checkpoints", "NoCompat", (getTestObjectProvider, apis) =
 			);
 		},
 	);
+
+	for (const crashPoint of ["before-proposal", "after-ack"] as const) {
+		itExpects(
+			`recovers a publisher crash ${crashPoint} from a fresh client`,
+			[
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					error: "Native checkpoint restored: reload without cached or pending state",
+				},
+				...(crashPoint === "before-proposal"
+					? [
+							{
+								eventName: "fluid:telemetry:Container:ContainerDispose",
+								error: "Native checkpoint restored: reload without cached or pending state",
+							},
+						]
+					: []),
+			],
+			async () => {
+				const provider = getTestObjectProvider({ syncSummarizer: true });
+				const source = await provider.makeTestContainer(config);
+				await waitForContainerConnection(source);
+				const runtime = await getRuntime(source);
+				const entry = await getEntry(source);
+				entry.root.set("value", "checkpoint");
+				await provider.ensureSynchronized();
+				await runtime.createNativeCheckpoint("recover");
+				await provider.ensureSynchronized();
+				entry.root.set("value", "discard");
+				await provider.ensureSynchronized();
+				const { summarizer } = await createSummarizer(provider, source, {
+					...config,
+					runtimeOptions: undefined,
+				});
+				await summarizeNow(summarizer);
+				summarizer.close();
+				async function loadWorker(): Promise<IContainer> {
+					const loadedWorker = await provider.loadTestContainer(config, {
+						[LoaderHeader.cache]: false,
+						[LoaderHeader.clientDetails]: {
+							capabilities: { interactive: false },
+							type: "summarizer",
+						},
+						[DriverHeader.summarizingClient]: true,
+					});
+					await waitForContainerConnection(loadedWorker);
+					await provider.ensureSynchronized();
+					return loadedWorker;
+				}
+				const worker = await loadWorker();
+				const publisher = await getRuntime(worker);
+				publisher.requestNativeCheckpointRestore("recover-restore", "recover");
+				await provider.ensureSynchronized();
+				provider.opProcessingController.resumeProcessing();
+				if (crashPoint === "before-proposal") {
+					const upload = stub(publisher.storage, "uploadSummaryWithContext").rejects(
+						new Error("injected upload failure"),
+					);
+					try {
+						await assert.rejects(
+							publisher.publishNativeCheckpointRestore(),
+							/injected upload failure/,
+						);
+					} finally {
+						upload.restore();
+						worker.close();
+					}
+				} else {
+					worker.on("op", (message) => {
+						if (message.type === MessageType.SummaryAck) {
+							worker.close();
+						}
+					});
+					await assert.rejects(publisher.publishNativeCheckpointRestore());
+				}
+				assert(!source.closed, "Without completion the old generation remains fenced");
+				const replacement = await loadWorker();
+				const recoveryRuntime = await getRuntime(replacement);
+				assert.equal(
+					recoveryRuntime.getNativeCheckpointRestore()?.phase,
+					crashPoint === "before-proposal" ? "ordered" : "restored",
+				);
+				const uploadSpy = spy(recoveryRuntime.storage, "uploadSummaryWithContext");
+				provider.opProcessingController.resumeProcessing();
+				await recoveryRuntime.publishNativeCheckpointRestore();
+				await provider.ensureSynchronized();
+				assert.equal(uploadSpy.callCount, crashPoint === "before-proposal" ? 1 : 0);
+				assert(source.closed);
+				const restored = await provider.loadTestContainer(config);
+				await waitForContainerConnection(restored);
+				assert.equal((await getEntry(restored)).root.get("value"), "checkpoint");
+			},
+		);
+	}
 
 	for (const seed of [1, 42]) {
 		itExpects(

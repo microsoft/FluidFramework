@@ -1417,10 +1417,34 @@ export class ContainerRuntime
 				restore: NativeCheckpointRestore;
 				protocol: ISummaryTree | undefined;
 				metadata: SummaryObject;
+				proposals: Set<number>;
+				acknowledgedVersion?: string;
 		  }
 		| undefined;
 	private checkpointSubmitCount = 0;
 	private getCheckpointSummaryContext: (() => ISummaryContext | undefined) | undefined;
+
+	/** Reports replayable recovery work without relying on the original publisher's memory. */
+	public getNativeCheckpointRestore():
+		| {
+				restore: NativeCheckpointRestore;
+				phase: "ordered" | "published" | "restored";
+				version?: string;
+		  }
+		| undefined {
+		const pending = this.pendingCheckpointRestore;
+		if (pending !== undefined) {
+			return {
+				restore: { ...pending.restore },
+				phase: pending.acknowledgedVersion === undefined ? "ordered" : "published",
+				version: pending.acknowledgedVersion,
+			};
+		}
+		const restored = this.nativeCheckpointState?.restored;
+		return restored === undefined
+			? undefined
+			: { restore: { ...restored }, phase: "restored", version: this.loadedFromVersionId };
+	}
 
 	/**
 	 * Lists durable checkpoints. Available only for documents created with the experimental gate.
@@ -1594,8 +1618,22 @@ export class ContainerRuntime
 		this.flush();
 	}
 
-	/** Publishes the ordered replacement; another client may race this exact operation. */
-	public async publishNativeCheckpointRestore(): Promise<string> {
+	/**
+	 * Publishes an ordered replacement, or completes a previously published restore after a crash.
+	 * A fresh summary-authorized client can replay the boundary and retry this method.
+	 * No automatic upload retry hides service failures.
+	 */
+	public async publishNativeCheckpointRestore(
+		options: { readonly ackTimeoutMs?: number } = {},
+	): Promise<string> {
+		const ackTimeoutMs = options.ackTimeoutMs ?? 120_000;
+		if (
+			!Number.isSafeInteger(ackTimeoutMs) ||
+			ackTimeoutMs <= 0 ||
+			ackTimeoutMs > 2147483647
+		) {
+			throw new UsageError("Invalid native checkpoint acknowledgement timeout");
+		}
 		if (!this.isSummarizerClient || !this.connected) {
 			throw new UsageError(
 				"Checkpoint publication requires a connected summary-authorized client",
@@ -1603,6 +1641,15 @@ export class ContainerRuntime
 		}
 		const pending = this.pendingCheckpointRestore;
 		const state = this.nativeCheckpointState;
+		const recovery = this.getNativeCheckpointRestore();
+		if (recovery?.version !== undefined) {
+			this.submit({
+				type: nativeCheckpointMessageType,
+				contents: { action: "complete", id: recovery.restore.id },
+			});
+			this.flush();
+			return recovery.version;
+		}
 		if (pending === undefined || state === undefined) {
 			throw new UsageError("No ordered native checkpoint restore");
 		}
@@ -1681,6 +1728,11 @@ export class ContainerRuntime
 		this.on("op", onOp);
 		this.on("dispose", onDispose);
 		this.on("disconnected", onDispose);
+		const timeout = setTimeout(() => {
+			ack.reject(
+				new UsageError("Native checkpoint acknowledgement timed out; reload to recover"),
+			);
+		}, ackTimeoutMs);
 		try {
 			this.submitSummaryMessage(
 				{
@@ -1699,6 +1751,7 @@ export class ContainerRuntime
 			this.flush();
 			return version;
 		} finally {
+			clearTimeout(timeout);
 			this.off("op", onOp);
 			this.off("dispose", onDispose);
 			this.off("disconnected", onDispose);
@@ -1777,6 +1830,7 @@ export class ContainerRuntime
 					restore: { id: message.id, checkpointId: message.checkpointId, sequenceNumber },
 					protocol: this.captureCheckpointProtocol?.(),
 					metadata: blob,
+					proposals: new Set(),
 				};
 
 				break;
@@ -4145,6 +4199,29 @@ export class ContainerRuntime
 			message.contents = JSON.parse(message.contents);
 		}
 
+		const pending = this.pendingCheckpointRestore;
+		const contents: unknown = message.contents;
+		if (pending !== undefined && isRecord(contents)) {
+			if (
+				message.type === MessageType.Summarize &&
+				message.referenceSequenceNumber === pending.restore.sequenceNumber &&
+				contents.message === `Native checkpoint restore ${pending.restore.id}`
+			) {
+				pending.proposals.add(message.sequenceNumber);
+			}
+			const proposal: unknown = contents.summaryProposal;
+			if (
+				(message.type === MessageType.SummaryAck ||
+					message.type === MessageType.SummaryNack) &&
+				isRecord(proposal) &&
+				typeof proposal.summarySequenceNumber === "number" &&
+				pending.proposals.delete(proposal.summarySequenceNumber) &&
+				message.type === MessageType.SummaryAck &&
+				typeof contents.handle === "string"
+			) {
+				pending.acknowledgedVersion = contents.handle;
+			}
+		}
 		this.emit("op", message, false /* runtimeMessage */);
 	}
 

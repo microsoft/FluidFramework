@@ -65,6 +65,13 @@ It does not delete shared image bytes or service history.
 Retention during an ordered restore is ignored, and capture whose base was concurrently removed does not enter the catalog.
 Callers must observe the acknowledged catalog, not assume a submitted capture or retention request won a race.
 
+Restore recovery does not depend on the original publisher.
+`getNativeCheckpointRestore()` reports an ordered boundary, an observed publication acknowledgement, or a boundary loaded from a restored snapshot.
+A fresh summary-authorized client replays an unfinished boundary and calls `publishNativeCheckpointRestore()`.
+If publication was already acknowledged or the restored snapshot was loaded, it only resubmits completion; it does not upload another summary.
+An acknowledgement timeout rejects the attempt without undoing the sequenced boundary.
+Reload and inspect the state before retrying; service upload failures are surfaced without hidden retries.
+
 ## Data Virtualization For DataStores (Work in Progress)
 
 It's a capability to exclude some content from initial snapshot (used when loading container) and thus improve boot
