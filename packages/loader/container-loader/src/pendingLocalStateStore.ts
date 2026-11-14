@@ -7,6 +7,7 @@ import type { FluidIterableIterator } from "@fluidframework/core-interfaces";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+import type { ISerializableBlobContents } from "./containerStorageAdapter.js";
 import type {
 	IPendingContainerState,
 	SerializedSnapshotInfo,
@@ -45,7 +46,7 @@ export class PendingLocalStateStore<TKey> {
 	#firstUrl: string | undefined;
 	readonly #pendingStates = new Map<TKey, IPendingContainerState>();
 	readonly #savedOps: Record<number, ISequencedDocumentMessage> = {};
-	readonly #blobs: Record<string, string> = {};
+	readonly #blobs: ISerializableBlobContents = {};
 	readonly #attachmentBlobs: Record<string, string> = {};
 	readonly #loadingGroups: Record<string, SerializedSnapshotInfo> = {};
 

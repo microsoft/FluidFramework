@@ -41,13 +41,14 @@ import { SnapshotRefresher } from "./snapshotRefresher.js";
 import {
 	convertISnapshotToSnapshotWithBlobs,
 	convertSnapshotToSnapshotInfo,
+	deserializeBlobContents,
 	getDocumentAttributes,
 } from "./utils.js";
 
 /**
  * This is very similar to {@link @fluidframework/protocol-definitions/internal#ISnapshot}, but the difference is
  * that the blobs of ISnapshot are of type ArrayBufferLike, while the blobs of this interface are serializable because
- * they are already converted to string.
+ * they are already converted to strings or tagged base64.
  */
 export interface SnapshotWithBlobs {
 	/**
@@ -67,7 +68,7 @@ export interface SnapshotWithBlobs {
  *
  * This is very similar to {@link @fluidframework/protocol-definitions/internal#ISnapshot}, but the difference is
  * that the blobs of ISnapshot are of type ArrayBufferLike, while the blobs of this interface are serializable because
- * they are already converted to string.
+ * they are already converted to strings or tagged base64.
  *
  * @internal
  */
@@ -77,11 +78,15 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	 */
 	attached: true;
 	/**
-	 * Indicates that blob payloads are omitted and must be read from live storage.
+	 * Records the payload omission policy chosen by driver-level capture:
+	 * `"attachmentsOmitted"` omits attachment payloads but retains structural snapshot contents.
+	 * `"reference"` identifies legacy captures that omitted all blob payloads.
 	 *
-	 * Undefined for existing and self-contained pending state.
+	 * Undefined for inline captures and state serialized without capture-policy metadata,
+	 * including older unmarked state. This is not a completeness guarantee; missing payloads
+	 * still require live storage when read.
 	 */
-	blobContentsMode?: "reference";
+	blobContentsMode?: "reference" | "attachmentsOmitted";
 	/**
 	 * Runtime-specific state that will be needed to properly rehydrate
 	 * (it's included in ContainerContext passed to instantiateRuntime)
@@ -94,11 +99,9 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	/**
 	 * Attachment blob contents inlined by storage id, encoded as base64.
 	 *
-	 * Carried separately from {@link SnapshotWithBlobs.snapshotBlobs} because
-	 * attachment blobs may contain arbitrary binary payloads, and the
-	 * UTF-8 encoding used for `snapshotBlobs` (which holds JSON/text the
-	 * runtime authors) would corrupt non-UTF-8 byte sequences with
-	 * replacement characters. Populated by `captureFullContainerState`; the
+	 * Carried separately from {@link SnapshotWithBlobs.snapshotBlobs}, whose
+	 * values are legacy UTF-8 strings or explicitly tagged base64. Attachment
+	 * contents are always untagged base64. Populated by `captureFullContainerState`; the
 	 * live container's pending-state path leaves this `undefined` because
 	 * it does not inline attachment blob contents.
 	 *
@@ -292,10 +295,8 @@ export class SerializedStateManager implements IDisposable {
 			const { baseSnapshot, snapshotBlobs, attachmentBlobContents, savedOps } =
 				pendingLocalState;
 			const blobContents = new Map<string, ArrayBuffer>();
-			// Structural snapshot blobs (snapshot trees, `.attributes`, `.redirectTable`)
-			// are JSON/text the runtime authored, so UTF-8 round-trip is lossless.
 			for (const [id, value] of Object.entries(snapshotBlobs)) {
-				blobContents.set(id, stringToBuffer(value, "utf8"));
+				blobContents.set(id, deserializeBlobContents(value));
 			}
 			// Attachment blobs are base64-encoded — see IPendingContainerState
 			// docs. Decoded after structural blobs because storage-id collisions

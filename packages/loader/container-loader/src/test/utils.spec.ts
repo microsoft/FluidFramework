@@ -18,11 +18,42 @@ import type { SerializedSnapshotInfo } from "../serializedStateManager.js";
 import {
 	convertSnapshotInfoToSnapshot,
 	convertSnapshotToSnapshotInfo,
+	deserializeBlobContents,
 	getDocumentAttributes,
 	runSingle,
+	serializeBlobContents,
 } from "../utils.js";
 
 describe("container-loader utils", () => {
+	describe("summary blob serialization", () => {
+		it("retains legacy strings for lossless UTF-8 text", () => {
+			for (const text of ["", "plain text", "\u00E9\uD83D\uDE00", "\uFFFD"]) {
+				const bytes = stringToBuffer(text, "utf8");
+				assert.strictEqual(serializeBlobContents(bytes), text);
+				assert.deepStrictEqual(deserializeBlobContents(text), bytes);
+			}
+		});
+
+		it("preserves arbitrary bytes through snapshot conversions", () => {
+			for (const bytes of [
+				Uint8Array.from({ length: 256 }, (_, index) => index),
+				new Uint8Array([0xef, 0xbb, 0xbf, 0x61]),
+			]) {
+				const snapshot: ISnapshot = {
+					snapshotTree: { blobs: { binary: "binary-id" }, trees: {} },
+					blobContents: new Map([["binary-id", bytes.buffer]]),
+					ops: [],
+					sequenceNumber: 1,
+					latestSequenceNumber: undefined,
+					snapshotFormatV: 1,
+				};
+				const serialized = convertSnapshotToSnapshotInfo(snapshot);
+				const restored = convertSnapshotInfoToSnapshot(serialized);
+				assert.deepStrictEqual(restored.blobContents.get("binary-id"), bytes.buffer);
+			}
+		});
+	});
+
 	describe("runSingle", () => {
 		it("correctly calls internal func", async () => {
 			const wrappedFunc = runSingle(async (base: number, plus: number) => base + plus);

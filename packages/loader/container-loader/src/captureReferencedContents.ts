@@ -16,6 +16,7 @@ import type {
 	IBase64BlobContents,
 	ISerializableBlobContents,
 } from "./containerStorageAdapter.js";
+import { serializeBlobContents } from "./utils.js";
 
 /**
  * Wire-format constants this module needs to walk and filter snapshots.
@@ -165,7 +166,7 @@ export async function readReferencedSnapshotBlobs(
 	const blobs: ISerializableBlobContents = {};
 	await mapWithConcurrency([...ids], maxReadConcurrency, async (id) => {
 		const data = await read(id);
-		blobs[id] = bufferToString(data, "utf8");
+		blobs[id] = serializeBlobContents(data);
 	});
 	return blobs;
 }
@@ -226,11 +227,10 @@ function toTreeAndReader(
  * arbitrary binary payloads (images, encrypted data, etc.) and a
  * UTF-8 round-trip would silently corrupt non-UTF-8 byte sequences with
  * replacement characters. The runtime's own pending-blob serializer uses
- * base64 for the same reason. This diverges from the structural-blob path
- * in {@link readReferencedSnapshotBlobs}, which encodes UTF-8 because those
- * blobs are JSON or other text the runtime authored. Callers must keep the
- * two encodings on separate fields of the pending state so the load side
- * can decode each correctly.
+ * base64 for the same reason. The structural-blob path in
+ * {@link readReferencedSnapshotBlobs} retains legacy UTF-8 strings where
+ * lossless and tags binary contents explicitly. Attachment contents remain
+ * on a separate field so the load side can decode their untagged base64.
  */
 export async function captureReferencedAttachmentBlobs(
 	baseSnapshot: ISnapshotTree,

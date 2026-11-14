@@ -19,6 +19,7 @@ import {
 	FrozenDeltaStream,
 	FrozenDocumentServiceFactory,
 	WritableFrozenDeltaStream,
+	createFrozenDocumentServiceFactory,
 } from "../frozenServices.js";
 
 const fakeUrl = {
@@ -273,14 +274,7 @@ describe("FrozenDocumentService disposal", () => {
 });
 
 describe("FrozenDocumentStorageService readBlob (no inner factory)", () => {
-	// Offline frozen loads pass `undefined` for the inner factory. The
-	// previous handler threw a raw `Error("Operations are not supported…")`,
-	// which bypassed the package's UsageError contract and did not name the
-	// missing precondition (pending state produced by
-	// `captureFullContainerState`, which inlines attachment blobs). Verify
-	// both: the error type so callers can detect misuse uniformly, and the
-	// message so the diagnostic points at the right API.
-	it("rejects readBlob with a UsageError that names captureFullContainerState", async () => {
+	it("rejects missing offline payloads with actionable capture and online-read guidance", async () => {
 		const factory = new FrozenDocumentServiceFactory(true);
 		const service = await factory.createDocumentService(fakeUrl);
 		const storage = await service.connectToStorage();
@@ -291,14 +285,41 @@ describe("FrozenDocumentStorageService readBlob (no inner factory)", () => {
 				"UsageError",
 				"Expected a UsageError, not a generic Error — frozen storage misuse must surface uniformly",
 			);
+			assert.match(error.message, /blob payload was not captured/);
+			assert.match(error.message, /captureFullContainerState.*blobCaptureMode: "inline"/);
+			assert.match(error.message, /"reference" omits attachment payloads/);
 			assert.match(
 				error.message,
-				/captureFullContainerState/,
-				"Expected the error message to name the missing precondition (captureFullContainerState inlines attachment blobs)",
+				/online form of `loadFrozenContainerFromPendingState` with live driver wiring/,
 			);
 			return true;
 		});
 	});
+
+	for (const readOnly of [true, false]) {
+		it(`identifies reference-mode attachment omission after wrapping with readOnly=${readOnly}`, async () => {
+			const factory = createFrozenDocumentServiceFactory(
+				new FrozenDocumentServiceFactory(true, undefined, true),
+				readOnly,
+			);
+			const service = await factory.createDocumentService(fakeUrl);
+			try {
+				const storage = await service.connectToStorage();
+				await assert.rejects(storage.readBlob("omitted-attachment"), (error: Error) => {
+					assert.strictEqual(error.constructor.name, "UsageError");
+					assert.match(error.message, /blobCaptureMode: "reference"/);
+					assert.match(error.message, /omits attachment payloads/);
+					assert.match(
+						error.message,
+						/online form of `loadFrozenContainerFromPendingState` with live driver wiring/,
+					);
+					return true;
+				});
+			} finally {
+				service.dispose();
+			}
+		});
+	}
 
 	it("readBlob delegates to the inner storage when one is provided", async () => {
 		// Inverse of the offline assertion: with an inner factory the
@@ -329,7 +350,7 @@ describe("FrozenDocumentStorageService readBlob (no inner factory)", () => {
 				throw new Error("not used in this test");
 			},
 		};
-		const factory = new FrozenDocumentServiceFactory(true, innerFactory);
+		const factory = new FrozenDocumentServiceFactory(true, innerFactory, true);
 		const service = await factory.createDocumentService(fakeUrl);
 		const storage = await service.connectToStorage();
 
