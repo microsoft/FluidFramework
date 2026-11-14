@@ -17,6 +17,8 @@ import {
 	allowUnused,
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,
+	type ErasedNode,
+	type ErasedSchema,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
 	type InternalTreeNode,
@@ -30,6 +32,7 @@ import {
 import type { areSafelyAssignable, requireTrue } from "../../../util/index.js";
 import { getView } from "../../utils.js";
 
+// For a library-author walkthrough with top-level exports and application consumers, see ../../schemaErasure.integration.ts.
 describe("eraseSchemaDetails", () => {
 	describe("eraseSchemaDetails", () => {
 		it("example", () => {
@@ -56,8 +59,16 @@ describe("eraseSchemaDetails", () => {
 				}
 			}
 
-			const Square = eraseSchemaDetails<Square, SquareSchema>()(SquareInternal);
-			type Square = SquareNode & TreeNode & WithType<"com.example.Demo">;
+			const Square: SquareSchema & ErasedSchema<Square> = eraseSchemaDetails<
+				Square,
+				SquareSchema
+			>()(SquareInternal);
+			type Square = ErasedNode<SquareNode, "com.example.Demo">;
+
+			const square = Square.create(3);
+			assert.equal(square.area, 9);
+			assert(Tree.is(square, Square));
+			allowUnused<requireTrue<areSafelyAssignable<NodeFromSchema<typeof Square>, Square>>>();
 		});
 
 		it("recursive", () => {
