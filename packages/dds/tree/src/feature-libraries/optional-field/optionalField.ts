@@ -234,11 +234,25 @@ function composeNodeDetaches(
 		return change1.nodeDetach;
 	}
 
-	// TODO: If change1 detaches a node via a clear, and change2 renames that node (or detaches it after it is reattached by change1),
-	// the composition should have a nodeDetach, as change2's detach will ensure that the node is detached
-	// Note this is true even if change2 detaches the node with a location-targeting detach (e.g. an optional field clear).
-	// This is because change1 must attach the node in the location targeted by the detach,
-	// and rebasing does not affect attaches, although that could change if slice moves are implemented.
+	// TODO: The logic below can produce incorrect results in some scenarios.
+	// Why:
+	//  If change1 detaches a node via a clear, and change2 renames that node (or detaches it after it is reattached by change1),
+	//  the composition ought to have a nodeDetach, as change2's detach will ensure that the node is detached.
+	//  Note this is true even if change2 detaches the node with a location-targeting detach (e.g. an optional field clear).
+	//  This is because change1 must attach the node in the location targeted by the detach,
+	//  and rebasing does not affect attaches, although that could change if slice moves are implemented.
+	// Blockers:
+	//   In order to implement this, ModularChangeFamily would need to let fields query whether change2 has a detach intention for the node.
+	// Fallout of status quo:
+	//  This currently has no impact because there is no way to run into this scenario using app-facing APIs.
+	//  This scenario will become possible once such APIs allow detached nodes from optional fields to be reattached.
+	//  Once that scenario becomes possible, the logic bellow can cause two kinds of problems:
+	//  1. If rebased, the composed changeset may include a root rename with an empty source grave.
+	//     This will cause an error when applying the change (0x7cf: transferRoots should make progress).
+	//  2. If rebased, the composed changeset may not be equivalent to the composition of the individual rebased changes.
+	//     This is not a property that SharedTree currently relies on, but an application could potentially rely on it,
+	//     thus experiencing unexpected rebase outcomes.
+	//  The test "Repro issue: clear node from optional field ○ rename node" in modularChangeFamilyIntegration.spec.ts illustrates these issues.
 	return change1.valueReplace === undefined ? change2.nodeDetach : undefined;
 }
 
