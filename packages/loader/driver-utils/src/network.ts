@@ -119,6 +119,7 @@ export class AuthorizationError
 	// and the actual fields come from elsewhere.
 	declare readonly claims?: string;
 	declare readonly tenantId?: string;
+	declare readonly wwwAuthenticate?: string;
 
 	readonly canRetry = false;
 
@@ -127,6 +128,7 @@ export class AuthorizationError
 		claims: string | undefined,
 		tenantId: string | undefined,
 		props: DriverErrorTelemetryProps,
+		wwwAuthenticate?: string,
 	) {
 		if (claims !== undefined) {
 			props.claims = claims;
@@ -134,8 +136,11 @@ export class AuthorizationError
 		if (tenantId !== undefined) {
 			props.tenantId = tenantId;
 		}
-		// don't log claims or tenantId
-		super(message, props, new Set(["claims", "tenantId"]));
+		if (wwwAuthenticate !== undefined) {
+			props.wwwAuthenticate = wwwAuthenticate;
+		}
+		// don't log claims, tenantId or wwwAuthenticate
+		super(message, props, new Set(["claims", "tenantId", "wwwAuthenticate"]));
 	}
 }
 

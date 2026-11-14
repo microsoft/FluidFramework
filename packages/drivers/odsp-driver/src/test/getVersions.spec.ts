@@ -6,9 +6,17 @@
 import { strict as assert } from "node:assert";
 
 import { delay } from "@fluidframework/core-utils/internal";
-import type { ICacheEntry, ISnapshot } from "@fluidframework/driver-definitions/internal";
+import {
+	FetchSource,
+	type IAuthorizationError,
+	type ICacheEntry,
+	type ISnapshot,
+} from "@fluidframework/driver-definitions/internal";
 import { maximumCacheDurationMs } from "@fluidframework/driver-utils/internal";
-import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
+import {
+	type IOdspResolvedUrl,
+	OdspErrorTypes,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -20,6 +28,7 @@ import {
 import { createOdspUrl } from "../createOdspUrl.js";
 import { EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache, NonPersistentCache } from "../odspCache.js";
+import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
 import {
 	OdspDocumentStorageService,
 	defaultSummarizerCacheExpiryTimeout,
@@ -28,7 +37,12 @@ import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 import type { INewFileInfo } from "../odspUtils.js";
 
-import { createResponse, mockFetchSingle, notFound } from "./mockFetch.js";
+import {
+	createClaimsChallengeHeader,
+	createResponse,
+	mockFetchSingle,
+	notFound,
+} from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
@@ -443,6 +457,63 @@ describe("Tests for snapshot fetch", () => {
 			);
 
 			assert.notEqual(cacheEntry, undefined, "Cache should have been restored");
+		});
+	});
+
+	describe("Claims challenge with propagateClaimsChallenges", () => {
+		const claims = '{"access_token":{"nbf":{"essential":true,"value":"1597959090"}}}';
+
+		beforeEach(() => {
+			localCache = createUtLocalCache();
+		});
+
+		afterEach(async () => {
+			await localCache.removeEntries({ docId: hashedDocumentId, resolvedUrl });
+		});
+
+		it("fails the snapshot fetch without a retry and clears the cached snapshot", async () => {
+			const cacheEntry: ICacheEntry = {
+				key: "",
+				type: "snapshot",
+				file: { docId: hashedDocumentId, resolvedUrl },
+			};
+			await localCache.put(cacheEntry, value);
+
+			let tokenFetchCount = 0;
+			const factory = new OdspDocumentServiceFactory(
+				async () => {
+					tokenFetchCount++;
+					return "token";
+				},
+				undefined,
+				localCache,
+				{ ...GetHostStoragePolicyInternal(), propagateClaimsChallenges: true },
+			);
+			const documentService = await factory.createDocumentService(
+				await resolver.resolve({ url: odspUrl }),
+				logger,
+			);
+			const storage = await documentService.connectToStorage();
+
+			const wwwAuthenticate = createClaimsChallengeHeader(claims);
+			await assert.rejects(
+				mockFetchSingle(
+					async () => storage.getVersions(null, 1, undefined, FetchSource.noCache),
+					async () => createResponse({ "www-authenticate": wwwAuthenticate }, undefined, 401),
+				),
+				(error: IAuthorizationError) => {
+					assert.strictEqual(error.errorType, OdspErrorTypes.authorizationError);
+					assert.strictEqual(error.claims, claims);
+					assert.strictEqual(error.wwwAuthenticate, wwwAuthenticate);
+					return true;
+				},
+			);
+			assert.strictEqual(tokenFetchCount, 1, "the host should not be asked for a new token");
+			assert.strictEqual(
+				await localCache.get(cacheEntry),
+				undefined,
+				"the failed fetch should clear the cached snapshot, as for other authorization errors",
+			);
 		});
 	});
 });

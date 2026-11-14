@@ -130,6 +130,22 @@ export async function getWithRetryForTokenRefresh<T>(
 	});
 }
 
+/**
+ * Checks whether an error is a claims challenge from the service.
+ *
+ * @remarks
+ * A claims challenge is an authorization error with a `WWW-Authenticate` response header that asks for more claims.
+ * For such an error, `claims` has the decoded value from the header.
+ */
+export function isClaimsChallenge(error: unknown): boolean {
+	const authError = error as Partial<AuthorizationError> | null | undefined;
+	return (
+		authError?.errorType === OdspErrorTypes.authorizationError &&
+		typeof authError.claims === "string" &&
+		authError.claims.length > 0
+	);
+}
+
 export async function fetchHelper(
 	requestInfo: RequestInfo,
 	requestInit: RequestInit | undefined,
@@ -396,11 +412,13 @@ export const createOdspLogger = (logger?: ITelemetryBaseLogger): TelemetryLogger
 /**
  * Returns a function that can be used to fetch storage token.
  * Storage token can not be empty - if original delegate (tokenFetcher argument) returns null result, exception will be thrown
+ * @param propagateClaimsChallenges - See {@link toInstrumentedOdspTokenFetcher}.
  */
 export function toInstrumentedOdspStorageTokenFetcher(
 	logger: TelemetryLoggerExt,
 	resolvedUrlParts: IOdspUrlParts,
 	tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
+	propagateClaimsChallenges: boolean = false,
 ): InstrumentedStorageTokenFetcher {
 	const res = toInstrumentedOdspTokenFetcher(
 		logger,
@@ -408,6 +426,7 @@ export function toInstrumentedOdspStorageTokenFetcher(
 		tokenFetcher,
 		true, // throwOnNullToken
 		false, // returnPlainToken
+		propagateClaimsChallenges,
 	);
 	// Drop undefined from signature - we can do it safely due to throwOnNullToken == true above
 	return res as InstrumentedStorageTokenFetcher;
@@ -418,6 +437,9 @@ export function toInstrumentedOdspStorageTokenFetcher(
  * There are scenarios where websocket token is not required / present (consumer stack and ordering service token),
  * thus it could return null. Use toInstrumentedOdspStorageTokenFetcher if you deal with storage token.
  * @param returnPlainToken - When true, tokenResponse.token is returned. When false, tokenResponse.authorizationHeader is returned or an authorization header value is created based on tokenResponse.token
+ * @param propagateClaimsChallenges - When true, a token fetch for a retry after a claims challenge fails with the
+ * error from the challenge, and the host token fetcher is not called.
+ * See `HostStoragePolicy.propagateClaimsChallenges`.
  */
 export function toInstrumentedOdspTokenFetcher(
 	logger: TelemetryLoggerExt,
@@ -425,12 +447,19 @@ export function toInstrumentedOdspTokenFetcher(
 	tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
 	throwOnNullToken: boolean,
 	returnPlainToken: boolean,
+	propagateClaimsChallenges: boolean = false,
 ): InstrumentedTokenFetcher {
 	return async (
 		options: TokenFetchOptions,
 		name: string,
 		alwaysRecordTokenFetchTelemetry: boolean = false,
 	) => {
+		// getWithRetryForTokenRefresh() puts the error that caused the retry on the options.
+		// Every retry gets its token here, so this one check covers all requests that use this fetcher.
+		const previousError = (options as TokenFetchOptionsEx).previousError;
+		if (propagateClaimsChallenges && isClaimsChallenge(previousError)) {
+			throw previousError;
+		}
 		// Telemetry note: if options.refresh is true, there is a potential perf issue:
 		// Host should optimize and provide non-expired tokens on all critical paths.
 		// Exceptions: race conditions around expiration, revoked tokens, host that does not care

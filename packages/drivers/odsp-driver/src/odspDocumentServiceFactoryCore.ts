@@ -111,6 +111,11 @@ export interface IOdspPointInTimeDocumentServiceImplementationProps {
 	/** Host-owned attribution metadata for ODSP requests. */
 	readonly requestHeaders?: Readonly<Record<string, string>>;
 	/**
+	 * When true, a claims challenge fails the request instead of a token refresh and retry.
+	 * See {@link @fluidframework/odsp-driver-definitions#HostStoragePolicy.propagateClaimsChallenges}.
+	 */
+	readonly propagateClaimsChallenges?: boolean;
+	/**
 	 * Creates an ODSP document service for a resolved URL.
 	 *
 	 * @param resolvedUrl - The resolved URL for the document or file version to load.
@@ -149,6 +154,11 @@ export class OdspDocumentServiceFactoryCore
 	private readonly socketReferenceKeyPrefix?: string;
 	private readonly hostPolicy: HostStoragePolicy;
 	public readonly requestHeaders?: Readonly<Record<string, string>>;
+	/**
+	 * The value of {@link @fluidframework/odsp-driver-definitions#HostStoragePolicy.propagateClaimsChallenges}
+	 * that was given to this factory.
+	 */
+	public readonly propagateClaimsChallenges?: boolean;
 
 	public get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents> {
 		return this.nonPersistentCache.snapshotPrefetchResultCache;
@@ -256,6 +266,7 @@ export class OdspDocumentServiceFactoryCore
 					odspLogger,
 					resolvedUrlData,
 					this.getStorageToken,
+					this.hostPolicy.propagateClaimsChallenges,
 				);
 				const _odspResolvedUrl = await useCreateNewModule(odspLogger, async (module) => {
 					return isNewFileInfo(fileInfo)
@@ -321,6 +332,7 @@ export class OdspDocumentServiceFactoryCore
 			this.requestHeaders === undefined
 				? hostPolicy
 				: { ...hostPolicy, hostProvidedRequestHeaders: this.requestHeaders };
+		this.propagateClaimsChallenges = this.hostPolicy.propagateClaimsChallenges;
 		if (this.hostPolicy.isolateSocketCache === true || this.requestHeaders !== undefined) {
 			// create the key to separate the socket reuse cache
 			this.socketReferenceKeyPrefix = uuid();
@@ -415,6 +427,7 @@ export class OdspDocumentServiceFactoryCore
 			extLogger,
 			resolvedUrlData,
 			this.getStorageToken,
+			this.hostPolicy.propagateClaimsChallenges,
 		);
 
 		const webSocketTokenFetcher =
@@ -428,6 +441,7 @@ export class OdspDocumentServiceFactoryCore
 							this.getWebsocketToken!,
 							false /* throwOnNullToken */,
 							true /* returnPlainToken */,
+							this.hostPolicy.propagateClaimsChallenges,
 						)(options, "GetWebsocketToken");
 
 		return OdspDocumentService.create(

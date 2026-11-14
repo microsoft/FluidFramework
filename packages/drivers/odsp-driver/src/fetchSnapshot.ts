@@ -61,6 +61,7 @@ import {
 	getWithRetryForTokenRefresh,
 	getOdspResolvedUrl,
 	getWithRetryForTokenRefreshRepeat,
+	isClaimsChallenge,
 	isSnapshotFetchForLoadingGroup,
 	measure,
 	measureP,
@@ -854,7 +855,9 @@ function isRedeemSharingLinkError(
 		typeof error === "object" &&
 		error !== null &&
 		(error.errorType === OdspErrorTypes.authorizationError ||
-			error.errorType === OdspErrorTypes.fileNotFoundOrAccessDeniedError)
+			error.errorType === OdspErrorTypes.fileNotFoundOrAccessDeniedError) &&
+		// A claims challenge needs a token with more claims, which redeeming the sharing link can't provide.
+		!isClaimsChallenge(error)
 	) {
 		return true;
 	}

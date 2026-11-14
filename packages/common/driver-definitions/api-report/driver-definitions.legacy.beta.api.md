@@ -99,6 +99,7 @@ export interface IAuthorizationError extends IDriverErrorBase {
     readonly errorType: typeof DriverErrorTypes.authorizationError;
     // (undocumented)
     readonly tenantId?: string;
+    readonly wwwAuthenticate?: string;
 }
 
 // @beta @legacy
