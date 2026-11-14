@@ -517,13 +517,13 @@ describe("summary ownership", function () {
 		assert.match(creationEvent.args[0], /"Is-Ephemeral-Container":false/);
 	});
 
-	it("keeps legacy summary cache identity when no authorizer is configured", async () => {
+	it("isolates summary cache identity even when no authorizer is configured", async () => {
 		const summary = {
 			id: "summary-1",
 			trees: [],
 			blobs: [],
 		};
-		sandbox.stub(BasicRestWrapper.prototype, "get").resolves(summary);
+		const downstream = sandbox.stub(BasicRestWrapper.prototype, "get").resolves(summary);
 		const cache = new TestCache();
 		const proof: IDocumentAccessProof = {
 			tenantId,
@@ -559,11 +559,19 @@ describe("summary ownership", function () {
 		});
 
 		await service.getSummary("latest", false);
+		await service.getSummary("latest", false);
 
 		assert.deepStrictEqual(
-			await cache.get(`${tenantId}:${documentId}:summary:container`),
+			await cache.get(
+				`ownership-v2:tenant%2Fa:shared%3Aid:ephemeral:::::${tenantId}:${documentId}:summary:container`,
+			),
 			summary,
 		);
+		assert.strictEqual(
+			await cache.get(`${tenantId}:${documentId}:summary:container`),
+			undefined,
+		);
+		sinon.assert.calledOnce(downstream);
 	});
 
 	it("authenticates before document authorization or storage access", async () => {

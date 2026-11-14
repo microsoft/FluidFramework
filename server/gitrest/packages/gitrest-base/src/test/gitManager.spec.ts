@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "node:assert";
+import * as sinon from "sinon";
 import {
+	IFileSystemManagerParams,
 	IRepoManagerParams,
 	IsomorphicGitManagerFactory,
 	MemFsManagerFactory,
@@ -81,6 +83,114 @@ describe("isomorphic-git manager", () => {
 
 	afterEach(() => {
 		fsFactory.volume.reset();
+	});
+
+	describe("ephemeral filesystem isolation", () => {
+		const sandbox = sinon.createSandbox();
+		const physicalContainerName = "pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
+		afterEach(() => sandbox.restore());
+
+		function createFactory(repoPerDocEnabled: boolean, includeEphemeral = true) {
+			const durable = new MemFsManagerFactory(fsMaxFileSizeBytes);
+			const ephemeral = new MemFsManagerFactory(fsMaxFileSizeBytes);
+			const durableCreate = sandbox.spy(durable, "create");
+			const ephemeralCreate = sandbox.spy(ephemeral, "create");
+			const factory = new IsomorphicGitManagerFactory(
+				{ useRepoOwner: false },
+				{
+					defaultFileSystemManagerFactory: durable,
+					ephemeralFileSystemManagerFactory: includeEphemeral ? ephemeral : undefined,
+				},
+				new NullExternalStorageManager(),
+				repoPerDocEnabled,
+				false,
+				true,
+				undefined,
+				gitMaxBlobSizeBytes,
+			);
+			return { factory, durableCreate, ephemeralCreate };
+		}
+
+		for (const repoPerDocEnabled of [false, true]) {
+			it(`creates and opens isolated EC and DC repositories with per-doc=${repoPerDocEnabled}`, async () => {
+				const { factory, durableCreate, ephemeralCreate } =
+					createFactory(repoPerDocEnabled);
+				const durable = await factory.create(repoManagerParams);
+				const ephemeralParams = {
+					...repoManagerParams,
+					isEphemeralContainer: true,
+					fileSystemManagerParams: { storageName: "storage-account" },
+				};
+				const ephemeral = await factory.create(ephemeralParams);
+				const blob = await ephemeral.createBlob({
+					content: "ephemeral",
+					encoding: "utf-8",
+				});
+				await assert.rejects(durable.getBlob(blob.sha));
+				const reopened = await factory.open(ephemeralParams);
+				assert.strictEqual(
+					(await reopened.getBlob(blob.sha)).content,
+					Buffer.from("ephemeral").toString("base64"),
+				);
+				assert.strictEqual(ephemeral.path, repoPerDocEnabled ? "fluid/test" : "test");
+				sinon.assert.calledOnce(durableCreate);
+				sinon.assert.calledTwice(ephemeralCreate);
+				await factory.open(repoManagerParams);
+				sinon.assert.calledTwice(durableCreate);
+			});
+
+			for (const operation of ["create", "open"] as const) {
+				it(`rejects ${operation} without an EC filesystem before DC access with per-doc=${repoPerDocEnabled}`, async () => {
+					const { factory, durableCreate } = createFactory(repoPerDocEnabled, false);
+					await factory.create(repoManagerParams);
+					durableCreate.resetHistory();
+
+					await assert.rejects(
+						factory[operation]({ ...repoManagerParams, isEphemeralContainer: true }),
+						{ name: "NetworkError", code: 503, canRetry: false },
+					);
+
+					sinon.assert.notCalled(durableCreate);
+				});
+
+				const routingCases: IFileSystemManagerParams[] = [
+					{ physicalContainerName },
+					{ storageLayoutVersion: "v2" },
+					{ storageLifecycleVersion: "generation-1" },
+					{
+						physicalContainerName,
+						storageLayoutVersion: "v2",
+						storageLifecycleVersion: "generation-1",
+					},
+				];
+				for (const routing of routingCases) {
+					it(`rejects mixed EC/DC ${operation} routing ${Object.keys(routing).join(
+						",",
+					)} with per-doc=${repoPerDocEnabled}`, async () => {
+						const { factory, durableCreate, ephemeralCreate } =
+							createFactory(repoPerDocEnabled);
+
+						await assert.rejects(
+							factory[operation]({
+								...repoManagerParams,
+								isEphemeralContainer: true,
+								fileSystemManagerParams: routing,
+							}),
+							{
+								name: "NetworkError",
+								code: 400,
+								canRetry: false,
+								message: "Ephemeral requests cannot use durable storage routing.",
+							},
+						);
+
+						sinon.assert.notCalled(durableCreate);
+						sinon.assert.notCalled(ephemeralCreate);
+					});
+				}
+			}
+		}
 	});
 
 	it("uses the authorized physical container as the repository root", async () => {

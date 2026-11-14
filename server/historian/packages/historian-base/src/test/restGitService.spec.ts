@@ -171,12 +171,214 @@ describe("RestGitService Git object SHA validation", () => {
 			},
 			parents: [],
 		};
-		await cache.set(canonicalSha, commit);
+		const cacheKey = `ownership-v2:tenant:document:durable:::::${canonicalSha}`;
+		await cache.set(cacheKey, commit);
 		const cacheGet = sandbox.spy(cache, "get");
 
 		assert.strictEqual(await service.getCommit(canonicalSha, true), commit);
 
-		sinon.assert.calledOnceWithExactly(cacheGet, canonicalSha);
+		sinon.assert.calledOnceWithExactly(cacheGet, cacheKey);
+	});
+
+	describe("RestGitService content-cache isolation", () => {
+		const sandbox = sinon.createSandbox();
+		const commit = {
+			sha: canonicalSha,
+			url: "http://storage/commit",
+			author: {
+				name: "author",
+				email: "author@example.com",
+				date: "2026-08-07T00:00:00.000Z",
+			},
+			committer: {
+				name: "author",
+				email: "author@example.com",
+				date: "2026-08-07T00:00:00.000Z",
+			},
+			message: "message",
+			tree: { sha: canonicalSha, url: "http://storage/tree" },
+			parents: [],
+		};
+
+		afterEach(() => sandbox.restore());
+
+		for (const resource of [
+			{
+				name: "commit",
+				value: commit,
+				read: async (service: RestGitService) => service.getCommit(canonicalSha, true),
+			},
+			{
+				name: "blob",
+				value: {
+					sha: canonicalSha,
+					url: "http://storage/blob",
+					content: "aGVsbG8=",
+					encoding: "base64",
+					size: 5,
+				},
+				read: async (service: RestGitService) =>
+					service.getBlob(tenantId, canonicalSha, true),
+			},
+			{
+				name: "tree",
+				value: { sha: canonicalSha, url: "http://storage/tree", tree: [] },
+				read: async (service: RestGitService) => service.getTree(canonicalSha, false, true),
+			},
+		]) {
+			for (const scope of [
+				{ name: "tenant", tenant: "other-tenant", document: documentId },
+				{ name: "document", tenant: tenantId, document: "other-document" },
+				{ name: "container type", tenant: tenantId, document: documentId, ephemeral: true },
+				{
+					name: "storage account",
+					tenant: tenantId,
+					document: documentId,
+					storage: "other",
+				},
+			]) {
+				it(`isolates cached ${resource.name}s by ${scope.name} without an access proof`, async () => {
+					const cache = new TestCache();
+					const first = new RestGitService(storage, false, tenantId, documentId, cache);
+					const second = new RestGitService(
+						storage,
+						false,
+						scope.tenant,
+						scope.document,
+						cache,
+						scope.storage,
+						undefined,
+						scope.ephemeral,
+					);
+					const notFound = new NetworkError(
+						404,
+						"Object not found in this document.",
+						false,
+					);
+					const downstream = sandbox.stub(BasicRestWrapper.prototype, "get");
+					downstream.onFirstCall().resolves(resource.value);
+					downstream.onSecondCall().rejects(notFound);
+
+					assert.strictEqual(await resource.read(first), resource.value);
+					assert.strictEqual(await resource.read(first), resource.value);
+					sinon.assert.calledOnce(downstream);
+					await assert.rejects(
+						resource.read(second),
+						(error: unknown) => error === notFound,
+					);
+					sinon.assert.calledTwice(downstream);
+				});
+			}
+		}
+
+		it("ignores an old raw cache entry without an access proof", async () => {
+			const cache = new TestCache();
+			await cache.set(canonicalSha, commit);
+			const service = new RestGitService(storage, false, tenantId, documentId, cache);
+			const notFound = new NetworkError(404, "Document not found.", false);
+			const downstream = sandbox.stub(BasicRestWrapper.prototype, "get").rejects(notFound);
+			const cacheSet = sandbox.spy(cache, "set");
+
+			await assert.rejects(
+				service.getCommit(canonicalSha, true),
+				(error: unknown) => error === notFound,
+			);
+
+			sinon.assert.calledOnce(downstream);
+			sinon.assert.notCalled(cacheSet);
+		});
+
+		it("serves a warm cache read with one cache get and no downstream call", async () => {
+			const cache = new TestCache();
+			const service = new RestGitService(storage, false, tenantId, documentId, cache);
+			const downstream = sandbox.stub(BasicRestWrapper.prototype, "get").resolves(commit);
+			await service.getCommit(canonicalSha, true);
+			downstream.resetHistory();
+			const cacheGet = sandbox.spy(cache, "get");
+
+			assert.strictEqual(await service.getCommit(canonicalSha, true), commit);
+
+			sinon.assert.calledOnce(cacheGet);
+			sinon.assert.notCalled(downstream);
+		});
+
+		it("uses the same isolated namespace for background blob fills", async () => {
+			const cache = new TestCache();
+			const service = new RestGitService(storage, false, tenantId, documentId, cache);
+			const blob = {
+				sha: canonicalSha,
+				url: "http://storage/blob",
+				content: "aGVsbG8=",
+				encoding: "base64",
+				size: 5,
+			};
+			sandbox
+				.stub(BasicRestWrapper.prototype, "post")
+				.resolves({ sha: canonicalSha, url: blob.url });
+			const downstream = sandbox.stub(BasicRestWrapper.prototype, "get").resolves(blob);
+
+			await service.createBlob({ content: blob.content, encoding: "base64" });
+			await new Promise<void>((resolve) => setImmediate(resolve));
+			sinon.assert.calledOnce(downstream);
+			downstream.resetHistory();
+
+			assert.strictEqual(await service.getBlob(tenantId, canonicalSha, true), blob);
+			assert.strictEqual(await cache.get(`${tenantId}:${canonicalSha}`), undefined);
+			sinon.assert.notCalled(downstream);
+		});
+
+		for (const ephemeral of [false, true]) {
+			it(`keeps summary body, latest SHA and invalidation scoped for ephemeral=${ephemeral}`, async () => {
+				const cache = new TestCache();
+				const service = new RestGitService(
+					storage,
+					false,
+					tenantId,
+					documentId,
+					cache,
+					undefined,
+					undefined,
+					ephemeral,
+				);
+				const other = new RestGitService(
+					storage,
+					false,
+					tenantId,
+					documentId,
+					cache,
+					undefined,
+					undefined,
+					!ephemeral,
+				);
+				const summary = { id: canonicalSha, trees: [], blobs: [] };
+				const otherSummary = { id: "other-summary", trees: [], blobs: [] };
+				sandbox.stub(BasicRestWrapper.prototype, "post").resolves(summary);
+				const downstream = sandbox
+					.stub(BasicRestWrapper.prototype, "get")
+					.resolves(otherSummary);
+				sandbox.stub(BasicRestWrapper.prototype, "delete").resolves(true);
+
+				await service.createSummary(
+					{ type: "container", message: "summary", sequenceNumber: 0, entries: [] },
+					true,
+				);
+				assert.strictEqual(await service.getSummary("latest", false), summary);
+				assert.strictEqual(await service.getSummary(canonicalSha, false), summary);
+				sinon.assert.notCalled(downstream);
+				assert.strictEqual(await other.getSummary("latest", false), otherSummary);
+
+				assert.strictEqual(await service.deleteSummary(false), true);
+				assert.strictEqual(await other.getSummary("latest", false), otherSummary);
+				sinon.assert.calledOnce(downstream);
+				const notFound = new NetworkError(404, "Summary not found.", false);
+				downstream.rejects(notFound);
+				await assert.rejects(
+					service.getSummary("latest", false),
+					(error: unknown) => error === notFound,
+				);
+				sinon.assert.calledTwice(downstream);
+			});
+		}
 	});
 
 	it("sends the authorized physical root to GitRest", async () => {
