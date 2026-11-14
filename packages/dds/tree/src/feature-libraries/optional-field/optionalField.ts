@@ -252,7 +252,7 @@ function composeNodeDetaches(
 	//  2. If rebased, the composed changeset may not be equivalent to the composition of the individual rebased changes.
 	//     This is not a property that SharedTree currently relies on, but an application could potentially rely on it,
 	//     thus experiencing unexpected rebase outcomes.
-	//  The test "clear node from optional field ○ rename node" in modularChangeFamilyIntegration.spec.ts. illustrates these issues.
+	//  The test "Repro issue: clear node from optional field ○ rename node" in modularChangeFamilyIntegration.spec.ts illustrates these issues.
 	return change1.valueReplace === undefined ? change2.nodeDetach : undefined;
 }
 

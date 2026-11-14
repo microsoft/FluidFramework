@@ -18,6 +18,7 @@ import {
 	type NormalizedUpPath,
 	type RevisionTag,
 	type TaggedChange,
+	areEqualChangeAtomIds,
 	makeAnonChange,
 	offsetChangeAtomId,
 	rebaseChangeOverChanges,
@@ -52,7 +53,6 @@ import {
 } from "../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import {
-	isChangesetValid,
 	removeAliases,
 	validateChangeset,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -63,6 +63,8 @@ import type {
 } from "../../feature-libraries/modular-schema/modularChangeTypes.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { optionalFieldEditor } from "../../feature-libraries/optional-field/optionalField.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { OptionalChangeset } from "../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { Changeset } from "../../feature-libraries/sequence-field/types.js";
 import { FluidClientVersion, FormatValidatorBasic } from "../../index.js";
@@ -1753,7 +1755,7 @@ describe("ModularChangeFamily integration", () => {
 		// This test succeeds so long as the current composition behavior is unchanged.
 		// This test will fail if the composition behavior is fixed. It may also fail for other reasons.
 		// See the TODO in src/feature-libraries/optional-field/optionalField.ts referencing this test.
-		it("clear node from optional field ○ rename node", () => {
+		it("Repro issue: clear node from optional field ○ rename node", () => {
 			const graveId1: ChangeAtomId = {
 				revision: tag1,
 				localId: brand(1),
@@ -1823,8 +1825,21 @@ describe("ModularChangeFamily integration", () => {
 				{ revision: tag2 },
 			]);
 			const rebaseOfComposition = family.rebase(makeAnonChange(composed), moveAC, metadata);
+			const { valueReplace } = rebaseOfComposition.fieldChanges.get(fieldA)
+				?.change as OptionalChangeset;
 			// This check demonstrates that the current composition behavior can produce an invalid changeset
-			assert.equal(isChangesetValid(rebaseOfComposition, family.fieldKinds), "");
+			assert.ok(
+				valueReplace &&
+					// Field A is still being cleared to detach the root that is then renamed
+					areEqualChangeAtomIds(valueReplace.dst, graveId1) &&
+					// But field A is now empty
+					valueReplace.isEmpty &&
+					// So this rename is invalid
+					areEqualChangeAtomIds(
+						rebaseOfComposition.rootNodes.oldToNewId.entries()[0].start,
+						graveId1,
+					),
+			);
 
 			// Verify
 			const rebasedClearA = tagChange(family.rebase(clearA, moveAC, metadata), tag1);
@@ -1838,7 +1853,7 @@ describe("ModularChangeFamily integration", () => {
 			// (A ○ B) ↷ X <==> (A ↷ X) ○ (B ↷ (A⁻¹ ○ X ○ (A ↷ X)))
 			assert.throws(
 				() => assertModularChangesetsEqual(rebaseOfComposition, compositionOfRebase),
-				"Objects are not structurally equal",
+				/Objects are not structurally equal/,
 			);
 		});
 
