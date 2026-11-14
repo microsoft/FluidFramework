@@ -26,6 +26,9 @@ Four workflows compose the PR fleet review system:
 | medium | 3 | everything else |
 
 "Packages" = distinct top-level dirs under `packages/`, `experimental/`, `examples/`.
+The router parses NUL-delimited `git diff --numstat -z` through
+`pr_review_propose.py metrics`, including both package areas for cross-package renames.
+Docs-only and empty diffs have zero packages; binary files count as files but not changed lines.
 
 ## 2. `pr-review-confirm.yml` — Human Toggle → Dispatch
 
@@ -68,7 +71,7 @@ severity cap, enforce it in `parse_review_file()` as well as in its prompt.
 ### Jobs
 
 1. **`setup`** — Resolves params (artifact for `workflow_run`, inputs for `workflow_dispatch`). The label path forces the default fleet size of 3 from the priority list `[correctness, security, api-compatibility, performance, testing]`; the documentation reviewer is available through explicit selection or the six-reviewer full-fleet fallback. The confirm path passes an explicit reviewer JSON array. Creates a check run on the PR head and posts an "in progress" sticky comment.
-2. **`review`** (matrix, `fail-fast: false`) — One job per reviewer. Checks out PR head with `persist-credentials: false`, pre-computes the diff / changed-files / api-report-files, then loads the prompt **from the base branch** (`git show origin/${BASE_REF}:.github/prompts/reviewers/${REVIEWER}.md`). Installs `@github/copilot` and runs with `COPILOT_GITHUB_TOKEN`, model `gpt-6.1-sol`, and **only `--allow-tool=read --allow-tool=write`**. The reviewer writes `review-${reviewer}.json`, uploaded as an artifact. See [Security Notes](#security-notes) for the prompt-injection and credential rationale.
+2. **`review`** (matrix, `fail-fast: false`) — One job per reviewer. Checks out PR head with `persist-credentials: false`, pre-computes the diff / changed-files / api-report-files, then loads the prompt **from the base branch** (`git show origin/${BASE_REF}:.github/prompts/reviewers/${REVIEWER}.md`). Installs `@github/copilot` and runs with `COPILOT_GITHUB_TOKEN`, model `gpt-6.1-sol`, file read/write approvals, and explicit shell/URL denials. Built-in MCP servers and custom instruction loading are disabled. The reviewer writes `review-${reviewer}.json`, uploaded as an artifact. See [Security Notes](#security-notes) for the prompt-injection and credential rationale.
 3. **`consolidate`** — Downloads all `review-*` artifacts, runs `.github/scripts/consolidate_reviews.py` (exit 0 = findings, 2 = clean), scrubs GitHub token patterns from the output as defense-in-depth, and posts the result via the same `pr-review-fleet` sticky header so it overwrites the in-progress comment.
 4. **`teardown`** — Always runs to finalize the check run (success / neutral with findings / failure), so a failed `setup` doesn't leave the "Fleet Review" check stuck in `in_progress`.
 
@@ -98,6 +101,26 @@ Label "fleet-review" applied
 - `auto-route` uses `pull_request_target`, so fork PRs can trigger a workflow that has repository permissions and secrets. The danger is not the trigger by itself; the danger is combining that privileged context with attacker-controlled PR content. If this workflow checked out the PR head and ran scripts, installs, tests, Git aliases, or other PR-authored code, the PR author could shape that code to read tokens, call GitHub APIs, or influence privileged follow-up actions.
 - To avoid that, `auto-route` only uses trusted workflow code from the base branch. It fetches the PR head commit as data, reads deterministic `git diff --numstat` output, reduces that output to line / file / package counts, and posts a bot-authored proposal comment. The untrusted PR controls the numbers that feed the tiering decision, but not the command sequence, prompt text, posted comment template, or any executable code path.
 - `fleet` is a separate workflow that intentionally checks out the PR head for review context. That step is lower risk because checkout uses `persist-credentials: false`, reviewer prompts are loaded from `origin/${BASE_REF}` instead of the PR checkout, and all git-derived context is pre-materialized before `COPILOT_GITHUB_TOKEN` enters the reviewer step environment.
-- Reviewer agents are credentialed with `COPILOT_GITHUB_TOKEN`, and the PR diff is attacker-controlled text that is sent to an LLM. The model is therefore treated as exposed to prompt injection: it is allowed to read the prepared files and write its JSON review result, but it is denied shell and git tools (`--allow-tool=read --allow-tool=write` only). Without shell/git tools or persisted checkout credentials, a malicious diff can ask the model to exfiltrate or mutate repository state, but the agent has no approved tool path to run commands, invoke git, or push changes.
+- Reviewer agents are credentialed with `COPILOT_GITHUB_TOKEN`, and the PR diff is attacker-controlled text that is sent to an LLM. The model is therefore treated as exposed to prompt injection: it is allowed to read the prepared files and write its JSON review result, but shell and URL permissions are denied. A malicious diff can ask the model to exfiltrate or mutate repository state; file read/write approvals do not approve commands, git operations, or pushes.
+- The reviewer explicitly denies `shell` and `url` permissions, disables built-in MCP servers, and disables custom instruction loading from the PR checkout.
+  Deny rules override inherited allow rules.
+  Permission rules control approvals; they are not a tool-visibility allowlist or an operating-system sandbox.
+  Changes to runtime configuration, hooks, plugins, or available tools still require review.
 - The consolidated report is regex-scrubbed for `gh[pousr]_…` and `github_pat_…` token patterns before posting, since model output itself is untrusted. This is defense-in-depth, not the primary boundary; the primary boundary is preventing PR-controlled content from gaining command execution or access to persisted credentials in the first place.
 - The confirm workflow needs `actions: write` because `GITHUB_TOKEN` can only dispatch workflows in its own repo when that permission is explicitly granted.
+
+## Offline validation
+
+The read-only `ai-tooling-checks.yml` workflow runs the Python regression suite on tooling changes.
+It does not invoke a model, use Copilot credentials, or post review comments.
+To run it locally with Python 3.12 and Bash on PATH:
+
+```bash
+python -m pip install -r .github/scripts/requirements-test.txt
+PYTHONUTF8=1 python -m pytest .github/scripts -q
+bash -n scripts/codespace-setup/agent-aliases.sh
+```
+
+Coverage includes proposal checkbox preservation/reset, fleet sizing boundaries,
+empty and docs-only diffs, binary and renamed paths, reviewer permission flags,
+and review consolidation.
