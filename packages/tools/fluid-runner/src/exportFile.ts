@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
-
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	loadExistingContainer,
@@ -19,7 +17,13 @@ import {
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
-import type { IFluidFileConverter } from "./codeLoaderBundle.js";
+import type {
+	FluidFileConverter,
+	IFluidFileConverter,
+	IFluidFileConverterDirectoryOutput,
+	IFluidFileConverterWithBinaryOutput,
+	IFluidFileConverterWithDirectoryOutput,
+} from "./codeLoaderBundle.js";
 import { FakeUrlResolver } from "./fakeUrlResolver.js";
 /* eslint-disable import-x/no-internal-modules */
 import type { IFileLoggerTelemetryOptions } from "./logger/fileLogger.js";
@@ -28,6 +32,7 @@ import {
 	getTelemetryFileValidationError,
 } from "./logger/loggerUtils.js";
 import { getArgsValidationError, getSnapshotFileContent, timeoutPromise } from "./utils.js";
+import { writeFluidFileConverterOutput } from "./writeFluidFileConverterOutput.js";
 /* eslint-enable import-x/no-internal-modules */
 
 /**
@@ -56,11 +61,11 @@ const clientArgsValidationError = "Client_ArgsValidationError";
 
 /**
  * Execute code on a Fluid {@link @fluidframework/container-definitions#IContainer} loaded from an ODSP snapshot
- * file and write the resulting string to disk.
+ * file and write the result to disk.
  * @internal
  */
 export async function exportFile(
-	fluidFileConverter: IFluidFileConverter,
+	fluidFileConverter: FluidFileConverter,
 	inputFile: string,
 	outputFile: string,
 	telemetryFile: string,
@@ -92,12 +97,12 @@ export async function exportFile(
 					return { success: false, eventName, errorMessage: argsValidationError };
 				}
 
-				fs.writeFileSync(
+				writeFluidFileConverterOutput(
 					outputFile,
-					await createFluidRunnerContainerAndExecute(
+					await createContainerAndExecute(
 						getSnapshotFileContent(inputFile),
 						fluidFileConverter,
-						baseLogger,
+						logger,
 						options,
 						timeout,
 						disableNetworkFetch,
@@ -171,9 +176,50 @@ export async function createContainerAndExecute(
 	logger: TelemetryLoggerExt,
 	options?: string,
 	timeout?: number,
+	disableNetworkFetch?: boolean,
+): Promise<string>;
+/**
+ * @internal
+ */
+export async function createContainerAndExecute(
+	localOdspSnapshot: string | Uint8Array,
+	fluidFileConverter: IFluidFileConverterWithBinaryOutput,
+	logger: TelemetryLoggerExt,
+	options?: string,
+	timeout?: number,
+	disableNetworkFetch?: boolean,
+): Promise<Uint8Array>;
+/**
+ * @internal
+ */
+export async function createContainerAndExecute(
+	localOdspSnapshot: string | Uint8Array,
+	fluidFileConverter: IFluidFileConverterWithDirectoryOutput,
+	logger: TelemetryLoggerExt,
+	options?: string,
+	timeout?: number,
+	disableNetworkFetch?: boolean,
+): Promise<IFluidFileConverterDirectoryOutput>;
+/**
+ * @internal
+ */
+export async function createContainerAndExecute(
+	localOdspSnapshot: string | Uint8Array,
+	fluidFileConverter: FluidFileConverter,
+	logger: TelemetryLoggerExt,
+	options?: string,
+	timeout?: number,
+	disableNetworkFetch?: boolean,
+): Promise<string | Uint8Array | IFluidFileConverterDirectoryOutput>;
+export async function createContainerAndExecute(
+	localOdspSnapshot: string | Uint8Array,
+	fluidFileConverter: FluidFileConverter,
+	logger: TelemetryLoggerExt,
+	options?: string,
+	timeout?: number,
 	disableNetworkFetch: boolean = false,
-): Promise<string> {
-	const fn = async (): Promise<string> => {
+): Promise<string | Uint8Array | IFluidFileConverterDirectoryOutput> {
+	const fn = async (): Promise<string | Uint8Array | IFluidFileConverterDirectoryOutput> => {
 		if (disableNetworkFetch) {
 			global.fetch = async () => {
 				throw new Error("Network fetch is not allowed");
@@ -197,24 +243,28 @@ export async function createContainerAndExecute(
 				},
 			},
 		});
-		await waitContainerToCatchUp(container);
-
-		return PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {
-			try {
-				return await fluidFileConverter.execute(container, options);
-			} finally {
-				container.dispose();
-			}
-		});
+		try {
+			await waitContainerToCatchUp(container);
+			return await PerformanceEvent.timedExecAsync(
+				logger,
+				{ eventName: "ExportFile" },
+				async () => fluidFileConverter.execute(container, options),
+			);
+		} finally {
+			container.dispose();
+		}
 	};
 
 	// eslint-disable-next-line unicorn/prefer-ternary
 	if (timeout !== undefined) {
-		return timeoutPromise<string>((resolve, reject) => {
-			fn()
-				.then((value) => resolve(value))
-				.catch((error) => reject(error));
-		}, timeout);
+		return timeoutPromise<string | Uint8Array | IFluidFileConverterDirectoryOutput>(
+			(resolve, reject) => {
+				fn()
+					.then((value) => resolve(value))
+					.catch((error) => reject(error));
+			},
+			timeout,
+		);
 	} else {
 		return fn();
 	}
