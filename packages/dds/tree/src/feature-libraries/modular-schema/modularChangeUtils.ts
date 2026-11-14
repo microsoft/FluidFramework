@@ -512,7 +512,7 @@ function validateAttach(
 		changeset.crossFieldKeys,
 		changeset.rootNodes,
 		attachId,
-		count,
+		countProcessed,
 	);
 	countProcessed = detachEntry.length;
 
