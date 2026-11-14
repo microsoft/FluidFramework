@@ -119,9 +119,7 @@ function buildSummaryTree(attr, quorumVal, summarizer): ISummaryTree {
 	};
 }
 
-interface ISerializableBlobContents {
-	[id: string]: string;
-}
+type ISerializableBlobContents = SnapshotWithBlobs["snapshotBlobs"];
 
 describeCompat(
 	`Dehydrate Rehydrate Container Test`,
@@ -177,6 +175,7 @@ describeCompat(
 			const contents = blobs[id];
 
 			assert(contents, `blob contents for ${key} missing`);
+			assert(typeof contents === "string", `expected text blob contents for ${key}`);
 			return JSON.parse(contents) as T;
 		}
 
