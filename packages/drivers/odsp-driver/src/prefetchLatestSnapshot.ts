@@ -60,6 +60,8 @@ import {
  * @param _fetchBinarySnapshotFormat - Deprecated and not used.
  * @param _snapshotFormatFetchType - Deprecated and not used.
  * @param odspDocumentServiceFactory - factory to access the non persistent cache and store the prefetch promise.
+ * The prefetch also uses the request headers and the claims challenge policy of this factory.
+ * See {@link @fluidframework/odsp-driver-definitions#HostStoragePolicy.propagateClaimsChallenges}.
  *
  * @returns `true` if the snapshot is cached, `false` otherwise.
  * @legacy
@@ -94,6 +96,7 @@ export async function prefetchLatestSnapshot(
 		odspLogger,
 		resolvedUrlData,
 		getStorageToken,
+		odspDocumentServiceFactory?.propagateClaimsChallenges,
 	);
 
 	const snapshotDownloader = async (
@@ -136,6 +139,9 @@ export async function prefetchLatestSnapshot(
 			const prefetchStartTime = performanceNow();
 			// Add the deferred promise to the cache, so that it can be leveraged while loading the container.
 			const snapshotContentsWithEpochP = new Deferred<IPrefetchSnapshotContents>();
+			// Nothing observes the deferred promise if there is no factory or the cache already has the key.
+			// Handle its rejection here so that a failed prefetch doesn't cause an unhandled rejection.
+			snapshotContentsWithEpochP.promise.catch(() => {});
 			const nonPersistentCacheKey = getKeyForCacheEntry(snapshotKey);
 			const snapshotNonPersistentCache =
 				odspDocumentServiceFactory?.snapshotPrefetchResultCache;

@@ -8,7 +8,7 @@
 import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import type { PromiseCache } from "@fluidframework/core-utils/internal";
+import { delay, type PromiseCache } from "@fluidframework/core-utils/internal";
 import {
 	FetchSource,
 	type ICacheEntry,
@@ -16,7 +16,10 @@ import {
 	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import { getKeyForCacheEntry } from "@fluidframework/driver-utils/internal";
-import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
+import {
+	type IOdspResolvedUrl,
+	OdspErrorTypes,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";
@@ -35,7 +38,12 @@ import { getHashedDocumentId } from "../odspPublicUtils.js";
 import { type INewFileInfo, createCacheSnapshotKey } from "../odspUtils.js";
 import { prefetchLatestSnapshot } from "../prefetchLatestSnapshot.js";
 
-import { createResponse, mockFetchSingle, notFound } from "./mockFetch.js";
+import {
+	createClaimsChallengeHeader,
+	createResponse,
+	mockFetchSingle,
+	notFound,
+} from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
@@ -218,6 +226,88 @@ describe("Tests for prefetching snapshot", () => {
 					);
 				},
 			);
+		});
+
+		it("prefetch fails without a retry when it gets a claims challenge", async () => {
+			const claims = '{"access_token":{"nbf":{"essential":true,"value":"1597959090"}}}';
+			const factory = new OdspDocumentServiceFactory(
+				async () => "token",
+				async () => "token",
+				localCache,
+				{ ...GetHostStoragePolicyInternal(), propagateClaimsChallenges: true },
+			);
+
+			let tokenFetchCount = 0;
+			const prefetched = await mockFetchSingle(
+				async () =>
+					prefetchLatestSnapshot(
+						resolved,
+						async () => {
+							tokenFetchCount++;
+							return "token";
+						},
+						localCache,
+						true,
+						mockLogger,
+						undefined,
+						false,
+						undefined,
+						undefined,
+						factory,
+					),
+				async () =>
+					createResponse(
+						{ "www-authenticate": createClaimsChallengeHeader(claims) },
+						undefined,
+						401,
+					),
+			);
+
+			assert.strictEqual(prefetched, false, "prefetch should report the failure");
+			assert.strictEqual(tokenFetchCount, 1, "the host should not be asked for a new token");
+			assert.strictEqual(
+				mockLogger.events.find((event) =>
+					event.eventName.includes("PrefetchLatestSnapshotError"),
+				)?.errorType,
+				OdspErrorTypes.authorizationError,
+				"prefetch should fail with the claims challenge",
+			);
+		});
+
+		it("failed prefetch without a factory does not cause an unhandled rejection", async () => {
+			// Mocha doesn't fail a test on an unhandled rejection, so track them here.
+			const unhandledRejections: unknown[] = [];
+			const rejectionHandler = (reason: unknown): void => {
+				unhandledRejections.push(reason);
+			};
+			process.on("unhandledRejection", rejectionHandler);
+
+			try {
+				const prefetched = await mockFetchSingle(
+					async () =>
+						prefetchLatestSnapshot(
+							resolved,
+							async (_options) => "token",
+							localCache,
+							true,
+							mockLogger,
+							undefined,
+							false,
+						),
+					notFound,
+				);
+				assert.strictEqual(prefetched, false, "prefetch should report the failure");
+
+				// Give Node a chance to report unhandled rejections.
+				await delay(0);
+				assert.deepStrictEqual(
+					unhandledRejections,
+					[],
+					"Should not have unhandled rejections",
+				);
+			} finally {
+				process.off("unhandledRejection", rejectionHandler);
+			}
 		});
 
 		it("prefetching snapshot should result in snapshot source as cache as prefetch adds to cache", async () => {

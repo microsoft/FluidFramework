@@ -110,6 +110,7 @@ export interface IOdspPointInTimeDocumentServiceImplementationProps {
     readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>;
     readonly logger?: ITelemetryBaseLogger;
     readonly persistedCache: IPersistedCache;
+    readonly propagateClaimsChallenges?: boolean;
     readonly requestHeaders?: Readonly<Record<string, string>>;
     readonly resolvedUrl: IResolvedUrl;
     readonly targetSequenceNumber: number;
@@ -214,6 +215,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory, 
     get IRelaySessionAwareDriverFactory(): this;
     // (undocumented)
     protected persistedCache: IPersistedCache;
+    readonly propagateClaimsChallenges?: boolean;
     // (undocumented)
     readonly requestHeaders?: Readonly<Record<string, string>>;
     // (undocumented)
