@@ -11,17 +11,24 @@ import {
 	type FieldKey,
 	type FieldUpPath,
 	type PathRootPrefix,
+	type Range,
 	type TreeNodeSchemaIdentifier,
 	type TreeValue,
 	type UpPath,
 	type Value,
-	type ChunkedCursor,
 	type TreeChunk,
 	cursorChunk,
 	dummyRoot,
 } from "../../core/index.js";
 import { ReferenceCountedBase, getOrCreate, hasSome } from "../../util/index.js";
 import { SynchronousCursor, prefixFieldPath, prefixPath } from "../treeCursorUtils.js";
+
+import {
+	type ChunkEditCursor,
+	type EditableChunk,
+	getFieldLength,
+	validateChunkEditRange,
+} from "./chunkEditing.js";
 
 /**
  * Create a tree chunk with ref count 1.
@@ -39,7 +46,7 @@ export function uniformChunk(shape: ChunkShape, values: TreeValue[]): TreeChunk 
  * Separates shape from content,
  * allowing deduplication of shape information and storing of content as a flat sequence of values.
  */
-export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
+export class UniformChunk extends ReferenceCountedBase implements EditableChunk {
 	public idCompressor: undefined | Pick<IIdCompressor, "decompress">;
 	/**
 	 * Create a tree chunk with ref count 1.
@@ -70,6 +77,11 @@ export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 
 	public cursor(): Cursor {
 		return new Cursor(this);
+	}
+
+	public getEditCursor(): ChunkEditCursor {
+		assert(!this.isShared(), "Editing requires exclusive chunk ownership");
+		return this.cursor();
 	}
 
 	protected onUnreferenced(): void {}
@@ -340,7 +352,7 @@ class NodePositionInfo implements UpPath {
  * Tracks a flat `positionIndex` and derives each node's position info from the shape's shared
  * {@link TreeShape.positions} plus the node's top-level index.
  */
-class Cursor extends SynchronousCursor implements ChunkedCursor {
+class Cursor extends SynchronousCursor implements ChunkEditCursor {
 	private positionIndex!: number; // When in fields mode, this points to the parent node.
 
 	/** Position info for the current node, or `undefined` when in root field. */
@@ -526,6 +538,97 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 			return 0;
 		}
 		return fieldInfo[2];
+	}
+
+	public getFieldChunks(): undefined {
+		assert(this.mode === CursorLocationType.Fields, "Expected a field");
+		// Children are stored inline in this chunk's shape and values, not as independently owned chunks.
+		return undefined;
+	}
+
+	/**
+	 * Attempts a shape-preserving leaf replacement in an owned field.
+	 * @remarks
+	 * Also supports the root sequence through the same editing contract.
+	 * An owning parent can use this to replace top-level leaves without splitting the child chunk.
+	 */
+	public trySplice(range: Range, content: readonly TreeChunk[]): TreeChunk[] | undefined {
+		assert(!this.chunk.isShared(), "Editing requires exclusive chunk ownership");
+		validateChunkEditRange(range, this.getFieldLength());
+		const count = range.end - range.start;
+		if (getFieldLength(content) !== count) {
+			// Changing a nested field's length changes the shared TreeShape.
+			// The top-level sequence could be resized without changing TreeShape, but that case is not implemented here.
+			return undefined;
+		}
+		if (count === 0) {
+			return [];
+		}
+		const field = this.nodePositionInfo?.shape.fieldsOffsetArray[this.indexOfField];
+		const shape = this.nodePositionInfo === undefined ? this.treeShape : field?.shape;
+		if (shape?.hasValue !== true) {
+			// Only leaf replacement is implemented. Same-shape subtree replacement could copy a larger value range.
+			return undefined;
+		}
+		// A leaf occupies one value slot. Nested position offsets are relative to one top-level tree,
+		// so add that tree's offset in the chunk before indexing the flat values array.
+		let valueOffset = range.start;
+		if (this.nodePositionInfo !== undefined) {
+			const withinTree = this.positionIndex - 1 - this.topLevelIndex * this.nodeLength;
+			const firstChild =
+				this.treeShape.positions[withinTree + (field ?? oob()).offset] ?? oob();
+			valueOffset += this.topLevelIndex * this.stride + firstChild.valueOffset;
+		}
+		const incoming = content[0];
+		if (
+			content.length === 1 &&
+			incoming instanceof UniformChunk &&
+			!incoming.isShared() &&
+			incoming.shape.treeShape.equals(shape) &&
+			incoming.idCompressor === this.chunk.idCompressor
+		) {
+			// Reuse the exclusively owned incoming chunk as the outgoing content by swapping value slots.
+			// Matching shapes and compressor identities make raw values interchangeable, including compressed IDs.
+			for (let offset = 0; offset < count; offset++) {
+				const oldValue = this.chunk.values[valueOffset + offset];
+				const newValue = incoming.values[offset];
+				assert(oldValue !== undefined && newValue !== undefined, "Missing leaf value");
+				this.chunk.values[valueOffset + offset] = newValue;
+				incoming.values[offset] = oldValue;
+			}
+			return [incoming];
+		}
+		// Validate and read every incoming leaf before mutating storage or consuming references.
+		// This keeps unsupported edits side-effect free. Cursor reads also decode IDs with the source compressor.
+		const values: TreeValue[] = [];
+		for (const chunk of content) {
+			const cursor = chunk.cursor();
+			for (let index = 0; index < chunk.topLevelLength; index++) {
+				cursor.enterNode(index);
+				if (cursor.type !== shape.type || cursor.firstField()) {
+					return undefined;
+				}
+				const value = cursor.value;
+				assert(value !== undefined, "Leaf replacement must have a value");
+				values.push(value);
+				cursor.exitNode();
+			}
+		}
+		// Outgoing values keep their original encoding and compressor; decoded incoming strings can be stored directly.
+		const removed = new UniformChunk(
+			shape.withTopLevelLength(count),
+			this.chunk.values.slice(valueOffset, valueOffset + count),
+			this.chunk.idCompressor,
+		);
+		for (let offset = 0; offset < count; offset++) {
+			const value = values[offset];
+			assert(value !== undefined, "Missing replacement value");
+			this.chunk.values[valueOffset + offset] = value;
+		}
+		for (const chunk of content) {
+			chunk.referenceRemoved();
+		}
+		return [removed];
 	}
 
 	public firstNode(): boolean {
