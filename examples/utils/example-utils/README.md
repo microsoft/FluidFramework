@@ -4,6 +4,13 @@ This package contains utilities used by Fluid examples. These interfaces can be 
 
 See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.
 
+## Initialize a new example container
+
+Pass an optional initializer to `createOrLoadExampleContainer(client, rootStore, initialize)` to set up a newly created root before attachment.
+The helper awaits the initializer, attaches the container, and then publishes its ID in the URL hash.
+It does not call the initializer when loading an existing document.
+If initialization or attachment fails, the helper closes the new container and propagates the error without publishing its ID.
+
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
