@@ -237,7 +237,6 @@ export class Chunker implements IChunker {
 /**
  * Get a TreeChunk for the current node (and its children) of cursor.
  * This will copy if needed, but add refs to existing chunks which hold the data.
- * Borrows the cursor's content and returns one owned reference, including when reusing a chunk.
  *
  * @param cursor - cursor in nodes mode
  */
@@ -248,7 +247,6 @@ export function chunkTree(cursor: ITreeCursorSynchronous, policy: ChunkCompresso
 /**
  * Get a TreeChunk[] for the current field (and its children) of cursor.
  * This will copy if needed, but add refs to existing chunks which hold the data.
- * Borrows the cursor's content and returns one owned reference per array entry.
  */
 export function chunkField(
 	cursor: ITreeCursorSynchronous,
@@ -281,7 +279,7 @@ export function chunkFieldSingle(
 /**
  * Create a single TreeChunk from an array of TreeChunks.
  * @remarks
- * Takes ownership of one reference per array entry and returns one owned reference.
+ * This takes ownership of the provided TreeChunk references, and returns an owned referenced.
  */
 export function combineChunks(chunks: TreeChunk[]): TreeChunk {
 	if (chunks.length === 1) {
@@ -293,7 +291,6 @@ export function combineChunks(chunks: TreeChunk[]): TreeChunk {
 /**
  * Get a BasicChunk for the current node (and its children) of cursor.
  * This will copy if needed, and add refs to existing chunks which hold the data.
- * Borrows the cursor's content and returns one owned reference.
  */
 export function basicChunkTree(
 	cursor: ITreeCursorSynchronous,
@@ -302,7 +299,7 @@ export function basicChunkTree(
 	// symbol based fast path to check for BasicChunk:
 	// return existing chunk with a increased ref count if possible.
 	const chunk = tryGetChunk(cursor);
-	if (chunk instanceof BasicChunk && policy.shouldRechunk?.(chunk) !== true) {
+	if (chunk instanceof BasicChunk) {
 		chunk.referenceAdded();
 		return chunk;
 	}
@@ -526,15 +523,6 @@ export interface ChunkPolicy {
 export interface ChunkCompressor {
 	readonly policy: ChunkPolicy;
 	/**
-	 * Whether to traverse an existing non-uniform chunk to optimize its descendants instead of reusing the subtree.
-	 * The callback borrows the chunk without taking ownership of a reference.
-	 * Returning `false` preserves the chunk's identity and skips its descendants.
-	 * When omitted, existing chunks can be reused without traversal.
-	 * Uniform chunks are reused without calling this callback.
-	 * Traversal costs are proportional to the content outside reused subtrees.
-	 */
-	readonly shouldRechunk?: (chunk: TreeChunk) => boolean;
-	/**
 	 * If the idCompressor is provided, {@link UniformChunk}s with identifiers will be encoded for its in-memory representation.
 	 * @remarks
 	 * This compression applies to {@link UniformChunk}s when {@link TreeShape.mayContainCompressedIds} is set.
@@ -543,40 +531,15 @@ export interface ChunkCompressor {
 	readonly idCompressor: IIdCompressor | undefined;
 }
 
-/**
- * Rechunks the current node's fields, returning one owned BasicChunk reference.
- * Preserves an existing BasicChunk's identity when its child references are unchanged so incremental summary tracking remains valid.
- * In that case, releases the temporary child references acquired during traversal and returns a new reference to the existing parent.
- * Otherwise, transfers the child references to a new parent.
- */
 function newBasicChunkTree(
 	cursor: ITreeCursorSynchronous,
 	policy: ChunkCompressor,
 ): BasicChunk {
-	const existing = tryGetChunk(cursor);
-	const fields = new Map(
-		mapCursorFields(cursor, () => [cursor.getFieldKey(), chunkField(cursor, policy)]),
+	return new BasicChunk(
+		cursor.type,
+		new Map(mapCursorFields(cursor, () => [cursor.getFieldKey(), chunkField(cursor, policy)])),
+		cursor.value,
 	);
-	if (
-		existing instanceof BasicChunk &&
-		existing.fields.size === fields.size &&
-		[...fields].every(([key, children]) => {
-			const previous = existing.fields.get(key);
-			return (
-				previous?.length === children.length &&
-				children.every((child, index) => child === previous[index])
-			);
-		})
-	) {
-		for (const children of fields.values()) {
-			for (const child of children) {
-				child.referenceRemoved();
-			}
-		}
-		existing.referenceAdded();
-		return existing;
-	}
-	return new BasicChunk(cursor.type, fields, cursor.value);
 }
 
 /**
@@ -613,10 +576,7 @@ export function chunkRange(
 			const chunkLength = cursor.chunkLength;
 			if (chunkLength <= remaining) {
 				const chunk = tryGetChunk(cursor);
-				if (
-					chunk !== undefined &&
-					(chunk instanceof UniformChunk || chunkCompressor.shouldRechunk?.(chunk) !== true)
-				) {
+				if (chunk !== undefined) {
 					if (
 						chunk instanceof SequenceChunk &&
 						chunk.subChunks.length <= chunkCompressor.policy.sequenceChunkInlineThreshold
@@ -643,12 +603,10 @@ export function chunkRange(
 
 		if (!reusedChunk) {
 			assert(cursor.mode === CursorLocationType.Nodes, 0x580 /* should be in nodes */);
+			// TODO: if provided, use schema to consider using UniformChunks
 			const type = cursor.type;
 			const shape = chunkCompressor.policy.shapeFromSchema(type);
-			if (
-				shape instanceof TreeShape &&
-				shape.positions.length <= chunkCompressor.policy.uniformChunkNodeCount
-			) {
+			if (shape instanceof TreeShape) {
 				const nodesPerTopLevelNode = shape.positions.length;
 				const maxTopLevelLength = Math.max(
 					1,
@@ -675,9 +633,7 @@ export function chunkRange(
 		}
 	}
 
-	// TODO: Consider coalescing adjacent small, same-shape UniformChunks reused by the fast path
-	// when their combined size fits within the applicable chunk size limit.
-	// Newly converted runs are already packed by uniformChunkFromCursor.
+	// TODO: maybe make a pass over output to coalesce UniformChunks and/or convert other formats to UniformChunks where possible.
 
 	// If output is large, group it into a tree of sequence chunks.
 	while (output.length > chunkCompressor.policy.sequenceChunkSplitThreshold) {

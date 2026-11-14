@@ -39,12 +39,8 @@ import {
 	type Breakable,
 	type JsonCompatibleReadOnly,
 } from "../../util/index.js";
-import {
-	chunkFieldSingle,
-	combineChunks,
-	defaultChunkPolicy,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../chunked-forest/chunkTree.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
 import {
 	defaultIncrementalEncodingPolicy,
 	type FieldBatchDecodingContext,
@@ -95,7 +91,6 @@ export class ForestSummarizer
 		/**
 		 * The summarizer for the same stored schema repository used by the forest's chunking policy.
 		 * This establishes the schema-before-forest loading contract, so forest loading can rely on a populated schema.
-		 * Rechunking decoded content uses this schema through the forest's chunking policy.
 		 * Callers that invoke {@link ForestSummarizer.load} directly must ensure the schema is already populated.
 		 */
 		schemaSummarizer: SchemaSummarizer,
@@ -139,11 +134,6 @@ export class ForestSummarizer
 			(cursor: ITreeCursorSynchronous) => this.forest.chunkField(cursor),
 			shouldEncodeIncrementally,
 			initialSequenceNumber,
-			(chunk, shouldRechunk) => {
-				const rechunked = combineChunks(this.forest.chunkField(chunk.cursor(), shouldRechunk));
-				chunk.referenceRemoved();
-				return rechunked;
-			},
 		);
 	}
 
