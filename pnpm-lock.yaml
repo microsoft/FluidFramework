@@ -14245,6 +14245,9 @@ importers:
       '@fluidframework/shared-object-base':
         specifier: workspace:~
         version: link:../../dds/shared-object-base
+      '@fluidframework/shared-summary-block':
+        specifier: workspace:~
+        version: link:../../dds/shared-summary-block
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils

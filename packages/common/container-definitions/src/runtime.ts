@@ -491,6 +491,11 @@ export interface IContainerContext {
  */
 export interface IContainerContextInternal extends IContainerContext {
 	/**
+	 * Captures the protocol tree for experimental same-session checkpoint publication.
+	 * Returns undefined when the service supplies the protocol tree itself.
+	 */
+	readonly captureCheckpointProtocol?: () => ISummaryTree | undefined;
+	/**
 	 * Reports the runtime's operation-only dirty state.
 	 *
 	 * @remarks

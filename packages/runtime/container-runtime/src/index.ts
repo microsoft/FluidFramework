@@ -20,6 +20,7 @@ export {
 	type RuntimeHeaderData,
 } from "./containerRuntime.js";
 export type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
+export type { NativeCheckpoint } from "./nativeCheckpoint.js";
 export { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 export type {
 	ContainerRuntimeAliasMessage,
@@ -135,3 +136,7 @@ export {
 	loaderSupportRequirementsForRuntime,
 	dataStoreSupportRequirementsForRuntime,
 } from "./runtimeLayerCompatState.js";
+export {
+	NativeCheckpointCoordinator,
+	type NativeCheckpointCoordinatorOptions,
+} from "./nativeCheckpointCoordinator.js";

@@ -12,7 +12,13 @@ import type nconf from "nconf";
 
 import * as utils from "../utils";
 
-export async function createTree(
+/**
+ * Isomorphic-git's loose object writer checks existence before a non-atomic write.
+ * A concurrent identical tree can otherwise read a partially written object.
+ */
+const pendingTrees = new Map<string, Promise<ITree>>();
+
+export function createTree(
 	store: nconf.Provider,
 	tenantId: string,
 	authorization: string,
@@ -29,13 +35,31 @@ export async function createTree(
 		return entry;
 	});
 
-	const sha = await git.writeTree({
-		fs,
-		dir: utils.getGitDir(store, tenantId),
-		tree: entries,
+	// Input order does not affect a Git tree's identity. Do not include authorization in the key.
+	const directory = utils.getGitDir(store, tenantId);
+	const key = JSON.stringify([
+		directory,
+		[...entries].sort((left, right) =>
+			left.path < right.path ? -1 : left.path > right.path ? 1 : 0,
+		),
+	]);
+	const existing = pendingTrees.get(key);
+	if (existing !== undefined) {
+		return existing;
+	}
+	const pending = (async () => {
+		const sha = await git.writeTree({
+			fs,
+			dir: directory,
+			tree: entries,
+		});
+		return getTree(store, tenantId, authorization, sha, false, true);
+	})().finally(() => {
+		pendingTrees.delete(key);
 	});
+	pendingTrees.set(key, pending);
 
-	return getTree(store, tenantId, authorization, sha, false, true);
+	return pending;
 }
 
 export async function getTree(

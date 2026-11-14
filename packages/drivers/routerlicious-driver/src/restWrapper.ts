@@ -275,7 +275,7 @@ class RouterliciousRestWrapper extends RestWrapper {
 					? responseBody
 					: safeStringify(responseBody);
 		throwR11sNetworkError(
-			`R11s fetch error: ${responseSummary}`,
+			`R11s fetch error (HTTP ${response.status}): ${responseSummary}`,
 			response.status,
 			responseBody?.retryAfter,
 			{

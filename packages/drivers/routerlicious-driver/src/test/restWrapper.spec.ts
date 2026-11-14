@@ -283,6 +283,21 @@ describe("RouterliciousDriverRestWrapper", () => {
 				errorType: RouterliciousErrorTypes.authorizationError,
 			});
 		});
+		it("includes the HTTP status even when a failed response has an empty JSON body", async () => {
+			mockFetch = createMockFetch([
+				{ method: "GET", origin: testHost, path: testPath, status: 400, body: {} },
+			]);
+			await assert.rejects(restWrapper.get(testUrl), {
+				message: "R11s fetch error (HTTP 400): {}",
+				canRetry: false,
+			});
+			assert.equal(
+				mockFetch.stub.callCount,
+				1,
+				"Diagnostics must not hide errors with retries",
+			);
+		});
+
 		it("throws a retriable error on 500", async () => {
 			mockFetch = createMockFetch([
 				{ method: "GET", origin: testHost, path: testPath, status: 500 },

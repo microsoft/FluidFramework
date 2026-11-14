@@ -73,6 +73,10 @@ export type {
 } from "./protocol/index.js";
 export { PendingLocalStateStore } from "./pendingLocalStateStore.js";
 export {
+	loadContainerAfterNativeCheckpointRestore,
+	type NativeCheckpointReloadBoundary,
+} from "./nativeCheckpointReload.js";
+export {
 	extractBlobAttachReferences,
 	wireFormatConstants,
 	type IBlobAttachReference,

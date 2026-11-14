@@ -76,6 +76,7 @@ export interface IContainerContextConfig
 	// fetchOps is an internal-only capability (IContainerContextInternal), not part of the public
 	// IContainerContext contract. Optional: hosts may not provide op reading.
 	readonly fetchOps: IContainerContextInternal["fetchOps"];
+	readonly captureCheckpointProtocol?: IContainerContextInternal["captureCheckpointProtocol"];
 	// Allows the runtime to report op-only dirty state separately from host-facing aggregate dirty state.
 	readonly updatePendingOpState: NonNullable<
 		IContainerContextInternal["updatePendingOpState"]
@@ -140,6 +141,7 @@ export class ContainerContext
 		targetClientId?: string,
 	) => void;
 	public readonly fetchOps: IContainerContextInternal["fetchOps"];
+	public readonly captureCheckpointProtocol: IContainerContextInternal["captureCheckpointProtocol"];
 	public readonly updatePendingOpState: NonNullable<
 		IContainerContextInternal["updatePendingOpState"]
 	>;
@@ -200,6 +202,7 @@ export class ContainerContext
 		this.loader = config.loader;
 		this.submitFn = config.submitFn;
 		this.submitSummaryFn = config.submitSummaryFn;
+		this.captureCheckpointProtocol = config.captureCheckpointProtocol;
 		this.submitBatchFn = config.submitBatchFn;
 		this.submitSignalFn = config.submitSignalFn;
 		this.fetchOps = config.fetchOps;
