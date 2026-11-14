@@ -238,7 +238,10 @@ While sub-agents run, perform the Architecture, Tests, Performance, and Security
 
 ### Spawning Sub-agents
 
-Spawn all sub-agents in a single parallel batch using Copilot's task delegation tool.
+Use the active runtime's task delegation tool only if it is available.
+If it is unavailable, perform the selected review passes sequentially and report that limitation; do not invent tool names or silently skip a pass.
+Use the runtime's configured model defaults and preserve an explicit user model choice.
+When delegating, spawn independent sub-agents in a single parallel batch.
 
 Each sub-agent prompt includes — literally pasted into the prompt text:
 
@@ -256,18 +259,15 @@ Perform the Inspector pass yourself while sub-agents run. Wait for all to comple
 
 ## Step 7: De-duplicate and Classify
 
-Classify each finding and adjust severity:
+Classify each finding by its demonstrated impact, not its reviewer or category:
 
-| Area | Max Severity | Adjustment |
-|------|:---:|:---:|
-| Correctness | CRITICAL | Promote +1 level (MEDIUM->HIGH, HIGH->CRITICAL) |
-| API Quality | CRITICAL | Promote +1 level (MEDIUM->HIGH, HIGH->CRITICAL) |
-| Performance | HIGH | Cap |
-| Architecture | HIGH | Cap |
-| Tests | HIGH | Cap |
-| Security | MEDIUM | Cap |
+- CRITICAL: concrete data loss, corruption, credential exposure, exploitable code execution, or a similarly severe failure.
+- HIGH: a substantial correctness regression, breaking API change, or exploitable vulnerability with a verified affected path.
+- MEDIUM: a bounded defect with a concrete failure mechanism and limited impact.
 
-Multi-area findings: classify in whichever area gives higher severity. Drop uncertain findings. If a concern depends on guesswork, hypothetical misuse, or hardening beyond an already-enforcing layer, omit it.
+Do not automatically promote correctness or API findings, and do not cap a security finding at MEDIUM.
+For multi-area findings, choose the area that best describes the root cause and report it once.
+Drop uncertain findings. If a concern depends on guesswork, hypothetical misuse, or hardening beyond an already-enforcing layer, omit it.
 
 ## Step 8: Report
 

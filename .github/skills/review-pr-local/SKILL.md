@@ -54,23 +54,32 @@ For ADO, pass the org explicitly on every command: `--organization https://<org>
 
 | Platform | Command | Fields |
 |----------|---------|--------|
-| Azure DevOps | `az repos pr show --id <id> --organization https://<org>.visualstudio.com --output json` | `sourceRefName`, `targetRefName`, `lastMergeSourceCommit.commitId` (head), `lastMergeTargetCommit.commitId` (base) |
-| GitHub | `gh pr view <number> --repo <owner>/<repo> --json headRefName,baseRefName,headRefOid,baseRefOid` | `headRefName`, `baseRefName`, `headRefOid` (head), `baseRefOid` (base) |
+| Azure DevOps | `az repos pr show --id <id> --organization https://<org>.visualstudio.com --output json` | `sourceRefName`, `targetRefName`, `lastMergeSourceCommit.commitId` (head), `lastMergeTargetCommit.commitId` (base), `repository.remoteUrl` (base clone URL), `forkSource.repository.remoteUrl` (source clone URL for a fork) |
+| GitHub | `gh api repos/<owner>/<repo>/pulls/<number>` | `head.ref`, `base.ref`, `head.sha`, `base.sha`, `base.repo.clone_url` (base clone URL) |
+
+Use the base repository clone URL from this metadata for fetches.
+For an Azure DevOps fork, fetch the head from its source clone URL instead; otherwise the source and base clone URLs are the same.
+Do not assume the current checkout's `origin` is the repository from the PR URL.
 
 ## Step 4 — Fetch the PR into an isolated worktree
 
 Never run `git checkout` / `gh pr checkout` in the user's working directory. Always use a separate worktree.
 
-1. Reuse an existing worktree if present:
+1. Check for an existing worktree:
    - Repo root: `git rev-parse --show-toplevel`.
    - Worktree path: sibling of the repo root named `<repo-name>-pr-<id-or-number>`.
-   - If it already appears in `git worktree list`, skip to Step 5.
+   - If it already appears in `git worktree list`, inspect its status and recorded PR identity.
+     Ask before reusing it or choose a new path with the user.
+     Never reset or remove an existing worktree automatically; it may contain human review edits or a different PR revision.
 2. Fetch the head and base commits:
 
    | Platform | Fetch head | Fetch base |
    |----------|------------|------------|
-   | Azure DevOps | `git fetch origin <source-branch>` | `git fetch origin <head-commit> <base-commit>` |
-   | GitHub | `git fetch origin pull/<number>/head` (works for forks) | `git fetch origin <base-branch>` |
+   | Azure DevOps | `git fetch --no-tags <source-clone-url> <head-commit>` | `git fetch --no-tags <base-clone-url> <base-commit>` |
+   | GitHub | `git fetch --no-tags <base-clone-url> pull/<number>/head` (works for forks) | `git fetch --no-tags <base-clone-url> <base-commit>` |
+
+   Verify the fetched PR head matches the metadata SHA before fetching the base.
+   If the head changed, refresh metadata rather than mixing revisions.
 
 3. Create a **detached** worktree at the head commit (detached avoids "branch already checked out" errors and leaves no stray local branch):
 
@@ -84,6 +93,9 @@ Never run `git checkout` / `gh pr checkout` in the user's working directory. Alw
 
 The editor's Source Control panel shows only *uncommitted* changes, so a committed PR branch looks empty. Soft-reset the detached worktree to the PR's merge-base so the PR's changes become staged changes with per-file diffs.
 
+Only do this in the newly created review worktree after `git status --porcelain` confirms it is clean.
+For a reused worktree, preserve its current index and files unless the human explicitly authorizes re-materializing the review view.
+
 1. Merge-base (isolates the PR's own changes): `git -C <worktree-path> merge-base <head-commit> <base-commit>`
 2. Verify the real file set first: `git -C <worktree-path> diff --stat <merge-base> <head-commit>`
 3. Surface as staged: `git -C <worktree-path> reset --soft <merge-base>`
@@ -91,7 +103,7 @@ The editor's Source Control panel shows only *uncommitted* changes, so a committ
 
 ## Step 6 — Interactive review
 
-1. Read the three-dot diff (`<merge-base>..<head-commit>`) and the modified files for context.
+1. Read the two-dot diff (`<merge-base>..<head-commit>`) and the modified files for context.
 2. Present a short list of the **important parts** (per the Philosophy bar), each as `file:line` + a one-line reason. Default to few.
 3. Answer the human's follow-up questions about any file, hunk, or symbol — read more of the tree as needed. Stay in this loop until the human is ready to comment or finish.
 
@@ -157,13 +169,18 @@ Rules for all paths: call ADO MCP tools server-qualified (`ado/repo_*`) — neve
 
 ## Step 8 — Cleanup
 
-When finished, remove the worktree (never affects the user's own branch):
+Keep the worktree available for the human's review unless they request removal.
+For requested cleanup, first check for human edits and untracked files:
 
 ```
-git worktree remove --force <worktree-path>
+git -C <worktree-path> status --short
+git worktree remove <worktree-path>
 ```
 
-If the directory is locked (an editor still has it open), close that editor window, then re-run the remove and `git worktree prune`.
+The intentionally staged PR view can make normal removal refuse.
+Do not force removal to hide that failure.
+Explain the staged state and get explicit approval before discarding it; preserve any additional human changes.
+If the directory is locked by an editor, ask the human to close that window rather than force cleanup.
 
 ## Error handling
 
