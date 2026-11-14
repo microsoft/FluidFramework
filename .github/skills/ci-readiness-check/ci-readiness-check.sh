@@ -151,9 +151,9 @@ if [ ${#NOT_BUILT[@]} -gt 0 ]; then
 fi
 
 # ---------- Phase 0.5: Ensure dependencies are installed ----------
-if [ ! -d "${REPO_ROOT}/node_modules" ]; then
+if ! (cd "${REPO_ROOT}" && pnpm exec fluid-build --help >/dev/null 2>&1); then
     section "Installing dependencies"
-    warn "node_modules not found — running pnpm install"
+    warn "fluid-build is unavailable — restoring dependencies with pnpm install"
     (cd "${REPO_ROOT}" && pnpm install --frozen-lockfile 2>&1) || {
         fail "pnpm install failed. Install dependencies manually and re-run."
         exit 1
@@ -161,14 +161,65 @@ if [ ! -d "${REPO_ROOT}/node_modules" ]; then
     ok "Dependencies installed"
 fi
 
-# Build the package list as space-separated paths for fluid-build.
-PKG_ARGS=""
+# Separate registered scheduler packages from independent packages.
+SCHEDULED_PACKAGES=()
+INDEPENDENT_PACKAGES=()
 for pkg in "${PACKAGES[@]}"; do
-    PKG_ARGS="${PKG_ARGS} ${pkg}"
+    runner="$(node - "${REPO_ROOT}" "${pkg}" <<'NODE'
+const fs = require("node:fs");
+const path = require("node:path");
+const root = process.argv[2];
+const directory = path.resolve(root, process.argv[3]);
+const config = require(path.join(root, "fluidBuild.config.cjs"));
+const registered = Object.values(config.repoPackages).flatMap((entry) =>
+    typeof entry === "string" ? [entry] : Array.isArray(entry) ? entry : [entry.directory]
+).map((entry) => path.resolve(root, entry));
+let workspace = directory;
+while (!fs.existsSync(path.join(workspace, "pnpm-workspace.yaml")) && workspace !== root) {
+    const parent = path.dirname(workspace);
+    if (parent === workspace) throw new Error(`No workspace found for ${directory}`);
+    workspace = parent;
+}
+console.log(registered.includes(directory) || registered.includes(workspace) ? "scheduled" : "independent");
+NODE
+)"
+    if [ "${runner}" = scheduled ]; then
+        SCHEDULED_PACKAGES+=("${pkg}")
+    else
+        INDEPENDENT_PACKAGES+=("${pkg}")
+    fi
 done
 
 CHECKS_FIX_OK=true
 CHECKS_OK=true
+
+run_checks() {
+    local task="$1" script pkg
+    local success=true
+    if [ ${#SCHEDULED_PACKAGES[@]} -gt 0 ]; then
+        echo "Running: fluid-build --task ${task} ${SCHEDULED_PACKAGES[*]}"
+        (cd "${REPO_ROOT}" && pnpm exec fluid-build --task "${task}" "${SCHEDULED_PACKAGES[@]}") || success=false
+    fi
+    for pkg in "${INDEPENDENT_PACKAGES[@]}"; do
+        script="$(cd "${REPO_ROOT}/${pkg}" && node -e '
+            const scripts = require("./package.json").scripts ?? {};
+            const task = process.argv[1];
+            const fallback = task === "checks:fix" ? "lint:fix" : "lint";
+            if (scripts[task]) console.log(task);
+            else if (scripts[fallback]) console.log(fallback);
+            else {
+                console.error(`No ${task} or ${fallback} script in ${process.cwd()}`);
+                process.exit(1);
+            }
+        ' "${task}")" || { success=false; continue; }
+        if [ ! -d "${REPO_ROOT}/${pkg}/node_modules" ]; then
+            (cd "${REPO_ROOT}/${pkg}" && pnpm install --frozen-lockfile) || { success=false; continue; }
+        fi
+        echo "Running: pnpm run ${script} (in ${pkg})"
+        (cd "${REPO_ROOT}/${pkg}" && pnpm run "${script}") || success=false
+    done
+    [ "${success}" = true ]
+}
 
 # ---------- Phase 1: Auto-fix all checks ----------
 section "Running checks:fix on changed packages"
@@ -176,8 +227,7 @@ section "Running checks:fix on changed packages"
 # Use fluid-build --task checks:fix scoped to just the changed packages.
 # This runs: biome format --write, flub check policy --fix, syncpack fix,
 # and buildVersion --fix — all in the correct dependency order.
-echo "Running: fluid-build --task checks:fix ${PKG_ARGS}"
-if (cd "${REPO_ROOT}" && pnpm exec fluid-build --task checks:fix ${PKG_ARGS} 2>&1); then
+if run_checks checks:fix; then
     ok "checks:fix completed"
 else
     warn "checks:fix had issues (some fixes may still have been applied)"
@@ -187,11 +237,11 @@ fi
 # ---------- Phase 2: Verify checks pass ----------
 section "Verifying checks pass"
 
-if (cd "${REPO_ROOT}" && pnpm exec fluid-build --task checks ${PKG_ARGS} 2>&1) >/dev/null 2>&1; then
+if run_checks checks; then
     ok "All checks pass"
 else
     CHECKS_OK=false
-    fail "Some checks still failing after auto-fix. Re-run for details: pnpm exec fluid-build --task checks ${PKG_ARGS}"
+    fail "Some checks still failing after auto-fix — see the command output above."
 fi
 
 # ---------- Phase 3: Changeset check ----------
