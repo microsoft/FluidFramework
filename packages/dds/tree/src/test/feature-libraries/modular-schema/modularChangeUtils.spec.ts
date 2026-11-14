@@ -213,18 +213,11 @@ describe("modularChangeUtils", () => {
 
 		it("propagates errors from the remainder of an attach range", () => {
 			const change = Change.build(
-				{
-					family,
-					renames: [
-						{
-							oldId: { localId: brand(2) },
-							newId: nodeId,
-							count: 1,
-							detachLocation: undefined,
-						},
-					],
-				},
-				Change.field(field, FieldKinds.sequence.identifier, [MarkMaker.attach(2, nodeId)]),
+				{ family },
+				Change.field(field, FieldKinds.sequence.identifier, [
+					MarkMaker.detach(1, nodeId),
+					MarkMaker.attach(2, nodeId),
+				]),
 			);
 			assert.equal(
 				isChangesetValid(change, fieldKinds),
