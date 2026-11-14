@@ -17,10 +17,12 @@ import {
 	allowUnused,
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,
+	type ErasedSchemaSubclassable,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
 	type InternalTreeNode,
 	type NodeFromSchema,
+	type MaskedProperties,
 	type TreeFieldFromImplicitField,
 	type TreeNode,
 	type TreeNodeSchema,
@@ -29,6 +31,40 @@ import {
 } from "../../../simple-tree/index.js";
 import type { areSafelyAssignable, requireTrue } from "../../../util/index.js";
 import { getView } from "../../utils.js";
+
+interface ReservedSquare {
+	readonly area: number;
+}
+
+declare class PrivateSquareReservations {
+	private readonly hidden: unknown;
+}
+
+export function createReservedSquareSchema<TReserved>(): ErasedSchemaSubclassable<
+	ReservedSquare,
+	"com.example.ReservedSquare",
+	TReserved
+> {
+	const schema = new SchemaFactory("com.example");
+	class SquareInternal
+		extends schema.object("ReservedSquare", { hidden: schema.number })
+		implements ReservedSquare
+	{
+		public get area(): number {
+			return this.hidden * this.hidden;
+		}
+	}
+	return eraseSchemaDetailsSubclassable<ReservedSquare, unknown, TReserved>()(SquareInternal);
+}
+
+// Keep this annotation exported to check declaration emission with a named private reservation type.
+export function createPrivateReservedSquareSchema(): ErasedSchemaSubclassable<
+	ReservedSquare,
+	"com.example.ReservedSquare",
+	PrivateSquareReservations
+> {
+	return createReservedSquareSchema<PrivateSquareReservations>();
+}
 
 describe("eraseSchemaDetails", () => {
 	describe("eraseSchemaDetails", () => {
@@ -195,14 +231,134 @@ describe("eraseSchemaDetails", () => {
 				}
 			}
 
-			class Square extends eraseSchemaDetailsSubclassable<SquareInterface>()(SquareInternal) {
+			class Square extends eraseSchemaDetailsSubclassable<
+				SquareInterface,
+				unknown,
+				MaskedProperties<"size">
+			>()(SquareInternal) {
 				public static create(sideLength: number): Square {
-					return new (this as TreeNodeSchema as typeof SquareInternal)({ size: sideLength });
+					return TreeBeta.importConcise(this, { size: sideLength });
 				}
 			}
 
 			const square = Square.create(10);
 			assert.equal(square.area, 100);
+		});
+
+		it("masks properties with unknown reads and read-only access", () => {
+			const reservedSymbol = Symbol("reserved");
+			const Base =
+				createReservedSquareSchema<
+					MaskedProperties<"hidden" | "future" | typeof reservedSymbol | 42>
+				>();
+
+			class Square extends Base {
+				public readonly label = "square";
+			}
+
+			class ExplicitOverrides extends Base {
+				public override hidden = 1;
+				public override future = undefined;
+				public override [reservedSymbol] = 1;
+				public override 42 = 1;
+			}
+			class ImplicitOverride extends Base {
+				public hidden = 1;
+			}
+
+			const checkTypes = (node: Square): void => {
+				allowUnused<requireTrue<areSafelyAssignable<typeof node.hidden, unknown>>>();
+				// @ts-expect-error - A masked read must not produce a never value.
+				allowUnused<requireAssignableTo<typeof node.hidden, never>>();
+				// @ts-expect-error - A masked read must not expose the implementation's type.
+				allowUnused<requireAssignableTo<typeof node.hidden, number>>();
+				// @ts-expect-error - Masked values are not necessarily objects.
+				allowUnused<requireAssignableTo<typeof node.hidden, object>>();
+				// @ts-expect-error - Masked properties are read-only.
+				node.hidden = node.future;
+				// @ts-expect-error - Masked symbol properties are read-only.
+				node[reservedSymbol] = 1;
+				// @ts-expect-error - Masked numeric properties are read-only.
+				node[42] = 1;
+			};
+			allowUnused<typeof checkTypes>();
+
+			const square = TreeBeta.importConcise(Square, { hidden: 5 });
+			assert.equal(square.area, 25);
+			assert.equal(square.label, "square");
+			assert.equal(square.hidden, 5);
+
+			const view = getView(new TreeViewConfiguration({ schema: Square }));
+			view.initialize(square);
+			assert.equal(view.root.area, 25);
+		});
+
+		it("allows masked properties to be absent or hold arbitrary values", () => {
+			const values: readonly MaskedProperties<"hidden">[] = [
+				{},
+				{ hidden: undefined },
+				{ hidden: null },
+				{ hidden: 1 },
+				{ hidden: "text" },
+				{ hidden: { data: true } },
+			];
+			assert.equal(values[0].hidden, undefined);
+			allowUnused<requireAssignableTo<MaskedProperties<never>, object>>();
+		});
+
+		it("preserves private reservations through explicit factory return types", () => {
+			const Base = createPrivateReservedSquareSchema();
+			class Square extends Base {
+				public readonly label = "square";
+			}
+
+			// @ts-expect-error - A subclass cannot expose the reserved private member.
+			class PublicCollision extends Base {
+				public override hidden = 1;
+			}
+			// @ts-expect-error - A separately declared private member also conflicts.
+			class PrivateCollision extends Base {
+				private override readonly hidden = 1;
+			}
+
+			const checkTypes = (node: Square): void => {
+				// @ts-expect-error - Private reservations are not readable by consumers.
+				const hidden: unknown = node.hidden;
+				allowUnused<typeof hidden>();
+			};
+			allowUnused<typeof checkTypes>();
+
+			const square = TreeBeta.importConcise(Square, { hidden: 5 });
+			assert.equal(square.area, 25);
+			assert.equal(square.label, "square");
+		});
+
+		it("combines private reservations and masked properties", () => {
+			const Base = createReservedSquareSchema<
+				PrivateSquareReservations & MaskedProperties<"future">
+			>();
+			class FutureOverride extends Base {
+				public override future = "application data";
+			}
+			// @ts-expect-error - Private reservations remain effective alongside masking.
+			class PrivateCollision extends Base {
+				public override hidden = 1;
+			}
+		});
+
+		it("does not change the schema or runtime properties", () => {
+			const schema = new SchemaFactory("com.example");
+			class Internal extends schema.object("Unchanged", { hidden: schema.number }) {}
+			const Erased = eraseSchemaDetailsSubclassable<
+				object,
+				unknown,
+				MaskedProperties<"hidden" | "future">
+			>()(Internal);
+			assert.equal(Object.is(Erased, Internal), true);
+			class Consumer extends Erased {}
+			const node = TreeBeta.importConcise(Consumer, { hidden: 5 });
+			assert.equal(Object.hasOwn(node, "hidden"), true);
+			assert.equal(Object.hasOwn(node, "future"), false);
 		});
 
 		it("Erased Base", () => {
