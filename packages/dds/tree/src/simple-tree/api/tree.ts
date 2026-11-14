@@ -620,6 +620,51 @@ export interface TreeBranchHistory {
 }
 
 /**
+ * Changes to the history exposed by {@link UntypedTreeViewAlpha.branchHistory}.
+ * @remarks
+ * Includes pending local commits, but excludes temporary edits inside uncommitted transactions.
+ * Describes history available on this client, not history persisted in a summary.
+ * @sealed @alpha
+ */
+export interface HistoryUpdate {
+	/**
+	 * The number of commits before the update.
+	 */
+	readonly lengthBefore: number;
+	/**
+	 * The number of commits after the update.
+	 */
+	readonly lengthAfter: number;
+	/**
+	 * Changes in the order they occurred.
+	 * An update can add and trim commits even when its total length is unchanged.
+	 */
+	readonly changes: readonly HistoryChange[];
+}
+
+/**
+ * Commit counts for a change to a branch's history.
+ * @sealed @alpha
+ */
+export interface HistoryChange {
+	/**
+	 * Why this replacement occurred.
+	 * A rebase can replace existing revisions with new versions of the same revisions.
+	 * Rollback removes commits, including when a local view is rewound.
+	 */
+	readonly reason: "append" | "trim" | "rebase" | "rollback";
+	/**
+	 * The number of history entries removed.
+	 * For a rebase, entries can be counted as both removed and added even when their revisions are unchanged.
+	 */
+	readonly removedCount: number;
+	/**
+	 * The number of history entries added.
+	 */
+	readonly addedCount: number;
+}
+
+/**
  * An {@link UntypedTreeView} with alpha-level APIs.
  * @remarks
  * Use `UntypedTreeViewAlpha` when your application needs to inspect or manipulate branch history directly.
@@ -1322,6 +1367,20 @@ export interface TreeBranchEventsBeta {
  * @sealed @alpha
  */
 export interface TreeBranchEvents extends TreeBranchEventsBeta {
+	/**
+	 * Fired after a synchronous history update and any nested trimming have completed.
+	 * @remarks
+	 * Fires even when document content and the number of commits are unchanged.
+	 * This event is separate from {@link TreeBranchEvents.changed}: trimming alone does not fire `changed`,
+	 * and `changed` can fire before nested trimming has completed.
+	 * {@link HistoryUpdate.lengthAfter} matches {@link TreeBranchHistory.length} during the callback.
+	 * Acknowledging a pending local commit does not add it again.
+	 * Edits and branch operations are not permitted during this callback.
+	 * Applications can read {@link UntypedTreeViewAlpha.branchHistory} to refresh their history display.
+	 * @param update - Reasons and commit counts for this client's history update.
+	 */
+	historyChanged(update: HistoryUpdate): void;
+
 	/**
 	 * Fired as described by {@link TreeBranchEventsBeta.changed}, with alpha change metadata and revertible support.
 	 *

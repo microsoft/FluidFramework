@@ -116,6 +116,8 @@ import {
 	customFromCursorStored,
 	type CustomTreeValue,
 	type CustomTreeNode,
+	type HistoryUpdate,
+	type HistoryChange,
 } from "../simple-tree/index.js";
 import {
 	Breakable,
@@ -260,6 +262,11 @@ export interface CheckoutEvents {
 	 * @param data - information about the change
 	 */
 	changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
+
+	/**
+	 * {@inheritDoc TreeBranchEvents.historyChanged}
+	 */
+	historyChanged(update: HistoryUpdate): void;
 
 	/**
 	 * Fired when a new branch is created from this checkout.
@@ -722,6 +729,9 @@ export abstract class CheckoutBase implements ITreeCheckout {
 	readonly #events = createEmitter<CheckoutEvents>();
 	public events: Listenable<CheckoutEvents> = this.#events;
 	private _branchHistory?: DefaultTreeBranchHistory;
+	private pendingHistoryUpdate:
+		| { readonly lengthBefore: number; readonly changes: HistoryChange[] }
+		| undefined;
 	private _locations?: DefaultTreeLocationResolver;
 	private locationRevisionSource?: () => LocationRevisionSource;
 
@@ -1025,6 +1035,8 @@ export abstract class CheckoutBase implements ITreeCheckout {
 	}
 
 	private registerForBranchEvents(): void {
+		this.#transaction.branch.events.on("beforeChange", this.onBeforeBranchHistoryChange);
+		this.#transaction.branch.events.on("ancestryTrimmed", this.onHistoryTrimmed);
 		this.#transaction.branch.events.on("afterChange", this.onAfterBranchChange);
 		this.#transaction.branch.events.on("commitSequenced", this.onCommitSequenced);
 		this.#transaction.activeBranchEvents.on("afterChange", this.onAfterChange);
@@ -1032,11 +1044,68 @@ export abstract class CheckoutBase implements ITreeCheckout {
 	}
 
 	private unregisterFromBranchEvents(): void {
+		this.#transaction.branch.events.off("beforeChange", this.onBeforeBranchHistoryChange);
+		this.#transaction.branch.events.off("ancestryTrimmed", this.onHistoryTrimmed);
 		this.#transaction.branch.events.off("afterChange", this.onAfterBranchChange);
 		this.#transaction.branch.events.off("commitSequenced", this.onCommitSequenced);
 		this.#transaction.activeBranchEvents.off("afterChange", this.onAfterChange);
 		this.#transaction.activeBranchEvents.off("ancestryTrimmed", this.onAncestryTrimmed);
 	}
+
+	private readonly onBeforeBranchHistoryChange = (
+		change: SharedTreeBranchChange<SharedTreeChange>,
+	): void => {
+		if (!this.#events.hasListeners("historyChanged")) {
+			return;
+		}
+		// Capture the initial length before afterChange listeners can trigger trimming.
+		this.recordHistoryChange(
+			change.type === "remove" ? "rollback" : change.type,
+			this.branchHistory.length,
+			change.type === "append" ? 0 : change.removedCommits.length,
+			change.type === "remove" ? 0 : change.newCommits.length,
+		);
+	};
+
+	private readonly onHistoryTrimmed = (revisions: RevisionTag[]): void => {
+		this.recordHistoryChange(
+			"trim",
+			this.branchHistory.length + revisions.length,
+			revisions.length,
+			0,
+		);
+	};
+
+	private recordHistoryChange(
+		reason: HistoryChange["reason"],
+		lengthBefore: number,
+		removedCount: number,
+		addedCount: number,
+	): void {
+		if (!this.#events.hasListeners("historyChanged")) {
+			return;
+		}
+		const update = (this.pendingHistoryUpdate ??= {
+			lengthBefore,
+			changes: [],
+		});
+		update.changes.push({ reason, removedCount, addedCount });
+		this.branch.historyUpdates.defer(this.emitHistoryChanged);
+	}
+
+	private readonly emitHistoryChanged = (): void => {
+		const update = this.pendingHistoryUpdate;
+		this.pendingHistoryUpdate = undefined;
+		if (update === undefined || this.disposed) {
+			return;
+		}
+		this.emitChangedLocked(() => {
+			this.#events.emit("historyChanged", {
+				...update,
+				lengthAfter: this.branchHistory.length,
+			});
+		}, "a historyChanged event callback");
+	};
 
 	private createTransactionStack(
 		branch: SharedTreeBranch<
@@ -1787,6 +1856,20 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		>,
 	): void {
 		this.checkCanSwitchBranch();
+		branch.historyUpdates.run(() => this.switchBranchCore(branch));
+	}
+
+	private switchBranchCore(
+		branch: SharedTreeBranch<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>,
+	): void {
+		const lengthBefore = this.branchHistory.length;
+		const removed: GraphCommit<SharedTreeChange>[] = [];
+		const added: GraphCommit<SharedTreeChange>[] = [];
+		findCommonAncestor([this.branch.getHead(), removed], [branch.getHead(), added]);
 		const diff = diffHistories(
 			this.changeFamily.rebaser,
 			this.#transaction.branch.getHead(),
@@ -1803,6 +1886,14 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		this.locationRevisionSource = undefined;
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
 		this.registerForBranchEvents();
+		if (removed.length > 0 || added.length > 0) {
+			this.recordHistoryChange(
+				added.length === 0 ? "rollback" : "rebase",
+				lengthBefore,
+				removed.length,
+				added.length,
+			);
+		}
 
 		// TODO: Rework eventing
 		this.applyInternalChange(diff);

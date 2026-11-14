@@ -296,6 +296,13 @@ export class SchematizingSimpleTreeView<
 		this.currentEnabledUpgrades = new Map();
 		this.update();
 
+		// Forward separately from "changed": trim-only updates do not emit "changed",
+		// and history notifications must wait until nested trimming has finished.
+		this.unregisterCallbacks.add(
+			this.checkout.events.on("historyChanged", (update) => {
+				this.events.emit("historyChanged", update);
+			}),
+		);
 		this.unregisterCallbacks.add(
 			this.checkout.events.on("changed", (data, getRevertible) => {
 				this.events.emit("changed", data, getRevertible);
@@ -604,17 +611,20 @@ export class SchematizingSimpleTreeView<
 	}
 
 	private runSchemaEdit(edit: () => void): void {
-		this.midUpgrade = true;
-		try {
-			edit();
-		} finally {
-			this.midUpgrade = false;
-		}
-		// Ensure hydration is flushed before events run which could access nodes.
-		this.pendingHydration?.();
-		this.pendingHydration = undefined;
-		this.events.emit("schemaChanged");
-		this.events.emit("rootChanged");
+		// History listeners may access nodes, so defer them until hydration has finished.
+		this.checkout.mainBranch.historyUpdates.run(() => {
+			this.midUpgrade = true;
+			try {
+				edit();
+			} finally {
+				this.midUpgrade = false;
+			}
+			// Ensure hydration is flushed before events run which could access nodes.
+			this.pendingHydration?.();
+			this.pendingHydration = undefined;
+			this.events.emit("schemaChanged");
+			this.events.emit("rootChanged");
+		});
 	}
 
 	private disposeFlexView(): void {
