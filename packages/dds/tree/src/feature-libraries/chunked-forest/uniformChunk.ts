@@ -40,7 +40,7 @@ export function uniformChunk(shape: ChunkShape, values: TreeValue[]): TreeChunk 
  * allowing deduplication of shape information and storing of content as a flat sequence of values.
  */
 export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
-	public idCompressor: undefined | IIdCompressor;
+	public idCompressor: undefined | Pick<IIdCompressor, "decompress">;
 	/**
 	 * Create a tree chunk with ref count 1.
 	 *
@@ -50,7 +50,7 @@ export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 	public constructor(
 		public shape: ChunkShape,
 		public values: TreeValue[],
-		idCompressor?: IIdCompressor,
+		idCompressor?: Pick<IIdCompressor, "decompress">,
 	) {
 		super();
 		this.idCompressor = shape.treeShape.mayContainCompressedIds ? idCompressor : undefined;
@@ -65,7 +65,7 @@ export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 	}
 
 	public clone(): UniformChunk {
-		return new UniformChunk(this.shape, [...this.values]);
+		return new UniformChunk(this.shape, [...this.values], this.idCompressor);
 	}
 
 	public cursor(): Cursor {

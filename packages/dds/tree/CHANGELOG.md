@@ -1,5 +1,95 @@
 # @fluidframework/tree
 
+## 3.12.0
+
+### Minor Changes
+
+- Array move events now behave consistently before and after hydration ([#28487](https://github.com/microsoft/FluidFramework/pull/28487)) [1038bf6d64d](https://github.com/microsoft/FluidFramework/commit/1038bf6d64d663da816edbe9df299123d7787599)
+
+  Range moves on unhydrated arrays now produce change events and deltas consistent with hydrated arrays, including when the destination is within the source range and the contents remain unchanged.
+  This also makes insertion anchors update consistently before and after hydration.
+
+  Moving an empty range on unhydrated arrays no longer emits change events, matching hydrated arrays.
+
+- Reduce optimized forest memory overhead after loading and receiving inserted content ([#28653](https://github.com/microsoft/FluidFramework/pull/28653)) [8331b103730](https://github.com/microsoft/FluidFramework/commit/8331b1037304a0fe346bf1b4c60b98b68f4b347f)
+
+  SharedTree configured with [ForestTypeOptimized](https://fluidframework.com/docs/api/v3/tree#foresttypeoptimized-variable) now uses compact in-memory storage for eligible content loaded from summaries or received in insertion operations.
+
+  #### Example measurements
+
+  In a local benchmark with 10,000-character documents, the median results before and after this change were:
+
+  | Metric                                       | Formatted text, before to after   | Plain text, before to after      |
+  | -------------------------------------------- | --------------------------------- | -------------------------------- |
+  | Retained tree heap after loading             | 39.9 MiB to 30.6 MiB (23% less)   | 5.12 MiB to 2.79 MiB (46% less)  |
+  | Retained attached-content heap after loading | 19.8 MiB to 10.5 MiB (47% less)   | 2.44 MiB to 0.113 MiB (95% less) |
+  | Summary load time                            | 140 ms to 212 ms (51% slower)     | 28.5 ms to 40.2 ms (41% slower)  |
+  | Receive insertion time                       | 271 ms to 428 ms (58% slower)     | 242 ms to 63.0 ms (74% faster)   |
+  | Local insertion time                         | 1,109 ms to 1,224 ms (10% slower) | 137 ms to 130 ms (5% faster)     |
+
+  These measurements use Node.js 22, in-memory storage, and a mocked runtime, with 18 timed samples per case across two process orders.
+  Heap measurements use six batches of loaded documents after garbage collection and do not measure peak memory.
+  The memory savings can come with additional processing time, particularly when loading summaries or receiving formatted text.
+  Results depend on the document schema, workload, and environment.
+
+- Manage branch state independently of views ([#28520](https://github.com/microsoft/FluidFramework/pull/28520)) [9ea98a15a67](https://github.com/microsoft/FluidFramework/commit/9ea98a15a67e51642eaa343bb570329404ac9acd)
+
+  You can now create and retain an independent branch without keeping a typed view alive.
+  This lets you separate the lifetime of branch state and history from the schema-configured view used to read and edit it.
+
+  This change is a step toward separating branch management from views and reducing the current one-view-per-branch restriction.
+  It does not enable multiple active views of the same branch: each branch still supports one active view at a time.
+
+  Use the new alpha method `tree.forkBranch()` to create a `TreeBranchHandleAlpha` without a source view or schema configuration.
+  Use `branch.viewWith(config)` when you need to read or edit the branch.
+  Disposing that view preserves the branch so you can create another view later.
+  Edits remain isolated until you merge them into another view.
+
+  ```typescript
+  import {
+    asAlpha,
+    SchemaFactory,
+    TreeViewConfiguration,
+  } from "@fluidframework/tree/alpha";
+
+  const sf = new SchemaFactory("counter");
+  class Counter extends sf.object("Counter", {
+    count: sf.number,
+  }) {}
+
+  const config = new TreeViewConfiguration({ schema: Counter });
+
+  // `tree` is an `ITree` initialized with this schema and { count: 0 }.
+  // It has no active view.
+  const branch = asAlpha(tree).forkBranch();
+  const branchView = branch.viewWith(config);
+  const view = asAlpha(tree.viewWith(config));
+
+  branchView.root.count = 5;
+  console.log(view.root.count); // 0: the branch edit is isolated.
+
+  view.merge(branchView); // Also disposes branch and branchView.
+  console.log(view.root.count); // 5
+  ```
+
+  You own each branch and must dispose it when you no longer need it.
+  Disposing a branch also disposes its active view.
+
+  Use `branch.fork()` to create an independent child branch.
+  Existing `view.fork()` behavior is unchanged: the returned view owns its branch, and disposing that view also disposes its branch.
+
+  See [Indexes and Branches](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/main/indexes-and-branches.md) for more details.
+
+- Deprecate isEquivalent compatibility flag ([#28655](https://github.com/microsoft/FluidFramework/pull/28655)) [8c51cdeac2d](https://github.com/microsoft/FluidFramework/commit/8c51cdeac2dc2c238a8e97fd61e0a1206a7eb336)
+
+  [`SchemaCompatibilityStatus.isEquivalent`](https://fluidframework.com/docs/api/fluid-framework/schemacompatibilitystatus-interface#isequivalent-propertysignature) is deprecated.
+  Use [`canView`](https://fluidframework.com/docs/api/fluid-framework/schemacompatibilitystatus-interface#canview-propertysignature) to determine whether you can read and edit a document with your view schema.
+  Use [`canUpgrade`](https://fluidframework.com/docs/api/fluid-framework/schemacompatibilitystatus-interface#canupgrade-propertysignature) to determine whether you can upgrade the document's stored schema.
+  For details about differences that prevent viewing, use [`SchemaCompatibilityStatusBeta.discrepancies`](https://fluidframework.com/docs/api/fluid-framework/schemacompatibilitystatusbeta-interface#discrepancies-propertysignature).
+
+  There is no direct replacement for schema equivalence.
+  The property remains available until a future major release.
+
 ## 3.11.0
 
 ### Minor Changes

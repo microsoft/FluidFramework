@@ -6,8 +6,16 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { TreeStoredSchema } from "../core/index.js";
-import { defaultSchemaPolicy } from "../feature-libraries/index.js";
+import {
+	LeafNodeStoredSchema,
+	MapNodeStoredSchema,
+	ObjectNodeStoredSchema,
+	type FieldKey,
+	type TreeFieldStoredSchema,
+	type TreeNodeSchemaIdentifier,
+	type TreeStoredSchema,
+} from "../core/index.js";
+import { defaultSchemaPolicy, FieldKinds } from "../feature-libraries/index.js";
 import { getOrCreate, oneFromIterable } from "../util/index.js";
 
 import {
@@ -22,15 +30,23 @@ import {
 	type TreeNodeSchema,
 } from "./core/index.js";
 import {
+	FieldKind,
 	type FieldSchemaAlpha,
 	type ImplicitFieldSchema,
 	normalizeFieldSchema,
 } from "./fieldSchema.js";
-import { isObjectNodeSchema } from "./node-kinds/index.js";
-import type { SchemaType, SimpleNodeSchema, SimpleTreeSchema } from "./simpleSchema.js";
+import { isObjectNodeSchema, type ObjectNodeSchemaPrivate } from "./node-kinds/index.js";
+import type {
+	SchemaType,
+	SimpleFieldSchema,
+	SimpleNodeSchema,
+	SimpleTreeSchema,
+} from "./simpleSchema.js";
 import {
+	getStoredSchema,
 	resolveStoredSchemaGenerationOptions,
 	simpleStoredSchemaToStoredSchema,
+	transformSimpleNodeSchema,
 	transformSimpleSchema,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
 	type toUnhydratedSchema,
@@ -395,6 +411,233 @@ export function toUpgradeSchema(
 	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
 ): TreeStoredSchema {
 	return toStoredSchema(root, resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades));
+}
+
+/**
+ * Builds a candidate upgrade target while preserving staged upgrades already enabled at each stored location.
+ *
+ * @remarks
+ * Start with the stored schema selected by the view and its policy, then preserve already-enabled upgrades at corresponding fields.
+ * This separates the policy's decision to enable a staged upgrade from the need to preserve one already enabled.
+ * Construction follows these rules:
+ *
+ * - Matching fields retain their stored allowed types and add types selected by the view and supplied policy.
+ * - Already-optional fields stay optional when the corresponding view field supports missing content, including through staged optionality.
+ * - Shared tokens do not make preservation global: an enabled change remains at its stored field, while other fields gain it only if the policy enables the token.
+ * - Definitions required by retained allowed types are included, even when restrictive conversion excludes their staged references.
+ * View-known types use their current declarations so incompatible changes are not hidden by an old stored definition.
+ *
+ * This does not retain object fields omitted from the view. Such omissions can still prevent an upgrade even when viewing is permitted.
+ *
+ * The result is a proposal, not an approved upgrade.
+ * Retaining an allowed type can still leave a candidate that the view cannot read, and other schema differences can still violate upgrade rules.
+ * Before applying the candidate, callers must use {@link isSchemaUpgradeAllowed} to check that all previously allowed content remains allowed and that the view can read and edit documents using the candidate.
+ * They remain responsible for deciding whether that permitted upgrade would make any change.
+ *
+ * @param viewSchema - The view schema for which the upgrade target is being constructed.
+ * @param storedSchema - The existing stored schema from which to construct the upgrade target.
+ * @param policy - The policy that selects new staged upgrades. Already-enabled upgrades are preserved independently at each location.
+ *
+ * @returns The complete candidate stored schema.
+ */
+export function getSchemaUpgradeCandidate(
+	viewSchema: TreeSchema,
+	storedSchema: TreeStoredSchema,
+	policy: StagedSchemaUpgradePolicy,
+): TreeStoredSchema {
+	const initial = toStoredSchema(viewSchema.root, policy);
+
+	return runSchemaInitialization(() => {
+		const rootFieldSchema = composeFieldSchema(
+			initial.rootFieldSchema,
+			storedSchema.rootFieldSchema,
+			viewSchema.root,
+		);
+		const nodeSchema = new Map(initial.nodeSchema);
+		const pending = new Set([...nodeSchema.keys(), ...rootFieldSchema.types]);
+
+		// Iterate over all reachable node types, including those added while processing fields.
+		// Iteration visits newly added identifiers; duplicates are ignored, so recursive references do not repeat work.
+		for (const identifier of pending) {
+			// The node definition as it appears in the view schema.
+			// This will be `undefined` if the node is not declared in the view schema.
+			const viewNode = viewSchema.definitions.get(identifier);
+
+			// The node definition as it appears in the stored schema.
+			// This will be `undefined` if the node is not declared in the stored schema.
+			const storedNode = storedSchema.nodeSchema.get(identifier);
+
+			let candidate = nodeSchema.get(identifier);
+
+			if (candidate === undefined) {
+				// An already-enabled type can be omitted from the initial conversion because all view references to it are disabled by staging.
+				// Use the view's current declaration when available, so upgrade validation can detect incompatible changes instead of hiding them with the stored definition.
+				candidate =
+					viewNode === undefined
+						? storedNode
+						: getStoredSchema(transformSimpleNodeSchema(viewNode, policy));
+				if (candidate === undefined) {
+					// Without a definition, this identifier permits no nodes.
+					// Leave references to it intact rather than creating a definition that could allow new content.
+					continue;
+				}
+			}
+
+			// For each field, preserve its already-enabled upgrades while adding the schema changes requested by the view and policy.
+			// Preserving an already-enabled change in one field must not enable it in other fields that share the same token.
+			//
+			// Arrays also use stored object fields; their element types follow the same composition rule.
+			if (
+				storedNode instanceof ObjectNodeStoredSchema &&
+				candidate instanceof ObjectNodeStoredSchema
+			) {
+				const viewObject =
+					viewNode !== undefined && isObjectNodeSchema(viewNode) ? viewNode : undefined;
+				candidate = composeObjectNodeSchema(candidate, storedNode, viewObject);
+			} else if (
+				storedNode instanceof MapNodeStoredSchema &&
+				candidate instanceof MapNodeStoredSchema
+			) {
+				candidate = composeMapNodeSchema(candidate, storedNode);
+			}
+
+			nodeSchema.set(identifier, candidate);
+
+			// Queue every type referenced by this node's fields, even if the node itself is unknown to the view.
+			if (candidate instanceof MapNodeStoredSchema) {
+				for (const type of candidate.mapFields.types) {
+					pending.add(type);
+				}
+			} else if (candidate instanceof ObjectNodeStoredSchema) {
+				for (const field of candidate.objectNodeFields.values()) {
+					for (const type of field.types) {
+						pending.add(type);
+					}
+				}
+			} else {
+				assert(candidate instanceof LeafNodeStoredSchema, "Unsupported stored node schema");
+			}
+		}
+
+		return { rootFieldSchema, nodeSchema };
+	});
+}
+
+/**
+ * Preserves enabled types and supported optionality in fields declared by the candidate object node.
+ *
+ * @remarks
+ * The stored representation is shared by objects and arrays, so both preserve enabled upgrades for declared fields.
+ *
+ * Field maps may belong to cached schemas, so this helper copies only the parts it changes rather than modifying either input.
+ * It handles this node's fields only; the caller must follow their type references and validate the complete candidate.
+ *
+ * @param candidate - The node produced by converting the view or retaining an unknown stored type.
+ * @param storedNode - The existing stored definition of the same node type.
+ * @param viewObject - The view's object declaration, or `undefined` if the type is unknown or is not an object.
+ *
+ * @returns The original candidate if unchanged, or a new node with the composed fields and candidate metadata.
+ */
+function composeObjectNodeSchema(
+	candidate: ObjectNodeStoredSchema,
+	storedNode: ObjectNodeStoredSchema,
+	viewObject: ObjectNodeSchemaPrivate | undefined,
+): ObjectNodeStoredSchema {
+	let fields: Map<FieldKey, TreeFieldStoredSchema> | undefined;
+	for (const [fieldKey, field] of storedNode.objectNodeFields) {
+		const candidateField = candidate.objectNodeFields.get(fieldKey);
+		const propertyKey = viewObject?.storedKeyToPropertyKey.get(fieldKey);
+
+		// The candidate already declares this stored field.
+		// Preserve already-enabled upgrades alongside the requested changes so disabled staging cannot narrow the field.
+		if (candidateField !== undefined) {
+			const composed = composeFieldSchema(
+				candidateField,
+				field,
+				propertyKey === undefined ? undefined : viewObject?.fields.get(propertyKey),
+			);
+
+			// Composition returns the original field when nothing changes.
+			// Otherwise, copy the field map before replacing the entry so cached conversion results remain unchanged.
+			if (composed !== candidateField) {
+				fields ??= new Map(candidate.objectNodeFields);
+				fields.set(fieldKey, composed);
+			}
+		}
+	}
+
+	// At least one field changed, so replace the node while keeping its metadata.
+	// Otherwise, reuse the original candidate without modifying a potentially cached node.
+	return fields === undefined
+		? candidate
+		: new ObjectNodeStoredSchema(fields, candidate.metadata);
+}
+
+/**
+ * Combines the shared entry field schema of a stored map node with the candidate's entry field schema.
+ *
+ * @remarks
+ * All map entries use the same field schema, so preserving its allowed types preserves them for every entry.
+ * The field schema may belong to a cached conversion and must not be mutated.
+ * As with object composition, the caller must follow the resulting type references and validate the complete candidate.
+ *
+ * @param candidate - The node produced by converting the view or retaining an unknown stored type.
+ * @param storedNode - The existing stored definition of the same node type.
+ *
+ * @returns The original candidate if unchanged, or a new node with the composed field and candidate metadata.
+ */
+function composeMapNodeSchema(
+	candidate: MapNodeStoredSchema,
+	storedNode: MapNodeStoredSchema,
+): MapNodeStoredSchema {
+	// A map uses one field schema for all entries, rather than a separate declaration for each key.
+	// Compose that shared schema so existing entry types remain allowed alongside the view's requested additions.
+	const mapFields = composeFieldSchema(candidate.mapFields, storedNode.mapFields);
+
+	// Replace the map node only if composition changed its field schema, leaving the original node untouched.
+	return mapFields === candidate.mapFields
+		? candidate
+		: new MapNodeStoredSchema(mapFields, candidate.metadata);
+}
+
+/**
+ * Combines a candidate field schema with the existing stored field schema.
+ *
+ * @remarks
+ * The result includes allowed types from both field schemas.
+ * If the stored field is optional and `viewField` supports missing content, the result stays optional even when the candidate field is required.
+ *
+ * Keeping an existing type prevents the candidate from narrowing the field, but does not give the view support for that type.
+ * Callers must therefore use {@link isSchemaUpgradeAllowed} to validate the complete candidate before applying it rather than treating field composition as approval.
+ *
+ * @param candidate - The field produced by converting the view with the configured policy.
+ * @param stored - The existing field at the same stored location.
+ * @param viewField - The root or object view field, used to determine whether it supports missing content.
+ *
+ * @returns The original candidate if unchanged, or a new field with the combined allowed types, supported optionality, and candidate metadata.
+ */
+function composeFieldSchema(
+	candidate: TreeFieldStoredSchema,
+	stored: TreeFieldStoredSchema,
+	viewField?: SimpleFieldSchema<SchemaType.View>,
+): TreeFieldStoredSchema {
+	let types: Set<TreeNodeSchemaIdentifier> | undefined;
+	for (const type of stored.types) {
+		if (!candidate.types.has(type)) {
+			types ??= new Set(candidate.types);
+			types.add(type);
+		}
+	}
+
+	// A staged-optional field is optional in the view even when its policy-generated candidate is required.
+	// A strictly required view must still fail validation rather than silently accepting missing content.
+	const kind =
+		stored.kind === FieldKinds.optional.identifier && viewField?.kind === FieldKind.Optional
+			? FieldKinds.optional.identifier
+			: candidate.kind;
+	return types === undefined && kind === candidate.kind
+		? candidate
+		: { ...candidate, kind, types: types ?? candidate.types };
 }
 
 /**

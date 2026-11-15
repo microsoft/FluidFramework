@@ -6,9 +6,11 @@
 import {
 	IContainer,
 	IHostLoader,
+	IRuntimeFactory,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import {
+	type IContainerRuntimeOptions,
 	// eslint-disable-next-line import-x/no-deprecated -- Internal test helpers retain summarizer implementation access (AB#88250).
 	IOnDemandSummarizeOptions,
 	// eslint-disable-next-line import-x/no-deprecated -- Internal test helpers retain summarizer implementation access (AB#88250).
@@ -18,7 +20,6 @@ import {
 import {
 	IConfigProviderBase,
 	IRequest,
-	IResponse,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -33,40 +34,11 @@ import { createTestConfigProvider } from "./TestConfigs.js";
 // eslint-disable-next-line import-x/no-deprecated
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "./containerRuntimeFactories.js";
 import { waitForContainerConnection } from "./containerUtils.js";
-import {
-	type ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
-	createContainerRuntimeFactoryWithDefaultDataStore,
-} from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
 import { defaultTestOldestSupportedClient } from "./testCompatibility.js";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider.js";
 import { timeoutAwait } from "./timeoutUtils.js";
 
 const summarizerClientType = "summarizer";
-
-/**
- * This function should ONLY be used for back compat purposes
- * LTS versions of the Loader/Container will not have the "getEntryPoint" method, so we need to fallback to "request"
- * This function can be removed once LTS version of Loader moves to 2.0.0-internal.7.0.0
- * @internal
- */
-// eslint-disable-next-line import-x/no-deprecated -- Internal test helpers retain summarizer implementation access (AB#88250).
-async function getSummarizerBackCompat(container: IContainer): Promise<ISummarizer> {
-	if (container.getEntryPoint !== undefined) {
-		const entryPoint = await container.getEntryPoint();
-		// Note: We need to also check if the result of `getEntryPoint()` is defined. This is because when running
-		// cross-client compat testing scenarios, if we create with 1.X container and load with 2.X then the
-		// function container.getEntryPoint will be defined for the 2.X container. However, it will not return undefined
-		// since the container's runtime will be on version 1.X, which does not have an entry point defined.
-		if (entryPoint !== undefined) {
-			// eslint-disable-next-line import-x/no-deprecated -- Internal test helpers retain summarizer implementation access (AB#88250).
-			return entryPoint as ISummarizer;
-		}
-	}
-	const response: IResponse = await (container as any).request({ url: "_summarizer" });
-	assert(response.status === 200, "requesting '/' should return default data object");
-	// eslint-disable-next-line import-x/no-deprecated -- Internal test helpers retain summarizer implementation access (AB#88250).
-	return response.value as ISummarizer;
-}
 
 /**
  * @internal
@@ -100,9 +72,8 @@ export async function createSummarizerCore(
 	const summarizerContainer = await loader.resolve(request);
 	await waitForContainerConnection(summarizerContainer);
 
-	// Old loaders will not have getEntryPoint API on the container. So, use getSummarizerBackCompat which
-	// will use request pattern to get the summarizer in these old loaders.
-	const fluidObject = await getSummarizerBackCompat(summarizerContainer);
+	// eslint-disable-next-line import-x/no-deprecated -- Internal test helpers retain summarizer implementation access (AB#88250).
+	const fluidObject = (await summarizerContainer.getEntryPoint()) as ISummarizer;
 	if (fluidObject.ISummarizer === undefined) {
 		throw new Error("Fluid object does not implement ISummarizer");
 	}
@@ -133,24 +104,28 @@ export async function createSummarizerFromFactory(
 	container: IContainer,
 	dataStoreFactory: IFluidDataStoreFactory,
 	summaryVersion?: string,
-	containerRuntimeFactoryType?: ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
+	containerRuntimeFactoryType?: new (props: {
+		defaultFactory: IFluidDataStoreFactory;
+		oldestSupportedClient: typeof defaultTestOldestSupportedClient;
+		registryEntries: NamedFluidDataStoreRegistryEntries;
+		runtimeOptions?: IContainerRuntimeOptions;
+	}) => IRuntimeFactory,
 	registryEntries?: NamedFluidDataStoreRegistryEntries,
 	logger?: ITelemetryBaseLogger,
 	configProvider: IConfigProviderBase = createTestConfigProvider(),
 	// eslint-disable-next-line import-x/no-deprecated -- Internal test helpers retain summarizer implementation access (AB#88250).
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
-	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+	const RuntimeFactory =
 		// eslint-disable-next-line import-x/no-deprecated
-		containerRuntimeFactoryType ?? ContainerRuntimeFactoryWithDefaultDataStore,
-		{
-			defaultFactory: dataStoreFactory,
-			oldestSupportedClient: defaultTestOldestSupportedClient,
-			registryEntries: registryEntries ?? [
-				[dataStoreFactory.type, Promise.resolve(dataStoreFactory)],
-			],
-			runtimeOptions: { summaryOptions: defaultSummaryOptions },
-		},
-	);
+		containerRuntimeFactoryType ?? ContainerRuntimeFactoryWithDefaultDataStore;
+	const runtimeFactory = new RuntimeFactory({
+		defaultFactory: dataStoreFactory,
+		oldestSupportedClient: defaultTestOldestSupportedClient,
+		registryEntries: registryEntries ?? [
+			[dataStoreFactory.type, Promise.resolve(dataStoreFactory)],
+		],
+		runtimeOptions: { summaryOptions: defaultSummaryOptions },
+	});
 
 	const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]], {
 		configProvider,

@@ -12,10 +12,7 @@ import type { ISharedDirectory } from "@fluidframework/map/internal";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestObjectProvider,
-	createContainerRuntimeFactoryWithDefaultDataStore,
 	defaultTestOldestSupportedClient,
-	getContainerEntryPointBackCompat,
-	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
 /**
@@ -71,8 +68,7 @@ describeCompat(
 				const innerDataStore = await this._context.containerRuntime.createDataStore(
 					innerDataObjectFactory.type,
 				);
-				const innerDataObject =
-					await getDataStoreEntryPointBackCompat<ITestDataObject>(innerDataStore);
+				const innerDataObject = (await innerDataStore.entryPoint.get()) as ITestDataObject;
 
 				this.root.set(this.innerDataStoreKey, innerDataObject.handle);
 			}
@@ -100,17 +96,14 @@ describeCompat(
 		});
 
 		it("Requesting data store before outer data store completes initialization", async function () {
-			const containerRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-				ContainerRuntimeFactoryWithDefaultDataStore,
-				{
-					defaultFactory: outerDataObjectFactory,
-					oldestSupportedClient: defaultTestOldestSupportedClient,
-					registryEntries: [
-						[outerDataObjectFactory.type, Promise.resolve(outerDataObjectFactory)],
-						[innerDataObjectFactory.type, Promise.resolve(innerDataObjectFactory)],
-					],
-				},
-			);
+			const containerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+				defaultFactory: outerDataObjectFactory,
+				oldestSupportedClient: defaultTestOldestSupportedClient,
+				registryEntries: [
+					[outerDataObjectFactory.type, Promise.resolve(outerDataObjectFactory)],
+					[innerDataObjectFactory.type, Promise.resolve(innerDataObjectFactory)],
+				],
+			});
 			const request = provider.driver.createCreateNewRequest(provider.documentId);
 			const loader = provider.createLoader([
 				[provider.defaultCodeDetails, containerRuntimeFactory],
@@ -119,24 +112,20 @@ describeCompat(
 			const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 			// Get the outer dataStore from the detached container. This will create and load the inner data store
 			// during initialization.
-			const outerDataStore =
-				await getContainerEntryPointBackCompat<ITestDataObject>(container);
+			const outerDataStore = (await container.getEntryPoint()) as ITestDataObject;
 			assert(outerDataStore !== undefined, "Could not load outer data store");
 			await assert.doesNotReject(container.attach(request), "Container did not attach");
 		});
 
 		it("Requesting data store before outer data store (non-root) completes initialization", async function () {
-			const containerRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-				ContainerRuntimeFactoryWithDefaultDataStore,
-				{
-					defaultFactory: innerDataObjectFactory,
-					oldestSupportedClient: defaultTestOldestSupportedClient,
-					registryEntries: [
-						[outerDataObjectFactory.type, Promise.resolve(outerDataObjectFactory)],
-						[innerDataObjectFactory.type, Promise.resolve(innerDataObjectFactory)],
-					],
-				},
-			);
+			const containerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+				defaultFactory: innerDataObjectFactory,
+				oldestSupportedClient: defaultTestOldestSupportedClient,
+				registryEntries: [
+					[outerDataObjectFactory.type, Promise.resolve(outerDataObjectFactory)],
+					[innerDataObjectFactory.type, Promise.resolve(innerDataObjectFactory)],
+				],
+			});
 			const request = provider.driver.createCreateNewRequest(provider.documentId);
 			const loader = provider.createLoader([
 				[provider.defaultCodeDetails, containerRuntimeFactory],
@@ -145,8 +134,7 @@ describeCompat(
 			const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 			// Get the default dataStore from the detached container.
-			const defaultDataStore =
-				await getContainerEntryPointBackCompat<ITestDataObject>(container);
+			const defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
 
 			// Create another data store and make it visible by adding its handle in the root data store's DDS.
 			// This will create and load the inner data store during initialization.

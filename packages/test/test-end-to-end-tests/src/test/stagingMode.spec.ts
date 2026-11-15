@@ -17,7 +17,6 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	defaultTestOldestSupportedClient,
-	getContainerEntryPointBackCompat,
 	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
 import * as semver from "semver";
@@ -80,7 +79,7 @@ describeCompat(
 				}),
 			);
 			const { _context, _runtime, _root } =
-				await getContainerEntryPointBackCompat<ITestDataObject>(container);
+				(await container.getEntryPoint()) as ITestDataObject;
 
 			const containerRuntime = _context.containerRuntime;
 			return {

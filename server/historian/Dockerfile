@@ -73,11 +73,10 @@ ENV PATH="$PNPM_HOME:$HISTORIAN_ROOT/node_modules/.bin:$PATH"
 # CI has no egress to registry.npmjs.org under 1ES network isolation, so it
 # provides an authenticated .npmrc (pointing at our ADO npm mirror) as a
 # BuildKit secret. The mount is marked required=false so local `docker build`
-# invocations that don't pass --secret still work, falling back to npm's
-# default public registry.
+# invocations that don't pass --secret use anonymous publicPackages access.
 RUN --mount=type=secret,id=npmrc,target=/root/.npmrc,required=false \
     PNPM_VERSION=$(node -e "const p=require('./package.json');console.log(p.packageManager.split('+')[0])") \
-    && npm install -g "$PNPM_VERSION"
+    && npm install -g "$PNPM_VERSION" --registry=https://pkgs.dev.azure.com/fluidframework/public/_packaging/publicPackages/npm/registry/
 
 # Forward any pnpm trust policy overrides from the host environment.
 # This is needed because tools/pipelines/templates/include-install-pnpm.yml uses these options to work around CI package mirror limitations.
