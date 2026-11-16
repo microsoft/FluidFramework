@@ -224,11 +224,10 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 		const lumberjackBaseProperties =
 			helpers.getLumberjackBasePropertiesFromRepoManagerParams(params);
 
-		const fileSystemManagerFactory =
-			!params.isEphemeralContainer ||
-			!this.fileSystemManagerFactories.ephemeralFileSystemManagerFactory
-				? this.fileSystemManagerFactories.defaultFileSystemManagerFactory
-				: this.fileSystemManagerFactories.ephemeralFileSystemManagerFactory;
+		const fileSystemManagerFactory = helpers.getFilesystemManagerFactory(
+			this.fileSystemManagerFactories,
+			params.isEphemeralContainer === true,
+		);
 
 		const fileSystemManager = fileSystemManagerFactory.create({
 			...params.fileSystemManagerParams,

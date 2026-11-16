@@ -17,7 +17,6 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 	timeoutPromise as timeoutPromiseUnnamed,
 	TimeoutWithError,
 	TimeoutWithValue,
@@ -104,10 +103,10 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		const container1 = await provider.makeTestContainer(testContainerConfig);
-		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 
 		const container2 = await provider.loadTestContainer(testContainerConfig);
-		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 
 		// need to be connected to send signals
 		if (container1.connectionState !== ConnectionState.Connected) {
@@ -282,7 +281,7 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 			const container = await (i === 0
 				? provider.makeTestContainer(testContainerConfig)
 				: provider.loadTestContainer(testContainerConfig));
-			const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+			const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 
 			if (container.connectionState !== ConnectionState.Connected) {
 				await new Promise((resolve) => container.once("connected", resolve));

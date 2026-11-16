@@ -13,8 +13,19 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { parseCompactSnapshotResponse } from "../compactSnapshotParser.js";
+import {
+	currentReadVersion,
+	parseCompactSnapshotResponse,
+	snapshotMinReadVersion,
+} from "../compactSnapshotParser.js";
 import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";
+import { TreeBuilderSerializer } from "../WriteBufferUtils.js";
+import {
+	addBoolProperty,
+	addDictionaryStringProperty,
+	addNumberProperty,
+	addStringProperty,
+} from "../zipItDataRepresentationUtils.js";
 
 const snapshotTree: ISnapshotTree = {
 	id: "SnapshotId",
@@ -167,6 +178,91 @@ const blobContents2 = new Map<string, ArrayBuffer>([
 ]);
 
 describe("Snapshot Format Conversion Tests", () => {
+	for (const configuration of [
+		{ name: "populated", hasChildren: true, groupId: undefined },
+		{ name: "empty", hasChildren: false, groupId: undefined },
+		{ name: "grouped", hasChildren: true, groupId: "group" },
+	]) {
+		it(`assigns an independent binary record's unreferenced flag to its ${configuration.name} child only`, () => {
+			// Do not use the snapshot writer: its inverse flag-placement bug can
+			// hide a decoder bug in a round-trip test.
+			const builder = new TreeBuilderSerializer();
+			const root = builder.addNode();
+			addStringProperty(root, "mrv", snapshotMinReadVersion);
+			addStringProperty(root, "cv", currentReadVersion);
+			root.addDictionaryString("snapshot");
+			const snapshot = root.addNode();
+			addStringProperty(snapshot, "id", "SnapshotId");
+			addNumberProperty(snapshot, "sequenceNumber", 0);
+			snapshot.addDictionaryString("treeNodes");
+			const treeNodes = snapshot.addNode("list");
+			const unreferencedChild = treeNodes.addNode();
+			addDictionaryStringProperty(unreferencedChild, "name", "unreferencedChild");
+			addBoolProperty(unreferencedChild, "unreferenced", true);
+			if (configuration.hasChildren) {
+				unreferencedChild.addDictionaryString("children");
+				const children = unreferencedChild.addNode("list");
+				const blob = children.addNode();
+				addDictionaryStringProperty(blob, "name", "content");
+				addDictionaryStringProperty(blob, "value", "blob");
+			}
+			if (configuration.groupId !== undefined) {
+				addDictionaryStringProperty(unreferencedChild, "groupId", configuration.groupId);
+			}
+			const referencedSibling = treeNodes.addNode();
+			addDictionaryStringProperty(referencedSibling, "name", "referencedSibling");
+			root.addDictionaryString("blobs");
+			root.addNode("list");
+
+			const logger = new MockLogger();
+			const result = parseCompactSnapshotResponse(
+				builder.serialize(),
+				logger.toTelemetryLogger(),
+			);
+			assert.strictEqual(result.snapshotTree.unreferenced, undefined);
+			assert.strictEqual(result.snapshotTree.trees.unreferencedChild.unreferenced, true);
+			assert.strictEqual(result.snapshotTree.trees.referencedSibling.unreferenced, undefined);
+			if (configuration.hasChildren) {
+				assert.strictEqual(result.snapshotTree.trees.unreferencedChild.blobs.content, "blob");
+			}
+			if (configuration.groupId !== undefined) {
+				assert.strictEqual(
+					result.snapshotTree.trees.unreferencedChild.groupId,
+					configuration.groupId,
+				);
+			}
+		});
+	}
+
+	it("round-trips an unreferenced leaf without marking its parent or sibling", () => {
+		const snapshotContents: ISnapshot = {
+			snapshotTree: {
+				id: "SnapshotId",
+				blobs: {},
+				trees: {
+					unreferencedLeaf: {
+						unreferenced: true,
+						blobs: { content: "blob" },
+						trees: {},
+					},
+					referencedSibling: { blobs: {}, trees: {} },
+				},
+			},
+			blobContents: new Map([["blob", stringToBuffer("content", "utf8")]]),
+			ops: [],
+			sequenceNumber: 0,
+			latestSequenceNumber: 0,
+			snapshotFormatV: 1,
+		};
+		const logger = new MockLogger();
+		const result = parseCompactSnapshotResponse(
+			convertToCompactSnapshot(snapshotContents),
+			logger.toTelemetryLogger(),
+		);
+		assert.deepStrictEqual(result.snapshotTree, snapshotContents.snapshotTree);
+		assert.deepStrictEqual(result.blobContents, snapshotContents.blobContents);
+	});
+
 	it("Conversion test", async () => {
 		const snapshotContents: ISnapshot = {
 			snapshotTree,
@@ -191,8 +287,7 @@ describe("Snapshot Format Conversion Tests", () => {
 		);
 
 		assert(result.telemetryProps.slowBlobStructureCount === 0);
-		// there is { name, unreferenced } structure (i.e. empty unreferenced tree) that we do not optimize
-		assert(result.telemetryProps.slowTreeStructureCount === 1);
+		assert(result.telemetryProps.slowTreeStructureCount === 0);
 
 		// Convert to compact snapshot again and then match to previous one.
 		const compactSnapshot2 = convertToCompactSnapshot(result);
@@ -227,8 +322,7 @@ describe("Snapshot Format Conversion Tests", () => {
 			"Snapshot id should match",
 		);
 		assert(result.telemetryProps.slowBlobStructureCount === 0);
-		// there is { name, unreferenced } structure (i.e. empty unreferenced tree) that we do not optimize
-		assert(result.telemetryProps.slowTreeStructureCount === 1);
+		assert(result.telemetryProps.slowTreeStructureCount === 0);
 
 		// Convert to compact snapshot again and then match to previous one.
 		const compactSnapshot2 = convertToCompactSnapshot(result);
@@ -267,8 +361,7 @@ describe("Snapshot Format Conversion Tests", () => {
 			"Snapshot id should match",
 		);
 		assert(result.telemetryProps.slowBlobStructureCount === 0);
-		// there is { name, unreferenced } structure (i.e. empty unreferenced tree) that we do not optimize
-		assert(result.telemetryProps.slowTreeStructureCount === 4);
+		assert(result.telemetryProps.slowTreeStructureCount === 3);
 		assert(result.telemetryProps.treeStructureCountWithGroupId === 3);
 
 		// Convert to compact snapshot again and then match to previous one.

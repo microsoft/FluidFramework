@@ -68,14 +68,13 @@ curl -H "Content-Type: application/json" -X POST -d '{"ref": "refs/heads/main", 
 curl --verbose http://localhost:3000/repos/prague/test/git/refs
 ```
 
-Submodule example
+Submodule metadata can be represented in a `.gitmodules` blob and then referenced by the SHA returned from the blob-creation request:
 
 ```
-curl -H "Content-Type: application/json" -X POST -d '{"content": "[submodule \"module\"]\n\tpath = module\n\turl = ssh://git@localhost:3022/home/git/prague/test", "encoding": "utf-8"}' --verbose localhost:3000/repos/prague/test/git/blobs
-curl -H "Content-Type: application/json" -X POST -d '{"tree": [{"path": ".gitmodules", "mode": "100644", "type": "blob", "sha": "54a2d1738d0c62529ada54d32c5d05e1d1ea0fae"},{"path": "file.txt", "mode": "100644", "type": "blob", "sha": "b45ef6fec89518d314f546fd6c3025367b721684"},{"path": "module", "mode": "160000", "type": "commit", "sha": "38421e18f9cf4ec024ae98f687e79c0bdf8f3f18"}]}' --verbose localhost:3000/repos/prague/test/git/trees
-curl -H "Content-Type: application/json" -X POST -d '{"message": "submodule commit", "tree": "f007d4f4ebe654785e87634a2e8f91d02993361d", "parents": [], "author": { "name": "Kurt Berglund", "email": "kurtb@microsoft.com", "date": "Thu Jul 13 2017 20:17:40 GMT-0700 (PDT)" }}' --verbose localhost:3000/repos/prague/test/git/commits
-curl -H "Content-Type: application/json" -X POST -d '{"ref": "refs/heads/modules", "sha": "b02301e7f2a6e1cc0bdb8cb33f4905f7c7b17ecc"}' --verbose localhost:3000/repos/prague/test/git/refs
+curl -H "Content-Type: application/json" -X POST -d '{"content": "[submodule \"module\"]\n\tpath = module\n\turl = https://example.com/prague/test.git", "encoding": "utf-8"}' --verbose localhost:3000/repos/prague/test/git/blobs
 ```
+
+Use the returned blob SHA in the subsequent tree payload instead of hard-coding a value from an earlier example.
 
 Reference deletion and tags
 

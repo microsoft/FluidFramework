@@ -14,12 +14,7 @@ import { IContainerRuntimeWithResolveHandle_Deprecated } from "@fluidframework/c
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
-import {
-	ITestObjectProvider,
-	TestFluidObject,
-	getContainerEntryPointBackCompat,
-	getDataStoreEntryPointBackCompat,
-} from "@fluidframework/test-utils/internal";
+import { ITestObjectProvider, TestFluidObject } from "@fluidframework/test-utils/internal";
 
 describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
@@ -35,16 +30,14 @@ describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) 
 	beforeEach("createContainers", async () => {
 		// Create a Container for the first client.
 		const firstContainer = await provider.makeTestContainer();
-		firstContainerObject1 =
-			await getContainerEntryPointBackCompat<ITestDataObject>(firstContainer);
+		firstContainerObject1 = (await firstContainer.getEntryPoint()) as ITestDataObject;
 		const containerRuntime1 = firstContainerObject1._context.containerRuntime;
 		const dataStore = await containerRuntime1.createDataStore(TestDataObjectType);
-		firstContainerObject2 = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore);
+		firstContainerObject2 = (await dataStore.entryPoint.get()) as ITestDataObject;
 
 		// Load the Container that was created by the first client.
 		const secondContainer = await provider.loadTestContainer();
-		secondContainerObject1 =
-			await getContainerEntryPointBackCompat<ITestDataObject>(secondContainer);
+		secondContainerObject1 = (await secondContainer.getEntryPoint()) as ITestDataObject;
 
 		await provider.ensureSynchronized();
 	});

@@ -11,17 +11,20 @@ import {
 	captureFullContainerState,
 	createDetachedContainer,
 	extractBlobAttachReferences,
+	loadAndSummarize,
 	loadExistingContainer,
 	loadFrozenContainerFromPendingState,
 	waitContainerToCatchUp,
 } from "@fluidframework/container-loader/internal";
-import type { FluidObject } from "@fluidframework/core-interfaces/internal";
+import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import type {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IDocumentStorageService,
 	IResolvedUrl,
 	ISequencedDocumentMessage,
+	ISnapshot,
+	ISnapshotTree,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import type {
@@ -29,9 +32,15 @@ import type {
 	LocalResolver,
 } from "@fluidframework/local-driver/internal";
 import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
+import {
+	channelsTreeName,
+	gcBlobPrefix,
+	gcTreeKey,
+} from "@fluidframework/runtime-definitions/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
+	createTestConfigProvider,
 	timeoutPromise,
 	type ITestFluidObject,
 	type LocalCodeLoader,
@@ -84,6 +93,41 @@ function makeFactoryWithFailingReadBlob(
 		createContainer: async (...args) => wrapService(await inner.createContainer(...args)),
 		createDocumentService: async (...args) =>
 			wrapService(await inner.createDocumentService(...args)),
+	};
+}
+
+/**
+ * Supplies a fixed downloaded snapshot while retaining the real service's operation stream.
+ */
+function makeFactoryWithSnapshot(
+	inner: IDocumentServiceFactory,
+	snapshot: ISnapshot,
+): IDocumentServiceFactory {
+	return {
+		createContainer: async (...args) => inner.createContainer(...args),
+		createDocumentService: async (...args) =>
+			new Proxy(await inner.createDocumentService(...args), {
+				get: (service, property, receiver) => {
+					if (property === "connectToStorage") {
+						return async (): Promise<IDocumentStorageService> =>
+							new Proxy(await service.connectToStorage(), {
+								get: (storage, storageProperty, storageReceiver) => {
+									if (storageProperty === "getSnapshot") {
+										return async (): Promise<ISnapshot> => snapshot;
+									}
+									const storageValue: unknown = Reflect.get(
+										storage,
+										storageProperty,
+										storageReceiver,
+									);
+									return storageValue;
+								},
+							});
+					}
+					const value: unknown = Reflect.get(service, property, receiver);
+					return value;
+				},
+			}),
 	};
 }
 
@@ -170,6 +214,7 @@ const initialize = async (): Promise<{
 	urlResolver: LocalResolver;
 	codeLoader: LocalCodeLoader;
 	documentServiceFactory: LocalDocumentServiceFactory;
+	deltaConnectionServer: ReturnType<typeof LocalDeltaConnectionServer.create>;
 }> => {
 	const deltaConnectionServer = LocalDeltaConnectionServer.create();
 	const { urlResolver, codeDetails, codeLoader, loaderProps, documentServiceFactory } =
@@ -187,10 +232,166 @@ const initialize = async (): Promise<{
 		urlResolver,
 		codeLoader,
 		documentServiceFactory,
+		deltaConnectionServer,
 	};
 };
 
 describe("captureFullContainerState", () => {
+	it("revives an unreferenced data store through saved ops without live storage reads", async () => {
+		const {
+			container,
+			testFluidObject,
+			urlResolver,
+			codeLoader,
+			documentServiceFactory,
+			deltaConnectionServer,
+		} = await initialize();
+		let frozenContainer: IContainer | undefined;
+		let documentService: IDocumentService | undefined;
+		try {
+			const dataStore =
+				await testFluidObject.context.containerRuntime.createDataStore("default");
+			const entryPoint: FluidObject<ITestFluidObject> = await dataStore.entryPoint.get();
+			assert(entryPoint.ITestFluidObject !== undefined, "Expected a test data store");
+			const unreferencedDataStore = entryPoint.ITestFluidObject;
+			const nestedMap = SharedMap.create(unreferencedDataStore.runtime);
+			nestedMap.set("fromSnapshot", "retained DDS contents");
+			unreferencedDataStore.root.set("nestedMap", nestedMap.handle);
+			testFluidObject.root.set("revivedStore", unreferencedDataStore.handle);
+
+			await container.attach(urlResolver.createCreateNewRequest("revive-unreferenced"));
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			const attachmentBytes = stringToBuffer("attachment owned by the data store", "utf8");
+			const attachmentHandle = await unreferencedDataStore.runtime.uploadBlob(attachmentBytes);
+			nestedMap.set("attachment", attachmentHandle);
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			testFluidObject.root.delete("revivedStore");
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined, "Expected an absolute URL");
+			const summary = await loadAndSummarize({
+				codeLoader,
+				urlResolver,
+				documentServiceFactory,
+				request: { url },
+				configProvider: createTestConfigProvider({
+					"Fluid.Summarizer.FullTree.OnDemand": true,
+				}),
+			});
+			assert(container.resolvedUrl !== undefined, "Expected a resolved URL");
+			documentService = await documentServiceFactory.createDocumentService(
+				container.resolvedUrl,
+			);
+			const storage = await documentService.connectToStorage();
+			assert(storage.getSnapshot !== undefined, "Expected snapshot support");
+			const snapshot = await storage.getSnapshot({ versionId: summary.version });
+			assert.equal(snapshot.sequenceNumber, summary.referenceSequenceNumber);
+
+			const gcTree: ISnapshotTree | undefined = snapshot.snapshotTree.trees[gcTreeKey];
+			assert(gcTree !== undefined, "Expected GC state in the summary");
+			const unreferencedPaths = new Set<string>();
+			for (const [name, blobId] of Object.entries(gcTree.blobs)) {
+				if (!name.startsWith(gcBlobPrefix)) {
+					continue;
+				}
+				const contents = snapshot.blobContents.get(blobId);
+				assert(contents !== undefined, "Expected captured GC blob contents");
+				const gcState: {
+					gcNodes: Record<string, { unreferencedTimestampMs?: number }>;
+				} = JSON.parse(bufferToString(contents, "utf8"));
+				for (const [path, node] of Object.entries(gcState.gcNodes)) {
+					if (node.unreferencedTimestampMs !== undefined) {
+						unreferencedPaths.add(path);
+					}
+				}
+			}
+			assert(
+				unreferencedPaths.has(`/${unreferencedDataStore.context.id}`),
+				"GC must mark the data store unreferenced in the snapshot",
+			);
+			assert(
+				unreferencedPaths.has(toFluidHandleInternal(attachmentHandle).absolutePath),
+				"GC must mark its attachment unreferenced in the snapshot",
+			);
+			const dataStoreTree: ISnapshotTree | undefined =
+				snapshot.snapshotTree.trees[channelsTreeName]?.trees[unreferencedDataStore.context.id];
+			assert(dataStoreTree !== undefined, "Expected the unswept data store in the snapshot");
+			// The local driver drops this metadata. Restore the GC-verified marker that ODSP returns.
+			dataStoreTree.unreferenced = true;
+
+			testFluidObject.root.set("revivedStore", unreferencedDataStore.handle);
+			nestedMap.set("fromSavedOp", "replayed DDS edit");
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			const revivalSequenceNumber = container.deltaManager.lastSequenceNumber;
+			const pendingLocalState = await captureFullContainerState({
+				urlResolver,
+				documentServiceFactory: makeFactoryWithSnapshot(documentServiceFactory, snapshot),
+				request: { url },
+			});
+			const captured: {
+				baseSnapshot: ISnapshotTree;
+				savedOps: ISequencedDocumentMessage[];
+			} = JSON.parse(pendingLocalState);
+			assert.equal(
+				captured.baseSnapshot.trees[channelsTreeName]?.trees[unreferencedDataStore.context.id]
+					?.unreferenced,
+				true,
+				"The captured base snapshot must retain the unreferenced data store",
+			);
+			assert(
+				captured.savedOps.some(
+					(operation) => operation.sequenceNumber === revivalSequenceNumber,
+				),
+				"Saved ops must include the post-summary revival and DDS edit",
+			);
+			assert.equal(
+				captured.savedOps.flatMap((operation) => extractBlobAttachReferences(operation))
+					.length,
+				0,
+				"Revival must not rely on a new BlobAttach operation",
+			);
+
+			frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				urlResolver,
+				documentServiceFactory: makeFactoryWithFailingReadBlob(documentServiceFactory),
+				request: { url },
+				pendingLocalState,
+			});
+			const frozenEntryPoint: FluidObject<ITestFluidObject> =
+				await frozenContainer.getEntryPoint();
+			assert(frozenEntryPoint.ITestFluidObject !== undefined, "Expected a test root");
+			const revivedHandle =
+				frozenEntryPoint.ITestFluidObject.root.get<IFluidHandle<ITestFluidObject>>(
+					"revivedStore",
+				);
+			assert(revivedHandle !== undefined, "Saved ops must restore the data store reference");
+			const revivedDataStore = await revivedHandle.get();
+			const nestedHandle = revivedDataStore.root.get<IFluidHandle<ISharedMap>>("nestedMap");
+			assert(nestedHandle !== undefined, "Expected the snapshotted DDS handle");
+			const revivedMap = await nestedHandle.get();
+			assert.equal(revivedMap.get("fromSnapshot"), "retained DDS contents");
+			assert.equal(revivedMap.get("fromSavedOp"), "replayed DDS edit");
+			const revivedAttachment = revivedMap.get<IFluidHandle<ArrayBufferLike>>("attachment");
+			assert(revivedAttachment !== undefined, "Expected the original attachment handle");
+			assert.deepStrictEqual(await revivedAttachment.get(), attachmentBytes);
+		} finally {
+			frozenContainer?.close();
+			documentService?.dispose();
+			container.close();
+			await deltaConnectionServer.close();
+		}
+	});
+
 	it("captures state that can rehydrate a frozen container with matching data", async () => {
 		const { container, testFluidObject, urlResolver, codeLoader, documentServiceFactory } =
 			await initialize();

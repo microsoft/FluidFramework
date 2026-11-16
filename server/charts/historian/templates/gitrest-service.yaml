@@ -10,9 +10,6 @@ metadata:
     heritage: "{{ .Release.Service }}"
 spec:
   ports:
-    - name: ssh
-      port: 22
-      targetPort: ssh
     - name: http
       port: 80
       targetPort: http

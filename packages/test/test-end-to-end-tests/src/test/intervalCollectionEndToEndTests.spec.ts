@@ -20,7 +20,6 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 	getRequiredPendingLocalState,
 	toIDeltaManagerFull,
 	waitForContainerConnection,
@@ -102,7 +101,7 @@ describeCompat(
 		beforeEach(async () => {
 			provider = getTestObjectProvider();
 			container1 = await provider.makeTestContainer(testContainerConfig);
-			dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+			dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 			sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 			sharedString1.insertText(0, "hello world");
 			collection1 = sharedString1.getIntervalCollection(collectionId);
@@ -143,7 +142,7 @@ describeCompat(
 
 			container1 = await provider.loadTestContainer(testContainerConfig);
 			await waitForContainerConnection(container1);
-			dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+			dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 			sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 			collection1 = sharedString1.getIntervalCollection(collectionId);
 			await provider.ensureSynchronized();
@@ -151,7 +150,7 @@ describeCompat(
 
 			let container2 = await loader.resolve({ url }, pendingState);
 			await waitForContainerConnection(container1);
-			dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+			dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 			collection2 = sharedString2.getIntervalCollection(collectionId);
 			await provider.ensureSynchronized();
@@ -162,7 +161,7 @@ describeCompat(
 
 			// reload the container and verify that the above change takes effect
 			container2 = await provider.loadTestContainer(testContainerConfig);
-			dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+			dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 			collection2 = sharedString2.getIntervalCollection(collectionId);
 

@@ -20,7 +20,6 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
 const mapId = "mapKey";
@@ -63,17 +62,17 @@ describeCompat("ConsensusRegisterCollection", "FullCompat", (getTestObjectProvid
 	beforeEach("createSharedMaps", async () => {
 		// Create a Container for the first client.
 		container1 = await provider.makeTestContainer(createContainerConfig);
-		dataStore1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		sharedMap1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
 
 		// Load the Container that was created by the first client.
 		const container2 = await provider.loadTestContainer(loadContainerConfig);
-		const dataStore2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		sharedMap2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 
 		// Load the Container that was created by the first client.
 		const container3 = await provider.loadTestContainer(loadContainerConfig);
-		const dataStore3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
+		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 		sharedMap3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 	});
 
@@ -334,7 +333,7 @@ describeCompat("ConsensusRegisterCollection", "NoCompat", (getTestObjectProvider
 
 		it("grouped batching doesn't hit 0x071", async () => {
 			const container = await provider.makeTestContainer(groupedBatchingContainerConfig);
-			const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+			const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			const sharedMap = await dataObject.getSharedObject<ISharedMap>(mapId);
 
 			const collection = ConsensusRegisterCollection.create(dataObject.runtime);
@@ -377,7 +376,7 @@ describeCompat("ConsensusRegisterCollection", "NoCompat", (getTestObjectProvider
 		beforeEach("createSharedMaps", async () => {
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
-			dataStore1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+			dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
 			sharedMap1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
 		});
 

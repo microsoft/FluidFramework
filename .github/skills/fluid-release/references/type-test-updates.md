@@ -1,6 +1,7 @@
 # Type Test Updates (Steps 8-9)
 
-Update type test baselines on both `main` and the release branch. Do this **the day after** the release to allow npm feeds to pick up the published packages.
+Update type test baselines on both `main` and the release branch after publication is verified.
+Do not wait until the next day: prepare the changes and obtain approvals while downstream feeds propagate.
 
 ## Autonomous Mode Notes
 
@@ -10,10 +11,16 @@ The user should provide the release branch name (e.g., `release/client/2.90`) up
 
 ## CI Resilience
 
-The `flub typetests --reset --previous` command fetches the previously released packages from npm. If the packages are not yet available (e.g., npm feeds haven't updated), this step will fail. In CI:
+The `flub typetests --reset --previous` command updates the baseline dependencies and type-test configuration in `package.json`.
+The subsequent `pnpm install --no-frozen-lockfile` command fetches the packages from the configured registry.
+Even after the exact version is verified on public npm, pipeline feeds can take up to six hours to accept it.
 
-- If `flub typetests` fails, open a GitHub issue titled `Release <VERSION>: type test update failed — npm packages not yet available` with the error output, and exit gracefully.
-- The scheduled workflow will retry on the next run and succeed once packages are available.
+- Inspect the error before attributing a failure to feed propagation.
+  Confirm that the exact version exists on public npm and that the failing job cannot resolve it from its configured feed.
+- For a confirmed propagation delay, preserve any prepared changes or PRs, report the affected jobs, and rerun them after the feed updates (about six hours after publication if necessary).
+  In CI, report the retry checkpoint and let the next scheduled run resume; do not report the release process as complete while checks are failing.
+- If packages remain unavailable beyond that window, or the failure has another cause, investigate it.
+  In autonomous mode or CI, use the skill's release-blocking issue fallback if the failure prevents progress, including the actual error and remaining commands rather than assuming an npm availability problem.
 
 ## Step 8: Update Type Test Baselines on Main
 
