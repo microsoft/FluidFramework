@@ -1417,8 +1417,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 					);
 					this._attachState = AttachState.Attached;
 					this.channel?.setAttachState(attachState);
-					// TODO: AB#88995: Suspected duplicate notification; investigate removing the second call.
-					this.channel?.setAttachState(attachState);
 				}
 				break;
 			}
