@@ -19,7 +19,10 @@ import {
 	LocalServerStressModel,
 } from "./localServerStressHarness.js";
 
-describe("Local Server Stress", () => {
+describe("Local Server Stress", function () {
+	// Each seed runs 200 operations across multiple containers and validates their DDS state.
+	this.timeout(10000);
+
 	const model: LocalServerStressModel<StressOperations> = {
 		workloadName: "default",
 		generatorFactory: () => takeAsync(200, makeGenerator()),
