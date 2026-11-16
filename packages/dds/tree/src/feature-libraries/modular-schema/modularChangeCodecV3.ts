@@ -116,7 +116,7 @@ export function makeModularChangeCodecV3(
 		codec: FieldCodec;
 	} => {
 		const entry = fieldChangesetCodecs.get(fieldKind);
-		assert(entry !== undefined, "Tried to encode unsupported fieldKind");
+		assert(entry !== undefined, 0xdaf /* Tried to encode unsupported fieldKind */);
 		return entry;
 	};
 
@@ -137,7 +137,7 @@ export function makeModularChangeCodecV3(
 			);
 
 			if (compiledSchema !== undefined && !compiledSchema.check(encodedChange)) {
-				fail("Encoded change didn't pass schema validation.");
+				fail(0xdb0 /* Encoded change didn't pass schema validation. */);
 			}
 
 			const fieldKey: FieldKey = field;
@@ -217,7 +217,7 @@ export function makeModularChangeCodecV3(
 		for (const field of encodedChange) {
 			const { codec, compiledSchema } = getFieldChangesetCodec(field.fieldKind);
 			if (compiledSchema !== undefined && !compiledSchema.check(field.change)) {
-				fail("Encoded change didn't pass schema validation.");
+				fail(0xdb1 /* Encoded change didn't pass schema validation. */);
 			}
 
 			const fieldId: FieldId = {
@@ -343,14 +343,14 @@ export function makeModularChangeCodecV3(
 			const encodeNode = (nodeId: NodeId): EncodedNodeChangeset => {
 				const node = change.nodeChanges.get([nodeId.revision, nodeId.localId]);
 				// Node IDs in field changes should always be normalized.
-				assert(node !== undefined, "Unknown node ID");
+				assert(node !== undefined, 0xdb2 /* Unknown node ID */);
 				return encodeNodeChangesForJson(node, nodeId, contextFactory);
 			};
 
 			const contextFactory = makeFieldEncodingContextFactory(change, context, encodeNode);
 
 			// Destroys only exist in rollback changesets, which are never sent.
-			assert(change.destroys === undefined, "Unexpected changeset with destroys");
+			assert(change.destroys === undefined, 0xdb3 /* Unexpected changeset with destroys */);
 			const encoded: EncodedModularChangesetV3 = {
 				maxId: change.maxId,
 				revisions:
@@ -504,6 +504,6 @@ function getChangeHandler(
 	}
 
 	const handler = fieldKinds.get(fieldKind)?.kind.changeHandler;
-	assert(handler !== undefined, "Unknown field kind");
+	assert(handler !== undefined, 0xdb4 /* Unknown field kind */);
 	return handler;
 }
