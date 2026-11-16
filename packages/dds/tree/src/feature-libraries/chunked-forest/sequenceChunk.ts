@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ChunkedCursor, TreeChunk } from "../../core/index.js";
+import { dummyRoot, type ChunkedCursor, type TreeChunk } from "../../core/index.js";
 import { ReferenceCountedBase } from "../../util/index.js";
 
 import { ChunkCursor, ChunkSequenceCursor, type CompositeChunk } from "./chunkCursor.js";
@@ -43,7 +43,7 @@ export class SequenceChunk extends ReferenceCountedBase implements CompositeChun
 	}
 
 	public getLocalCursor(): ChunkSequenceCursor {
-		return new ChunkSequenceCursor(this.subChunks);
+		return new ChunkSequenceCursor(this.subChunks, dummyRoot, this.topLevelLength);
 	}
 
 	protected onUnreferenced(): void {

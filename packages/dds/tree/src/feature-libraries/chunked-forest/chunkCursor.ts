@@ -31,12 +31,18 @@ import { getFieldLength, locateNodeInChunks } from "./chunkEditing.js";
  * When {@link ChunkLocalCursor.getFieldChunks} returns an array, the shared traversal enters those child chunks.
  * Otherwise the adapter must implement {@link ChunkInlineCursor} to enter nodes stored inline.
  * A sequence exposes its root field, so crossing that boundary adds no logical tree depth.
+ * A complete cursor with numeric rootLength also implements this contract; its forks must retain that metadata.
  */
 export interface ChunkLocalCursor
 	extends Pick<
 		ChunkedCursor,
 		"mode" | "atChunkRoot" | "getFieldKey" | "getFieldLength" | "getFieldPath"
 	> {
+	/**
+	 * Number of nodes in this adapter's root field, independent of its current position.
+	 * Remains fixed while the adapter navigates or edits its storage.
+	 */
+	readonly rootLength: number;
 	/**
 	 * Returns the current field's child array, or undefined for inline content.
 	 * Requires fields mode. Navigation must not mutate the array or change chunk reference counts.
@@ -98,8 +104,6 @@ interface ChunkCursorFrame {
 	readonly parentOffset: number;
 	/** Whether the parent adapter's root field is also the traversal's root field. */
 	readonly parentAtRoot: boolean;
-	/** Parent chunk's top-level node count, restored for subsequent inline seeks. */
-	readonly parentLength: number;
 }
 
 /**
@@ -118,8 +122,6 @@ export abstract class ChunkTraversal
 	protected offset = 0;
 	/** Whether the active chunk's root field is also the traversal's root field. */
 	protected atRoot = true;
-	/** Active chunk's top-level node count, used to seek inline before crossing a boundary. */
-	protected rootLength: number;
 	/**
 	 * Active storage-local adapter; undefined after navigation state has been released.
 	 * Its root field and paths are relative to the active chunk, not the traversal's original root.
@@ -136,7 +138,6 @@ export abstract class ChunkTraversal
 	public constructor(local: ChunkLocalCursor) {
 		super();
 		this.local = local;
-		this.rootLength = local.getFieldLength();
 	}
 
 	/** Active adapter, rejecting access after navigation state has been released. */
@@ -194,7 +195,12 @@ export abstract class ChunkTraversal
 			assert(cursor.parentStack.length === 0, "Expected a fresh root-field cursor");
 			return cursor.local;
 		}
-		return cursor;
+		// Complete format-local cursors can also implement the local contract.
+		// Their forks must retain the root-length metadata, just like other local adapters.
+		if ("rootLength" in cursor && typeof cursor.rootLength === "number") {
+			return cursor as ChunkedCursor & ChunkLocalCursor;
+		}
+		return new CompleteChunkCursorAdapter(cursor, chunk.topLevelLength);
 	}
 
 	/** Replaces navigation state with the supplied adapter positioned at its root field. */
@@ -203,7 +209,6 @@ export abstract class ChunkTraversal
 		this.local = local;
 		this.offset = 0;
 		this.atRoot = true;
-		this.rootLength = local.getFieldLength();
 	}
 
 	/**
@@ -219,7 +224,6 @@ export abstract class ChunkTraversal
 		}
 		target.offset = this.offset;
 		target.atRoot = this.atRoot;
-		target.rootLength = this.rootLength;
 	}
 
 	public get mode(): CursorLocationType {
@@ -335,7 +339,6 @@ export abstract class ChunkTraversal
 					start,
 					parentOffset: this.offset,
 					parentAtRoot: this.atRoot,
-					parentLength: this.rootLength,
 				});
 			} else {
 				reusableFrame.indexOfChunk = indexOfChunk;
@@ -346,7 +349,6 @@ export abstract class ChunkTraversal
 			this.offset = start + (transparent ? this.offset : 0);
 			this.atRoot = transparent && this.atRoot;
 			this.local = this.cursorForChunk(chunk, reuse);
-			this.rootLength = chunk.topLevelLength;
 			localIndex = indexWithinChunk;
 		}
 	}
@@ -360,7 +362,6 @@ export abstract class ChunkTraversal
 		this.local = frame.cursor;
 		this.offset = frame.parentOffset;
 		this.atRoot = frame.parentAtRoot;
-		this.rootLength = frame.parentLength;
 		return frame;
 	}
 
@@ -383,7 +384,7 @@ export abstract class ChunkTraversal
 				return inline.nextNode();
 			}
 			// A failed forward step is exactly one past the chunk's last root node.
-			return inline.nextNode() || this.seekAcrossChunks(this.rootLength, inline);
+			return inline.nextNode() || this.seekAcrossChunks(inline.rootLength, inline);
 		}
 		return this.seekNodes(1);
 	}
@@ -394,7 +395,7 @@ export abstract class ChunkTraversal
 			return inline.seekNodes(offset);
 		}
 		const index = inline.fieldIndex + offset;
-		if (index >= 0 && index < this.rootLength) {
+		if (index >= 0 && index < inline.rootLength) {
 			return inline.seekNodes(offset);
 		}
 		// Only the exited adapter can be reused: ancestor adapters remain suspended in the stack.
@@ -509,6 +510,8 @@ export class ChunkSequenceCursor implements ChunkLocalCursor {
 		private readonly chunks: readonly TreeChunk[],
 		/** Field key used for the adapter's root field and its paths. */
 		private readonly key: FieldKey = dummyRoot,
+		/** Root length may be supplied by an owning sequence or a fork to avoid rescanning. */
+		public readonly rootLength: number = getFieldLength(chunks),
 	) {}
 	public getFieldChunks(): readonly TreeChunk[] {
 		return this.chunks;
@@ -523,9 +526,87 @@ export class ChunkSequenceCursor implements ChunkLocalCursor {
 		return true;
 	}
 	public fork(): ChunkSequenceCursor {
-		return new ChunkSequenceCursor(this.chunks, this.key);
+		return new ChunkSequenceCursor(this.chunks, this.key, this.rootLength);
 	}
 	public getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
 		return { parent: prefix?.parent, field: prefix?.rootFieldOverride ?? this.key };
+	}
+}
+
+/**
+ * Adapts a complete cursor without extending the general ChunkedCursor contract.
+ * Only chunks without a local-cursor implementation use this fallback.
+ */
+class CompleteChunkCursorAdapter implements ChunkInlineCursor {
+	public constructor(
+		private readonly cursor: ChunkedCursor,
+		public readonly rootLength: number,
+	) {}
+
+	public get mode(): CursorLocationType {
+		return this.cursor.mode;
+	}
+	public get value(): Value {
+		return this.cursor.value;
+	}
+	public get type(): TreeType {
+		return this.cursor.type;
+	}
+	public get [cursorChunk](): TreeChunk | undefined {
+		return this.cursor[cursorChunk];
+	}
+	public get fieldIndex(): number {
+		return this.cursor.fieldIndex;
+	}
+	public get chunkStart(): number {
+		return this.cursor.chunkStart;
+	}
+	public get chunkLength(): number {
+		return this.cursor.chunkLength;
+	}
+	public atChunkRoot(): boolean {
+		return this.cursor.atChunkRoot();
+	}
+	public getFieldKey(): FieldKey {
+		return this.cursor.getFieldKey();
+	}
+	public getFieldLength(): number {
+		return this.cursor.getFieldLength();
+	}
+	public enterNode(index: number): void {
+		this.cursor.enterNode(index);
+	}
+	public firstNode(): boolean {
+		return this.cursor.firstNode();
+	}
+	public nextNode(): boolean {
+		return this.cursor.nextNode();
+	}
+	public seekNodes(offset: number): boolean {
+		return this.cursor.seekNodes(offset);
+	}
+	public exitNode(): void {
+		this.cursor.exitNode();
+	}
+	public enterField(key: FieldKey): void {
+		this.cursor.enterField(key);
+	}
+	public exitField(): void {
+		this.cursor.exitField();
+	}
+	public firstField(): boolean {
+		return this.cursor.firstField();
+	}
+	public nextField(): boolean {
+		return this.cursor.nextField();
+	}
+	public getPath(prefix?: PathRootPrefix): UpPath | undefined {
+		return this.cursor.getPath(prefix);
+	}
+	public getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
+		return this.cursor.getFieldPath(prefix);
+	}
+	public fork(): CompleteChunkCursorAdapter {
+		return new CompleteChunkCursorAdapter(this.cursor.fork(), this.rootLength);
 	}
 }

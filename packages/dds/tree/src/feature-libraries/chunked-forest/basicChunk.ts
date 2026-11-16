@@ -93,6 +93,10 @@ export class BasicChunk extends ReferenceCountedBase implements CompositeChunk {
  * Local navigation over one node and its field keys; child nodes belong to separate chunks.
  */
 export class BasicChunkLocalCursor implements ChunkInlineCursor {
+	public get rootLength(): number {
+		return this.chunk.topLevelLength;
+	}
+
 	/** Local position: 0 is the synthetic root field, 1 is the chunk's node, and 2 is a field owned by that node. */
 	private depth = 0;
 	/** Field enumeration snapshot, or the single key selected by enterField; empty outside owned-field mode. */

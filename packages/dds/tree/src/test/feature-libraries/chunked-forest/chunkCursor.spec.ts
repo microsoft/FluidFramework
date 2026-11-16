@@ -77,6 +77,76 @@ describe("chunkCursor", () => {
 	});
 
 	describe("ChunkCursor", () => {
+		it("keeps local root lengths through inline fields, fallback cursors, forks, and boundary exits", () => {
+			const leaf = new TreeShape(brand(numberSchema.identifier), true, []);
+			const shape = new TreeShape(brand("parent"), false, [[EmptyKey, leaf, 2]]);
+			const uniform = new UniformChunk(shape.withTopLevelLength(3), [1, 2, 3, 4, 5, 6]);
+			const local = uniform.cursor();
+			local.enterNode(1);
+			local.enterField(EmptyKey);
+			assert.equal(local.getFieldLength(), 2);
+			assert.equal(local.rootLength, 3);
+			assert.equal(local.fork().rootLength, 3);
+			// This wrapper exposes only a complete cursor, not the local-adapter contract.
+			class CompleteCursorOnlyChunk extends WrapperChunk {
+				public override cursor(): ReturnType<WrapperChunk["cursor"]> {
+					const complete = super.cursor();
+					Object.defineProperty(complete, "rootLength", { value: undefined });
+					return complete;
+				}
+			}
+			const wrapper = new CompleteCursorOnlyChunk(uniform);
+			uniform.referenceRemoved();
+			const root = new BasicChunk(
+				brand("root"),
+				new Map([
+					[
+						EmptyKey,
+						[numericBasicChunk(0), new SequenceChunk([wrapper, numericBasicChunk(7)])],
+					],
+				]),
+			);
+			const cursor = root.cursor();
+			cursor.enterNode(0);
+			cursor.enterField(EmptyKey);
+			cursor.enterNode(2);
+			cursor.enterField(EmptyKey);
+			assert.equal(cursor.getFieldLength(), 2);
+			const fork = cursor.fork();
+			cursor.enterNode(1);
+			assert.equal(cursor.value, 4);
+			cursor.exitNode();
+			cursor.exitField();
+			assert(cursor.nextNode());
+			assert.equal(cursor.fieldIndex, 3);
+			assert(cursor.nextNode());
+			assert.equal(cursor.fieldIndex, 4);
+			assert.equal(cursor.value, 7);
+			assert(cursor.seekNodes(-3));
+			assert.equal(cursor.fieldIndex, 1);
+			cursor.enterField(EmptyKey);
+			assert(cursor.firstNode());
+			assert.equal(cursor.value, 1);
+			fork.enterNode(0);
+			assert.equal(fork.value, 3);
+			fork.exitNode();
+			fork.exitField();
+			assert(fork.nextNode());
+			assert.equal(fork.fieldIndex, 3);
+			assert(fork.nextNode());
+			assert.equal(fork.fieldIndex, 4);
+			assert.equal(fork.value, 7);
+			assert.equal(cursor.value, 1);
+			cursor.exitNode();
+			cursor.exitField();
+			cursor.exitNode();
+			assert.equal(cursor.getFieldLength(), 5);
+			cursor.exitField();
+			assert.equal(cursor.nextNode(), false);
+			assert.equal(cursor.getFieldLength(), 1);
+			root.referenceRemoved();
+		});
+
 		it("refreshes inline capabilities after reset and releases them on clear without changing forks", () => {
 			class ResettableCursor extends ChunkCursor {
 				public select(chunk: TreeChunk): void {
