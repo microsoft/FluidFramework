@@ -255,6 +255,23 @@ const initialize = async (): Promise<{
 };
 
 describe("captureFullContainerState", () => {
+	function assertLegacyBlobEncoding(serializedState: string): void {
+		let foundSnapshotBlobs = false;
+		JSON.parse(serializedState, (key: string, value: unknown): unknown => {
+			assert.notStrictEqual(key, "blobContentsEncoding");
+			if (key === "snapshotBlobs") {
+				assert(typeof value === "object" && value !== null);
+				for (const contents of Object.values(value)) {
+					assert(typeof contents === "string");
+					stringToBuffer(contents, "utf8");
+				}
+				foundSnapshotBlobs = true;
+			}
+			return value;
+		});
+		assert(foundSnapshotBlobs, "Expected snapshot blobs for legacy-reader coverage");
+	}
+
 	const blobCaptureModes: ("inline" | "reference")[] = ["inline", "reference"];
 	for (const blobCaptureMode of blobCaptureModes) {
 		it(`preserves binary summary bytes through ${blobCaptureMode} capture, online/offline load, and reserialization`, async () => {
@@ -295,7 +312,9 @@ describe("captureFullContainerState", () => {
 					urlResolver,
 				});
 				containers.push(container);
+				assertLegacyBlobEncoding(container.serialize());
 				await container.attach(urlResolver.createCreateNewRequest("binary-summary"));
+				assertLegacyBlobEncoding(await getRequiredPendingLocalState(container));
 				const url = await container.getAbsoluteUrl("");
 				assert(url !== undefined);
 				const pendingLocalState = await captureFullContainerState({

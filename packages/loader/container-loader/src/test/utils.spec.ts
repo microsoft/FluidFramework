@@ -29,24 +29,27 @@ describe("container-loader utils", () => {
 		it("retains legacy strings for lossless UTF-8 text", () => {
 			for (const text of ["", "plain text", "\u00E9\uD83D\uDE00", "\uFFFD"]) {
 				const bytes = stringToBuffer(text, "utf8");
-				assert.strictEqual(serializeBlobContents(bytes), text);
+				assert.strictEqual(serializeBlobContents(bytes, true), text);
 				assert.deepStrictEqual(deserializeBlobContents(text), bytes);
 			}
 		});
 
 		it("retains leading byte-order marks in serialized UTF-8 text", () => {
 			const bytes = new Uint8Array([0xef, 0xbb, 0xbf, 0x61]).buffer;
-			const serialized = serializeBlobContents(bytes);
+			const serialized = serializeBlobContents(bytes, true);
 			assert.strictEqual(serialized, "\uFEFFa");
 			assert.deepStrictEqual(deserializeBlobContents(serialized), bytes);
 		});
 
 		it("serializes valid text after a truncated UTF-8 blob", () => {
 			const bytes = new Uint8Array([0xe2, 0x82]).buffer;
-			const serialized = serializeBlobContents(bytes);
+			const serialized = serializeBlobContents(bytes, true);
 			assert.deepStrictEqual(serialized, { encoding: "base64", contents: "4oI=" });
 			assert.deepStrictEqual(deserializeBlobContents(serialized), bytes);
-			assert.strictEqual(serializeBlobContents(stringToBuffer("valid", "utf8")), "valid");
+			assert.strictEqual(
+				serializeBlobContents(stringToBuffer("valid", "utf8"), true),
+				"valid",
+			);
 		});
 
 		it("preserves arbitrary bytes through snapshot conversions", () => {
@@ -62,7 +65,7 @@ describe("container-loader utils", () => {
 					latestSequenceNumber: undefined,
 					snapshotFormatV: 1,
 				};
-				const serialized = convertSnapshotToSnapshotInfo(snapshot);
+				const serialized = convertSnapshotToSnapshotInfo(snapshot, true);
 				const restored = convertSnapshotInfoToSnapshot(serialized);
 				assert.deepStrictEqual(restored.blobContents.get("binary-id"), bytes.buffer);
 			}

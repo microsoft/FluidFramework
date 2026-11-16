@@ -88,6 +88,12 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	 */
 	blobContentsMode?: "reference" | "attachmentsOmitted";
 	/**
+	 * Enables lossless structural blob encoding for driver-level captures and their continued sessions.
+	 * Non-UTF-8 contents use tagged base64 entries that require an updated loader.
+	 * Undefined for ordinary sessions, which retain legacy string-only serialization.
+	 */
+	blobContentsEncoding?: "utf8OrBase64";
+	/**
 	 * Runtime-specific state that will be needed to properly rehydrate
 	 * (it's included in ContainerContext passed to instantiateRuntime)
 	 */
@@ -184,6 +190,7 @@ export class SerializedStateManager implements IDisposable {
 	private snapshotInfo: ISnapshotInfo | undefined;
 	private latestSnapshot: ISnapshotInfo | undefined;
 	private lastSavedOpSequenceNumber: number = 0;
+	private useLosslessBlobEncoding = false;
 	private readonly snapshotRefresher: SnapshotRefresher | undefined;
 	#disposed: boolean = false;
 
@@ -292,6 +299,7 @@ export class SerializedStateManager implements IDisposable {
 			}
 			return { snapshot, version, attributes };
 		} else {
+			this.useLosslessBlobEncoding = pendingLocalState.blobContentsEncoding === "utf8OrBase64";
 			const { baseSnapshot, snapshotBlobs, attachmentBlobContents, savedOps } =
 				pendingLocalState;
 			const blobContents = new Map<string, ArrayBuffer>();
@@ -478,23 +486,31 @@ export class SerializedStateManager implements IDisposable {
 				if (groupIdSnapshots.length > 0) {
 					for (const [groupId, snapshot] of groupIdSnapshots) {
 						hasGroupIdSnapshots = true;
-						loadedGroupIdSnapshots[groupId] = convertSnapshotToSnapshotInfo(snapshot);
+						loadedGroupIdSnapshots[groupId] = convertSnapshotToSnapshotInfo(
+							snapshot,
+							this.useLosslessBlobEncoding,
+						);
 					}
 				}
 
 				const snapshotWithBlobs: SnapshotWithBlobs = isInstanceOfISnapshot(
 					snapshotInfo.snapshot,
 				)
-					? convertISnapshotToSnapshotWithBlobs(snapshotInfo.snapshot)
+					? convertISnapshotToSnapshotWithBlobs(
+							snapshotInfo.snapshot,
+							this.useLosslessBlobEncoding,
+						)
 					: await convertSnapshotTreeToSnapshotWithBlobs(
 							snapshotInfo.snapshot,
 							this.storageAdapter,
+							this.useLosslessBlobEncoding,
 						);
 
 				const pendingState: IPendingContainerState = {
 					attached: true,
 					pendingRuntimeState,
 					...snapshotWithBlobs,
+					blobContentsEncoding: this.useLosslessBlobEncoding ? "utf8OrBase64" : undefined,
 					loadedGroupIdSnapshots: hasGroupIdSnapshots ? loadedGroupIdSnapshots : undefined,
 					savedOps,
 					url: resolvedUrl.url,
@@ -510,8 +526,13 @@ export class SerializedStateManager implements IDisposable {
 async function convertSnapshotTreeToSnapshotWithBlobs(
 	snapshot: ISnapshotTree,
 	storageAdapter: ISerializedStateManagerDocumentStorageService,
+	useLosslessBlobEncoding: boolean,
 ): Promise<SnapshotWithBlobs> {
-	const snapshotBlobs = await getBlobContentsFromTree(snapshot, storageAdapter);
+	const snapshotBlobs = await getBlobContentsFromTree(
+		snapshot,
+		storageAdapter,
+		useLosslessBlobEncoding,
+	);
 	return {
 		baseSnapshot: snapshot,
 		snapshotBlobs,

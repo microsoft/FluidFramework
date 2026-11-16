@@ -165,7 +165,7 @@ export async function readStructuralSnapshotBlobs(
 	const blobs: ISerializableBlobContents = {};
 	await mapWithConcurrency([...ids], maxReadConcurrency, async (id) => {
 		const data = await read(id);
-		blobs[id] = serializeBlobContents(data);
+		blobs[id] = serializeBlobContents(data, true);
 	});
 	return blobs;
 }

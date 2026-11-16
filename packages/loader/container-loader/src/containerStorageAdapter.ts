@@ -36,8 +36,8 @@ import { convertSnapshotInfoToSnapshot, serializeBlobContents } from "./utils.js
 
 /**
  * Stringified blobs from a summary/snapshot tree, keyed by blob id.
- * UTF-8 text retains the legacy string representation. Contents that do not
- * round-trip through UTF-8 use an explicitly tagged base64 representation.
+ * Ordinary serialization uses legacy UTF-8 strings. Capture sessions can
+ * use an explicitly tagged base64 representation for non-UTF-8 contents.
  * @internal
  */
 export interface ISerializableBlobContents {
@@ -325,20 +325,24 @@ const redirectTableBlobName = ".redirectTable";
 
 /**
  * Get blob contents of a snapshot tree from storage (or, ideally, cache)
+ * @param snapshot - The snapshot whose blob contents should be serialized.
+ * @param storage - Storage used to read blob contents not included in the snapshot.
+ * @param useLosslessBlobEncoding - Preserve binary contents for a continued capture session.
  */
 export async function getBlobContentsFromTree(
 	snapshot: ISnapshot | ISnapshotTree,
 	storage: Pick<IDocumentStorageService, "readBlob">,
+	useLosslessBlobEncoding = false,
 ): Promise<ISerializableBlobContents> {
 	const blobs: ISerializableBlobContents = {};
 	if (isInstanceOfISnapshot(snapshot)) {
 		const blobContents = snapshot.blobContents;
 		for (const [id, content] of blobContents.entries()) {
 			// ArrayBufferLike will not survive JSON.stringify()
-			blobs[id] = serializeBlobContents(content);
+			blobs[id] = serializeBlobContents(content, useLosslessBlobEncoding);
 		}
 	} else {
-		await getBlobContentsFromTreeCore(snapshot, blobs, storage);
+		await getBlobContentsFromTreeCore(snapshot, blobs, storage, useLosslessBlobEncoding);
 	}
 	return blobs;
 }
@@ -347,20 +351,25 @@ async function getBlobContentsFromTreeCore(
 	tree: ISnapshotTree,
 	blobs: ISerializableBlobContents,
 	storage: Pick<IDocumentStorageService, "readBlob">,
+	useLosslessBlobEncoding: boolean,
 	root = true,
 ): Promise<unknown[]> {
 	const treePs: Promise<unknown>[] = [];
 	for (const [key, subTree] of Object.entries(tree.trees)) {
 		if (root && key === blobsTreeName) {
-			treePs.push(getBlobManagerTreeFromTree(subTree, blobs, storage));
+			treePs.push(
+				getBlobManagerTreeFromTree(subTree, blobs, storage, useLosslessBlobEncoding),
+			);
 		} else {
-			treePs.push(getBlobContentsFromTreeCore(subTree, blobs, storage, false));
+			treePs.push(
+				getBlobContentsFromTreeCore(subTree, blobs, storage, useLosslessBlobEncoding, false),
+			);
 		}
 	}
 	for (const id of Object.values(tree.blobs)) {
 		const blob = await storage.readBlob(id);
 		// ArrayBufferLike will not survive JSON.stringify()
-		blobs[id] = serializeBlobContents(blob);
+		blobs[id] = serializeBlobContents(blob, useLosslessBlobEncoding);
 	}
 	return Promise.all(treePs);
 }
@@ -370,12 +379,13 @@ async function getBlobManagerTreeFromTree(
 	tree: ISnapshotTree,
 	blobs: ISerializableBlobContents,
 	storage: Pick<IDocumentStorageService, "readBlob">,
+	useLosslessBlobEncoding: boolean,
 ): Promise<void> {
 	const id = tree.blobs[redirectTableBlobName];
 	assert(id !== undefined, 0x9ce /* id is undefined in getBlobManagerTreeFromTree */);
 	const blob = await storage.readBlob(id);
 	// ArrayBufferLike will not survive JSON.stringify()
-	blobs[id] = serializeBlobContents(blob);
+	blobs[id] = serializeBlobContents(blob, useLosslessBlobEncoding);
 }
 
 /**

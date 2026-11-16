@@ -560,6 +560,12 @@ export interface ICaptureFullContainerStateProps {
  * format produced by a live container's pending-state serialization, and can
  * be handed to {@link loadExistingContainer} as `pendingLocalState`.
  *
+ * Both capture modes preserve structural blob bytes losslessly.
+ * UTF-8 text remains a string; other contents use tagged base64 entries that require
+ * an updated loader, including when rolling back an application.
+ * Containers loaded from captures retain this encoding policy when serializing again.
+ * Ordinary sessions and detached serialization retain their legacy string-only encoding.
+ *
  * By default, the output contains the latest snapshot, inlined contents of every
  * structural snapshot blob, inlined contents of every eligible attachment blob
  * keyed by storage id, and all ops with sequence numbers after the base
@@ -770,6 +776,7 @@ export async function captureFullContainerState({
 			attached: true,
 			baseSnapshot,
 			snapshotBlobs,
+			blobContentsEncoding: "utf8OrBase64",
 			blobContentsMode: captureAttachmentPayloads ? undefined : "attachmentsOmitted",
 			attachmentBlobContents:
 				Object.keys(attachmentBlobContents).length === 0 ? undefined : attachmentBlobContents,
