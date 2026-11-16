@@ -3,7 +3,7 @@
 "fluid-framework": minor
 "__section": tree
 ---
-Type-checking schema that use large enums from enumFromStrings is much faster
+Type-checking schemas that use large enums from enumFromStrings is much faster
 
 The type of the `schema` property returned by [`enumFromStrings`](https://fluidframework.com/docs/api/tree/#enumfromstrings-function) is now computed by mapping the provided array of members directly, instead of converting the union of members back into a tuple.
 The cost of type-checking code that uses `schema` (for example, as a field's allowed types) now grows linearly with the number of members rather than roughly quadratically.

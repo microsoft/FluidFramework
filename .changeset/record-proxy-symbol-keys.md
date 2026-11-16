@@ -15,4 +15,4 @@ A customizable record node now reports its symbol-keyed own properties to these 
 Reading or writing a symbol-keyed property through the node is unchanged.
 
 `Object.keys` still reports only the record's entries, since symbol-keyed properties are not string keys.
-Object spread copies a node's enumerable symbol-keyed own properties as well as its entries, but transpiled private fields are not enumerable, so spread still copies only the record's entries in that case.
+Transpiled private fields are not enumerable, so object spread still copies only the record's entries.

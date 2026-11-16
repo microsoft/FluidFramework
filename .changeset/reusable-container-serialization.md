@@ -8,6 +8,8 @@ The new `ContainerAlpha.serializeAttached` method makes capturing an attached co
 For attached containers, callers explicitly choose whether to include unsequenced local changes.
 With `includePendingLocalState: false`, `serializeAttached` omits local changes and session-specific state and the returned state can safely be used to load multiple containers connected to the original document.
 `includePendingLocalState: true` has the same behavior and restrictions as `getPendingLocalState`: close the source container before loading the state, never load the same state more than once, and replace stored state after each reconnect.
+In both cases, pending-state capture must be enabled when the container is created or loaded: the client must be interactive, and the `Fluid.Container.enableOfflineFull` configuration flag must not be `false` (it defaults to `true`).
+Otherwise, `serializeAttached` throws a `UsageError`.
 
 ```typescript
 import { asLegacyAlpha } from "@fluidframework/container-loader/legacy/alpha";
