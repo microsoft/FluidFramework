@@ -1,5 +1,9 @@
 # @fluidframework/container-runtime-definitions
 
+## 3.13.0
+
+Dependency updates only.
+
 ## 3.12.0
 
 Dependency updates only.
