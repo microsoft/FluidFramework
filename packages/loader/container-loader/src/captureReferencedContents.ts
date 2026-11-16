@@ -367,11 +367,11 @@ export function unreferencedAttachmentBlobLocalIds(
 }
 
 /**
- * Inline attachment blob contents for the given `(localId, storageId)`
- * references. Skips entries already present in `existing` (de-dupe with
- * the snapshot path) and entries whose `localId` is in
- * `unreferencedLocalIds`. Returns only the freshly-read entries; the
- * caller merges them into the existing map.
+ * Inline attachment blob contents for the given `(localId, storageId)` references.
+ * Skips entries already present in `existing` (de-dupe with the snapshot path) and entries whose `localId` is in `unreferencedLocalIds`.
+ * `unreferencedLocalIds` contains only tombstoned or deleted local IDs.
+ * Attachments marked unreferenced by garbage collection are intentionally inlined.
+ * Returns only the freshly-read entries; the caller merges them into the existing map.
  *
  * @internal
  */
