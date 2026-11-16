@@ -153,6 +153,17 @@ export abstract class ChunkTraversal
 		return this.currentInline ?? this.failInline();
 	}
 
+	/**
+	 * Whether the active adapter can expose fields backed by separate child chunks.
+	 * @remarks
+	 * Such adapters must use shared traversal to inspect the current field before entering a node,
+	 * rather than taking an inline-only fast path.
+	 */
+	get #localCursorExposesChunkFields(): boolean {
+		// Check for getFieldChunks, not its result: an adapter can expose child chunks in some fields but store others inline.
+		return this.local.getFieldChunks !== undefined;
+	}
+
 	/** Keeps invalid-state handling out of the frequently inlined adapter accessor. */
 	private failInline(): never {
 		if (this.current === undefined) {
@@ -258,7 +269,7 @@ export abstract class ChunkTraversal
 
 	public firstNode(): boolean {
 		const inline = this.currentInline;
-		if (inline?.getFieldChunks === undefined && inline?.firstNode !== undefined) {
+		if (!this.#localCursorExposesChunkFields && inline?.firstNode !== undefined) {
 			return inline.firstNode();
 		}
 		if (this.getFieldLength() === 0) {
@@ -279,11 +290,11 @@ export abstract class ChunkTraversal
 	}
 
 	public enterNode(index: number): void {
-		if (this.local.getFieldChunks === undefined) {
+		if (this.#localCursorExposesChunkFields) {
+			this.enterNodeAt(index);
+		} else {
 			// Entirely inline storage already validates and navigates its own fields.
 			this.inline.enterNode(index);
-		} else {
-			this.enterNodeAt(index);
 		}
 	}
 
