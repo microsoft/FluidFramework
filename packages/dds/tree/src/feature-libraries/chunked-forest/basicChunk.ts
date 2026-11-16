@@ -102,7 +102,7 @@ export class BasicChunkLocalCursor implements ChunkInlineCursor {
 
 	/**
 	 * Starts at the synthetic field containing the supplied node.
-	 * Reading borrows its storage.
+	 * The caller must keep the chunk alive while using the cursor.
 	 */
 	public constructor(
 		/** Borrowed node storage, replaced only when the exited adapter is reused. */
@@ -120,9 +120,6 @@ export class BasicChunkLocalCursor implements ChunkInlineCursor {
 	public atChunkRoot(): boolean {
 		return this.depth < 2;
 	}
-	/**
-	 * Returns the borrowed BasicChunk while the adapter is positioned on its node.
-	 */
 	public get [cursorChunk](): BasicChunk {
 		assert(this.depth === 1, "Expected a node");
 		return this.chunk;

@@ -51,6 +51,7 @@ export const dummyRoot: FieldKey = rootFieldKey;
 
 /**
  * A symbol for extracting a TreeChunk from {@link ITreeCursor}.
+ * @see {@link WithChunk | WithChunk's [cursorChunk] property}.
  */
 export const cursorChunk: unique symbol = Symbol("cursorChunk");
 
@@ -62,6 +63,7 @@ interface WithChunk {
 	 * When in nodes mode, if a value is returned, it is a TreeChunk who's top level nodes are the
 	 * chunkLength nodes starting from chunkStart.
 	 *
+	 * Any returned chunk is borrowed: accessing this property does not add a counted reference or transfer ownership to the caller.
 	 *
 	 * @remarks
 	 * Note that there may be other tree representations with different chunk APIs and thus different ways to query them.

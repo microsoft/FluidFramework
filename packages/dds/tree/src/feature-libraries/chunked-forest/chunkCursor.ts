@@ -26,6 +26,7 @@ import { getFieldLength, locateNodeInChunks } from "./chunkEditing.js";
  * Storage-local field adapter used by {@link ChunkTraversal}, not a complete tree cursor.
  * {@link ChunkInlineCursor} extends this contract with navigation over nodes stored within the chunk.
  * {@link ChunkCursor} composes these adapters into a complete {@link ChunkedCursor} over the logical tree.
+ * Like {@link ChunkedCursor}, local cursors do not own counted references to chunks.
  *
  * When {@link ChunkLocalCursor.getFieldChunks} returns an array, the shared traversal enters those child chunks.
  * Otherwise the adapter must implement {@link ChunkInlineCursor} to enter nodes stored inline.
@@ -75,9 +76,10 @@ export interface ChunkInlineCursor
 export interface CompositeChunk extends TreeChunk {
 	/**
 	 * Creates a local cursor at this chunk's root field.
+	 * Does not add any counted references, whether it reuses an adapter or creates a new one.
+	 * As with {@link TreeChunk.cursor}, the caller must keep the chunk alive while using the cursor.
 	 * @param reuse - Optional exited adapter that the implementation may reset instead of allocating.
 	 * The caller relinquishes this adapter's navigation state and must not use it after this call.
-	 * Storage remains borrowed, whether the implementation reuses the adapter or returns a new one.
 	 */
 	getLocalCursor(reuse?: ChunkLocalCursor): ChunkLocalCursor;
 }
@@ -86,7 +88,7 @@ export interface CompositeChunk extends TreeChunk {
 interface ChunkCursorFrame {
 	/** Parent adapter in fields mode, restored on exit or before normalization replaces the child. */
 	readonly cursor: ChunkLocalCursor;
-	/** Borrowed child array of the suspended field; owns the reference to the selected child chunk. */
+	/** Child array of the suspended field; the field, not this frame, owns the counted references to its children. */
 	readonly chunks: readonly TreeChunk[];
 	/** Physical child slot, distinct from the node's logical index in the whole field. */
 	indexOfChunk: number;
@@ -102,7 +104,8 @@ interface ChunkCursorFrame {
 
 /**
  * Composes chunk-local navigation with one active cursor and an explicit stack of chunk boundaries.
- * Borrows all storage. Read cursors and editors expose different capabilities over this traversal.
+ * The traversal state owns no counted references to chunks.
+ * Read cursors and editors expose different capabilities over this traversal.
  * Sequence boundaries contribute offsets, but not nodes, to logical paths.
  */
 export abstract class ChunkTraversal
@@ -128,7 +131,7 @@ export abstract class ChunkTraversal
 
 	/**
 	 * Starts traversal at the root field exposed by an adapter.
-	 * @param local - Adapter positioned at its chunk's root field. Its storage is borrowed for the traversal's lifetime.
+	 * @param local - Adapter positioned at its chunk's root field.
 	 */
 	public constructor(local: ChunkLocalCursor) {
 		super();
@@ -183,7 +186,7 @@ export abstract class ChunkTraversal
 		return cursor;
 	}
 
-	/** Replaces navigation state with a borrowed adapter positioned at its root field. */
+	/** Replaces navigation state with the supplied adapter positioned at its root field. */
 	protected reset(local: ChunkLocalCursor): void {
 		this.parentStack.length = 0;
 		this.local = local;
@@ -193,12 +196,12 @@ export abstract class ChunkTraversal
 	}
 
 	/**
-	 * Copies adapters and boundary frames so the target navigates independently over the same borrowed storage.
+	 * Copies adapters and boundary frames so the target navigates independently over the same storage.
 	 * The target must have no suspended parent frames. Used when forking read cursors.
 	 */
 	protected copyTo(target: ChunkTraversal): void {
 		target.local = this.local.fork();
-		// Read navigation does not mutate the borrowed child arrays. Copy mutable frame positions and adapter state,
+		// Read navigation does not mutate the child arrays. Copy mutable frame positions and adapter state,
 		// but keep references to the same content arrays rather than copying the stored tree.
 		for (const frame of this.parentStack) {
 			target.parentStack.push({ ...frame, cursor: frame.cursor.fork() });
@@ -217,10 +220,6 @@ export abstract class ChunkTraversal
 	public get type(): TreeType {
 		return this.inline.type;
 	}
-	/**
-	 * Returns the active adapter's borrowed chunk for the current node, when available.
-	 * Requires nodes mode; the returned chunk covers the range described by chunkStart and chunkLength.
-	 */
 	public get [cursorChunk](): TreeChunk | undefined {
 		return this.inline[cursorChunk];
 	}
@@ -478,7 +477,11 @@ export abstract class ChunkTraversal
  * Read cursor over the shared traversal. Forks copy navigation state without adding counted references.
  */
 export class ChunkCursor extends ChunkTraversal implements ChunkedCursor {
-	/** Creates a read cursor at a chunk's root field, borrowing its storage without adding a reference. */
+	/**
+	 * Creates a read cursor at a chunk's root field.
+	 * Borrows the chunk without adding a counted reference.
+	 * The caller must keep the chunk alive while using the cursor.
+	 */
 	public static fromChunk(chunk: TreeChunk): ChunkCursor {
 		return new ChunkCursor(ChunkTraversal.localCursor(chunk));
 	}
