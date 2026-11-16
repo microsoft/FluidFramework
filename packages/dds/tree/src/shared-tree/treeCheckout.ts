@@ -1476,7 +1476,7 @@ export abstract class CheckoutBase implements ITreeCheckout {
 				const telemetryMetrics = getSchemaChangeTelemetryMetrics(
 					this.storedSchema,
 					newSchema,
-					innerChange.innerChange.isInverse,
+					innerChange.innerChange.isRollback,
 				);
 				this.storedSchema.apply(newSchema);
 				this.logger?.sendTelemetryEvent({

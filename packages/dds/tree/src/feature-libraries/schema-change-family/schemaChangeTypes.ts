@@ -9,21 +9,48 @@ import { allowsRepoSuperset } from "../modular-schema/index.js";
 
 /** A change to the document's stored schema */
 export abstract class SchemaChangeset {
+	#conflicted?: boolean;
+
 	public constructor(
 		/** The schema of the context in which this change was created (i.e. the schema that would result if all changes prior to this one, including those it has rebased over, were applied) */
 		public readonly input: TreeStoredSchema,
 		/** The new schema requested by the original version of this change in its initial authoring context (i.e. before any rebasing over other changes) */
 		public readonly proposed: TreeStoredSchema,
 		/**
-		 * Whether this changeset was produced by {@link SchemaChangeset.invert | inversion}.
-		 * @remarks Also true for inverses of inverses and {@link SchemaChangeset.rebase | rebases} of inverses.
+		 * Whether this changeset was produced by a {@link SchemaChangeset.rollback | rollback}.
+		 * @remarks Also true for rollbacks of rollbacks and {@link SchemaChangeset.rebase | rebases} of rollbacks.
 		 */
-		public readonly isInverse = false,
+		public readonly isRollback = false,
 	) {}
 
-	/** Produce a changeset that reverses this change's effects, or a no-op if it is conflicted */
-	public invert(): SchemaChangeset {
-		return this.hasConflicts() ? new NoopSchemaChangeset(this.input, true) : this.getInverse();
+	/**
+	 * True if this changeset cannot be applied cleanly due to the original {@link SchemaChangeset.proposed | intent} and/or context being incompatible with the {@link SchemaChangeset.input | current context}
+	 * @remarks Computed on first access and cached for this changeset
+	 */
+	public get isConflicted(): boolean {
+		if (this.#conflicted === undefined) {
+			this.#conflicted = this.hasConflicts();
+		}
+		return this.#conflicted;
+	}
+
+	/**
+	 * The resulting schema after applying this changeset
+	 * @throws if this changeset is {@link SchemaChangeset.isConflicted | conflicted}.
+	 */
+	public get output(): TreeStoredSchema {
+		if (this.isConflicted) {
+			throw new Error("Cannot get output of a conflicted changeset");
+		}
+		return this.getOutput();
+	}
+
+	/**
+	 * Produce a changeset that "rolls back" this change's effects, such that the schema prior to this change applying is restored
+	 * @remarks Produces a no-op if this change is conflicted
+	 */
+	public rollback(): SchemaChangeset {
+		return this.isConflicted ? new NoopSchemaChangeset(this.input, true) : this.getRollback();
 	}
 
 	/**
@@ -31,20 +58,23 @@ export abstract class SchemaChangeset {
 	 * @remarks Conflicted base changesets have no effect
 	 */
 	public rebase(over: SchemaChangeset): SchemaChangeset {
-		return over.hasConflicts() ? this : this.withInput(over.output);
+		return over.isConflicted ? this : this.withInput(over.output);
 	}
 
 	/**
 	 * The resulting schema after applying this changeset
-	 * @remarks Check that the changeset is not {@link SchemaChangeset.hasConflicts | conflicted} before using the output, otherwise it may be invalid or nonsensical
+	 * @remarks Only called when the changeset is not conflicted
 	 */
-	public abstract get output(): TreeStoredSchema;
-	/** True if this changeset cannot be applied cleanly due to the original {@link SchemaChangeset.proposed | intent} and/or context being incompatible with the {@link SchemaChangeset.input | current context} */
-	public abstract hasConflicts(): boolean;
+	protected abstract getOutput(): TreeStoredSchema;
+	/** Compute whether this changeset conflicts with its input context */
+	protected abstract hasConflicts(): boolean;
 	/** Create a version of this changeset with the same {@link SchemaChangeset.proposed | intentions} but a different {@link SchemaChangeset.input | input schema} */
 	protected abstract withInput(input: TreeStoredSchema): SchemaChangeset;
-	/** Create a version of this changeset that reverses its intentions and effects */
-	protected abstract getInverse(): SchemaChangeset;
+	/**
+	 * Create a version of this changeset that restores the schema to its state prior to this change
+	 * @remarks Only called when the changeset is not conflicted
+	 */
+	protected abstract getRollback(): SchemaChangeset;
 }
 
 /**
@@ -53,7 +83,7 @@ export abstract class SchemaChangeset {
  * A widening change may widen the schema, or it may keep it the same if it's already as wide as (or wider than) necessary.
  */
 export class WideningSchemaChangeset extends SchemaChangeset {
-	public override get output(): TreeStoredSchema {
+	protected override getOutput(): TreeStoredSchema {
 		// If `input` == `proposed`, we return `proposed` rather than `input`.
 		// This preserves changes to `proposed` vs. `input` that are not considered by schema compatibility (e.g. changes to schema metadata).
 		return allowsRepoSuperset(defaultSchemaPolicy, this.input, this.proposed)
@@ -61,16 +91,16 @@ export class WideningSchemaChangeset extends SchemaChangeset {
 			: this.input;
 	}
 
-	public override hasConflicts(): boolean {
+	protected override hasConflicts(): boolean {
 		return areSchemasDivergent(this.proposed, this.input);
 	}
 
 	protected override withInput(input: TreeStoredSchema): WideningSchemaChangeset {
-		return new WideningSchemaChangeset(input, this.proposed, this.isInverse);
+		return new WideningSchemaChangeset(input, this.proposed, this.isRollback);
 	}
 
-	protected override getInverse(): NarrowingSchemaChangeset {
-		return new NarrowingSchemaChangeset(this.output, this.input, true);
+	protected override getRollback(): NarrowingSchemaChangeset {
+		return new NarrowingSchemaChangeset(this.getOutput(), this.input, true);
 	}
 }
 
@@ -80,7 +110,7 @@ export class WideningSchemaChangeset extends SchemaChangeset {
  * A narrowing change may narrow the schema, or it may keep it the same if it's already as narrow as (or narrower than) necessary.
  */
 export class NarrowingSchemaChangeset extends SchemaChangeset {
-	public override get output(): TreeStoredSchema {
+	protected override getOutput(): TreeStoredSchema {
 		// If `input` == `proposed`, we return `proposed` rather than `input`.
 		// This preserves changes to `proposed` vs. `input` that are not considered by schema compatibility (e.g. changes to schema metadata).
 		return allowsRepoSuperset(defaultSchemaPolicy, this.proposed, this.input)
@@ -88,16 +118,16 @@ export class NarrowingSchemaChangeset extends SchemaChangeset {
 			: this.input;
 	}
 
-	public override hasConflicts(): boolean {
+	protected override hasConflicts(): boolean {
 		return areSchemasDivergent(this.proposed, this.input);
 	}
 
 	protected override withInput(input: TreeStoredSchema): NarrowingSchemaChangeset {
-		return new NarrowingSchemaChangeset(input, this.proposed, this.isInverse);
+		return new NarrowingSchemaChangeset(input, this.proposed, this.isRollback);
 	}
 
-	protected override getInverse(): WideningSchemaChangeset {
-		return new WideningSchemaChangeset(this.output, this.input, true);
+	protected override getRollback(): WideningSchemaChangeset {
+		return new WideningSchemaChangeset(this.getOutput(), this.input, true);
 	}
 }
 
@@ -111,16 +141,16 @@ export class CompareAndSwapSchemaChangeset extends SchemaChangeset {
 		proposed: TreeStoredSchema,
 		/** The schema in the original authoring context, unchanged by rebasing */
 		public readonly original: TreeStoredSchema = input,
-		isInverse: boolean = false,
+		isRollback: boolean = false,
 	) {
-		super(input, proposed, isInverse);
+		super(input, proposed, isRollback);
 	}
 
-	public override get output(): TreeStoredSchema {
+	protected override getOutput(): TreeStoredSchema {
 		return this.proposed;
 	}
 
-	public override hasConflicts(): boolean {
+	protected override hasConflicts(): boolean {
 		return !areSchemasEquivalent(this.original, this.input);
 	}
 
@@ -129,12 +159,13 @@ export class CompareAndSwapSchemaChangeset extends SchemaChangeset {
 			input,
 			this.proposed,
 			this.original,
-			this.isInverse,
+			this.isRollback,
 		);
 	}
 
-	protected override getInverse(): CompareAndSwapSchemaChangeset {
-		return new CompareAndSwapSchemaChangeset(this.output, this.input, this.output, true);
+	protected override getRollback(): CompareAndSwapSchemaChangeset {
+		const output = this.getOutput();
+		return new CompareAndSwapSchemaChangeset(output, this.input, output, true);
 	}
 }
 
@@ -142,24 +173,24 @@ export class CompareAndSwapSchemaChangeset extends SchemaChangeset {
  * A {@link SchemaChangeset} that represents a no-op change, which does not modify the schema and never has conflicts
  */
 class NoopSchemaChangeset extends SchemaChangeset {
-	public constructor(input: TreeStoredSchema, isInverse: boolean) {
-		super(input, input, isInverse);
+	public constructor(input: TreeStoredSchema, isRollback: boolean) {
+		super(input, input, isRollback);
 	}
 
-	public override get output(): TreeStoredSchema {
+	protected override getOutput(): TreeStoredSchema {
 		return this.input;
 	}
 
-	public override hasConflicts(): boolean {
+	protected override hasConflicts(): boolean {
 		return false;
 	}
 
 	protected override withInput(input: TreeStoredSchema): NoopSchemaChangeset {
-		return new NoopSchemaChangeset(input, this.isInverse);
+		return new NoopSchemaChangeset(input, this.isRollback);
 	}
 
-	protected override getInverse(): NoopSchemaChangeset {
-		return new NoopSchemaChangeset(this.output, true);
+	protected override getRollback(): NoopSchemaChangeset {
+		return new NoopSchemaChangeset(this.getOutput(), true);
 	}
 }
 

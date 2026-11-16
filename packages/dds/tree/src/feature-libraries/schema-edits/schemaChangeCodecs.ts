@@ -31,11 +31,11 @@ export function makeSchemaChangeCodec(
 				"Only compare-and-swap schema changes may be encoded",
 			);
 			assert(
-				!schemaChange.isInverse,
+				!schemaChange.isRollback,
 				0x933 /* Inverse schema changes should never be transmitted */,
 			);
 			assert(
-				!schemaChange.hasConflicts(),
+				!schemaChange.isConflicted,
 				"Conflicted schema changes should never be transmitted",
 			);
 			return {

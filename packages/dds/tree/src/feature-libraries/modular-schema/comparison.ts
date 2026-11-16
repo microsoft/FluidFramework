@@ -198,17 +198,14 @@ export function allowsRepoSuperset(
 	original: TreeStoredSchema,
 	superset: TreeStoredSchema,
 ): boolean {
-	{
-		if (
-			!allowsFieldSuperset(
-				policy,
-				original,
-				original.rootFieldSchema,
-				superset.rootFieldSchema,
-			)
-		) {
-			return false;
-		}
+	if (original === superset) {
+		return true;
+	}
+
+	if (
+		!allowsFieldSuperset(policy, original, original.rootFieldSchema, superset.rootFieldSchema)
+	) {
+		return false;
 	}
 	// Check if all schemas in original are included in superset, and permit a superset of the node content.
 	// Note that any schema from `original.nodeSchema` can be used as the schema for a node at the root of a detached field,

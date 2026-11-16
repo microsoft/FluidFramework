@@ -55,9 +55,9 @@ describe("schemaChangeCodec", () => {
 		);
 	});
 
-	it("rejects inverse CAS changes", () => {
+	it("rejects CAS rollbacks", () => {
 		assert.throws(
-			() => codec.encode(new CompareAndSwapSchemaChangeset(empty, number).invert()),
+			() => codec.encode(new CompareAndSwapSchemaChangeset(empty, number).rollback()),
 			validateAssertionError(/Inverse schema changes should never be transmitted/),
 		);
 	});
