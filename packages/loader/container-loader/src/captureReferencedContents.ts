@@ -214,6 +214,8 @@ function toTreeAndReader(
  * deleted local IDs. Eligible storage-ID aliases can retain the same payload.
  * Unreferenced blobs are kept because saved or future ops can reference their
  * owning data store again without a new BlobAttach op.
+ * Blobs absent from the GC graph are also kept unless their local IDs are
+ * tombstoned or deleted.
  * If `gcData` is `undefined`, every attachment blob is returned.
  *
  * The returned map is keyed by attachment blob storage id. Values are the
@@ -403,13 +405,14 @@ export async function inlineAttachmentBlobsByReference(
 /**
  * Returns true if any referenced subtree of `baseSnapshot` declares a
  * `groupId` — the snapshot-tree wire field that carries the runtime's
- * loading-group identifier. Subtrees flagged `unreferenced` are skipped —
- * a dead subtree's `groupId` would not be loaded by the runtime either.
+ * loading-group identifier. On 3.11, loading-group validation deliberately
+ * continues to skip subtrees flagged `unreferenced`, preserving existing
+ * validation behavior even though capture retains their structural contents.
  *
  * `captureFullContainerState` does not yet support loading groups: prefetching
  * per-group snapshots adds a code path that has no end-to-end coverage and no
  * known production consumer. Callers use this to fail fast with a `UsageError`
- * rather than silently producing a pending state that omits group data.
+ * for groups detected by this check. Groups in skipped subtrees are not validated.
  */
 export function snapshotHasLoadingGroups(baseSnapshot: ISnapshotTree): boolean {
 	if (baseSnapshot.unreferenced === true) {

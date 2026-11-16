@@ -476,7 +476,7 @@ describe("captureReferencedContents", () => {
 			assert.strictEqual(
 				snapshotHasLoadingGroups(snapshot),
 				false,
-				"unreferenced subtrees would not be loaded by the runtime, so their groupIds don't count",
+				"3.11 deliberately preserves loading-group validation that skips unreferenced subtrees",
 			);
 		});
 
