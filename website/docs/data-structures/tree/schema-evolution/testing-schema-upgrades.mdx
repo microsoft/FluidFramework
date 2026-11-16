@@ -41,7 +41,7 @@ import {
     StagedSchemaUpgradePolicy,
     TreeViewConfigurationAlpha,
 } from "@fluidframework/tree/alpha";
-import { independentView } from "@fluidframework/tree/alpha";
+import { createIndependentTreeView } from "@fluidframework/tree/beta";
 
 const sf = new SchemaFactoryAlpha("WhiteboardApp");
 
@@ -66,7 +66,7 @@ class Note extends sf.objectAlpha("Note", {
 ```typescript
 it("can read documents with RgbColor enabled", () => {
     // Create a view with the RGB upgrade enabled — simulates a future client
-    const futureView = independentView(
+    const futureView = createIndependentTreeView(
         new TreeViewConfigurationAlpha({
             schema: Note,
             stagedUpgradePolicy:
@@ -90,7 +90,7 @@ it("can read documents with RgbColor enabled", () => {
 
 ```typescript
 it("rejects staged content when upgrades are not enabled", () => {
-    const view = independentView(
+    const view = createIndependentTreeView(
         new TreeViewConfigurationAlpha({
             schema: Note,
             // No stagedUpgradePolicy — staged types stay excluded
@@ -126,7 +126,7 @@ class Item extends sf.objectAlpha("Item", {
 
 ```typescript
 it("can read documents where the field was cleared", () => {
-    const futureView = independentView(
+    const futureView = createIndependentTreeView(
         new TreeViewConfigurationAlpha({
             schema: Item,
             stagedUpgradePolicy:
@@ -168,7 +168,7 @@ This is useful for verifying that each phase of your rollout maintains the expec
 
 ## Tips
 
-- **Use `independentView`** for isolated tests that don't require a Fluid service connection.
+- **Use `createIndependentTreeView`** for isolated tests that don't require a Fluid service connection.
 - **Use `StagedSchemaUpgradePolicy.permissive`** to enable *all* staged upgrades at once — useful for broad integration tests that exercise the fully-upgraded schema without listing individual tokens.
 - **Test all schema states**: original → staged → upgraded → cleanup (staged wrappers removed). Each transition should maintain compatibility.
 - **Combine with** <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">**`snapshotSchemaCompatibility`**</ApiLink> tests to catch regressions when your schema changes across releases.
@@ -180,7 +180,7 @@ Test each boundary against the library's [compatibility policy](./schema-librari
 
 ### Library behavior
 
-Test construction, initialization, edits, events, and invariants on new nodes and nodes in an <ApiLink package="fluid-framework" api="independentView" />.
+Test construction, initialization, edits, events, and invariants on new nodes and nodes in a view created with <ApiLink package="fluid-framework" api="createIndependentTreeView" newApi />.
 Include adapter subscriptions and cleanup where supported.
 
 Cover supported configuration features with representative child schemas: empty extension sets where supported, multiple child types, recursion, and two scoped configurations in one root.
@@ -209,7 +209,7 @@ Verify disabled and enabled writes using the staged-upgrade tests above; simulat
 
 Repeat compatibility checks on the actual root schema, scopes, child schemas, components, and upgrade policy.
 Test promised client-version combinations, including rollback builds against upgraded documents, concurrent operations, and upgrades observed by another client.
-Check shared data and domain or adapter responses using multiple clients in the application's [Fluid testing setup](../../../testing/testing.mdx); `independentView` does not test message delivery or merging.
+Check shared data and domain or adapter responses using multiple clients in the application's [Fluid testing setup](../../../testing/testing.mdx); `createIndependentTreeView` does not test message delivery or merging.
 
 ## See Also
 

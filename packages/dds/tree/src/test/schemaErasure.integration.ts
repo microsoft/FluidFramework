@@ -8,10 +8,10 @@ import { strict as assert } from "node:assert";
 import { SchemaFactory, Tree, TreeViewConfiguration } from "@fluidframework/tree";
 import {
 	eraseSchemaDetails,
-	independentView,
 	type ErasedNode,
 	type ErasedSchema,
 } from "@fluidframework/tree/alpha";
+import { createIndependentTreeView } from "@fluidframework/tree/beta";
 
 // #region Library public API: these are the declarations consumers import
 
@@ -67,6 +67,15 @@ export const Square: SquareStatics & ErasedSchema<Square> = eraseSchemaDetails<
 
 // #region Application consumers: depend only on Square's public types and schema value
 
+const applicationFactory = new SchemaFactory("com.example.geometry.app");
+class Drawing extends applicationFactory.object("Drawing", { square: Square }) {}
+
+function createDrawingView(sideLength: number) {
+	const view = createIndependentTreeView(new TreeViewConfiguration({ schema: Drawing }));
+	view.initialize({ square: Square.create(sideLength) });
+	return view;
+}
+
 describe("Schema erasure library walkthrough", () => {
 	it("constructs new content through the domain factory", () => {
 		const square: Square = Square.create(3);
@@ -77,11 +86,7 @@ describe("Schema erasure library walkthrough", () => {
 	});
 
 	it("embeds the schema and obtains existing instances through the view", () => {
-		const applicationFactory = new SchemaFactory("com.example.geometry.app");
-		class Drawing extends applicationFactory.object("Drawing", { square: Square }) {}
-
-		const view = independentView(new TreeViewConfiguration({ schema: Drawing }));
-		view.initialize({ square: Square.create(3) });
+		const view = createDrawingView(3);
 		// Reading a stored node supplies its domain methods; creating another square is not a load operation.
 		const square: Square = view.root.square;
 		let changes = 0;
@@ -98,6 +103,18 @@ describe("Schema erasure library walkthrough", () => {
 		}
 		square.resize(6);
 		assert.equal(changes, 1);
+	});
+
+	it("reuses the application schema without sharing document state", () => {
+		const first = createDrawingView(3);
+		const second = createDrawingView(4);
+		assert(Tree.is(first.root, Drawing));
+		assert(Tree.is(second.root, Drawing));
+		first.root.square.resize(5);
+		assert.equal(first.root.square.area, 25);
+		assert.equal(second.root.square.area, 16);
+		first.dispose();
+		second.dispose();
 	});
 });
 

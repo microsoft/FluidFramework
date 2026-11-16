@@ -53,10 +53,15 @@ Erasure returns the same runtime schema; it is not a wrapper or access-control m
 
 ### Explicit public types
 
-Start with the executable [schema-erasure walkthrough](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/schemaErasure.integration.ts): top-level exports followed by consumer tests for construction, embedding, edits, and events.
-It imports erasure APIs from `@fluidframework/tree/alpha` and keeps the implementation class local.
-The following excerpts show its public contract and erased export.
-First, define the public contract; the walkthrough provides the imports and `SquareImplementation` class:
+Consider a geometry library that stores a square's side length but exposes only its area and a resize operation.
+The [schema-erasure walkthrough](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/schemaErasure.integration.ts) contains the complete source, imports, and tests for construction, embedding, edits, and events.
+Import `ErasedNode`, `ErasedSchema`, and `eraseSchemaDetails` from `@fluidframework/tree/alpha`, and `createIndependentTreeView` from `@fluidframework/tree/beta`.
+Import `SchemaFactory` and `TreeViewConfiguration` from `@fluidframework/tree`.
+
+#### Define the public contract
+
+Describe the operations consumers can use without exposing the stored `sideLength` field.
+Keep the persisted identifier in the `Square` type aligned with the implementation:
 
 {/* markdown-magic:begin {"transform":"include-code","path":"../../../../../packages/dds/tree/src/test/schemaErasure.integration.ts","language":"typescript","start":17,"end":30} */}
 {/* prettier-ignore-start */}
@@ -81,7 +86,43 @@ export interface SquareStatics {
 {/* prettier-ignore-end */}
 {/* markdown-magic:end */}
 
-Then export the implementation with only that contract and the runtime schema exposed:
+#### Keep the implementation private
+
+Implement the contract on a schema class that the library does not export.
+The `area` getter reads the stored field, `resize` edits it, and `create` translates a domain argument into stored content:
+
+{/* markdown-magic:begin {"transform":"include-code","path":"../../../../../packages/dds/tree/src/test/schemaErasure.integration.ts","language":"typescript","start":35,"end":53} */}
+{/* prettier-ignore-start */}
+{/* NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. */}
+
+```typescript
+const factory = new SchemaFactory("com.example.geometry");
+
+class SquareImplementation
+	extends factory.object("Square", { sideLength: factory.number })
+	implements SquareMembers
+{
+	public get area(): number {
+		return this.sideLength * this.sideLength;
+	}
+
+	public resize(sideLength: number): void {
+		this.sideLength = sideLength;
+	}
+
+	public static create(sideLength: number): SquareImplementation {
+		return new SquareImplementation({ sideLength });
+	}
+}
+```
+
+{/* prettier-ignore-end */}
+{/* markdown-magic:end */}
+
+#### Export the erased schema
+
+Export the implementation with only the public contract and runtime schema exposed.
+The exported value retains the static `create` method, but consumers cannot construct a `Square` directly from its stored fields:
 
 {/* markdown-magic:begin {"transform":"include-code","path":"../../../../../packages/dds/tree/src/test/schemaErasure.integration.ts","language":"typescript","start":60,"end":64} */}
 {/* prettier-ignore-start */}
@@ -97,7 +138,6 @@ export const Square: SquareStatics & ErasedSchema<Square> = eraseSchemaDetails<
 {/* prettier-ignore-end */}
 {/* markdown-magic:end */}
 
-Consumers embed the `Square` schema, construct nodes with `Square.create`, and use `area` and `resize` without depending on the stored `sideLength` field.
 The [API tests](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/eraseSchemaDetails.spec.ts) cover recursion, subclassing, and compile-time restrictions.
 
 For generic factories, explicitly annotate the return type with public interfaces parameterized by the consumer inputs you preserve, independent of the local class.
@@ -107,6 +147,34 @@ See the [configurable library walkthrough](https://github.com/microsoft/FluidFra
 
 Create new content with the domain factory, then insert it or initialize a view with it.
 Obtain existing nodes, including their domain methods, through the view or a parent node; a creation factory does not load stored content.
+
+The application embeds the exported `Square` schema in its own root.
+Define that root once, then reuse it for each view:
+
+{/* markdown-magic:begin {"transform":"include-code","path":"../../../../../packages/dds/tree/src/test/schemaErasure.integration.ts","language":"typescript","start":69,"end":77} */}
+{/* prettier-ignore-start */}
+{/* NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. */}
+
+```typescript
+const applicationFactory = new SchemaFactory("com.example.geometry.app");
+class Drawing extends applicationFactory.object("Drawing", { square: Square }) {}
+
+function createDrawingView(sideLength: number) {
+	const view = createIndependentTreeView(new TreeViewConfiguration({ schema: Drawing }));
+	view.initialize({ square: Square.create(sideLength) });
+	return view;
+}
+```
+
+{/* prettier-ignore-end */}
+{/* markdown-magic:end */}
+
+Calling `createDrawingView(3)` initializes a new drawing with a square whose `area` is `9`.
+Read that same node through `view.root.square`, then call `resize(5)` to change its area to `25`.
+Neither embedding nor editing the square requires the application to know about `SquareImplementation` or `sideLength`.
+
+This example uses `createIndependentTreeView` to exercise the model without a Fluid service.
+In an application, obtain the view from your SharedTree.
 See [Reading and Editing](../reading-and-editing.mdx) and the [initialization flow](../recommended-init-flow.mdx).
 
 ## Decide whether to allow subclassing

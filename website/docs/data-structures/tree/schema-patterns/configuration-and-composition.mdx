@@ -60,29 +60,74 @@ Handle configuration changes through [schema evolution](../schema-evolution/sche
 Start with <ApiLink package="fluid-framework" api="SchemaFactory" /> itself: its methods return schemas configured by names, fields, and allowed types.
 For smaller schema-creation utilities, see <ApiLink package="fluid-framework" api="enumFromStrings" /> and <ApiLink package="fluid-framework" api="adaptEnum" />, which derive schemas from focused inputs without a component system.
 
-Then see the executable [configurable library walkthrough](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/configurableSchemaLibrary.integration.ts): an explicitly typed factory and two scoped configurations embedded in one root.
-The following excerpt shows its schema factory.
-The walkthrough provides the imports, the `Box`, `BoxStatics`, and `BoxSchema` public contracts, and the application tests.
-The return type preserves the caller's scope and allowed child types while hiding the stored `content` field:
+For a reusable model, consider a box that can hold caller-selected content.
+An application needs one box for notes or strings and another for a numeric quantity.
+This example extends the [encapsulated root pattern](./encapsulation-and-exports.mdx#explicit-public-types): the new concerns are preserving the selected child types and giving each configuration a stable identity.
+The [configurable library walkthrough](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/configurableSchemaLibrary.integration.ts) provides the complete source, imports, and tests.
+The erasure APIs come from `@fluidframework/tree/alpha`, and `createIndependentTreeView` comes from `@fluidframework/tree/beta`.
+The other APIs come from `@fluidframework/tree`.
 
-{/* markdown-magic:begin {"transform":"include-code","path":"../../../../../packages/dds/tree/src/test/configurableSchemaLibrary.integration.ts","language":"typescript","start":68,"end":98} */}
+#### Preserve the selected child types
+
+The library exposes a readable `value` and a static `create` method.
+The readable value uses the selected node types; the factory accepts insertable content, including plain objects where the child schema permits them.
+The `Box` type also retains the caller's scope as part of its identifier:
+
+{/* markdown-magic:begin {"transform":"include-code","path":"../../../../../packages/dds/tree/src/test/configurableSchemaLibrary.integration.ts","language":"typescript","start":37,"end":61} */}
 {/* prettier-ignore-start */}
 {/* NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. */}
 
 ```typescript
-const boxFactory = new SchemaFactory("com.example.box");
+/**
+ * A box whose persisted identity includes the caller's scope.
+ */
+export type Box<Scope extends string, Allowed extends ImplicitAllowedTypes> = ErasedNode<
+	{ readonly value: TreeNodeFromImplicitAllowedTypes<Allowed> },
+	`com.example.box<${Scope}>.Box`
+>;
 
 /**
- * Creates one configured box schema with identifier `com.example.box.<scope>.Box`.
- * The caller must reuse the result and keep its scope stable when reopening documents.
- * Distinct configurations that coexist in one schema need distinct scopes.
- * See schemaErasure.integration.ts for a fixed library's explicit export boundary.
+ * Construction without exposing stored fields.
+ */
+export interface BoxStatics<Scope extends string, Allowed extends ImplicitAllowedTypes> {
+	/** Accepts plain objects for child schemas that support them, not just existing nodes. */
+	create(value: InsertableTreeNodeFromImplicitAllowedTypes<Allowed>): Box<Scope, Allowed>;
+}
+
+/**
+ * The public schema and construction contract.
+ */
+export type BoxSchema<Scope extends string, Allowed extends ImplicitAllowedTypes> = BoxStatics<
+	Scope,
+	Allowed
+> &
+	ErasedSchema<Box<Scope, Allowed>>;
+```
+
+{/* prettier-ignore-end */}
+{/* markdown-magic:end */}
+
+#### Implement the factory
+
+The factory stores the selected content in a required field, but its explicit `BoxSchema` return type hides that field from consumers.
+The identifier encloses the caller's scope in angle brackets, keeping it separate from the library-owned `Box` type name.
+This follows the library-owned scope convention used by `TableSchema` and `FormattedText`:
+
+{/* markdown-magic:begin {"transform":"include-code","path":"../../../../../packages/dds/tree/src/test/configurableSchemaLibrary.integration.ts","language":"typescript","start":66,"end":93} */}
+{/* prettier-ignore-start */}
+{/* NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. */}
+
+```typescript
+/**
+ * Creates one configured box schema with identifier `com.example.box<scope>.Box`.
+ * Reuse the result and keep the scope stable; configurations that coexist need distinct scopes.
  */
 export function createBoxSchema<Scope extends string, Allowed extends ImplicitAllowedTypes>(
 	scope: Scope,
 	allowed: Allowed,
 ): BoxSchema<Scope, Allowed> {
-	class BoxImplementation extends boxFactory.object(`${scope}.Box`, {
+	const boxFactory = new SchemaFactory("com.example");
+	class BoxImplementation extends boxFactory.object(`box<${scope}>.Box`, {
 		content: boxFactory.required(allowed),
 	}) {
 		public get value(): TreeNodeFromImplicitAllowedTypes<Allowed> {
@@ -104,6 +149,64 @@ export function createBoxSchema<Scope extends string, Allowed extends ImplicitAl
 
 {/* prettier-ignore-end */}
 {/* markdown-magic:end */}
+
+#### Configure once at the application boundary
+
+The application defines its `Note` type and creates two box schemas with distinct scopes.
+The readonly tuple preserves the choice between a `Note` node and a string.
+Both box schemas can then coexist in one root:
+
+{/* markdown-magic:begin {"transform":"include-code","path":"../../../../../packages/dds/tree/src/test/configurableSchemaLibrary.integration.ts","language":"typescript","start":98,"end":109} */}
+{/* prettier-ignore-start */}
+{/* NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. */}
+
+```typescript
+const applicationFactory = new SchemaFactory("com.example.boxes.app");
+class Note extends applicationFactory.object("Note", {
+	text: applicationFactory.string,
+}) {}
+
+const NotesBox = createBoxSchema("notes", [Note, applicationFactory.string] as const);
+const QuantityBox = createBoxSchema("quantity", applicationFactory.number);
+class Root extends applicationFactory.object("Root", {
+	notes: NotesBox,
+	quantity: QuantityBox,
+}) {}
+```
+
+{/* prettier-ignore-end */}
+{/* markdown-magic:end */}
+
+#### Construct content through the configured schemas
+
+Reuse those schema classes when creating views.
+`NotesBox.create` accepts an insertable note object; `QuantityBox.create` accepts a number:
+
+{/* markdown-magic:begin {"transform":"include-code","path":"../../../../../packages/dds/tree/src/test/configurableSchemaLibrary.integration.ts","language":"typescript","start":110,"end":118} */}
+{/* prettier-ignore-start */}
+{/* NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. */}
+
+```typescript
+function createBoxesView() {
+	const view = createIndependentTreeView(new TreeViewConfiguration({ schema: Root }));
+	view.initialize({
+		notes: NotesBox.create({ text: "Remember this" }),
+		quantity: QuantityBox.create(3),
+	});
+	return view;
+}
+```
+
+{/* prettier-ignore-end */}
+{/* markdown-magic:end */}
+
+After calling `createBoxesView()`, `view.root.notes.value` is a `Note` or a string, while `view.root.quantity.value` is a number.
+Use `Tree.is(value, Note)` to narrow the note value before editing its `text`.
+Passing a string to `QuantityBox.create` is a type error; the walkthrough also tests its runtime rejection.
+The box identifiers remain `com.example.box<notes>.Box` and `com.example.box<quantity>.Box` across views.
+
+These examples use `createIndependentTreeView` to exercise the model without a Fluid service.
+For application view creation, follow the [initialization flow](../recommended-init-flow.mdx).
 
 For larger examples, see <ApiLink package="fluid-framework" api="FormattedText.createSchema" /> for formatting and extra atom schemas, or <ApiLink package="fluid-framework" api="TableSchema" /> for separately configurable cells, rows, and columns.
 Use their public contracts and release tags, not internal helpers, as extension points.
@@ -168,17 +271,6 @@ Laziness does not resolve circular inference or [declaration-emission constraint
 Define schema references with <ApiLink package="fluid-framework" api="Component.LazyArray" /> and capture the lazy configuration in <ApiLink package="fluid-framework" api="Component.Factory" /> functions.
 Call <ApiLink package="fluid-framework" api="Component.(compose:1)" /> before retrieving contributions with <ApiLink package="fluid-framework" api="Component.Composed.getComposed" /> or component-specific exports with <ApiLink package="fluid-framework" api="Component.Composed.getComponent" />.
 
-```mermaid
-flowchart TB
-	subgraph composition[During compose]
-		Capture["Factories capture lazy configuration<br/>Do not evaluate schemas"]
-		Capture --> Return[Return lazy contributions and exports]
-	end
-	Return --> Complete[Composition completes]
-	Complete --> Retrieve["getComposed() or getComponent()"]
-	Retrieve --> Construct["Construct root schema and<br/>TreeViewConfiguration"]
-```
-
 View configuration and node construction can force schema evaluation.
 Construct the root schema and <ApiLink package="fluid-framework" api="TreeViewConfiguration" /> only after composition, never inside component factories.
 
@@ -186,28 +278,7 @@ If multiple paths expose a schema, such as a contribution and a component-specif
 Create a <ApiLink package="fluid-framework" api="Component.memoize" /> callback inside the component factory so its cache belongs to that composition.
 For other cached, configuration-dependent results, see <ApiLink package="fluid-framework" api="Component.Configurable" /> and <ApiLink package="fluid-framework" api="Component.Composed.getConfigured" />.
 
-For example, consider this excerpt from the [component walkthrough](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/components.integration.ts).
-Its `createTextSchema` function defines a text node whose attachment can hold any of the composed item schemas.
-Both the `items` contribution and the `textSchema` export use the same memoized callback:
-
-{/* markdown-magic:begin {"transform":"include-code","path":"../../../../../packages/dds/tree/src/test/components.integration.ts","language":"typescript","start":82,"end":91} */}
-{/* prettier-ignore-start */}
-{/* NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. */}
-
-```typescript
-const textComponent = ((lazyComposition) => {
-	// Defer schema creation until composition is complete, then reuse the same class for both exports.
-	// Creating it on every access would produce distinct classes with the same schema identifier.
-	const textSchema = Component.memoize(() => createTextSchema(lazyComposition()));
-	return {
-		items: () => [textSchema],
-		textSchema,
-	};
-}) satisfies Component.Factory<ItemComponent>;
-```
-
-{/* prettier-ignore-end */}
-{/* markdown-magic:end */}
+The [text and group libraries below](#runnable-composition-examples) apply this lifecycle.
 
 ## Types at composition boundaries
 
@@ -220,7 +291,182 @@ Keep unavoidable casts at a typed model-owned insertion boundary, retain runtime
 
 ## Runnable composition examples
 
-Read the [component walkthrough](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/components.integration.ts) from shared contracts through the two libraries to application consumers.
-It tests recursion, schema reuse, independent compositions, unregistered types, and consumers that know only the shared contract.
+The [component walkthrough](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/components.integration.ts) models a document editor with text items and groups and includes all imports and tests.
+Text items can attach groups, and groups can contain text items or more groups.
+The following steps show the contracts, each library, and the application that connects them.
+Import `Component` from `@fluidframework/tree/alpha` and `createIndependentTreeView` from `@fluidframework/tree/beta`.
+Import the other APIs from `@fluidframework/tree`.
+
+### Define shared item contracts
+
+Every item supplies a `describe` operation.
+Each contributed schema also supplies a menu label and a `create` factory.
+`ItemComponent` collects those schemas lazily so libraries can refer to the final set before any schema is evaluated:
+
+{/* markdown-magic:begin {"transform":"include-code","path":"../../../../../packages/dds/tree/src/test/components.integration.ts","language":"typescript","start":36,"end":55} */}
+{/* prettier-ignore-start */}
+{/* NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. */}
+
+```typescript
+/**
+ * Operations shared by all contributed items.
+ */
+export type Item = TreeNode & { describe(): string };
+
+/**
+ * A contributed schema with a creation-menu label and factory.
+ */
+export type ItemSchema = TreeNodeSchema<string, NodeKind.Object, Item> & {
+	readonly description: string;
+	create(): Item;
+};
+
+/**
+ * Lazy references to the schemas contributed by an item library.
+ */
+export interface ItemComponent {
+	readonly items: Component.LazyArray<ItemSchema>;
+}
+```
+
+{/* prettier-ignore-end */}
+{/* markdown-magic:end */}
+
+In separate packages, put these contracts in a module that neither imports nor selects the implementations.
+
+### Contribute text items
+
+The text library gets its allowed attachment types from the composition, not by importing the group library.
+Put schema creation inside `Component.memoize`: the factory returns a callback without evaluating `lazyComposition()`.
+After composition, the first call creates the schema; later calls return the same class.
+Both the `items` contribution and the `textSchema` export use that callback:
+
+{/* markdown-magic:begin {"transform":"include-code","path":"../../../../../packages/dds/tree/src/test/components.integration.ts","language":"typescript","start":60,"end":86} */}
+{/* prettier-ignore-start */}
+{/* NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. */}
+
+```typescript
+const textComponent = ((lazyComposition) => {
+	const textSchema = Component.memoize(() => {
+		const factory = new SchemaFactory("com.example.components.text");
+		class TextItem extends factory.object("Text", {
+			text: factory.string,
+			attachment: factory.optional(lazyComposition().getComposed("items")),
+		}) {
+			public static readonly description = "Text";
+
+			public static create(): TextItem {
+				return new TextItem({ text: "New text" });
+			}
+
+			public describe(): string {
+				return this.text;
+			}
+
+			public attach(item: Item): void {
+				// The open insertion boundary retains runtime schema checks.
+				this.attachment = item as never;
+			}
+		}
+		return TextItem;
+	});
+	return { items: () => [textSchema], textSchema };
+}) satisfies Component.Factory<ItemComponent>;
+```
+
+{/* prettier-ignore-end */}
+{/* markdown-magic:end */}
+
+### Contribute groups
+
+The group library follows the same pattern.
+Its children use the composed item schemas, so a group can contain another group without evaluating the recursive references during composition:
+
+{/* markdown-magic:begin {"transform":"include-code","path":"../../../../../packages/dds/tree/src/test/components.integration.ts","language":"typescript","start":91,"end":116} */}
+{/* prettier-ignore-start */}
+{/* NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. */}
+
+```typescript
+const groupComponent = ((lazyComposition) => {
+	const groupSchema = Component.memoize(() => {
+		const factory = new SchemaFactory("com.example.components.group");
+		class Children extends factory.array("Children", lazyComposition().getComposed("items")) {}
+
+		class Group extends factory.object("Group", { children: Children }) {
+			public static readonly description = "Group";
+
+			public static create(): Group {
+				return new Group({ children: [] });
+			}
+
+			public describe(): string {
+				return this.children.map((child) => child.describe()).join(", ");
+			}
+
+			public add(item: Item): void {
+				// The open insertion boundary retains runtime schema checks.
+				this.children.insertAtEnd(item as never);
+			}
+		}
+		return Group;
+	});
+	return { items: () => [groupSchema], groupSchema };
+}) satisfies Component.Factory<ItemComponent>;
+```
+
+{/* prettier-ignore-end */}
+{/* markdown-magic:end */}
+
+The `attach` and `add` methods contain the casts needed at the [open insertion boundary](#types-at-composition-boundaries).
+They do not bypass runtime schema checks: an item must still belong to the composition's allowed types.
+These libraries use fixed identifiers; configure a more general library with [distinct scopes](#avoiding-schema-identifier-collisions) when multiple configurations must coexist in one view.
+
+### Compose and use the application model
+
+Select the libraries and compose them once.
+Only after composition, retrieve their schema classes and define the application root:
+
+{/* markdown-magic:begin {"transform":"include-code","path":"../../../../../packages/dds/tree/src/test/components.integration.ts","language":"typescript","start":121,"end":126} */}
+{/* prettier-ignore-start */}
+{/* NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. */}
+
+```typescript
+const editorComposition = Component.compose([groupComponent, textComponent]);
+const EditorGroup = editorComposition.getComponent(groupComponent).groupSchema();
+const EditorTextItem = editorComposition.getComponent(textComponent).textSchema();
+const applicationFactory = new SchemaFactory("com.example.components.app");
+class Root extends applicationFactory.object("Root", { group: EditorGroup }) {}
+```
+
+{/* prettier-ignore-end */}
+{/* markdown-magic:end */}
+
+Reuse that root for each document.
+This function initializes a group, adds a nested group containing text, and gives that text an attached group:
+
+{/* markdown-magic:begin {"transform":"include-code","path":"../../../../../packages/dds/tree/src/test/components.integration.ts","language":"typescript","start":127,"end":137} */}
+{/* prettier-ignore-start */}
+{/* NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. */}
+
+```typescript
+function createEditorView() {
+	const view = createIndependentTreeView(new TreeViewConfiguration({ schema: Root }));
+	view.initialize({ group: EditorGroup.create() });
+	const nestedGroup = EditorGroup.create();
+	const text = EditorTextItem.create();
+	text.attach(EditorGroup.create());
+	nestedGroup.add(text);
+	view.root.group.add(nestedGroup);
+	return view;
+}
+```
+
+{/* prettier-ignore-end */}
+{/* markdown-magic:end */}
+
+After calling `createEditorView()`, `view.root.group.describe()` returns `"New text"`.
+The application can also build a creation menu from `editorComposition.getComposed("items")`; each schema supplies its own label and factory.
+
+The walkthrough tests these operations, schema reuse, independent document state and compositions, unregistered types, and consumers that know only the shared contract.
 The [open-polymorphism tests](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/openPolymorphism.integration.ts) retain alternatives and edge cases; their skipped mutable-registry examples are unsupported.
 Run these examples with the [tree package development workflow](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/README.md#recommended-developer-workflow).
