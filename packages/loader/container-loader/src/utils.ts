@@ -359,6 +359,11 @@ export function convertISnapshotToSnapshotWithBlobs(snapshot: ISnapshot): Snapsh
 	};
 }
 
+const summaryBlobTextDecoder = new TextDecoder("utf8", {
+	fatal: true,
+	ignoreBOM: true,
+});
+
 /**
  * Serializes summary blob bytes without changing the legacy representation of UTF-8 text.
  * @param blob - Raw summary blob contents.
@@ -367,16 +372,14 @@ export function convertISnapshotToSnapshotWithBlobs(snapshot: ISnapshot): Snapsh
 export function serializeBlobContents(
 	blob: ArrayBufferLike,
 ): ISerializableBlobContents[string] {
-	const text = bufferToString(blob, "utf8");
-	const originalBytes = new Uint8Array(blob);
-	const encodedBytes = new Uint8Array(stringToBuffer(text, "utf8"));
-	if (
-		originalBytes.length === encodedBytes.length &&
-		originalBytes.every((value, index) => value === encodedBytes[index])
-	) {
-		return text;
+	try {
+		return summaryBlobTextDecoder.decode(blob);
+	} catch (error) {
+		if (!(error instanceof TypeError)) {
+			throw error;
+		}
+		return { encoding: "base64", contents: bufferToString(blob, "base64") };
 	}
-	return { encoding: "base64", contents: bufferToString(blob, "base64") };
 }
 
 /**

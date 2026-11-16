@@ -338,9 +338,9 @@ export async function loadExistingContainer(
  * offline structural and attachment access. Its `"reference"` mode supports
  * offline structural loading, but omits attachment payloads: dereferencing an
  * omitted attachment later fails, even if loading succeeded.
- * Legacy reference captures, including those produced by version 3.12, omitted all
- * blob payloads and require online driver wiring. Recapture with a version that
- * includes structural payloads if offline loading is needed. State from
+ * Reference captures produced by Fluid versions before 3.13 omitted all blob
+ * payloads and require online driver wiring. Recapture with Fluid 3.13 or later
+ * if offline structural loading is needed. State from
  * `IContainer.getPendingLocalState` / `getRequiredPendingLocalState` may also
  * omit required payloads. Missing payloads trigger a storage `UsageError` when
  * read, either during load or subsequent access. Handle resolution may wrap
@@ -349,11 +349,10 @@ export async function loadExistingContainer(
  * **URL shape requirement.** In the offline form the captured
  * `pendingLocalState.url` is the only URL available; it is parsed in place of
  * a real `IUrlResolver.resolve()` call, so it must satisfy
- * {@link tryParseCompatibleResolvedUrl}'s contract — a resolved URL of shape
- * `protocol://{host}/.../..?{queryString}`. This is the format that
- * Fluid-shipped drivers emit; drivers that emit a non-standard resolved-URL
- * shape will surface as a `UsageError` at load time. The online form uses the
- * supplied resolver and remains subject to the normal loader's URL validation.
+ * {@link tryParseCompatibleResolvedUrl}'s contract. Drivers that emit an
+ * incompatible resolved-URL shape will surface as a `UsageError` at load time.
+ * The online form uses the supplied resolver and remains subject to the normal
+ * loader's URL validation.
  *
  * The offline form supports `readOnly: false` for the same capture-and-relay
  * use case as the online form: local DDS submissions accrue in the runtime's
@@ -438,7 +437,7 @@ export async function loadFrozenContainerFromPendingState(
 		// Legacy reference captures omitted structural payloads as well as attachments.
 		if (pending.blobContentsMode === "reference") {
 			throw new UsageError(
-				`${fnName}: pending state does not contain inlined snapshot blob contents. Reference-only state captured by older versions of ${captureFullContainerState.name} (including 3.12) requires online driver wiring. Recapture with a version that includes structural payloads for offline loading.`,
+				`${fnName}: pending state does not contain inlined snapshot blob contents. Reference-only state captured by ${captureFullContainerState.name} in Fluid versions before 3.13 requires online driver wiring. Recapture with Fluid 3.13 or later for offline structural loading.`,
 			);
 		}
 		const parsed = tryParseCompatibleResolvedUrl(pending.url);
@@ -534,7 +533,7 @@ export interface ICaptureFullContainerStateProps {
 	 */
 	readonly logger?: ITelemetryBaseLogger | undefined;
 	/**
-	 * Controls whether blob payloads are included in the captured state.
+	 * Controls whether attachment blob payloads are included in the captured state.
 	 *
 	 * `"inline"` (the default) includes structural and eligible attachment blob
 	 * contents, supporting offline access to captured contents with
@@ -547,8 +546,7 @@ export interface ICaptureFullContainerStateProps {
 	 * Online attachment access depends on the attachment remaining available.
 	 * This does not change garbage collection or retention.
 	 *
-	 * Offline loading requires the resolved URL to have the shape
-	 * `protocol://<string>/<tenantId>/<docId>?<querystring>` accepted by
+	 * Offline loading requires a resolved URL accepted by
 	 * {@link tryParseCompatibleResolvedUrl}. Inline capture rejects incompatible
 	 * URLs with `UsageError`; reference capture leaves validation to the loader.
 	 */

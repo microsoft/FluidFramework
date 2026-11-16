@@ -1175,7 +1175,7 @@ describe("captureFullContainerState", () => {
 						codeLoader,
 						pendingLocalState: legacyReferenceState,
 					}),
-				/Reference-only state.*3\.12.*requires online driver wiring.*Recapture/,
+				/Reference-only state.*versions before 3\.13.*requires online driver wiring.*Recapture with Fluid 3\.13 or later/,
 				"Fully offline loading should clearly reject legacy reference-only state",
 			);
 

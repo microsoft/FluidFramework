@@ -2,18 +2,17 @@
 "@fluidframework/container-loader": minor
 "__section": legacy
 ---
-Reference-mode capture preserves structural snapshot contents
+Reference-mode capture supports offline structural loading
 
-`captureFullContainerState` with `blobCaptureMode: "reference"` now retains structural snapshot contents, attachment references, and saved operations while omitting attachment bytes.
+`captureFullContainerState` with `blobCaptureMode: "reference"` now retains structural snapshot contents and saved operations while omitting attachment payloads, allowing structural state to load offline.
 The default remains `"inline"`.
 Reference captures can be larger and perform more structural reads than before.
-Structural summary blobs retain their original bytes, including non-UTF-8 binary contents.
-Text keeps its legacy serialized representation; binary entries use tagged base64 and require an updated loader to replay.
+Accessing an omitted attachment requires online storage and succeeds only while storage retains it.
 
-Both capture modes include structural contents beneath unreferenced snapshot subtrees.
-Offline loading requires a URL accepted by `tryParseCompatibleResolvedUrl` and fails if an omitted attachment is accessed.
-Reference capture leaves offline URL validation to the loader.
-Online access to an omitted attachment succeeds only while storage retains it; retention and garbage collection are unchanged.
+Reference captures produced by Fluid versions before 3.13 omitted structural payloads too and require online driver wiring.
+Recapture with Fluid 3.13 or later if offline structural loading is needed.
 
-Legacy reference captures, including those produced by version 3.12, omitted structural payloads too and still require live driver wiring.
-Recapture with this version if offline structural loading is needed.
+The lossless blob format applies beyond capture: pending state from `getPendingLocalState`, detached state from `serialize()`, and serialized loading-group snapshots may now contain tagged base64 entries for non-UTF-8 blob contents.
+Older loaders cannot read state containing these entries.
+Use updated loaders for all readers of these artifacts, including during application rollback.
+Existing text entries remain readable.

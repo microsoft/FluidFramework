@@ -34,6 +34,21 @@ describe("container-loader utils", () => {
 			}
 		});
 
+		it("retains leading byte-order marks in serialized UTF-8 text", () => {
+			const bytes = new Uint8Array([0xef, 0xbb, 0xbf, 0x61]).buffer;
+			const serialized = serializeBlobContents(bytes);
+			assert.strictEqual(serialized, "\uFEFFa");
+			assert.deepStrictEqual(deserializeBlobContents(serialized), bytes);
+		});
+
+		it("serializes valid text after a truncated UTF-8 blob", () => {
+			const bytes = new Uint8Array([0xe2, 0x82]).buffer;
+			const serialized = serializeBlobContents(bytes);
+			assert.deepStrictEqual(serialized, { encoding: "base64", contents: "4oI=" });
+			assert.deepStrictEqual(deserializeBlobContents(serialized), bytes);
+			assert.strictEqual(serializeBlobContents(stringToBuffer("valid", "utf8")), "valid");
+		});
+
 		it("preserves arbitrary bytes through snapshot conversions", () => {
 			for (const bytes of [
 				Uint8Array.from({ length: 256 }, (_, index) => index),
