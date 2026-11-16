@@ -122,6 +122,9 @@ function formatViewIncompatibility(value: Discrepancy): SchemaViewIncompatibilit
 	}
 }
 
+/**
+ * Converts an internal upgrade discrepancy into a public incompatibility with a human-readable reason.
+ */
 function formatUpgradeIncompatibility(
 	value: StoredSchemaUpgradeDiscrepancy,
 ): SchemaUpgradeIncompatibility {

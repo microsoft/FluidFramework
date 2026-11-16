@@ -928,15 +928,16 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 }
 
 /**
- * A discrepancy that prevents a view schema from providing read/write access to a tree, based on that tree's existing stored schema.
+ * A schema difference that prevents the view from reading or writing a document.
  *
  * @remarks
  * These entries explain why {@link SchemaCompatibilityStatusBeta.view} does not permit access to the document.
- * They compare the view schema with the document's existing stored schema, rather than checking its current content
- * or the proposed schema for an upgrade.
+ * They compare the view schema with the document's current stored schema.
+ * They do not check the document's content or a proposed upgrade.
  *
- * To identify the failed schema requirement, use `mismatch` to distinguish the entry's shape and interpret its structured fields.
- * An entry can also include staging annotations that provide context without themselves preventing access.
+ * Use `mismatch` to identify the failed schema requirement and the fields that describe it.
+ * Some entries also describe staged schema changes: `stagedView` lists staged node types, and `viewIsStagedOptional` marks a staged optional field.
+ * These details describe the schema change, but `view` and `stored` show the difference that prevents access.
  *
  * @sealed @beta
  */
@@ -946,9 +947,10 @@ export type SchemaDiscrepancy =
 			 * Indicates that a field allows different node types in the view and stored schemas.
 			 *
 			 * @remarks
-			 * This compares node type identifiers, not the shapes of nodes with the same identifier.
-			 * For example, changing a field from `sf.number` to `sf.string` changes its allowed types,
-			 * so `view` and `stored` identify the types allowed only on their respective sides.
+			 * This compares node type identifiers, not the structure of nodes that share an identifier.
+			 * For example, {@link SchemaStatics.number | SchemaFactory.number} and {@link SchemaStatics.string | SchemaFactory.string} have different identifiers.
+			 * Changing a field from one to the other changes its allowed types.
+			 * The `view` array lists types allowed only by the view, and `stored` lists types allowed only by the stored schema.
 			 */
 			readonly mismatch: "allowedTypes";
 			/**
@@ -990,11 +992,10 @@ export type SchemaDiscrepancy =
 			 * Indicates that a field has different field kinds in the view and stored schemas.
 			 *
 			 * @remarks
-			 * A field's kind determines its child presence requirements, independently of which node types it allows.
-			 * For example, `"Value"` requires exactly one child, while `"Optional"` permits zero or one,
-			 * so changing between them changes whether a child can be absent.
-			 * The other kinds are `"Sequence"` (any number of children), `"Forbidden"` (no children),
-			 * and `"Identifier"` (a required identifier field).
+			 * A field's kind specifies how many children it permits, not which node types those children can have.
+			 * For example, a {@link SchemaStatics.required | required field} (`"Value"`) must have exactly one child.
+			 * An {@link SchemaStatics.optional | optional field} (`"Optional"`) can have zero or one child.
+			 * If you change between these field kinds, you change whether a child can be absent.
 			 */
 			readonly mismatch: "fieldKind";
 			/**
@@ -1030,12 +1031,12 @@ export type SchemaDiscrepancy =
 			 * Indicates that a leaf node accepts different value types in the view and stored schemas.
 			 *
 			 * @remarks
-			 * A leaf holds a primitive value or a Fluid handle rather than child nodes,
-			 * so its value schema determines which values it accepts.
-			 * This mismatch occurs when the same node type identifier requires different value types,
-			 * such as `"Number"` in the view and `"String"` in the stored schema.
-			 * In contrast, changing a field between `sf.number` and `sf.string` uses different node identifiers,
-			 * so that change produces an `"allowedTypes"` mismatch instead.
+			 * A leaf holds a primitive value or a Fluid handle, not child nodes.
+			 * Its value schema specifies which values it accepts.
+			 * This mismatch occurs when the same node type identifier requires different value types in the view and stored schema.
+			 * For example, the view requires `"Number"`, but the stored schema permits `"String"`.
+			 * In contrast, {@link SchemaStatics.number | SchemaFactory.number} and {@link SchemaStatics.string | SchemaFactory.string} have different node identifiers.
+			 * If you change a field between them, you get an `"allowedTypes"` mismatch instead.
 			 */
 			readonly mismatch: "valueSchema";
 			/**
@@ -1056,11 +1057,10 @@ export type SchemaDiscrepancy =
 			 * Indicates that a node is represented by different node kinds in the view and stored schemas.
 			 *
 			 * @remarks
-			 * Node kinds describe structure, such as an object, map, array, or leaf.
-			 * Because the view must interpret the stored structure, it cannot view an identifier as an object
-			 * when the stored schema defines it as a map.
-			 * Arrays require an additional structural check because they use an object representation in stored schema:
-			 * a stored object that lacks the required array structure also produces this mismatch.
+			 * Node kinds describe a node's structure, such as an object, map, array, or leaf.
+			 * The view must support the stored node's structure.
+			 * For example, a view that expects an object cannot use a map with the same identifier.
+			 * This mismatch also occurs if the view expects an array but the stored schema does not support the required array structure.
 			 */
 			readonly mismatch: "nodeKind";
 			/**
@@ -1078,22 +1078,22 @@ export type SchemaDiscrepancy =
 	  };
 
 /**
- * A schema requirement that prevents the proposed stored schema from being a permitted upgrade.
+ * A schema requirement that prevents an upgrade to the proposed stored schema.
  *
  * @remarks
- * Before upgrading a document, the view creates a proposed stored schema using its effective staged-upgrade policy.
- * The proposal must both satisfy the stored-schema upgrade rules and allow the view to read and write the document.
- * These entries explain which requirement prevents the upgrade, rather than why viewing the document's current schema is blocked.
+ * Before an upgrade, the view uses its staged-upgrade policy to create a candidate stored schema.
+ * The candidate is the stored schema that the upgrade would apply.
+ * It must satisfy the stored-schema upgrade rules and let the view read and write the document.
+ * These entries explain which check the candidate fails.
  *
- * When the proposal violates a stored-schema upgrade rule, the entry identifies the schema difference that caused the failure.
- * For mismatch kinds shared with {@link SchemaViewIncompatibility}, the entries use the same shapes,
- * but replace `view` with `proposed` and omit viewing-specific staging annotations.
- * For an allowed-type mismatch, the arrays show identifiers present on only one side of the comparison:
- * removing stored types blocks the upgrade, while proposed-only types are included for context.
+ * If the candidate does not meet a stored-schema upgrade rule, the entry describes the schema difference that caused the failure.
+ * For example, an upgrade must not remove an allowed node type.
+ * For this mismatch, `stored` lists the removed node type identifiers.
+ * The `proposed` list shows added identifiers to help explain the change.
+ * Types that both schemas allow do not appear in these lists.
  *
- * Even if the proposal satisfies the stored-schema upgrade rules, it can still prevent viewing.
- * In that case, `viewIncompatibleAfterUpgrade` contains the viewing incompatibilities for the proposed schema,
- * explaining why the upgrade would not make the document accessible through this view.
+ * The view also rejects a candidate that meets those rules but does not let the view read or write the document.
+ * The `viewIncompatibleAfterUpgrade` entry then lists the viewing incompatibilities with the candidate, not the document's current stored schema.
  *
  * @sealed @beta
  */
@@ -1173,11 +1173,11 @@ export type SchemaUpgradeIncompatibility =
 			 * A leaf node's proposed value schema is incompatible with its stored value schema.
 			 *
 			 * @remarks
-			 * A leaf holds a primitive value or a Fluid handle rather than child nodes.
-			 * For example, reusing a node type identifier for number values when it previously held strings
-			 * would stop accepting the stored string values.
-			 * In contrast, changing a field between `sf.number` and `sf.string` uses different node identifiers,
-			 * so that change produces an `"allowedTypes"` mismatch instead.
+			 * A leaf holds a primitive value or a Fluid handle, not child nodes.
+			 * For example, suppose a node type identifier allows string values in the stored schema.
+			 * An upgrade cannot reuse that identifier for number values because this would reject the stored string values.
+			 * In contrast, {@link SchemaStatics.number | SchemaFactory.number} and {@link SchemaStatics.string | SchemaFactory.string} have different node identifiers.
+			 * If you change a field between them, you get an `"allowedTypes"` mismatch instead.
 			 */
 			readonly mismatch: "valueSchema";
 			/**
@@ -1270,13 +1270,12 @@ export type SchemaUpgradeIncompatibility =
 	  }
 	| {
 			/**
-			 * The proposed stored schema is an allowed upgrade but would still prevent this view from reading or writing.
+			 * The proposed stored schema meets the stored-schema upgrade rules but does not let this view read or write the document.
 			 *
 			 * @remarks
-			 * An upgrade can preserve existing allowed types that this view does not support,
-			 * leaving the document inaccessible even though the stored-schema upgrade rules are satisfied.
-			 * To explain why the upgrade would not resolve access, these incompatibilities compare the view
-			 * with the proposed schema rather than the current stored schema.
+			 * The candidate can keep allowed node types that the view does not support.
+			 * The view rejects such a candidate even though it meets the stored-schema upgrade rules.
+			 * To explain this failure, the nested incompatibilities compare the view with the proposed stored schema, not the current stored schema.
 			 */
 			readonly mismatch: "viewIncompatibleAfterUpgrade";
 			/**

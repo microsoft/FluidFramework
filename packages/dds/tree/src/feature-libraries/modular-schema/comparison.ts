@@ -42,6 +42,10 @@ interface NodeComparisonDiagnostics extends ComparisonDiagnostics {
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  *
  * `undefined` TreeNodeStoredSchema means the schema is not present (and thus treated as a NeverTree).
+ *
+ * @param diagnostics - If you supply this argument, the function adds failed upgrade requirements to `diagnostics.discrepancies`.
+ * It keeps existing entries and compares the other fields to find more failures.
+ * If you omit this argument, the function does not collect failure details and can stop at the first failure.
  */
 export function allowsTreeSuperset(
 	policy: FullSchemaPolicy,
@@ -149,11 +153,12 @@ export function allowsTreeSuperset(
 }
 
 /**
- * Records an immediate schema requirement that prevents the proposed node from being constructed.
+ * Records a field or map requirement that prevents construction of the proposed node.
  *
- * The caller has already established that construction is impossible.
- * This helper identifies a required map entry or object field that explains the failure,
- * resolving child types against the existing stored definitions as the upgrade comparison does.
+ * @remarks
+ * Before you call this helper, check that no finite tree can match `proposed`.
+ * Use the existing stored definitions in `originalData` to check its child types.
+ * The helper then records a map requirement or required object field that explains this failure.
  */
 function reportUnsatisfiedNodeSchemaRequirement(
 	policy: FullSchemaPolicy,
@@ -224,6 +229,10 @@ export function allowsValueSuperset(
  * @param monotonicOnly - If true, only allow changes of field kinds which are explicitly listed in {@link FieldKindOptions.allowMonotonicUpgradeFrom}.
  * This prevents this function from considering two different schemas as equivalent, preventing upgrades which would allow their inverse.
  * This prevents infinite upgrade loops where two clients could keep upgrading between two schemas.
+ *
+ * @param diagnostics - If you supply this argument, the function adds failed upgrade requirements to `diagnostics.discrepancies`.
+ * It keeps existing entries and checks both allowed types and field kinds so it can report a failure in each.
+ * If you omit this argument, the function does not collect failure details and can stop at the first failure.
  *
  * @remarks
  * True if a client should be able to {@link TreeView.upgradeSchema} from a field schema using this field kind and `originalTypes` to `superset`.
