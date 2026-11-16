@@ -100,8 +100,8 @@ pnpm remove <package> --filter <workspace-package>
 ```
 
 For an independent package, omit `--filter`.
-For a dependency change made by editing `package.json`, run `pnpm install --no-frozen-lockfile`.
-In the root or ESLint configuration workspace, `pnpm install-no-frozen` selects the minimum release age automatically: 7 days for npmjs or 0 for `publicPackages`.
+For a dependency change made by editing `package.json`, run `pnpm install-no-frozen` in the affected workspace root.
+The script selects the minimum release age automatically: 7 days for npmjs or 0 for `publicPackages`.
 See [minimum release age guidance](../../../DEV.md#updating-dependencies-while-respecting-minimum-release-age) for details.
 
 Before submitting the change, verify the install:
@@ -139,13 +139,12 @@ You do not need a maintainer's credentials.
 4. Update your branch with the resulting manifest and lockfile changes, then run the frozen install again.
 
 You can prototype against npmjs if your environment permits it.
-In the root or ESLint configuration workspace, run:
+In the affected workspace root, run:
 
 ```shell
 pnpm install-no-frozen --registry=https://registry.npmjs.org/
 ```
 
-In other workspaces, use `pnpm --registry=https://registry.npmjs.org/ --config.minimum-release-age=10080 install --no-frozen-lockfile`.
 Keep the committed registry settings unchanged.
 Never work around a fork PR failure by giving it a maintainer token or by running its code in a privileged workflow.
 
