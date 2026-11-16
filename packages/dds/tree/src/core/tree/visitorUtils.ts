@@ -68,6 +68,7 @@ export function makeBreakingVisitor(
 		destroy: (...args) => breaker.run(() => visitor.destroy(...args)),
 		attach: (...args) => breaker.run(() => visitor.attach(...args)),
 		detach: (...args) => breaker.run(() => visitor.detach(...args)),
+		replace: (...args) => breaker.run(() => visitor.replace(...args)),
 		enterNode: (...args) => breaker.run(() => visitor.enterNode(...args)),
 		exitNode: (...args) => breaker.run(() => visitor.exitNode(...args)),
 		enterField: (...args) => breaker.run(() => visitor.enterField(...args)),
@@ -140,6 +141,17 @@ export function combineVisitors(visitors: readonly CombinableVisitor[]): Combine
 				v.afterDetach(source.start, source.end - source.start, destination, isReplaced);
 			}
 		},
+		replace: (source, range, destination, id) => {
+			for (const visitor of announcedVisitors) {
+				visitor.beforeReplace(source, range, destination);
+			}
+			for (const visitor of allVisitors) {
+				visitor.replace(source, range, destination, id);
+			}
+			for (const visitor of announcedVisitors) {
+				visitor.afterReplace(source, range, destination);
+			}
+		},
 		enterNode: (...args) => {
 			for (const v of allVisitors) {
 				v.enterNode(...args);
@@ -188,6 +200,16 @@ export interface AnnouncedVisitor extends DeltaVisitor {
 		destination: FieldKey,
 		isReplaced: boolean,
 	): void;
+	/**
+	 * Called before any visitor applies a replacement, while the outgoing nodes are still in `range`.
+	 * Parameters have the same meaning as in {@link DeltaVisitor.replace}.
+	 */
+	beforeReplace(source: FieldKey, range: Range, destination: FieldKey): void;
+	/**
+	 * Called after all visitors apply a replacement, with incoming nodes in `range` and outgoing nodes in `destination`.
+	 * Parameters have the same meaning as in {@link DeltaVisitor.replace}.
+	 */
+	afterReplace(source: FieldKey, range: Range, destination: FieldKey): void;
 }
 
 const noOp = (): void => {};
@@ -195,6 +217,10 @@ const noOp = (): void => {};
 /**
  * Creates an announced visitor with only the provided functions and uses a no op for the rest.
  * This is provided to make some of the delta visitor definitions cleaner.
+ * @remarks
+ * When replacement callbacks are omitted, they forward to the corresponding detach and attach callbacks.
+ * Both before callbacks observe the state before replacement; both after callbacks observe the state after replacement.
+ * The detach callbacks receive `isReplaced: true`.
  */
 export function createAnnouncedVisitor(
 	visitorFunctions: Partial<AnnouncedVisitor>,
@@ -212,6 +238,29 @@ export function createAnnouncedVisitor(
 		beforeDetach: visitorFunctions.beforeDetach ?? noOp,
 		detach: visitorFunctions.detach ?? noOp,
 		afterDetach: visitorFunctions.afterDetach ?? noOp,
+		beforeReplace:
+			visitorFunctions.beforeReplace ??
+			((source, range, destination) => {
+				visitorFunctions.beforeDetach?.(range, destination, true);
+				visitorFunctions.beforeAttach?.(source, range.end - range.start, range.start);
+			}),
+		replace:
+			visitorFunctions.replace ??
+			((source, range, destination, id) => {
+				visitorFunctions.detach?.(range, destination, id, true);
+				visitorFunctions.attach?.(source, range.end - range.start, range.start);
+			}),
+		afterReplace:
+			visitorFunctions.afterReplace ??
+			((source, range, destination) => {
+				visitorFunctions.afterDetach?.(
+					range.start,
+					range.end - range.start,
+					destination,
+					true,
+				);
+				visitorFunctions.afterAttach?.(source, range);
+			}),
 		enterNode: visitorFunctions.enterNode ?? noOp,
 		exitNode: visitorFunctions.exitNode ?? noOp,
 		enterField: visitorFunctions.enterField ?? noOp,

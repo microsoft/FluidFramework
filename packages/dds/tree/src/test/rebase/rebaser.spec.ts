@@ -52,6 +52,10 @@ export class DummyChangeRebaser implements ChangeRebaser<typeof dummyChange> {
 	public changeRevision(): typeof dummyChange {
 		return {};
 	}
+
+	public ensureCompatibility(): typeof dummyChange {
+		return {};
+	}
 }
 
 class DummyChangeFamily implements ChangeFamily<ChangeFamilyEditor, typeof dummyChange> {

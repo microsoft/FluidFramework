@@ -9,8 +9,7 @@ import {
 } from "@fluidframework/core-interfaces/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js";
-import type { ImplicitFieldSchema } from "../fieldSchema.js";
+import type { TreeStoredSchema } from "../../core/index.js";
 
 /**
  * Enables schema hash telemetry and optional checks when constructing a view.
@@ -31,10 +30,7 @@ export class SchemaIdentityInternal
 {
 	public constructor(
 		public readonly expectedHash: string | undefined,
-		public readonly schemaHasher: (
-			schema: ImplicitFieldSchema,
-			stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
-		) => string,
+		public readonly schemaHasher: (schema: TreeStoredSchema) => string,
 	) {
 		super();
 		if (
