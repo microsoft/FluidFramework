@@ -1751,6 +1751,7 @@ describe("ModularChangeFamily integration", () => {
 			assertEqual(composed, expected);
 		});
 
+		// AD#89060: This test is related to the issue described in the TODO in optionalField.ts.
 		// This test demonstrates an issue with the current composition behavior:
 		// This test succeeds so long as the current composition behavior is unchanged.
 		// This test will fail if the composition behavior is fixed. It may also fail for other reasons.
@@ -1824,10 +1825,11 @@ describe("ModularChangeFamily integration", () => {
 				{ revision: tag1 },
 				{ revision: tag2 },
 			]);
+
+			// Check that the current composition behavior can produce an invalid changeset
 			const rebaseOfComposition = family.rebase(makeAnonChange(composed), moveAC, metadata);
 			const { valueReplace } = rebaseOfComposition.fieldChanges.get(fieldA)
 				?.change as OptionalChangeset;
-			// This check demonstrates that the current composition behavior can produce an invalid changeset
 			assert.ok(
 				valueReplace &&
 					// Field A is still being cleared to detach the root that is then renamed
@@ -1841,7 +1843,8 @@ describe("ModularChangeFamily integration", () => {
 					),
 			);
 
-			// Verify
+			// Check that the current composition behavior breaks the following group axiom:
+			// (A ○ B) ↷ X <==> (A ↷ X) ○ (B ↷ (A⁻¹ ○ X ○ (A ↷ X)))
 			const rebasedClearA = tagChange(family.rebase(clearA, moveAC, metadata), tag1);
 			const rollbackClearA = tagChange(family.invert(clearA, true, tag4), tag4);
 			const rebasedRename = tagChange(
@@ -1849,8 +1852,6 @@ describe("ModularChangeFamily integration", () => {
 				tag2,
 			);
 			const compositionOfRebase = family.compose([rebasedClearA, rebasedRename]);
-			// This check demonstrates that the current composition behavior breaks the following group axiom:
-			// (A ○ B) ↷ X <==> (A ↷ X) ○ (B ↷ (A⁻¹ ○ X ○ (A ↷ X)))
 			assert.throws(
 				() => assertModularChangesetsEqual(rebaseOfComposition, compositionOfRebase),
 				/Objects are not structurally equal/,
