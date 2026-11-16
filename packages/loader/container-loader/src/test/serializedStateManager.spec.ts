@@ -296,6 +296,39 @@ describe("serializedStateManager", () => {
 			});
 		}
 
+		const captureModes: IPendingContainerState["blobContentsMode"][] = [
+			"attachmentsOmitted",
+			"reference",
+			undefined,
+		];
+		for (const blobContentsMode of captureModes) {
+			it(`preserves only attachment omission metadata when reserializing mode: ${blobContentsMode}`, async () => {
+				const { manager, runtime } = createTestState();
+				try {
+					await manager.fetchSnapshot(undefined, {
+						...pendingLocalState,
+						...(blobContentsMode === undefined ? {} : { blobContentsMode }),
+					});
+					for (const includePendingLocalState of [false, true]) {
+						const state: unknown = JSON.parse(
+							await manager.serialize("clientId", runtime, resolvedUrl, {
+								includePendingLocalState,
+							}),
+						);
+						assert(typeof state === "object" && state !== null);
+						if (blobContentsMode === "attachmentsOmitted") {
+							assert("blobContentsMode" in state);
+							assert.strictEqual(state.blobContentsMode, "attachmentsOmitted");
+						} else {
+							assert(!("blobContentsMode" in state));
+						}
+					}
+				} finally {
+					manager.dispose();
+				}
+			});
+		}
+
 		it("retains capture encoding for reserialized base and loading-group snapshots", async () => {
 			const snapshot = createBinarySnapshot();
 			const snapshotBlobs: IPendingContainerState["snapshotBlobs"] = {

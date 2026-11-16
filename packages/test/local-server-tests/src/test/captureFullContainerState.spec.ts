@@ -1086,8 +1086,13 @@ describe("captureFullContainerState", () => {
 					}),
 				});
 				containers.push(offlineContainer);
+				const reserializedOfflineContainer = await loadFrozenContainerFromPendingState({
+					codeLoader,
+					pendingLocalState: await getRequiredPendingLocalState(offlineContainer),
+				});
+				containers.push(reserializedOfflineContainer);
 				const offlineEntryPoint: FluidObject<TestFluidObject> =
-					await offlineContainer.getEntryPoint();
+					await reserializedOfflineContainer.getEntryPoint();
 				assert(offlineEntryPoint.ITestFluidObject !== undefined);
 				const offlineRoot = offlineEntryPoint.ITestFluidObject.root;
 				assert.strictEqual(offlineRoot.get("snapshotValue"), "before attach");
@@ -1194,7 +1199,7 @@ describe("captureFullContainerState", () => {
 						codeLoader,
 						pendingLocalState: legacyReferenceState,
 					}),
-				/Reference-only state.*versions before 3\.13.*requires online driver wiring.*Recapture with Fluid 3\.13 or later/,
+				/Legacy reference-only state.*requires online driver wiring.*Recapture with a loader that includes structural contents in reference mode/,
 				"Fully offline loading should clearly reject legacy reference-only state",
 			);
 

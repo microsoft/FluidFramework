@@ -78,7 +78,8 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	 */
 	attached: true;
 	/**
-	 * Records the payload omission policy chosen by driver-level capture:
+	 * Records the payload omission policy chosen by driver-level capture.
+	 * Continued sessions retain the `"attachmentsOmitted"` policy.
 	 * `"attachmentsOmitted"` omits attachment payloads but retains structural snapshot contents.
 	 * `"reference"` identifies legacy captures that omitted all blob payloads.
 	 *
@@ -191,6 +192,7 @@ export class SerializedStateManager implements IDisposable {
 	private latestSnapshot: ISnapshotInfo | undefined;
 	private lastSavedOpSequenceNumber: number = 0;
 	private useLosslessBlobEncoding = false;
+	private attachmentsOmitted = false;
 	private readonly snapshotRefresher: SnapshotRefresher | undefined;
 	#disposed: boolean = false;
 
@@ -300,6 +302,7 @@ export class SerializedStateManager implements IDisposable {
 			return { snapshot, version, attributes };
 		} else {
 			this.useLosslessBlobEncoding = pendingLocalState.blobContentsEncoding === "utf8OrBase64";
+			this.attachmentsOmitted = pendingLocalState.blobContentsMode === "attachmentsOmitted";
 			const { baseSnapshot, snapshotBlobs, attachmentBlobContents, savedOps } =
 				pendingLocalState;
 			const blobContents = new Map<string, ArrayBuffer>();
@@ -511,6 +514,7 @@ export class SerializedStateManager implements IDisposable {
 					pendingRuntimeState,
 					...snapshotWithBlobs,
 					blobContentsEncoding: this.useLosslessBlobEncoding ? "utf8OrBase64" : undefined,
+					blobContentsMode: this.attachmentsOmitted ? "attachmentsOmitted" : undefined,
 					loadedGroupIdSnapshots: hasGroupIdSnapshots ? loadedGroupIdSnapshots : undefined,
 					savedOps,
 					url: resolvedUrl.url,

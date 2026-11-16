@@ -338,13 +338,11 @@ export async function loadExistingContainer(
  * offline structural and attachment access. Its `"reference"` mode supports
  * offline structural loading, but omits attachment payloads: dereferencing an
  * omitted attachment later fails, even if loading succeeded.
- * Reference captures produced by Fluid versions before 3.13 omitted all blob
- * payloads and require online driver wiring. Recapture with Fluid 3.13 or later
- * if offline structural loading is needed. State from
- * `IContainer.getPendingLocalState` / `getRequiredPendingLocalState` may also
- * omit required payloads. Missing payloads trigger a storage `UsageError` when
- * read, either during load or subsequent access. Handle resolution may wrap
- * this error rather than preserving its type.
+ * Legacy reference-only captures omit all blob payloads and require online driver wiring.
+ * Recapture with a loader that includes structural contents in reference mode if offline structural loading is needed.
+ * State from `IContainer.getPendingLocalState` / `getRequiredPendingLocalState` may also omit required payloads.
+ * Missing payloads trigger a storage `UsageError` when read, either during load or subsequent access.
+ * Handle resolution may wrap this error rather than preserving its type.
  *
  * **URL shape requirement.** In the offline form the captured
  * `pendingLocalState.url` is the only URL available; it is parsed in place of
@@ -437,7 +435,7 @@ export async function loadFrozenContainerFromPendingState(
 		// Legacy reference captures omitted structural payloads as well as attachments.
 		if (pending.blobContentsMode === "reference") {
 			throw new UsageError(
-				`${fnName}: pending state does not contain inlined snapshot blob contents. Reference-only state captured by ${captureFullContainerState.name} in Fluid versions before 3.13 requires online driver wiring. Recapture with Fluid 3.13 or later for offline structural loading.`,
+				`${fnName}: pending state does not contain inlined snapshot blob contents. Legacy reference-only state captured by ${captureFullContainerState.name} requires online driver wiring. Recapture with a loader that includes structural contents in reference mode for offline structural loading.`,
 			);
 		}
 		const parsed = tryParseCompatibleResolvedUrl(pending.url);

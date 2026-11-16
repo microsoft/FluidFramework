@@ -9,8 +9,9 @@ The default remains `"inline"`.
 Reference captures can be larger and perform more structural reads than before.
 Accessing an omitted attachment requires online storage and succeeds only while storage retains it.
 
-Reference captures produced by Fluid versions before 3.13 omitted structural payloads too and require online driver wiring.
-Recapture with Fluid 3.13 or later if offline structural loading is needed.
+Legacy reference-only captures omit structural payloads too and require online driver wiring.
+Recapture with a loader that includes structural contents in reference mode if offline structural loading is needed.
+State reserialized from a reference capture retains the attachment omission metadata so offline attachment access continues to report capture-specific error guidance.
 
 Both capture modes now preserve non-UTF-8 structural blob contents instead of corrupting them during serialization.
 Captures and state reserialized by containers loaded from them can contain tagged base64 entries that older loaders cannot read.
