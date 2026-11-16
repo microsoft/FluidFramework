@@ -1,0 +1,26 @@
+<!doctype html>
+<!-- Copyright (c) Microsoft Corporation and contributors. Licensed under the MIT License. -->
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Native checkpoint browser smoke</title>
+	</head>
+	<body>
+		<pre id="result">RUNNING</pre>
+		<script src="native-checkpoint-browser.js"></script>
+		<script>
+			const checkpointSmoke = NativeCheckpointBrowser.runNativeCheckpointBrowserSmoke();
+			checkpointSmoke.then(
+				(result) => {
+					document.getElementById("result").textContent = JSON.stringify(result);
+				},
+				(error) => {
+					document.getElementById("result").textContent = JSON.stringify({
+						passed: false,
+						error: String(error),
+					});
+				},
+			);
+		</script>
+	</body>
+</html>

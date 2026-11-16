@@ -8,6 +8,30 @@ import type {
 	IProvideLayerCompatDetails,
 } from "@fluid-internal/client-utils";
 import {
+	decodeNativeCheckpoint,
+	createNativeCheckpointPruneMessage,
+	encodeNativeCheckpoint,
+	nativeCheckpointKey,
+	isRecord,
+	parseNativeCheckpointMessage,
+	parseNativeCheckpointState,
+	selectRetainedNativeCheckpoints,
+	selectNativeCheckpointsForRetentionPolicy,
+	type NativeCheckpoint,
+	type NativeCheckpointMessage,
+	type NativeCheckpointRestore,
+	type NativeCheckpointRetentionPolicy,
+	type NativeCheckpointState,
+} from "./nativeCheckpoint.js";
+import {
+	encodeNativeCheckpointStorage,
+	loadNativeCheckpointBytes,
+	maxNativeCheckpointDepth,
+	type NativeCheckpointBase,
+} from "./nativeCheckpointStorage.js";
+import { summarizeBlobManagerState } from "./blobManager/index.js";
+import { nativeCheckpointMessageType } from "./messageTypes.js";
+import {
 	checkLayerCompatibility,
 	createEmitter,
 	Trace,
@@ -1303,6 +1327,9 @@ export class ContainerRuntime
 		};
 
 		validateMinimumVersionForCollab(updatedMinVersionForCollab);
+		const nativeCheckpointState = parseNativeCheckpointState(
+			await tryFetchBlob<unknown>(nativeCheckpointKey),
+		);
 		const runtime = new containerRuntimeCtor(
 			context,
 			registry,
@@ -1327,6 +1354,15 @@ export class ContainerRuntime
 		);
 
 		runtime.sharePendingBlobs();
+		runtime.nativeCheckpointState = nativeCheckpointState;
+		if (
+			!existing &&
+			runtime.mc.config.getBoolean("Fluid.ContainerRuntime.NativeCheckpoints") === true
+		) {
+			runtime.nativeCheckpointState = { version: 1, checkpoints: [] };
+		}
+		const internalContext: IContainerContextInternal = context;
+		runtime.captureCheckpointProtocol = internalContext.captureCheckpointProtocol;
 
 		// Initialize the base state of the runtime before it's returned.
 		await runtime.initializeBaseState(context.loader);
@@ -1339,6 +1375,495 @@ export class ContainerRuntime
 	}
 
 	public readonly options: Record<string | number, unknown>;
+
+	private nativeCheckpointState: NativeCheckpointState | undefined;
+	private nativeCheckpointBase: NativeCheckpointBase | undefined;
+	private captureCheckpointProtocol: (() => ISummaryTree | undefined) | undefined;
+	private pendingCheckpointRestore:
+		| {
+				restore: NativeCheckpointRestore;
+				protocol: ISummaryTree | undefined;
+				metadata: SummaryObject;
+				proposals: Set<number>;
+				acknowledgedVersion?: string;
+		  }
+		| undefined;
+	private checkpointSubmitCount = 0;
+	private getCheckpointSummaryContext: (() => ISummaryContext | undefined) | undefined;
+
+	/** Reports replayable recovery work without relying on the original publisher's memory. */
+	public getNativeCheckpointRestore():
+		| {
+				restore: NativeCheckpointRestore;
+				phase: "ordered" | "published" | "restored";
+				version?: string;
+		  }
+		| undefined {
+		const pending = this.pendingCheckpointRestore;
+		if (pending !== undefined) {
+			return {
+				restore: { ...pending.restore },
+				phase: pending.acknowledgedVersion === undefined ? "ordered" : "published",
+				version: pending.acknowledgedVersion,
+			};
+		}
+		const restored = this.nativeCheckpointState?.restored;
+		return restored === undefined
+			? undefined
+			: { restore: { ...restored }, phase: "restored", version: this.loadedFromVersionId };
+	}
+
+	/**
+	 * Lists durable checkpoints. Available only for documents created with the experimental gate.
+	 */
+	public getNativeCheckpoints(): readonly NativeCheckpoint[] {
+		return (
+			this.nativeCheckpointState?.checkpoints.map((checkpoint) => ({
+				...checkpoint,
+				assets: [...checkpoint.assets],
+			})) ?? []
+		);
+	}
+
+	/**
+	 * Captures acknowledged native state and stores it in attachment storage.
+	 * Use an isolated client: a concurrent local edit invalidates this capture.
+	 * Resolves after submitting the catalog op; wait for its acknowledgement before relying on durability.
+	 */
+	public async createNativeCheckpoint(id: string): Promise<NativeCheckpoint> {
+		if (
+			this.nativeCheckpointState === undefined ||
+			this.pendingCheckpointRestore !== undefined
+		) {
+			throw new UsageError("Native checkpoint capture is unavailable");
+		}
+		if (this.nativeCheckpointState.checkpoints.some((entry) => entry.id === id)) {
+			throw new UsageError("Native checkpoint ID already exists");
+		}
+		this.flush();
+		if (this.pendingMessagesCount !== 0 || !this.connected) {
+			throw new UsageError(
+				`Native checkpoint capture requires an acknowledged connected client (pending=${this.pendingMessagesCount}, connected=${this.connected})`,
+			);
+		}
+		const deltaManager = this.deltaManager;
+		assert(isIDeltaManagerFull(deltaManager), "Native capture requires a full delta manager");
+		await deltaManager.inbound.pause();
+		let bytes: Uint8Array;
+		let assets: string[];
+		const sequenceNumber = this.deltaManager.lastSequenceNumber;
+		const submitCount = this.checkpointSubmitCount;
+		try {
+			const { summary } = await this.summarize({
+				fullTree: true,
+				trackState: false,
+				runGC: false,
+			});
+			const gcData = await this.getGCDataInternal(true);
+			assets = [
+				...new Set(
+					Object.values(gcData.gcNodes)
+						.flat()
+						.filter((route) => route.startsWith("/_blobs/")),
+				),
+			];
+			const redirects = new Map<string, string>();
+			for (const route of assets) {
+				const localId = route.slice("/_blobs/".length);
+				const storageId = this.lookupTemporaryBlobStorageId(localId);
+				if (storageId === undefined) {
+					throw new UsageError("Native checkpoint contains an unuploaded attachment");
+				}
+				redirects.set(localId, storageId);
+			}
+			summary.tree[blobsTreeName] = summarizeBlobManagerState(redirects).summary;
+			Reflect.deleteProperty(summary.tree, nativeCheckpointKey);
+			delete summary.tree.gc;
+			Reflect.deleteProperty(summary.tree, chunksBlobName);
+			Reflect.deleteProperty(summary.tree, recentBatchInfoBlobName);
+			Reflect.deleteProperty(summary.tree, electedSummarizerBlobName);
+			bytes = encodeNativeCheckpoint(summary);
+			if (
+				submitCount !== this.checkpointSubmitCount ||
+				sequenceNumber !== this.deltaManager.lastSequenceNumber
+			) {
+				throw new UsageError("Document changed during native checkpoint capture");
+			}
+		} finally {
+			deltaManager.inbound.resume();
+		}
+		const previous = this.nativeCheckpointState.checkpoints.at(-1);
+		let base: NativeCheckpointBase | undefined;
+		if (previous !== undefined && (previous.depth ?? 0) < maxNativeCheckpointDepth) {
+			base =
+				this.nativeCheckpointBase?.checkpoint.route === previous.route
+					? this.nativeCheckpointBase
+					: { checkpoint: previous, bytes: await this.loadNativeCheckpoint(previous) };
+		}
+		const encoded = await encodeNativeCheckpointStorage(bytes, base);
+		const handle = await this.blobManager.createBlob(encoded.bytes.buffer);
+		this.verifyNotClosed();
+		if (this.pendingCheckpointRestore !== undefined || !this.connected) {
+			throw new UsageError("Native checkpoint capture interrupted");
+		}
+		handle.attachGraph();
+		const checkpoint: NativeCheckpoint = {
+			id,
+			sequenceNumber,
+			route: handle.absolutePath,
+			bytes: encoded.bytes.byteLength,
+			assets,
+			baseId: encoded.baseId,
+			depth: encoded.depth,
+		};
+		this.nativeCheckpointBase = { checkpoint, bytes };
+		this.submit({
+			type: nativeCheckpointMessageType,
+			contents: { action: "store", checkpoint },
+		});
+		this.flush();
+		return checkpoint;
+	}
+
+	/**
+	 * Reads retained native content without changing the live document.
+	 * Shares capture's single-entry reconstruction cache; does not create a historical container.
+	 * Images remain attachment references and are not downloaded by this operation.
+	 */
+	public async loadNativeCheckpointSummary(id: string): Promise<ISummaryTree> {
+		const checkpoint = this.nativeCheckpointState?.checkpoints.find(
+			(entry) => entry.id === id,
+		);
+		if (checkpoint === undefined) {
+			throw new UsageError("Unknown native checkpoint");
+		}
+		const bytes =
+			this.nativeCheckpointBase?.checkpoint.route === checkpoint.route
+				? this.nativeCheckpointBase.bytes
+				: await this.loadNativeCheckpoint(checkpoint);
+		this.nativeCheckpointBase = { checkpoint, bytes };
+		return decodeNativeCheckpoint(bytes.buffer);
+	}
+
+	/** Resolves only the bounded attachment dependency chain, never historical summary handles. */
+	private async loadNativeCheckpoint(checkpoint: NativeCheckpoint): Promise<Uint8Array> {
+		assert(this.nativeCheckpointState !== undefined, "Checkpoint catalog must exist");
+		return loadNativeCheckpointBytes(
+			checkpoint,
+			[...this.nativeCheckpointState.checkpoints],
+			async (route) => {
+				const storageId = this.lookupTemporaryBlobStorageId(route.slice("/_blobs/".length));
+				assert(storageId !== undefined, "Checkpoint blob must be attached");
+				return this.storage.readBlob(storageId);
+			},
+		);
+	}
+
+	/**
+	 * Retains these IDs and their dependency closure after this control op is acknowledged.
+	 * The current restore boundary is pinned. Retention never directly deletes attachment bytes.
+	 */
+	public retainNativeCheckpoints(ids: readonly string[]): void {
+		if (
+			this.nativeCheckpointState === undefined ||
+			this.pendingCheckpointRestore !== undefined
+		) {
+			throw new UsageError("Native checkpoint retention is unavailable");
+		}
+		if (
+			ids.some(
+				(id) =>
+					this.nativeCheckpointState?.checkpoints.some((entry) => entry.id === id) !== true,
+			)
+		) {
+			throw new UsageError("Unknown native checkpoint");
+		}
+		this.flush();
+		this.submit({
+			type: nativeCheckpointMessageType,
+			contents: { action: "retain", ids: [...ids] },
+		});
+		this.flush();
+	}
+
+	/**
+	 * Requests host-triggered retention: keep at least 30 days and the latest 100 points by default.
+	 * Recent entries, legacy metadata, delta bases, and the restore boundary can exceed the soft count.
+	 * Uses sequenced service time and protects captures ordered after this client's observed boundary.
+	 * Returns after submission; observe the acknowledged catalog before relying on pruning.
+	 */
+	public pruneNativeCheckpoints(policy: NativeCheckpointRetentionPolicy = {}): void {
+		if (
+			this.nativeCheckpointState === undefined ||
+			this.pendingCheckpointRestore !== undefined
+		) {
+			throw new UsageError("Native checkpoint retention is unavailable");
+		}
+		const contents = createNativeCheckpointPruneMessage(
+			this.deltaManager.lastSequenceNumber,
+			policy,
+		);
+		this.flush();
+		this.submit({ type: nativeCheckpointMessageType, contents });
+		this.flush();
+	}
+
+	/**
+	 * Orders a replacement boundary. Call publishNativeCheckpointRestore after this op is observed.
+	 */
+	public requestNativeCheckpointRestore(id: string, checkpointId: string): void {
+		if (
+			this.nativeCheckpointState?.checkpoints.some(
+				(checkpoint) => checkpoint.id === checkpointId,
+			) !== true
+		) {
+			throw new UsageError("Unknown native checkpoint");
+		}
+		this.flush();
+		this.submit({
+			type: nativeCheckpointMessageType,
+			contents: { action: "restore", id, checkpointId },
+		});
+		this.flush();
+	}
+
+	/**
+	 * Publishes an ordered replacement, or completes a previously published restore after a crash.
+	 * A fresh summary-authorized client can replay the boundary and retry this method.
+	 * No automatic upload retry hides service failures.
+	 */
+	public async publishNativeCheckpointRestore(
+		options: { readonly ackTimeoutMs?: number } = {},
+	): Promise<string> {
+		const ackTimeoutMs = options.ackTimeoutMs ?? 120_000;
+		if (
+			!Number.isSafeInteger(ackTimeoutMs) ||
+			ackTimeoutMs <= 0 ||
+			ackTimeoutMs > 2147483647
+		) {
+			throw new UsageError("Invalid native checkpoint acknowledgement timeout");
+		}
+		if (!this.isSummarizerClient || !this.connected) {
+			throw new UsageError(
+				"Checkpoint publication requires a connected summary-authorized client",
+			);
+		}
+		const pending = this.pendingCheckpointRestore;
+		const state = this.nativeCheckpointState;
+		const recovery = this.getNativeCheckpointRestore();
+		if (recovery?.version !== undefined) {
+			this.submit({
+				type: nativeCheckpointMessageType,
+				contents: { action: "complete", id: recovery.restore.id },
+			});
+			this.flush();
+			return recovery.version;
+		}
+		if (pending === undefined || state === undefined) {
+			throw new UsageError("No ordered native checkpoint restore");
+		}
+		// Freeze the parent before asynchronous reconstruction: another publisher can win during it.
+		const summaryContext =
+			this.getCheckpointSummaryContext?.() ?? this.lastAckedSummaryContext;
+		const parent = summaryContext?.ackHandle ?? this.loadedFromVersionId;
+		const checkpoint = state.checkpoints.find(
+			(entry) => entry.id === pending.restore.checkpointId,
+		);
+		assert(checkpoint !== undefined, "Restore checkpoint must exist");
+		const checkpointBytes = await this.loadNativeCheckpoint(checkpoint);
+		const summary = decodeNativeCheckpoint(checkpointBytes.buffer);
+		summary.tree[metadataBlobName] = pending.metadata;
+		summary.tree[blobsTreeName] = this.blobManager.summarize().summary;
+		summary.tree[nativeCheckpointKey] = {
+			type: SummaryType.Blob,
+			content: JSON.stringify({ ...state, restored: pending.restore }),
+		};
+		const upload =
+			pending.protocol === undefined
+				? summary
+				: {
+						type: SummaryType.Tree,
+						tree: { ".app": summary, ".protocol": pending.protocol },
+					};
+		const handle = await this.storage.uploadSummaryWithContext(upload, {
+			referenceSequenceNumber: pending.restore.sequenceNumber,
+			proposalHandle: summaryContext?.proposalHandle,
+			ackHandle: parent,
+		});
+		this.verifyNotClosed();
+		if (!this.connected) {
+			throw new UsageError("Native checkpoint publisher disconnected during upload");
+		}
+		const ack = new Deferred<string>();
+		let proposalSequenceNumber: number | undefined;
+		const onOp = (message: ISequencedDocumentMessage): void => {
+			if (
+				message.type !== MessageType.Summarize &&
+				message.type !== MessageType.SummaryAck &&
+				message.type !== MessageType.SummaryNack
+			) {
+				return;
+			}
+			const contents: unknown =
+				typeof message.contents === "string" ? JSON.parse(message.contents) : message.contents;
+			if (!isRecord(contents)) {
+				return;
+			}
+			// Equivalent uploads can share a storage handle; correlate the proposal with its author.
+			if (
+				message.type === MessageType.Summarize &&
+				contents.handle === handle &&
+				message.clientId === this.clientId &&
+				proposalSequenceNumber === undefined
+			) {
+				proposalSequenceNumber = message.sequenceNumber;
+			}
+			const proposal: unknown = contents.summaryProposal;
+			if (
+				proposalSequenceNumber !== undefined &&
+				isRecord(proposal) &&
+				proposal.summarySequenceNumber === proposalSequenceNumber
+			) {
+				if (message.type === MessageType.SummaryAck && typeof contents.handle === "string") {
+					ack.resolve(contents.handle);
+				} else if (message.type === MessageType.SummaryNack) {
+					ack.reject(new UsageError("Native checkpoint summary was rejected"));
+				}
+			}
+		};
+		const onDispose = (): void => {
+			ack.reject(new UsageError("Native checkpoint publisher disposed"));
+		};
+		this.on("op", onOp);
+		this.on("dispose", onDispose);
+		this.on("disconnected", onDispose);
+		const timeout = setTimeout(() => {
+			ack.reject(
+				new UsageError("Native checkpoint acknowledgement timed out; reload to recover"),
+			);
+		}, ackTimeoutMs);
+		try {
+			this.submitSummaryMessage(
+				{
+					handle,
+					head: parent ?? "",
+					parents: parent === undefined ? [] : [parent],
+					message: `Native checkpoint restore ${pending.restore.id}`,
+				},
+				pending.restore.sequenceNumber,
+			);
+			const version = await ack.promise;
+			this.submit({
+				type: nativeCheckpointMessageType,
+				contents: { action: "complete", id: pending.restore.id },
+			});
+			this.flush();
+			return version;
+		} finally {
+			clearTimeout(timeout);
+			this.off("op", onOp);
+			this.off("dispose", onDispose);
+			this.off("disconnected", onDispose);
+		}
+	}
+
+	/** Applies catalog changes and establishes the old-generation operation fence. */
+	private processNativeCheckpoint(
+		message: NativeCheckpointMessage,
+		sequenceNumber: number,
+		timestamp: number,
+	): void {
+		const state = this.nativeCheckpointState;
+		if (state === undefined) {
+			throw new UsageError("Native checkpoints are not enabled for this document");
+		}
+		switch (message.action) {
+			case "store": {
+				if (this.pendingCheckpointRestore !== undefined) {
+					return;
+				}
+				if (state.checkpoints.some((checkpoint) => checkpoint.id === message.checkpoint.id)) {
+					return;
+				}
+				if (message.checkpoint.baseId !== undefined) {
+					const base = state.checkpoints.find(
+						(checkpoint) => checkpoint.id === message.checkpoint.baseId,
+					);
+					if (base === undefined) {
+						// A retention op may have won the race with a capture's attachment upload.
+						return;
+					}
+					if (message.checkpoint.depth !== (base.depth ?? 0) + 1) {
+						throw new UsageError("Invalid native checkpoint dependency depth");
+					}
+				}
+				// Neither capture age nor the concurrency fence may come from client-supplied contents.
+				state.checkpoints.push({
+					...message.checkpoint,
+					timestamp,
+					storeSequenceNumber: sequenceNumber,
+				});
+				for (const route of [message.checkpoint.route, ...message.checkpoint.assets]) {
+					this.addedGCOutboundRoute("/", route, timestamp);
+				}
+
+				break;
+			}
+			case "retain":
+			case "prune": {
+				if (this.pendingCheckpointRestore !== undefined) {
+					return;
+				}
+				const retained =
+					message.action === "retain"
+						? selectRetainedNativeCheckpoints(state, message.ids)
+						: selectNativeCheckpointsForRetentionPolicy(state, message, timestamp);
+				state.checkpoints.splice(0, state.checkpoints.length, ...retained);
+				if (
+					!retained.some(
+						(entry) => entry.route === this.nativeCheckpointBase?.checkpoint.route,
+					)
+				) {
+					this.nativeCheckpointBase = undefined;
+				}
+
+				break;
+			}
+			case "restore": {
+				if (this.pendingCheckpointRestore !== undefined || state.restored?.id === message.id) {
+					return;
+				}
+				if (!state.checkpoints.some((checkpoint) => checkpoint.id === message.checkpointId)) {
+					throw new UsageError("Restore references an unknown native checkpoint");
+				}
+				if (this.captureCheckpointProtocol === undefined) {
+					throw new UsageError("Native checkpoint restore requires a compatible loader");
+				}
+				const summary: ISummaryTree = { type: SummaryType.Tree, tree: {} };
+				const metadata = { summary, stats: calculateStats(summary) };
+				this.addMetadataToSummary(metadata);
+				const blob: SummaryObject | undefined = metadata.summary.tree[metadataBlobName];
+				assert(blob !== undefined, "Runtime metadata must exist");
+				this.pendingCheckpointRestore = {
+					restore: { id: message.id, checkpointId: message.checkpointId, sequenceNumber },
+					protocol: this.captureCheckpointProtocol?.(),
+					metadata: blob,
+					proposals: new Set(),
+				};
+
+				break;
+			}
+			default: {
+				if (this.pendingCheckpointRestore?.restore.id === message.id) {
+					this.closeFn(
+						new UsageError(
+							"Native checkpoint restored: reload without cached or pending state",
+						),
+					);
+				}
+			}
+		}
+	}
 
 	private readonly _getClientId: () => string | undefined;
 	public get oldestSupportedClient(): OldestSupportedClientVersion {
@@ -2435,6 +2960,29 @@ export class ContainerRuntime
 	private async initializeSummarizer(loader: ILoader): Promise<void> {
 		if (this.summariesDisabled) {
 			this.mc.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
+			if (this.nativeCheckpointState === undefined) {
+				return;
+			}
+		}
+
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
+		const summaryCollection: SummaryCollection = new SummaryCollection(
+			this.deltaManager,
+			this.baseLogger,
+		);
+		if (this.nativeCheckpointState !== undefined) {
+			this.getCheckpointSummaryContext = () => {
+				const latestAck = summaryCollection.latestAck;
+				return latestAck === undefined
+					? undefined
+					: {
+							proposalHandle: latestAck.summaryOp.contents.handle,
+							ackHandle: latestAck.summaryAck.contents.handle,
+							referenceSequenceNumber: latestAck.summaryOp.referenceSequenceNumber,
+						};
+			};
+		}
+		if (this.summariesDisabled) {
 			return;
 		}
 
@@ -2451,11 +2999,6 @@ export class ContainerRuntime
 						this.summaryConfiguration.initialSummarizerDelayMs,
 				};
 
-		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
-		const summaryCollection: SummaryCollection = new SummaryCollection(
-			this.deltaManager,
-			this.baseLogger,
-		);
 		const onRequestMode = isSummaryOnRequest(this.summaryConfiguration);
 
 		if (this.isSummarizerClient) {
@@ -2859,6 +3402,13 @@ export class ContainerRuntime
 		telemetryContext?: ITelemetryContext,
 	): void {
 		this.addMetadataToSummary(summaryTree);
+		if (this.nativeCheckpointState !== undefined) {
+			addBlobToSummary(
+				summaryTree,
+				nativeCheckpointKey,
+				JSON.stringify(this.nativeCheckpointState),
+			);
+		}
 
 		if (this._idCompressor) {
 			const idCompressorState = JSON.stringify(this._idCompressor.serialize(false));
@@ -2942,7 +3492,12 @@ export class ContainerRuntime
 		if (!this.shouldSendOps()) {
 			return;
 		}
-
+		if (this.pendingCheckpointRestore !== undefined && this.pendingMessagesCount !== 0) {
+			this.closeFn(
+				new UsageError("Cannot replay pending edits across a native checkpoint restore"),
+			);
+			return;
+		}
 		// Invariant: the canSendOps edge in `setConnectionStateCore` — the
 		// only caller of this method — cannot fire while
 		// `applyStashedOpsAt` is in flight, because the loader awaits the
@@ -3007,6 +3562,9 @@ export class ContainerRuntime
 		// Pending State contains serialized contents, so parse it here.
 		const opContents = this.parseLocalOpContent(serializedOpContent);
 		switch (opContents.type) {
+			case nativeCheckpointMessageType: {
+				throw new UsageError("Native checkpoint control messages cannot be stashed");
+			}
 			case ContainerMessageType.FluidDataStoreOp:
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias: {
@@ -3626,6 +4184,29 @@ export class ContainerRuntime
 			message.contents = JSON.parse(message.contents);
 		}
 
+		const pending = this.pendingCheckpointRestore;
+		const contents: unknown = message.contents;
+		if (pending !== undefined && isRecord(contents)) {
+			if (
+				message.type === MessageType.Summarize &&
+				message.referenceSequenceNumber === pending.restore.sequenceNumber &&
+				contents.message === `Native checkpoint restore ${pending.restore.id}`
+			) {
+				pending.proposals.add(message.sequenceNumber);
+			}
+			const proposal: unknown = contents.summaryProposal;
+			if (
+				(message.type === MessageType.SummaryAck ||
+					message.type === MessageType.SummaryNack) &&
+				isRecord(proposal) &&
+				typeof proposal.summarySequenceNumber === "number" &&
+				pending.proposals.delete(proposal.summarySequenceNumber) &&
+				message.type === MessageType.SummaryAck &&
+				typeof contents.handle === "string"
+			) {
+				pending.acknowledgedVersion = contents.handle;
+			}
+		}
 		this.emit("op", message, false /* runtimeMessage */);
 	}
 
@@ -3648,8 +4229,29 @@ export class ContainerRuntime
 	): void {
 		// Get the contents without the localOpMetadata because not all message types know about localOpMetadata.
 		const contents = messagesContent.map((c) => c.contents);
+		const boundary =
+			this.pendingCheckpointRestore?.restore.sequenceNumber ??
+			this.nativeCheckpointState?.restored?.sequenceNumber;
+		if (
+			boundary !== undefined &&
+			(message.referenceSequenceNumber < boundary ||
+				(message.type !== nativeCheckpointMessageType &&
+					this.pendingCheckpointRestore !== undefined))
+		) {
+			return;
+		}
 
 		switch (message.type) {
+			case nativeCheckpointMessageType: {
+				for (const content of contents) {
+					this.processNativeCheckpoint(
+						parseNativeCheckpointMessage(content),
+						message.sequenceNumber,
+						message.timestamp,
+					);
+				}
+				break;
+			}
 			case ContainerMessageType.FluidDataStoreOp:
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias: {
@@ -4438,6 +5040,15 @@ export class ContainerRuntime
 		const builder = new GCDataBuilder();
 		const dsGCData = await this.summarizerNode.getGCData(fullGC);
 		builder.addNodes(dsGCData.gcNodes);
+		if (this.nativeCheckpointState !== undefined) {
+			builder.addNode("/", [
+				...(dsGCData.gcNodes["/"] ?? []),
+				...this.nativeCheckpointState.checkpoints.flatMap((checkpoint) => [
+					checkpoint.route,
+					...checkpoint.assets,
+				]),
+			]);
+		}
 
 		const blobsGCData = this.blobManager.getGCData(fullGC);
 		builder.addNodes(blobsGCData.gcNodes);
@@ -4641,6 +5252,9 @@ export class ContainerRuntime
 
 	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
+		if (this.pendingCheckpointRestore !== undefined) {
+			throw new UsageError("Ordinary summaries are fenced during native checkpoint restore");
+		}
 		const {
 			cancellationToken,
 			fullTree = false,
@@ -5211,6 +5825,14 @@ export class ContainerRuntime
 		metadata?: { localId: string; blobId?: string },
 	): void {
 		this.verifyNotClosed();
+		this.checkpointSubmitCount++;
+		if (
+			this.pendingCheckpointRestore !== undefined &&
+			(containerRuntimeMessage.type !== nativeCheckpointMessageType ||
+				containerRuntimeMessage.contents.action !== "complete")
+		) {
+			throw new UsageError("Old-generation edits are fenced during native checkpoint restore");
+		}
 
 		// Nothing should be submitting while we're replaying stashed ops.
 		// The runtime is readonly during the apply window (see
@@ -5499,6 +6121,10 @@ export class ContainerRuntime
 		opMetadata,
 	}: PendingMessageResubmitData): void {
 		switch (message.type) {
+			case nativeCheckpointMessageType: {
+				this.submit(message);
+				break;
+			}
 			case ContainerMessageType.FluidDataStoreOp:
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias: {
