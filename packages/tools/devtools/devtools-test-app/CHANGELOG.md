@@ -1,5 +1,9 @@
 # @fluid-private/devtools-test-app
 
+## 3.13.0
+
+Dependency updates only.
+
 ## 3.12.0
 
 Dependency updates only.
