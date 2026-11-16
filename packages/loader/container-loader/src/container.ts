@@ -717,7 +717,7 @@ export class Container
 			throw new UsageError("The context is already disposed");
 		}
 		if (this._runtime !== undefined) {
-			return this._runtime.getEntryPoint?.();
+			return this._runtime.getEntryPoint();
 		}
 		return new Promise<FluidObject>((resolve, reject) => {
 			const runtimeInstantiatedHandler = (): void => {
@@ -725,7 +725,7 @@ export class Container
 					this._runtime !== undefined,
 					0x5a3 /* runtimeInstantiated fired but runtime is still undefined */,
 				);
-				resolve(this._runtime.getEntryPoint?.());
+				resolve(this._runtime.getEntryPoint());
 				this._lifecycleEvents.off("disposed", disposedHandler);
 			};
 			const disposedHandler = (): void => {
@@ -1204,6 +1204,31 @@ export class Container
 			this.resolvedUrl,
 		);
 		return pendingState;
+	}
+
+	/**
+	 * {@inheritDoc ContainerAlpha.serializeAttached}
+	 */
+	public async serializeAttached(options: ContainerSerializationOptions): Promise<string> {
+		// Yield to guard against consistency problems when serializeAttached is called from an op-processing
+		// or "saved" event handler.
+		await Promise.resolve();
+
+		if (this.closed || this._disposed || this.attachState !== AttachState.Attached) {
+			throw new UsageError(
+				"Container must be attached, open, and not disposed to use serializeAttached.",
+			);
+		}
+		assert(
+			this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
+			"Attached container must have a resolved Fluid URL",
+		);
+		return this.serializedStateManager.serialize(
+			this.clientId,
+			this.runtime,
+			this.resolvedUrl,
+			options,
+		);
 	}
 
 	public get attachState(): AttachState {
@@ -2691,12 +2716,26 @@ export class Container
 }
 
 /**
+ * Options for {@link ContainerAlpha.serializeAttached}.
+ * @legacy @alpha
+ */
+export interface ContainerSerializationOptions {
+	/**
+	 * Whether to include pending local changes and the session state needed to replay them in an attached container.
+	 * When `false`, the result contains only sequenced state and can safely be used to load multiple containers.
+	 * When `true`, all restrictions documented on
+	 * {@link @fluidframework/container-definitions#IContainer.getPendingLocalState | IContainer.getPendingLocalState} apply.
+	 */
+	readonly includePendingLocalState: boolean;
+}
+
+/**
  * IContainer interface that includes experimental features still under development.
  *
  * @remarks
  * For `getPendingLocalState`, prefer
  * {@link @fluidframework/container-definitions#IContainer.getPendingLocalState | IContainer.getPendingLocalState}
- * on the `@legacy @beta` surface. This interface is retained for callers that require the
+ * on the `@legacy @beta` surface. The `getPendingLocalState` redeclaration is retained for callers that require the
  * typed-required (non-optional) shape and will be removed in a future breaking release once
  * `IContainer.getPendingLocalState` is made required.
  *
@@ -2710,6 +2749,43 @@ export interface ContainerAlpha extends IContainer {
 	 * @returns serialized blob that can be passed to Loader.resolve()
 	 */
 	getPendingLocalState(): Promise<string>;
+
+	/**
+	 * Serialize an attached container for later loading, optionally including the pending local state
+	 * captured by {@link @fluidframework/container-definitions#IContainer.getPendingLocalState | IContainer.getPendingLocalState}.
+	 *
+	 * @param options - Controls whether to include pending local state.
+	 * @returns An opaque serialized state string. Do not inspect or modify its contents.
+	 *
+	 * @remarks
+	 * The container must be attached, open, and not disposed. Serialization while attaching is not currently supported.
+	 * Violating these requirements throws `UsageError`.
+	 *
+	 * For detached containers, use
+	 * {@link @fluidframework/container-definitions#IContainer.serialize | IContainer.serialize}, which captures the full current state.
+	 *
+	 * For attached containers, pending-state capture must be enabled when the container is created or loaded:
+	 * the client must be interactive, and the `Fluid.Container.enableOfflineFull` configuration flag
+	 * must not be `false` (the flag defaults to `true`).
+	 * Otherwise, this method throws `UsageError`.
+	 *
+	 * The serialized state can be used to load a new container using
+	 * {@link @fluidframework/container-definitions#ILoader.resolve | ILoader.resolve} or `loadExistingContainer` from
+	 * `@fluidframework/container-loader`.
+	 * With `includePendingLocalState: false`, the result captures only sequenced state.
+	 * Unsequenced operations, pending attachment blobs, and session-specific runtime state are omitted.
+	 * The original container is not modified and can continue editing.
+	 * The result can safely load multiple independent instances of the same document, including
+	 * frozen containers at the captured state.
+	 *
+	 * With `includePendingLocalState: true`, this method has the same behavior and reuse restrictions as
+	 * {@link @fluidframework/container-definitions#IContainer.getPendingLocalState | IContainer.getPendingLocalState}.
+	 * WARNING: misuse of this API can result in duplicate op submission and potential document corruption.
+	 * When pending local state is included, close the source container before loading the state,
+	 * never load the same state more than once, and delete the returned state if and when this
+	 * container emits a "connected" event.
+	 */
+	serializeAttached(options: ContainerSerializationOptions): Promise<string>;
 }
 
 /**
@@ -2718,8 +2794,8 @@ export interface ContainerAlpha extends IContainer {
  * @remarks
  * For `getPendingLocalState`, prefer calling
  * {@link @fluidframework/container-definitions#IContainer.getPendingLocalState | IContainer.getPendingLocalState}
- * directly on the `@legacy @beta` surface. This helper is retained for callers that need the
- * typed-required shape and will be removed in a future breaking release.
+ * directly on the `@legacy @beta` surface. This helper also exposes
+ * {@link ContainerAlpha.serializeAttached}.
  *
  * @legacy @alpha
  */

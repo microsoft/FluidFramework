@@ -3,12 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+
 import type { CodecAndSchema, IJsonCodec, Versioned } from "../codec/index.js";
 import type { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../core/index.js";
 import {
 	type JsonCompatibleReadOnly,
 	type JsonCompatibleReadOnlyObject,
 	JsonCompatibleReadOnlySchema,
+	unbrand,
 } from "../util/index.js";
 
 import type { SummaryData } from "./editManager.js";
@@ -48,7 +51,7 @@ export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 	EditManagerEncodingContext<TChangeset>,
 	EditManagerDecodingContext
 > {
-	const includeCustomMetadata = version >= EditManagerFormatVersion.v7;
+	const includeCustomMetadata = doesVersionSupportCustomMetadata(version);
 	const schema = EncodedEditManager(
 		changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema,
 		includeCustomMetadata,
@@ -100,4 +103,25 @@ export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 		},
 	};
 	return codec;
+}
+
+function doesVersionSupportCustomMetadata(version: EditManagerFormatVersion): boolean {
+	switch (version) {
+		case unbrand(EditManagerFormatVersion.v1):
+		case unbrand(EditManagerFormatVersion.v2):
+		case unbrand(EditManagerFormatVersion.v3):
+		case unbrand(EditManagerFormatVersion.v4):
+		case unbrand(EditManagerFormatVersion.v5):
+		case unbrand(EditManagerFormatVersion.v6): {
+			return false;
+		}
+		case unbrand(EditManagerFormatVersion.v7):
+		case unbrand(EditManagerFormatVersion.vSharedBranches):
+		case unbrand(EditManagerFormatVersion.vDetachedRoots): {
+			return true;
+		}
+		default: {
+			unreachableCase(version);
+		}
+	}
 }

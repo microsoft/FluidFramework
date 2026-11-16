@@ -142,6 +142,62 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		}
 	});
 
+	it("loadAndSummarize suppresses startup heuristics with unsummarized catch-up ops", async () => {
+		// Use runtime defaults, including the startup delay, rather than the test factory's zero delay.
+		const containerConfig = { ...testContainerConfig, runtimeOptions: {} };
+		const container = await provider.makeTestContainer(containerConfig);
+		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+		// Exceed the default maxOps (100) without changing the runtime's summary configuration.
+		// These may be grouped into one batch; each edit still counts toward the heuristic.
+		for (let i = 0; i < 110; i++) {
+			dataObject.root.set(`catch-up-${i}`, i);
+		}
+		await provider.ensureSynchronized(container);
+		const editsSequenceNumber = container.deltaManager.lastSequenceNumber;
+		const props = await buildLoadPropsForExistingContainer(container, containerConfig);
+		const result = await loadAndSummarize(props);
+		assert(
+			result.referenceSequenceNumber >= editsSequenceNumber,
+			"acknowledged summary must include the catch-up edits",
+		);
+		const summaryStarts = logger.events.filter(
+			(event) => event.eventName === "fluid:telemetry:Summarizer:Running:Summarize_start",
+		);
+		assert.equal(summaryStarts.length, 1, "only the requested summary should start");
+		assert.equal(summaryStarts[0].summarizeReason, "onDemand;summaryOnRequest");
+		assert(
+			Number(summaryStarts[0].runtimeOpsSinceLastSummary) >= 110,
+			"summary client must catch up on enough edits to trigger maxOps",
+		);
+	});
+
+	it("loadSummarizerContainerAndMakeSummary suppresses startup heuristics with unsummarized catch-up ops", async () => {
+		// Use runtime defaults, including the startup delay, rather than the test factory's zero delay.
+		const containerConfig = { ...testContainerConfig, runtimeOptions: {} };
+		const container = await provider.makeTestContainer(containerConfig);
+		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+		// Exceed the default maxOps (100) without changing the runtime's summary configuration.
+		// These may be grouped into one batch; each edit still counts toward the heuristic.
+		for (let i = 0; i < 110; i++) {
+			dataObject.root.set(`catch-up-${i}`, i);
+		}
+		await provider.ensureSynchronized(container);
+		const props = await buildLoadPropsForExistingContainer(container, containerConfig);
+		const result = await loadSummarizerContainerAndMakeSummary(props);
+		assert(result.success, "on-demand summary must succeed");
+		assert(result.summaryResults.summarySubmitted, "summary must be submitted");
+		assert(result.summaryResults.summaryOpBroadcasted, "summary must be broadcast");
+		const summaryStarts = logger.events.filter(
+			(event) => event.eventName === "fluid:telemetry:Summarizer:Running:Summarize_start",
+		);
+		assert.equal(summaryStarts.length, 1, "only the requested summary should start");
+		assert.equal(summaryStarts[0].summarizeReason, "onDemand;summaryOnRequest");
+		assert(
+			Number(summaryStarts[0].runtimeOpsSinceLastSummary) >= 110,
+			"summary client must catch up on enough edits to trigger maxOps",
+		);
+	});
+
 	it("summarizes successfully with fullTree gate on", async function () {
 		const props = await buildLoadProps();
 		const configProvider = {

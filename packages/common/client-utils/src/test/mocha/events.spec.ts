@@ -276,6 +276,77 @@ describe("CustomEventEmitter", () => {
 			validateError(/register.*twice.*TestEvent/),
 		);
 	});
+
+	describe("as an event gains and loses listeners", () => {
+		it("emits to each listener, and collects their results, with one, two, one and no listeners", () => {
+			const removed: (keyof TestEvents)[] = [];
+			const emitter = createEmitter<TestEvents>((eventName) => removed.push(eventName));
+			const upper = (arg: string): string => arg.toUpperCase();
+			const lower = (arg: string): string => arg.toLowerCase();
+			assert.deepEqual(emitter.emitAndCollect("compute", "aB"), []);
+			const offUpper = emitter.on("compute", upper);
+			assert.deepEqual(emitter.emitAndCollect("compute", "aB"), ["AB"]);
+			emitter.on("compute", lower);
+			assert.deepEqual(emitter.emitAndCollect("compute", "aB"), ["AB", "ab"]);
+			offUpper();
+			assert.deepEqual(emitter.emitAndCollect("compute", "aB"), ["ab"]);
+			assert(emitter.hasListeners("compute"));
+			assert.throws(() => emitter.on("compute", lower), validateError(/register.*twice/));
+			emitter.off("compute", lower);
+			assert.deepEqual(emitter.emitAndCollect("compute", "aB"), []);
+			assert(!emitter.hasListeners("compute"));
+			assert.deepEqual(removed, ["compute"]);
+			emitter.on("compute", lower);
+			assert.deepEqual(emitter.emitAndCollect("compute", "aB"), ["ab"]);
+		});
+
+		it("does not emit to a listener added by the only listener", () => {
+			const emitter = createEmitter<TestEvents>();
+			const log: string[] = [];
+			const second = (): number => log.push("second");
+			emitter.on("open", () => {
+				log.push("first");
+				if (!emitter.hasListeners("close")) {
+					emitter.on("close", () => {});
+					emitter.on("open", second);
+				}
+			});
+			emitter.emit("open");
+			assert.deepEqual(log, ["first"]);
+			emitter.emit("open");
+			assert.deepEqual(log, ["first", "first", "second"]);
+		});
+
+		it("emits to a listener removed and added again by an earlier listener", () => {
+			const emitter = createEmitter<TestEvents>();
+			const log: string[] = [];
+			const second = (): number => log.push("second");
+			emitter.on("open", () => {
+				log.push("first");
+				emitter.off("open", second);
+				emitter.on("open", second);
+			});
+			emitter.on("open", second);
+			emitter.emit("open");
+			assert.deepEqual(log, ["first", "second"]);
+		});
+
+		it("does not emit to a listener removed by an earlier listener after the event had two", () => {
+			const emitter = createEmitter<TestEvents>();
+			const log: string[] = [];
+			const third = (): number => log.push("third");
+			const second = (): number => log.push("second");
+			emitter.on("open", () => {
+				log.push("first");
+				emitter.off("open", second);
+				emitter.off("open", third);
+			});
+			emitter.on("open", second);
+			emitter.on("open", third);
+			emitter.emit("open");
+			assert.deepEqual(log, ["first"]);
+		});
+	});
 });
 
 /**
