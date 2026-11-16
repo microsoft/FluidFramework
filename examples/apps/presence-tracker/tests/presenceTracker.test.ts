@@ -38,8 +38,13 @@ const loadPresenceTrackerApp = async (page: Page, url: string): Promise<string> 
 	const waitFunction = idMatch
 		? (_hash: string) => window["fluidContainerId"] === _hash
 		: (_hash: string) => (window["fluidContainerId"] ?? "") !== "";
-	// Container initialization continues after the load event; use the test's timeout.
-	await page.waitForFunction(waitFunction, idMatch);
+	// Container initialization continues after the load event.
+	await page.waitForFunction(waitFunction, idMatch, { timeout: 3000 }).catch(async () => {
+		const after = await page.evaluate(() => `${window["fluidContainerId"]}`);
+		throw new Error(
+			`failed waiting for app load to id ${idMatch ? idMatch : '!== ""'} (after timeout=${after})`,
+		);
+	});
 
 	return page.evaluate(() => `${window["fluidSessionId"]}`);
 };
@@ -179,7 +184,11 @@ test.describe("presence-tracker", () => {
 							) => boolean
 						)(expectation),
 					expected,
-					{ timeout: 300 },
+					// Historically, the timeout was shorter at 300ms; increased
+					// to 600ms once using Ubuntu 24 image base with Node 24.
+					// Some investigations suggest that code coverage instrumentation
+					// has increasingly negative impact with Node 20, then 22, and 24.
+					{ timeout: 600 },
 				)
 				.catch(async () => {
 					const attendeeData = await targetPage.evaluate(() => ({
