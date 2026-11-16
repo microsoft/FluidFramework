@@ -22,7 +22,7 @@ For example, a geometry library removes the public `resize` method in favor of `
 This is a breaking package API change, but if the schema identifiers and stored fields stay the same, existing documents need no schema upgrade.
 
 A schema change, however, might not involve a breaking API change.
-The following example shows a non-API-breaking schema rollout in two stages:
+The following example shows a schema rollout in two stages without a breaking package API change:
 
 1.  A drawing library adds support for an `RgbColor` node alongside existing string colors.
     It can add that support in a minor release while keeping the new allowed type [staged](./allowed-types-rollout.mdx).
