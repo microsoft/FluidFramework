@@ -124,6 +124,8 @@ function formatViewIncompatibility(value: Discrepancy): SchemaViewIncompatibilit
 
 /**
  * Converts an internal upgrade discrepancy into a public incompatibility with a human-readable reason.
+ *
+ * @param value - The failed stored-schema upgrade requirement to describe.
  */
 function formatUpgradeIncompatibility(
 	value: StoredSchemaUpgradeDiscrepancy,

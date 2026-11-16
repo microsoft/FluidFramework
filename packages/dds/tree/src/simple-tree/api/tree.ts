@@ -1088,12 +1088,10 @@ export type SchemaDiscrepancy =
  *
  * If the candidate does not meet a stored-schema upgrade rule, the entry describes the schema difference that caused the failure.
  * For example, an upgrade must not remove an allowed node type.
- * For this mismatch, `stored` lists the removed node type identifiers.
- * The `proposed` list shows added identifiers to help explain the change.
- * Types that both schemas allow do not appear in these lists.
  *
  * The view also rejects a candidate that meets those rules but does not let the view read or write the document.
- * The `viewIncompatibleAfterUpgrade` entry then lists the viewing incompatibilities with the candidate, not the document's current stored schema.
+ * No upgrade takes place, and the stored schema remains unchanged.
+ * In this case, `viewIncompatibleAfterUpgrade` lists the viewing incompatibilities with the rejected candidate, not the document's current stored schema.
  *
  * @sealed @beta
  */
@@ -1104,8 +1102,17 @@ export type SchemaUpgradeIncompatibility =
 			 *
 			 * @remarks
 			 * An upgrade must continue to allow the stored field's node types.
-			 * For example, replacing `[sf.number, sf.string]` with `sf.number` fails this requirement because it removes support for string nodes.
-			 * The comparison therefore concerns node type identifiers, not the primitive value types or shapes of those nodes.
+			 * The `stored` list identifies the types that the proposed schema no longer allows.
+			 * Removing these types blocks the upgrade.
+			 * The `proposed` list identifies any added types, but adding types does not cause this failure.
+			 * Types that both schemas allow do not appear in either list.
+			 *
+			 * For example, suppose a field allows numbers and strings, but the proposed schema allows numbers and booleans.
+			 * The `stored` list contains the string node type identifier, and `proposed` contains the boolean node type identifier.
+			 * Neither list contains the number node type identifier because both schemas allow it.
+			 * If the proposed schema allows only numbers instead, `stored` still lists the string identifier, but `proposed` is empty.
+			 * In both cases, removing support for strings blocks the upgrade.
+			 * These lists contain node type identifiers, not primitive values or node definitions.
 			 */
 			readonly mismatch: "allowedTypes";
 			/**
@@ -1125,6 +1132,7 @@ export type SchemaUpgradeIncompatibility =
 				  };
 			/**
 			 * Node type identifiers allowed only by the proposed schema.
+			 * Empty if the proposed schema adds no allowed node types.
 			 */
 			readonly proposed: readonly string[];
 			/**
@@ -1270,12 +1278,15 @@ export type SchemaUpgradeIncompatibility =
 	  }
 	| {
 			/**
-			 * The proposed stored schema meets the stored-schema upgrade rules but does not let this view read or write the document.
+			 * The upgrade candidate meets the stored-schema upgrade rules, but the view cannot use it, so no upgrade takes place.
 			 *
 			 * @remarks
-			 * The candidate can keep allowed node types that the view does not support.
-			 * The view rejects such a candidate even though it meets the stored-schema upgrade rules.
-			 * To explain this failure, the nested incompatibilities compare the view with the proposed stored schema, not the current stored schema.
+			 * For example, suppose a task's stored schema allows its priority to be a number or a string.
+			 * The view adds an optional notes field but allows only numbers for priority.
+			 * The candidate adds notes and keeps both priority types, so it still allows all content permitted by the stored schema.
+			 * However, the view does not support string priorities, so the view rejects the upgrade.
+			 * No upgrade takes place, and the stored schema remains unchanged.
+			 * The nested incompatibilities explain why the view cannot use the candidate, not why it cannot use the current stored schema.
 			 */
 			readonly mismatch: "viewIncompatibleAfterUpgrade";
 			/**
