@@ -8,11 +8,16 @@ import { strict as assert } from "node:assert";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+import type { ISerializableBlobContents } from "../containerStorageAdapter.js";
 import { PendingLocalStateStore } from "../pendingLocalStateStore.js";
 import type {
 	IPendingContainerState,
 	SerializedSnapshotInfo,
 } from "../serializedStateManager.js";
+import {
+	getAttachedContainerStateFromSerializedContainer,
+	serializeBlobContents,
+} from "../utils.js";
 
 describe("PendingLocalStateStore", () => {
 	/**
@@ -21,7 +26,7 @@ describe("PendingLocalStateStore", () => {
 	function createMockContainerState(
 		url: string,
 		savedOps: ISequencedDocumentMessage[] = [],
-		snapshotBlobs: Record<string, string> = {},
+		snapshotBlobs: ISerializableBlobContents = {},
 		loadedGroupIdSnapshots?: Record<string, SerializedSnapshotInfo>,
 	): IPendingContainerState {
 		const state: IPendingContainerState = {
@@ -307,6 +312,36 @@ describe("PendingLocalStateStore", () => {
 	});
 
 	describe("blob deduplication", () => {
+		for (const captureFirst of [false, true]) {
+			it(`preserves binary blob encoding when the ${captureFirst ? "capture-derived" : "ordinary"} state is stored first`, () => {
+				const store = new PendingLocalStateStore<number>();
+				const binaryBlob = new Uint8Array([0xff, 0x00, 0x80]).buffer;
+				const ordinaryState = createMockContainerState("http://test.com", [], {
+					binaryBlob: serializeBlobContents(binaryBlob),
+				});
+				const capturedState: IPendingContainerState = {
+					...createMockContainerState("http://test.com", [], {
+						binaryBlob: serializeBlobContents(binaryBlob, true),
+					}),
+					blobContentsEncoding: "utf8OrBase64",
+				};
+				const states = captureFirst
+					? [capturedState, ordinaryState]
+					: [ordinaryState, capturedState];
+
+				for (const [index, state] of states.entries()) {
+					store.set(index, JSON.stringify(state));
+				}
+
+				for (const [index, state] of states.entries()) {
+					const restored = getAttachedContainerStateFromSerializedContainer(store.get(index));
+					assert(restored !== undefined, "Expected state to be found");
+					assert.strictEqual(restored.blobContentsEncoding, state.blobContentsEncoding);
+					assert.deepStrictEqual(restored.snapshotBlobs, state.snapshotBlobs);
+				}
+			});
+		}
+
 		it("should deduplicate snapshot blobs by ID", () => {
 			const store = new PendingLocalStateStore<string>();
 			const blobs1 = { blob1: "content1", blob2: "content2" };
