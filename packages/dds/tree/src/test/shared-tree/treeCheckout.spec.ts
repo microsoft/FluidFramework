@@ -2311,7 +2311,7 @@ describe("sharedTreeView", () => {
 		it("does not classify a version-only schema change as initialization", () => {
 			const provider = new TestTreeProviderLite(
 				1,
-				new SharedTreeTestFactory(() => {}, undefined, {
+				SharedTreeTestFactory.build(() => {}, undefined, {
 					allowPossiblyIncompatibleWriteVersionOverrides: true,
 					writeVersionOverrides: new Map([["Schema", "schemaVersion"]]),
 				}),
