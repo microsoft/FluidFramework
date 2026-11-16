@@ -50,7 +50,7 @@ export interface TreeChunk extends ReferenceCounted {
 export const dummyRoot: FieldKey = rootFieldKey;
 
 /**
- * A symbol for extracting a TreeChunk from {@link ITreeCursor}.
+ * A symbol for extracting a {@link TreeChunk} from an {@link ITreeCursor}.
  * @see {@link WithChunk | WithChunk's [cursorChunk] property}.
  */
 export const cursorChunk: unique symbol = Symbol("cursorChunk");
@@ -60,17 +60,19 @@ export const cursorChunk: unique symbol = Symbol("cursorChunk");
  */
 interface WithChunk {
 	/**
-	 * When in nodes mode, if a value is returned, it is a TreeChunk who's top level nodes are the
-	 * chunkLength nodes starting from chunkStart.
-	 *
-	 * Any returned chunk is borrowed: accessing this property does not add a counted reference or transfer ownership to the caller.
+	 * The {@link TreeChunk} containing the current node, when available.
 	 *
 	 * @remarks
-	 * Note that there may be other tree representations with different chunk APIs and thus different ways to query them.
-	 * The chunkStart and chunkLength values thus to not uniquely apply to the chunks accessed through this field.
+	 * Only valid in {@link CursorLocationType.Nodes} mode.
+	 * The returned chunk's top-level nodes are the {@link ITreeCursor.chunkLength} nodes starting at {@link ITreeCursor.chunkStart}.
+	 * Any returned chunk is borrowed: accessing this property does not add a counted reference or transfer ownership to the caller.
 	 *
+	 * Note that there may be other tree representations with different chunk APIs and thus different ways to query them.
+	 * The {@link ITreeCursor.chunkStart} and {@link ITreeCursor.chunkLength} values thus do not uniquely identify the chunks accessed through this property.
+	 *
+	 * @privateRemarks
 	 * TODO:
-	 * This API (including the chunk start and end on ITreeCUrsor) have some issues:
+	 * This API (including the chunk start and length on {@link ITreeCursor}) has some issues:
 	 * 1. There are cases where multiple possible chunks could be considered.
 	 * For example, when in a SequenceChunk, it could be returned, or the chunk within it could be.
 	 * 2. When in a location other than the root of a chunk,
@@ -93,7 +95,8 @@ export function tryGetChunk(cursor: ITreeCursor): undefined | TreeChunk {
 }
 
 /**
- * Complete synchronous tree cursor with chunk-boundary information and optional access to underlying chunk storage.
+ * An {@link ITreeCursorSynchronous} with chunk-boundary information and optional access to {@link TreeChunk} storage.
+ * @remarks
  * Provides navigation over the logical tree, including descendants stored in separate child chunks.
  */
 export interface ChunkedCursor extends ITreeCursorSynchronous, WithChunk {

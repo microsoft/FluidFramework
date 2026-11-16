@@ -9,17 +9,20 @@ import type { TreeChunk } from "../../core/index.js";
 import { assertNonNegativeSafeInteger } from "../../util/index.js";
 
 /**
- * Returns the number of top-level nodes in a chunk sequence.
+ * Returns the sum of {@link TreeChunk.topLevelLength} over a chunk sequence.
+ * @remarks
+ * Scans the array on each call; the result is not cached.
  */
 export function getFieldLength(chunks: readonly TreeChunk[]): number {
 	return chunks.reduce((length, chunk) => length + chunk.topLevelLength, 0);
 }
 
 /**
- * Locates a node in a chunk sequence by its field index.
- * @param chunks - Borrowed chunks representing the whole field.
- * @param index - Logical node index across all chunks in the field.
- * @returns The containing chunk, its physical index in the array, and the node's top-level offset within that chunk.
+ * Locates a top-level node within a field represented by {@link TreeChunk}s.
+ * @param chunks - Borrowed chunk array representing the whole field.
+ * @param index - Non-negative safe integer indexing the nodes across all chunks in the field.
+ * Must be less than {@link getFieldLength} of `chunks`.
+ * @returns The containing chunk, its index in `chunks`, and the node's index among that chunk's top-level nodes.
  */
 export function locateNodeInChunks(
 	chunks: readonly TreeChunk[],

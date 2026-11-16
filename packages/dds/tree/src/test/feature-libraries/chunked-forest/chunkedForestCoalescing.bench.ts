@@ -305,7 +305,8 @@ class NestedRow extends objectSchemaFactory.object("NestedRow", {
 class NestedRows extends objectSchemaFactory.array("NestedRows", NestedRow) {}
 
 /**
- * Public-API read workloads using normal optimized-forest policies.
+ * Public-API read workloads using the default policies of {@link ForestTypeOptimized}.
+ * @remarks
  * Optional fields and nested arrays prevent uniform object chunking; fixed-shape rows provide a control.
  */
 const applicationReadFixtures = [

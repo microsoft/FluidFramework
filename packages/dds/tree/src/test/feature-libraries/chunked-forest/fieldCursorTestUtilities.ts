@@ -55,14 +55,18 @@ export function validateChunkCursor(
 	assertChunkCursorEquals(chunk, expected);
 }
 
-/** Creates a numeric BasicChunk with one owned reference. */
+/**
+ * Creates a numeric {@link BasicChunk} with one owned reference.
+ */
 export function numericBasicChunk(value: number = 0): BasicChunk {
 	return new BasicChunk(brand(numberSchema.identifier), new Map(), value);
 }
 
 /**
- * Wraps a chunk without exposing its concrete type or optional editing interface.
- * Adds and owns one reference to the wrapped chunk, exercising generic cursor fallback paths.
+ * Wraps a {@link TreeChunk}, exposing only the {@link TreeChunk} contract.
+ * @remarks
+ * Adds and owns one reference to the wrapped chunk.
+ * Used to exercise traversal's fallback to {@link TreeChunk.cursor}.
  */
 export class WrapperChunk extends ReferenceCountedBase implements TreeChunk {
 	public constructor(

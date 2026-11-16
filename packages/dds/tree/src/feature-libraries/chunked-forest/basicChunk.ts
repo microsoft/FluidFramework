@@ -47,7 +47,7 @@ export class BasicChunk extends ReferenceCountedBase implements CompositeChunk {
 		 * @remarks
 		 * This object has exclusive deep ownership of this map (which might mutate it in the future).
 		 * Any code editing this map must update child reference counts.
-		 * Like with MapTree, fields with no nodes must be removed from the map.
+		 * Fields with no nodes must be removed from the map.
 		 */
 		public fields: Map<FieldKey, TreeChunk[]>,
 		/** The value on this node, if any. */
@@ -90,7 +90,10 @@ export class BasicChunk extends ReferenceCountedBase implements CompositeChunk {
 }
 
 /**
- * Local navigation over one node and its field keys; child nodes belong to separate chunks.
+ * A {@link ChunkInlineCursor} for the single node stored in a {@link BasicChunk}.
+ * @remarks
+ * Navigates the node and its field keys.
+ * {@link ChunkCursor} enters the child chunks exposed by {@link BasicChunkLocalCursor.getFieldChunks}.
  */
 export class BasicChunkLocalCursor implements ChunkInlineCursor {
 	public get rootLength(): number {
@@ -99,13 +102,14 @@ export class BasicChunkLocalCursor implements ChunkInlineCursor {
 
 	/** Local position: 0 is the synthetic root field, 1 is the chunk's node, and 2 is a field owned by that node. */
 	private depth = 0;
-	/** Field enumeration snapshot, or the single key selected by enterField; empty outside owned-field mode. */
+	/** Field enumeration snapshot, or the single key selected by {@link BasicChunkLocalCursor.enterField}; empty outside the node's fields. */
 	private keys: readonly FieldKey[] = [];
-	/** Position of the selected field in keys, valid only at depth 2. */
+	/** Index of the selected field in {@link BasicChunkLocalCursor.keys}, valid only at depth 2. */
 	private keyIndex = 0;
 
 	/**
-	 * Starts at the synthetic field containing the supplied node.
+	 * Starts at the {@link dummyRoot} field containing the supplied {@link BasicChunk}'s node.
+	 * @remarks
 	 * The caller must keep the chunk alive while using the cursor.
 	 */
 	public constructor(
@@ -113,7 +117,12 @@ export class BasicChunkLocalCursor implements ChunkInlineCursor {
 		private chunk: BasicChunk,
 	) {}
 
-	/** Reuses a local adapter after its previous chunk has been exited. */
+	/**
+	 * Reuses this adapter to navigate another {@link BasicChunk}.
+	 * @remarks
+	 * Requires the adapter to be at its root field, with its previous node exited.
+	 * @param chunk - Borrowed storage to navigate. The caller must keep it alive while using the cursor.
+	 */
 	public reset(chunk: BasicChunk): void {
 		assert(this.depth === 0, "Only an exited adapter can be reused");
 		this.chunk = chunk;

@@ -10,7 +10,10 @@ import { ChunkCursor, ChunkSequenceCursor, type CompositeChunk } from "./chunkCu
 import { getFieldLength } from "./chunkEditing.js";
 
 /**
- * General purpose multi-node sequence chunk.
+ * A {@link CompositeChunk} representing the concatenation of its child {@link TreeChunk}s.
+ * @remarks
+ * {@link SequenceChunk.getLocalCursor} exposes the children through a {@link ChunkSequenceCursor}.
+ * The sequence adds no nodes or fields to the tree.
  * @privateRemarks
  * Cursor integration tests are in chunkCursor.spec.ts, alongside shared traversal and mixed-format boundary cases.
  */
@@ -18,12 +21,12 @@ export class SequenceChunk extends ReferenceCountedBase implements CompositeChun
 	public readonly topLevelLength: number;
 
 	/**
-	 * Create a tree chunk with ref count 1.
-	 *
+	 * Creates a {@link SequenceChunk} with reference count 1.
+	 * @remarks
+	 * Edits to {@link SequenceChunk.subChunks} must update child reference counts and preserve {@link SequenceChunk.topLevelLength}.
+	 * Changing the total number of top-level nodes requires replacing the sequence in its owning parent.
 	 * @param subChunks - Child array whose ownership is transferred to this chunk.
 	 * The caller must have accounted for one reference to each child via `referenceAdded`.
-	 * Edits must update child reference counts and preserve the total number of top-level nodes.
-	 * Changes to that number require replacing the sequence in its owning parent.
 	 */
 	public constructor(public readonly subChunks: TreeChunk[]) {
 		super();

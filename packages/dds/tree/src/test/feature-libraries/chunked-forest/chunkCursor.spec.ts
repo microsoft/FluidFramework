@@ -224,18 +224,11 @@ describe("chunkCursor", () => {
 
 			const cursor = ChunkCursor.fromChunks([uniform, trailingBasic]);
 
-			// Transitions from field to firstNode and then increments to nodeIndex 2,
-			// which maps to chunk array index 1 (the trailing BasicChunk).
+			// Node index 2 belongs to chunk array index 1 (the trailing BasicChunk).
 			cursor.enterNode(2);
 
-			// Entering the subfield of the trailing BasicChunk calls enterField, which is followed by
-			// getField, which looks up the current node (whose field we should get). This must
-			// handle the case where the index of the node does not match the index of the chunk
-			// containing the node in the owning chunk array.
-			// In this test, the node index is 2 and the chunk index is 1.
+			// Field access must use the selected chunk, not index the chunk array by node index.
 			cursor.enterField(subField);
-			// Validates the cursor is positioned on the subField holding the subLeaf,
-			// then enters it to confirm its value (42).
 			assert.equal(cursor.getFieldLength(), 1);
 			cursor.firstNode();
 			assert.equal(cursor.value, 42);
@@ -259,18 +252,11 @@ describe("chunkCursor", () => {
 
 			const cursor = ChunkCursor.fromChunks([uniformA, uniformB, trailingBasic]);
 
-			// Transitions from field to firstNode and then increments to nodeIndex 4,
-			// which maps to chunk array index 2 (the trailing BasicChunk).
+			// Node index 4 belongs to chunk array index 2 (the trailing BasicChunk).
 			cursor.enterNode(4);
 
-			// Entering the subfield of the trailing BasicChunk calls enterField, which is followed by
-			// getField, which looks up the current node (whose field we should get). This must
-			// handle the case where the index of the node does not match the index of the chunk
-			// containing the node in the owning chunk array.
-			// In this test, the node index is 4 and the chunk index is 2.
+			// Field access must use the selected chunk, not index the chunk array by node index.
 			cursor.enterField(subField);
-			// Validates the cursor is positioned on the subField holding the subLeaf,
-			// then enters it to confirm its value (99).
 			assert.equal(cursor.getFieldLength(), 1);
 			cursor.firstNode();
 			assert.equal(cursor.value, 99);
