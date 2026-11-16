@@ -30,7 +30,10 @@ import type {
 } from "@fluidframework/local-driver/internal";
 import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import {
+	type ILocalDeltaConnectionServer,
+	LocalDeltaConnectionServer,
+} from "@fluidframework/server-local-server";
 import {
 	timeoutPromise,
 	type ITestFluidObject,
@@ -47,7 +50,7 @@ const toComparableArray = (map: ISharedMap): [string, unknown][] =>
 	]);
 
 /**
- * Wraps a document service factory so that any `readBlob` call on the
+ * Wraps a document service factory so that any explicit `readBlob` call on the
  * resulting storage throws. Frozen-load delegates `readBlob` to the inner
  * storage when one is provided, which masks the case where the artifact
  * itself is not self-contained. Routing through this wrapper turns "blob
@@ -55,6 +58,18 @@ const toComparableArray = (map: ISharedMap): [string, unknown][] =>
  */
 function makeFactoryWithFailingReadBlob(
 	inner: IDocumentServiceFactory,
+): IDocumentServiceFactory {
+	return makeFactoryWithReadBlob(inner, async () => {
+		throw new Error("readBlob hit live storage — captured artifact was not self-contained");
+	});
+}
+
+/**
+ * Wraps explicit blob reads without intercepting the driver's own snapshot prefetch.
+ */
+function makeFactoryWithReadBlob(
+	inner: IDocumentServiceFactory,
+	readBlob: (storage: IDocumentStorageService, id: string) => Promise<ArrayBufferLike>,
 ): IDocumentServiceFactory {
 	const wrapService = (svc: IDocumentService): IDocumentService =>
 		new Proxy(svc, {
@@ -65,11 +80,11 @@ function makeFactoryWithFailingReadBlob(
 						return new Proxy(innerStorage, {
 							get: (storageTarget, storageProp, storageReceiver) => {
 								if (storageProp === "readBlob") {
-									return async (_id: string): Promise<ArrayBufferLike> => {
-										throw new Error(
-											"readBlob hit live storage — captured artifact was not self-contained",
-										);
-									};
+									return async (id: string): Promise<ArrayBufferLike> =>
+										readBlob(innerStorage, id);
+								}
+								if (storageProp === "getSnapshot" && storageTarget.getSnapshot !== undefined) {
+									return storageTarget.getSnapshot.bind(storageTarget);
 								}
 								return Reflect.get(storageTarget, storageProp, storageReceiver) as unknown;
 							},
@@ -170,6 +185,7 @@ const initialize = async (): Promise<{
 	urlResolver: LocalResolver;
 	codeLoader: LocalCodeLoader;
 	documentServiceFactory: LocalDocumentServiceFactory;
+	deltaConnectionServer: ILocalDeltaConnectionServer;
 }> => {
 	const deltaConnectionServer = LocalDeltaConnectionServer.create();
 	const { urlResolver, codeDetails, codeLoader, loaderProps, documentServiceFactory } =
@@ -187,6 +203,7 @@ const initialize = async (): Promise<{
 		urlResolver,
 		codeLoader,
 		documentServiceFactory,
+		deltaConnectionServer,
 	};
 };
 
@@ -645,6 +662,109 @@ describe("captureFullContainerState", () => {
 		assert.strictEqual(bufferToString(retrievedBlob, "utf8"), blobPayload);
 	});
 
+	it("captures structural state in reference mode without explicit attachment reads", async () => {
+		const {
+			container,
+			testFluidObject,
+			urlResolver,
+			codeLoader,
+			documentServiceFactory,
+			deltaConnectionServer,
+		} = await initialize();
+		const containers = [container];
+		try {
+			const snapshotPayload = "snapshot-attachment";
+			const snapshotHandle = await testFluidObject.runtime.uploadBlob(
+				stringToBuffer(snapshotPayload, "utf8"),
+			);
+			testFluidObject.root.set("snapshotBlob", snapshotHandle);
+			testFluidObject.root.set("snapshotValue", "before attach");
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+
+			const postSnapshotPayload = "post-snapshot-attachment";
+			const postSnapshotHandle = await testFluidObject.runtime.uploadBlob(
+				stringToBuffer(postSnapshotPayload, "utf8"),
+			);
+			testFluidObject.root.set("postSnapshotBlob", postSnapshotHandle);
+			testFluidObject.root.set("postSnapshotValue", "after attach");
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined);
+			const inlineState: { attachmentBlobContents?: Record<string, string> } = JSON.parse(
+				await captureFullContainerState({
+					urlResolver,
+					documentServiceFactory,
+					request: { url },
+				}),
+			);
+			const attachmentIds = new Set(Object.keys(inlineState.attachmentBlobContents ?? {}));
+			assert(attachmentIds.size >= 2, "Expected snapshot and post-snapshot attachments");
+			const referenceState = await captureFullContainerState({
+				urlResolver,
+				documentServiceFactory: makeFactoryWithReadBlob(
+					documentServiceFactory,
+					async (storage, id) => {
+						assert(!attachmentIds.has(id), "Reference capture must not read attachments");
+						return storage.readBlob(id);
+					},
+				),
+				request: { url },
+				blobCaptureMode: "reference",
+			});
+			const offlineContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				pendingLocalState: referenceState,
+			});
+			containers.push(offlineContainer);
+			const offlineEntryPoint: FluidObject<TestFluidObject> =
+				await offlineContainer.getEntryPoint();
+			assert(offlineEntryPoint.ITestFluidObject !== undefined);
+			const offlineRoot = offlineEntryPoint.ITestFluidObject.root;
+			assert.strictEqual(offlineRoot.get("snapshotValue"), "before attach");
+			assert.strictEqual(offlineRoot.get("postSnapshotValue"), "after attach");
+			for (const key of ["snapshotBlob", "postSnapshotBlob"]) {
+				const handle: unknown = offlineRoot.get(key);
+				assert(isFluidHandle(handle));
+				await assert.rejects(async () => handle.get(), {
+					message: /without a live storage service/,
+				});
+			}
+
+			const onlineContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				urlResolver,
+				documentServiceFactory: makeFactoryWithReadBlob(
+					documentServiceFactory,
+					async (storage, id) => {
+						assert(attachmentIds.has(id), "Structural blobs must not require live reads");
+						return storage.readBlob(id);
+					},
+				),
+				request: { url },
+				pendingLocalState: referenceState,
+			});
+			containers.push(onlineContainer);
+			const onlineEntryPoint: FluidObject<TestFluidObject> =
+				await onlineContainer.getEntryPoint();
+			assert(onlineEntryPoint.ITestFluidObject !== undefined);
+			for (const [key, payload] of [
+				["snapshotBlob", snapshotPayload],
+				["postSnapshotBlob", postSnapshotPayload],
+			]) {
+				const handle: unknown = onlineEntryPoint.ITestFluidObject.root.get(key);
+				assert(isFluidHandle(handle));
+				assert.deepStrictEqual(await handle.get(), stringToBuffer(payload, "utf8"));
+			}
+		} finally {
+			for (const loadedContainer of containers) {
+				loadedContainer.close();
+			}
+			await deltaConnectionServer.close();
+		}
+	});
+
 	it("captures references that can seed multiple independent online containers", async () => {
 		const { container, testFluidObject, urlResolver, codeLoader, documentServiceFactory } =
 			await initialize();
@@ -674,20 +794,22 @@ describe("captureFullContainerState", () => {
 			request: { url },
 			blobCaptureMode: "reference",
 		});
-		const parsedReferenceState = JSON.parse(referenceState) as {
+		const parsedInlineState: { snapshotBlobs: Record<string, string> } =
+			JSON.parse(inlineState);
+		const parsedReferenceState: {
 			snapshotBlobs: Record<string, string>;
-			blobContentsMode?: "reference";
+			blobContentsMode?: "attachmentsOmitted";
 			attachmentBlobContents?: Record<string, string>;
-		};
+		} = JSON.parse(referenceState);
 		assert.deepStrictEqual(
 			parsedReferenceState.snapshotBlobs,
-			{},
-			"Reference-only state should omit structural blob payloads",
+			parsedInlineState.snapshotBlobs,
+			"Reference capture should retain the same structural payloads as inline capture",
 		);
 		assert.strictEqual(
 			parsedReferenceState.blobContentsMode,
-			"reference",
-			"Reference-only state should identify its live-storage dependency",
+			"attachmentsOmitted",
+			"Reference capture should identify attachment omission",
 		);
 		assert.strictEqual(
 			parsedReferenceState.attachmentBlobContents,
@@ -699,18 +821,23 @@ describe("captureFullContainerState", () => {
 			"Reference-only state should be smaller than the default inline state",
 		);
 
+		const legacyReferenceState = JSON.stringify({
+			...JSON.parse(referenceState),
+			snapshotBlobs: {},
+			blobContentsMode: "reference",
+		});
 		await assert.rejects(
 			async () =>
 				loadFrozenContainerFromPendingState({
 					codeLoader,
-					pendingLocalState: referenceState,
+					pendingLocalState: legacyReferenceState,
 				}),
 			/Reference-only state.*requires online driver wiring/,
 			"Fully offline loading should clearly reject reference-only state",
 		);
 
 		const unmarkedEmptyState = JSON.stringify({
-			...JSON.parse(referenceState),
+			...JSON.parse(legacyReferenceState),
 			blobContentsMode: undefined,
 		});
 		await assert.rejects(
