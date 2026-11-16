@@ -17,3 +17,15 @@ export const encodeHandlesInContainerRuntime = "encodeHandlesInContainerRuntime"
  * @internal
  */
 export const notifiesReadOnlyState = "notifiesReadOnlyState";
+
+/**
+ * This feature indicates that runtime messages passed to the DataStore layer include
+ * {@link IRuntimeMessagesContent.indexInBatch}.
+ *
+ * @remarks
+ * This feature may be absent from earlier generation 10 versions, but must be present in every
+ * generation 11 and later version.
+ *
+ * @internal
+ */
+export const runtimeMessagesHaveIndexInBatch = "runtimeMessagesHaveIndexInBatch";

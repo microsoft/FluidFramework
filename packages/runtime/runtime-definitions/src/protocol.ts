@@ -105,7 +105,90 @@ export interface IRuntimeMessagesContent {
 	 */
 	readonly localOpMetadata: unknown;
 	/**
-	 * The client sequence number of the message
+	 * The position of this message within its runtime batch.
+	 *
+	 * @remarks
+	 * This property may be absent when a message crosses a compatibility boundary with an older
+	 * runtime package. Consumers that only require a local ordering key may fall back to
+	 * {@link IRuntimeMessagesContent.clientSequenceNumber}, but that fallback does not necessarily
+	 * represent the message's position within its batch and must not be persisted or exposed as one.
+	 * The explicit `undefined` type permits forwarding layers to assign a possibly absent value
+	 * directly. An `undefined` value does not carry any additional meaning.
+	 *
+	 * @privateRemarks
+	 * Migration plan: this feature may ship in only some generation 10 versions, but it must be
+	 * present in every generation 11 version. Keep this property optional and retain the
+	 * `clientSequenceNumber` fallback through generation 13 to honor the three-generation
+	 * compatibility window. At generation 14, require the Runtime capability before removing the
+	 * fallback. Making this property required and removing runtime `clientSequenceNumber` are beta
+	 * API breaks and must wait for the 3.10 release or a later eligible beta-breaking release.
+	 */
+	readonly indexInBatch?: number | undefined;
+	/**
+	 * The client sequence number of the message.
+	 *
+	 * @remarks
+	 * This may be used as a local ordering fallback when {@link IRuntimeMessagesContent.indexInBatch}
+	 * is absent across a compatibility boundary. The fallback does not necessarily represent the
+	 * message's position within its batch and must not be persisted or exposed as one.
+	 *
+	 * @deprecated 3.3.0. To be removed no earlier than 3.10.0. Use
+	 * {@link IRuntimeMessagesContent.indexInBatch} when the message's position within its runtime
+	 * batch is needed. See {@link https://github.com/microsoft/FluidFramework/issues/27471} for the
+	 * beta-breaking change process.
+	 */
+	readonly clientSequenceNumber: number;
+}
+
+/**
+ * A logical runtime message after container-runtime virtualization has been removed.
+ *
+ * @remarks
+ * Unlike {@link @fluidframework/driver-definitions#ISequencedDocumentMessage}, messages represented
+ * by this interface may not have a meaningful client sequence number. Grouped batch messages share
+ * a single wire-level client sequence number, so their logical order is represented by
+ * {@link ISequencedRuntimeMessage.indexInBatch}.
+ *
+ * @legacy @beta
+ */
+export interface ISequencedRuntimeMessage extends ISequencedDocumentMessage {
+	/**
+	 * The position of this logical message within its runtime batch.
+	 *
+	 * @remarks
+	 * This property may be absent when a message crosses a compatibility boundary with an older
+	 * runtime package. Consumers that only require a local ordering key may fall back to
+	 * {@link ISequencedRuntimeMessage.clientSequenceNumber}, but that fallback does not necessarily
+	 * represent the message's position within its batch and must not be persisted or exposed as one.
+	 * The explicit `undefined` type permits forwarding layers to assign a possibly absent value
+	 * directly. An `undefined` value does not carry any additional meaning.
+	 *
+	 * @privateRemarks
+	 * Migration plan: this feature may ship in only some generation 10 versions, but it must be
+	 * present in every generation 11 version. Keep this property optional and retain the
+	 * `clientSequenceNumber` fallback through generation 13 to honor the three-generation
+	 * compatibility window. At generation 14, require the Runtime capability before removing the
+	 * fallback. Making this property required and removing runtime `clientSequenceNumber` are beta
+	 * API breaks and must wait for the 3.10 release or a later eligible beta-breaking release.
+	 */
+	readonly indexInBatch?: number | undefined;
+
+	/**
+	 * The legacy client sequence number value exposed by the runtime.
+	 *
+	 * @remarks
+	 * For grouped batches this value is one greater than
+	 * {@link ISequencedRuntimeMessage.indexInBatch}.
+	 * For ungrouped messages it remains the wire-level client sequence number for compatibility.
+	 * It may be used as a local ordering fallback when
+	 * {@link ISequencedRuntimeMessage.indexInBatch} is absent across a compatibility boundary, but
+	 * the fallback does not necessarily represent the message's position within its batch and must
+	 * not be persisted or exposed as one.
+	 *
+	 * @deprecated 3.3.0. To be removed no earlier than 3.10.0. Use
+	 * {@link ISequencedRuntimeMessage.indexInBatch} when the message's position within its runtime
+	 * batch is needed. See {@link https://github.com/microsoft/FluidFramework/issues/27471} for the
+	 * beta-breaking change process.
 	 */
 	readonly clientSequenceNumber: number;
 }
