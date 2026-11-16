@@ -269,22 +269,7 @@ export abstract class ChunkTraversal
 	}
 
 	/**
-	 * Selects storage before crossing its owning boundary; editing traversal can make that slot exclusive.
-	 * @param chunks - Child array exposed by the active field adapter.
-	 * @param index - Logical node index in the whole field, not a physical chunk-array index.
-	 * @param location - Optional known location in that array, avoiding a repeated scan during sibling traversal.
-	 * @returns The selected chunk and its physical and logical offsets after any ownership changes.
-	 */
-	protected prepareChunk(
-		chunks: readonly TreeChunk[],
-		index: number,
-		location?: ReturnType<typeof locateNodeInChunks>,
-	): ReturnType<typeof locateNodeInChunks> {
-		return location ?? locateNodeInChunks(chunks, index);
-	}
-
-	/**
-	 * Creates the selected child's root-field adapter after {@link ChunkTraversal.prepareChunk} resolves ownership.
+	 * Creates the selected child's root-field adapter.
 	 * Editing traversal overrides this to obtain the child's editing adapter.
 	 * @param chunk - Selected child whose storage is borrowed.
 	 * @param reuse - Exited adapter offered for reuse under {@link CompositeChunk.getLocalCursor}'s contract.
@@ -326,11 +311,8 @@ export abstract class ChunkTraversal
 				this.inline.enterNode(localIndex);
 				return;
 			}
-			const { chunk, indexOfChunk, indexWithinChunk } = this.prepareChunk(
-				chunks,
-				localIndex,
-				selectedLocation,
-			);
+			const { chunk, indexOfChunk, indexWithinChunk } =
+				selectedLocation ?? locateNodeInChunks(chunks, localIndex);
 			selectedLocation = undefined;
 			const start = localIndex - indexWithinChunk;
 			const transparent = this.local.atChunkRoot();
