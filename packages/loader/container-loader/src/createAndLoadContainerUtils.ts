@@ -554,10 +554,12 @@ export interface ICaptureFullContainerStateProps {
  * omitted. Reference-only state requires live storage during load and cannot be
  * used with the fully offline form of {@link loadFrozenContainerFromPendingState}.
  *
- * Reachability respects GC. Snapshot subtrees flagged `unreferenced: true`
- * are skipped (their contents are not inlined). Attachment blobs that GC has
- * marked unreferenced, tombstoned, or deleted are skipped. When the snapshot
- * has no GC tree (GC disabled or pre-GC document), no filtering is applied.
+ * Inline capture retains structural contents in unreferenced snapshot subtrees
+ * and GC-unreferenced attachments. Saved or future ops can reference their data
+ * stores again without a new BlobAttach op. Tombstoned or deleted attachment
+ * local IDs are excluded, but eligible storage-ID aliases can retain the same
+ * payload. When the snapshot has no GC tree (GC disabled or pre-GC document),
+ * attachment filtering is not applied.
  *
  * Blob reads on load hit the `ContainerStorageAdapter` cache populated from
  * the captured `snapshotBlobs` map, so a frozen loader can serve the full
