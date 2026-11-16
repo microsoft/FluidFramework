@@ -161,7 +161,7 @@ export abstract class ChunkTraversal
 		return fail("Expected an inline-node adapter");
 	}
 
-	/** Discards all adapters and boundary frames without changing counted references to content. */
+	/** Discards all adapters and boundary frames. */
 	protected clearTraversal(): void {
 		this.current = undefined;
 		this.currentInline = undefined;
