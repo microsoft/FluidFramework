@@ -131,7 +131,8 @@ function pruneFieldMap(
 		let hasRootWithNodeChange = false;
 		for (const rootId of rootsWithChanges) {
 			const nodeId =
-				getFromChangeAtomIdMap(roots.nodeChanges, rootId) ?? fail("No root change found");
+				getFromChangeAtomIdMap(roots.nodeChanges, rootId) ??
+				fail(0xdc0 /* No root change found */);
 
 			const isRootChangeEmpty =
 				pruneNodeChange(

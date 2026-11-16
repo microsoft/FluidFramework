@@ -264,7 +264,10 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 				id: DeltaDetachedNodeId,
 			): void {
 				preEdit();
-				assert(source !== destination, "Replacement source and destination must differ");
+				assert(
+					source !== destination,
+					0xdc1 /* Replacement source and destination must differ */,
+				);
 				this.detachEdit(range, destination);
 				this.attachEdit(source, range.end - range.start, range.start);
 			}

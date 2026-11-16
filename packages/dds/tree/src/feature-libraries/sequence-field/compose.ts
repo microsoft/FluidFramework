@@ -137,7 +137,7 @@ function composeMarksIgnoreChild(
 		assert(isAttach(newMark), 0x9f1 /* Unexpected mark type */);
 		assert(
 			baseMark.cellId !== undefined && newMark.cellId !== undefined,
-			"Expected marks to target an empty cell",
+			0xdc4 /* Expected marks to target an empty cell */,
 		);
 		return { ...newMark, cellId: baseMark.cellId };
 	} else if (isRename(newMark)) {
@@ -146,7 +146,7 @@ function composeMarksIgnoreChild(
 	}
 
 	if (!markHasCellEffect(baseMark)) {
-		assert(baseMark.type === "Attach", "Expected baseMark to be a pin");
+		assert(baseMark.type === "Attach", 0xdc5 /* Expected baseMark to be a pin */);
 
 		// `newMark` can be either a remove or another pin.
 		// A pin is treated as a detach and attach, so we call `composeAttachDetach` in either case.
@@ -184,7 +184,7 @@ function composeMarksIgnoreChild(
 				return composed;
 			}
 			default: {
-				fail("Expected a mark type which can have a cell effect");
+				fail(0xdc6 /* Expected a mark type which can have a cell effect */);
 			}
 		}
 	} else if (!markHasCellEffect(newMark)) {
@@ -223,8 +223,8 @@ function composeMarksIgnoreChild(
 		}
 		return normalizeCellRename(baseMark.cellId, baseMark.count, attach, detach);
 	} else {
-		assert(baseMark.type === "Detach", "Unexpected mark type");
-		assert(newMark.type === "Attach", "Unexpected mark type");
+		assert(baseMark.type === "Detach", 0xdc7 /* Unexpected mark type */);
+		assert(newMark.type === "Attach", 0xdc8 /* Unexpected mark type */);
 		const detachId = getDetachedRootId(baseMark);
 
 		// The composition has no net effect, but we preserve the intention to pin the nodes here.
@@ -315,7 +315,7 @@ export class ComposeQueue {
 		const baseMark = this.baseMarks.peek();
 		const newMark = this.newMarks.peek();
 		if (baseMark === undefined && newMark === undefined) {
-			fail("Should not pop when queue is empty");
+			fail(0xdc9 /* Should not pop when queue is empty */);
 		} else if (baseMark === undefined) {
 			return this.dequeueNew();
 		} else if (newMark === undefined) {

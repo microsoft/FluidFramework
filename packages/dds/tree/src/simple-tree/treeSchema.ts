@@ -515,7 +515,10 @@ export function getSchemaUpgradeCandidate(
 					}
 				}
 			} else {
-				assert(candidate instanceof LeafNodeStoredSchema, "Unsupported stored node schema");
+				assert(
+					candidate instanceof LeafNodeStoredSchema,
+					0xda7 /* Unsupported stored node schema */,
+				);
 			}
 		}
 
