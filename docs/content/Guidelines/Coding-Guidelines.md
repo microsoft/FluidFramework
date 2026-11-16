@@ -183,9 +183,7 @@ For example, name the type describing changes to an item rather than constructin
 **Avoid:**
 
 ```typescript
-export function updateItems(
-	updates: ReadonlyMap<string, Partial<Omit<Item, "id">>>,
-): void;
+export function updateItems(updates: ReadonlyMap<string, Partial<Omit<Item, "id">>>): void;
 ```
 
 **Prefer:**
@@ -270,16 +268,14 @@ An anonymous type is appropriate for a property bag used only to supply argument
 **Acceptable:**
 
 ```typescript
-export function formatText(
-	parameters: {
-		/** `text` documentation */
-		text: string,
-		/** `maxLength` documentation */
-		maxLength?: number;
-		/** `ellipsis` documentation */
-		ellipsis?: string;
-	},
-): string;
+export function formatText(parameters: {
+	/** `text` documentation */
+	text: string;
+	/** `maxLength` documentation */
+	maxLength?: number;
+	/** `ellipsis` documentation */
+	ellipsis?: string;
+}): string;
 ```
 
 If multiple functions or methods share the property-bag contract, prefer a named type.
