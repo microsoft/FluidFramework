@@ -234,7 +234,7 @@ function composeNodeDetaches(
 		return change1.nodeDetach;
 	}
 
-	// TODO (AD#89060): The logic below can produce incorrect results in some scenarios.
+	// TODO: AB#89060: The logic below can produce incorrect results in some scenarios.
 	// Why:
 	//  If change1 detaches a node via a clear, and change2 renames that node (or detaches it after it is reattached by change1),
 	//  the composition ought to have a nodeDetach, as change2's detach will ensure that the node is detached.

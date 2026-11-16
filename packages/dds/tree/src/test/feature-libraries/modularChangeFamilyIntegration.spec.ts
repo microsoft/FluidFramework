@@ -1751,7 +1751,7 @@ describe("ModularChangeFamily integration", () => {
 			assertEqual(composed, expected);
 		});
 
-		// AD#89060: This test is related to the issue described in the TODO in optionalField.ts.
+		// AB#89060: This test is related to the issue described in the TODO in optionalField.ts.
 		// This test demonstrates an issue with the current composition behavior:
 		// This test succeeds so long as the current composition behavior is unchanged.
 		// This test will fail if the composition behavior is fixed. It may also fail for other reasons.
