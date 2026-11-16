@@ -18,14 +18,16 @@ Define their compatibility contracts separately; [Schema Evolution](./index.mdx)
 
 Package versions do not migrate documents: a major API change can leave schema unchanged, while a minor release can support a new representation without enabling new writes.
 
-For example:
+For example, a geometry library removes the public `resize` method in favor of `setSize`.
+This is a breaking package API change, but if the schema identifiers and stored fields stay the same, existing documents need no schema upgrade.
 
--   A geometry library removes the public `resize` method in favor of `setSize`.
-    This is a breaking package API change, but if the schema identifiers and stored fields stay the same, existing documents need no schema upgrade.
--   A drawing library adds support for an `RgbColor` node alongside existing string colors.
+A schema change, however, might not involve a breaking API change.
+The following example shows a non-API-breaking schema rollout in two stages:
+
+1.  A drawing library adds support for an `RgbColor` node alongside existing string colors.
     It can add that support in a minor release while keeping the new allowed type [staged](./allowed-types-rollout.mdx).
     Applications can update the package and handle RGB data without yet upgrading their documents to allow it.
--   An application later enables the RGB schema upgrade after deploying support to the required clients.
+2.  An application later enables the RGB schema upgrade after deploying support to the required clients.
     This changes a document's stored schema without requiring another library release.
     A client that predates RGB support can no longer open that upgraded document, even if it uses an earlier minor version of the same library.
 
