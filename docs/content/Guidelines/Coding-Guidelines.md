@@ -141,6 +141,162 @@ from<TType, TIn extends Copyable<TType>, TOut extends Copied<TType>>(
     }, thisArg?: any): TOut[];
 ```
 
+#### ✔ PREFER explicit, named types in user-facing APIs
+
+Prefer exported, named types over anonymous types in public API signatures.
+A named type gives developers a clear way to refer to an API's inputs and outputs when declaring variables, writing helper functions, or implementing interfaces.
+It also gives the type a discoverable place for documentation.
+
+For example, avoid declaring an object type directly in a return signature:
+
+**Avoid:**
+
+```typescript
+export function getItem(id: string): {
+	id: string;
+	label: string;
+};
+```
+
+**Prefer:**
+
+```typescript
+export interface Item {
+	readonly id: string;
+	readonly label: string;
+}
+
+export function getItem(id: string): Item;
+```
+
+Apply the same preference to public properties and parameter types, including object types nested within other types.
+This does not require introducing aliases for primitive types or standard type expressions such as `string[]` or `Promise<Item>`.
+
+##### Complex type expressions
+
+Prefer named types for complex type expressions as well, including combinations of unions, intersections, mapped types, or conditional types.
+This applies even when the expression contains no anonymous object types.
+Give meaningful parts of the expression names so developers can understand their purpose without having to interpret how the types are constructed.
+
+For example, name the type describing changes to an item rather than constructing it inline in the function signature:
+
+**Avoid:**
+
+```typescript
+export function updateItems(
+	updates: ReadonlyMap<string, Partial<Omit<Item, "id">>>,
+): void;
+```
+
+**Prefer:**
+
+```typescript
+export type ItemChanges = Partial<Omit<Item, "id">>;
+
+export function updateItems(updates: ReadonlyMap<string, ItemChanges>): void;
+```
+
+For a union containing inline object types, prefer naming both the union and its object members.
+This lets developers refer to the full union or an individual case.
+It also greatly enhances the IntelliSense experience for consumers, as well as the API web documentation.
+
+**Avoid:**
+
+```typescript
+export type ItemState =
+	| {
+			readonly status: "loading";
+			readonly loadedBytes: number;
+	  }
+	| {
+			readonly status: "loaded";
+			readonly item: Item;
+	  }
+	| {
+			readonly status: "failed";
+			readonly message: string;
+	  };
+```
+
+**Prefer:**
+
+```typescript
+export interface ItemLoadingState {
+	readonly status: "loading";
+	readonly loadedBytes: number;
+}
+
+export interface ItemLoadedState {
+	readonly status: "loaded";
+	readonly item: Item;
+}
+
+export interface ItemFailedState {
+	readonly status: "failed";
+	readonly message: string;
+}
+
+export type ItemState = ItemLoadingState | ItemLoadedState | ItemFailedState;
+```
+
+**Or:**
+
+```typescript
+/** @system */
+export interface ItemStateBase<TStatus extends "loading" | "loaded" | "failed"> {
+	/** `status` documentation */
+	readonly status: TStatus;
+}
+
+export interface ItemLoadingState extends ItemStateBase<"loading"> {
+	readonly loadedBytes: number;
+}
+
+export interface ItemLoadedState extends ItemStateBase<"loaded"> {
+	readonly item: Item;
+}
+
+export interface ItemFailedState extends ItemStateBase<"failed"> {
+	readonly message: string;
+}
+
+export type ItemState = ItemLoadingState | ItemLoadedState | ItemFailedState;
+```
+
+##### Exception: input property bags used by a single function or method
+
+An anonymous type is appropriate for a property bag used only to supply arguments to a single function or method.
+
+**Acceptable:**
+
+```typescript
+export function formatText(
+	parameters: {
+		/** `text` documentation */
+		text: string,
+		/** `maxLength` documentation */
+		maxLength?: number;
+		/** `ellipsis` documentation */
+		ellipsis?: string;
+	},
+): string;
+```
+
+If multiple functions or methods share the property-bag contract, prefer a named type.
+Likewise, prefer a named type if the bag is also returned or exposed through a public property.
+For example:
+
+```typescript
+export interface TextFormatOptions {
+	maxLength?: number;
+	ellipsis?: string;
+}
+
+export function formatText(text: string, options: TextFormatOptions): string;
+
+export function formatHeading(text: string, options: TextFormatOptions): string;
+```
+
 #### ✘ AVOID unnecessary use of generics
 
 Generic parameters are one of the most common sources of the "advanced" or "complex" types cautioned against just above.
