@@ -18,6 +18,10 @@ To help you diagnose either failure, every [`SchemaViewIncompatibility`](https:/
 Use these reasons for logging and debugging, or use `mismatch` and the structured fields when your application needs to handle a failure programmatically.
 The reasons describe schema requirements rather than application intent, so they do not prescribe a fix.
 
+The viewing discrepancy and upgrade incompatibility unions have named variants, such as `SchemaAllowedTypesDiscrepancy` and `SchemaUpgradeAllowedTypesIncompatibility`.
+Use these exported types when a helper handles one specific mismatch.
+The existing union names and their structured fields remain unchanged.
+
 You can adopt the new results without replacing existing compatibility checks: [`canView`](https://fluidframework.com/docs/api/tree/schemacompatibilitystatus-interface#canview-propertysignature) and [`canUpgrade`](https://fluidframework.com/docs/api/tree/schemacompatibilitystatus-interface#canupgrade-propertysignature) remain available for their respective operations.
 The existing [`discrepancies`](https://fluidframework.com/docs/api/tree/schemacompatibilitystatusbeta-interface#discrepancies-propertysignature) and [`SchemaDiscrepancy`](https://fluidframework.com/docs/api/tree/schemadiscrepancy-typealias) also remain available for viewing failures; `SchemaViewIncompatibility` adds `reason` to those same details.
 The new APIs use "incompatibility" to align with compatibility terminology, while existing API names are retained for compatibility.

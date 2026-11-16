@@ -942,140 +942,156 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
  * @sealed @beta
  */
 export type SchemaDiscrepancy =
-	| {
-			/**
-			 * Indicates that a field allows different node types in the view and stored schemas.
-			 *
-			 * @remarks
-			 * This compares node type identifiers, not the structure of nodes that share an identifier.
-			 * For example, {@link SchemaStatics.number | SchemaFactory.number} and {@link SchemaStatics.string | SchemaFactory.string} have different identifiers.
-			 * Changing a field from one to the other changes its allowed types.
-			 * The `view` array lists types allowed only by the view, and `stored` lists types allowed only by the stored schema.
-			 */
-			readonly mismatch: "allowedTypes";
-			/**
-			 * The field with the discrepancy.
-			 *
-			 * `"root"` identifies the root field. Otherwise, `nodeType` identifies the containing
-			 * node schema and `fieldKey` identifies its field. `fieldKey` is undefined for a map
-			 * node's implicit field.
-			 */
-			readonly location:
-				| "root"
-				| {
-						readonly nodeType: string;
-						readonly fieldKey: string | undefined;
-				  };
-			/**
-			 * Non-staged node type identifiers allowed by the view schema but not the stored schema.
-			 */
-			readonly view: readonly string[];
-			/**
-			 * Staged node type identifiers allowed by the view schema but not the stored schema.
-			 *
-			 * @remarks These types provide rollout context but do not cause the discrepancy.
-			 */
-			readonly stagedView?: readonly string[];
-			/**
-			 * Node type identifiers allowed by the stored schema but not the view schema.
-			 */
-			readonly stored: readonly string[];
-			/**
-			 * Whether the view field is a staged optional field.
-			 *
-			 * @remarks Omitted when false.
-			 */
-			readonly viewIsStagedOptional?: true;
-	  }
-	| {
-			/**
-			 * Indicates that a field has different field kinds in the view and stored schemas.
-			 *
-			 * @remarks
-			 * A field's kind specifies how many children it permits, not which node types those children can have.
-			 * For example, a {@link SchemaStatics.required | required field} (`"Value"`) must have exactly one child.
-			 * An {@link SchemaStatics.optional | optional field} (`"Optional"`) can have zero or one child.
-			 * If you change between these field kinds, you change whether a child can be absent.
-			 */
-			readonly mismatch: "fieldKind";
-			/**
-			 * The field with the discrepancy.
-			 *
-			 * `"root"` identifies the root field. Otherwise, `nodeType` identifies the containing
-			 * node schema and `fieldKey` identifies its field. `fieldKey` is undefined for a map
-			 * node's implicit field.
-			 */
-			readonly location:
-				| "root"
-				| {
-						readonly nodeType: string;
-						readonly fieldKey: string | undefined;
-				  };
-			/**
-			 * The field kind required by the view schema.
-			 */
-			readonly view: string;
-			/**
-			 * The field kind recorded in the stored schema.
-			 */
-			readonly stored: string;
-			/**
-			 * Whether the view field is a staged optional field.
-			 *
-			 * @remarks Omitted when false.
-			 */
-			readonly viewIsStagedOptional?: true;
-	  }
-	| {
-			/**
-			 * Indicates that a leaf node accepts different value types in the view and stored schemas.
-			 *
-			 * @remarks
-			 * A leaf holds a primitive value or a Fluid handle, not child nodes.
-			 * Its value schema specifies which values it accepts.
-			 * This mismatch occurs when the same node type identifier requires different value types in the view and stored schema.
-			 * For example, the view requires `"Number"`, but the stored schema permits `"String"`.
-			 * In contrast, {@link SchemaStatics.number | SchemaFactory.number} and {@link SchemaStatics.string | SchemaFactory.string} have different node identifiers.
-			 * If you change a field between them, you get an `"allowedTypes"` mismatch instead.
-			 */
-			readonly mismatch: "valueSchema";
-			/**
-			 * The identifier of the leaf node schema with the discrepancy.
-			 */
-			readonly nodeType: string;
-			/**
-			 * The value schema required by the view, or undefined when it does not constrain values.
-			 */
-			readonly view: string | undefined;
-			/**
-			 * The value schema recorded in the stored schema, or undefined when it does not constrain values.
-			 */
-			readonly stored: string | undefined;
-	  }
-	| {
-			/**
-			 * Indicates that a node is represented by different node kinds in the view and stored schemas.
-			 *
-			 * @remarks
-			 * Node kinds describe a node's structure, such as an object, map, array, or leaf.
-			 * The view must support the stored node's structure.
-			 * For example, a view that expects an object cannot use a map with the same identifier.
-			 * This mismatch also occurs if the view expects an array but the stored schema does not support the required array structure.
-			 */
-			readonly mismatch: "nodeKind";
-			/**
-			 * The identifier of the node schema with the discrepancy.
-			 */
-			readonly nodeType: string;
-			/**
-			 * The node kind required by the view schema.
-			 */
-			readonly view: string;
-			/**
-			 * The node kind recorded in the stored schema.
-			 */
-			readonly stored: string;
-	  };
+	| SchemaAllowedTypesDiscrepancy
+	| SchemaFieldKindDiscrepancy
+	| SchemaValueSchemaDiscrepancy
+	| SchemaNodeKindDiscrepancy;
+
+/* eslint-disable @typescript-eslint/consistent-type-definitions -- Object aliases preserve the original inline variants' index-signature assignability. */
+
+/**
+ * Indicates that a field allows different node types in the view and stored schemas.
+ *
+ * @remarks
+ * This compares node type identifiers, not the structure of nodes that share an identifier.
+ * For example, {@link SchemaStatics.number | SchemaFactory.number} and {@link SchemaStatics.string | SchemaFactory.string} have different identifiers.
+ * Changing a field from one to the other changes its allowed types.
+ * The `view` array lists types allowed only by the view, and `stored` lists types allowed only by the stored schema.
+ * @sealed @beta
+ */
+export type SchemaAllowedTypesDiscrepancy = {
+	readonly mismatch: "allowedTypes";
+	/**
+	 * The field with the discrepancy.
+	 *
+	 * `"root"` identifies the root field. Otherwise, `nodeType` identifies the containing
+	 * node schema and `fieldKey` identifies its field. `fieldKey` is undefined for a map
+	 * node's implicit field.
+	 */
+	readonly location:
+		| "root"
+		| {
+				readonly nodeType: string;
+				readonly fieldKey: string | undefined;
+		  };
+	/**
+	 * Non-staged node type identifiers allowed by the view schema but not the stored schema.
+	 */
+	readonly view: readonly string[];
+	/**
+	 * Staged node type identifiers allowed by the view schema but not the stored schema.
+	 *
+	 * @remarks These types provide rollout context but do not cause the discrepancy.
+	 */
+	readonly stagedView?: readonly string[];
+	/**
+	 * Node type identifiers allowed by the stored schema but not the view schema.
+	 */
+	readonly stored: readonly string[];
+	/**
+	 * Whether the view field is a staged optional field.
+	 *
+	 * @remarks Omitted when false.
+	 */
+	readonly viewIsStagedOptional?: true;
+};
+
+/**
+ * Indicates that a field has different field kinds in the view and stored schemas.
+ *
+ * @remarks
+ * A field's kind specifies how many children it permits, not which node types those children can have.
+ * For example, a {@link SchemaStatics.required | required field} (`"Value"`) must have exactly one child.
+ * An {@link SchemaStatics.optional | optional field} (`"Optional"`) can have zero or one child.
+ * If you change between these field kinds, you change whether a child can be absent.
+ * @sealed @beta
+ */
+export type SchemaFieldKindDiscrepancy = {
+	readonly mismatch: "fieldKind";
+	/**
+	 * The field with the discrepancy.
+	 *
+	 * `"root"` identifies the root field. Otherwise, `nodeType` identifies the containing
+	 * node schema and `fieldKey` identifies its field. `fieldKey` is undefined for a map
+	 * node's implicit field.
+	 */
+	readonly location:
+		| "root"
+		| {
+				readonly nodeType: string;
+				readonly fieldKey: string | undefined;
+		  };
+	/**
+	 * The field kind required by the view schema.
+	 */
+	readonly view: string;
+	/**
+	 * The field kind recorded in the stored schema.
+	 */
+	readonly stored: string;
+	/**
+	 * Whether the view field is a staged optional field.
+	 *
+	 * @remarks Omitted when false.
+	 */
+	readonly viewIsStagedOptional?: true;
+};
+
+/**
+ * Indicates that a leaf node accepts different value types in the view and stored schemas.
+ *
+ * @remarks
+ * A leaf holds a primitive value or a Fluid handle, not child nodes.
+ * Its value schema specifies which values it accepts.
+ * This mismatch occurs when the same node type identifier requires different value types in the view and stored schema.
+ * For example, the view requires `"Number"`, but the stored schema permits `"String"`.
+ * In contrast, {@link SchemaStatics.number | SchemaFactory.number} and {@link SchemaStatics.string | SchemaFactory.string} have different node identifiers.
+ * If you change a field between them, you get an `"allowedTypes"` mismatch instead.
+ * @sealed @beta
+ */
+export type SchemaValueSchemaDiscrepancy = {
+	readonly mismatch: "valueSchema";
+	/**
+	 * The identifier of the leaf node schema with the discrepancy.
+	 */
+	readonly nodeType: string;
+	/**
+	 * The value schema required by the view, or undefined when it does not constrain values.
+	 */
+	readonly view: string | undefined;
+	/**
+	 * The value schema recorded in the stored schema, or undefined when it does not constrain values.
+	 */
+	readonly stored: string | undefined;
+};
+
+/**
+ * Indicates that a node is represented by different node kinds in the view and stored schemas.
+ *
+ * @remarks
+ * Node kinds describe a node's structure, such as an object, map, array, or leaf.
+ * The view must support the stored node's structure.
+ * For example, a view that expects an object cannot use a map with the same identifier.
+ * This mismatch also occurs if the view expects an array but the stored schema does not support the required array structure.
+ * @sealed @beta
+ */
+export type SchemaNodeKindDiscrepancy = {
+	readonly mismatch: "nodeKind";
+	/**
+	 * The identifier of the node schema with the discrepancy.
+	 */
+	readonly nodeType: string;
+	/**
+	 * The node kind required by the view schema.
+	 */
+	readonly view: string;
+	/**
+	 * The node kind recorded in the stored schema.
+	 */
+	readonly stored: string;
+};
+
+/* eslint-enable @typescript-eslint/consistent-type-definitions -- End of shape-preserving discrepancy aliases. */
 
 /**
  * A schema requirement that prevents an upgrade to the proposed stored schema.
@@ -1096,209 +1112,234 @@ export type SchemaDiscrepancy =
  * @sealed @beta
  */
 export type SchemaUpgradeIncompatibility =
-	| {
-			/**
-			 * A field's proposed allowed types do not include all its stored allowed types.
-			 *
-			 * @remarks
-			 * An upgrade must continue to allow the stored field's node types.
-			 * The `stored` list identifies the types that the proposed schema no longer allows.
-			 * Removing these types blocks the upgrade.
-			 * The `proposed` list identifies any added types, but adding types does not cause this failure.
-			 * Types that both schemas allow do not appear in either list.
-			 *
-			 * For example, suppose a field allows numbers and strings, but the proposed schema allows numbers and booleans.
-			 * The `stored` list contains the string node type identifier, and `proposed` contains the boolean node type identifier.
-			 * Neither list contains the number node type identifier because both schemas allow it.
-			 * If the proposed schema allows only numbers instead, `stored` still lists the string identifier, but `proposed` is empty.
-			 * In both cases, removing support for strings blocks the upgrade.
-			 * These lists contain node type identifiers, not primitive values or node definitions.
-			 */
-			readonly mismatch: "allowedTypes";
-			/**
-			 * A human-readable explanation of the failed schema requirement.
-			 * Intended for diagnostics, not parsing or choosing an application-specific fix.
-			 */
-			readonly reason: string;
-			/**
-			 * The root field, or the containing node identifier and stored field key.
-			 * The field key is undefined for a map's implicit field.
-			 */
-			readonly location:
-				| "root"
-				| {
-						readonly nodeType: string;
-						readonly fieldKey: string | undefined;
-				  };
-			/**
-			 * Node type identifiers allowed only by the proposed schema.
-			 * Empty if the proposed schema adds no allowed node types.
-			 */
-			readonly proposed: readonly string[];
-			/**
-			 * Node type identifiers allowed only by the stored schema.
-			 * Removing these types prevents the upgrade.
-			 */
-			readonly stored: readonly string[];
-	  }
-	| {
-			/**
-			 * The transition from the stored field kind to the proposed kind is not permitted.
-			 *
-			 * @remarks
-			 * Because field kinds determine how many children a field permits, changing the kind can exclude previously allowed content.
-			 * For example, changing `"Optional"` (zero or one child) to `"Value"` (exactly one) would stop accepting an absent child.
-			 * Accepting the same content is not the only requirement: upgrade rules also restrict some transitions
-			 * to prevent clients from repeatedly upgrading back and forth.
-			 */
-			readonly mismatch: "fieldKind";
-			/**
-			 * A human-readable explanation of the failed schema requirement.
-			 * Intended for diagnostics, not parsing or choosing an application-specific fix.
-			 */
-			readonly reason: string;
-			/**
-			 * The root field, or the containing node identifier and stored field key.
-			 * The field key is undefined for a map's implicit field.
-			 */
-			readonly location:
-				| "root"
-				| {
-						readonly nodeType: string;
-						readonly fieldKey: string | undefined;
-				  };
-			/**
-			 * The proposed field kind.
-			 */
-			readonly proposed: string;
-			/**
-			 * The stored field kind.
-			 */
-			readonly stored: string;
-	  }
-	| {
-			/**
-			 * A leaf node's proposed value schema is incompatible with its stored value schema.
-			 *
-			 * @remarks
-			 * A leaf holds a primitive value or a Fluid handle, not child nodes.
-			 * For example, suppose a node type identifier allows string values in the stored schema.
-			 * An upgrade cannot reuse that identifier for number values because this would reject the stored string values.
-			 * In contrast, {@link SchemaStatics.number | SchemaFactory.number} and {@link SchemaStatics.string | SchemaFactory.string} have different node identifiers.
-			 * If you change a field between them, you get an `"allowedTypes"` mismatch instead.
-			 */
-			readonly mismatch: "valueSchema";
-			/**
-			 * A human-readable explanation of the failed schema requirement.
-			 * Intended for diagnostics, not parsing or choosing an application-specific fix.
-			 */
-			readonly reason: string;
-			/**
-			 * The leaf node schema identifier.
-			 */
-			readonly nodeType: string;
-			/**
-			 * The proposed value schema, or undefined when it does not constrain values.
-			 */
-			readonly proposed: string | undefined;
-			/**
-			 * The stored value schema, or undefined when it does not constrain values.
-			 */
-			readonly stored: string | undefined;
-	  }
-	| {
-			/**
-			 * The proposed node kind is incompatible with the stored node kind.
-			 *
-			 * @remarks
-			 * Stored nodes use an `"Object"`, `"Map"`, or `"Leaf"` representation, with arrays using the object representation.
-			 * Changing that representation can stop accepting previously allowed structures;
-			 * for example, changing a stored map to an object under the same identifier is not permitted.
-			 * Some object-to-map upgrades are permitted, however, so a representation change alone does not imply a failure.
-			 * This mismatch reports a blocked structural change, rather than a difference in field presence or primitive value types.
-			 */
-			readonly mismatch: "nodeKind";
-			/**
-			 * A human-readable explanation of the failed schema requirement.
-			 * Intended for diagnostics, not parsing or choosing an application-specific fix.
-			 */
-			readonly reason: string;
-			/**
-			 * The node schema identifier.
-			 */
-			readonly nodeType: string;
-			/**
-			 * The proposed node kind.
-			 */
-			readonly proposed: string;
-			/**
-			 * The stored node kind.
-			 */
-			readonly stored: string;
-	  }
-	| {
-			/**
-			 * A constructible stored node definition is absent from the proposed schema.
-			 *
-			 * @remarks
-			 * Upgrading must preserve stored node types even when they are unreachable from the document root,
-			 * since detached content may use them.
-			 */
-			readonly mismatch: "missingNodeSchema";
-			/**
-			 * A human-readable explanation of the failed schema requirement.
-			 * Intended for diagnostics, not parsing or choosing an application-specific fix.
-			 */
-			readonly reason: string;
-			/**
-			 * The missing stored node schema identifier.
-			 */
-			readonly nodeType: string;
-	  }
-	| {
-			/**
-			 * The proposed node definition has requirements that cannot be satisfied under the upgrade rules.
-			 *
-			 * @remarks
-			 * The upgrade comparison checks whether the proposed node can be constructed,
-			 * resolving its allowed child types against the existing stored definitions.
-			 * For example, a required field cannot be filled if it allows no types or none of its allowed types can be constructed this way.
-			 * This failure therefore describes an unsatisfied schema requirement, not invalid document content.
-			 */
-			readonly mismatch: "nodeSchemaCannotBeSatisfied";
-			/**
-			 * A human-readable explanation identifying the unsatisfied field or map requirement.
-			 * Intended for diagnostics, not parsing or choosing an application-specific fix.
-			 */
-			readonly reason: string;
-			/**
-			 * The stored node schema identifier.
-			 */
-			readonly nodeType: string;
-	  }
-	| {
-			/**
-			 * The upgrade candidate meets the stored-schema upgrade rules, but the view cannot use it, so no upgrade takes place.
-			 *
-			 * @remarks
-			 * For example, suppose a task's stored schema allows its priority to be a number or a string.
-			 * The view adds an optional notes field but allows only numbers for priority.
-			 * The candidate adds notes and keeps both priority types, so it still allows all content permitted by the stored schema.
-			 * However, the view does not support string priorities, so the view rejects the upgrade.
-			 * No upgrade takes place, and the stored schema remains unchanged.
-			 * The nested incompatibilities explain why the view cannot use the candidate, not why it cannot use the current stored schema.
-			 */
-			readonly mismatch: "viewIncompatibleAfterUpgrade";
-			/**
-			 * A human-readable explanation of why the upgrade would not enable viewing.
-			 * Intended for diagnostics, not parsing or choosing an application-specific fix.
-			 */
-			readonly reason: string;
-			/**
-			 * The nonempty list of viewing incompatibilities with the proposed stored schema.
-			 */
-			readonly incompatibilities: readonly SchemaViewIncompatibility[];
-	  };
+	| SchemaUpgradeAllowedTypesIncompatibility
+	| SchemaUpgradeFieldKindIncompatibility
+	| SchemaUpgradeValueSchemaIncompatibility
+	| SchemaUpgradeNodeKindIncompatibility
+	| SchemaUpgradeMissingNodeSchemaIncompatibility
+	| SchemaUpgradeUnsatisfiedNodeSchemaIncompatibility
+	| SchemaUpgradeViewIncompatibility;
+
+/* eslint-disable @typescript-eslint/consistent-type-definitions -- Object aliases preserve the original inline variants' index-signature assignability. */
+
+/**
+ * A field's proposed allowed types do not include all its stored allowed types.
+ *
+ * @remarks
+ * An upgrade must continue to allow the stored field's node types.
+ * The `stored` list identifies the types that the proposed schema no longer allows.
+ * Removing these types blocks the upgrade.
+ * The `proposed` list identifies any added types, but adding types does not cause this failure.
+ * Types that both schemas allow do not appear in either list.
+ *
+ * For example, suppose a field allows numbers and strings, but the proposed schema allows numbers and booleans.
+ * The `stored` list contains the string node type identifier, and `proposed` contains the boolean node type identifier.
+ * Neither list contains the number node type identifier because both schemas allow it.
+ * If the proposed schema allows only numbers instead, `stored` still lists the string identifier, but `proposed` is empty.
+ * In both cases, removing support for strings blocks the upgrade.
+ * These lists contain node type identifiers, not primitive values or node definitions.
+ * @sealed @beta
+ */
+export type SchemaUpgradeAllowedTypesIncompatibility = {
+	readonly mismatch: "allowedTypes";
+	/**
+	 * A human-readable explanation of the failed schema requirement.
+	 * Intended for diagnostics, not parsing or choosing an application-specific fix.
+	 */
+	readonly reason: string;
+	/**
+	 * The root field, or the containing node identifier and stored field key.
+	 * The field key is undefined for a map's implicit field.
+	 */
+	readonly location:
+		| "root"
+		| {
+				readonly nodeType: string;
+				readonly fieldKey: string | undefined;
+		  };
+	/**
+	 * Node type identifiers allowed only by the proposed schema.
+	 * Empty if the proposed schema adds no allowed node types.
+	 */
+	readonly proposed: readonly string[];
+	/**
+	 * Node type identifiers allowed only by the stored schema.
+	 * Removing these types prevents the upgrade.
+	 */
+	readonly stored: readonly string[];
+};
+
+/**
+ * The transition from the stored field kind to the proposed kind is not permitted.
+ *
+ * @remarks
+ * Because field kinds determine how many children a field permits, changing the kind can exclude previously allowed content.
+ * For example, changing `"Optional"` (zero or one child) to `"Value"` (exactly one) would stop accepting an absent child.
+ * Accepting the same content is not the only requirement: upgrade rules also restrict some transitions
+ * to prevent clients from repeatedly upgrading back and forth.
+ * @sealed @beta
+ */
+export type SchemaUpgradeFieldKindIncompatibility = {
+	readonly mismatch: "fieldKind";
+	/**
+	 * A human-readable explanation of the failed schema requirement.
+	 * Intended for diagnostics, not parsing or choosing an application-specific fix.
+	 */
+	readonly reason: string;
+	/**
+	 * The root field, or the containing node identifier and stored field key.
+	 * The field key is undefined for a map's implicit field.
+	 */
+	readonly location:
+		| "root"
+		| {
+				readonly nodeType: string;
+				readonly fieldKey: string | undefined;
+		  };
+	/**
+	 * The proposed field kind.
+	 */
+	readonly proposed: string;
+	/**
+	 * The stored field kind.
+	 */
+	readonly stored: string;
+};
+
+/**
+ * A leaf node's proposed value schema is incompatible with its stored value schema.
+ *
+ * @remarks
+ * A leaf holds a primitive value or a Fluid handle, not child nodes.
+ * For example, suppose a node type identifier allows string values in the stored schema.
+ * An upgrade cannot reuse that identifier for number values because this would reject the stored string values.
+ * In contrast, {@link SchemaStatics.number | SchemaFactory.number} and {@link SchemaStatics.string | SchemaFactory.string} have different node identifiers.
+ * If you change a field between them, you get an `"allowedTypes"` mismatch instead.
+ * @sealed @beta
+ */
+export type SchemaUpgradeValueSchemaIncompatibility = {
+	readonly mismatch: "valueSchema";
+	/**
+	 * A human-readable explanation of the failed schema requirement.
+	 * Intended for diagnostics, not parsing or choosing an application-specific fix.
+	 */
+	readonly reason: string;
+	/**
+	 * The leaf node schema identifier.
+	 */
+	readonly nodeType: string;
+	/**
+	 * The proposed value schema, or undefined when it does not constrain values.
+	 */
+	readonly proposed: string | undefined;
+	/**
+	 * The stored value schema, or undefined when it does not constrain values.
+	 */
+	readonly stored: string | undefined;
+};
+
+/**
+ * The proposed node kind is incompatible with the stored node kind.
+ *
+ * @remarks
+ * Stored nodes use an `"Object"`, `"Map"`, or `"Leaf"` representation, with arrays using the object representation.
+ * Changing that representation can stop accepting previously allowed structures;
+ * for example, changing a stored map to an object under the same identifier is not permitted.
+ * Some object-to-map upgrades are permitted, however, so a representation change alone does not imply a failure.
+ * This mismatch reports a blocked structural change, rather than a difference in field presence or primitive value types.
+ * @sealed @beta
+ */
+export type SchemaUpgradeNodeKindIncompatibility = {
+	readonly mismatch: "nodeKind";
+	/**
+	 * A human-readable explanation of the failed schema requirement.
+	 * Intended for diagnostics, not parsing or choosing an application-specific fix.
+	 */
+	readonly reason: string;
+	/**
+	 * The node schema identifier.
+	 */
+	readonly nodeType: string;
+	/**
+	 * The proposed node kind.
+	 */
+	readonly proposed: string;
+	/**
+	 * The stored node kind.
+	 */
+	readonly stored: string;
+};
+
+/**
+ * A constructible stored node definition is absent from the proposed schema.
+ *
+ * @remarks
+ * Upgrading must preserve stored node types even when they are unreachable from the document root,
+ * since detached content may use them.
+ * @sealed @beta
+ */
+export type SchemaUpgradeMissingNodeSchemaIncompatibility = {
+	readonly mismatch: "missingNodeSchema";
+	/**
+	 * A human-readable explanation of the failed schema requirement.
+	 * Intended for diagnostics, not parsing or choosing an application-specific fix.
+	 */
+	readonly reason: string;
+	/**
+	 * The missing stored node schema identifier.
+	 */
+	readonly nodeType: string;
+};
+
+/**
+ * The proposed node definition has requirements that cannot be satisfied under the upgrade rules.
+ *
+ * @remarks
+ * The upgrade comparison checks whether the proposed node can be constructed,
+ * resolving its allowed child types against the existing stored definitions.
+ * For example, a required field cannot be filled if it allows no types or none of its allowed types can be constructed this way.
+ * This failure therefore describes an unsatisfied schema requirement, not invalid document content.
+ * @sealed @beta
+ */
+export type SchemaUpgradeUnsatisfiedNodeSchemaIncompatibility = {
+	readonly mismatch: "nodeSchemaCannotBeSatisfied";
+	/**
+	 * A human-readable explanation identifying the unsatisfied field or map requirement.
+	 * Intended for diagnostics, not parsing or choosing an application-specific fix.
+	 */
+	readonly reason: string;
+	/**
+	 * The stored node schema identifier.
+	 */
+	readonly nodeType: string;
+};
+
+/**
+ * The upgrade candidate meets the stored-schema upgrade rules, but the view cannot use it, so no upgrade takes place.
+ *
+ * @remarks
+ * For example, suppose a task's stored schema allows its priority to be a number or a string.
+ * The view adds an optional notes field but allows only numbers for priority.
+ * The candidate adds notes and keeps both priority types, so it still allows all content permitted by the stored schema.
+ * However, the view does not support string priorities, so the view rejects the upgrade.
+ * No upgrade takes place, and the stored schema remains unchanged.
+ * The nested incompatibilities explain why the view cannot use the candidate, not why it cannot use the current stored schema.
+ * @sealed @beta
+ */
+export type SchemaUpgradeViewIncompatibility = {
+	readonly mismatch: "viewIncompatibleAfterUpgrade";
+	/**
+	 * A human-readable explanation of why the upgrade would not enable viewing.
+	 * Intended for diagnostics, not parsing or choosing an application-specific fix.
+	 */
+	readonly reason: string;
+	/**
+	 * The nonempty list of viewing incompatibilities with the proposed stored schema.
+	 */
+	readonly incompatibilities: readonly SchemaViewIncompatibility[];
+};
+
+/* eslint-enable @typescript-eslint/consistent-type-definitions -- End of shape-preserving incompatibility aliases. */
 
 /**
  * An incompatibility that prevents a view from providing read/write access to a document.
