@@ -636,8 +636,8 @@ export async function captureFullContainerState({
 	}
 	const captureAttachmentPayloads = blobCaptureMode === "inline";
 
-	// Preserve the inline mode's offline URL check without adding a new capture-time
-	// restriction for reference callers. Offline loading validates the URL separately.
+	// Inline capture validates compatibility with offline loading; reference capture
+	// leaves offline URL validation to the loader.
 	if (
 		blobCaptureMode === "inline" &&
 		tryParseCompatibleResolvedUrl(resolvedUrl.url) === undefined
