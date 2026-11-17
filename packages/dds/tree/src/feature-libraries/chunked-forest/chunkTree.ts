@@ -37,6 +37,12 @@ import { isStableNodeIdentifier } from "../node-identifier/index.js";
 
 import { BasicChunk } from "./basicChunk.js";
 import type { IncrementalEncodingPolicy } from "./codec/index.js";
+import {
+	type ContentLayout,
+	ContentShapeCache,
+	type ContentShapeLimits,
+	defaultContentShapeLimits,
+} from "./contentShapeCache.js";
 import { SequenceChunk } from "./sequenceChunk.js";
 import { type FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
 
@@ -48,6 +54,10 @@ export interface Disposable {
 }
 /**
  * Creates a ChunkPolicy which responds to schema changes.
+ *
+ * @remarks
+ * Besides shapes derived from the schema, the policy uses shapes derived from content
+ * (see {@link ChunkPolicy.contentShapes}) with the {@link defaultContentShapeLimits}.
  */
 export function makeTreeChunker(
 	schema: TreeStoredSchemaSubscription,
@@ -75,7 +85,22 @@ export function makeTreeChunker(
 				},
 				type,
 			),
+		{ shouldEncodeIncrementally, limits: defaultContentShapeLimits },
 	);
+}
+
+/**
+ * Configuration for chunking with shapes derived from content. See {@link ContentShapeCache}.
+ */
+export interface ContentShapeOptions {
+	/**
+	 * Policy for which fields are encoded incrementally: such fields are never part of a content-derived shape.
+	 */
+	readonly shouldEncodeIncrementally: IncrementalEncodingPolicy;
+	/**
+	 * Bounds on the memory used to cache content-derived shapes.
+	 */
+	readonly limits: ContentShapeLimits;
 }
 
 /**
@@ -119,7 +144,7 @@ export type ShapeInfo = TreeShape | Polymorphic;
  * @remarks
  * Shape information is valid only for the current contents of {@link schema}.
  * The first cache miss registers one schema-change callback.
- * When the schema changes, the callback clears the complete cache and unregisters itself.
+ * When the schema changes, the callback clears the complete cache (including the {@link contentShapes} cache) and unregisters itself.
  * A later cache miss registers a new callback for the new schema version.
  */
 export class Chunker implements IChunker {
@@ -129,6 +154,13 @@ export class Chunker implements IChunker {
 	 * Cleared when `schema` changes.
 	 */
 	private readonly typeShapes: Map<TreeNodeSchemaIdentifier, ShapeInfo> = new Map();
+
+	/**
+	 * Cache of shapes derived from content, created on first use.
+	 * Corresponds to the version of the schema in `schema`.
+	 * Cleared when `schema` changes.
+	 */
+	private contentShapeCache: ContentShapeCache | undefined;
 
 	/**
 	 * Unregisters the schema-change callback for the current cache contents.
@@ -176,6 +208,11 @@ export class Chunker implements IChunker {
 			 */
 			chunkerSchema: TreeStoredSchema,
 		) => ShapeInfo,
+		/**
+		 * When provided, content whose schema allows several shapes is chunked with shapes derived from the content.
+		 * See {@link ChunkPolicy.contentShapes}.
+		 */
+		private readonly contentShapeOptions?: ContentShapeOptions,
 	) {}
 
 	public clone(schema: TreeStoredSchemaSubscription): IChunker {
@@ -189,7 +226,26 @@ export class Chunker implements IChunker {
 			this.uniformChunkNodeCount,
 			this.uniformChunkNodeCountDynamicTargetMax,
 			this.tryShapeWithSchema,
+			this.contentShapeOptions,
 		);
+	}
+
+	public get contentShapes(): ContentShapeCache | undefined {
+		if (this.contentShapeOptions === undefined) {
+			return undefined;
+		}
+		if (this.contentShapeCache === undefined) {
+			this.unregisterSchemaCallback ??= this.schema.events.on("afterSchemaChange", () =>
+				this.schemaChanged(),
+			);
+			this.contentShapeCache = new ContentShapeCache(
+				this.schema,
+				this.contentShapeOptions.shouldEncodeIncrementally,
+				this.uniformChunkNodeCount,
+				this.contentShapeOptions.limits,
+			);
+		}
+		return this.contentShapeCache;
 	}
 
 	public shapeFromSchema(schema: TreeNodeSchemaIdentifier): ShapeInfo {
@@ -227,6 +283,7 @@ export class Chunker implements IChunker {
 
 	private schemaChanged(): void {
 		this.typeShapes.clear();
+		this.contentShapeCache = undefined;
 		if (this.unregisterSchemaCallback) {
 			this.unregisterSchemaCallback();
 			this.unregisterSchemaCallback = undefined;
@@ -521,6 +578,21 @@ export interface ChunkPolicy {
 	 * Returns information about the shapes trees of type `schema` can take.
 	 */
 	shapeFromSchema(schema: TreeNodeSchemaIdentifier): ShapeInfo;
+
+	/**
+	 * Cache of shapes derived from content, used for trees whose schema allows several shapes.
+	 *
+	 * @remarks
+	 * When provided, chunking stores subtrees for which {@link ChunkPolicy.shapeFromSchema} gives no shape in
+	 * {@link UniformChunk}s when their content has a layout the cache supports.
+	 * See {@link ContentShapeCache}.
+	 *
+	 * The fields of a node in a content-derived shape are in the order the source content has them,
+	 * so this changes how content is stored in memory, not the content itself or its order.
+	 *
+	 * When undefined, only shapes from {@link ChunkPolicy.shapeFromSchema} are used.
+	 */
+	readonly contentShapes?: ContentShapeCache;
 }
 
 export interface ChunkCompressor {
@@ -580,6 +652,17 @@ function newBasicChunkTree(
 }
 
 /**
+ * Whether chunking can reuse `chunk`, an existing chunk of the content being chunked, instead of traversing it.
+ * @remarks
+ * {@link UniformChunk}s are never traversed: their content is already stored compactly
+ * (though chunking with content-derived shapes can copy their values into a parent's shape).
+ * Other chunks are reused unless {@link ChunkCompressor.shouldRechunk} asks for them to be traversed.
+ */
+function isReusable(chunk: TreeChunk, compressor: ChunkCompressor): boolean {
+	return chunk instanceof UniformChunk || compressor.shouldRechunk?.(chunk) !== true;
+}
+
+/**
  * Chunk a portion of a field.
  *
  * @param cursor - cursor at the starting node in the field.
@@ -601,8 +684,9 @@ export function chunkRange(
 		(cursor.mode === CursorLocationType.Nodes) === length > 0,
 		0xb59 /* Should be in nodes mode if not past end */,
 	);
-	let output: TreeChunk[] = [];
+	const output: TreeChunk[] = [];
 	let remaining = length;
+	const contentShapes = chunkCompressor.policy.contentShapes;
 	while (remaining > 0) {
 		assert(cursor.mode === CursorLocationType.Nodes, 0x57f /* should be in nodes */);
 		const start = cursor.chunkStart;
@@ -613,10 +697,7 @@ export function chunkRange(
 			const chunkLength = cursor.chunkLength;
 			if (chunkLength <= remaining) {
 				const chunk = tryGetChunk(cursor);
-				if (
-					chunk !== undefined &&
-					(chunk instanceof UniformChunk || chunkCompressor.shouldRechunk?.(chunk) !== true)
-				) {
+				if (chunk !== undefined && isReusable(chunk, chunkCompressor)) {
 					if (
 						chunk instanceof SequenceChunk &&
 						chunk.subChunks.length <= chunkCompressor.policy.sequenceChunkInlineThreshold
@@ -645,7 +726,17 @@ export function chunkRange(
 			assert(cursor.mode === CursorLocationType.Nodes, 0x580 /* should be in nodes */);
 			const type = cursor.type;
 			const shape = chunkCompressor.policy.shapeFromSchema(type);
-			if (
+			if (contentShapes !== undefined && !(shape instanceof TreeShape)) {
+				remaining -= chunkRunWithContentShapes(
+					cursor,
+					chunkCompressor,
+					contentShapes,
+					remaining,
+					skipLastNavigation,
+					output,
+					shape,
+				);
+			} else if (
 				shape instanceof TreeShape &&
 				shape.nodeCount <= chunkCompressor.policy.uniformChunkNodeCount
 			) {
@@ -680,27 +771,34 @@ export function chunkRange(
 	// Newly converted runs are already packed by uniformChunkFromCursor.
 
 	// If output is large, group it into a tree of sequence chunks.
-	while (output.length > chunkCompressor.policy.sequenceChunkSplitThreshold) {
-		const chunkCount = Math.ceil(
-			output.length / chunkCompressor.policy.sequenceChunkSplitThreshold,
-		);
+	return groupIntoSequenceChunks(output, chunkCompressor.policy);
+}
+
+/**
+ * Groups the chunks of a field into a tree of {@link SequenceChunk}s if there are more than
+ * {@link ChunkPolicy.sequenceChunkSplitThreshold} of them.
+ * @returns `output` if it is short enough, otherwise a new array.
+ */
+function groupIntoSequenceChunks(output: TreeChunk[], policy: ChunkPolicy): TreeChunk[] {
+	let result = output;
+	while (result.length > policy.sequenceChunkSplitThreshold) {
+		const chunkCount = Math.ceil(result.length / policy.sequenceChunkSplitThreshold);
 		const newOutput: TreeChunk[] = [];
 		// Rounding down, and add an extra item to some of the chunks.
-		const chunkSize = Math.floor(output.length / chunkCount);
+		const chunkSize = Math.floor(result.length / chunkCount);
 		// number of chunks to add an extra item to to make total line up.
-		const extra = output.length % chunkCount;
+		const extra = result.length % chunkCount;
 		let previousEnd = 0;
 		for (let index = 0; index < chunkCount; index++) {
 			// If we are in the first `extra` items, add an extra to this chunk.
 			const end = previousEnd + chunkSize + (index < extra ? 1 : 0);
-			newOutput.push(new SequenceChunk(output.slice(previousEnd, end)));
+			newOutput.push(new SequenceChunk(result.slice(previousEnd, end)));
 			previousEnd = end;
 		}
-		assert(previousEnd === output.length, 0x581 /* chunks should add up to total */);
-		output = newOutput;
+		assert(previousEnd === result.length, 0x581 /* chunks should add up to total */);
+		result = newOutput;
 	}
-
-	return output;
+	return result;
 }
 
 /**
@@ -982,4 +1080,402 @@ export function uniformChunkFromCursor(
 	}
 	// Copy the values to an array of exactly their length, without the spare capacity left by push.
 	return new UniformChunk(shape.withTopLevelLength(topLevelLength), [...values], idCompressor);
+}
+
+/**
+ * The result of chunking one node with content-derived shapes:
+ * its shape (with its values appended to {@link ContentChunkingWalk.values}) or a {@link BasicChunk} holding it.
+ */
+type WalkResult = TreeShape | TreeChunk;
+
+/**
+ * Scratch state for chunking a range with content-derived shapes. See {@link chunkRunWithContentShapes}.
+ *
+ * @remarks
+ * Nodes are walked depth first. Each node with a shape leaves its values in {@link ContentChunkingWalk.values}
+ * (in the order {@link TreeShape} lays them out) for its parent.
+ * The children of each field being walked are recorded as runs: either consecutive children with the same shape,
+ * or one chunk.
+ * When a node turns out to have no shape, the runs of its fields are converted to chunks and its values are dropped.
+ */
+class ContentChunkingWalk {
+	/**
+	 * Values of the shaped nodes walked so far whose ancestors may still get a shape.
+	 */
+	public readonly values: TreeValue[] = [];
+
+	/**
+	 * For each run: the shape of its nodes, or the chunk which makes up the run.
+	 */
+	public readonly runItems: (TreeShape | TreeChunk)[] = [];
+
+	/**
+	 * For each run of shaped nodes, the index in {@link ContentChunkingWalk.values} of its first value.
+	 */
+	public readonly runValueStarts: number[] = [];
+
+	/**
+	 * For each run, its number of top level nodes.
+	 */
+	public readonly runLengths: number[] = [];
+
+	/**
+	 * For each run, the existing {@link UniformChunk} it was absorbed from (see {@link ContentChunkingWalk.appendAbsorbed}), if any.
+	 */
+	public readonly runSources: (UniformChunk | undefined)[] = [];
+
+	/**
+	 * For each field being walked (or walked, under a node which is still being walked), its key.
+	 */
+	public readonly fieldKeys: FieldKey[] = [];
+
+	/**
+	 * For each entry in {@link ContentChunkingWalk.fieldKeys}, the index of the field's first run.
+	 */
+	public readonly fieldRunStarts: number[] = [];
+
+	public constructor(
+		public readonly cache: ContentShapeCache,
+		public readonly compressor: ChunkCompressor,
+	) {}
+
+	/**
+	 * Records `result`, the result of walking a node whose values (if any) start at `valueStart`.
+	 * Extends the last run if it has the same shape and starts at or after `firstRunOfField`.
+	 */
+	public appendRun(result: WalkResult, valueStart: number, firstRunOfField: number): void {
+		const last = this.runItems.length - 1;
+		if (
+			result instanceof TreeShape &&
+			last >= firstRunOfField &&
+			this.runItems[last] === result &&
+			this.runSources[last] === undefined
+		) {
+			this.runLengths[last] = (this.runLengths[last] ?? oob()) + 1;
+			return;
+		}
+		this.runItems.push(result);
+		this.runValueStarts.push(valueStart);
+		this.runLengths.push(1);
+		this.runSources.push(undefined);
+	}
+
+	/**
+	 * Records `chunk` (to which the caller has added a reference) as a run.
+	 */
+	public appendChunk(chunk: TreeChunk): void {
+		this.runItems.push(chunk);
+		this.runValueStarts.push(0);
+		this.runLengths.push(chunk.topLevelLength);
+		this.runSources.push(undefined);
+	}
+
+	/**
+	 * Records the nodes of `chunk`, an existing chunk of the content whose nodes have shape `shape`, as a run,
+	 * appending their values to {@link ContentChunkingWalk.values} so that their parent can still get a shape.
+	 * @remarks
+	 * The run is not extended with other nodes, so if the parent gets no shape, the run is stored as `chunk` itself.
+	 */
+	public appendAbsorbed(shape: TreeShape, chunk: UniformChunk): void {
+		this.runItems.push(shape);
+		this.runValueStarts.push(this.values.length);
+		this.runLengths.push(chunk.topLevelLength);
+		this.runSources.push(chunk);
+		for (const value of chunk.values) {
+			this.values.push(value);
+		}
+	}
+
+	/**
+	 * The shape with which to absorb the nodes of `chunk`, an existing chunk of the content
+	 * (see {@link ContentChunkingWalk.appendAbsorbed}), or `undefined` if they are kept as a chunk.
+	 * @remarks
+	 * The shape is the instance this walk's cache uses for the chunk's layout (see {@link ContentShapeCache.internShape}),
+	 * so that equal layouts keep sharing shapes.
+	 */
+	public absorbableShape(chunk: UniformChunk): TreeShape | undefined {
+		const shape = chunk.shape.treeShape;
+		if (shape.mayContainCompressedIds && chunk.idCompressor !== this.compressor.idCompressor) {
+			return undefined;
+		}
+		return this.cache.internShape(shape, (type) =>
+			this.compressor.policy.shapeFromSchema(type),
+		);
+	}
+
+	/**
+	 * Appends the chunks for runs `[from, to)` to `output`:
+	 * each run of shaped nodes becomes one or more {@link UniformChunk}s, other runs are their chunk.
+	 */
+	public materializeRuns(from: number, to: number, output: TreeChunk[]): TreeChunk[] {
+		const { uniformChunkNodeCount } = this.compressor.policy;
+		for (let run = from; run < to; run++) {
+			const item = this.runItems[run] ?? oob();
+			const source = this.runSources[run];
+			if (source !== undefined) {
+				source.referenceAdded();
+				output.push(source);
+			} else if (item instanceof TreeShape) {
+				let start = this.runValueStarts[run] ?? oob();
+				let remaining = this.runLengths[run] ?? oob();
+				// Same limit as chunkRange uses for schema-derived shapes.
+				const maxTopLevelLength = Math.max(
+					1,
+					Math.floor(uniformChunkNodeCount / item.nodeCount),
+				);
+				while (remaining > 0) {
+					const topLevelLength = Math.min(remaining, maxTopLevelLength);
+					const end = start + topLevelLength * item.valuesPerTopLevelNode;
+					output.push(
+						new UniformChunk(
+							item.withTopLevelLength(topLevelLength),
+							this.values.slice(start, end),
+							this.compressor.idCompressor,
+						),
+					);
+					start = end;
+					remaining -= topLevelLength;
+				}
+			} else {
+				output.push(item);
+			}
+		}
+		return output;
+	}
+
+	/**
+	 * Completes a node of type `type` whose fields have been walked.
+	 *
+	 * @param layout - The layout of the node's fields, or undefined if the node can not have a shape.
+	 * @param valueStart - Length of {@link ContentChunkingWalk.values} before the node was walked.
+	 * @param runStart - Number of runs before the node's fields were walked.
+	 * @param fieldStart - Number of entries in {@link ContentChunkingWalk.fieldKeys} before the node's fields were walked.
+	 * @param existing - The existing chunk at the node in the content, if any.
+	 * @returns The node's shape (its values stay in {@link ContentChunkingWalk.values}),
+	 * or else a {@link BasicChunk} holding the node (its values are removed from {@link ContentChunkingWalk.values}):
+	 * `existing` if it is a {@link BasicChunk} with the same field chunks, otherwise a new one.
+	 */
+	public endNode(
+		type: TreeNodeSchemaIdentifier,
+		value: Value,
+		layout: ContentLayout | undefined,
+		valueStart: number,
+		runStart: number,
+		fieldStart: number,
+		existing: TreeChunk | undefined,
+	): WalkResult {
+		const shape = layout === undefined ? undefined : this.cache.shapeForLayout(layout, type);
+		if (shape === undefined) {
+			const fields: Map<FieldKey, TreeChunk[]> = new Map();
+			const fieldEnd = this.fieldKeys.length;
+			for (let field = fieldStart; field < fieldEnd; field++) {
+				const from = this.fieldRunStarts[field] ?? oob();
+				const to =
+					field + 1 < fieldEnd
+						? (this.fieldRunStarts[field + 1] ?? oob())
+						: this.runItems.length;
+				const chunks = groupIntoSequenceChunks(
+					this.materializeRuns(from, to, []),
+					this.compressor.policy,
+				);
+				// Like chunkField, store the field's chunks in an array of exactly their length.
+				fields.set(this.fieldKeys[field] ?? oob(), [...chunks]);
+			}
+			this.truncate(valueStart, runStart, fieldStart);
+			return reuseUnchangedBasicChunk(existing, fields) ?? new BasicChunk(type, fields, value);
+		}
+		this.truncate(this.values.length, runStart, fieldStart);
+		return shape;
+	}
+
+	private truncate(valueLength: number, runLength: number, fieldLength: number): void {
+		truncateArray(this.values, valueLength);
+		truncateArray(this.runItems, runLength);
+		truncateArray(this.runValueStarts, runLength);
+		truncateArray(this.runLengths, runLength);
+		truncateArray(this.runSources, runLength);
+		truncateArray(this.fieldKeys, fieldLength);
+		truncateArray(this.fieldRunStarts, fieldLength);
+	}
+}
+
+/**
+ * Removes the elements of `array` from index `length` on.
+ *
+ * @remarks
+ * Pops the elements: assigning `array.length` is a slow runtime call in V8, even when it does not change the length,
+ * while each pop is cheap and pops are bounded by the pushes they undo.
+ */
+function truncateArray(array: unknown[], length: number): void {
+	while (array.length > length) {
+		array.pop();
+	}
+}
+
+/**
+ * Returns the shape all children of a field have after walking one more child with `result`:
+ * `undefined` before the first child, `false` once they differ or a child has no shape.
+ */
+function nextFieldShape(
+	fieldShape: TreeShape | false | undefined,
+	result: WalkResult,
+): TreeShape | false {
+	if (!(result instanceof TreeShape)) {
+		return false;
+	}
+	return fieldShape === undefined || fieldShape === result ? result : false;
+}
+
+/**
+ * Chunks nodes from `cursor` into `output` with content-derived shapes, like {@link chunkRange}.
+ *
+ * @remarks
+ * Consumes up to `remaining` nodes, stopping early before a node which starts an existing chunk that
+ * {@link chunkRange} would reuse.
+ * Leaves the cursor where {@link chunkRange} would after consuming the same nodes.
+ *
+ * Each node is visited once: a node gets a shape from its children's shapes, so work is linear in the number of nodes.
+ * Consecutive siblings with the same shape share {@link UniformChunk}s.
+ *
+ * @param firstShape - The schema shape of the node under `cursor`, which the caller has already looked up.
+ * @returns The number of nodes consumed.
+ */
+function chunkRunWithContentShapes(
+	cursor: ITreeCursorSynchronous,
+	compressor: ChunkCompressor,
+	cache: ContentShapeCache,
+	remaining: number,
+	skipLastNavigation: boolean,
+	output: TreeChunk[],
+	firstShape: ShapeInfo,
+): number {
+	const walk = new ContentChunkingWalk(cache, compressor);
+	let consumed = 0;
+	for (;;) {
+		const valueStart = walk.values.length;
+		const result =
+			consumed === 0 ? walkNode(cursor, walk, firstShape) : walkNode(cursor, walk);
+		walk.appendRun(result, valueStart, 0);
+		consumed++;
+		if (consumed === remaining) {
+			if (!skipLastNavigation) {
+				cursor.nextNode();
+			}
+			break;
+		}
+		cursor.nextNode();
+		if (cursor.chunkStart === cursor.fieldIndex) {
+			const next = tryGetChunk(cursor);
+			if (
+				next !== undefined &&
+				isReusable(next, compressor) &&
+				cursor.chunkLength <= remaining - consumed
+			) {
+				break;
+			}
+		}
+	}
+	walk.materializeRuns(0, walk.runItems.length, output);
+	return consumed;
+}
+
+/**
+ * Walks the node under `cursor` (leaving the cursor on it) for {@link chunkRunWithContentShapes}.
+ * @param schemaShape - The shape of the node's schema.
+ */
+function walkNode(
+	cursor: ITreeCursorSynchronous,
+	walk: ContentChunkingWalk,
+	schemaShape: ShapeInfo = walk.compressor.policy.shapeFromSchema(cursor.type),
+): WalkResult {
+	const type = cursor.type;
+	if (schemaShape instanceof TreeShape) {
+		insertValues(cursor, schemaShape, walk.values, walk.compressor.idCompressor);
+		return schemaShape;
+	}
+	const existingNode = tryGetChunk(cursor);
+	const value = cursor.value;
+	const valueStart = walk.values.length;
+	const runStart = walk.runItems.length;
+	const fieldStart = walk.fieldKeys.length;
+	let layout = value === undefined ? walk.cache.layoutForType(type) : undefined;
+	for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
+		const key = cursor.getFieldKey();
+		const firstRunOfField = walk.runItems.length;
+		walk.fieldKeys.push(key);
+		walk.fieldRunStarts.push(firstRunOfField);
+		const fieldLength = cursor.getFieldLength();
+		let fieldShape: TreeShape | false | undefined;
+		let count = 0;
+		let inNodes = cursor.firstNode();
+		while (inNodes) {
+			if (cursor.chunkStart === cursor.fieldIndex) {
+				const existing = tryGetChunk(cursor);
+				if (existing !== undefined) {
+					const chunkLength = cursor.chunkLength;
+					if (chunkLength <= fieldLength - count && isReusable(existing, walk.compressor)) {
+						const absorbed =
+							existing instanceof UniformChunk ? walk.absorbableShape(existing) : undefined;
+						if (absorbed !== undefined && existing instanceof UniformChunk) {
+							walk.appendAbsorbed(absorbed, existing);
+							fieldShape = nextFieldShape(fieldShape, absorbed);
+						} else {
+							existing.referenceAdded();
+							walk.appendChunk(existing);
+							fieldShape = false;
+						}
+						count += chunkLength;
+						inNodes = cursor.seekNodes(chunkLength);
+						continue;
+					}
+				}
+			}
+			const childValueStart = walk.values.length;
+			const result = walkNode(cursor, walk);
+			walk.appendRun(result, childValueStart, firstRunOfField);
+			fieldShape = nextFieldShape(fieldShape, result);
+			count++;
+			inNodes = cursor.nextNode();
+		}
+		if (layout !== undefined) {
+			layout =
+				fieldShape instanceof TreeShape
+					? walk.cache.addField(layout, type, key, fieldShape, count)
+					: undefined;
+		}
+	}
+	return walk.endNode(type, value, layout, valueStart, runStart, fieldStart, existingNode);
+}
+
+/**
+ * Returns `existing` (with a reference added for the caller) if it is a {@link BasicChunk} whose fields hold exactly the chunks in `fields`,
+ * releasing the references `fields` holds, so that rechunking content which does not change keeps its chunks.
+ * Otherwise returns `undefined`.
+ * @remarks
+ * Like {@link newBasicChunkTree}, this preserves chunk identity so incremental summary tracking remains valid.
+ */
+function reuseUnchangedBasicChunk(
+	existing: TreeChunk | undefined,
+	fields: ReadonlyMap<FieldKey, readonly TreeChunk[]>,
+): BasicChunk | undefined {
+	if (
+		!(existing instanceof BasicChunk) ||
+		existing.fields.size !== fields.size ||
+		![...fields].every(([key, children]) => {
+			const previous = existing.fields.get(key);
+			return (
+				previous?.length === children.length &&
+				children.every((child, index) => child === previous[index])
+			);
+		})
+	) {
+		return undefined;
+	}
+	for (const children of fields.values()) {
+		for (const child of children) {
+			child.referenceRemoved();
+		}
+	}
+	existing.referenceAdded();
+	return existing;
 }
