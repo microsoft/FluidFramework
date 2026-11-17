@@ -36,6 +36,7 @@
 		"@changesets/types": "^6.0.0",
 		"changesets-format-with-issue-links": "^0.3.0",
 		"remark": "^15.0.1",
+		"remark-gfm": "^4.0.1",
 		"typescript": "catalog:TypeScript",
 		"unist-util-visit": "^5.0.0"
 	},

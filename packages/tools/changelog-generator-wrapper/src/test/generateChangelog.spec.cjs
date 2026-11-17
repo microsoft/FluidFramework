@@ -146,6 +146,12 @@ Measurements.
 > \`x
 > y\`
 > ===
+
+### https://example.com/a_b
+
+> <a
+> href="https://example.com">Hello</a>
+> ===
 `;
 
 		const second = `---

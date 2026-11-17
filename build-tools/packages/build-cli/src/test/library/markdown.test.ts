@@ -134,6 +134,54 @@ const value = 1;
 		});
 	}
 
+	// HTML inside a heading needs the same single-line representation as code spans, including inside containers.
+	for (const { source, expectedHeading } of [
+		{
+			source: '<a\nhref="https://example.com">Hello</a>\n===',
+			expectedHeading: '#### <a href="https://example.com">Hello</a>',
+		},
+		{
+			source: '> <a\n> href="https://example.com">Hello</a>\n> ===',
+			expectedHeading: '> #### <a href="https://example.com">Hello</a>',
+		},
+		{
+			source: '- <a\n  href="https://example.com">Hello</a>\n  ===',
+			expectedHeading: '* #### <a href="https://example.com">Hello</a>',
+		},
+	]) {
+		it(`preserves multiline inline HTML in ${JSON.stringify(source)}`, () => {
+			const actual = String(remark().use(remarkGfm).processSync(normalize(source)));
+			const expected = `${expectedHeading}\n`;
+			assert.equal(actual, expected);
+		});
+	}
+
+	// Character references preserve quoted attribute values while keeping the generated heading on one physical line.
+	it("preserves line feeds inside quoted HTML attributes", () => {
+		const actual = normalize(`> <a
+> title="first
+> second" data-label='third
+> fourth' href="https://example.com">Hello</a>
+> ===`);
+		const expected = `> #### <a title="first&#10;second" data-label='third&#10;fourth' href="https://example.com">Hello</a>
+`;
+		assert.equal(actual, expected);
+	});
+
+	it("leaves multiline HTML outside headings unchanged", () => {
+		const source = `<div
+class="example">Block</div>
+
+\`\`\`html
+<a
+href="https://example.com">Hello</a>
+\`\`\`
+`;
+		const actual = normalize(source);
+		const expected = source;
+		assert.equal(actual, expected);
+	});
+
 	// Serializing an empty bold label as "****" would introduce a horizontal rule the author did not request.
 	it("does not turn empty overflowing headings into thematic breaks", () => {
 		const actual = normalize("# Examples\n\n####");

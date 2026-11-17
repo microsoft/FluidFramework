@@ -163,6 +163,71 @@ describe("changelog formatter", () => {
 		assert.equal(actual, expected);
 	});
 
+	// Escaping an underscore in a bare URL changes its GFM autolink destination, not just its visible text.
+	for (const prefix of ["", "> ", "- "]) {
+		it(`preserves bare URL destinations with prefix ${JSON.stringify(prefix)}`, async () => {
+			const actual = await format(`Title\n\n# Root\n\n${prefix}### https://example.com/a_b`);
+			const expected = `#### Title
+
+##### Root
+
+${prefix}**<https://example.com/a_b>**
+`;
+			assert.equal(actual, expected);
+		});
+	}
+
+	// A multiline tag is valid in a Setext heading, but its ATX replacement must stay on one physical line.
+	for (const { source, expectedHeading } of [
+		{
+			source: '<a\nhref="https://example.com">Hello</a>\n===',
+			expectedHeading: '##### <a href="https://example.com">Hello</a>',
+		},
+		{
+			source: '> <a\n> href="https://example.com">Hello</a>\n> ===',
+			expectedHeading: '> ##### <a href="https://example.com">Hello</a>',
+		},
+		{
+			source: '- <a\n  href="https://example.com">Hello</a>\n  ===',
+			expectedHeading: '- ##### <a href="https://example.com">Hello</a>',
+		},
+	]) {
+		it(`preserves multiline inline HTML in ${JSON.stringify(source)}`, async () => {
+			const actual = await format(`Title\n\n${source}`);
+			const expected = `#### Title\n\n${expectedHeading}\n`;
+			assert.equal(actual, expected);
+		});
+	}
+
+	// Tag-layout whitespace may become spaces, but line feeds inside quoted attribute values must retain their meaning.
+	it("preserves line feeds inside quoted HTML attributes", async () => {
+		const actual = await format(`Title
+
+> <a
+> title="first
+> second" data-label='third
+> fourth' href="https://example.com">Hello</a>
+> ===`);
+		const expected = `#### Title
+
+> ##### <a title="first&#10;second" data-label='third&#10;fourth' href="https://example.com">Hello</a>
+`;
+		assert.equal(actual, expected);
+	});
+
+	it("leaves multiline HTML outside headings unchanged", async () => {
+		const body = `<div
+class="example">Block</div>
+
+\`\`\`html
+<a
+href="https://example.com">Hello</a>
+\`\`\``;
+		const actual = await format(`Title\n\n${body}`);
+		const expected = `#### Title\n\n${body}\n`;
+		assert.equal(actual, expected);
+	});
+
 	// A top-level HTML block ends at a blank line, not at its closing tag.
 	// Parse concatenated formatter output to verify the next entry remains a Markdown heading.
 	it("separates an entry ending in HTML from the next entry", async () => {

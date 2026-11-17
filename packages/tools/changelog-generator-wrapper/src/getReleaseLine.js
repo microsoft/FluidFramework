@@ -5,6 +5,7 @@
 
 const changelogFunctions = require("changesets-format-with-issue-links");
 const { remark } = require("remark");
+const remarkGfm = require("remark-gfm").default;
 const { visit } = require("unist-util-visit");
 
 /**
@@ -28,6 +29,21 @@ function isBlankLine(line, prefix) {
 	const containerPrefix = prefix.trimEnd();
 	const content = line.startsWith(containerPrefix) ? line.slice(containerPrefix.length) : line;
 	return BLANK_LINE_REGEX.test(content);
+}
+
+/**
+ * Keeps inline HTML on one physical line without changing quoted attribute values.
+ *
+ * @remarks
+ * HTML normalizes literal line endings to line feeds; character references preserve those values inside quoted attributes.
+ *
+ * @param {string} html - An inline HTML node's source.
+ * @returns {string} HTML with tag-layout line endings replaced by spaces and quoted line feeds encoded as character references.
+ */
+function normalizeInlineHtml(html) {
+	return html.replace(/"[^"]*"|'[^']*'|\r\n?|\n/g, (part) =>
+		part.startsWith('"') || part.startsWith("'") ? part.replace(/\r\n?|\n/g, "&#10;") : " ",
+	);
 }
 
 /**
@@ -102,7 +118,8 @@ const getReleaseLine = async (changeset, type, options) => {
 		return `${title}\n`;
 	}
 
-	const processor = remark();
+	// Use GitHub-flavored Markdown so reserializing headings does not change autolink destinations or inline syntax.
+	const processor = remark().use(remarkGfm);
 
 	// Preserve the body's blank lines and indentation, which can be significant in Markdown code blocks.
 	let body = bodyLines.join("\n");
@@ -134,9 +151,13 @@ const getReleaseLine = async (changeset, type, options) => {
 				);
 			}
 
-			// Code-span line endings render as spaces; physical newlines would split an ATX heading or lose its container prefix.
-			visit(node, "inlineCode", (code) => {
-				code.value = code.value.replace(/\r\n?|\n/g, " ");
+			// Physical newlines in code spans or HTML would split an ATX heading or lose its container prefix.
+			visit(node, ["inlineCode", "html"], (inline) => {
+				if (inline.type === "html") {
+					inline.value = normalizeInlineHtml(inline.value);
+				} else if (inline.type === "inlineCode") {
+					inline.value = inline.value.replace(/\r\n?|\n/g, " ");
+				}
 			});
 
 			// Apply the same offset even when source heading levels are skipped.

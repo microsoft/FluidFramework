@@ -24,6 +24,10 @@
 
 > #### `x y`
 
+**<https://example.com/a_b>**
+
+> #### <a href="https://example.com">Hello</a>
+
 #### Change details
 
 Commit: [`<SHORT_COMMIT_HASH>`](https://github.com/example/repo/commit/<COMMIT_HASH>)

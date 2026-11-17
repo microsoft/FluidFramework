@@ -124,9 +124,13 @@ export function normalizeReleaseNoteHeadings(): (tree: Root) => void {
 		const offset = MINIMUM_BODY_HEADING_LEVEL - shallowestDepth;
 
 		visit(tree, "heading", (node, index, parent) => {
-			// Code-span line endings render as spaces; retaining physical newlines would break normalized ATX headings.
-			visit(node, "inlineCode", (code) => {
-				code.value = code.value.replace(/\r\n?|\n/g, " ");
+			// Physical newlines in code spans or HTML would break normalized ATX headings.
+			visit(node, ["inlineCode", "html"], (inline) => {
+				if (inline.type === "html") {
+					inline.value = normalizeInlineHtml(inline.value);
+				} else if (inline.type === "inlineCode") {
+					inline.value = inline.value.replace(/\r\n?|\n/g, " ");
+				}
 			});
 			const depth = node.depth + offset;
 			if (depth === MINIMUM_BODY_HEADING_LEVEL || depth === 5 || depth === 6) {
@@ -148,6 +152,18 @@ export function normalizeReleaseNoteHeadings(): (tree: Root) => void {
 			return SKIP;
 		});
 	};
+}
+
+/**
+ * Keeps inline HTML on one physical line without changing quoted attribute values.
+ *
+ * @remarks
+ * HTML normalizes literal line endings to line feeds; character references preserve those values inside quoted attributes.
+ */
+function normalizeInlineHtml(html: string): string {
+	return html.replace(/"[^"]*"|'[^']*'|\r\n?|\n/g, (part) =>
+		part.startsWith('"') || part.startsWith("'") ? part.replace(/\r\n?|\n/g, "&#10;") : " ",
+	);
 }
 
 /**

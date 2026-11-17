@@ -190,6 +190,12 @@ Improve memory usage
 > \`x
 > y\`
 > ===
+
+#### https://example.com/a_b
+
+> <a
+> href="https://example.com">Hello</a>
+> ===
 `;
 		await writeFile(path.join(testDir, ".changeset", "first.md"), firstChangeset);
 
