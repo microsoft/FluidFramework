@@ -652,7 +652,8 @@ function attachPass(
 /**
  * Converts a chunk of trees into an array of cursors, one at each top-level node.
  * @remarks
- * A chunk with one node, as a build of one new value has, gets the chunk's own cursor in that node rather than a fork of it.
+ * A chunk with one node, as a build of one new value has, returns a new cursor from {@link TreeChunk.cursor} which this function owns,
+ * so that cursor is moved to the node and returned rather than forked.
  *
  * TODO: Update the visitDelta logic and downstream APIs to avoid splitting up sequences into individual nodes.
  */
