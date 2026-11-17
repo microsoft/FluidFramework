@@ -312,6 +312,85 @@ describeCompat(
 			loaderContainerTracker.reset();
 		});
 
+		for (const reserveAlias of [false, true]) {
+			it(`allocates distinct detached data store IDs after rehydrating a gap (alias: ${reserveAlias})`, async function () {
+				if (apis.containerRuntime.version !== pkgVersion) {
+					this.skip();
+				}
+				const { container, defaultDataStore } =
+					await createDetachedContainerAndGetEntryPoint();
+				const runtime = defaultDataStore.context.containerRuntime;
+				const unbound = await runtime.createDataStore(["default"]);
+				const unboundObject = (await unbound.entryPoint.get()) as TestFluidObject;
+				const retained = await runtime.createDataStore(["default"]);
+				const retainedObject = (await retained.entryPoint.get()) as TestFluidObject;
+				retainedObject.root.set("value", "retained");
+				defaultDataStore.root.set("retained", retainedObject.handle);
+				if (reserveAlias) {
+					// The next short ID after the retained data store's ID ("E") is "G".
+					assert.equal(await retained.trySetAlias("G"), "Success");
+				}
+
+				const { baseSnapshot } = getSnapshotInfoFromSerializedContainer(container);
+				const channels = assertChannelsTree(baseSnapshot);
+				assert.equal(
+					channels.trees[unboundObject.runtime.id],
+					undefined,
+					"Unbound store must be omitted",
+				);
+				assertDatastoreTree(baseSnapshot, retainedObject.runtime.id);
+
+				const rehydrated = await loader.rehydrateDetachedContainerFromSnapshot(
+					container.serialize(),
+				);
+				container.close();
+				const root = (await rehydrated.getEntryPoint()) as TestFluidObject;
+				const restoredRuntime = root.context.containerRuntime;
+				const ids = new Set([root.runtime.id, retainedObject.runtime.id]);
+				for (let index = 0; index < 3; index++) {
+					const store = await restoredRuntime.createDataStore(["default"]);
+					const object = (await store.entryPoint.get()) as TestFluidObject;
+					assert(
+						!ids.has(object.runtime.id),
+						"New data store ID must not replace an existing store",
+					);
+					if (reserveAlias) {
+						assert.notEqual(
+							object.runtime.id,
+							"G",
+							"New data store ID must not collide with an alias",
+						);
+					}
+					ids.add(object.runtime.id);
+					object.root.set("value", `new-${index}`);
+					assert.equal(await store.trySetAlias(`new-${index}`), "Success");
+					root.root.set(`new-${index}`, object.handle);
+				}
+
+				const restoredSnapshot = getSnapshotInfoFromSerializedContainer(rehydrated);
+				for (const id of ids) {
+					assertDatastoreTree(restoredSnapshot.baseSnapshot, id);
+				}
+				await rehydrated.attach(request);
+				assert(rehydrated.resolvedUrl !== undefined);
+				const url = await provider.urlResolver.getAbsoluteUrl(rehydrated.resolvedUrl, "");
+				const reloaded = await loader.resolve({ url });
+				await loaderContainerTracker.ensureSynchronized();
+				for (const key of ["retained", "new-0", "new-1", "new-2"]) {
+					const object = await getDataObjectFromContainer(reloaded, key);
+					assert.equal(object.root.get("value"), key, `${key} contents must survive reload`);
+				}
+				if (reserveAlias) {
+					const reloadedRoot = (await reloaded.getEntryPoint()) as TestFluidObject;
+					const handle =
+						await reloadedRoot.context.containerRuntime.getAliasedDataStoreEntryPoint("G");
+					assert(handle !== undefined, "Existing alias must survive reload");
+					const object = (await handle.get()) as TestFluidObject;
+					assert.equal(object.root.get("value"), "retained");
+				}
+			});
+		}
+
 		const tests = (): void => {
 			it("Dehydrated container snapshot", async () => {
 				const { container, defaultDataStore } =
