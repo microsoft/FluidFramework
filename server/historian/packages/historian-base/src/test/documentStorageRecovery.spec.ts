@@ -50,13 +50,14 @@ const activeDocument: IDocument = {
 		isSessionActive: false,
 	},
 };
+const accessToken = generateToken(tenantId, documentId, "tenant-key", [
+	ScopeType.DocRead,
+	ScopeType.DocWrite,
+	ScopeType.SummaryWrite,
+]);
 const authorization = getAuthorizationTokenFromCredentials({
 	user: tenantId,
-	password: generateToken(tenantId, documentId, "tenant-key", [
-		ScopeType.DocRead,
-		ScopeType.DocWrite,
-		ScopeType.SummaryWrite,
-	]),
+	password: accessToken,
 });
 
 describe("document storage recovery", () => {
@@ -150,6 +151,7 @@ describe("document storage recovery", () => {
 			revokedTokenChecker?: IRevokedTokenChecker;
 			authorizer?: IDocumentAccessAuthorizer;
 			resolver?: ITrustedCreateContextResolver;
+			cache?: TestCache;
 		} = {},
 	) {
 		return historianApp.create(
@@ -160,7 +162,7 @@ describe("document storage recovery", () => {
 			new Map(),
 			documentManager,
 			new StartupCheck(),
-			new TestCache(),
+			options.cache ?? new TestCache(),
 			options.revokedTokenChecker,
 			options.denyList,
 			undefined,
@@ -194,7 +196,7 @@ describe("document storage recovery", () => {
 		sinon.assert.notCalled(storageNameRetriever.get);
 	});
 
-	it("shares recovery between concurrent requests", async () => {
+	it("shares recovery between concurrent operations on one service", async () => {
 		const service = await createService();
 		assert.deepStrictEqual(await Promise.all([service.getRefs(), service.getRefs()]), [[], []]);
 		assert.strictEqual(
@@ -230,6 +232,125 @@ describe("document storage recovery", () => {
 		assert.strictEqual(operations.length, 3);
 	});
 
+	it("keeps local ephemeral cache hits free of Alfred and durable routing", async () => {
+		config.set("ignoreEphemeralFlag", false);
+		config.set("alfredEnforcesServerGeneratedDocumentId", true);
+		initialized = true;
+		const cache = new TestCache();
+		await cache.activateSummaryAccessIfNotDeleted(
+			tenantId,
+			documentId,
+			activeDocument.createTime,
+			activeDocument.createTime + 24 * 60 * 60 * 1000,
+		);
+		const readLocalAccess = sandbox.spy(cache, "readSummaryAccess");
+		const readStaticProperties = sandbox
+			.stub(documentManager, "readStaticProperties")
+			.resolves({
+				...activeDocument,
+				isEphemeralContainer: true,
+			});
+		const app = createApp({ cache });
+		for (let i = 0; i < 2; i++) {
+			await request(app)
+				.get(`/repos/${tenantId}/git/summaries/latest`)
+				.set("Authorization", authorization)
+				.expect(200, summary);
+		}
+		assert.strictEqual(operations.length, 1);
+		sinon.assert.calledTwice(readLocalAccess);
+		sinon.assert.notCalled(readDocument);
+		sinon.assert.notCalled(readStaticProperties);
+		sinon.assert.notCalled(storageNameRetriever.get);
+	});
+
+	for (const state of ["deleted", "expired"] as const) {
+		it(`rejects a ${state} ephemeral document even with a warm summary cache`, async () => {
+			config.set("ignoreEphemeralFlag", false);
+			config.set("alfredEnforcesServerGeneratedDocumentId", true);
+			initialized = true;
+			const cache = new TestCache();
+			await cache.set(`isEphemeralContainer:${tenantId}:${documentId}`, true);
+			await cache.activateSummaryAccessIfNotDeleted(
+				tenantId,
+				documentId,
+				activeDocument.createTime,
+				activeDocument.createTime + 24 * 60 * 60 * 1000,
+			);
+			const app = createApp({ cache });
+			await request(app)
+				.get(`/repos/${tenantId}/git/summaries/latest`)
+				.set("Authorization", authorization)
+				.expect(200, summary);
+			sandbox.stub(cache, "readSummaryAccess").resolves({
+				version: 1,
+				state: state === "deleted" ? "deleted" : "active",
+				createTime: state === "expired" ? 0 : activeDocument.createTime,
+			});
+			await request(app)
+				.get(`/repos/${tenantId}/git/summaries/latest`)
+				.set("Authorization", authorization)
+				.expect(404);
+			assert.strictEqual(operations.length, 1);
+			sinon.assert.notCalled(readDocument);
+		});
+	}
+
+	it("persists an ephemeral tombstone before sending deletion to GitRest", async () => {
+		config.set("ignoreEphemeralFlag", false);
+		config.set("alfredEnforcesServerGeneratedDocumentId", true);
+		initialized = true;
+		readDocument.resolves({ ...activeDocument, isEphemeralContainer: true });
+		const cache = new TestCache();
+		await cache.set(`isEphemeralContainer:${tenantId}:${documentId}`, true);
+		const markDeleted = sandbox.spy(cache, "markSummaryAccessDeleted");
+		let tombstonedBeforeDelete = false;
+		server.once("request", () => {
+			tombstonedBeforeDelete = markDeleted.calledOnce;
+		});
+		await request(createApp({ cache }))
+			.delete(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.set("Soft-Delete", "true")
+			.expect(200);
+		assert.strictEqual((await cache.readSummaryAccess(tenantId, documentId))?.state, "deleted");
+		assert.ok(tombstonedBeforeDelete);
+		sinon.assert.calledOnce(markDeleted);
+		assert.strictEqual(operations.length, 1);
+		assert.ok(operations[0]?.startsWith("DELETE "));
+		sinon.assert.calledOnce(readDocument);
+	});
+
+	it("does not delete ephemeral storage when tombstone persistence fails", async () => {
+		config.set("ignoreEphemeralFlag", false);
+		config.set("alfredEnforcesServerGeneratedDocumentId", true);
+		initialized = true;
+		readDocument.resolves({ ...activeDocument, isEphemeralContainer: true });
+		const cache = new TestCache();
+		await cache.set(`isEphemeralContainer:${tenantId}:${documentId}`, true);
+		sandbox.stub(cache, "markSummaryAccessDeleted").rejects(new Error("Redis unavailable"));
+		await request(createApp({ cache }))
+			.delete(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.set("Soft-Delete", "true")
+			.expect(503);
+		assert.deepStrictEqual(operations, []);
+	});
+
+	it("does not access ephemeral storage when Alfred reports a durable document", async () => {
+		config.set("ignoreEphemeralFlag", false);
+		config.set("alfredEnforcesServerGeneratedDocumentId", true);
+		initialized = true;
+		const cache = new TestCache();
+		await cache.set(`isEphemeralContainer:${tenantId}:${documentId}`, true);
+		await request(createApp({ cache }))
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(403);
+		assert.deepStrictEqual(operations, []);
+		sinon.assert.calledOnce(readDocument);
+	});
+
 	it("uses already validated document details to resolve legacy storage", async () => {
 		const document = { ...activeDocument, storageName: undefined };
 		readDocument.resolves(document);
@@ -240,6 +361,95 @@ describe("document storage recovery", () => {
 		sinon.assert.calledOnceWithExactly(getWithDocumentDetails, tenantId, document);
 		sinon.assert.calledOnce(readDocument);
 	});
+
+	it("reuses the existing storage retriever for documents without a storage name", async () => {
+		readDocument.resolves({ ...activeDocument, storageName: undefined });
+		const service = await createService();
+		assert.deepStrictEqual(await service.getRefs(), []);
+		sinon.assert.calledOnceWithExactly(storageNameRetriever.get, tenantId, documentId);
+		sinon.assert.calledOnce(readDocument);
+		assert.strictEqual(operations.length, 3);
+	});
+
+	it("does not treat an initial upload storage hint as authoritative legacy routing", async () => {
+		readDocument.resolves({ ...activeDocument, storageName: undefined });
+		const service = await createGitService({
+			config,
+			tenantId,
+			authorization,
+			tenantService: new TestTenantService(),
+			documentManager,
+			storageNameRetriever,
+			initialUpload: true,
+			storageName: "untrusted-storage",
+		});
+		await assert.rejects(
+			service.getRefs(),
+			(error: unknown) => error instanceof NetworkError && error.code === 403,
+		);
+		sinon.assert.calledOnceWithExactly(storageNameRetriever.get, tenantId, documentId);
+		assert.strictEqual(operations.length, 1);
+	});
+
+	it("recovers an active durable Alfred fallback proof", async () => {
+		const service = await createGitService({
+			config,
+			tenantId,
+			authorization,
+			tenantService: new TestTenantService(),
+			documentManager,
+			storageNameRetriever,
+			accessOperation: "read",
+			documentAccessAuthorizer: {
+				authorize: sandbox.stub().resolves({
+					tenantId,
+					documentId,
+					storageAccountName: storageName,
+					containerType: "durable",
+					lifecycleVersion: "generation-1",
+					operation: "read",
+					state: "active",
+					source: "alfred-fallback",
+				}),
+			},
+		});
+		assert.deepStrictEqual(await service.getRefs(), []);
+		sinon.assert.calledOnce(readDocument);
+		assert.strictEqual(operations.length, 3);
+	});
+
+	for (const source of ["dc-v1-metadata", "dc-v2-metadata", "trusted-create"] as const) {
+		it(`does not recover a ${source} proof`, async () => {
+			const creating = source === "trusted-create";
+			const service = await createGitService({
+				config,
+				tenantId,
+				authorization,
+				tenantService: new TestTenantService(),
+				documentManager,
+				storageNameRetriever,
+				accessOperation: creating ? "create" : "read",
+				documentAccessAuthorizer: {
+					authorize: sandbox.stub().resolves({
+						tenantId,
+						documentId,
+						storageAccountName: storageName,
+						containerType: "durable",
+						lifecycleVersion: "generation-1",
+						operation: creating ? "create" : "read",
+						state: creating ? "pending" : "active",
+						source,
+					}),
+				},
+			});
+			await assert.rejects(
+				service.getRefs(),
+				(error: unknown) => error instanceof NetworkError && error.code === 409,
+			);
+			sinon.assert.notCalled(readDocument);
+			assert.strictEqual(operations.length, 1);
+		});
+	}
 
 	it("does not resolve durable storage for ephemeral requests", async () => {
 		config.set("ignoreEphemeralFlag", false);
@@ -346,6 +556,27 @@ describe("document storage recovery", () => {
 	});
 
 	for (const status of [401, 403]) {
+		it(`honors customer-token reuse when Alfred rejects the caller with ${status}`, async () => {
+			config.set("restGitService:reuseCustomerAccessTokenForSummaryOwnership", true);
+			readDocument.callsFake(
+				async (_tenant: string, _document: string, options?: { accessToken?: string }) => {
+					if (options?.accessToken !== undefined) {
+						throw new NetworkError(status, "Caller denied");
+					}
+					return activeDocument;
+				},
+			);
+			const service = await createService();
+			await assert.rejects(
+				service.getRefs(),
+				(error: unknown) => error instanceof NetworkError && error.code === status,
+			);
+			sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId, {
+				accessToken,
+			});
+			assert.strictEqual(operations.length, 1);
+		});
+
 		it(`does not backfill or retry an Alfred ${status}`, async () => {
 			readDocument.rejects(new NetworkError(status, "Denied"));
 			const service = await createService();
@@ -377,6 +608,22 @@ describe("document storage recovery", () => {
 			.expect(204);
 		assert.strictEqual(operations.length, 1);
 		assert.match(operations[0] ?? "", /\/internal\/document-storage\/initialize$/);
+		sinon.assert.notCalled(readDocument);
+	});
+
+	it("rejects ephemeral initialization without poisoning its routing cache", async () => {
+		config.set("ignoreEphemeralFlag", false);
+		const cache = new TestCache();
+		const key = `isEphemeralContainer:${tenantId}:${documentId}`;
+		await cache.set(key, true);
+		await request(createApp({ cache }))
+			.post(`/repos/${tenantId}/internal/document-storage/initialize`)
+			.set("Authorization", authorization)
+			.set("Is-Ephemeral-Container", "true")
+			.set("StorageName", storageName)
+			.expect(400);
+		assert.strictEqual(await cache.get(key), true);
+		assert.deepStrictEqual(operations, []);
 		sinon.assert.notCalled(readDocument);
 	});
 

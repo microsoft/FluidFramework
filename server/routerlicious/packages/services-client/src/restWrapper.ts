@@ -210,10 +210,6 @@ export abstract class RestWrapper {
  * @internal
  */
 export class BasicRestWrapper extends RestWrapper {
-	/**
-	 * @param preserveErrorSource - Preserve string-valued error sources returned by a trusted service.
-	 * Defaults to false, which uses the local request description instead.
-	 */
 	constructor(
 		baseurl?: string,
 		defaultQueryString: Record<string, string | number | boolean> = {},
@@ -235,7 +231,6 @@ export class BasicRestWrapper extends RestWrapper {
 		) => Promise<RawAxiosRequestHeaders | undefined>,
 		private readonly logHttpMetrics?: (requestProps: IBasicRestWrapperMetricProps) => void,
 		private readonly getCallingServiceName?: () => string | undefined,
-		private readonly preserveErrorSource = false,
 	) {
 		super(baseurl, defaultQueryString, maxBodyLength, maxContentLength);
 	}
@@ -340,11 +335,7 @@ export class BasicRestWrapper extends RestWrapper {
 								reject(
 									createFluidServiceNetworkError(error?.response?.status, {
 										...error?.response?.data,
-										source:
-											this.preserveErrorSource &&
-											typeof error.response.data?.source === "string"
-												? error.response.data.source
-												: errorSourceMessage,
+										source: errorSourceMessage,
 									}),
 								);
 							}

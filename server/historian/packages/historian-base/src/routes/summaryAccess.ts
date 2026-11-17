@@ -72,9 +72,17 @@ function logAllowed(
 	);
 }
 
+export function resolveSummaryAccess(
+	args: IResolveSummaryAccessArgs,
+): Promise<ISummaryAccessContext>;
+export function resolveSummaryAccess(
+	args: IResolveSummaryAccessArgs,
+	localOnly: true,
+): Promise<ISummaryAccessContext | undefined>;
 export async function resolveSummaryAccess(
 	args: IResolveSummaryAccessArgs,
-): Promise<ISummaryAccessContext> {
+	localOnly = false,
+): Promise<ISummaryAccessContext | undefined> {
 	const identity = getTokenDocumentIdentity(args.tenantId, args.authorization);
 	const expiresAtFor = (createTime: number): number =>
 		createTime + args.ephemeralDocumentTTLSec * 1000;
@@ -146,6 +154,9 @@ export async function resolveSummaryAccess(
 			return context;
 		}
 
+		if (localOnly) {
+			return undefined;
+		}
 		const fallbackDetails: Omit<ISummaryOwnershipTelemetryDetails, "source"> = {
 			localOutcome: localFailureOutcome ?? "miss",
 			fallbackReason:
@@ -233,6 +244,9 @@ export async function resolveSummaryAccess(
 		return context;
 	}
 
+	if (localOnly) {
+		return undefined;
+	}
 	const document = await validateSummaryDocument({
 		...args,
 		telemetryDetails: { source: "alfred" },

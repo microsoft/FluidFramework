@@ -504,6 +504,7 @@ export async function validateSummaryDocument({
 export interface ICreateGitServiceResult {
 	service: RestGitService;
 	accessProof?: IDocumentAccessProof;
+	isEphemeralContainer: boolean;
 }
 
 export async function resolveTrustedCreateContext({
@@ -658,6 +659,12 @@ export async function createGitServiceWithAccess(
 				getWithDocumentDetails?(tenant: string, document: IDocument): Promise<string>;
 		  })
 		| undefined = storageNameRetriever;
+	let storageNameRequest: Promise<string | undefined> | undefined;
+	const getStorageName = () =>
+		(storageNameRequest ??=
+			gitrestOwnershipValidation && requestStorageNameRetriever?.getForRequest
+				? requestStorageNameRetriever.getForRequest(tenantId, documentId, readDocument)
+				: Promise.resolve(storageNameRetriever?.get(tenantId, documentId)));
 
 	const customData: ITenantCustomDataExternal = details.customData;
 	const simplifiedCustomData = simplifiedCustomDataRetriever?.get(customData);
@@ -713,13 +720,14 @@ export async function createGitServiceWithAccess(
 	} else {
 		calculatedStorageName =
 			summaryAccessContext?.storageName ??
-			(await (gitrestOwnershipValidation && requestStorageNameRetriever?.getForRequest
-				? requestStorageNameRetriever.getForRequest(tenantId, documentId, readDocument)
-				: storageNameRetriever?.get(tenantId, documentId))) ??
+			(await getStorageName()) ??
 			customData?.storageName;
 	}
 	const recoverDocumentStorage =
-		gitrestOwnershipValidation && !postIsEphemeral && accessProof === undefined
+		gitrestOwnershipValidation &&
+		!postIsEphemeral &&
+		(accessProof === undefined ||
+			(accessProof.source === "alfred-fallback" && accessProof.state === "active"))
 			? async () => {
 					const document = await validateSummaryDocument({
 						tenantId,
@@ -728,6 +736,10 @@ export async function createGitServiceWithAccess(
 						operation: "get",
 						routeType: "notApplicable",
 						ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
+						reuseCustomerAccessToken:
+							config.get(
+								"restGitService:reuseCustomerAccessTokenForSummaryOwnership",
+							) ?? false,
 					});
 					const authoritativeStorageName =
 						document.storageName ??
@@ -735,6 +747,7 @@ export async function createGitServiceWithAccess(
 							tenantId,
 							document,
 						)) ??
+						(await getStorageName()) ??
 						customData?.storageName;
 					if (
 						document.isEphemeralContainer === true ||
@@ -767,6 +780,7 @@ export async function createGitServiceWithAccess(
 	return {
 		service,
 		accessProof,
+		isEphemeralContainer: postIsEphemeral,
 	};
 }
 

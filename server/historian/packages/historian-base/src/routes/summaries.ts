@@ -49,7 +49,7 @@ import type {
 import { isEphemeralSummaryAccessStore } from "../services";
 import { parseToken, Constants } from "../utils";
 
-import { resolveSummaryAccess } from "./summaryAccess";
+import { type IResolveSummaryAccessArgs, resolveSummaryAccess } from "./summaryAccess";
 import * as utils from "./utils";
 
 export function create(
@@ -146,31 +146,7 @@ export function create(
 		allowDisabledTenant = false,
 		query?: Query,
 	): Promise<{ service: RestGitService; access?: ISummaryAccessContext }> {
-		if (
-			documentAccessAuthorizer !== undefined ||
-			config.get("restGitService:gitrestOwnershipValidation") === true
-		) {
-			const { service, accessProof } = await utils.createGitServiceWithAccess({
-				config,
-				tenantId,
-				authorization,
-				tenantService,
-				storageNameRetriever,
-				documentManager,
-				cache,
-				allowDisabledTenant,
-				ephemeralDocumentTTLSec,
-				simplifiedCustomDataRetriever,
-				postEphemeralContainerChecker,
-				query,
-				accessOperation:
-					operation === "get" ? "read" : operation === "post" ? "write" : "delete",
-				containerTypeHint: "ephemeral",
-				documentAccessAuthorizer,
-			});
-			return { service, access: getEphemeralSummaryAccess(accessProof) };
-		}
-		const access = await resolveSummaryAccess({
+		const accessArgs: IResolveSummaryAccessArgs = {
 			tenantId,
 			authorization,
 			documentManager,
@@ -180,7 +156,48 @@ export function create(
 			ignoreEphemeralFlag: ignoreIsEphemeralFlag,
 			reuseCustomerAccessToken: reuseCustomerAccessTokenForSummaryOwnership,
 			accessStore,
-		});
+		};
+		if (
+			documentAccessAuthorizer !== undefined ||
+			config.get("restGitService:gitrestOwnershipValidation") === true
+		) {
+			let access =
+				documentAccessAuthorizer === undefined
+					? await resolveSummaryAccess(accessArgs, true)
+					: undefined;
+			const { service, accessProof, isEphemeralContainer } =
+				await utils.createGitServiceWithAccess({
+					config,
+					tenantId,
+					authorization,
+					tenantService,
+					storageNameRetriever,
+					documentManager,
+					cache,
+					allowDisabledTenant,
+					ephemeralDocumentTTLSec,
+					simplifiedCustomDataRetriever,
+					postEphemeralContainerChecker,
+					query,
+					accessOperation:
+						operation === "get" ? "read" : operation === "post" ? "write" : "delete",
+					containerTypeHint: "ephemeral",
+					documentAccessAuthorizer,
+					summaryAccessContext: access,
+				});
+			if (
+				documentAccessAuthorizer === undefined &&
+				access === undefined &&
+				isEphemeralContainer
+			) {
+				access = await resolveSummaryAccess(accessArgs);
+				if (!access.isEphemeralContainer) {
+					throw new NetworkError(403, "Document container type does not match.");
+				}
+			}
+			return { service, access: access ?? getEphemeralSummaryAccess(accessProof) };
+		}
+		const access = await resolveSummaryAccess(accessArgs);
 		const service = await utils.createGitService({
 			config,
 			tenantId,

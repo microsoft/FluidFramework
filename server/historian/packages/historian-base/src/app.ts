@@ -7,6 +7,7 @@ import { ScopeType } from "@fluidframework/protocol-definitions";
 import {
 	DriverVersionHeaderName,
 	CallingServiceHeaderName,
+	NetworkError,
 } from "@fluidframework/server-services-client";
 import type {
 	IStorageNameRetriever,
@@ -161,6 +162,12 @@ export function create(
 			denyListMiddleware(denyList),
 			(request, response) => {
 				const result = (async () => {
+					if (request.get(Constants.IsEphemeralContainer) === "true") {
+						throw new NetworkError(
+							400,
+							"Ephemeral storage cannot be initialized here.",
+						);
+					}
 					const { accessToken } = getTokenDocumentIdentity(
 						request.params.tenantId,
 						request.get("Authorization"),
