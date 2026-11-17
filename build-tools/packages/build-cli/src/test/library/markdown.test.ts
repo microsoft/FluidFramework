@@ -55,6 +55,30 @@ describe("normalizeReleaseNoteHeadings", () => {
 		assert.ok(labels.every((node) => node.children[0]?.type === "strong"));
 	});
 
+	it("preserves adjacent prose, indented code, and rules after serializing bold labels", () => {
+		const output = String(
+			processor.processSync(
+				"# Examples\n\nIntro.\n#### Details\n    const value = 1;\n#### Rule\n---",
+			),
+		);
+		const blocks = remark().parse(output).children;
+
+		// The AST-based release-note path must keep the same block boundaries protected by the changelog formatter.
+		// Parse its serialized output so an indented example becoming prose or a rule becoming an underline cannot pass.
+		assert.deepEqual(
+			blocks.map((node) => node.type),
+			["heading", "paragraph", "paragraph", "code", "paragraph", "thematicBreak"],
+		);
+		for (const index of [2, 4]) {
+			const label = blocks[index];
+			assert.ok(label?.type === "paragraph");
+			assert.equal(label.children[0]?.type, "strong");
+		}
+		const code = blocks[3];
+		assert.ok(code?.type === "code");
+		assert.equal(code.value, "const value = 1;");
+	});
+
 	it("uses the shallowest heading even when it appears later and preserves level gaps", () => {
 		const tree = normalize("###### Deep details\n\n## Examples\n\n#### Details");
 
