@@ -15,6 +15,8 @@ import { FieldKinds } from "../../../feature-libraries/index.js";
 import {
 	CompareAndSwapSchemaChangeset,
 	NarrowingSchemaChangeset,
+	NoopSchemaChangeset,
+	type SchemaChangeset,
 	WideningSchemaChangeset,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/schema-change-family/schemaChangeTypes.js";
@@ -35,175 +37,285 @@ function makeSchema(types: readonly TreeNodeSchemaIdentifier[]): TreeStoredSchem
 }
 
 const empty = makeSchema([]);
-const number = makeSchema([numberType]);
-const number2 = makeSchema([numberType]);
+const numberSchema = makeSchema([numberType]);
+const numberClone = makeSchema([numberType]);
 const string = makeSchema([stringType]);
 const numberString = makeSchema([numberType, stringType]);
 const numberWithMetadata: TreeStoredSchema = {
-	...number2,
+	...numberClone,
 	rootFieldSchema: {
-		...number2.rootFieldSchema,
+		...numberClone.rootFieldSchema,
 		persistedMetadata: { value: 1 },
 	},
 };
 
+/* The possible relationships between two schemas */
+const inputRelationships = [
+	"reference equal",
+	"equivalent",
+	"narrower",
+	"wider",
+	"divergent",
+] as const;
+
+// Tests typically use the `number` schema as a baseline for comparison with other schema.
+// Hang the other schemas off of the number schema by their relationship (e.g. `number.wider` is a schema that is wider than `number`) for convenience.
+const number = Object.assign(numberSchema, {
+	"reference equal": numberSchema,
+	equivalent: numberClone,
+	narrower: empty,
+	wider: numberString,
+	divergent: string,
+} satisfies { [key in (typeof inputRelationships)[number]]: TreeStoredSchema });
+
+interface ChangesetImplementation {
+	/** Type used for test titles and instance checks */
+	type: abstract new (
+		...args: never[]
+	) => SchemaChangeset;
+	create: (
+		input: TreeStoredSchema,
+		proposed: TreeStoredSchema,
+		original?: TreeStoredSchema,
+		isRollback?: boolean,
+	) => SchemaChangeset;
+	expectedOutput: {
+		/** What should be the output when input == number and proposed == number.wider? */
+		proposedWider: TreeStoredSchema;
+		/** What should be the output when input == number and proposed == number.narrower? */
+		proposedNarrower: TreeStoredSchema;
+		/** What should be the output when input == number and proposed == numberWithMetadata? */
+		metadataOnly: TreeStoredSchema;
+	};
+	/** The complete set of inputs that cause the schema change to be conflicted */
+	conflictingInputs: readonly (typeof inputRelationships)[number][];
+	/** Type expected when rolling back an unconflicted change */
+	rollbackType: abstract new (
+		...args: never[]
+	) => SchemaChangeset;
+}
+
+const implementations: readonly ChangesetImplementation[] = [
+	{
+		type: WideningSchemaChangeset,
+		create: (input, proposed, _original, isRollback) =>
+			new WideningSchemaChangeset(input, proposed, isRollback),
+		expectedOutput: {
+			proposedWider: numberString,
+			proposedNarrower: number,
+			metadataOnly: numberWithMetadata,
+		},
+		conflictingInputs: ["divergent"],
+		rollbackType: NarrowingSchemaChangeset,
+	},
+	{
+		type: NarrowingSchemaChangeset,
+		create: (input, proposed, _original, isRollback) =>
+			new NarrowingSchemaChangeset(input, proposed, isRollback),
+		expectedOutput: {
+			proposedWider: number,
+			proposedNarrower: number.narrower,
+			metadataOnly: numberWithMetadata,
+		},
+		conflictingInputs: ["divergent"],
+		rollbackType: WideningSchemaChangeset,
+	},
+	{
+		type: CompareAndSwapSchemaChangeset,
+		create: (input, proposed, original, isRollback) =>
+			new CompareAndSwapSchemaChangeset(input, proposed, original, isRollback),
+		expectedOutput: {
+			proposedWider: numberString,
+			proposedNarrower: number.narrower,
+			metadataOnly: numberWithMetadata,
+		},
+		conflictingInputs: ["narrower", "wider", "divergent"],
+		rollbackType: CompareAndSwapSchemaChangeset,
+	},
+	{
+		type: NoopSchemaChangeset,
+		create: (input, _proposed, _original, isRollback = false) =>
+			new NoopSchemaChangeset(input, isRollback),
+		expectedOutput: {
+			proposedWider: number,
+			proposedNarrower: number,
+			metadataOnly: number,
+		},
+		conflictingInputs: [],
+		rollbackType: NoopSchemaChangeset,
+	},
+];
+
+// For the given input and proposed schemas, check that the output matches the value of the corresponding key in the `expectedOutput` of the `ChangesetImplementation`
+const schemaPolicies = [
+	{
+		name: "when proposed is wider than input",
+		input: number,
+		proposed: number.wider,
+		output: "proposedWider",
+	},
+	{
+		name: "when proposed is narrower than input",
+		input: number,
+		proposed: number.narrower,
+		output: "proposedNarrower",
+	},
+	{
+		name: "when the schemas differ only in metadata",
+		input: number,
+		proposed: numberWithMetadata,
+		output: "metadataOnly",
+	},
+] as const;
+
 describe("SchemaChangeset", () => {
-	describe("rollback", () => {
-		it("returns a no-op in the actual input context for a conflicted change", () => {
-			const rollback = new CompareAndSwapSchemaChangeset(
-				numberString,
-				string,
-				number,
-			).rollback();
-			assert.equal(rollback.output, numberString);
-			assert.equal(rollback.isConflicted, false);
-			assert.equal(rollback.isRollback, true);
+	describe("output", () => {
+		for (const { name, input, proposed, output } of schemaPolicies) {
+			describe(name, () => {
+				for (const implementation of implementations) {
+					it(implementation.type.name, () => {
+						assert.equal(
+							implementation.create(input, proposed).output,
+							implementation.expectedOutput[output],
+						);
+					});
+				}
+			});
+		}
+
+		describe("when proposed is divergent from input", () => {
+			for (const implementation of implementations) {
+				it(implementation.type.name, () => {
+					const change = implementation.create(number, number.divergent);
+					if (change instanceof CompareAndSwapSchemaChangeset) {
+						assert.equal(change.output, number.divergent);
+					} else if (change instanceof NoopSchemaChangeset) {
+						assert.equal(change.output, number);
+					} else {
+						assert.throws(() => change.output, /Cannot get output of a conflicted changeset/);
+					}
+				});
+			}
+		});
+	});
+
+	describe("isConflicted", () => {
+		for (const name of inputRelationships) {
+			describe(`when input is ${name} relative to number`, () => {
+				for (const implementation of implementations) {
+					it(implementation.type.name, () => {
+						assert.equal(
+							implementation.create(number[name], number, number).isConflicted,
+							implementation.conflictingInputs.includes(name),
+						);
+					});
+				}
+			});
+		}
+
+		describe("ignores metadata differences between input and the expected schema", () => {
+			for (const implementation of implementations) {
+				it(implementation.type.name, () => {
+					assert.equal(
+						implementation.create(numberWithMetadata, number, number).isConflicted,
+						false,
+					);
+				});
+			}
 		});
 	});
 
 	describe("rebase", () => {
-		it("ignores a conflicted base rather than its hypothetical output", () => {
-			const change = new CompareAndSwapSchemaChangeset(number, string);
-			const over = new CompareAndSwapSchemaChangeset(number, numberString, string);
-			assert.equal(over.isConflicted, true);
-			const rebased = change.rebase(over);
-			assert.equal(rebased.input, number);
-			assert.equal(rebased.isConflicted, false);
-			assert.equal(rebased.output, string);
-			assert.equal(rebased.isRollback, false);
+		describe("has no effect when rebasing over a conflicted change", () => {
+			for (const implementation of implementations) {
+				it(implementation.type.name, () => {
+					const change = implementation.create(number, number.wider);
+					const over = new CompareAndSwapSchemaChangeset(number, string, empty);
+					const rebased = change.rebase(over);
+					assert.equal(rebased.input, number);
+					assert.equal(rebased.output, implementation.expectedOutput.proposedWider);
+					assert.equal(rebased.isConflicted, false);
+					assert.equal(rebased.isRollback, change.isRollback);
+				});
+			}
 		});
 
-		it("uses the base's output rather than its proposal", () => {
-			const change = new CompareAndSwapSchemaChangeset(numberString, string);
-			const over = new WideningSchemaChangeset(numberString, number);
-			const rebased = change.rebase(over);
-			assert.equal(rebased.input, numberString);
-			assert.equal(rebased.isConflicted, false);
-			assert.equal(rebased.isRollback, false);
+		describe("uses the base's output rather than its proposal", () => {
+			for (const implementation of implementations) {
+				it(implementation.type.name, () => {
+					const change = implementation.create(number, number.narrower);
+					const over = new WideningSchemaChangeset(number, number.narrower);
+					const rebased = change.rebase(over);
+					assert.equal(rebased.input, number);
+					assert.equal(rebased.output, implementation.expectedOutput.proposedNarrower);
+					assert.equal(rebased.isConflicted, false);
+					assert.equal(rebased.isRollback, change.isRollback);
+				});
+			}
+		});
+
+		describe("preserves the intention by preserving the concrete type and proposed schema", () => {
+			// No-ops are an exception because they do not have an intention to preserve - they just absorb the output of their rebasee as their output
+			for (const implementation of implementations.filter(
+				({ type: Changeset }) => Changeset !== NoopSchemaChangeset,
+			)) {
+				it(implementation.type.name, () => {
+					const change = implementation.create(number.divergent, number, number, true);
+					const updated = change.rebase(
+						new CompareAndSwapSchemaChangeset(number.divergent, number.wider),
+					);
+					assert(updated instanceof implementation.type);
+					assert.notEqual(updated, change);
+					assert.equal(updated.input, number.wider);
+					assert.equal(updated.proposed, number);
+					assert.equal(updated.isRollback, true);
+				});
+			}
 		});
 	});
 
-	for (const { Changeset, Rollback, expectedOutput, otherSchema } of [
-		{
-			Changeset: WideningSchemaChangeset,
-			Rollback: NarrowingSchemaChangeset,
-			expectedOutput: numberString,
-			otherSchema: number,
-		},
-		{
-			Changeset: NarrowingSchemaChangeset,
-			Rollback: WideningSchemaChangeset,
-			expectedOutput: number,
-			otherSchema: numberString,
-		},
-	]) {
-		describe(Changeset.name, () => {
-			describe("output", () => {
-				it("selects the appropriate schema when proposed is wider than input", () => {
-					assert.equal(new Changeset(number, numberString).output, expectedOutput);
-				});
-
-				it("selects the appropriate schema when proposed is narrower than input", () => {
-					assert.equal(new Changeset(numberString, number).output, expectedOutput);
-				});
-
-				it("preserves proposed metadata when the schemas are equivalent", () => {
-					const change = new Changeset(number, numberWithMetadata);
-					assert.equal(change.isConflicted, false);
-					assert.equal(change.output, numberWithMetadata);
-				});
-			});
-
-			describe("isConflicted", () => {
-				for (const [name, input, expected] of [
-					["identical", number, false],
-					["equivalent", number2, false],
-					["narrower", empty, false],
-					["wider", numberString, false],
-					["divergent", string, true], // Only divergent schemas should result in conflicts
-				] as const) {
-					it(`returns ${expected} for ${name} input`, () => {
-						assert.equal(new Changeset(input, number).isConflicted, expected);
-					});
-				}
-			});
-
-			describe("rebase", () => {
-				it("preserves the concrete type and proposal when the input changes", () => {
-					const change = new Changeset(expectedOutput, otherSchema, true);
-					const updated = change.rebase(
-						new CompareAndSwapSchemaChangeset(expectedOutput, otherSchema),
-					);
-					assert(updated instanceof Changeset);
-					assert.notEqual(updated, change);
-					assert.equal(updated.input, otherSchema);
-					assert.equal(updated.proposed, change.proposed);
-					assert.equal(updated.output, otherSchema);
-					assert.equal(updated.isRollback, true);
-				});
-			});
-
-			describe("rollback", () => {
-				for (const [name, input, proposal] of [
-					["an effective change", otherSchema, expectedOutput],
-					["an already satisfied change", expectedOutput, otherSchema],
-				] as const) {
-					it(`rolls back ${name} with the opposite intention`, () => {
-						const rollback = new Changeset(input, proposal).rollback();
-						assert(rollback instanceof Rollback);
-						assert.equal(rollback.input, expectedOutput);
+	describe("rollback", () => {
+		for (const { name, input, proposed, output } of schemaPolicies) {
+			describe(`restores the input schema ${name}`, () => {
+				for (const implementation of implementations) {
+					it(implementation.type.name, () => {
+						const rollback = implementation.create(input, proposed).rollback();
+						assert(rollback instanceof implementation.rollbackType);
+						assert.equal(rollback.input, implementation.expectedOutput[output]);
 						assert.equal(rollback.output, input);
 						assert.equal(rollback.isConflicted, false);
 						assert.equal(rollback.isRollback, true);
 					});
 				}
 			});
-		});
-	}
+		}
 
-	describe("CompareAndSwapSchemaChangeset", () => {
-		describe("output", () => {
-			it("returns proposed unchanged, including metadata", () => {
-				const change = new CompareAndSwapSchemaChangeset(string, numberWithMetadata);
-				assert.equal(change.isConflicted, false);
-				assert.equal(change.output, numberWithMetadata);
-			});
-		});
-
-		describe("isConflicted", () => {
-			for (const [name, input, expected] of [
-				["identical", number, false],
-				["equivalent", number2, false],
-				["narrower", empty, true],
-				["wider", numberString, true],
-				["divergent", string, true],
-			] as const) {
-				it(`returns ${expected} when input is ${name} relative to the original schema`, () => {
-					assert.equal(
-						new CompareAndSwapSchemaChangeset(input, input, number).isConflicted,
-						expected,
-					);
+		describe("rolling back a conflicted change leaves its input schema unchanged", () => {
+			for (const implementation of implementations.filter(
+				({ conflictingInputs: conflictingInputRelationships }) =>
+					conflictingInputRelationships.length > 0,
+			)) {
+				it(implementation.type.name, () => {
+					const rollback = implementation.create(number.divergent, number, number).rollback();
+					assert(rollback instanceof NoopSchemaChangeset);
+					assert.equal(rollback.output, number.divergent);
+					assert.equal(rollback.isConflicted, false);
+					assert.equal(rollback.isRollback, true);
 				});
 			}
-
-			it("ignores metadata differences between original and input", () => {
-				assert.equal(
-					new CompareAndSwapSchemaChangeset(numberWithMetadata, number, number).isConflicted,
-					false,
-				);
-			});
 		});
+	});
 
+	// This is an additional suite for testing aspects of the CAS implementation that aren't applicable to the other implementations in the generic suite.
+	describe("CompareAndSwapSchemaChangeset", () => {
 		describe("rebase", () => {
-			it("preserves the concrete type, proposal and original schema when the input changes", () => {
-				const change = new CompareAndSwapSchemaChangeset(numberString, string, number, true);
-				const updated = change.rebase(new CompareAndSwapSchemaChangeset(numberString, empty));
+			it("preserves the intention's original-schema precondition", () => {
+				const change = new CompareAndSwapSchemaChangeset(number.wider, string, number, true);
+				const updated = change.rebase(
+					new CompareAndSwapSchemaChangeset(number.wider, number.narrower),
+				);
 				assert(updated instanceof CompareAndSwapSchemaChangeset);
-				assert.notEqual(updated, change);
-				assert.equal(updated.input, empty);
-				assert.equal(updated.proposed, change.proposed);
-				assert.equal(updated.original, change.original);
-				assert.equal(updated.isRollback, true);
+				assert.equal(updated.original, number);
 			});
 		});
 
@@ -226,7 +338,7 @@ describe("SchemaChangeset", () => {
 	});
 
 	describe("No-op changes", () => {
-		const noop = new WideningSchemaChangeset(number, string).rollback();
+		const noop = new NoopSchemaChangeset(number, true);
 
 		it("remains a no-op after rebasing", () => {
 			const rebased = noop.rebase(new CompareAndSwapSchemaChangeset(number, string));
@@ -244,5 +356,46 @@ describe("SchemaChangeset", () => {
 			assert.equal(rebased.output, string);
 			assert.equal(rebased.isConflicted, false);
 		});
+	});
+
+	describe("caching", () => {
+		class CountingSchemaChangeset extends CompareAndSwapSchemaChangeset {
+			public conflictCheckCount = 0;
+
+			protected override hasConflicts(): boolean {
+				this.conflictCheckCount++;
+				return super.hasConflicts();
+			}
+		}
+
+		for (const [name, input, expected] of [
+			["unconflicted", number, false],
+			["conflicted", number.divergent, true],
+		] as const) {
+			it(`computes and caches the ${name} result on first access`, () => {
+				const change = new CountingSchemaChangeset(input, number, number);
+				assert.equal(change.conflictCheckCount, 0);
+				assert.equal(change.isConflicted, expected);
+				assert.equal(change.isConflicted, expected);
+				if (expected) {
+					assert.throws(() => change.output, /Cannot get output of a conflicted changeset/);
+				} else {
+					assert.equal(change.output, number);
+				}
+				assert.equal(change.conflictCheckCount, 1);
+			});
+
+			it(`does not reuse a cached ${name} result after rebasing`, () => {
+				const change = new CompareAndSwapSchemaChangeset(input, number, number);
+				assert.equal(change.isConflicted, expected);
+
+				const updated = change.rebase(
+					new CompareAndSwapSchemaChangeset(input, expected ? number : number.divergent),
+				);
+
+				assert.equal(updated.isConflicted, !expected);
+				assert.equal(change.isConflicted, expected);
+			});
+		}
 	});
 });

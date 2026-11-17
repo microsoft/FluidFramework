@@ -172,7 +172,7 @@ export class CompareAndSwapSchemaChangeset extends SchemaChangeset {
 /**
  * A {@link SchemaChangeset} that represents a no-op change, which does not modify the schema and never has conflicts
  */
-class NoopSchemaChangeset extends SchemaChangeset {
+export class NoopSchemaChangeset extends SchemaChangeset {
 	public constructor(input: TreeStoredSchema, isRollback: boolean) {
 		super(input, input, isRollback);
 	}

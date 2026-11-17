@@ -5,7 +5,10 @@
 
 import { strict as assert, fail } from "node:assert";
 
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+import {
+	deepFreeze,
+	validateAssertionError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { currentVersion, type CodecWriteOptions } from "../../codec/index.js";
 import {
@@ -211,6 +214,14 @@ describe("SharedTreeChangeFamily", () => {
 			{
 				changes: [],
 			},
+		);
+	});
+
+	it("rejects reverting schema changes", () => {
+		assert.throws(
+			() =>
+				sharedTreeFamily.invert(makeAnonChange(treeSchemaChange), false, mintRevisionTag()),
+			validateAssertionError(/Reverting schema changes is not supported/),
 		);
 	});
 
