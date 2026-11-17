@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, type CompatApis } from "@fluid-private/test-version-utils";
+import type { ContainerRuntimeFactoryWithDefaultDataStoreProps } from "@fluidframework/aqueduct/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import type {
 	IContainerRuntimeBase,
@@ -13,11 +14,9 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestObjectProvider,
-	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizerFromFactory,
 	defaultTestOldestSupportedClient,
 	summarizeNow,
-	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
 } from "@fluidframework/test-utils/internal";
 import type { TreeView } from "@fluidframework/tree";
 import type { ITree, ITreeAlpha } from "@fluidframework/tree/alpha";
@@ -162,10 +161,7 @@ describeCompat(
 			provider = getTestObjectProvider();
 		});
 
-		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-			ContainerRuntimeFactoryWithDefaultDataStore,
-			runtimeProps,
-		);
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(runtimeProps);
 		// This test reproduces a bug with SharedTree's encoding/decoding. Non-finalized op-space IDs can legitimately appear
 		// in attach summaries. At the time of writing, SharedTree encoded the short ID but failed to include originator data
 		// in the same summary (so that remote clients can decompress with respect to the actual client that generated the ID).
@@ -232,10 +228,7 @@ describeCompat(
 			provider = getTestObjectProvider();
 		});
 
-		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-			ContainerRuntimeFactoryWithDefaultDataStore,
-			runtimeProps,
-		);
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(runtimeProps);
 		// This test exercises a scenario where SharedTree's EditManager is forced to encode/decode non-finalized short IDs.
 		it("Summarizer creates the data store from the attach op summary and can summarize", async () => {
 			// 1. Create a container with an attached default data store.

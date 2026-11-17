@@ -13,12 +13,7 @@ import { IChannelFactory } from "@fluidframework/datastore-definitions/internal"
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
 import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/internal";
-import {
-	ITestFluidObject,
-	getContainerEntryPointBackCompat,
-	getDataStoreEntryPointBackCompat,
-	timeoutPromise,
-} from "@fluidframework/test-utils/internal";
+import { ITestFluidObject, timeoutPromise } from "@fluidframework/test-utils/internal";
 
 // during these point succeeding objects won't even exist locally
 const ContainerCreated = 0;
@@ -94,11 +89,10 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 					await attachContainer();
 				}
 
-				const initDataObject =
-					await getContainerEntryPointBackCompat<ITestFluidObject>(initContainer);
+				const initDataObject = (await initContainer.getEntryPoint()) as ITestFluidObject;
 
 				const ds = await initDataObject.context.containerRuntime.createDataStore("default");
-				const newDataObj = await getDataStoreEntryPointBackCompat<ITestFluidObject>(ds);
+				const newDataObj = (await ds.entryPoint.get()) as ITestFluidObject;
 				const attachDatastore = async (): Promise<void> => {
 					initDataObject.root.set("ds", newDataObj.handle);
 					while (
@@ -184,8 +178,7 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 					url: await provider.driver.createContainerUrl(provider.documentId, containerUrl),
 				});
 
-				const initDataObject =
-					await getContainerEntryPointBackCompat<ITestFluidObject>(validationContainer);
+				const initDataObject = (await validationContainer.getEntryPoint()) as ITestFluidObject;
 
 				const newDatastore = await (
 					await waitKey<IFluidHandle<ITestFluidObject>>(initDataObject.root, "ds")

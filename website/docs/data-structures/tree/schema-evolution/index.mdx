@@ -22,8 +22,9 @@ When updating your schema, it's important to understand the difference between t
 - **View Schema**: The schema defined in your application code using <ApiLink package="fluid-framework" api="SchemaFactory" />
 - **Stored Schema**: The schema persisted with each document. It describes what type of tree can be stored in the document.
 
-When a document is first created, its stored schema is set using the given view schema.
-Afterwards, it is immutable until explicitly [upgraded](./index.mdx#schema-upgrade-process).
+When a document is first created, its stored schema is derived from the view schema and its configured staged-upgrade policy.
+Later changes to application code do not change that stored schema until a client explicitly [upgrades](./index.mdx#schema-upgrade-process) the document.
+The upgrade combines the view's requested additions with staged upgrades already enabled in the document.
 
 ### Stored Schema Invariants
 
@@ -35,7 +36,7 @@ Every node and field in the document is known to the stored schema.
 
 **2. Additive Only**
 The stored schema can grow over time but cannot shrink.
-All nodes types present in the stored schema will exist forever, even if they stop being used by the view schema.
+Upgrades must continue to permit all content allowed by the existing stored schema.
 
 **3. Field Key Stability**
 Field keys on object nodes are permanent once introduced.
@@ -51,12 +52,13 @@ Therefore, a Fluid application should be prepared to encounter any version of a 
 
 When you open a document, SharedTree compares your application's view schema with the document's stored schema to determine compatibility:
 
-- **Compatible**: Document can be opened and used normally
-- **Upgradeable**: Document can be upgraded to match your view schema using <ApiLink package="fluid-framework" api="TreeView.upgradeSchema">`view.upgradeSchema()`</ApiLink>
-- **Incompatible**: Document cannot be opened with or upgraded to match your current view schema
+- **Viewable**: The view can read and edit the document using its current stored schema.
+- **Upgradeable**: The view's requested additions can be combined with already-enabled staged upgrades into a safe target that the view can read and edit.
+  Apply that target with <ApiLink package="fluid-framework" api="TreeView.upgradeSchema">`view.upgradeSchema()`</ApiLink>.
+- **Incompatible**: The view can neither read and edit the document nor upgrade it to a compatible target.
 
-They must be compatible or upgradeable in order for the application to work - otherwise, it cannot read or write data from/to the document.
-SharedTree will throw an assert if the application attempts to access the document's data with an incompatible view schema.
+To access the document's data, use a view that can already read and write it, or apply a permitted upgrade first.
+Accessing tree data through a view that is not compatible with the stored schema throws an error.
 
 Initially, a document's stored schema is created to match the view schema at the time of creation, and therefore the view schema is compatible with the stored schema.
 However, later on the application might change the view schema.

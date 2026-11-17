@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { Static, TSchema } from "@sinclair/typebox";
-// This export is documented as supported in TypeBox's documentation.
-// eslint-disable-next-line import-x/no-internal-modules
-import { Check } from "@sinclair/typebox/value";
+import type { Static, TSchema } from "typebox";
+import { Check } from "typebox/schema";
 
 import { toFormatValidator, type JsonValidator } from "../codec/index.js";
 

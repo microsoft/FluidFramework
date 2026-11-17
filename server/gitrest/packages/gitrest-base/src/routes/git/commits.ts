@@ -61,13 +61,13 @@ export function create(
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	router.get("/repos/:owner/:repo/git/commits/:sha", async (request, response, next) => {
 		const repoManagerParams = getRepoManagerParamsFromRequest(request);
-		const fileSystemManagerFactory = getFilesystemManagerFactory(
-			fileSystemManagerFactories,
-			repoManagerParams.isEphemeralContainer ?? false,
-		);
 		const resultP = repoManagerFactory
 			.open(repoManagerParams)
 			.then(async (repoManager) => {
+				const fileSystemManagerFactory = getFilesystemManagerFactory(
+					fileSystemManagerFactories,
+					repoManagerParams.isEphemeralContainer ?? false,
+				);
 				const fsManager = fileSystemManagerFactory.create({
 					...repoManagerParams.fileSystemManagerParams,
 					rootDir: repoManager.path,

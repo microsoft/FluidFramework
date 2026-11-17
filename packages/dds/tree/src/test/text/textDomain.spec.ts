@@ -382,7 +382,9 @@ describe("textDomain", () => {
 	// validates every edit against the reference object forest, then the chunked main forest is
 	// inspected to ensure same-shape neighbors were batched instead of remaining one chunk per character.
 	describe("chunked forest storage", () => {
-		it("batches typed characters into multi-node chunks", () => {
+		it("batches typed characters into multi-node chunks", function () {
+			// Validate all 1000 edits against both forests, including expensive text assertions.
+			this.timeout(30000);
 			const size = 1000;
 			const { root, forest } = buildChunkedTextDocument();
 

@@ -958,7 +958,7 @@ describe("custom commit metadata", () => {
 			const provider = await TestTreeProvider.create(
 				1,
 				SummarizeType.onDemand,
-				new SharedTreeTestFactory(() => {}, undefined, {
+				SharedTreeTestFactory.build(() => {}, undefined, {
 					minVersionForCollab: FluidClientVersion.v2_117,
 					retainHistory: true,
 				}),
@@ -999,7 +999,7 @@ describe("custom commit metadata", () => {
 			const provider = await TestTreeProvider.create(
 				2,
 				SummarizeType.disabled,
-				new SharedTreeTestFactory(() => {}, undefined, {
+				SharedTreeTestFactory.build(() => {}, undefined, {
 					minVersionForCollab: FluidClientVersion.v2_117,
 				}),
 			);

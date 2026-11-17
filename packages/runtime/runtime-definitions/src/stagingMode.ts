@@ -30,10 +30,18 @@ export interface CommitStagedChangesOptionsInternal {
 /**
  * Controls for managing staged changes in experimental staging mode.
  *
- * Provides methods to either commit or discard changes made while in staging mode.
+ * Provides methods to pause inbound operations and either commit or discard staged changes.
  * @internal
  */
 export interface StageControlsInternal extends StageControls {
+	/**
+	 * Same as {@link StageControls.pauseInbound}, but always defined.
+	 */
+	readonly pauseInbound: () => Promise<void>;
+	/**
+	 * Same as {@link StageControls.resumeInbound}, but always defined.
+	 */
+	readonly resumeInbound: () => void;
 	/**
 	 * Exit staging mode and commit to any changes made while in staging mode.
 	 * This will cause them to be sent to the ordering service, and subsequent changes
@@ -51,7 +59,7 @@ export interface StageControlsInternal extends StageControls {
 export interface IContainerRuntimeBaseInternal extends IContainerRuntimeBase {
 	/**
 	 * Enters staging mode, allowing changes to be staged before being committed or discarded.
-	 * @returns Controls for committing or discarding staged changes.
+	 * @returns Controls for pausing inbound operations and committing or discarding staged changes.
 	 */
 	enterStagingMode(): StageControlsInternal;
 
@@ -72,7 +80,7 @@ export interface IContainerRuntimeBaseInternal extends IContainerRuntimeBase {
 /**
  * Controls for managing staged changes in alpha staging mode.
  *
- * Provides methods to either commit or discard changes made while in staging mode.
+ * Provides methods to pause inbound operations and either commit or discard staged changes.
  *
  * @deprecated Use {@link StageControls} (beta) instead.
  * @legacy @alpha

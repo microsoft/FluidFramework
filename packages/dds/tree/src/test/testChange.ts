@@ -261,6 +261,10 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 	public changeRevision(change: TestChange): TestChange {
 		return change;
 	}
+
+	public ensureCompatibility(change: TestChange): TestChange {
+		return change;
+	}
 }
 
 export class UnrebasableTestChangeRebaser extends TestChangeRebaser {

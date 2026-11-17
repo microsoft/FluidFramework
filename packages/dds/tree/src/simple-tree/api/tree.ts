@@ -19,6 +19,7 @@ import type {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
 import type { TreeStatus } from "../../feature-libraries/index.js";
 import type {
+	TreeBranchHandleAlpha,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports -- This is referenced by doc comments.
 	TreeAlpha,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
@@ -129,6 +130,24 @@ export interface ITree extends ViewableTree, IFluidLoadable {}
  */
 export interface ViewableTreeAlpha extends ViewableTree {
 	/**
+	 * Creates an independent branch from this tree's current state.
+	 *
+	 * @remarks
+	 * Each call creates a new branch.
+	 * Changes to the new branch do not affect this tree until you {@link UntypedTreeView.merge | merge} them into a view of this tree.
+	 * Use {@link TreeBranchHandleAlpha.viewWith | viewWith} to create a view that can read and edit the new branch.
+	 * Use {@link TreeBranchHandleAlpha.fork | fork} to create child branches.
+	 *
+	 * You own the returned branch.
+	 * Dispose the branch when you no longer need it.
+	 * If you dispose a view of the source tree or the new branch, the new branch remains available.
+	 *
+	 * @returns A new, independent branch that you own.
+	 * @throws A `UsageError` if this tree's branch has a pending transaction or is disposed.
+	 */
+	forkBranch(): TreeBranchHandleAlpha;
+
+	/**
 	 * Exports root in the same format as {@link (TreeAlpha:interface).(exportVerbose:1)} using stored keys.
 	 * @remarks
 	 * This is `undefined` if and only if the root field is empty (this can only happen if the root field is optional).
@@ -145,6 +164,9 @@ export interface ViewableTreeAlpha extends ViewableTree {
 
 /**
  * {@link ITree} extended with some alpha APIs.
+ *
+ * @remarks
+ * This object represents the tree's main branch.
  *
  * @see {@link (asAlpha:1)} to access these APIs on an existing {@link ITree}
  *
@@ -290,19 +312,34 @@ export interface UntypedTreeView extends IDisposable, TreeContextBeta {
 	>;
 
 	/**
-	 * Fork a new branch off of this branch which is based off of this branch's current state.
-	 * @remarks Any changes to the tree on the new view will not apply to this view until the new view is e.g. {@link UntypedTreeView.merge | merged} back into this view.
-	 * The view should be disposed when no longer needed, either {@link UntypedTreeView.dispose | explicitly} or {@link UntypedTreeView.merge | implicitly when merging} into another view.
+	 * Creates a view of a new branch based on this branch's current state.
+	 *
+	 * @remarks
+	 * Changes through the returned view do not affect this branch until you {@link UntypedTreeView.merge | merge} them back.
+	 * The returned view owns its branch: disposing the view also disposes that branch.
+	 *
+	 * @returns A view that owns the new branch.
+	 * @throws A `UsageError` if this branch has a pending transaction or is disposed.
 	 */
 	fork(): UntypedTreeView;
 
 	/**
-	 * Apply all the new changes on the given view to this view.
-	 * @param view - A view created by {@link UntypedTreeView.fork}.
-	 * @param disposeMerged - Whether or not to dispose `view` after the merge completes.
-	 * Defaults to true.
-	 * The {@link UntypedTreeView | main view} cannot be disposed - attempting to do so will have no effect.
-	 * @remarks All ongoing transactions (if any) in `view` will be committed before the merge.
+	 * Applies all new changes from the provided view's branch to this view's branch.
+	 * @param view - A view of a branch that shares a common ancestor with this view's branch.
+	 * For example, use a view from {@link UntypedTreeView.fork} or {@link TreeBranchHandleAlpha.viewWith}.
+	 * The provided branch does not need to be a direct fork of this view's branch.
+	 * @param disposeMerged - If true, dispose the provided view and its branch after a successful merge, unless that branch is shared.
+	 * The default is true.
+	 * Pass false to keep the provided view and its branch available.
+	 *
+	 * @remarks
+	 * The disposal policy also applies when the provided view was created through {@link TreeBranchHandleAlpha.viewWith}:
+	 * a successful merge disposes its branch and view unless `disposeMerged` is false.
+	 * Shared branches, including the main branch, are not disposed by a merge.
+	 * The merge does not dispose this view or the branch it views.
+	 *
+	 * @throws A `UsageError` if either branch has a pending transaction or is disposed.
+	 * @throws An error if the branches do not share a common ancestor.
 	 */
 	merge(view: UntypedTreeView, disposeMerged?: boolean): void;
 
@@ -310,7 +347,8 @@ export interface UntypedTreeView extends IDisposable, TreeContextBeta {
 	 * Advance this view forward such that all new changes on the target view become part of this view.
 	 * @param view - The view to rebase onto.
 	 * @remarks After rebasing, this view will be "ahead" of the target view, that is, its unique changes will have been recreated as if they happened after all changes on the target view.
-	 * This method may only be called on views produced via {@link UntypedTreeView.fork | fork} - attempting to rebase the main view will throw.
+	 * This method can be called on views from {@link UntypedTreeView.fork | fork} or {@link TreeBranchHandleAlpha.viewWith}.
+	 * Shared branches, including the main branch, cannot be rebased onto another branch.
 	 *
 	 * Rebasing long-lived branches is important to avoid consuming memory unnecessarily.
 	 * In particular, the SharedTree retains all sequenced changes made to the tree since the "most-behind" branch was created or last rebased.
@@ -633,16 +671,22 @@ export interface UntypedTreeViewAlpha
 	fork(): UntypedTreeViewAlpha;
 
 	/**
-	 * Switches this view to a new underlying branch with the given commit as the head, updating the view state accordingly.
+	 * Switches this view to a new branch with the specified commit as its head.
 	 *
 	 * @param revision - The {@link TreeBranchCommitMetadata.revision | revision} to rewind to.
 	 * Can be obtained by navigating the commits on the {@link UntypedTreeViewAlpha.branchHistory | branch history}.
 	 *
 	 * @remarks
-	 * Unlike {@link UntypedTreeViewAlpha.revertTo | revertTo}, this does not apply a change to the underlying branch.
-	 * The original underlying branch will be disposed.
-	 * Consider {@link UntypedTreeViewAlpha.fork | forking} before rewinding.
-	 * Not valid to invoke on the main branch or a {@link (ITreeAlpha:interface).createSharedBranch | shared branch}.
+	 * Unlike {@link UntypedTreeViewAlpha.revertTo | revertTo}, this method does not apply a change to the current branch.
+	 * Instead, it disposes the current branch.
+	 * Use {@link UntypedTreeViewAlpha.fork | fork} first to keep a copy of the current state.
+	 * Do not call this method on the main branch or a {@link (ITreeAlpha:interface).createSharedBranch | shared branch}.
+	 * Do not call it on a view whose branch cannot be replaced.
+	 * This restriction includes views created through {@link TreeBranchHandleAlpha.viewWith} and forks of those views.
+	 * Use {@link TreeBranchCommitMetadata.revertTo} to restore earlier content without replacing the branch.
+	 *
+	 * @throws A `UsageError` if this view's branch cannot be replaced, is shared, has a pending transaction, or is disposed.
+	 * @throws A `UsageError` if a revision with the given UUID cannot be found in this branch's history.
 	 */
 	rewindTo(revision: CommitRevision): void;
 
@@ -798,18 +842,20 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 
 	/**
 	 * When {@link SchemaCompatibilityStatus.canUpgrade} is true,
-	 * this can be used to modify the stored schema to make it match the view schema.
+	 * this can be used to modify the stored schema to make it compatible with the view.
 	 * @remarks
-	 * This will update the {@link TreeView.compatibility}, allowing access to `root`.
-	 * Beware that this may impact other clients' ability to view the document: see {@link SchemaCompatibilityStatus.canView} for more information.
+	 * An upgrade makes the schema changes needed by this view while preserving content permitted by the existing stored schema.
+	 * For example, it can add an allowed type or make a required field optional, but cannot remove an allowed type that existing content may use.
+	 * Preserving content does not guarantee that other application versions can read newly allowed values, so check their compatibility before deploying the change.
 	 *
-	 * It is an error to call this when {@link SchemaCompatibilityStatus.canUpgrade} is false.
-	 * {@link SchemaCompatibilityStatus.canUpgrade} being true does not mean that an upgrade is required, nor that an upgrade will have any effect.
+	 * When the stored schema is upgraded, {@link SchemaCompatibilityStatus.canView} becomes `true`, and {@link TreeView.root} becomes available.
+	 *
+	 * Use {@link SchemaCompatibilityStatus.canUpgrade} to check whether calling this method is permitted; calling it when that flag is `false` is an error.
 	 *
 	 * When using {@link TreeViewConfigurationAlpha} with a {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy},
-	 * staged schema upgrades matching the configured policy are included in the derived stored schema.
-	 * Set {@link (StagedSchemaUpgradePolicy:interface).includeAlreadyEnabledUpgrades} to `true` to
-	 * also include staged upgrades that are already enabled in the document.
+	 * the configured policy selects which staged upgrades to enable.
+	 * Already-enabled upgrades are preserved even if the policy does not select their tokens, allowing a flag-off client to make other compatible upgrades.
+	 * This preservation is local to each field: if fields share a token but only one has the change enabled, the others remain unchanged unless the policy enables that token.
 	 *
 	 * @example Enabling a staged allowed type for documents, selected by a feature flag
 	 *
@@ -851,7 +897,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 * - update only a specific change (add an optional field, or apply a staged upgrade)
 	 * - update persistedMetadata or not
 	 *
-	 * As persisted metadata becomes more supported, how it interacts with isEquivalent and upgradeSchema should be clarified:
+	 * As persisted metadata becomes more supported, how it interacts with `upgradeSchema` should be clarified:
 	 * for now the docs are being left somewhat vague to allow flexibility in this area.
 	 */
 	upgradeSchema(): void;
@@ -1017,7 +1063,7 @@ export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus
 	 * When present, the list is nonempty and explains why accessing {@link TreeView.root} throws.
 	 *
 	 * It does not report all schema differences nor discrepancies that would prevent
-	 * {@link SchemaCompatibilityStatus.canUpgrade} or {@link SchemaCompatibilityStatus.isEquivalent}.
+	 * {@link SchemaCompatibilityStatus.canUpgrade}.
 	 *
 	 * Entries may include non-blocking staging context in addition to the constraint that prevents viewing.
 	 *
@@ -1148,26 +1194,35 @@ export interface SchemaCompatibilityStatus {
 	 *
 	 * @remarks
 	 *
-	 * This is true only when {@link SchemaCompatibilityStatus.canView} is true and the existing and proposed stored schemas each satisfy the schema upgrade rules relative to the other.
+	 * This is true only when {@link SchemaCompatibilityStatus.canView} is true and the existing and generated stored schemas each satisfy the schema upgrade rules relative to the other.
 	 * Thus, a `true` value also implies that {@link SchemaCompatibilityStatus.canUpgrade} is true.
 	 *
 	 * Equivalence does not require the schemas to be identical.
 	 * Differences that do not affect schema compatibility, such as {@link NodeSchemaOptionsAlpha.persistedMetadata}, do not affect this flag.
 	 *
-	 * This check compares the existing stored schema with the stored schema that would
-	 * be generated from the current view schema with its corresponding configuration.
-	 * This includes {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy}.
-	 * This policy determines which staged changes are included, including whether to
-	 * retain upgrades already enabled in the document.
+	 * The generated schema depends only on the view and its {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy}, as when initializing a new document.
+	 * It does not retain staged upgrades already enabled in the existing document.
+	 * A view whose policy excludes an already-enabled staged type can therefore report `false` even though {@link TreeView.upgradeSchema} would preserve that type and make no change.
 	 *
 	 * Allowing unknown optional fields through {@link ObjectSchemaOptions.allowUnknownOptionalFields} can permit viewing without equivalence:
-	 * fields present in the stored schema but absent from the proposed stored schema can still prevent equivalence.
+	 * fields present in the stored schema but absent from the generated stored schema can still prevent equivalence.
 	 *
 	 * When true, {@link TreeView.upgradeSchema} makes no change to the stored schema.
 	 *
 	 * A `false` value does not by itself mean that viewing or upgrading will throw.
 	 * Check {@link SchemaCompatibilityStatus.canView} before accessing {@link TreeView.root},
 	 * and {@link SchemaCompatibilityStatus.canUpgrade} before calling {@link TreeView.upgradeSchema}.
+	 *
+	 * @deprecated
+	 * This property isn't needed as a part of application flows for loading a document.
+	 * Use {@link SchemaCompatibilityStatus.canView} to determine if a document can be viewed as-is.
+	 * Use {@link SchemaCompatibilityStatus.canUpgrade} to determine if the stored schema can be upgraded to match the view schema, when the document is not viewable as-is.
+	 *
+	 * When diagnosing schema incompatibility issues, use {@link SchemaCompatibilityStatusBeta.discrepancies} to get detailed information about the incompatibilities.
+	 *
+	 * No direct replacement APIs are intended for this property.
+	 * It will be removed in a version 4.0.0.
+	 * See {@link https://github.com/microsoft/FluidFramework/issues/28660} for more details.
 	 */
 	readonly isEquivalent: boolean;
 
@@ -1177,14 +1232,17 @@ export interface SchemaCompatibilityStatus {
 	 * @remarks
 	 * If false, accessing {@link TreeView.root} throws.
 	 *
-	 * If the view schema does not opt into supporting any additional cases, then `canView` is only true when `isEquivalent` is also true.
-	 * The view schema can however opt into supporting additional cases, and thus can also view documents with stored schema which would be equivalent, except for the following discrepancies:
+	 * A view does not need to declare exactly the same schema as the document to provide read/write access.
+	 * It can tolerate additional stored content when its declarations provide the appropriate compatibility support:
 	 *
-	 * - An object node with {@link ObjectSchemaOptions.allowUnknownOptionalFields} to set to true that has additional optional fields in the stored schema beyond those mentioned in its view schema.
+	 * - {@link ObjectSchemaOptions.allowUnknownOptionalFields} lets an object view tolerate additional optional fields without exposing them as properties.
 	 *
-	 * - An additional type allowed at a location in the stored schema where it is {@link SchemaStaticsBeta.staged | staged} in the view schema.
+	 * - A {@link SchemaStaticsBeta.staged | staged allowed type} lets the view read and write that type where the stored schema already permits it.
 	 *
-	 * In these cases `canUpgrade` and `isEquivalent` will be false.
+	 * - A {@link SchemaStaticsAlpha.stagedOptional | staged-optional field} lets the view handle missing content where the stored field is already optional.
+	 *
+	 * These allowances determine whether the current document can be used; they do not by themselves determine {@link SchemaCompatibilityStatus.canUpgrade}.
+	 * For example, a view that tolerates unknown optional fields can read a document while still being unable to upgrade it because it omits those fields.
 	 *
 	 * When the set of documents allowed by the view schema is a strict superset of those allowed by the stored schema,
 	 * `canView` is false because writes to the document using the view schema could make the document violate its stored schema.
@@ -1204,27 +1262,22 @@ export interface SchemaCompatibilityStatus {
 	readonly canView: boolean;
 
 	/**
-	 * Whether the document's stored schema can be upgraded to be compatible with the view schema.
-	 * That is, whether the existing stored schema can be modified to allow all documents permitted by the view schema while adhering to the schema upgrade rules.
+	 * Whether the stored schema and the view's requested additions can be composed into a safe upgrade target that the view can read and edit.
 	 *
 	 * @remarks
-	 * If false, calling {@link TreeView.upgradeSchema} throws a `UsageError`.
+	 * Use this flag when deciding whether to call {@link TreeView.upgradeSchema}; calling it when the flag is `false` throws a `UsageError`.
 	 *
-	 * When true, it is valid to call {@link TreeView.upgradeSchema}.
-	 * This does not mean that an upgrade is needed or that the call will change the stored schema.
-	 * It also does not imply that {@link SchemaCompatibilityStatus.canView} is already true or that other clients can view the document after the upgrade.
+	 * A `true` result permits the call but does not mean an upgrade is needed: the view may already work with the stored schema, or the requested upgrade may be a no-op.
+	 * If {@link SchemaCompatibilityStatus.canView} is `false`, you must apply the permitted upgrade before accessing the document through this view.
 	 *
-	 * This check compares the existing stored schema with the stored schema that would
-	 * be generated from the current view schema with its corresponding configuration.
-	 * This includes {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy}.
-	 * This policy determines which staged upgrades are enabled, including whether to
-	 * retain upgrades already enabled in the document.
+	 * To determine whether the upgrade is safe, this check considers a target built from the existing stored schema and the view's requested additions.
+	 * The {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy} chooses which staged upgrades to enable.
+	 * The target also retains existing allowed types and supported optionality at their stored locations, independently of that policy.
 	 *
-	 * When adding optional fields to schema which previously were marked with {@link ObjectSchemaOptions.allowUnknownOptionalFields}
-	 * the schema upgrade (assuming no other changes are included) will allow the previous version to view.
-	 * Even this case must still must be done with caution however as only clients with the newly added field will be able to do future upgrades.
-	 * Thus if a version of an application is shipped that adds an unknown optional field, all future versions should include it, even if its no longer used,
-	 * to ensure that documents containing it can still be upgraded.
+	 * The target is accepted only if it satisfies the stored-schema upgrade rules and gives the requesting view read/write access.
+	 * This preservation does not retain optional fields omitted from an object's view schema.
+	 * Adding an optional field can therefore let older views continue reading when they allow {@link ObjectSchemaOptions.allowUnknownOptionalFields}, while preventing those views from making further upgrades.
+	 * Keep the field in future view declarations if those clients need to upgrade documents that contain it.
 	 */
 	readonly canUpgrade: boolean;
 

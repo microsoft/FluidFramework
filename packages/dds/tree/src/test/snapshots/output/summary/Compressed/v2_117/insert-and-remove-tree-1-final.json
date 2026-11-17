@@ -41,7 +41,7 @@
                           "change": [
                             {
                               "data": {
-                                "maxId": 3,
+                                "maxId": 4,
                                 "changes": [
                                   {
                                     "fieldKey": "rootFieldKey",

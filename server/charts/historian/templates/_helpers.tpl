@@ -13,7 +13,3 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- define "gitrest.fullname" -}}
 {{- printf "%s-%s" .Release.Name "gitrest" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
-
-{{- define "gitssh.fullname" -}}
-{{- printf "%s-%s" .Release.Name "gitssh" | trunc 63 | trimSuffix "-" -}}
-{{- end -}}

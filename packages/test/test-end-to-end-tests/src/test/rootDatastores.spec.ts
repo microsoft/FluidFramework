@@ -17,7 +17,6 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 	summarizeNow,
 	timeoutAwait,
 } from "@fluidframework/test-utils/internal";
@@ -50,10 +49,10 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 			syncSummarizer: true,
 		});
 		container1 = await provider.makeTestContainer(testContainerConfig);
-		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 
 		container2 = await provider.loadTestContainer(testContainerConfig);
-		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 	});
 	afterEach("clearTestPersistedCache", async () => {
 		testPersistedCache.reset();
@@ -69,10 +68,7 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 		dataObject: ITestFluidObject,
 		id: string,
 	): Promise<IFluidHandle<FluidObject>> {
-		// Back compat support - older versions of the runtime do not have getAliasedDataStoreEntryPoint
-		// Can be removed once we no longer support ^2.0.0-internal.7.0.0
-		const dataStore = await (runtimeOf(dataObject).getAliasedDataStoreEntryPoint?.(id) ??
-			(runtimeOf(dataObject) as any).getRootDataStore(id, false /* wait */));
+		const dataStore = await runtimeOf(dataObject).getAliasedDataStoreEntryPoint(id);
 		if (dataStore === undefined) {
 			throw new Error("Could not get aliased data store");
 		}
@@ -88,7 +84,7 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 				provider.defaultCodeDetails,
 			);
 			const request = provider.driver.createCreateNewRequest(provider.documentId);
-			const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+			const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			const ds1 = await runtimeOf(dataObject).createDataStore(packageName);
 			const ds2 = await runtimeOf(dataObject).createDataStore(packageName);
 
@@ -277,7 +273,7 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 			assert.equal(aliasResult2, "Conflict");
 
 			const container3 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
+			const dataObject3 = (await container3.getEntryPoint()) as ITestFluidObject;
 
 			await provider.ensureSynchronized();
 			assert.ok(await timeoutAwait(getAliasedDataStoreEntryPoint(dataObject3, alias)));
@@ -354,7 +350,7 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 					}, // requestHeader
 				);
 				const dataObject3 =
-					await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
+					(await container3.getEntryPoint()) as ITestFluidObject;
 				const ds3 = await runtimeOf(dataObject3).createDataStore(packageName);
 				const aliasResult3 = await ds3.trySetAlias(alias);
 

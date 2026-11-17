@@ -1,5 +1,184 @@
 # @fluidframework/tree
 
+## 3.13.0
+
+### Minor Changes
+
+- Type-checking schemas that use large enums from enumFromStrings is much faster ([#28497](https://github.com/microsoft/FluidFramework/pull/28497)) [99c70281137](https://github.com/microsoft/FluidFramework/commit/99c702811376dc0bddb236a18b4df8bfb471410e)
+
+  The type of the `schema` property returned by [`enumFromStrings`](https://fluidframework.com/docs/api/tree/#enumfromstrings-function) is now computed by mapping the provided array of members directly, instead of converting the union of members back into a tuple.
+  The cost of type-checking code that uses `schema` (for example, as a field's allowed types) now grows linearly with the number of members rather than roughly quadratically.
+
+  For example, type-checking a field whose allowed types are a 250-member enum created with `enumFromStrings` takes about 1.4 seconds instead of about 19 seconds with TypeScript 6, and requires about 8 times fewer type instantiations.
+
+  `schema` is still a tuple with one entry per member, and its entries are in the same order as the members passed to `enumFromStrings`.
+  When the members are not a tuple type (for example, a `string[]`), `schema` is typed as an array instead of a single-element tuple, matching its runtime value.
+
+- Refactor detached changeset model ([#28667](https://github.com/microsoft/FluidFramework/pull/28667)) [34ab100160d](https://github.com/microsoft/FluidFramework/commit/34ab100160d74b620890e1f4164dff9281eb851a)
+
+  This change is a stepping stone toward future SharedTree features.
+
+  This change is expected to have zero impact on existing APIs, persisted/wire formats, or execution behaviors.
+  However, because of the large amount of code changes, it is worth calling out in case these changes cause unexpected issues.
+
+- Customizable record nodes work when JavaScript private fields are transpiled to symbol-keyed properties ([#28684](https://github.com/microsoft/FluidFramework/pull/28684)) [31505b4f6a4](https://github.com/microsoft/FluidFramework/commit/31505b4f6a49e2126bd18609e569aa44f14c0837)
+
+  Fluid Framework targets ES2022, which supports JavaScript private fields (`#field`) natively.
+  Some tools transpile them to symbol-keyed properties for older runtimes, for example Babel with its `privateFieldsAsSymbols` assumption.
+  Fluid doesn't directly support those runtimes, but such tools are used to bundle applications.
+  With them, every tree node gets a non-configurable symbol-keyed property in place of a private field that the node's base class declares.
+
+  Previously, `Object.keys`, `Reflect.ownKeys`, object spread and similar operations threw a `TypeError` on a customizable record node (one declared as a class extending `SchemaFactory.record`) that had such a property.
+  A customizable record node now reports its symbol-keyed own properties to these operations.
+  Reading or writing a symbol-keyed property through the node is unchanged.
+
+  `Object.keys` still reports only the record's entries, since symbol-keyed properties are not string keys.
+  Transpiled private fields are not enumerable, so object spread still copies only the record's entries.
+
+- Improve SharedTree decoding performance ([#28708](https://github.com/microsoft/FluidFramework/pull/28708)) [3968eef2a31](https://github.com/microsoft/FluidFramework/commit/3968eef2a31523f3b6f4b3fb6d9356960f1b18c2)
+
+  SharedTree decoding has been optimized.
+  Formatted-text benchmarks measured the following median decoding times on Node.js 22:
+
+  | Document size     |    Before |     After | Time reduction |
+  | ----------------- | --------: | --------: | -------------: |
+  | 1,000 characters  |  1.665 ms |  1.637 ms |           1.7% |
+  | 10,000 characters | 17.298 ms | 16.648 ms |           3.8% |
+
+- Schema upgrades preserve already-enabled staged changes ([#28695](https://github.com/microsoft/FluidFramework/pull/28695)) [ebac34442d7](https://github.com/microsoft/FluidFramework/commit/ebac34442d7158ee0413ccff9594190e6cc38f0e)
+
+  Schema upgrades now preserve already-enabled staged allowed types and optionality at each stored location, even when the view's staged-upgrade policy does not enable those changes.
+  Previously, the default restrictive policy could cause an upgrade to be rejected because its proposed schema excluded changes already enabled in the document.
+  The policy now controls only which new staged changes are introduced when upgrading a schema.
+
+  Preservation does not enable a shared upgrade token at additional locations.
+  If a token is only partially enabled, explicitly enable it with [`StagedSchemaUpgradePolicy.enabledStagedUpgrades(token)`](https://fluidframework.com/docs/api/fluid-framework/stagedschemaupgradepolicyfactory-interface#enabledstagedupgrades-methodsignature) to apply it at the remaining locations.
+
+  The alpha `StagedSchemaUpgradePolicy.includeAlreadyEnabledUpgrades` option has been removed because preservation is now automatic.
+
+- Optimize tree decoding ([#28664](https://github.com/microsoft/FluidFramework/pull/28664)) [b73dd7cde2c](https://github.com/microsoft/FluidFramework/commit/b73dd7cde2c2b612eda5952ed196c30c7e88eccc)
+
+  SharedTree now better preserves compression when decoding subtrees.
+  This improves performance for loads and remote inserts, and additionally saves memory if using [ForestTypeOptimized](https://fluidframework.com/docs/api/v3/tree#foresttypeoptimized-variable).
+
+  #### Example measurements
+
+  In a local benchmark with 10,000-character documents using [ForestTypeOptimized](https://fluidframework.com/docs/api/v3/tree#foresttypeoptimized-variable), the median results before and after this change were:
+
+  | Metric                                       | Formatted text, before to after       | Plain text, before to after        |
+  | -------------------------------------------- | ------------------------------------- | ---------------------------------- |
+  | Retained tree heap after loading             | 30.6 MiB to 25.4 MiB (17% less)       | 2.72 MiB to 0.316 MiB (88% less)   |
+  | Retained attached-content heap after loading | 10.5 MiB to 10.5 MiB (about the same) | 0.114 MiB to 0.0778 MiB (32% less) |
+  | Summary load time                            | 214 ms to 210 ms (about the same)     | 33.5 ms to 17.4 ms (48% faster)    |
+  | Receive insertion time                       | 431 ms to 428 ms (about the same)     | 72.0 ms to 65.6 ms (9% faster)     |
+  | Local insertion time                         | 1,335 ms to 1,332 ms (about the same) | 146 ms to 150 ms (about the same)  |
+
+  These measurements use Node.js 22.23.2, in-memory summary storage, and a mocked runtime, with 18 timed samples per case after warmup across two process orders.
+  Both variants include the existing optimized-forest compaction; the comparison includes the decoding optimization and its accompanying editing fixes.
+  Summary load times include mock runtime and storage setup but exclude subsequent content verification.
+  Receive insertion times include message synchronization and the sender's acknowledgement.
+
+  Heap measurements report median per-document retained heap from six batches of four loaded documents after garbage collection, with separate heap warmups.
+  The attached-content measurement retains only the root-field chunks, excluding the tree and checkout.
+  Shared summary fixtures and their ID compressor are excluded from heap deltas.
+  These measurements do not measure peak memory.
+
+  Both document types use less memory in these scenarios.
+  Plain-text summary loading is faster, while formatted-text timing differences are small and vary between process runs.
+  Formatted-text attached-content heap is essentially unchanged because its enclosing polymorphic structures do not use the fixed-shape sequence path.
+  Small timing differences can be noise, and preparing a decoder for a custom leaf type can cost more than the general path for a tiny batch.
+  Results depend on the document schema, workload, and environment.
+
+## 3.12.0
+
+### Minor Changes
+
+- Array move events now behave consistently before and after hydration ([#28487](https://github.com/microsoft/FluidFramework/pull/28487)) [1038bf6d64d](https://github.com/microsoft/FluidFramework/commit/1038bf6d64d663da816edbe9df299123d7787599)
+
+  Range moves on unhydrated arrays now produce change events and deltas consistent with hydrated arrays, including when the destination is within the source range and the contents remain unchanged.
+  This also makes insertion anchors update consistently before and after hydration.
+
+  Moving an empty range on unhydrated arrays no longer emits change events, matching hydrated arrays.
+
+- Reduce optimized forest memory overhead after loading and receiving inserted content ([#28653](https://github.com/microsoft/FluidFramework/pull/28653)) [8331b103730](https://github.com/microsoft/FluidFramework/commit/8331b1037304a0fe346bf1b4c60b98b68f4b347f)
+
+  SharedTree configured with [ForestTypeOptimized](https://fluidframework.com/docs/api/v3/tree#foresttypeoptimized-variable) now uses compact in-memory storage for eligible content loaded from summaries or received in insertion operations.
+
+  #### Example measurements
+
+  In a local benchmark with 10,000-character documents, the median results before and after this change were:
+
+  | Metric                                       | Formatted text, before to after   | Plain text, before to after      |
+  | -------------------------------------------- | --------------------------------- | -------------------------------- |
+  | Retained tree heap after loading             | 39.9 MiB to 30.6 MiB (23% less)   | 5.12 MiB to 2.79 MiB (46% less)  |
+  | Retained attached-content heap after loading | 19.8 MiB to 10.5 MiB (47% less)   | 2.44 MiB to 0.113 MiB (95% less) |
+  | Summary load time                            | 140 ms to 212 ms (51% slower)     | 28.5 ms to 40.2 ms (41% slower)  |
+  | Receive insertion time                       | 271 ms to 428 ms (58% slower)     | 242 ms to 63.0 ms (74% faster)   |
+  | Local insertion time                         | 1,109 ms to 1,224 ms (10% slower) | 137 ms to 130 ms (5% faster)     |
+
+  These measurements use Node.js 22, in-memory storage, and a mocked runtime, with 18 timed samples per case across two process orders.
+  Heap measurements use six batches of loaded documents after garbage collection and do not measure peak memory.
+  The memory savings can come with additional processing time, particularly when loading summaries or receiving formatted text.
+  Results depend on the document schema, workload, and environment.
+
+- Manage branch state independently of views ([#28520](https://github.com/microsoft/FluidFramework/pull/28520)) [9ea98a15a67](https://github.com/microsoft/FluidFramework/commit/9ea98a15a67e51642eaa343bb570329404ac9acd)
+
+  You can now create and retain an independent branch without keeping a typed view alive.
+  This lets you separate the lifetime of branch state and history from the schema-configured view used to read and edit it.
+
+  This change is a step toward separating branch management from views and reducing the current one-view-per-branch restriction.
+  It does not enable multiple active views of the same branch: each branch still supports one active view at a time.
+
+  Use the new alpha method `tree.forkBranch()` to create a `TreeBranchHandleAlpha` without a source view or schema configuration.
+  Use `branch.viewWith(config)` when you need to read or edit the branch.
+  Disposing that view preserves the branch so you can create another view later.
+  Edits remain isolated until you merge them into another view.
+
+  ```typescript
+  import {
+    asAlpha,
+    SchemaFactory,
+    TreeViewConfiguration,
+  } from "@fluidframework/tree/alpha";
+
+  const sf = new SchemaFactory("counter");
+  class Counter extends sf.object("Counter", {
+    count: sf.number,
+  }) {}
+
+  const config = new TreeViewConfiguration({ schema: Counter });
+
+  // `tree` is an `ITree` initialized with this schema and { count: 0 }.
+  // It has no active view.
+  const branch = asAlpha(tree).forkBranch();
+  const branchView = branch.viewWith(config);
+  const view = asAlpha(tree.viewWith(config));
+
+  branchView.root.count = 5;
+  console.log(view.root.count); // 0: the branch edit is isolated.
+
+  view.merge(branchView); // Also disposes branch and branchView.
+  console.log(view.root.count); // 5
+  ```
+
+  You own each branch and must dispose it when you no longer need it.
+  Disposing a branch also disposes its active view.
+
+  Use `branch.fork()` to create an independent child branch.
+  Existing `view.fork()` behavior is unchanged: the returned view owns its branch, and disposing that view also disposes its branch.
+
+  See [Indexes and Branches](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/main/indexes-and-branches.md) for more details.
+
+- Deprecate isEquivalent compatibility flag ([#28655](https://github.com/microsoft/FluidFramework/pull/28655)) [8c51cdeac2d](https://github.com/microsoft/FluidFramework/commit/8c51cdeac2dc2c238a8e97fd61e0a1206a7eb336)
+
+  [`SchemaCompatibilityStatus.isEquivalent`](https://fluidframework.com/docs/api/fluid-framework/schemacompatibilitystatus-interface#isequivalent-propertysignature) is deprecated.
+  Use [`canView`](https://fluidframework.com/docs/api/fluid-framework/schemacompatibilitystatus-interface#canview-propertysignature) to determine whether you can read and edit a document with your view schema.
+  Use [`canUpgrade`](https://fluidframework.com/docs/api/fluid-framework/schemacompatibilitystatus-interface#canupgrade-propertysignature) to determine whether you can upgrade the document's stored schema.
+  For details about differences that prevent viewing, use [`SchemaCompatibilityStatusBeta.discrepancies`](https://fluidframework.com/docs/api/fluid-framework/schemacompatibilitystatusbeta-interface#discrepancies-propertysignature).
+
+  There is no direct replacement for schema equivalence.
+  The property remains available until a future major release.
+
 ## 3.11.0
 
 ### Minor Changes

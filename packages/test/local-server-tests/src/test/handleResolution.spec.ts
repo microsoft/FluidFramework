@@ -16,7 +16,6 @@ import type { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
 	LoaderContainerTracker,
-	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 	type ITestFluidObject,
 } from "@fluidframework/test-utils/internal";
@@ -64,7 +63,7 @@ describe("Multi-level handle access", () => {
 		});
 		const container1 = await createDetachedContainer(loader);
 
-		const dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		const containerRuntime1 = dataObject1.context.containerRuntime;
 
 		const dataObject2 = await createNonRootDataObject(containerRuntime1);
@@ -112,7 +111,7 @@ describe("Multi-level handle access", () => {
 		loaderContainerTracker.addContainer(container2);
 		await loaderContainerTracker.ensureSynchronized();
 
-		const dataObject1C2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		const dataObject1C2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const dataObject2C2 = await getAndValidateDataObject(dataObject1C2, "dataObject2");
 		const dataObject3C2 = await getAndValidateDataObject(dataObject2C2, "dataObject3");
 
@@ -155,7 +154,7 @@ describe("Multi-level handle access", () => {
 		await waitForContainerConnection(container1);
 		loaderContainerTracker.addContainer(container1);
 
-		const dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		const containerRuntime1 = dataObject1.context.containerRuntime;
 
 		const dataObject2 = await createNonRootDataObject(containerRuntime1);
@@ -188,7 +187,7 @@ describe("Multi-level handle access", () => {
 		loaderContainerTracker.addContainer(container2);
 		await loaderContainerTracker.ensureSynchronized();
 
-		const dataObject1C2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		const dataObject1C2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const dataObject2C2 = await getAndValidateDataObject(dataObject1C2, "dataObject2");
 		const dataObject3C2 = await getAndValidateDataObject(dataObject2C2, "dataObject3");
 
@@ -226,7 +225,7 @@ describe("Multi-level handle access", () => {
 		const container1 = await createDetachedContainer(loader);
 		loaderContainerTracker.addContainer(container1);
 
-		const dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		const containerRuntime1 = dataObject1.context.containerRuntime;
 
 		const dataObject2 = await createNonRootDataObject(containerRuntime1);
@@ -262,7 +261,7 @@ describe("Multi-level handle access", () => {
 		await waitForContainerConnection(container2);
 		loaderContainerTracker.addContainer(container2);
 
-		const dataObjectC2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		const dataObjectC2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const dataObject2C2 = await getAndValidateDataObject(dataObjectC2, "dataObject2");
 		const dataObject3C2 = await getAndValidateDataObject(dataObject2C2, "dataObject3");
 

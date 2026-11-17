@@ -1497,6 +1497,15 @@ export abstract class CheckoutBase implements ITreeCheckout {
 	private readonly onAncestryTrimmed = (revisions: RevisionTag[]): void => {
 		// When the branch is trimmed, we can garbage collect any repair data whose latest relevant revision is one of the
 		// trimmed revisions.
+		// Commits without repair data (such as inserts) need no edit to the forest.
+		const hasRepairData = revisions.some(
+			(revision) =>
+				this._removedRoots.getRootsLastTouchedByRevision(revision)[Symbol.iterator]().next()
+					.done !== true,
+		);
+		if (!hasRepairData) {
+			return;
+		}
 		this.withCombinedVisitor((visitor) => {
 			for (const revision of revisions) {
 				// get all the roots last created or used by the revision
@@ -1667,7 +1676,7 @@ export abstract class CheckoutBase implements ITreeCheckout {
 	 * @param disposeCheckoutOnViewDispose - Whether disposing the view also disposes this checkout.
 	 * Defaults to this checkout's {@link CheckoutBase.disposesWithView} policy.
 	 * @remarks
-	 * Extends {@link ViewTree.viewWith} to include `disposeCheckoutOnViewDispose` parameter.
+	 * Extends {@link ViewableTree.viewWith} to include the `disposeCheckoutOnViewDispose` parameter.
 	 */
 	@throwIfBroken
 	public viewWithInternal<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
@@ -1872,10 +1881,8 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		}
 		const revisionForInvert = this.mintRevisionTag();
 		const toUndo = this.changeFamily.rebaser.compose(commitsToUndo);
-		const inverse = this.changeFamily.rebaser.invert(
-			makeAnonChange(toUndo),
-			false,
-			revisionForInvert,
+		const inverse = this.changeFamily.rebaser.ensureCompatibility(
+			this.changeFamily.rebaser.invert(makeAnonChange(toUndo), false, revisionForInvert),
 		);
 		this.#transaction.branch.apply(
 			tagChange(inverse, revisionForInvert),
@@ -2107,7 +2114,9 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		const revisionForInvert = this.mintRevisionTag();
 
 		let change = tagChange(
-			this.changeFamily.rebaser.invert(commitToRevert, false, revisionForInvert),
+			this.changeFamily.rebaser.ensureCompatibility(
+				this.changeFamily.rebaser.invert(commitToRevert, false, revisionForInvert),
+			),
 			revisionForInvert,
 		);
 

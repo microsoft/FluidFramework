@@ -26,6 +26,14 @@ describeCompat(
 			fluidDataObjectType: DataObjectFactoryType.Test,
 			registry,
 		};
+
+		beforeEach("check driver compatibility", function () {
+			if (getTestObjectProvider().driver.type === "odsp") {
+				// TODO: Re-enable for ODSP when AB#72105 fixes intermittent drive/item lookup failures during container setup.
+				this.skip();
+			}
+		});
+
 		async function setup(): Promise<{
 			provider: ITestObjectProvider;
 			counters: ISharedCounter[];

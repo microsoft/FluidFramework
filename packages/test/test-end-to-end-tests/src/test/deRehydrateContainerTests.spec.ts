@@ -35,10 +35,7 @@ import {
 	LocalCodeLoader,
 	TestFluidObject,
 	createDocumentId,
-	getContainerEntryPointBackCompat,
-	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
-import * as semver from "semver";
 
 // eslint-disable-next-line import-x/no-internal-modules
 import type { SnapshotWithBlobs } from "../../../../loader/container-loader/lib/serializedStateManager.js";
@@ -214,8 +211,7 @@ describeCompat(
 		}> {
 			const container: IContainer = await loader.createDetachedContainer(codeDetails);
 			// Get the root dataStore from the detached container.
-			const defaultDataStore =
-				await getContainerEntryPointBackCompat<TestFluidObject>(container);
+			const defaultDataStore = (await container.getEntryPoint()) as TestFluidObject;
 			return {
 				container,
 				defaultDataStore,
@@ -268,8 +264,7 @@ describeCompat(
 			peerDataStoreRuntimeChannel: IFluidDataStoreChannel;
 		}> => {
 			const dataStore = await containerRuntime.createDataStore(["default"]);
-			const peerDataStore =
-				await getDataStoreEntryPointBackCompat<ITestFluidObject>(dataStore);
+			const peerDataStore = (await dataStore.entryPoint.get()) as ITestFluidObject;
 			return {
 				peerDataStore,
 				peerDataStoreRuntimeChannel: peerDataStore.channel,
@@ -280,7 +275,7 @@ describeCompat(
 			container: IContainer,
 			key: string,
 		): Promise<TestFluidObject> {
-			const entryPoint = await getContainerEntryPointBackCompat<TestFluidObject>(container);
+			const entryPoint = (await container.getEntryPoint()) as TestFluidObject;
 			const handle: IFluidHandle<TestFluidObject> | undefined = entryPoint.root.get(key);
 			assert(handle !== undefined, `handle for [${key}] must exist`);
 			return handle.get();
@@ -304,9 +299,7 @@ describeCompat(
 				// These tests only work with the latest version of loader -
 				// they do make certain assumptions that are not valid for older loaders. This check could be relaxed in
 				// the future.
-				apis.loader.version !== pkgVersion ||
-				(semver.compare(provider.driver.version, "0.46.0") === -1 &&
-					(provider.driver.type === "routerlicious" || provider.driver.type === "tinylicious"))
+				apis.loader.version !== pkgVersion
 			) {
 				this.skip();
 			}
@@ -448,8 +441,7 @@ describeCompat(
 				const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
 				// Check for default data store
-				const defaultDataStore =
-					await getContainerEntryPointBackCompat<TestFluidObject>(container2);
+				const defaultDataStore = (await container2.getEntryPoint()) as TestFluidObject;
 				assert.notStrictEqual(defaultDataStore, undefined, "Component should exist!!");
 
 				// Check for dds
@@ -488,8 +480,7 @@ describeCompat(
 				await container2.attach(request);
 
 				// Check for default data store
-				const defaultDataStore =
-					await getContainerEntryPointBackCompat<TestFluidObject>(container2);
+				const defaultDataStore = (await container2.getEntryPoint()) as TestFluidObject;
 				assert.notStrictEqual(defaultDataStore, undefined, "Component should exist!!");
 
 				// Check for dds
@@ -528,8 +519,7 @@ describeCompat(
 				}
 
 				// Check for default data store
-				const defaultDataStore =
-					await getContainerEntryPointBackCompat<TestFluidObject>(container1);
+				const defaultDataStore = (await container1.getEntryPoint()) as TestFluidObject;
 				assert.notStrictEqual(defaultDataStore, undefined, "Component should exist!!");
 
 				// Check for dds
@@ -562,8 +552,7 @@ describeCompat(
 			it("Change contents of dds, then rehydrate and then check summary", async () => {
 				const { container } = await createDetachedContainerAndGetEntryPoint();
 
-				const defaultDataStoreBefore =
-					await getContainerEntryPointBackCompat<TestFluidObject>(container);
+				const defaultDataStoreBefore = (await container.getEntryPoint()) as TestFluidObject;
 				const sharedStringBefore =
 					await defaultDataStoreBefore.getSharedObject<SharedString>(sharedStringId);
 				const intervalsBefore = sharedStringBefore.getIntervalCollection("intervals");
@@ -571,43 +560,14 @@ describeCompat(
 				let interval0: SequenceInterval | undefined;
 				let interval1: SequenceInterval | undefined;
 
-				// The interval collection API was changed to uniformize `change`/`changeProperties` and addition of intervals.
-				interface OldIntervalCollection {
-					add(start: number, end: number, intervalType: number): SequenceInterval;
-					change(id: string, start: number, end: number): SequenceInterval | undefined;
-				}
-
-				// Note: "dev" prereleases have to be special-cased since semver orders prerelease tags alphabetically,
-				// so dev builds (i.e. -dev or -dev-rc) sort as before official internal releases.
-				const isCurrentApi =
-					apis.dataRuntime.version.includes("dev") ||
-					semver.gte(apis.dataRuntime.version, "2.0.0-internal.8.0.0");
-
-				if (!isCurrentApi) {
-					// Versions of @fluidframework/sequence before this version had a different `add` API.
-					// See https://github.com/microsoft/FluidFramework/commit/e5b463cc8b24a411581c3e48f62ce1eea68dd639
-					// for the removal of that API.
-					const slideOnRemove = 0x2;
-					interval0 = (intervalsBefore as unknown as OldIntervalCollection).add(
-						0,
-						0,
-						slideOnRemove,
-					);
-					interval1 = (intervalsBefore as unknown as OldIntervalCollection).add(
-						0,
-						1,
-						slideOnRemove,
-					);
-				} else {
-					interval0 = intervalsBefore.add({
-						start: 0,
-						end: 0,
-					});
-					interval1 = intervalsBefore.add({
-						start: 0,
-						end: 1,
-					});
-				}
+				interval0 = intervalsBefore.add({
+					start: 0,
+					end: 0,
+				});
+				interval1 = intervalsBefore.add({
+					start: 0,
+					end: 1,
+				});
 				let id0;
 				let id1;
 
@@ -616,23 +576,15 @@ describeCompat(
 					id1 = interval1.getIntervalId();
 					assert.strictEqual(typeof id0, "string");
 					assert.strictEqual(typeof id1, "string");
-					if (!isCurrentApi) {
-						// Versions of @fluidframework/sequence before this version had a different `change` API.
-						// See https://github.com/microsoft/FluidFramework/commit/12c83d26962a1d76db6eb0ccad31fd6a7976a1af
-						(intervalsBefore as unknown as OldIntervalCollection).change(id0, 2, 3);
-						(intervalsBefore as unknown as OldIntervalCollection).change(id1, 0, 3);
-					} else {
-						intervalsBefore.change(id0, { start: 2, end: 3 });
-						intervalsBefore.change(id1, { start: 0, end: 3 });
-					}
+					intervalsBefore.change(id0, { start: 2, end: 3 });
+					intervalsBefore.change(id1, { start: 0, end: 3 });
 				}
 
 				const snapshotTree = container.serialize();
 
 				const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
-				const defaultComponentAfter =
-					await getContainerEntryPointBackCompat<TestFluidObject>(container2);
+				const defaultComponentAfter = (await container2.getEntryPoint()) as TestFluidObject;
 				const sharedStringAfter =
 					await defaultComponentAfter.getSharedObject<SharedString>(sharedStringId);
 				const intervalsAfter = sharedStringAfter.getIntervalCollection("intervals");
@@ -684,16 +636,14 @@ describeCompat(
 			it("Rehydrate container from summary, change contents of dds and then check summary", async () => {
 				const { container } = await createDetachedContainerAndGetEntryPoint();
 				let str = "AA";
-				const defaultComponent1 =
-					await getContainerEntryPointBackCompat<TestFluidObject>(container);
+				const defaultComponent1 = (await container.getEntryPoint()) as TestFluidObject;
 				const sharedString1 =
 					await defaultComponent1.getSharedObject<SharedString>(sharedStringId);
 				sharedString1.insertText(0, str);
 				const snapshotTree = container.serialize();
 
 				const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
-				const defaultDataStoreBefore =
-					await getContainerEntryPointBackCompat<TestFluidObject>(container2);
+				const defaultDataStoreBefore = (await container2.getEntryPoint()) as TestFluidObject;
 				const sharedStringBefore =
 					await defaultDataStoreBefore.getSharedObject<SharedString>(sharedStringId);
 				const sharedMapBefore =
@@ -703,8 +653,7 @@ describeCompat(
 				sharedMapBefore.set("0", str);
 
 				await container2.attach(request);
-				const defaultComponentAfter =
-					await getContainerEntryPointBackCompat<TestFluidObject>(container);
+				const defaultComponentAfter = (await container.getEntryPoint()) as TestFluidObject;
 				const sharedStringAfter =
 					await defaultComponentAfter.getSharedObject<SharedString>(sharedStringId);
 				const sharedMapAfter =
@@ -863,7 +812,7 @@ describeCompat(
 					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
 				const rehydratedEntryPoint =
-					await getContainerEntryPointBackCompat<TestFluidObject>(rehydratedContainer);
+					(await rehydratedContainer.getEntryPoint()) as TestFluidObject;
 				const rehydratedRootOfDataStore =
 					await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
 				const dataStore2Handle: IFluidHandle<TestFluidObject> | undefined =
@@ -899,7 +848,7 @@ describeCompat(
 					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
 				const rehydratedEntryPoint =
-					await getContainerEntryPointBackCompat<TestFluidObject>(rehydratedContainer);
+					(await rehydratedContainer.getEntryPoint()) as TestFluidObject;
 				const rootOfDds2 = await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
 				const dds2Handle: IFluidHandle<ISharedMap> | undefined = rootOfDds2.get(dds2Key);
 				assert(dds2Handle !== undefined, `handle for [${dds2Key}] must exist`);
@@ -942,7 +891,7 @@ describeCompat(
 						await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
 					const rehydratedEntryPoint =
-						await getContainerEntryPointBackCompat<TestFluidObject>(rehydratedContainer);
+						(await rehydratedContainer.getEntryPoint()) as TestFluidObject;
 					const rootOfDds2 =
 						await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
 					const dds2Handle: IFluidHandle<ISharedMap> | undefined = rootOfDds2.get(dds2Key);
@@ -1000,7 +949,7 @@ describeCompat(
 						await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
 					const rehydratedEntryPoint =
-						await getContainerEntryPointBackCompat<TestFluidObject>(rehydratedContainer);
+						(await rehydratedContainer.getEntryPoint()) as TestFluidObject;
 					const rehydratedRootOfDataStore2 =
 						await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
 					const dataStore2Handle: IFluidHandle<TestFluidObject> | undefined =
