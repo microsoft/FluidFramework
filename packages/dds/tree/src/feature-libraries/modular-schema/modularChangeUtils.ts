@@ -503,10 +503,15 @@ function validateAttach(
 	count: number,
 ): true | string {
 	let countProcessed = count;
+	// Note: Unlike builds, refreshers are not inspected as a potential source for two reasons:
+	// 1. Refreshers are not relevant:
+	//    We always expect a rename entry for the root being attached.
+	//    (This expectation does not apply to rollbacks, which makes the attaches impossible to validate on rollback changesets)
+	// 2. Refreshers are not guaranteed to be included:
+	//    The presence of a refresher is dependent on details that are extrinsic to the changeset like the collab window.
+	//    This means that any check based on their presence would be unreliable.
 	const buildEntry = hasBuildForIdRange(changeset.builds, attachId, countProcessed);
 	countProcessed = buildEntry.length;
-	const refresherEntry = hasBuildForIdRange(changeset.refreshers, attachId, countProcessed);
-	countProcessed = refresherEntry.length;
 
 	const detachEntry = getDetachFieldForAttach(
 		changeset.crossFieldKeys,
@@ -521,7 +526,6 @@ function validateAttach(
 
 	if (
 		!buildEntry.value &&
-		!refresherEntry.value &&
 		detachEntry.value === undefined &&
 		renameEntry.value === undefined
 	) {
