@@ -155,7 +155,8 @@ Changesets are Markdown documents, and unless otherwise stated below they should
   We use present tense because we are describing changes in the current release.
   A useful rule of thumb: mentally prefix the summary with "In this release," and verify it reads naturally.
 - Avoid referring to package names in the summary (they appear in the "packages affected" section of release notes).
-- Changeset body content may include Markdown headings starting at **level 5** (`#####`), since levels 1-3 are used in the release notes structure.
+- Changeset body content may include Markdown headings.
+  Heading levels will be automatically adjusted when generating changelogs and release notes based on the heading level of the target location.
 - `@`-prefixed text use should be code formatted (backtick enclosed).
   GitHub will aggressively turn "@foo" into a mention of username `foo`.
 - Include links to relevant documentation (e.g. API docs on fluidframework.com) where possible.
