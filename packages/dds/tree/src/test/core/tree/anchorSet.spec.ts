@@ -52,6 +52,27 @@ describe("AnchorSet", () => {
 		checkEquality(anchors.locate(anchor3), path3);
 	});
 
+	it("anchors children from their parent's anchor node as tracking their paths does", () => {
+		const anchors = new AnchorSet();
+		const parentAnchor = anchors.track(path4);
+		const parent = anchors.locate(parentAnchor) ?? assert.fail();
+		const [newChild, newChildNode] = parent.getOrCreateChildRef(fieldBar, 4);
+		checkEquality(newChildNode, path1);
+		assert.equal(anchors.locate(newChild), newChildNode);
+		// A child which already has an anchor node gets another anchor to the same node.
+		const tracked = anchors.track(path1);
+		const [again, againNode] = parent.getOrCreateChildRef(fieldBar, 4);
+		assert.equal(againNode, newChildNode);
+		assert.equal(anchors.locate(tracked), newChildNode);
+		// Each anchor holds its own reference.
+		anchors.forget(newChild);
+		anchors.forget(again);
+		assert.equal(anchors.locate(tracked), newChildNode);
+		anchors.forget(tracked);
+		anchors.forget(parentAnchor);
+		assert(anchors.isEmpty());
+	});
+
 	it("can move within field", () => {
 		const anchors = new AnchorSet();
 		const anchor0 = anchors.track(makePath([rootFieldKey, 0]));

@@ -211,7 +211,12 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 					const key: FieldKey = cursor.getFieldKey();
 					const pair: [FieldKey, FlexTreeField] = [
 						key,
-						makeField(this.context, this.storedSchema.getFieldSchema(key).kind, cursor),
+						makeField(
+							this.context,
+							this.storedSchema.getFieldSchema(key).kind,
+							cursor,
+							this.anchorNode,
+						),
 					];
 					return pair;
 				}).values();
@@ -235,7 +240,7 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 			if (cursor.getFieldLength() === 0) {
 				return undefined;
 			}
-			return cached ?? makeField(this.context, schema.kind, cursor);
+			return cached ?? makeField(this.context, schema.kind, cursor, this.anchorNode);
 		});
 	}
 
@@ -250,7 +255,7 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 
 		const fieldSchema = this.storedSchema.getFieldSchema(key);
 		return inCursorField(this.cursor, key, (cursor) => {
-			return makeField(this.context, fieldSchema.kind, cursor);
+			return makeField(this.context, fieldSchema.kind, cursor, this.anchorNode);
 		});
 	}
 
@@ -260,6 +265,7 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 				this.context,
 				this.storedSchema.getFieldSchema(cursor.getFieldKey()).kind,
 				cursor,
+				this.anchorNode,
 			),
 		).values();
 	}

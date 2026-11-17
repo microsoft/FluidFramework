@@ -18,6 +18,7 @@ import {
 	rootFieldKey,
 } from "../../../core/index.js";
 import { Context } from "../../../feature-libraries/flex-tree/context.js";
+import { LazyField } from "../../../feature-libraries/flex-tree/lazyField.js";
 import { LazyTreeNode } from "../../../feature-libraries/flex-tree/lazyNode.js";
 import { withObservation } from "../../../feature-libraries/flex-tree/observer.js";
 import {
@@ -153,6 +154,54 @@ describe("LazyNode", () => {
 			view.dispose();
 			assert.throws(() => node.getBoxed(key));
 			checkout.dispose();
+		});
+
+		it(`anchors new fields and child nodes from the parent's anchor node (${name})`, () => {
+			const sf = new SchemaFactory("anchors-from-parent");
+			class Item extends sf.object("Item", { value: sf.number }) {}
+			class Holder extends sf.object("Holder", { items: sf.array(Item) }) {}
+			const view = createIndependentTreeAlpha({ forest }).viewWith(
+				new TreeViewConfiguration({ schema: Holder }),
+			);
+			view.initialize({ items: [{ value: 2 }, { value: 3 }] });
+			const arrayNode = getInnerNode(view.root.items);
+			assert(arrayNode instanceof LazyTreeNode);
+			const anchors = arrayNode.context.checkout.forest.anchors;
+			// Counts the anchors created from a path rather than from an existing anchor node.
+			let trackedPaths = 0;
+			const track = anchors.track.bind(anchors);
+			anchors.track = (path) => {
+				if (path !== null && anchors.find(path) !== path) {
+					trackedPaths++;
+				}
+				return track(path);
+			};
+
+			const field = arrayNode.getBoxed(EmptyKey);
+			assert(field instanceof LazyField);
+			assert(field.anchor.parent !== undefined);
+			assert.equal(anchors.locate(field.anchor.parent), arrayNode.anchorNode);
+
+			const unboxed = field.atIndex(0);
+			assert(unboxed instanceof LazyTreeNode);
+			assert.equal(unboxed.anchorNode.parent, arrayNode.anchorNode);
+			assert.equal(anchors.locate(unboxed.anchor), unboxed.anchorNode);
+			assert.equal(field.atIndex(0), unboxed);
+			const valueField = unboxed.getBoxed(brand("value"));
+			assert(valueField instanceof LazyField);
+			assert.equal(valueField.atIndex(0), 2);
+			assert.equal(trackedPaths, 0);
+			assert.equal(field.boxedAt(0), unboxed);
+
+			// Fields and nodes keep working after edits move them.
+			view.root.items.insertAt(0, { value: 0 });
+			assert.equal(unboxed.anchorNode.parentIndex, 1);
+			assert.equal(field.atIndex(1), unboxed);
+			assert.equal(field.length, 3);
+			assert.equal(view.root.items[1]?.value, 2);
+
+			view.dispose();
+			assert(anchors.isEmpty());
 		});
 
 		for (const compatible of [true, false]) {
