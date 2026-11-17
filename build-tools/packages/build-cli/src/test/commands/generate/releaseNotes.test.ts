@@ -8,9 +8,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import execa from "execa";
-import { toString } from "mdast-util-to-string";
 import { afterEach, beforeEach, describe, it } from "mocha";
-import { remark } from "remark";
 
 // Exercise the real CLI, not just the Markdown plugin.
 // Author-written headings must fit beneath generated change titles without taking over the document outline.
@@ -126,39 +124,49 @@ describe("generate:releaseNotes heading normalization", () => {
 
 		const output = await readFile(path.join(testDir, "release-notes.md"), "utf8");
 
-		// Inspect actual document headings so code examples and table-of-contents links cannot satisfy the outline checks.
-		const headings = remark()
-			.parse(output)
-			.children.filter((node) => node.type === "heading")
-			.map((node) => ({ depth: node.depth, text: toString(node) }));
-
 		// Readers should see sibling level-3 change titles, with body headings nested at levels 4 and 5.
 		// Generated "Change details" must remain level 4 and must not influence the per-body normalization offset.
-		for (const [text, depth] of [
-			["Improve memory usage", 3],
-			["Examples", 4],
-			["Measurements", 5],
-			["Next change", 3],
-			["Another top-level heading", 4],
-			["Change details", 4],
-		] as const) {
-			assert.ok(
-				headings.some((heading) => heading.text === text && heading.depth === depth),
-				`Expected "${text}" to be a level-${depth} heading.`,
-			);
+		for (const { title, expected } of [
+			{
+				title: "### Improve memory usage",
+				expected: `### Improve memory usage
+
+#### Examples
+
+##### Measurements
+
+**Deep details**
+
+\`\`\`markdown
+# A code example
+\`\`\`
+
+`,
+			},
+			{
+				title: "### Next change",
+				expected: `### Next change
+
+#### Another top-level heading
+
+Details.
+
+`,
+			},
+		]) {
+			// Compare complete emitted bodies while excluding variable commit metadata and the generated table of contents.
+			// Include line boundaries in both markers so a heading at the wrong depth cannot match a suffix of a deeper one.
+			const start = output.indexOf(`\n${title}\n`);
+			assert.notEqual(start, -1, `Expected a standalone "${title}" heading.`);
+			const end = output.indexOf("\n#### Change details\n", start + 1);
+			assert.ok(end > start, `Expected level-4 change details after "${title}".`);
+			const actual = output.slice(start + 1, end + 1);
+			assert.equal(actual, expected);
 		}
 
-		// A mapped level-7 heading cannot enter the document outline, but its text must remain visible as a bold label.
-		assert.ok(!headings.some((heading) => heading.text === "Deep details"));
-		assert.match(output, /\*\*Deep details\*\*/);
-
-		// Code examples must remain copyable: a hash-prefixed line inside a fence is code, not document structure.
-		assert.match(output, /```markdown\n# A code example\n```/);
-
 		// Normalization is output-only, preserving the author's source for generators with different target heading depths.
-		assert.equal(
-			await readFile(path.join(testDir, ".changeset", "first.md"), "utf8"),
-			firstChangeset,
-		);
+		const actual = await readFile(path.join(testDir, ".changeset", "first.md"), "utf8");
+		const expected = firstChangeset;
+		assert.equal(actual, expected);
 	});
 });

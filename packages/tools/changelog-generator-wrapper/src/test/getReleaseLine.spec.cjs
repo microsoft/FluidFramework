@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable tsdoc/syntax -- JavaScript type annotations use JSDoc syntax. */
+
 const assert = require("node:assert/strict");
 const { execFile } = require("node:child_process");
 const { cp, mkdir, mkdtemp, readFile, rm, writeFile } = require("node:fs/promises");
@@ -96,8 +98,6 @@ describe("changelog formatter", () => {
 		}
 	});
 
-	/* eslint-disable tsdoc/syntax -- JavaScript type annotations use JSDoc syntax. */
-
 	/**
 	 * Formats Markdown without commit or PR links so the content can be compared directly.
 	 *
@@ -107,7 +107,6 @@ describe("changelog formatter", () => {
 	 * @param {string} summary - The complete changeset Markdown, excluding front matter.
 	 * @returns {Promise<string>} The formatted changelog entry.
 	 */
-	/* eslint-enable tsdoc/syntax */
 	async function format(summary) {
 		return getReleaseLine(
 			{ id: "example", summary, releases: [{ name: "example-package", type: "minor" }] },
@@ -120,124 +119,217 @@ describe("changelog formatter", () => {
 		);
 	}
 
+	/**
+	 * Parses and serializes the formatter's actual output for structural Markdown comparisons.
+	 *
+	 * @remarks
+	 * Canonical formatting removes incidental blank-line indentation inside containers.
+	 * Parsing the emitted Markdown, not the source AST, ensures malformed block boundaries remain visible in the comparison.
+	 *
+	 * @param {string} summary - The complete changeset Markdown, excluding front matter.
+	 * @returns {Promise<string>} The formatted entry serialized as canonical Markdown.
+	 */
+	async function formatCanonical(summary) {
+		return String(remark().processSync(await format(summary)));
+	}
+
 	// Each entry needs its own section so its body headings cannot appear to contain subsequent changes.
 	it("formats the summary as a heading instead of a list item", async () => {
-		assert.equal(await format("Improve items"), "#### Improve items");
+		const actual = await format("Improve items");
+		const expected = "#### Improve items";
+		assert.equal(actual, expected);
 	});
 
 	// Level-4 entry titles leave only levels 5 and 6 for body headings; deeper sections must remain readable as bold labels.
 	it("preserves relative nesting and renders adjusted levels above 6 as bold labels", async () => {
-		assert.equal(
-			await format(
-				"Improve items\n\nDetails.\n\n#### Examples\n\nExample.\n\n##### Measurements\n\nNumbers.\n\n###### Details\n\nMore details.",
-			),
-			"#### Improve items\n\nDetails.\n\n##### Examples\n\nExample.\n\n###### Measurements\n\nNumbers.\n\n**Details**\n\nMore details.",
+		const actual = await format(
+			"Improve items\n\nDetails.\n\n#### Examples\n\nExample.\n\n##### Measurements\n\nNumbers.\n\n###### Details\n\nMore details.",
 		);
+		const expected =
+			"#### Improve items\n\nDetails.\n\n##### Examples\n\nExample.\n\n###### Measurements\n\nNumbers.\n\n**Details**\n\nMore details.";
+		assert.equal(actual, expected);
 	});
 
 	// Source depth is an authoring choice, not a restriction.
 	// Even a lone level-6 heading becomes level 5 rather than a bold label because it is the shallowest heading in its body.
 	for (const depth of [1, 2, 3, 4, 5, 6]) {
 		it(`normalizes a level-${depth} body heading to level 5`, async () => {
-			assert.equal(
-				await format(`Improve items\n\n${"#".repeat(depth)} Examples`),
-				"#### Improve items\n\n##### Examples",
-			);
+			const actual = await format(`Improve items\n\n${"#".repeat(depth)} Examples`);
+			const expected = "#### Improve items\n\n##### Examples";
+			assert.equal(actual, expected);
 		});
 	}
 
 	// Preserve the author's numeric level gaps: source levels 2, 4, and 6 map to 5, 7, and 9, not consecutive output headings.
 	it("preserves gaps between source heading levels", async () => {
-		assert.equal(
-			await format("Improve items\n\n## Examples\n\n#### Details\n\n###### More details"),
-			"#### Improve items\n\n##### Examples\n\n**Details**\n\n**More details**",
+		const actual = await format(
+			"Improve items\n\n## Examples\n\n#### Details\n\n###### More details",
 		);
+		const expected = "#### Improve items\n\n##### Examples\n\n**Details**\n\n**More details**";
+		assert.equal(actual, expected);
 	});
 
 	// A body can start with a nested section, so choosing the offset from its first heading would give the wrong hierarchy.
 	it("uses the shallowest heading even when it appears later in the body", async () => {
-		assert.equal(
-			await format("Improve items\n\n###### Details\n\n## Examples\n\n### Measurements"),
-			"#### Improve items\n\n**Details**\n\n##### Examples\n\n###### Measurements",
+		const actual = await format(
+			"Improve items\n\n###### Details\n\n## Examples\n\n### Measurements",
 		);
+		const expected =
+			"#### Improve items\n\n**Details**\n\n##### Examples\n\n###### Measurements";
+		assert.equal(actual, expected);
 	});
 
 	it("preserves inline formatting when converting the deepest headings", async () => {
-		const result = await format(
+		const actual = await format(
 			"Improve items\n\n#### Examples\n\n###### Compare `before` with [after](https://example.com)",
 		);
 
 		// Converting a section heading to a bold label must not flatten its inline code or links into plain text.
-		assert.equal(
-			result,
-			"#### Improve items\n\n##### Examples\n\n**Compare `before` with [after](https://example.com)**",
-		);
+		const expected =
+			"#### Improve items\n\n##### Examples\n\n**Compare `before` with [after](https://example.com)**";
+		assert.equal(actual, expected);
 	});
 
 	// ATX headings can separate blocks without blank lines, but bold paragraphs cannot.
-	// Inspect parsed output so visually plausible Markdown cannot silently merge prose or turn examples into ordinary text.
+	// Explicit blank lines in the expected Markdown keep prose and code examples separate from each bold label.
 	it("preserves block boundaries around an overflowing heading next to prose", async () => {
-		const output = await format("Improve items\n\n# Examples\n\nIntro.\n### Details\nMore.");
-		const blocks = remark().parse(output).children.slice(2);
-		assert.deepEqual(
-			blocks.map((node) => node.type),
-			["paragraph", "paragraph", "paragraph"],
-		);
-		assert.equal(blocks[0].children[0].value, "Intro.");
-		assert.equal(blocks[1].children[0].type, "strong");
-		assert.equal(blocks[1].children[0].children[0].value, "Details");
-		assert.equal(blocks[2].children[0].value, "More.");
+		const actual = await format(`Improve items
+
+# Examples
+
+Intro.
+### Details
+More.`);
+		const expected = `#### Improve items
+
+##### Examples
+
+Intro.
+
+**Details**
+
+More.`;
+		assert.equal(actual, expected);
 	});
 
 	it("preserves indented code immediately after an overflowing heading", async () => {
-		const output = await format(
-			"Improve items\n\n# Examples\n\n###### Details\n    const value = 1;",
-		);
-		const blocks = remark().parse(output).children.slice(2);
-		assert.deepEqual(
-			blocks.map((node) => node.type),
-			["paragraph", "code"],
-		);
-		assert.equal(blocks[0].children[0].type, "strong");
-		assert.equal(blocks[0].children[0].children[0].value, "Details");
-		assert.equal(blocks[1].value, "const value = 1;");
+		const actual = await format(`Improve items
+
+# Examples
+
+###### Details
+    const value = 1;`);
+		const expected = `#### Improve items
+
+##### Examples
+
+**Details**
+
+    const value = 1;`;
+		assert.equal(actual, expected);
 	});
 
+	// Without a separator, "---" would become a Setext underline and promote the label to a level-2 heading.
 	it("preserves a horizontal rule immediately after an overflowing heading", async () => {
-		const output = await format("Improve items\n\n# Root\n\n### Deep\n---");
-		const blocks = remark().parse(output).children.slice(2);
+		const actual = await format(`Improve items
 
-		// Without a separator, "---" would become a Setext underline and promote the label to a level-2 heading.
-		assert.deepEqual(
-			blocks.map((node) => node.type),
-			["paragraph", "thematicBreak"],
-		);
-		assert.equal(blocks[0].children[0].type, "strong");
-		assert.equal(blocks[0].children[0].children[0].value, "Deep");
+# Root
+
+### Deep
+---`);
+		const expected = `#### Improve items
+
+##### Root
+
+**Deep**
+
+---`;
+		assert.equal(actual, expected);
 	});
 
 	it("keeps adjacent overflowing headings as separate bold paragraphs", async () => {
-		const output = await format(
-			"Improve items\n\n# Examples\n\n### First\n#### Second\nMore.",
-		);
-		const blocks = remark().parse(output).children.slice(2);
-		assert.deepEqual(
-			blocks.map((node) => node.type),
-			["paragraph", "paragraph", "paragraph"],
-		);
-		assert.equal(blocks[0].children[0].children[0].value, "First");
-		assert.equal(blocks[1].children[0].children[0].value, "Second");
-		assert.equal(blocks[2].children[0].value, "More.");
+		const actual = await format(`Improve items
+
+# Examples
+
+### First
+#### Second
+More.`);
+		const expected = `#### Improve items
+
+##### Examples
+
+**First**
+
+**Second**
+
+More.`;
+		assert.equal(actual, expected);
 	});
 
-	for (const { name, firstPrefix, prefix, containers } of [
-		{ name: "blockquotes", firstPrefix: "> ", prefix: "> ", containers: ["blockquote"] },
-		{ name: "list items", firstPrefix: "- ", prefix: "  ", containers: ["list", "listItem"] },
+	for (const { name, firstPrefix, prefix, expected: expectedBody } of [
+		{
+			name: "blockquotes",
+			firstPrefix: "> ",
+			prefix: "> ",
+			expected: `> Intro.
+>
+> **Details**
+>
+> More.
+>
+> **Code**
+>
+> \`\`\`
+> const value = 1;
+> \`\`\`
+>
+> **Rule**
+>
+> ***
+`,
+		},
+		{
+			name: "list items",
+			firstPrefix: "- ",
+			prefix: "  ",
+			expected: `* Intro.
+
+  **Details**
+
+  More.
+
+  **Code**
+
+  \`\`\`
+  const value = 1;
+  \`\`\`
+
+  **Rule**
+
+  ***
+`,
+		},
 		{
 			name: "ordered lists inside blockquotes",
 			firstPrefix: "> 12. ",
 			prefix: ">     ",
-			containers: ["blockquote", "list", "listItem"],
+			expected: `> 12. Intro.
+>
+>     **Details**
+>
+>     More.
+>
+>     **Code**
+>
+>     \`\`\`
+>     const value = 1;
+>     \`\`\`
+>
+>     **Rule**
+>
+>     ***
+`,
 		},
 	]) {
 		it(`preserves block boundaries inside ${name}`, async () => {
@@ -253,85 +345,68 @@ describe("changelog formatter", () => {
 			const source = lines
 				.map((line, index) => `${index === 0 ? firstPrefix : prefix}${line}`)
 				.join("\n");
-			const output = await format(`Improve items\n\n# Examples\n\n${source}`);
-			let blocks = remark().parse(output).children.slice(2);
 
 			// Added separators must not split a quote or let a label escape its original list item.
-			for (const type of containers) {
-				assert.equal(blocks.length, 1);
-				assert.equal(blocks[0].type, type);
-				blocks = blocks[0].children;
-			}
-			assert.deepEqual(
-				blocks.map((node) => node.type),
-				[
-					"paragraph",
-					"paragraph",
-					"paragraph",
-					"paragraph",
-					"code",
-					"paragraph",
-					"thematicBreak",
-				],
-			);
-			for (const [index, label] of [
-				[1, "Details"],
-				[3, "Code"],
-				[5, "Rule"],
-			]) {
-				assert.equal(blocks[index].children[0].type, "strong");
-				assert.equal(blocks[index].children[0].children[0].value, label);
-			}
-			assert.equal(blocks[4].value, "const value = 1;");
+			const actual = await formatCanonical(`Improve items\n\n# Examples\n\n${source}`);
+			const expected = `#### Improve items
+
+##### Examples
+
+${expectedBody}`;
+			assert.equal(actual, expected);
 		});
 	}
 
 	// A label at the end of a container must not absorb following plain text into that quote or list.
-	for (const { name, prefix, type } of [
-		{ name: "blockquote", prefix: "> ", type: "blockquote" },
-		{ name: "list item", prefix: "- ", type: "list" },
+	for (const { name, prefix, expected: expectedContainer } of [
+		{ name: "blockquote", prefix: "> ", expected: "> **Details**" },
+		{ name: "list item", prefix: "- ", expected: "* **Details**" },
 	]) {
 		it(`keeps following prose outside a ${name} ending with an overflowing heading`, async () => {
-			const output = await format(
+			const actual = await formatCanonical(
 				`Improve items\n\n# Examples\n\n${prefix}### Details\nOutside.`,
 			);
-			const blocks = remark().parse(output).children;
-			assert.deepEqual(
-				blocks.map((node) => node.type),
-				["heading", "heading", type, "paragraph"],
-			);
-			assert.equal(blocks[3].children[0].value, "Outside.");
+			const expected = `#### Improve items
+
+##### Examples
+
+${expectedContainer}
+
+Outside.
+`;
+			assert.equal(actual, expected);
 		});
 	}
 
 	it("preserves a quoted ordered list starting with an overflowing heading", async () => {
-		const output = await format(
-			"Improve items\n\n# Examples\n\n> 12. ### Details\n>         const value = 1;\n\nOutside.",
-		);
-		const blocks = remark().parse(output).children;
-		assert.deepEqual(
-			blocks.map((node) => node.type),
-			["heading", "heading", "blockquote", "paragraph"],
-		);
-		const list = blocks[2].children[0];
-		assert.equal(list.type, "list");
-		assert.equal(list.start, 12);
-		const item = list.children[0];
-		assert.deepEqual(
-			item.children.map((node) => node.type),
-			["paragraph", "code"],
-		);
-		assert.equal(item.children[0].children[0].type, "strong");
-		assert.equal(item.children[1].value, "const value = 1;");
-		assert.equal(blocks[3].children[0].value, "Outside.");
+		const actual = await formatCanonical(`Improve items
+
+# Examples
+
+> 12. ### Details
+>         const value = 1;
+
+Outside.`);
+		const expected = `#### Improve items
+
+##### Examples
+
+> 12. **Details**
+>
+>     \`\`\`
+>     const value = 1;
+>     \`\`\`
+
+Outside.
+`;
+		assert.equal(actual, expected);
 	});
 
 	// An empty overflowing heading must not produce "****", which Markdown interprets as an unintended horizontal rule.
 	it("does not turn empty overflowing headings into thematic breaks", async () => {
-		assert.equal(
-			await format("Improve items\n\n#### Examples\n\n######"),
-			"#### Improve items\n\n##### Examples\n\n",
-		);
+		const actual = await format("Improve items\n\n#### Examples\n\n######");
+		const expected = "#### Improve items\n\n##### Examples\n\n";
+		assert.equal(actual, expected);
 	});
 
 	// These code examples contain shallower hash-prefixed lines than the real heading.
@@ -351,10 +426,9 @@ describe("changelog formatter", () => {
 			"",
 			"#### Actual heading",
 		].join("\n");
-		assert.equal(
-			await format(`Improve items\n\n${body}`),
-			`#### Improve items\n\n${body.replace("#### Actual heading", "##### Actual heading")}`,
-		);
+		const actual = await format(`Improve items\n\n${body}`);
+		const expected = `#### Improve items\n\n${body.replace("#### Actual heading", "##### Actual heading")}`;
+		assert.equal(actual, expected);
 	});
 
 	it("preserves paragraphs, lists, tables, links, and indentation", async () => {
@@ -373,33 +447,33 @@ describe("changelog formatter", () => {
 		].join("\n");
 
 		// Compare the entire body, not just parsed node types, to catch formatting churn in tables, lists, and code indentation.
-		assert.equal(await format(`Improve items\n\n${body}`), `#### Improve items\n\n${body}`);
+		const actual = await format(`Improve items\n\n${body}`);
+		const expected = `#### Improve items\n\n${body}`;
+		assert.equal(actual, expected);
 	});
 
 	// Source-range edits must retain quote and list markers, including indentation for the list's continuation paragraph.
 	it("handles headings inside blockquotes and list items", async () => {
-		assert.equal(
-			await format(
-				"Improve items\n\n> #### Quoted heading\n\n- ##### Nested heading\n\n  List details.",
-			),
-			"#### Improve items\n\n> ##### Quoted heading\n\n- ###### Nested heading\n\n  List details.",
+		const actual = await format(
+			"Improve items\n\n> #### Quoted heading\n\n- ##### Nested heading\n\n  List details.",
 		);
+		const expected =
+			"#### Improve items\n\n> ##### Quoted heading\n\n- ###### Nested heading\n\n  List details.";
+		assert.equal(actual, expected);
 	});
 
 	// Both hash-prefixed (ATX) and underline-style (Setext) headings must preserve their relative levels in the output.
 	it("nests shallower ATX and Setext headings beneath the entry title", async () => {
-		assert.equal(
-			await format("Improve items\n\n# Heading\n\nSetext heading\n---"),
-			"#### Improve items\n\n##### Heading\n\n###### Setext heading",
-		);
+		const actual = await format("Improve items\n\n# Heading\n\nSetext heading\n---");
+		const expected = "#### Improve items\n\n##### Heading\n\n###### Setext heading";
+		assert.equal(actual, expected);
 	});
 
 	// Windows line endings must not leave carriage returns in titles or interfere with recognizing body headings.
 	it("handles Windows line endings", async () => {
-		assert.equal(
-			await format("Improve items\r\n\r\n#### Examples\r\n\r\nDetails."),
-			"#### Improve items\n\n##### Examples\n\nDetails.",
-		);
+		const actual = await format("Improve items\r\n\r\n#### Examples\r\n\r\nDetails.");
+		const expected = "#### Improve items\n\n##### Examples\n\nDetails.";
+		assert.equal(actual, expected);
 	});
 
 	it("preserves automatically generated PR and commit links", async () => {
@@ -421,17 +495,20 @@ describe("changelog formatter", () => {
 
 	// Authors may preview an uncommitted changeset; missing Git metadata must not hide its content or leave empty link markup.
 	it("retains entries without Git history", async () => {
-		const result = await getReleaseLine(
+		const actual = await getReleaseLine(
 			{ id: "uncommitted", summary: "New change\n\nDetails.", releases: [] },
 			"minor",
 			{ ...linkOptions, gitlogOptions: { repo: repoDir } },
 		);
-		assert.equal(result, "#### New change\n\nDetails.");
+		const expected = "#### New change\n\nDetails.";
+		assert.equal(actual, expected);
 	});
 
 	// An empty dependency-entry string tells Changesets not to add a separate dependency-update bullet.
 	it("continues to omit dependency-only entries", async () => {
-		assert.equal(await getDependencyReleaseLine([], [], {}), "");
+		const actual = await getDependencyReleaseLine([], [], {});
+		const expected = "";
+		assert.equal(actual, expected);
 	});
 
 	it("generates sibling entry headings through the Changesets CLI", async () => {
@@ -445,38 +522,37 @@ describe("changelog formatter", () => {
 			[require.resolve("@changesets/cli/bin.js"), "version"],
 			{ cwd: integrationDir },
 		);
-		const changelog = await readFile(path.join(integrationDir, "CHANGELOG.md"), "utf8");
-		const tree = remark().parse(changelog);
-		const headings = tree.children.filter((node) => node.type === "heading");
+		const actual = await readFile(path.join(integrationDir, "CHANGELOG.md"), "utf8");
+		const { stdout } = await execFileAsync("git", ["show", "-s", "--format=%H%n%h", "HEAD"], {
+			cwd: repoDir,
+		});
+		const [hash, abbreviatedHash] = stdout.trim().split("\n");
+		const links = ` ([#42](https://example.com/repo/pull/42)) [${abbreviatedHash}](https://example.com/repo/commit/${hash})`;
 
-		// Package -> version -> change category -> first entry -> its subsection -> next entry.
-		// Returning to level 4 is the regression guard: the next change must not belong beneath the previous subsection.
-		assert.deepEqual(
-			headings.map((node) => node.depth),
-			[1, 2, 3, 4, 5, 4],
-		);
+		// Compare the final Markdown, including generated version headings and PR/commit navigation.
+		// The blank line before indented code and following level-4 title protect block boundaries and sibling entry scope.
+		const expected = `# example-package
 
-		// Check the final serialized changelog, not just the formatter output: the example must still be a code block.
-		const labelIndex = tree.children.findIndex(
-			(node) =>
-				node.type === "paragraph" &&
-				node.children[0]?.type === "strong" &&
-				node.children[0].children[0]?.type === "text" &&
-				node.children[0].children[0].value === "Details",
-		);
-		assert.notEqual(labelIndex, -1, "The deep section must remain a standalone bold label.");
-		const code = tree.children[labelIndex + 1];
-		assert.ok(code?.type === "code");
-		assert.equal(code.value, "const value = 1;");
-		const nextEntry = tree.children[labelIndex + 2];
-		assert.ok(nextEntry?.type === "heading");
-		assert.equal(nextEntry.depth, 4);
+## 1.1.0
 
-		// Changing entry layout must preserve Changesets' version and bump-category headings, as well as PR navigation.
-		assert.ok(changelog.includes("## 1.1.0"));
-		assert.ok(changelog.includes("### Minor Changes"));
-		assert.ok(changelog.includes("##### Example measurements"));
-		assert.ok(changelog.includes("#### Manage branches independently"));
-		assert.ok(changelog.includes("https://example.com/repo/pull/42"));
+### Minor Changes
+
+#### Improve memory usage${links}
+
+Details.
+
+##### Example measurements
+
+Measurements.
+
+**Details**
+
+    const value = 1;
+
+#### Manage branches independently${links}
+
+Branch details.
+`;
+		assert.equal(actual, expected);
 	});
 });

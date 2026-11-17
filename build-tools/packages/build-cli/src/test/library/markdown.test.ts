@@ -4,8 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-import type { Root } from "mdast";
-import { toString } from "mdast-util-to-string";
 import { describe, it } from "mocha";
 import { remark } from "remark";
 import remarkGfm from "remark-gfm";
@@ -15,160 +13,186 @@ describe("normalizeReleaseNoteHeadings", () => {
 	const processor = remark().use(remarkGfm).use(normalizeReleaseNoteHeadings);
 
 	/**
-	 * Normalizes a fresh body using the shared processor, whose transforms edit the parsed tree in place.
+	 * Normalizes a fresh body and serializes the transformed AST as Markdown.
 	 */
-	function normalize(source: string): Root {
-		const tree = processor.parse(source);
-		processor.runSync(tree);
-		return tree;
+	function normalize(source: string): string {
+		return String(processor.processSync(source));
 	}
 
 	for (const depth of [1, 2, 3, 4, 5, 6]) {
 		it(`normalizes a level-${depth} body heading to level 4`, () => {
-			const headings = normalize(`${"#".repeat(depth)} Examples`).children.filter(
-				(node) => node.type === "heading",
-			);
-			assert.deepEqual(
-				headings.map((node) => node.depth),
-				[4],
-			);
+			const actual = normalize(`${"#".repeat(depth)} Examples`);
+			const expected = "#### Examples\n";
+			assert.equal(actual, expected);
 		});
 	}
 
+	// Readers have three real heading levels available beneath each changeset title.
+	// Deeper sections must remain readable as bold labels without adding invalid headings to the outline.
 	it("preserves relative nesting and converts overflowing headings to bold labels", () => {
-		const tree = normalize(
-			"# Examples\n\n## Measurements\n\n### Details\n\n#### Deep details\n\n###### Deeper details",
-		);
+		const actual = normalize(`# Examples
 
-		// Readers have three real heading levels available beneath each changeset title.
-		assert.deepEqual(
-			tree.children.filter((node) => node.type === "heading").map((node) => node.depth),
-			[4, 5, 6],
-		);
-		const labels = tree.children.filter((node) => node.type === "paragraph");
+## Measurements
 
-		// Deeper sections must remain readable as bold labels without adding invalid headings to the outline.
-		assert.deepEqual(
-			labels.map((node) => toString(node)),
-			["Deep details", "Deeper details"],
-		);
-		assert.ok(labels.every((node) => node.children[0]?.type === "strong"));
+### Details
+
+#### Deep details
+
+###### Deeper details`);
+		const expected = `#### Examples
+
+##### Measurements
+
+###### Details
+
+**Deep details**
+
+**Deeper details**
+`;
+		assert.equal(actual, expected);
 	});
 
+	// The AST-based release-note path must keep the same block boundaries protected by the changelog formatter.
+	// Explicit blank lines and code fences make the expected separation visible in the Markdown.
 	it("preserves adjacent prose, indented code, and rules after serializing bold labels", () => {
-		const output = String(
-			processor.processSync(
-				"# Examples\n\nIntro.\n#### Details\n    const value = 1;\n#### Rule\n---",
-			),
-		);
-		const blocks = remark().parse(output).children;
+		const actual = normalize(`# Examples
 
-		// The AST-based release-note path must keep the same block boundaries protected by the changelog formatter.
-		// Parse its serialized output so an indented example becoming prose or a rule becoming an underline cannot pass.
-		assert.deepEqual(
-			blocks.map((node) => node.type),
-			["heading", "paragraph", "paragraph", "code", "paragraph", "thematicBreak"],
-		);
-		for (const index of [2, 4]) {
-			const label = blocks[index];
-			assert.ok(label?.type === "paragraph");
-			assert.equal(label.children[0]?.type, "strong");
-		}
-		const code = blocks[3];
-		assert.ok(code?.type === "code");
-		assert.equal(code.value, "const value = 1;");
+Intro.
+#### Details
+    const value = 1;
+#### Rule
+---`);
+		const expected = `#### Examples
+
+Intro.
+
+**Details**
+
+\`\`\`
+const value = 1;
+\`\`\`
+
+**Rule**
+
+***
+`;
+		assert.equal(actual, expected);
 	});
 
+	// The early level-6 heading overflows, while the later levels 2 and 4 must remain two levels apart.
+	// Using the first heading as the baseline or collapsing gaps would change the author's hierarchy.
 	it("uses the shallowest heading even when it appears later and preserves level gaps", () => {
-		const tree = normalize("###### Deep details\n\n## Examples\n\n#### Details");
+		const actual = normalize(`###### Deep details
 
-		// The early level-6 heading overflows, while the later levels 2 and 4 must remain two levels apart.
-		// Using the first heading as the baseline or collapsing gaps would change the author's hierarchy.
-		assert.deepEqual(
-			tree.children.map((node) => (node.type === "heading" ? node.depth : node.type)),
-			["paragraph", 4, 6],
-		);
+## Examples
+
+#### Details`);
+		const expected = `**Deep details**
+
+#### Examples
+
+###### Details
+`;
+		assert.equal(actual, expected);
 	});
 
 	// A previous changeset's heading levels must not determine how the next changeset is rendered.
 	it("normalizes each body independently when the processor is reused", () => {
-		for (const source of ["# First body", "###### Second body", "### Third body"]) {
-			const heading = normalize(source).children[0];
-			assert.ok(heading?.type === "heading");
-			assert.equal(heading.depth, 4);
+		for (const { source, expected } of [
+			{ source: "# First body", expected: "#### First body\n" },
+			{ source: "###### Second body", expected: "#### Second body\n" },
+			{ source: "### Third body", expected: "#### Third body\n" },
+		]) {
+			const actual = normalize(source);
+			assert.equal(actual, expected);
 		}
 	});
 
+	// Overflow changes the section's presentation, not its inline content: code spans and links must remain formatted.
 	it("preserves inline formatting in overflowing headings", () => {
-		const tree = normalize(
+		const actual = normalize(
 			"# Examples\n\n#### Compare `before` with [after](https://example.com)",
 		);
-		const label = tree.children[1];
-		assert.ok(label?.type === "paragraph");
-		const strong = label.children[0];
-		assert.ok(strong?.type === "strong");
+		const expected = `#### Examples
 
-		// Overflow changes the section's presentation, not its inline content: code spans and links must remain formatted.
-		assert.deepEqual(
-			strong.children.map((node) => node.type),
-			["text", "inlineCode", "text", "link"],
-		);
+**Compare \`before\` with [after](https://example.com)**
+`;
+		assert.equal(actual, expected);
 	});
 
+	// Serializing an empty bold label as "****" would introduce a horizontal rule the author did not request.
 	it("does not turn empty overflowing headings into thematic breaks", () => {
-		const tree = normalize("# Examples\n\n####");
-
-		// Serializing an empty bold label as "****" would introduce a horizontal rule the author did not request.
-		assert.equal(processor.stringify(tree).trimEnd(), "#### Examples");
+		const actual = normalize("# Examples\n\n####");
+		const expected = "#### Examples\n\n";
+		assert.equal(actual, expected);
 	});
 
+	// The shallower hash-prefixed lines are code, so only the actual level-5 heading may determine the offset.
+	// Code examples must retain their literal contents so readers can copy them without heading rewrites.
 	it("ignores heading-like content in fenced and indented code blocks", () => {
-		const tree = normalize(
-			"```markdown\n# Fenced example\n```\n\n    ## Indented example\n\n##### Actual heading",
-		);
+		const actual = normalize(`\`\`\`markdown
+# Fenced example
+\`\`\`
 
-		// The shallower hash-prefixed lines are code, so only the actual level-5 heading may determine the offset.
-		assert.deepEqual(
-			tree.children.filter((node) => node.type === "heading").map((node) => node.depth),
-			[4],
-		);
+    ## Indented example
 
-		// Code examples must retain their literal contents so readers can copy them without heading rewrites.
-		assert.deepEqual(
-			tree.children.filter((node) => node.type === "code").map((node) => node.value),
-			["# Fenced example", "## Indented example"],
-		);
+##### Actual heading`);
+		const expected = `\`\`\`markdown
+# Fenced example
+\`\`\`
+
+\`\`\`
+## Indented example
+\`\`\`
+
+#### Actual heading
+`;
+		assert.equal(actual, expected);
 	});
 
+	// Headings inside containers must also fit beneath the changeset title, not just headings at the document root.
 	it("normalizes headings inside blockquotes and list items", () => {
-		const result = String(
-			processor.processSync("> ## Quoted heading\n\n- ### Nested heading"),
-		);
+		const actual = normalize("> ## Quoted heading\n\n- ### Nested heading");
+		const expected = `> #### Quoted heading
 
-		// Headings inside containers must also fit beneath the changeset title, not just headings at the document root.
-		assert.ok(result.includes("> #### Quoted heading"));
-		assert.match(result, /##### Nested heading/);
+* ##### Nested heading
+`;
+		assert.equal(actual, expected);
 	});
 
+	// Underline-style headings express the same hierarchy as hash-prefixed headings and must normalize the same way.
 	it("preserves relative levels of Setext headings", () => {
-		const tree = normalize("Examples\n========\n\nDetails\n-------");
+		const actual = normalize(`Examples
+========
 
-		// Underline-style headings express the same hierarchy as hash-prefixed headings and must normalize the same way.
-		assert.deepEqual(
-			tree.children.filter((node) => node.type === "heading").map((node) => node.depth),
-			[4, 5],
-		);
+Details
+-------`);
+		const expected = `#### Examples
+
+##### Details
+`;
+		assert.equal(actual, expected);
 	});
 
+	// A body does not need headings; ordinary paragraphs, lists, and GitHub-flavored Markdown tables remain ordinary blocks.
 	it("retains content without headings, including GFM tables", () => {
-		const tree = normalize(
-			"Details.\n\n- First\n- Second\n\n| Before | After |\n| --- | --- |\n| 2 | 1 |",
-		);
+		const actual = normalize(`Details.
 
-		// A body does not need headings; ordinary paragraphs, lists, and GitHub-flavored Markdown tables remain ordinary blocks.
-		assert.deepEqual(
-			tree.children.map((node) => node.type),
-			["paragraph", "list", "table"],
-		);
+- First
+- Second
+
+| Before | After |
+| --- | --- |
+| 2 | 1 |`);
+		const expected = `Details.
+
+* First
+* Second
+
+| Before | After |
+| ------ | ----- |
+| 2      | 1     |
+`;
+		assert.equal(actual, expected);
 	});
 });
