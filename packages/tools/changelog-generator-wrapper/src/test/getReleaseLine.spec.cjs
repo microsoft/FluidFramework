@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable tsdoc/syntax -- JavaScript type annotations use JSDoc syntax. */
-
 const assert = require("node:assert/strict");
 const { execFile } = require("node:child_process");
-const { cp, mkdir, mkdtemp, readFile, rm, writeFile } = require("node:fs/promises");
+const { mkdir, mkdtemp, rm, writeFile } = require("node:fs/promises");
 const { tmpdir } = require("node:os");
 const path = require("node:path");
 const { promisify } = require("node:util");
@@ -41,34 +39,8 @@ describe("changelog formatter", () => {
 		repoDir = path.join(testDir, "repo");
 		await mkdir(path.join(repoDir, ".changeset"), { recursive: true });
 		await writeFile(
-			path.join(repoDir, "package.json"),
-			JSON.stringify({ name: "example-package", version: "1.0.0" }),
-		);
-
-		// Resolve this workspace's wrapper explicitly so the integration test cannot silently use the default list formatter.
-		await writeFile(
-			path.join(repoDir, ".changeset", "config.json"),
-			JSON.stringify({
-				changelog: [
-					require.resolve("../index.js"),
-					{ ...linkOptions, gitlogOptions: { repo: repoDir } },
-				],
-				commit: false,
-				fixed: [],
-				linked: [],
-				access: "public",
-				baseBranch: "main",
-				updateInternalDependencies: "patch",
-				ignore: [],
-			}),
-		);
-		await writeFile(
 			path.join(repoDir, ".changeset", "example.md"),
-			'---\n"example-package": minor\n---\nImprove memory usage\n\nDetails.\n\n# Example measurements\n\nMeasurements.\n\n###### Details\n    const value = 1;\n',
-		);
-		await writeFile(
-			path.join(repoDir, ".changeset", "second.md"),
-			'---\n"example-package": minor\n---\nManage branches independently\n\nBranch details.\n',
+			'---\n"example-package": minor\n---\nImprove items\n\nDetails.\n',
 		);
 		await execFileAsync("git", ["init", "--initial-branch=main", repoDir]);
 		await execFileAsync("git", ["add", "."], { cwd: repoDir });
@@ -508,51 +480,6 @@ Outside.
 	it("continues to omit dependency-only entries", async () => {
 		const actual = await getDependencyReleaseLine([], [], {});
 		const expected = "";
-		assert.equal(actual, expected);
-	});
-
-	it("generates sibling entry headings through the Changesets CLI", async () => {
-		const integrationDir = path.join(testDir, "integration");
-
-		// "changeset version" consumes source changesets and updates package files, so run it against a disposable copy.
-		// Keep the shared Git fixtures intact for the other cases in this suite.
-		await cp(repoDir, integrationDir, { recursive: true });
-		await execFileAsync(
-			process.execPath,
-			[require.resolve("@changesets/cli/bin.js"), "version"],
-			{ cwd: integrationDir },
-		);
-		const actual = await readFile(path.join(integrationDir, "CHANGELOG.md"), "utf8");
-		const { stdout } = await execFileAsync("git", ["show", "-s", "--format=%H%n%h", "HEAD"], {
-			cwd: repoDir,
-		});
-		const [hash, abbreviatedHash] = stdout.trim().split("\n");
-		const links = ` ([#42](https://example.com/repo/pull/42)) [${abbreviatedHash}](https://example.com/repo/commit/${hash})`;
-
-		// Compare the final Markdown, including generated version headings and PR/commit navigation.
-		// The blank line before indented code and following level-4 title protect block boundaries and sibling entry scope.
-		const expected = `# example-package
-
-## 1.1.0
-
-### Minor Changes
-
-#### Improve memory usage${links}
-
-Details.
-
-##### Example measurements
-
-Measurements.
-
-**Details**
-
-    const value = 1;
-
-#### Manage branches independently${links}
-
-Branch details.
-`;
 		assert.equal(actual, expected);
 	});
 });

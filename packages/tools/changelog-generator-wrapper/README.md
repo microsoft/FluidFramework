@@ -48,6 +48,9 @@ a wrapper around other implementations, so the code is simple and doesn't benefi
 Run `pnpm --filter @fluid-private/changelog-generator-wrapper test:mocha` to test the formatter and its integration with the Changesets CLI.
 The tests use temporary Git repositories and do not consume the repository's changesets.
 
+[The end-to-end generation suite](./src/test/generateChangelog.spec.cjs) compares full changelogs with [checked-in snapshots](./src/test/fixtures) for a simple patch and heading normalization across multiple changes.
+The tests substitute fixture commit hashes in the expected snapshots so each run can use a fresh repository.
+
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
