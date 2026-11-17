@@ -364,6 +364,15 @@ export class RestGitService {
 				`/repos/${this.getRepoPath()}/git/summaries/${encodeURIComponent(sha)}`,
 			);
 
+		// Without an independent access proof, GitRest must validate every durable read.
+		if (
+			this.isEphemeralContainer !== true &&
+			this.accessProof === undefined &&
+			this.recoverDocumentStorage !== undefined
+		) {
+			return summaryFetch();
+		}
+
 		// Currently, only "container" type summaries are retrieved from storage.
 		// In the future, we might want to also retrieve "channels". When that happens,
 		// our APIs will change so we specify what type we want to retrieve during

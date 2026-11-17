@@ -112,7 +112,10 @@ describe("document storage recovery", () => {
 					}),
 				);
 			} else {
-				res.end(JSON.stringify(req.url?.includes("/git/summaries/") ? summary : []));
+				const isSummary =
+					req.url?.includes("/git/summaries/") ||
+					(req.method === "POST" && req.url?.endsWith("/git/summaries"));
+				res.end(JSON.stringify(isSummary ? summary : []));
 			}
 		});
 		await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -132,7 +135,7 @@ describe("document storage recovery", () => {
 		);
 	});
 
-	async function createService(isEphemeralContainer?: boolean) {
+	async function createService(isEphemeralContainer?: boolean, cache = new TestCache()) {
 		return createGitService({
 			config,
 			tenantId,
@@ -141,7 +144,7 @@ describe("document storage recovery", () => {
 			documentManager,
 			storageNameRetriever,
 			isEphemeralContainer,
-			cache: new TestCache(),
+			cache,
 		});
 	}
 
@@ -219,6 +222,81 @@ describe("document storage recovery", () => {
 			.get(`/repos/${tenantId}/git/summaries/${summary.id}`)
 			.set("Authorization", authorization)
 			.expect(200, summary);
+		sinon.assert.notCalled(readDocument);
+		assert.strictEqual(operations.length, 1);
+	});
+
+	for (const version of ["latest", summary.id]) {
+		for (const enabled of [false, true]) {
+			it(`${enabled ? "bypasses" : "preserves"} an existing durable ${
+				version === "latest" ? "latest" : "SHA"
+			} cache entry when GitRest validation is ${
+				enabled ? "enabled" : "disabled"
+			}`, async () => {
+				config.set("restGitService:gitrestOwnershipValidation", false);
+				initialized = true;
+				const cache = new TestCache();
+				const writer = await createService(false, cache);
+				await writer.createSummary({
+					type: "container",
+					entries: [],
+					sequenceNumber: 0,
+					message: "Initial summary",
+				});
+				config.set("restGitService:gitrestOwnershipValidation", enabled);
+				initialized = false;
+				failureStatus = 403;
+				readDocument.resetHistory();
+				const response = await request(createApp({ cache }))
+					.get(`/repos/${tenantId}/git/summaries/${version}`)
+					.set("Authorization", authorization);
+				assert.strictEqual(response.status, enabled ? 403 : 200);
+				if (!enabled) {
+					assert.deepStrictEqual(response.body, summary);
+				}
+				assert.strictEqual(operations.length, enabled ? 2 : 1);
+				assert.strictEqual(readDocument.callCount, enabled ? 0 : 1);
+			});
+		}
+	}
+
+	it("validates every durable summary read without an independent access proof", async () => {
+		initialized = true;
+		const app = createApp({ cache: new TestCache() });
+		await request(app)
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(200, summary);
+		initialized = false;
+		failureStatus = 403;
+		await request(app)
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(403);
+		assert.strictEqual(operations.length, 2);
+		sinon.assert.notCalled(readDocument);
+	});
+
+	it("preserves durable summary caching with fresh independent authorization", async () => {
+		initialized = true;
+		const authorize = sandbox.stub().resolves({
+			tenantId,
+			documentId,
+			storageAccountName: storageName,
+			containerType: "durable",
+			lifecycleVersion: "generation-1",
+			operation: "read",
+			state: "active",
+			source: "dc-v1-metadata",
+		});
+		const app = createApp({ cache: new TestCache(), authorizer: { authorize } });
+		for (let i = 0; i < 2; i++) {
+			await request(app)
+				.get(`/repos/${tenantId}/git/summaries/latest`)
+				.set("Authorization", authorization)
+				.expect(200, summary);
+		}
+		sinon.assert.calledTwice(authorize);
 		sinon.assert.notCalled(readDocument);
 		assert.strictEqual(operations.length, 1);
 	});

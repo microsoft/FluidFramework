@@ -53,6 +53,9 @@ the initial summary; the shared creation flow does not opt providers into this o
 That implementation must emit the structured missing-metadata error code and implement the
 conditional initialize/backfill hooks. No client transport or Historian source patch is needed.
 
-The GitRest-owned validation mode is not ready to activate without an access authorizer:
-durable summary cache hits still bypass GitRest validation.
-A cache-policy change is required before that configuration can be used safely.
+Without an independent access proof, durable summary reads in this mode bypass the summary
+cache and always reach GitRest, including reads by version SHA.
+This adds one GitRest request for each former durable cache hit, but does not add an Alfred
+ownership precheck or another request on a cache miss.
+Ephemeral summaries, default-off deployments, and requests authorized by an independent
+access proof retain their existing summary cache behavior.
