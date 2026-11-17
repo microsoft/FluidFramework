@@ -337,7 +337,8 @@ describe("SchemaChangeset", () => {
 		});
 	});
 
-	describe("No-op changes", () => {
+	// This is an additional suite for testing aspects of the no-op implementation that aren't applicable to the other implementations in the generic suite.
+	describe("NoopSchemaChangeset", () => {
 		const noop = new NoopSchemaChangeset(number, true);
 
 		it("remains a no-op after rebasing", () => {
