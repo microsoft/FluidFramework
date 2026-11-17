@@ -125,6 +125,7 @@ export { getJsonSchema } from "./getJsonSchema.js";
 export { getSimpleSchema } from "./getSimpleSchema.js";
 export {
 	checkSchemaCompatibility,
+	checkGeneratedSchemaCompatibility,
 	getSchemaIncompatibilityDetails,
 	isSchemaUpgradeAllowed,
 } from "./schemaCompatibilityTester.js";

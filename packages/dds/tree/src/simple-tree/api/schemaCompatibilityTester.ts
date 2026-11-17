@@ -8,17 +8,23 @@ import { unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
+	type TreeFieldStoredSchema,
 	type TreeStoredSchema,
 	ValueSchema,
 } from "../../core/index.js";
 import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js";
 import { NodeKind } from "../core/index.js";
-import { allowsRepoSuperset, defaultSchemaPolicy } from "../../feature-libraries/index.js";
+import {
+	allowsFieldSuperset,
+	allowsRepoSuperset,
+	defaultSchemaPolicy,
+} from "../../feature-libraries/index.js";
 import { resolveStoredSchemaGenerationOptions } from "../toStoredSchema.js";
 import { getSchemaUpgradeCandidate, toInitialSchema, type TreeSchema } from "../treeSchema.js";
 
 import {
 	getDiscrepanciesInAllowedContent,
+	getRootFieldDiscrepancies,
 	type Discrepancy,
 	type UpgradeLocationCollector,
 } from "./discrepancies.js";
@@ -219,6 +225,55 @@ export function checkSchemaCompatibility(
 		isEquivalent,
 		discrepancies: canView ? undefined : discrepancies,
 		enabledUpgrades,
+	};
+}
+
+/**
+ * {@link checkSchemaCompatibility} for a stored schema whose node schemas are those of `generated`, and whose root field schema is `storedRoot`.
+ *
+ * @param viewSchema - Schema for the view. Must not have any staged upgrades (see {@link TransitiveSchemaInfo.hasStagedSchema}).
+ * @param generated - The stored schema {@link toInitialSchema} generates from `viewSchema`.
+ * @param storedRoot - The stored root field schema.
+ *
+ * @remarks
+ * Gives the same result as {@link checkSchemaCompatibility} in this case, but only compares the root fields:
+ * a view schema has no discrepancies with the node schemas generated from it,
+ * and since it has no staged upgrades, none are enabled and the schema it would upgrade to is `generated`.
+ *
+ * This is the case while a document is being initialized from the view schema,
+ * which may install `generated` with a relaxed root field before installing `generated` itself.
+ */
+export function checkGeneratedSchemaCompatibility(
+	viewSchema: TreeSchema,
+	generated: TreeStoredSchema,
+	storedRoot: TreeFieldStoredSchema,
+): ReturnType<typeof checkSchemaCompatibility> {
+	const policy = defaultSchemaPolicy;
+	const discrepancies = Array.from(
+		getRootFieldDiscrepancies(viewSchema, storedRoot),
+		formatSchemaDiscrepancy,
+	);
+	const canView = discrepancies.length === 0;
+	const stored: TreeStoredSchema = {
+		nodeSchema: generated.nodeSchema,
+		rootFieldSchema: storedRoot,
+	};
+	const canUpgrade = allowsFieldSuperset(
+		policy,
+		stored,
+		storedRoot,
+		generated.rootFieldSchema,
+	);
+	const isEquivalent =
+		canView &&
+		canUpgrade &&
+		allowsFieldSuperset(policy, generated, generated.rootFieldSchema, storedRoot);
+	return {
+		canView,
+		canUpgrade,
+		isEquivalent,
+		discrepancies: canView ? undefined : discrepancies,
+		enabledUpgrades: new Map(),
 	};
 }
 

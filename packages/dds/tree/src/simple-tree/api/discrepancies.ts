@@ -217,14 +217,7 @@ export function* getDiscrepanciesInAllowedContent(
 	stored: TreeStoredSchema,
 	upgradeCollector?: UpgradeLocationCollector,
 ): Iterable<Discrepancy> {
-	// check root field discrepancies
-	yield* getFieldDiscrepancies(
-		view.root,
-		stored.rootFieldSchema,
-		undefined,
-		undefined,
-		upgradeCollector,
-	);
+	yield* getRootFieldDiscrepancies(view, stored.rootFieldSchema, upgradeCollector);
 
 	// Check all of the stored nodes, including their fields for discrepancies.
 	for (const [identifier, storedSchema] of stored.nodeSchema) {
@@ -236,6 +229,17 @@ export function* getDiscrepanciesInAllowedContent(
 		}
 		// Note that nodes that are missing in the view schema are only a problem if other stored schema nodes actually reference them which will produce its own discrepancy, so we can rely on that to produce any needed discrepancies.
 	}
+}
+
+/**
+ * The part of {@link getDiscrepanciesInAllowedContent} which compares the root fields.
+ */
+export function* getRootFieldDiscrepancies(
+	view: TreeSchema,
+	storedRoot: TreeFieldStoredSchema,
+	upgradeCollector?: UpgradeLocationCollector,
+): Iterable<Discrepancy> {
+	yield* getFieldDiscrepancies(view.root, storedRoot, undefined, undefined, upgradeCollector);
 }
 
 function* getNodeDiscrepancies(
