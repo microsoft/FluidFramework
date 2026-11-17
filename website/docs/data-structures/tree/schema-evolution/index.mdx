@@ -213,16 +213,16 @@ class Task extends factory.object("Task", {
 
 If that release is later rolled back, clients return to the original `Task` declaration without `notes`.
 They can still read and edit `title` in documents that contain notes, but cannot access `notes` through their view's properties.
-Further compatible upgrades preserve the notes and their schema rather than replacing the document's schema with the reduced declaration.
+Further compatible upgrades preserve `notes` in the document's schema.
 
 New documents created after the rollback have a different history: their stored schema has never included `notes`.
-A client that still declares the field must first upgrade such a document to permit it.
+A client that still declares the field must first upgrade such a document to use it.
 The two histories therefore differ as follows:
 
 | Document history | Result |
 | --- | --- |
-| Created with notes, then opened by the reduced view | Notes remain stored and are treated as unknown optional fields. |
-| Created with the reduced view | The initial stored schema has no notes field. A client that declares notes must add its field schema through an upgrade before viewing. |
+| Created with `notes`, then opened by the reduced view | The `notes` field is retained in the document, and it is treated as unknown content by the view. |
+| Created with the reduced view | The initial stored schema has no `notes` field. A client that declares `notes` must add its field schema through an upgrade before viewing. |
 
 Keeping unknown fields in the document does not make them visible to application code that copies a node's properties.
 When cloning nodes, use <ApiLink package="fluid-framework" api="(TreeBeta:interface).clone">`TreeBeta.clone()`</ApiLink> to preserve those fields rather than reconstructing nodes from visible properties.
@@ -235,7 +235,7 @@ Removing the field from a view does not free that identifier for reuse with an i
 
 For example, suppose a later version of `Task` declares `notes: factory.optional(factory.array(factory.string))` using the same stored key as the original optional string field.
 That view cannot load or safely upgrade documents whose stored schema still permits the original string-valued `notes` field.
-This conflict exists even if the field is currently empty, because the stored schema still permits strings that another client could write later.
+This conflict exists even the document contains no data under the old `notes` definition, because the stored schema still permits strings that another client could write later.
 
 Use a different stored key for a different, incompatible field.
 
