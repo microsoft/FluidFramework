@@ -22,8 +22,19 @@ This constraint does not make the format suitable for production use.
 An application that only needs one version can specify a non-negative safe integer in the `schemaVersion` option of [`identifySchema`](https://fluidframework.com/docs/api/fluid-framework/identifyschema-function):
 
 ```typescript
-const identity = identifySchema({
-	schemaVersion: 1,
+import { identifySchema, SchemaFactory, TreeViewConfigurationAlpha } from "fluid-framework/alpha";
+
+const schemaFactory = new SchemaFactory("com.example");
+class Note extends schemaFactory.object("Note", {
+	id: schemaFactory.identifier,
+	text: schemaFactory.string,
+}) {}
+
+const config = new TreeViewConfigurationAlpha({
+	schema: Note,
+	schemaIdentity: identifySchema({
+		schemaVersion: 1,
+	}),
 });
 ```
 
