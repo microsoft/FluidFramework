@@ -420,7 +420,7 @@ export function toUpgradeSchema(
  * Composes a candidate upgrade target from the view schema, existing stored schema, and configured staged-upgrade policy.
  *
  * @remarks
- * Start with the stored schema selected by the view and its policy, then combine it with existing permissions at corresponding fields.
+ * Start with the stored schema selected by the view and its policy, then combine it with the existing stored field schemas.
  * This separates the policy's decision to enable a staged upgrade from the need to preserve one already enabled.
  * Construction follows these rules:
  *
@@ -429,7 +429,7 @@ export function toUpgradeSchema(
  * - Shared tokens do not make preservation global: an enabled change remains at its stored field, while other fields gain it only if the policy enables the token.
  * - For each included object type whose view allows unknown optional fields, omitted stored optional fields are retained with their allowed types and metadata.
  * - Existing node definitions referenced by retained fields are included, along with the definitions they reference.
- * Types known to the view use their current declarations with field permissions composed as above; types unknown to the view retain their stored definitions.
+ * Types known to the view use their current declarations with allowed types and optionality composed as above; types unknown to the view retain their stored definitions.
  *
  * The result is a proposal, not an approved upgrade.
  * Retaining an allowed type can still leave a candidate that the view cannot read, and other schema differences can still violate upgrade rules.
