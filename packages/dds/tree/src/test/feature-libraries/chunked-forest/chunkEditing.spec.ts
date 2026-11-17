@@ -36,9 +36,10 @@ const numberShape = new TreeShape(
 );
 
 /**
- * Direct tests for chunkEditing's capability check, field lengths, index lookup, and range validation.
- * The editing interfaces are exercised through concrete adapters in chunkEditTraversal.spec.ts and uniformChunk.spec.ts.
- * Forest-level editing integration remains in chunkedForest.spec.ts.
+ * Direct tests for {@link isEditableChunk}, {@link getFieldLength}, {@link locateNodeInChunks}, and {@link validateChunkEditRange}.
+ * @remarks
+ * The editing interfaces are exercised through concrete adapters in `chunkEditTraversal.spec.ts` and `uniformChunk.spec.ts`.
+ * Forest-level editing integration remains in `chunkedForest.spec.ts`.
  */
 describe("chunkEditing", () => {
 	describe("isEditableChunk", () => {

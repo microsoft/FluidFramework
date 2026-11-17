@@ -279,8 +279,8 @@ function clonePositions(
  * The shape (see `TreeShape`) of a sequence of trees, all with the same shape (like `FieldShape`, but without a field key).
  *
  * @remarks
- * Paired with a value array, this lets a {@link UniformChunk} be traversed like a tree by an
- * {@link ITreeCursorSynchronous}. The {@link Cursor} derives each node's position info from the
+ * Paired with a value array, this lets a {@link UniformChunk} be traversed like a tree by a
+ * {@link ChunkedCursor}. The {@link Cursor} derives each node's position info from the
  * shared {@link TreeShape.positions} plus the node's top-level index.
  *
  * TODO: consider storing shape information in WASM
@@ -550,10 +550,10 @@ class Cursor
 	}
 
 	/**
-	 * Attempts a shape-preserving leaf replacement in an owned field.
+	 * Implements {@link ChunkEditCursor.trySplice} for shape-preserving leaf replacement.
 	 * @remarks
-	 * Also supports the root sequence through the same editing contract.
-	 * An owning parent can use this to replace top-level leaves without splitting the child chunk.
+	 * Supports both an owned inline field and the root sequence without changing the chunk's {@link TreeShape}.
+	 * An owning parent's generic splice can use this to replace top-level leaves without splitting the {@link UniformChunk}.
 	 */
 	public trySplice(range: Range, content: readonly TreeChunk[]): TreeChunk[] | undefined {
 		assert(!this.chunk.isShared(), "Editing requires exclusive chunk ownership");

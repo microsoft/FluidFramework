@@ -95,9 +95,10 @@ const shallowShape = new TreeShape(
 );
 
 /**
- * A formatted-atom-like shape with a string leaf and five formatting properties.
+ * Creates a formatted-atom-like {@link TreeShape} with a string leaf and five formatting properties.
+ * @remarks
  * This exercises larger value arrays than the shallow shape.
- * Homogeneous cases reuse the same shape instance, so equality uses its identity fast path rather than traversing these fields.
+ * Homogeneous cases reuse the same shape instance, so {@link TreeShape.equals} uses its identity fast path rather than traversing these fields.
  */
 function makeDeepShape(typeName: string): TreeShape {
 	const boolLeaf = new TreeShape(
@@ -157,8 +158,9 @@ function multiNodeChunk(
 }
 
 /**
- * Splits a UniformChunk into two at `nodeIndex` by slicing its value array — the same operation
- * `splitFieldAtIndex` performs internally when an edit lands inside a multi-node uniform chunk.
+ * Splits a {@link UniformChunk} at `nodeIndex` by slicing {@link UniformChunk.values}.
+ * @remarks
+ * Models the uniform-storage split performed by `splitFieldAtIndex` for these uncompressed synthetic fixtures.
  */
 function splitUniformChunk(
 	chunk: UniformChunk,
@@ -195,8 +197,10 @@ const editChunkNodeCount = 20;
 
 /**
  * Models an insertion into the middle of a uniform chunk by splitting its values and optionally coalescing the result.
+ * @remarks
  * Matching shapes allow the pieces to merge; the heterogeneous fixture has a different root type and is rejected immediately.
- * This measures chunk construction, value copying, and coalescing, not the forest visitor or application editing APIs.
+ * This measures {@link splitUniformChunk}, chunk construction, value copying, and {@link coalesceUniformChunks},
+ * not the forest visitor or application editing APIs.
  */
 function insertEdit(
 	fieldShape: TreeShape,
@@ -422,10 +426,10 @@ const FormattedDocument = FormattedText.createSchema(
 const formattedTextLength = currentBenchmarkMode === BenchmarkMode.Performance ? 1000 : 100;
 
 /**
- * An initialized optimized-forest document and a single-use operation to measure.
+ * An initialized {@link ForestTypeOptimized} document and a single-use operation to measure.
  * @remarks
- * Fixture creation is outside the timing window; only `edit()` is timed, with `verify()` called afterward.
- * Incoming-edit fixtures prepare the source change during setup, so `edit()` measures its application rather than its creation.
+ * Fixture creation is outside the timing window; only {@link LeafEditFixture.edit} is timed, with {@link LeafEditFixture.verify} called afterward.
+ * Incoming-edit fixtures prepare the source change during setup, so {@link LeafEditFixture.edit} measures its application rather than its creation.
  * The callbacks capture the view, so retaining the complete fixture also retains its editing history.
  */
 interface LeafEditFixture {
@@ -483,6 +487,7 @@ function formattedAtoms(root: object): readonly { readonly format: CharacterForm
 
 /**
  * Authors formatting on a fork before timing the receiving view's merge, including normal merge cleanup.
+ * @remarks
  * The receiver has no concurrent local edits, so this is not a conflicting-rebase benchmark.
  */
 function formattedBranchFixture(): LeafEditFixture {
@@ -539,6 +544,7 @@ const incomingEditFactory = configuredSharedTree({
 
 /**
  * Queues a formatting edit on a paused receiver while sequencing and sender acknowledgement finish during setup.
+ * @remarks
  * The timed operation drains only the receiver's queue, including decoding and applying the change.
  * Network delay and sender work are excluded; the receiver has no concurrent local edits.
  */

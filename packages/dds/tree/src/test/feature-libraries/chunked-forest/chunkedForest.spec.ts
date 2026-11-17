@@ -196,8 +196,9 @@ describe("Chunker", () => {
 });
 
 /**
- * Forest visitor and storage-policy integration coverage.
- * Direct helper tests live in chunkEditing.spec.ts and chunkEditTraversal.spec.ts;
+ * Forest visitor and storage-policy integration coverage for {@link buildChunkedForest}.
+ * @remarks
+ * Direct helper tests live in `chunkEditing.spec.ts` and `chunkEditTraversal.spec.ts`;
  * those suites cover lookup, normalization, and generic splicing independently of forest dispatch.
  */
 describe("ChunkedForest", () => {

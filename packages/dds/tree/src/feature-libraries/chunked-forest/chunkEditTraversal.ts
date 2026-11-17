@@ -5,7 +5,14 @@
 
 import { assert, debugAssert, fail, oob } from "@fluidframework/core-utils/internal";
 
-import type { FieldKey, Range, TreeChunk, UpPath, Value } from "../../core/index.js";
+import type {
+	FieldKey,
+	ITreeCursorSynchronous,
+	Range,
+	TreeChunk,
+	UpPath,
+	Value,
+} from "../../core/index.js";
 import { replaceArrayRange } from "../../util/index.js";
 
 import { BasicChunk } from "./basicChunk.js";
@@ -25,15 +32,16 @@ import {
 } from "./chunkTree.js";
 
 /**
- * Tries a format-specific edit, then performs a generic splice if the field exposes child chunks.
+ * Tries {@link ChunkEditCursor.trySplice}, then performs a generic splice if the field exposes child chunks.
  * @remarks
  * Requires an exclusively owned field. Returns undefined for unsupported inline edits without consuming content.
- * Generic edits to a chunk's root sequence must preserve its top-level node count; its owning parent handles length changes.
- * The adapter remains at the same field and receives the edited array for format-specific bookkeeping.
- * @param cursor - Active editing adapter, positioned at the field to edit.
+ * Generic edits to a chunk's root sequence must preserve {@link ChunkLocalCursor.rootLength}; its owning parent handles length changes.
+ * Generic splices use {@link ChunkEditCursor.getFieldChunks} and {@link ChunkEditCursor.setFieldChunks}
+ * to update the array and finalize format-specific bookkeeping, leaving the adapter at the same field.
+ * @param cursor - Active {@link ChunkEditCursor}, positioned at the field to edit.
  * @param range - Half-open logical node range to remove from the whole field.
  * @param content - Incoming chunks, with one owned reference per entry; the array itself is not modified.
- * @param compressor - Policy and ID compressor used for splitting and coalescing.
+ * @param compressor - {@link ChunkCompressor} used for splitting and coalescing.
  * @returns Owned chunks containing the removed nodes, consuming incoming references on success.
  */
 export function trySpliceField(
@@ -65,7 +73,10 @@ export function trySpliceField(
 
 /**
  * Splices an exclusively owned child array, first offering contained replacements to the child format.
+ * @remarks
  * Consumes incoming references and returns owned outgoing references. The caller finalizes field bookkeeping.
+ * Contained replacements delegate through {@link trySpliceField}; the fallback uses {@link splitFieldAtIndex}
+ * and {@link coalesceUniformChunks} to preserve neighboring storage where possible.
  */
 function spliceChunkField(
 	chunks: TreeChunk[],
@@ -115,13 +126,13 @@ function spliceChunkField(
 }
 
 /**
- * Ensures the selected node is stored in an exclusively owned BasicChunk.
+ * Ensures the selected node is stored in an exclusively owned {@link BasicChunk}.
  * @remarks
  * Mutates the owning chunk array, splitting and converting only the selected node as needed.
  * The returned chunk is owned by that array; no additional reference is transferred to the caller.
  * @param chunks - Exclusively owned child array whose references may be replaced during normalization.
  * @param index - Logical index of the selected node in the whole array's content.
- * @param compressor - Representation policy and ID compressor used when splitting or converting storage.
+ * @param compressor - {@link ChunkCompressor} used by {@link splitFieldAtIndex} and {@link basicChunkTree}.
  */
 export function ensureExclusiveBasicChunk(
 	chunks: TreeChunk[],
@@ -163,20 +174,27 @@ export function ensureExclusiveBasicChunk(
 }
 
 /**
- * Owns navigation through the shared read-cursor implementation and supplies editing policy at chunk boundaries.
+ * Owns navigation through a {@link ChunkCursor} and supplies editing policy at chunk boundaries.
  * @remarks
- * Starts on the root BasicChunk node and borrows its reference.
- * The caller must exclusively own the root, keep it alive until free(), and not introduce sharing on the active path.
+ * Starts on the root {@link BasicChunk} node and borrows its reference.
+ * The caller must exclusively own the root, keep it alive until {@link ChunkEditTraversal.free}, and not introduce sharing on the active path.
  * Crossing a boundary makes the child exclusive before navigation continues, exposing sharing inherited from ancestors.
  * Inline nodes need no separate ownership checks.
  */
-export class ChunkEditTraversal {
+export class ChunkEditTraversal
+	implements
+		Pick<
+			ITreeCursorSynchronous,
+			"enterNode" | "exitNode" | "enterField" | "exitField" | "getFieldLength" | "value"
+		>
+{
+	/** Shared cursor that applies the editor's ownership policy before crossing chunk boundaries. */
 	private readonly navigation: ChunkCursor;
 
 	/**
 	 * Starts on the supplied root node, ready to enter one of its fields.
-	 * @param root - Exclusively owned root borrowed for the editor's lifetime.
-	 * @param compressor - Representation policy used by delegated edits and normalization.
+	 * @param root - Exclusively owned {@link BasicChunk} borrowed for the editor's lifetime.
+	 * @param compressor - {@link ChunkCompressor} used by delegated edits and normalization.
 	 */
 	public constructor(
 		root: BasicChunk,
@@ -190,7 +208,11 @@ export class ChunkEditTraversal {
 		this.enterNode(0);
 	}
 
-	/** Releases borrowed navigation state without changing the content's reference counts. */
+	/**
+	 * Releases borrowed navigation state through {@link ChunkCursor.releaseNavigation}.
+	 * @remarks
+	 * Does not change the content's reference counts.
+	 */
 	public free(): void {
 		this.navigation.releaseNavigation();
 	}
@@ -221,19 +243,25 @@ export class ChunkEditTraversal {
 
 	/**
 	 * Tests whether the current location is the named field directly under the supplied root node.
+	 * @remarks
 	 * Requires fields mode; used to reject transfers of a detached field into itself.
 	 */
 	public isRootField(key: FieldKey): boolean {
 		return this.navigation.isRootField(key);
 	}
 
-	/** Returns the active adapter under the invariant that editing traversal enters only editable storage. */
+	/**
+	 * Returns {@link ChunkCursor.localAdapter} as a {@link ChunkEditCursor}.
+	 * @remarks
+	 * Editing traversal enters only storage that provides a child-array hook, a format-specific splice hook, or both.
+	 */
 	private editingCursor(): ChunkEditCursor {
 		const local = this.navigation.localAdapter;
 		assert("getFieldChunks" in local || "trySplice" in local, "Expected an editing cursor");
 		return local as ChunkEditCursor;
 	}
 
+	/** Makes the selected child exclusive, using {@link ensureExclusiveBasicChunk} for formats without editing support. */
 	private prepareChunk(
 		chunks: readonly TreeChunk[],
 		index: number,
@@ -258,6 +286,7 @@ export class ChunkEditTraversal {
 		return location;
 	}
 
+	/** Obtains the prepared child's {@link ChunkEditCursor} after the ownership check. */
 	private cursorForChunk(chunk: TreeChunk): ChunkLocalCursor {
 		// Editing adapters may carry format-specific mutation state, so do not reuse a read adapter here.
 		assert(isEditableChunk(chunk), "Expected editable child storage");
@@ -266,7 +295,8 @@ export class ChunkEditTraversal {
 
 	/**
 	 * Applies every valid splice, normalizing the current field's parent path when its format declines the edit.
-	 * Consumes incoming references and returns owned outgoing references as specified by ChunkEditCursor.trySplice.
+	 * @remarks
+	 * Uses {@link trySpliceField} and consumes incoming references as specified by {@link ChunkEditCursor.trySplice}.
 	 * Requires fields mode and remains at the same logical field after editing.
 	 * @param range - Half-open logical node range to remove; an empty range inserts without removal.
 	 * @param content - Incoming chunks, with one owned reference per entry. The array itself is not modified.
@@ -285,8 +315,10 @@ export class ChunkEditTraversal {
 
 	/**
 	 * Converts only the active chunk's parent path, then re-enters it through the shared traversal.
+	 * @remarks
 	 * Suspended ancestors already provide independently stored child references and need no conversion.
-	 * Re-entering the path rebuilds frames for newly introduced chunk boundaries so subsequent exits restore the correct owners.
+	 * {@link ChunkCursor.restoreOwningField} supplies the original owning field.
+	 * Re-entering through {@link ChunkEditTraversal.enterBasicNode} rebuilds frames for new chunk boundaries so subsequent exits restore the correct owners.
 	 */
 	private normalizeCurrentField(): void {
 		// Preserve the local path before conversion releases the old chunk and invalidates its adapter.
@@ -308,7 +340,8 @@ export class ChunkEditTraversal {
 	}
 
 	/**
-	 * Normalizes the selected child to exclusive BasicChunk storage, then enters it through the shared traversal.
+	 * Normalizes the selected child with {@link ensureExclusiveBasicChunk}, then enters it through {@link ChunkEditTraversal.enterNode}.
+	 * @remarks
 	 * Requires a field with a separately stored child array; index is relative to that whole field.
 	 */
 	private enterBasicNode(index: number): void {

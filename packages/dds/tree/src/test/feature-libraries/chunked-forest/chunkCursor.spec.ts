@@ -39,10 +39,11 @@ import {
 } from "./fieldCursorTestUtilities.js";
 
 /**
- * Shared ChunkTraversal/ChunkCursor navigation and ChunkSequenceCursor's field-only contract.
- * SequenceChunk cursor integration is intentionally covered here, alongside mixed-format and nested-sequence traversal.
- * BasicChunk and UniformChunk cursor conformance suites remain in basicChunk.spec.ts and uniformChunk.spec.ts.
- * Editing traversal and sequence write-back are covered in chunkEditTraversal.spec.ts.
+ * Shared traversal through {@link ChunkCursor} and the field-only contract of {@link ChunkSequenceCursor}.
+ * @remarks
+ * {@link SequenceChunk} cursor integration is intentionally covered here, alongside mixed-format and nested-sequence traversal.
+ * {@link BasicChunk} and {@link UniformChunk} cursor conformance suites remain in `basicChunk.spec.ts` and `uniformChunk.spec.ts`.
+ * Editing traversal and sequence write-back are covered in `chunkEditTraversal.spec.ts`.
  */
 describe("chunkCursor", () => {
 	describe("ChunkSequenceCursor", () => {

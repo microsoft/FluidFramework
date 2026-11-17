@@ -44,10 +44,11 @@ const basicOnlyChunkCompressor: ChunkCompressor = {
 };
 
 /**
- * BasicChunk storage, adapter write-back, and cursor conformance.
- * Shared traversal regressions live in chunkCursor.spec.ts; generic field edits and normalization live in chunkEditTraversal.spec.ts.
- * The chunkTree/chunkField reuse tests stay here as integration coverage of BasicChunk reference ownership;
- * general chunking coverage is in chunkTree.spec.ts.
+ * {@link BasicChunk} storage, adapter write-back, and cursor conformance.
+ * @remarks
+ * Shared traversal regressions live in `chunkCursor.spec.ts`; generic field edits and normalization live in `chunkEditTraversal.spec.ts`.
+ * The {@link chunkTree} and {@link chunkField} reuse tests stay here as integration coverage of {@link BasicChunk} reference ownership;
+ * general chunking coverage is in `chunkTree.spec.ts`.
  */
 describe("basicChunk", () => {
 	describe("BasicChunkLocalCursor", () => {

@@ -86,8 +86,10 @@ function arrayOfPoints(pointsPerArray: number): TreeShape {
 }
 
 /**
- * Cross-format cursor composition is covered in chunkCursor.spec.ts.
- * Generic editing, ownership, and normalization around uniform chunks are covered in chunkEditTraversal.spec.ts.
+ * {@link UniformChunk} storage, inline editing, and cursor conformance.
+ * @remarks
+ * Cross-format cursor composition is covered in `chunkCursor.spec.ts`.
+ * Generic editing, ownership, and normalization around uniform chunks are covered in `chunkEditTraversal.spec.ts`.
  */
 describe("uniformChunk", () => {
 	describe("editing", () => {

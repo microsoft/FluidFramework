@@ -59,10 +59,11 @@ const basicOnlyChunkCompressor: ChunkCompressor = {
 };
 
 /**
- * Direct tests for ChunkEditTraversal, trySpliceField, and ensureExclusiveBasicChunk.
- * BasicChunk and SequenceChunk adapter write-back is also exercised here with real generic field edits.
- * Read cursor conformance lives in basicChunk.spec.ts and chunkCursor.spec.ts;
- * visitor-level integration remains in chunkedForest.spec.ts, and uniform inline edits in uniformChunk.spec.ts.
+ * Direct tests for {@link ChunkEditTraversal}, {@link trySpliceField}, and {@link ensureExclusiveBasicChunk}.
+ * @remarks
+ * {@link BasicChunk} and {@link SequenceChunk} adapter write-back is also exercised here with real generic field edits.
+ * Read cursor conformance lives in `basicChunk.spec.ts` and `chunkCursor.spec.ts`.
+ * Visitor-level integration remains in `chunkedForest.spec.ts`, and uniform inline edits in `uniformChunk.spec.ts`.
  */
 describe("chunkEditTraversal", () => {
 	describe("ChunkEditTraversal", () => {

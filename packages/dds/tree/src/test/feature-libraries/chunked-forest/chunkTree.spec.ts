@@ -118,7 +118,9 @@ function assertChunksUnchanged(
 }
 
 /**
- * BasicChunk reuse and reference ownership for chunkTree/chunkField are additionally tested in basicChunk.spec.ts.
+ * Chunk construction, conversion, splitting, and coalescing.
+ * @remarks
+ * BasicChunk reuse and reference ownership for `chunkTree` and {@link chunkField} are additionally tested in `basicChunk.spec.ts`.
  */
 describe("chunkTree", () => {
 	// Ensure handling of various shapes works properly

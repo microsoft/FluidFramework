@@ -67,11 +67,19 @@ export class SequenceChunk
 	}
 }
 
-/** Local editing of an exclusive sequence's child array. */
+/**
+ * A {@link ChunkEditCursor} exposing an exclusive {@link SequenceChunk}'s child array.
+ * @remarks
+ * Generic edits preserve {@link SequenceChunk.topLevelLength}; {@link SequenceEditCursor.setFieldChunks} checks that invariant.
+ */
 class SequenceEditCursor extends ChunkSequenceCursor implements ChunkEditCursor {
-	/** Starts at an exclusive sequence's root field, retaining its fixed top-level node count during edits. */
+	/**
+	 * Starts at an exclusive sequence's root field.
+	 * @remarks
+	 * Retains {@link SequenceChunk.topLevelLength} as the adapter's fixed root length during editing.
+	 */
 	public constructor(
-		/** Exclusive sequence borrowed without adding references; supplies the fixed top-level node count. */
+		/** Borrowed exclusive sequence supplying {@link SequenceChunk.topLevelLength}. */
 		private readonly chunk: SequenceChunk,
 	) {
 		super(chunk.subChunks, dummyRoot, chunk.topLevelLength);
