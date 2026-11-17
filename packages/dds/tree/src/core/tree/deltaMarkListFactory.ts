@@ -26,7 +26,7 @@ export class DeltaMarkListFactory {
 	 * @param mark - A valid delta mark, or a zero-count mark to omit.
 	 */
 	public push(mark: Mark): void {
-		assert(mark.count >= 0, "Mark count must be greater or equal to zero");
+		assert(mark.count >= 0, 0xda8 /* Mark count must be greater or equal to zero */);
 		if (mark.count === 0) {
 			return;
 		}

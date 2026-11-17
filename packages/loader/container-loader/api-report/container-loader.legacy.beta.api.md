@@ -10,6 +10,9 @@ export interface AcknowledgedSummary {
     readonly version: string;
 }
 
+// @beta @legacy
+export function captureFullContainerState(input: ICaptureFullContainerStateProps): Promise<string>;
+
 // @public
 export enum ConnectionState {
     CatchingUp = 1,
@@ -37,6 +40,15 @@ export interface IBaseProtocolHandler {
     setConnectionState(connected: boolean, clientId: string | undefined): any;
     // (undocumented)
     snapshot(): IQuorumSnapshot;
+}
+
+// @beta @legacy @input
+export interface ICaptureFullContainerStateProps {
+    readonly blobCaptureMode?: "inline" | "reference" | undefined;
+    readonly documentServiceFactory: IDocumentServiceFactory;
+    readonly logger?: ITelemetryBaseLogger | undefined;
+    readonly request: IRequest;
+    readonly urlResolver: IUrlResolver;
 }
 
 // @beta @deprecated @legacy (undocumented)

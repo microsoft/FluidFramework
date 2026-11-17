@@ -9,12 +9,20 @@ import {
 	BenchmarkMode,
 	BenchmarkType,
 	benchmarkDuration,
+	benchmarkDurationBatchless,
 	benchmarkIt,
 	currentBenchmarkMode,
 } from "@fluid-tools/benchmark";
 
-import { SchemaFactory, SchemaFactoryAlpha, type TreeNode } from "../../simple-tree/index.js";
-import { configureBenchmarkHooks } from "../utils.js";
+import {
+	SchemaFactory,
+	SchemaFactoryAlpha,
+	TreeViewConfiguration,
+	type ImplicitFieldSchema,
+	type TreeNode,
+	type TreeNodeSchema,
+} from "../../simple-tree/index.js";
+import { TestTreeProviderLite, configureBenchmarkHooks } from "../utils.js";
 
 import {
 	generateDeepSimpleTree,
@@ -461,6 +469,82 @@ describe("SimpleTree benchmarks", () => {
 						});
 						if (currentBenchmarkMode !== BenchmarkMode.Performance)
 							assert.equal(tree[tree.length - 1], changedLeafValue);
+					},
+				}),
+			});
+		}
+	});
+
+	describe("First read of nodes of many schema types", () => {
+		/**
+		 * Makes a chain of `length` distinct object schemas, each with an optional field holding the next one.
+		 * @remarks
+		 * Each call makes new schema classes, which have not been used yet.
+		 */
+		function makeChainSchema(length: number): TreeNodeSchema {
+			const factory = new SchemaFactory("firstRead");
+			let next: TreeNodeSchema | undefined;
+			for (let index = length - 1; index >= 0; index--) {
+				const fields: Record<string, ImplicitFieldSchema> = { n: factory.number };
+				if (next !== undefined) {
+					fields.next = factory.optional(next);
+				}
+				next = factory.object(`link${index}`, fields);
+			}
+			assert(next !== undefined);
+			return next;
+		}
+
+		interface ChainLink {
+			readonly n: number;
+			readonly next?: ChainLink;
+		}
+
+		function makeChainContent(length: number): ChainLink {
+			let content: ChainLink | undefined;
+			for (let index = length - 1; index >= 0; index--) {
+				content = content === undefined ? { n: index } : { n: index, next: content };
+			}
+			assert(content !== undefined);
+			return content;
+		}
+
+		for (const [typeCount, benchmarkType] of [
+			[10, BenchmarkType.Perspective],
+			[100, BenchmarkType.Measurement],
+		] as const) {
+			benchmarkIt({
+				type: benchmarkType,
+				title: `of a chain of ${typeCount} types, read from another client's content`,
+				...benchmarkDurationBatchless({
+					benchmarkFn: (state) => {
+						let running: boolean;
+						do {
+							// Setup: the reader's schema classes are first used when reading, so its nodes are created hydrated.
+							const provider = new TestTreeProviderLite(2);
+							const writerView = provider.trees[0].viewWith(
+								new TreeViewConfiguration({ schema: makeChainSchema(typeCount) }),
+							);
+							writerView.initialize(makeChainContent(typeCount) as never);
+							provider.synchronizeMessages();
+							const readerView = provider.trees[1].viewWith(
+								new TreeViewConfiguration({ schema: makeChainSchema(typeCount) }),
+							);
+
+							// Measure
+							let sum = 0;
+							running = state.time(() => {
+								let link = readerView.root as unknown as ChainLink | undefined;
+								while (link !== undefined) {
+									sum += link.n;
+									link = link.next;
+								}
+							});
+
+							assert.equal(sum, (typeCount * (typeCount - 1)) / 2);
+							writerView.dispose();
+							readerView.dispose();
+						} while (running);
 					},
 				}),
 			});

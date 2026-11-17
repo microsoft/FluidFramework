@@ -22,6 +22,7 @@ import {
 } from "../../core/index.js";
 import { ReferenceCountedBase, getOrCreate, hasSome } from "../../util/index.js";
 import { SynchronousCursor, prefixFieldPath, prefixPath } from "../treeCursorUtils.js";
+import type { ChunkInlineCursor } from "./chunkCursor.js";
 
 /**
  * Create a tree chunk with ref count 1.
@@ -340,7 +341,11 @@ class NodePositionInfo implements UpPath {
  * Tracks a flat `positionIndex` and derives each node's position info from the shape's shared
  * {@link TreeShape.positions} plus the node's top-level index.
  */
-class Cursor extends SynchronousCursor implements ChunkedCursor {
+class Cursor extends SynchronousCursor implements ChunkedCursor, ChunkInlineCursor {
+	public get rootLength(): number {
+		return this.shape.topLevelLength;
+	}
+
 	private positionIndex!: number; // When in fields mode, this points to the parent node.
 
 	/** Position info for the current node, or `undefined` when in root field. */

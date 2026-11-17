@@ -760,7 +760,7 @@ export function addNodeRename(
 		assert(
 			entry.value === undefined ||
 				areEqualChangeAtomIds(entry.value, offsetChangeAtomId(newId, entry.offset)),
-			"New rename conflicts with existing rename",
+			0xdbc /* New rename conflicts with existing rename */,
 		);
 	}
 
@@ -768,7 +768,7 @@ export function addNodeRename(
 		assert(
 			entry.value === undefined ||
 				areEqualChangeAtomIds(entry.value, offsetChangeAtomId(oldId, entry.offset)),
-			"New rename conflicts with existing rename",
+			0xdbd /* New rename conflicts with existing rename */,
 		);
 	}
 
@@ -830,7 +830,7 @@ export function assignRootChange(
 ): void {
 	assert(
 		rebaseVersion >= 2 || detachLocation !== undefined,
-		"All root changes need a detach location to support compatibility with older client versions",
+		0xdbe /* All root changes need a detach location to support compatibility with older client versions */,
 	);
 
 	setInChangeAtomIdMap(table.nodeChanges, detachId, nodeId);
@@ -991,7 +991,7 @@ export function getOldRootIdFromNewRootId(
 export function getNodeParent(changeset: ModularChangeset, nodeId: NodeId): NodeLocation {
 	const normalizedNodeId = normalizeNodeId(nodeId, changeset.nodeAliases);
 	const location = getFromChangeAtomIdMap(changeset.nodeToParent, normalizedNodeId);
-	assert(location !== undefined, "Parent field should be defined");
+	assert(location !== undefined, 0xdbf /* Parent field should be defined */);
 
 	if (location.field !== undefined) {
 		return { field: normalizeFieldId(location.field, changeset.nodeAliases) };
