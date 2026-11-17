@@ -189,7 +189,10 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 				id: DeltaDetachedNodeId,
 			): void {
 				this.forest.#events.emit("beforeChange");
-				assert(source !== destination, "Replacement source and destination must differ");
+				assert(
+					source !== destination,
+					0xdaa /* Replacement source and destination must differ */,
+				);
 				assert(
 					!editor.isRootField(source),
 					"Replacement source must differ from current field",

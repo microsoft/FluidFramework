@@ -155,7 +155,7 @@ export function ensureExclusiveBasicChunk(
 		}
 		// Splitting can replace and release the original chunk, so read the current array entry.
 		const isolatedChunk = chunks[finalIndexOfChunk] ?? oob();
-		assert(isolatedChunk.topLevelLength === 1, "expected an isolated node");
+		assert(isolatedChunk.topLevelLength === 1, 0xda9 /* expected an isolated node */);
 		const cursor = isolatedChunk.cursor();
 		cursor.firstNode();
 		// Conversion can reuse a BasicChunk inside the source, so acquire it before releasing the source.
