@@ -129,7 +129,7 @@ export function ensureExclusiveBasicChunk(
 		}
 		// Splitting can replace and release the original chunk, so read the current array entry.
 		const isolatedChunk = chunks[finalIndexOfChunk] ?? oob();
-		assert(isolatedChunk.topLevelLength === 1, "expected an isolated node");
+		assert(isolatedChunk.topLevelLength === 1, 0xda9 /* expected an isolated node */);
 		const cursor = isolatedChunk.cursor();
 		cursor.firstNode();
 		// Acquire the replacement's owned reference before releasing the array's old reference.
@@ -324,7 +324,10 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 				id: DeltaDetachedNodeId,
 			): void {
 				this.forest.#events.emit("beforeChange");
-				assert(source !== destination, "Replacement source and destination must differ");
+				assert(
+					source !== destination,
+					0xdaa /* Replacement source and destination must differ */,
+				);
 				this.detachEdit(range, destination);
 				this.attachEdit(source, range.end - range.start, range.start);
 			},

@@ -406,7 +406,10 @@ export function isChangesetValid(
 	options: ValidationOptions = {},
 ): true | string {
 	for (const nodeIdKey of change.nodeChanges.keys()) {
-		assert(change.nodeToParent.has(nodeIdKey), "Every node should have a location entry");
+		assert(
+			change.nodeToParent.has(nodeIdKey),
+			0xdb9 /* Every node should have a location entry */,
+		);
 	}
 
 	const unreachableNodes: ChangeAtomIdBTree<NodeLocation> = brand(change.nodeToParent.clone());
@@ -445,7 +448,10 @@ export function isChangesetValid(
 	for (const [detachIdKey, nodeId] of change.rootNodes.nodeChanges.entries()) {
 		const detachId: ChangeAtomId = { revision: detachIdKey[0], localId: detachIdKey[1] };
 		const location = getNodeParent(change, nodeId);
-		assert(areEqualChangeAtomIdOpts(location.root, detachId), "Inconsistent node location");
+		assert(
+			areEqualChangeAtomIdOpts(location.root, detachId),
+			0xdba /* Inconsistent node location */,
+		);
 
 		const normalizedNodeId = normalizeNodeId(nodeId, change.nodeAliases);
 		unreachableNodes.delete([normalizedNodeId.revision, normalizedNodeId.localId]);
@@ -506,7 +512,7 @@ function validateAttach(
 
 	assert(
 		buildEntry.value || detachEntry.value !== undefined || renameEntry.value !== undefined,
-		"No build, detach, or rename found for attach",
+		0xdbb /* No build, detach, or rename found for attach */,
 	);
 
 	if (countProcessed < count) {
@@ -740,7 +746,7 @@ export function addNodeRename(
 		assert(
 			entry.value === undefined ||
 				areEqualChangeAtomIds(entry.value, offsetChangeAtomId(newId, entry.offset)),
-			"New rename conflicts with existing rename",
+			0xdbc /* New rename conflicts with existing rename */,
 		);
 	}
 
@@ -748,7 +754,7 @@ export function addNodeRename(
 		assert(
 			entry.value === undefined ||
 				areEqualChangeAtomIds(entry.value, offsetChangeAtomId(oldId, entry.offset)),
-			"New rename conflicts with existing rename",
+			0xdbd /* New rename conflicts with existing rename */,
 		);
 	}
 
@@ -810,7 +816,7 @@ export function assignRootChange(
 ): void {
 	assert(
 		rebaseVersion >= 2 || detachLocation !== undefined,
-		"All root changes need a detach location to support compatibility with older client versions",
+		0xdbe /* All root changes need a detach location to support compatibility with older client versions */,
 	);
 
 	setInChangeAtomIdMap(table.nodeChanges, detachId, nodeId);
@@ -971,7 +977,7 @@ export function getOldRootIdFromNewRootId(
 export function getNodeParent(changeset: ModularChangeset, nodeId: NodeId): NodeLocation {
 	const normalizedNodeId = normalizeNodeId(nodeId, changeset.nodeAliases);
 	const location = getFromChangeAtomIdMap(changeset.nodeToParent, normalizedNodeId);
-	assert(location !== undefined, "Parent field should be defined");
+	assert(location !== undefined, 0xdbf /* Parent field should be defined */);
 
 	if (location.field !== undefined) {
 		return { field: normalizeFieldId(location.field, changeset.nodeAliases) };

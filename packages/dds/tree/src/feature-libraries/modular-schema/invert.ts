@@ -94,7 +94,9 @@ export function invertModularChange(
 	const revInfos: readonly RevisionInfo[] = isRollback
 		? getRevInfosForRollback(
 				change.change.revisions ?? [
-					{ revision: change.revision ?? fail("Expected change to have a revision") },
+					{
+						revision: change.revision ?? fail(0xdab /* Expected change to have a revision */),
+					},
 				],
 				revisionForInvert,
 			)
@@ -356,7 +358,7 @@ class InvertNodeManagerI implements InvertNodeManager {
 		countProcessed = attachIdEntry.length;
 
 		if (nodeChange !== undefined) {
-			assert(count === 1, "A node change should only affect one node");
+			assert(count === 1, 0xdac /* A node change should only affect one node */);
 
 			const attachFieldEntry = getFirstAttachField(
 				this.table.change.crossFieldKeys,
@@ -685,6 +687,6 @@ function getRevInfosForRollback(
 	revisions: readonly RevisionInfo[],
 	revisionForInvert: RevisionTag,
 ): readonly RevisionInfo[] {
-	assert(hasSingle(revisions), "Can only roll back a single revision at a time");
+	assert(hasSingle(revisions), 0xdad /* Can only roll back a single revision at a time */);
 	return [{ revision: revisionForInvert, rollbackOf: revisions[0].revision }];
 }
