@@ -1570,7 +1570,7 @@ const schemaIdentifierBrand: unique symbol;
 export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.SchemaIdentity"> {
 }
 
-// @beta @sealed
+// @beta
 export type SchemaIncompatibilityReason = string;
 
 // @beta @sealed

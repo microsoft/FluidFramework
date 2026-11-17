@@ -979,7 +979,7 @@ export type SchemaDiscrepancyFieldLocation =
  * To handle an incompatibility programmatically, check `mismatch` and its associated fields instead of parsing the explanation.
  * The explanation describes the failed requirement, but cannot determine which fix is appropriate for your application.
  *
- * @sealed @beta
+ * @beta
  */
 export type SchemaIncompatibilityReason = string;
 
@@ -1081,12 +1081,16 @@ export type SchemaValueSchemaDiscrepancy = {
 	 */
 	readonly nodeType: string;
 	/**
-	 * The value schema required by the view.
+	 * The value schema required by the view, or undefined if no value schema is specified.
+	 *
+	 * @remarks
 	 * Current leaf schemas specify a concrete value type, such as `"Number"` or `"String"`.
 	 */
 	readonly view: string | undefined;
 	/**
-	 * The value schema recorded in the stored schema.
+	 * The value schema recorded in the stored schema, or undefined if no value schema is specified.
+	 *
+	 * @remarks
 	 * Current leaf schemas specify a concrete value type, such as `"Number"` or `"String"`.
 	 */
 	readonly stored: string | undefined;
@@ -1242,12 +1246,16 @@ export type SchemaUpgradeValueSchemaIncompatibility = {
 	 */
 	readonly nodeType: string;
 	/**
-	 * The proposed value schema.
+	 * The proposed value schema, or undefined if no value schema is specified.
+	 *
+	 * @remarks
 	 * Current leaf schemas specify a concrete value type, such as `"Number"` or `"String"`.
 	 */
 	readonly proposed: string | undefined;
 	/**
-	 * The stored value schema.
+	 * The stored value schema, or undefined if no value schema is specified.
+	 *
+	 * @remarks
 	 * Current leaf schemas specify a concrete value type, such as `"Number"` or `"String"`.
 	 */
 	readonly stored: string | undefined;

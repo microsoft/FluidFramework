@@ -687,7 +687,7 @@ export type SchemaFieldKindDiscrepancy = {
 // @public @system
 const schemaIdentifierBrand: unique symbol;
 
-// @beta @sealed
+// @beta
 export type SchemaIncompatibilityReason = string;
 
 // @beta @sealed
