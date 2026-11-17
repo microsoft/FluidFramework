@@ -84,6 +84,105 @@ function arrayOfPoints(pointsPerArray: number): TreeShape {
 
 describe("uniformChunk", () => {
 	describe("shapes", () => {
+		/**
+		 * The positions of a shape, built from the positions of its child shapes.
+		 */
+		function referencePositions(shape: TreeShape): unknown[] {
+			const output: {
+				parentField: FieldKey;
+				parentIndex: number;
+				indexOfParentField: number | undefined;
+				indexOfParentPosition: number | undefined;
+				shape: TreeShape;
+				topLevelLength: number;
+				valueOffset: number;
+			}[] = [
+				{
+					parentField: dummyRoot,
+					parentIndex: 0,
+					indexOfParentField: undefined,
+					indexOfParentPosition: undefined,
+					shape,
+					topLevelLength: 1,
+					valueOffset: 0,
+				},
+			];
+			let values = shape.hasValue ? 1 : 0;
+			let fieldIndex = 0;
+			for (const [key, child, copies] of shape.fieldsArray) {
+				const inner = referencePositions(child) as typeof output;
+				const offset = output.length;
+				for (let index = 0; index < copies; index++) {
+					for (const position of inner) {
+						const wasRoot = position.indexOfParentPosition === undefined;
+						output.push({
+							parentField: position.parentField === dummyRoot ? key : position.parentField,
+							parentIndex: wasRoot ? index : position.parentIndex,
+							indexOfParentField: position.indexOfParentField ?? fieldIndex,
+							indexOfParentPosition: wasRoot
+								? 0
+								: (position.indexOfParentPosition ?? 0) + index * inner.length + offset,
+							shape: position.shape,
+							topLevelLength: wasRoot ? copies : position.topLevelLength,
+							valueOffset: position.valueOffset + values + child.valuesPerTopLevelNode * index,
+						});
+					}
+				}
+				values += child.valuesPerTopLevelNode * copies;
+				fieldIndex++;
+			}
+			return output;
+		}
+
+		it("positions are those built from the positions of child shapes", () => {
+			const arrays = new TreeShape(brand(JsonAsTree.Array.identifier), false, [
+				[EmptyKey, arrayOfPoints(3), 2],
+			]);
+			const shapes = [
+				numberShape,
+				pointShape,
+				arrayOfPoints(4),
+				arrays,
+				...testData.map((tree) => tree.dataFactory().shape.treeShape),
+			];
+			for (const shape of shapes) {
+				// The shape's positions are created without creating those of its child shapes first.
+				const positions = shape.positions;
+				assert.equal(positions.length, shape.nodeCount);
+				assert.deepEqual(
+					positions.map(
+						({
+							parentField,
+							parentIndex,
+							indexOfParentField,
+							indexOfParentPosition,
+							shape: positionShape,
+							topLevelLength,
+							valueOffset,
+						}) => ({
+							parentField,
+							parentIndex,
+							indexOfParentField,
+							indexOfParentPosition,
+							shape: positionShape,
+							topLevelLength,
+							valueOffset,
+						}),
+					),
+					referencePositions(shape),
+				);
+				for (const position of positions) {
+					assert.equal(
+						position.parent,
+						position.indexOfParentPosition === undefined
+							? undefined
+							: positions[position.indexOfParentPosition],
+					);
+				}
+				assert.equal(shape.positions, positions);
+			}
+		});
+
 		for (const tree of testData) {
 			it(`validate shape for ${tree.name}`, () => {
 				validateShape(tree.dataFactory().shape);

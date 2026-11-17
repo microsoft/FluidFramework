@@ -647,9 +647,9 @@ export function chunkRange(
 			const shape = chunkCompressor.policy.shapeFromSchema(type);
 			if (
 				shape instanceof TreeShape &&
-				shape.positions.length <= chunkCompressor.policy.uniformChunkNodeCount
+				shape.nodeCount <= chunkCompressor.policy.uniformChunkNodeCount
 			) {
-				const nodesPerTopLevelNode = shape.positions.length;
+				const nodesPerTopLevelNode = shape.nodeCount;
 				const maxTopLevelLength = Math.max(
 					1,
 					Math.floor(chunkCompressor.policy.uniformChunkNodeCount / nodesPerTopLevelNode),
@@ -980,5 +980,6 @@ export function uniformChunkFromCursor(
 		}
 		topLevelLength += 1;
 	}
-	return new UniformChunk(shape.withTopLevelLength(topLevelLength), values, idCompressor);
+	// Copy the values to an array of exactly their length, without the spare capacity left by push.
+	return new UniformChunk(shape.withTopLevelLength(topLevelLength), [...values], idCompressor);
 }

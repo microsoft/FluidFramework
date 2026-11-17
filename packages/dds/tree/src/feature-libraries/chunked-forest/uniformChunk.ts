@@ -122,7 +122,26 @@ export class TreeShape {
 	 * For example {@link Cursor} derives each node's actual position info from this shared
 	 * array plus the node's top-level index within the chunk.
 	 */
-	public readonly positions: readonly NodePositionInfo[];
+	public get positions(): readonly NodePositionInfo[] {
+		if (this.#positions === undefined) {
+			const positions: NodePositionInfo[] = [];
+			appendPositions(positions, this, undefined, dummyRoot, 0, undefined, this, 1, 0);
+			this.#positions = positions;
+		}
+		return this.#positions;
+	}
+
+	/**
+	 * {@link TreeShape.positions}, created on first use.
+	 * @remarks
+	 * Many shapes are only used within other shapes, whose positions are created from their structure without needing these.
+	 */
+	#positions: NodePositionInfo[] | undefined;
+
+	/**
+	 * The number of nodes in one top-level tree of this shape: the length of {@link TreeShape.positions}.
+	 */
+	public readonly nodeCount: number;
 
 	/**
 	 * Whether chunks using this shape (including any descendant leaf within it) may contain values compressed by the {@link UniformChunk.idCompressor}.
@@ -171,21 +190,19 @@ export class TreeShape {
 			maybeCompressedIdLeaf || fieldsArray.some(([, shape]) => shape.mayContainCompressedIds);
 		const fields: Map<FieldKey, OffsetShape> = new Map();
 		let numberOfValues = hasValue ? 1 : 0;
-		const infos: NodePositionInfo[] = [
-			new NodePositionInfo(undefined, dummyRoot, 0, undefined, undefined, this, 1, 0),
-		];
+		let nodeCount = 1;
 		let fieldIndex = 0;
 		for (const [k, f, length] of fieldsArray) {
 			assert(!fields.has(k), 0x4c5 /* no duplicate keys */);
-			const offset = new OffsetShape(f, length, infos.length, k, fieldIndex);
+			const offset = new OffsetShape(f, length, nodeCount, k, fieldIndex);
 			fields.set(k, offset);
-			clonePositions(0, [k, f, length], fieldIndex, numberOfValues, infos);
+			nodeCount += f.nodeCount * length;
 			numberOfValues += f.valuesPerTopLevelNode * length;
 			fieldIndex++;
 		}
 		this.fields = fields;
 		this.valuesPerTopLevelNode = numberOfValues;
-		this.positions = infos;
+		this.nodeCount = nodeCount;
 
 		this.fieldsOffsetArray = [...fields.values()];
 	}
@@ -231,36 +248,57 @@ export class TreeShape {
 	}
 }
 
-function clonePositions(
-	indexOfParentInOutput: number | undefined,
-	[key, shape, copies]: FieldShape,
-	indexOfParentField: number,
+/**
+ * Appends the {@link TreeShape.positions} of a tree of shape `shape` to `output`, in depth first pre-order,
+ * as positions within the tree whose positions `output` holds.
+ * @param parentPosition - Index in `output` of the tree's parent, or undefined for the root of `output`.
+ * @param containingShape - Shape of the sequence the tree is part of (see {@link NodePositionInfo.shape}).
+ * @param valueOffset - Offset of the tree's first value.
+ */
+function appendPositions(
+	output: NodePositionInfo[],
+	shape: TreeShape,
+	parentPosition: number | undefined,
+	parentField: FieldKey,
+	parentIndex: number,
+	indexOfParentField: number | undefined,
+	containingShape: TreeShape,
+	topLevelLength: number,
 	valueOffset: number,
-	outputInto: NodePositionInfo[] | (NodePositionInfo | undefined)[],
 ): void {
-	const offset = outputInto.length;
-	for (let index = 0; index < copies; index++) {
-		for (const inner of shape.positions) {
-			const wasRoot = inner.indexOfParentPosition === undefined;
-			const parentPositionIndex = wasRoot
-				? indexOfParentInOutput
-				: inner.indexOfParentPosition + index * shape.positions.length + offset;
-			outputInto.push(
-				new NodePositionInfo(
-					parentPositionIndex === undefined ? undefined : outputInto[parentPositionIndex],
-					inner.parentField === dummyRoot ? key : inner.parentField,
-					wasRoot ? index : inner.parentIndex,
-					inner.indexOfParentField ?? indexOfParentField,
-					parentPositionIndex,
-					inner.shape,
-					wasRoot ? copies : inner.topLevelLength,
-					inner.valueOffset + valueOffset + shape.valuesPerTopLevelNode * index,
-				),
+	const position = output.length;
+	output.push(
+		new NodePositionInfo(
+			parentPosition === undefined ? undefined : output[parentPosition],
+			parentField,
+			parentIndex,
+			indexOfParentField,
+			parentPosition,
+			containingShape,
+			topLevelLength,
+			valueOffset,
+		),
+	);
+	let childValueOffset = valueOffset + (shape.hasValue ? 1 : 0);
+	let fieldIndex = 0;
+	for (const [key, childShape, length] of shape.fieldsArray) {
+		for (let index = 0; index < length; index++) {
+			appendPositions(
+				output,
+				childShape,
+				position,
+				key,
+				index,
+				fieldIndex,
+				childShape,
+				length,
+				childValueOffset + childShape.valuesPerTopLevelNode * index,
 			);
 		}
+		childValueOffset += childShape.valuesPerTopLevelNode * length;
+		fieldIndex++;
 	}
 }
-
 /**
  * The shape (see `TreeShape`) of a sequence of trees, all with the same shape (like `FieldShape`, but without a field key).
  *
@@ -354,7 +392,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 	private readonly shape: ChunkShape;
 	/** The chunk's per-tree shape (shape of each top-level tree). */
 	private readonly treeShape: TreeShape;
-	/** Number of positions in one top-level tree (treeShape.positions.length). */
+	/** Number of positions in one top-level tree (treeShape.nodeCount). */
 	private readonly nodeLength: number;
 	/** Number of values per top-level node (treeShape.valuesPerTopLevelNode). */
 	private readonly stride: number;
@@ -373,7 +411,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		super();
 		this.shape = this.chunk.shape;
 		this.treeShape = this.shape.treeShape;
-		this.nodeLength = this.treeShape.positions.length;
+		this.nodeLength = this.treeShape.nodeCount;
 		this.stride = this.treeShape.valuesPerTopLevelNode;
 		this.fieldKey = dummyRoot;
 		this.moveToPosition(0);
@@ -577,7 +615,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		}
 		this.mode = CursorLocationType.Nodes;
 		this.fieldKey = undefined;
-		this.moveToPosition(this.positionIndex + f.offset + childIndex * f.shape.positions.length);
+		this.moveToPosition(this.positionIndex + f.offset + childIndex * f.shape.nodeCount);
 		assert(this.fieldIndex === childIndex, 0x4cc /* should be at selected child */);
 		return true;
 	}
@@ -630,7 +668,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		const info = this.nodeInfo(CursorLocationType.Nodes);
 		const index = offset + this.fieldIndex;
 		if (index >= 0 && index < this.siblingCount(info)) {
-			this.moveToPosition(this.positionIndex + offset * info.shape.positions.length);
+			this.moveToPosition(this.positionIndex + offset * info.shape.nodeCount);
 			return true;
 		}
 		this.exitNode();
@@ -646,7 +684,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 			this.exitNode();
 			return false;
 		}
-		this.moveToPosition(this.positionIndex + info.shape.positions.length);
+		this.moveToPosition(this.positionIndex + info.shape.nodeCount);
 		return true;
 	}
 
