@@ -22,7 +22,6 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
-	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizerCore,
 	summarizeNow,
 	timeoutPromise,
@@ -144,25 +143,22 @@ describeCompat(
 					);
 				},
 			};
-			return createContainerRuntimeFactoryWithDefaultDataStore(
-				containerApi.ContainerRuntimeFactoryWithDefaultDataStore,
-				{
-					defaultFactory: factory,
-					registryEntries: [[factory.type, factory]],
-					// This fixture deliberately uses only established DDS capabilities, not native composites.
-					oldestSupportedClient: "2.0.0",
-					runtimeOptions: {
-						summaryOptions: {
-							summaryConfigOverrides: {
-								state: summarizer ? "disableHeuristics" : "disabled",
-								initialSummarizerDelayMs: 0,
-								maxAckWaitTime: 20000,
-								maxOpsSinceLastSummary: 7000,
-							},
+			return new containerApi.ContainerRuntimeFactoryWithDefaultDataStore({
+				defaultFactory: factory,
+				registryEntries: [[factory.type, factory]],
+				// This fixture deliberately uses only established DDS capabilities, not native composites.
+				oldestSupportedClient: "2.0.0",
+				runtimeOptions: {
+					summaryOptions: {
+						summaryConfigOverrides: {
+							state: summarizer ? "disableHeuristics" : "disabled",
+							initialSummarizerDelayMs: 0,
+							maxAckWaitTime: 20000,
+							maxOpsSinceLastSummary: 7000,
 						},
 					},
 				},
-			);
+			});
 		}
 
 		let provider: ITestObjectProvider;

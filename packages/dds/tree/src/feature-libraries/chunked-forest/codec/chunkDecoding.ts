@@ -35,6 +35,7 @@ import {
 	type ChunkDecoder,
 	type StreamCursor,
 	getChecked,
+	getFullyChecked,
 	readStream,
 	readStreamBoolean,
 	readStreamNumber,
@@ -361,7 +362,10 @@ function decodeUniform(
 	let values: TreeValue[];
 	const encodedSize = plan.encodedSize * repetitions;
 	assertNonNegativeSafeInteger(encodedSize);
-	assert(encodedSize <= stream.data.length - stream.offset, "incomplete uniform chunk data");
+	assert(
+		encodedSize <= stream.data.length - stream.offset,
+		0xdd6 /* incomplete uniform chunk data */,
+	);
 	if (
 		plan.valuesAreVerbatim &&
 		stream.offset === 0 &&
@@ -492,7 +496,7 @@ function readIdentifierValue(
 	const value = readStream(stream);
 	assert(
 		typeof value === "number" || typeof value === "string",
-		"identifier must be string or number",
+		0xdd7 /* identifier must be string or number */,
 	);
 	return typeof value === "string"
 		? value
@@ -577,20 +581,23 @@ export class NestedArrayDecoder implements ChunkDecoder {
 				return emptyChunk;
 			}
 		} else {
-			assert(Array.isArray(data), "expected nested array data");
+			assert(Array.isArray(data), 0xdd8 /* expected nested array data */);
 		}
 		return this.decodeArray(data);
 	}
 
 	public initialize(decoders: readonly ChunkDecoder[]): void {
-		this.decoder = getChecked(decoders, this.shape);
+		this.decoder = getFullyChecked(decoders, this.shape);
 		const plan = getUniformDecodingPlan(this.decoder, decoders);
 		this.decodeArray =
 			plan === undefined
 				? this.decodeGeneral.bind(this)
 				: (data) => {
 						if (typeof data === "number") {
-							assert(plan.encodedSize === 0, "expected data for nonempty uniform encoding");
+							assert(
+								plan.encodedSize === 0,
+								0xdd9 /* expected data for nonempty uniform encoding */,
+							);
 							return decodeUniform(plan, data, { data: [], offset: 0 });
 						}
 						if (data.length === 0) {
@@ -598,7 +605,7 @@ export class NestedArrayDecoder implements ChunkDecoder {
 						}
 						assert(
 							plan.encodedSize > 0 && data.length % plan.encodedSize === 0,
-							"incomplete uniform chunk data",
+							0xdda /* incomplete uniform chunk data */,
 						);
 						return decodeUniform(plan, data.length / plan.encodedSize, {
 							data,
@@ -628,7 +635,10 @@ export class NestedArrayDecoder implements ChunkDecoder {
 			while (inner.offset !== inner.data.length) {
 				const previousOffset = inner.offset;
 				chunks.push(decoder.decode(inner));
-				assert(inner.offset > previousOffset, "nested array decoder must consume data");
+				assert(
+					inner.offset > previousOffset,
+					0xddb /* nested array decoder must consume data */,
+				);
 			}
 		}
 
@@ -651,7 +661,7 @@ export class InlineArrayDecoder extends UniformShapeDecoder {
 	protected buildUniformDecodingPlan(
 		decoders: readonly ChunkDecoder[],
 	): UniformDecodingPlan | undefined {
-		const plan = getUniformDecodingPlan(getChecked(decoders, this.shape.shape), decoders);
+		const plan = getUniformDecodingPlan(getFullyChecked(decoders, this.shape.shape), decoders);
 		if (plan === undefined) {
 			return undefined;
 		}
@@ -675,7 +685,7 @@ export class InlineArrayDecoder extends UniformShapeDecoder {
 		};
 	}
 	public initialize(decoders: readonly ChunkDecoder[]): void {
-		this.decoder = getChecked(decoders, this.shape.shape);
+		this.decoder = getFullyChecked(decoders, this.shape.shape);
 		const plan = this.getUniformDecodingPlan(decoders);
 		this.decode =
 			plan === undefined
@@ -744,7 +754,7 @@ export class AnyDecoder implements ChunkDecoder {
 	}
 	public decode(stream: StreamCursor): TreeChunk {
 		const shapeIndex = readStreamNumber(stream);
-		const decoder = getChecked(this.decoders, shapeIndex);
+		const decoder = getFullyChecked(this.decoders, shapeIndex);
 		return decoder.decode(stream);
 	}
 }
@@ -762,6 +772,7 @@ function fieldDecoder(
 	key: FieldKey,
 	shape: number,
 ): BasicFieldDecoder {
+	// NodeDecoder's constructor validates fixed-field shape indices.
 	const decoder = getChecked(decoders, shape);
 	return (stream) => {
 		return [key, decoder.decode(stream)];
@@ -839,6 +850,7 @@ export class NodeDecoder extends UniformShapeDecoder {
 				return undefined;
 			}
 			keys.add(key);
+			// The constructor validates fixed-field shape indices.
 			const plan = getUniformDecodingPlan(getChecked(decoders, fieldShape), decoders);
 			if (plan === undefined) {
 				return undefined;
@@ -894,7 +906,7 @@ export class NodeDecoder extends UniformShapeDecoder {
 		this.extraFieldsDecoder =
 			this.shape.extraFields === undefined
 				? undefined
-				: getChecked(decoders, this.shape.extraFields);
+				: getFullyChecked(decoders, this.shape.extraFields);
 	}
 	public decode(stream: StreamCursor): TreeChunk {
 		const type: TreeNodeSchemaIdentifier =

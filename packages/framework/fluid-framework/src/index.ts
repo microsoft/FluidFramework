@@ -95,8 +95,8 @@ export * from "@fluidframework/tree/alpha";
 
 // These are alpha APIs, but this package doesn't have an alpha entry point so they are imported from "internal".
 export {
-	defineDataStore,
 	dataStoreRegistryFromIterable,
+	defineDataStore,
 } from "@fluidframework/shared-object-base/internal";
 export type {
 	DataStoreOptions,

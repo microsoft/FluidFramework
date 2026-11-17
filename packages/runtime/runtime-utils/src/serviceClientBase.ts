@@ -24,6 +24,7 @@ import type {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
 	FluidDataStoreContextInternal,
+	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -133,22 +134,27 @@ export class DataStoreKindImplementation<T>
 	}
 }
 
+/**
+ * Cache for {@link dataStoreKindFromFactory}.
+ */
 const legacyKinds = new WeakMap<IFluidDataStoreFactory, DataStoreKind>();
 
 /**
- * Uses a legacy data-store factory as a kind in the alpha ServiceClient APIs.
+ * Adapt an {@link @fluidframework/runtime-definitions#IFluidDataStoreFactory} into a {@link @fluidframework/driver-definitions#DataStoreKind}.
  * @remarks
- * This preserves the factory, its entry point, child registry, and persisted representation.
- * It does not create an additional data store or adapt the entry-point value.
+ * This allows use of some of the `@legacy` API surface with the new {@link @fluidframework/driver-definitions#ServiceClient} APIs,
+ * helping enable incremental migration to the new API surface.
+ *
  * Repeated calls with the same factory return the same kind.
+ * Different factories remain different kinds, even if they have the same type identifier.
  *
  * The caller must ensure that the factory's entry point is a `T`.
  * Legacy factories do not encode that type, so this function cannot check it.
- * Register the returned kind wherever the new APIs need the factory.
- * Existing legacy registries can continue to register the original factory.
  *
- * This does not change the container's root-discovery convention.
- * @typeParam T - The entry-point type produced by the legacy factory.
+ * This does not change root discovery: {@link @fluidframework/driver-definitions#ServiceClient} currently expects the `root` data-store alias.
+ * For other conventions, load and resolve the root with your existing legacy APIs, then use {@link fluidContainerFromLegacy}.
+ * @typeParam T - The value type returned by the legacy factory's
+ * {@link @fluidframework/runtime-definitions#IFluidDataStoreChannel.entryPoint | entry-point handle}.
  * @param factory - The existing data-store factory.
  * @returns The kind for the factory, with the caller-specified entry-point type.
  * @legacy
@@ -282,12 +288,23 @@ export abstract class ServiceContainerBase<TData, TOptions = unknown>
 	public async createDataStore<T>(key: DataStoreKey<T>): Promise<T> {
 		const kind = await lookupInRegistry(this.registry, key);
 		DataStoreKindImplementation.narrowGeneric(kind);
-		const containerRuntime = this.getRuntime();
-
-		// TODO: There should probably be a higher level more type safe way to do this.
-		const context = containerRuntime.createDetachedDataStore([kind.type]);
-		const channel = await kind.instantiateDataStore(context, false);
-		const dataStore = await context.attachRuntime(kind, channel);
+		const containerRuntime: IContainerRuntimeBase & Partial<IProvideFluidDataStoreRegistry> =
+			this.getRuntime();
+		const registry = containerRuntime.IFluidDataStoreRegistry;
+		if (registry === undefined) {
+			throw new UsageError("The container runtime does not expose a data-store registry");
+		}
+		// Look up the runtime's registered factory to check it matches the requested kind.
+		// Prefer synchronous lookup, falling back to async lookup if unavailable or no entry is returned.
+		const registered = registry.getSync?.(kind.type) ?? (await registry.get(kind.type));
+		if (registered?.IFluidDataStoreFactory !== kind.IFluidDataStoreFactory) {
+			throw new UsageError(
+				"The data-store kind does not match the factory registered in the container runtime",
+			);
+		}
+		// Use the runtime's creation API rather than invoking the factory and attaching its runtime directly.
+		// This initializes the context's child registry before the factory runs, so it can create child stores.
+		const dataStore = await containerRuntime.createDataStore(kind.type);
 		const entryPoint = await dataStore.entryPoint.get();
 		// The data store's entry point type is erased at the registry boundary;
 		// the DataStoreKind<T> used to create it guarantees the entry point is a T.
@@ -300,16 +317,13 @@ export abstract class ServiceContainerBase<TData, TOptions = unknown>
  * @remarks
  * Resolve the application's root using its existing legacy APIs and pass that value as `data`.
  * No root alias, named channel, handle, or document content is changed.
- * Register the same factories in `registry` and the existing container runtime before using
- * {@link @fluidframework/driver-definitions#DataStoreCreator.createDataStore}.
  * Closing the returned container closes the original container.
- * The caller supplies the ID used to reopen the document with its service.
- * This need not equal `container.resolvedUrl.id`: for example, ODSP uses an item ID
- * to reopen a document, while its resolved URL ID is a hash.
  * @param container - The attached legacy container.
  * @param data - The application-facing root value selected using legacy APIs.
- * @param registry - Kinds whose factories are registered in the existing runtime.
+ * @param registry - Kinds whose factories are already registered in the existing runtime; use {@link dataStoreKindFromFactory} to adapt legacy factories.
+ * Used by {@link @fluidframework/driver-definitions#DataStoreCreator.createDataStore}; does not install factories in that runtime.
  * @param id - The service-facing ID used to reopen this document.
+ * This need not equal `container.resolvedUrl.id`: for example, ODSP uses an item ID to reopen a document, while its resolved URL ID is a hash.
  * @returns An alpha view of the same attached container.
  * @throws If the container is not attached.
  * @legacy

@@ -89,7 +89,11 @@ describe("examples", () => {
 			},
 			view: async (root) => root,
 		});
-		const parent = defineDataStore<{ root: ITree; creator: DataStoreCreator }, ITree>({
+		interface ParentData {
+			root: ITree;
+			creator: DataStoreCreator;
+		}
+		const parent = defineDataStore<ParentData, ITree>({
 			type: "parent",
 			registry: dataStoreRegistryFromIterable([
 				SharedTree,
@@ -112,14 +116,14 @@ describe("examples", () => {
 			},
 			view: async (root, creator) => ({ root, creator }),
 		});
-		const registry = dataStoreRegistryFromIterable([parent, SharedTree]);
+		const registry = dataStoreRegistryFromIterable<ParentData | ITree>([parent, SharedTree]);
 		const container = await client.createAttachedContainer(parent, registry);
 		assert.equal(loads, 1);
 		assert.equal("handle" in container.data, false);
 		await service.synchronize();
 		const remote = await client.loadContainer(container.id, registry);
-		// The multi-kind registry erases the root type; this document was created with parent.
-		const remoteData = remote.data as typeof container.data;
+		assert("root" in remote.data);
+		const remoteData = remote.data;
 		const remoteView = remoteData.root.viewWith(config);
 		const nestedHandle = remoteView.root;
 		assert(typeof nestedHandle !== "number");

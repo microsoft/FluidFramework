@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "node:assert";
-import { AttachState, type IContainer } from "@fluidframework/container-definitions/internal";
 
+import { AttachState, type IContainer } from "@fluidframework/container-definitions/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type {
 	FluidDataStoreContextInternal,
@@ -53,21 +53,23 @@ describe("fluidContainerFromLegacy", () => {
 		assert(closed);
 	});
 
-	it("rejects detached containers even when a reload ID is supplied", () => {
-		const container: Partial<IContainer> = { attachState: AttachState.Detached };
-		assert.throws(
-			() =>
-				fluidContainerFromLegacy(
-					container as IContainer,
-					undefined,
-					async () => {
-						throw new Error("No factory lookup expected");
-					},
-					"service-item-id",
-				),
-			/The legacy container must be attached/,
-		);
-	});
+	for (const attachState of [AttachState.Detached, AttachState.Attaching]) {
+		it(`rejects ${attachState} containers even when a reload ID is supplied`, () => {
+			const container: Partial<IContainer> = { attachState };
+			assert.throws(
+				() =>
+					fluidContainerFromLegacy(
+						container as IContainer,
+						undefined,
+						async () => {
+							throw new Error("No factory lookup expected");
+						},
+						"service-item-id",
+					),
+				/The legacy container must be attached/,
+			);
+		});
+	}
 });
 
 describe("dataStoreKindFromFactory", () => {
@@ -137,7 +139,7 @@ describe("dataStoreKindFromFactory", () => {
 		);
 	});
 
-	it("preserves registry getters and synchronous creation receivers", () => {
+	it("preserves registry getters and creation receivers", async () => {
 		let readCount = 0;
 		const registry: IFluidDataStoreRegistry = {
 			get IFluidDataStoreRegistry() {
@@ -147,6 +149,7 @@ describe("dataStoreKindFromFactory", () => {
 				return undefined;
 			},
 		};
+		const context: Partial<IFluidDataStoreContext> = {};
 		const factory: IFluidDataStoreFactory & {
 			readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry;
 		} = {
@@ -162,14 +165,26 @@ describe("dataStoreKindFromFactory", () => {
 				assert.equal(this, factory);
 				throw new Error("Synchronous creation invoked");
 			},
+			async instantiateDataStore(actualContext, existing): Promise<never> {
+				assert.equal(this, factory);
+				assert.equal(actualContext, context);
+				assert.equal(existing, true);
+				throw new Error("Asynchronous creation invoked");
+			},
 		};
 		const kind = dataStoreKindFromFactory(factory);
 		DataStoreKindImplementation.narrowGeneric(kind);
 		assert.equal(kind.IFluidDataStoreRegistry, registry);
 		assert.equal(kind.IFluidDataStoreRegistry, registry);
 		assert.equal(readCount, 2);
+		const entry = await convertRegistry(async () => kind).get(factory.type);
+		assert.equal(entry?.IFluidDataStoreRegistry, registry);
 		const create = kind.createDataStore;
 		assert(create !== undefined);
 		assert.throws(() => Reflect.apply(create, undefined, []), /Synchronous creation invoked/);
+		await assert.rejects(
+			kind.instantiateDataStore(context as IFluidDataStoreContext, true),
+			/Asynchronous creation invoked/,
+		);
 	});
 });
