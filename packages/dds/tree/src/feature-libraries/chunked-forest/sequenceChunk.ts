@@ -3,33 +3,34 @@
  * Licensed under the MIT License.
  */
 
-import { type ChunkedCursor, type TreeChunk, dummyRoot } from "../../core/index.js";
+import { dummyRoot, type ChunkedCursor, type TreeChunk } from "../../core/index.js";
 import { ReferenceCountedBase } from "../../util/index.js";
 
-import { BasicChunkCursor } from "./basicChunk.js";
+import { ChunkCursor, ChunkSequenceCursor, type CompositeChunk } from "./chunkCursor.js";
+import { getFieldLength } from "./chunkEditing.js";
 
 /**
- * General purpose multi-node sequence chunk.
+ * A {@link CompositeChunk} representing the concatenation of its child {@link TreeChunk}s.
+ * @remarks
+ * {@link SequenceChunk.getLocalCursor} exposes the children through a {@link ChunkSequenceCursor}.
+ * The sequence adds no nodes or fields to the tree.
+ * @privateRemarks
+ * Cursor integration tests are in chunkCursor.spec.ts, alongside shared traversal and mixed-format boundary cases.
  */
-export class SequenceChunk extends ReferenceCountedBase implements TreeChunk {
-	public get topLevelLength(): number {
-		let total = 0;
-		for (const child of this.subChunks) {
-			total += child.topLevelLength;
-		}
-		return total;
-	}
+export class SequenceChunk extends ReferenceCountedBase implements CompositeChunk {
+	public readonly topLevelLength: number;
 
 	/**
-	 * Create a tree chunk with ref count 1.
-	 *
-	 * @param fields - provides exclusive deep ownership of this map to this object (which might mutate it in the future).
-	 * The caller must have already accounted for this reference to the children in this map (via `referenceAdded`),
-	 * and any edits to this must update child reference counts.
-	 * @param value - the value on this node, if any.
+	 * Creates a {@link SequenceChunk} with reference count 1.
+	 * @remarks
+	 * Edits to {@link SequenceChunk.subChunks} must update child reference counts and preserve {@link SequenceChunk.topLevelLength}.
+	 * Changing the total number of top-level nodes requires replacing the sequence in its owning parent.
+	 * @param subChunks - Child array whose ownership is transferred to this chunk.
+	 * The caller must have accounted for one reference to each child via `referenceAdded`.
 	 */
 	public constructor(public readonly subChunks: TreeChunk[]) {
 		super();
+		this.topLevelLength = getFieldLength(subChunks);
 	}
 
 	public clone(): SequenceChunk {
@@ -41,18 +42,11 @@ export class SequenceChunk extends ReferenceCountedBase implements TreeChunk {
 	}
 
 	public cursor(): ChunkedCursor {
-		return new BasicChunkCursor(
-			this.subChunks,
-			[],
-			[],
-			[],
-			[],
-			[dummyRoot],
-			0,
-			0,
-			0,
-			undefined,
-		);
+		return ChunkCursor.fromChunk(this);
+	}
+
+	public getLocalCursor(): ChunkSequenceCursor {
+		return new ChunkSequenceCursor(this.subChunks, dummyRoot, this.topLevelLength);
 	}
 
 	protected onUnreferenced(): void {
