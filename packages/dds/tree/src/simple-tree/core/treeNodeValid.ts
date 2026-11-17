@@ -100,9 +100,11 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	 * Indicate that `this` is the most derived version of a schema, and thus the only one allowed to be used (other than by being subclassed a single time).
 	 */
 	public static markMostDerived(this: typeof TreeNodeValid & TreeNodeSchema): MostDerivedData {
-		assert(this.constructorCached !== "default", 0x95f /* invalid schema class */);
+		// Read once: reading a static property of a schema class is slow in schemas with many classes.
+		const cached = this.constructorCached;
+		assert(cached !== "default", 0x95f /* invalid schema class */);
 
-		if (this.constructorCached === undefined) {
+		if (cached === undefined) {
 			// Set the constructorCached on the layer of the prototype chain that declared it.
 			// This is necessary to ensure there is only one subclass of that type used:
 			// if constructorCached was simply set on `schema`,
@@ -122,8 +124,8 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 				0x9b5 /* Inheritance should work */,
 			);
 			return this.constructorCached;
-		} else if (this.constructorCached.constructor === this) {
-			return this.constructorCached;
+		} else if (cached.constructor === this) {
+			return cached;
 		}
 
 		// If users trying to diagnose the cause of this error becomes a common issue, more information could be captured.
@@ -131,7 +133,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		// This could then be included in the error to aid in debugging this error.
 		throw new UsageError(
 			`Two schema classes were used (${this.name} and ${
-				this.constructorCached.constructor.name
+				cached.constructor.name
 			}) which derived from the same SchemaFactory generated class (${JSON.stringify(
 				this.identifier,
 			)}). This is invalid.`,

@@ -470,12 +470,13 @@ export enum CompatibilityLevel {
 export function getTreeNodeSchemaPrivateData(
 	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
 ): TreeNodeSchemaPrivateData {
+	// Read once, rather than checking with `in` first: reading a property of a schema class is slow in schemas with many classes.
+	const data = (schema as Partial<TreeNodeSchemaCorePrivate>)[privateDataSymbol];
 	assert(
-		privateDataSymbol in schema,
+		data !== undefined,
 		0xbc9 /* All implementations of TreeNodeSchemaCore must also implement TreeNodeSchemaCorePrivate */,
 	);
-	const schemaValid = schema as TreeNodeSchemaCorePrivate;
-	return schemaValid[privateDataSymbol];
+	return data;
 }
 
 /**

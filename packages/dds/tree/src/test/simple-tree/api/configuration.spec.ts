@@ -112,6 +112,23 @@ describe("simple-tree configuration", () => {
 		}
 	});
 
+	it("reports duplicate allowed types in large unions", () => {
+		const sf = new SchemaFactoryAlpha("largeUnionDuplicates");
+		const members = Array.from({ length: 20 }, (_, index) => sf.object(`M${index}`, {}));
+		for (const preventAmbiguity of [false, true]) {
+			// Members have no required fields, so preventAmbiguity also reports them as ambiguous: only check the duplicate.
+			assert.throws(
+				() =>
+					new TreeViewConfigurationAlpha({
+						schema: [...members, members[3] ?? assert.fail()],
+						preventAmbiguity,
+					}),
+				validateUsageError(/Duplicate schema in allowed types: largeUnionDuplicates.M3/),
+			);
+		}
+		new TreeViewConfigurationAlpha({ schema: members });
+	});
+
 	for (const strictFirst of [false, true]) {
 		it(`preserves ambiguity-before-identifier validation phases (${strictFirst} first)`, () => {
 			const sf = new SchemaFactoryAlpha("validationPhases");
