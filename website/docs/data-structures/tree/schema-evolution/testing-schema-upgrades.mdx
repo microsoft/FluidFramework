@@ -170,10 +170,10 @@ This is useful for verifying that each phase of your rollout maintains the expec
 
 To verify that an earlier client preserves a completed rollout, define an earlier schema that stages a type and a later schema that fully enables it.
 Create a document with the later schema, then open it with the earlier client's restrictive policy.
-The earlier view should still read and edit the enabled values, and a call to `upgradeSchema()` must not remove that permission.
+The earlier view should still read and edit values of the enabled type, and a call to `upgradeSchema()` must keep that type allowed by the stored schema.
 If the view requests no other additions, verify that the call leaves the stored schema unchanged and emits no schema-change event or operation.
 
-Extend that scenario to cover the ways permissions can accumulate during a rollout:
+Extend that scenario to cover how upgrades combine during a rollout:
 
 - The earlier view adds its own optional field to a newer document while retaining fields that it does not declare.
 - A selected token enables a new type while another type, staged but not selected, is already permitted by the stored schema.
@@ -182,7 +182,7 @@ Extend that scenario to cover the ways permissions can accumulate during a rollo
 - A summary and reload preserve the composed stored schema and any data unknown to the reduced view.
 
 Also initialize a fresh document with the earlier view and restrictive policy.
-Unlike the upgraded document, it should still exclude the staged type: preserving a permission in one document must not enable it in another.
+Unlike the upgraded document, it should still exclude the staged type: preserving an enabled staged upgrade in one document must not enable it in another.
 Apply the same distinction to removed optional fields: an existing document retains them, while a fresh document created with the reduced view has no such field declarations.
 
 These live-document tests complement the <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">snapshot validator</ApiLink>.

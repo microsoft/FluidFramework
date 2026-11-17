@@ -43,17 +43,17 @@ For versions within `minVersionForCollaboration`, `snapshotSchemaCompatibility` 
 The current version must also be able to view or upgrade documents from every historical snapshot outside that collaboration window.
 Clients that can already view a document remain supported even when they cannot upgrade it; clients that can do neither are rejected.
 
-#### Staged permissions are preserved at each stored location
+#### Enabled staged upgrades are preserved at each stored location
 
-Schema upgrades now compose existing stored permissions with the additions requested by the view.
-An already-allowed type remains allowed even if it is staged in the view and the configured policy does not enable new staged permissions.
+Schema upgrades now preserve stored allowed types and optionality while applying the additions requested by the view.
+An already-allowed type remains allowed even if it is staged in the view and the configured policy does not enable new staged upgrades.
 An already-optional field remains optional when the view supports missing content, including through staged optionality.
 For example, stored `number | string` composed with a view that declares `number | staged(string)` remains `number | string`; with no other changes, the upgrade is a no-op.
 
 Preservation applies separately at each location.
 If a shared staged token is enabled at `primaryPriority` but not at `fallbackPriority`, a restrictive upgrade preserves that partial state.
 The policy must explicitly enable the token to introduce string values at the second location.
-New documents still use only the view and configured policy; they do not inherit permissions from other documents.
+New documents still use only the view and configured policy; they do not inherit enabled staged upgrades from other documents.
 
 The alpha `StagedSchemaUpgradePolicy.includeAlreadyEnabledUpgrades` flag has been removed.
 Remove that property from policy literals:

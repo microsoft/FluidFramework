@@ -125,7 +125,7 @@ See [Rolling Out New Allowed Types](./allowed-types-rollout.mdx) for details.
 ## Incompatible Changes
 
 The following changes remove assumptions that existing clients or documents rely on.
-An upgrade can add permissions to the stored schema, but it cannot teach a view to handle a value or missing field that the view no longer supports.
+An upgrade can expand the set of content allowed by the stored schema, but it cannot teach a view to handle a value or missing field that the view no longer supports.
 For that reason, preserving existing content in an upgrade candidate is not enough to make these changes compatible.
 
 ### Removing Required Fields

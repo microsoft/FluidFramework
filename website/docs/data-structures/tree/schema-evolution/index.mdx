@@ -25,7 +25,7 @@ When updating your schema, it's important to understand the difference between t
 
 When a document is first created, its stored schema is derived from the view schema and its configured staged-upgrade policy.
 Later changes to application code do not change that stored schema until a client explicitly [upgrades](./index.mdx#schema-upgrade-process) the document.
-The upgrade combines the view's requested additions with permissions already stored in the document.
+The upgrade combines the view's requested additions with the document's existing stored schema.
 
 ### Stored Schema Invariants
 
@@ -73,14 +73,14 @@ Such a change might be backwards compatible, forwards compatible, or neither or 
 #### Backwards Compatibility
 
 A change to the view schema is **backwards compatible** if the new view can read and edit documents created with the earlier schema, either directly or after a permitted [upgrade](#schema-upgrade-process).
-An upgrade preserves existing content, but adding new permissions can affect whether other clients can use the document.
+An upgrade preserves existing content, but allowing additional content can affect whether other clients can use the document.
 
 If a change is made that is not backwards compatible, then existing documents will "break", that is, they can no longer be loaded by the application.
 
 #### Forwards Compatibility
 
 A change to the view schema is **forwards compatible** if the earlier view can read and edit documents created or upgraded with the later schema, either directly or after a permitted upgrade.
-An upgrade requested by an older client follows the same rules as one requested by a newer client: it must preserve existing permissions and produce a schema the requesting view supports.
+An upgrade requested by an older client follows the same rules as one requested by a newer client: it must continue to allow all content permitted by the existing stored schema and produce a schema the requesting view supports.
 It is therefore not a downgrade of the document, even though the requesting application code is older.
 
 If a change is made that is backwards compatible, but not forwards compatible, then old versions of the application will "break" when trying to load newer/upgraded documents.

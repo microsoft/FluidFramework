@@ -834,7 +834,7 @@ describe("SharedTree", () => {
 			estimatedHours: factory.optional(factory.number),
 		}) {}
 
-		// The older view restores approval while retaining the newer document's reminder definition and enabled permissions.
+		// The older view restores approval while retaining the newer document's reminder definition and enabled staged upgrades.
 		class Expected extends factory.object("Task", {
 			title: factory.string,
 			reminder: factory.optional(Reminder),
