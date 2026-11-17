@@ -336,7 +336,8 @@ export type DataStoreRegistry<out T = unknown> = Registry<Promise<DataStoreKind<
  * The Fluid Framework provides a couple of different API surfaces for working with Fluid services, containers, and data stores:
  *
  * 1. The `@legacy @beta` "encapsulated API", which (despite its name) is problematic for leaking lots of Fluid Framework implementation details.
- * 2. The `@public` "declarative API" in `@fluidframework/fluid-static`, which hides the underlying loader and runtime abstractions,
+ * 2. The `@public` "declarative API", defined in `@fluidframework/fluid-static` and exposed through service-specific clients such as {@link @fluidframework/azure-client#AzureClient} and {@link @fluidframework/odsp-client#OdspClient},
+ * hides the underlying loader and runtime abstractions,
  * but makes some opinionated choices about how the root of the container is setup, and has limited expressiveness.
  * As a result of these limitations, there is no viable path for existing documents made with the "encapsulated API" to migrate to the "declarative API".
  * 3. The `@alpha` "ServiceClient" API, aims to provide the best of both APIs:
