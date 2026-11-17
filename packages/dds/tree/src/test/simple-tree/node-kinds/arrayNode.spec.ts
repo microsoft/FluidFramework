@@ -1132,8 +1132,8 @@ describe("ArrayNode", () => {
 				}
 
 				it("preserves large arrays when the destination gap is inside the moved range", () => {
-					// The unhydrated editor switches from splice to slice-based insertion at 1000 items.
-					// Keep a suffix after the moved range to expose unintended relocation on that path.
+					// Exercise the overlapping-move early return with a large range.
+					// Keep a suffix after the moved range to expose unintended relocation.
 					const initialState = Array.from({ length: 1002 }, (_, index) => index);
 					const array = init(schemaType, initialState);
 					array.moveRangeToIndex(1, 0, 1000);

@@ -84,6 +84,10 @@ parameters:
   type: string
   default: repo
 
+- name: installAllPlatforms
+  type: boolean
+  default: false
+
 # Parameter for modifying the 'types' field in the package.json.
 # If the value 'none' is provided, the 'types' field in package.json will remain unchanged.
 - name: packageTypesOverride
@@ -195,6 +199,7 @@ extends:
     # Skip tagging if Github PR coming from a fork;  This skips Microsoft security checks that won't work on forks.
     settings:
       skipBuildTagsForGitHubPullRequests: true
+      networkIsolationPolicy: DefaultDeny,CFSClean,CFSClean2,CFSClean3
     customBuildTags:
       - ES365AIMigrationTooling
     stages:
@@ -344,6 +349,7 @@ extends:
               - template: /tools/pipelines/templates/include-install.yml@self
                 parameters:
                   buildDirectory: '${{ parameters.buildDirectory }}'
+                  installAllPlatforms: ${{ parameters.installAllPlatforms }}
                   # The compat-workspaces lockfile is committed to the FluidFramework repo and changes
                   # whenever legacy package versions are added or removed. Including it in the pnpm store
                   # cache key ensures a cache miss whenever the set of compat packages changes.

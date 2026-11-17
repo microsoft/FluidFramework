@@ -9,7 +9,7 @@ The only pre-requisites for building and running Fluid Framework code from the r
       [MacOS/Linux](https://github.com/nvm-sh/nvm)) to install Node.js, in case you find yourself needing to install different
       versions of Node.js side-by-side.
 - [Git LFS](https://git-lfs.github.com/) (included by default with most Git installations, for extra test collateral)
-- [pnpm](https://pnpm.io/) (installed automatically once using `corepack enable`.)
+- [pnpm](https://pnpm.io/) (normally bootstrapped through Corepack; see the [publicPackages Corepack limitation and workaround](./Dependencies.md#known-limitation-corepack-bootstrap) before setup.)
 
 Optional:
 

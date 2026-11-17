@@ -30,7 +30,6 @@ import {
 	ITestContainerConfig,
 	ITestObjectProvider,
 	createTestConfigProvider,
-	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
@@ -177,7 +176,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 			it("attach sends an op", async function () {
 				const container = await provider.makeTestContainer(createContainerConfig);
 
-				const dataStore = await getContainerEntryPointBackCompat<ITestDataObject>(container);
+				const dataStore = (await container.getEntryPoint()) as ITestDataObject;
 
 				const blobOpP = new Promise<void>((resolve, reject) =>
 					dataStore._context.containerRuntime.on("op", (op) => {
@@ -209,13 +208,13 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 				const testKey = "a blob";
 				const container1 = await provider.makeTestContainer(createContainerConfig);
 
-				const dataStore1 = await getContainerEntryPointBackCompat<ITestDataObject>(container1);
+				const dataStore1 = (await container1.getEntryPoint()) as ITestDataObject;
 
 				const blob = await dataStore1._runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
 				dataStore1._root.set(testKey, blob);
 
 				const container2 = await provider.loadTestContainer(loadContainerConfig);
-				const dataStore2 = await getContainerEntryPointBackCompat<ITestDataObject>(container2);
+				const dataStore2 = (await container2.getEntryPoint()) as ITestDataObject;
 
 				await provider.ensureSynchronized();
 
@@ -234,8 +233,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 				const testString = "this is a test string";
 				// setup
 				{
-					const dataStore =
-						await getContainerEntryPointBackCompat<ITestDataObject>(container2);
+					const dataStore = (await container2.getEntryPoint()) as ITestDataObject;
 					const sharedString = SharedString.create(dataStore._runtime, uuid());
 					dataStore._root.set("sharedString", sharedString.handle);
 
@@ -278,8 +276,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 					container2,
 					await provider.loadTestContainer(loadContainerConfig),
 				]) {
-					const dataStore2 =
-						await getContainerEntryPointBackCompat<ITestDataObject>(container);
+					const dataStore2 = (await container.getEntryPoint()) as ITestDataObject;
 					await provider.ensureSynchronized();
 					const handle = dataStore2._root.get<IFluidHandle<SharedString>>("sharedString");
 					assert(handle);
@@ -293,7 +290,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 
 			it("correctly handles simultaneous identical blob upload on one container", async () => {
 				const container = await provider.makeTestContainer(createContainerConfig);
-				const dataStore = await getContainerEntryPointBackCompat<ITestDataObject>(container);
+				const dataStore = (await container.getEntryPoint()) as ITestDataObject;
 				const blob = stringToBuffer("some different yet still random text", "utf-8");
 
 				// upload the blob twice and make sure nothing bad happens.
@@ -331,7 +328,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 						runtimeOptions,
 					});
 
-					const dataStore = await getContainerEntryPointBackCompat<ITestDataObject>(container);
+					const dataStore = (await container.getEntryPoint()) as ITestDataObject;
 					const blobOpP = timeoutPromise((resolve, reject) =>
 						dataStore._context.containerRuntime.on("op", (op) => {
 							if (op.type === ContainerMessageType.BlobAttach) {

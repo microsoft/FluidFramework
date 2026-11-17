@@ -321,13 +321,14 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	 * (in the on-demand case).
 	 * @param onBehalfOf - ID of the client that requested that the summarizer start
 	 * @param runCoordinator - cancellation token
-	 * @param newConfig - Summary configuration to override the existing config when invoking the RunningSummarizer.
+	 * @param configuration - Summary configuration to use when creating the RunningSummarizer.
 	 * @returns A promise that is fulfilled when the RunningSummarizer is ready.
 	 */
 	private async start(
 		onBehalfOf: string,
 
 		runCoordinator: ICancellableSummarizerController,
+		configuration: ISummaryConfiguration = this.configurationGetter(),
 	): Promise<RunningSummarizer> {
 		if (this.runningSummarizer) {
 			if (this.runningSummarizer.disposed) {
@@ -344,7 +345,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 			eventName: "RunningSummarizer",
 			onBehalfOf,
 			initSummarySeqNumber: this.runtime.deltaManager.initialSequenceNumber,
-			config: JSON.stringify(this.configurationGetter()),
+			config: JSON.stringify(configuration),
 		});
 
 		// Summarizing container ID (with clientType === "summarizer")
@@ -362,7 +363,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		const runningSummarizer = await RunningSummarizer.start(
 			this.logger,
 			this.summaryCollection.createWatcher(clientId),
-			this.configurationGetter(),
+			configuration,
 			async (...args) => this.internalsProvider.submitSummary(...args), // submitSummaryCallback
 			async (...args) => this.internalsProvider.refreshLatestSummaryAck(...args), // refreshLatestSummaryAckCallback
 			this._heuristicData,
@@ -427,9 +428,20 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 
 			coordinatorCreateP
 				.then((runCoordinator) => {
+					// A fresh on-demand summarizer must not start a competing heuristic summary,
+					// either during startup catch-up or while processing the requested summary.
+					const configuration = this.configurationGetter();
+					const onDemandConfiguration: ISummaryConfiguration =
+						configuration.state === "enabled"
+							? { ...configuration, state: "summaryOnRequest" }
+							: configuration;
 					// Successfully created the cancellation token. Start the summarizer.
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const startP = this.start(this.runtime.clientId!, runCoordinator);
+					const startP = this.start(
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						this.runtime.clientId!,
+						runCoordinator,
+						onDemandConfiguration,
+					);
 					startP
 						.then(async (runningSummarizer) => {
 							// Successfully started the summarizer. Run it.

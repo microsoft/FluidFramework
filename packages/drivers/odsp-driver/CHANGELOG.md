@@ -1,5 +1,19 @@
 # @fluidframework/odsp-driver
 
+## 3.13.0
+
+### Minor Changes
+
+- Keep unreferenced flags on the correct snapshot trees ([#28680](https://github.com/microsoft/FluidFramework/pull/28680)) [606251d1cbd](https://github.com/microsoft/FluidFramework/commit/606251d1cbd278a670b06d987f7797f0be176be0)
+
+  Binary snapshot decoding assigns each unreferenced flag to the tree named by its record instead of that tree's parent.
+  This keeps snapshot metadata consistent with JSON decoding and corrects datastore reachability counts reported at load.
+  The change does not alter runtime garbage collection decisions.
+
+## 3.12.0
+
+Dependency updates only.
+
 ## 3.11.0
 
 ### Minor Changes

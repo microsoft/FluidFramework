@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { getFirstMoveEffectLength, type MoveEffectTable } from "./moveEffectTable.js";
+import type { NodeRangeQueryFunc } from "./moveEffectTable.js";
 import type { Mark } from "./types.js";
 import { splitMark } from "./utils.js";
 
@@ -75,12 +75,12 @@ export class MarkQueueBase {
 export class MarkQueue extends MarkQueueBase {
 	public constructor(
 		list: readonly Mark[],
-		private readonly moveEffects: MoveEffectTable,
+		private readonly moveEffects: NodeRangeQueryFunc,
 	) {
 		super(list);
 	}
 
 	protected override getLengthForSplit(mark: Mark): number {
-		return getFirstMoveEffectLength(mark, mark.count, this.moveEffects);
+		return this.moveEffects(mark);
 	}
 }

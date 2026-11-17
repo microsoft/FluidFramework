@@ -419,7 +419,7 @@ describe("unhydratedFlexTree", () => {
 			});
 
 			it("with a large sequence of new content", () => {
-				// This exercises a special code path for inserting large arrays, since large arrays are treated differently to avoid overflow with `splice` + spread.
+				// Use enough content to exercise replaceArrayRange's argument-safe path in the unhydrated editor.
 				const mutableFieldNode = unhydratedFlexTreeFromCursor(
 					context,
 					cursorForMapTreeNode({

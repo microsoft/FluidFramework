@@ -4,9 +4,8 @@
  */
 
 import { type ILoader, LoaderHeader } from "@fluidframework/container-definitions/internal";
-import type { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import type { FluidObject, IRequest } from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions/internal";
-import { responseToException } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -80,23 +79,8 @@ export function formCreateSummarizerFn(loader: ILoader): () => Promise<ISummariz
 
 		const resolvedContainer = await loader.resolve(request);
 		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
-		let fluidObject: FluidObject<ISummarizer> | undefined;
-
-		// Older containers may not have the "getEntryPoint" API
-		// ! This check will need to stay until LTS of loader moves past 2.0.0-internal.7.0.0
-		if (resolvedContainer.getEntryPoint === undefined) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-			const response = (await (resolvedContainer as any).request({
-				url: `/${summarizerRequestUrl}`,
-			})) as IResponse;
-			if (response.status !== 200 || response.mimeType !== "fluid/object") {
-				throw responseToException(response, request);
-			}
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			fluidObject = response.value;
-		} else {
-			fluidObject = await resolvedContainer.getEntryPoint();
-		}
+		const fluidObject: FluidObject<ISummarizer> | undefined =
+			await resolvedContainer.getEntryPoint();
 
 		if (fluidObject?.ISummarizer === undefined) {
 			throw new UsageError("Fluid object does not implement ISummarizer");

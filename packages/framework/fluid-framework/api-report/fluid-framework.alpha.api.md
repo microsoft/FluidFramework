@@ -395,6 +395,12 @@ export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutp
 export type DataStoreRegistry<out T = unknown> = Registry<Promise<DataStoreKind<T>>>;
 
 // @alpha
+export function dataStoreRegistryFromIterable<T = unknown>(entries: Iterable<DataStoreKind<T> | {
+    type: string;
+    kind: () => Promise<DataStoreKind<T>>;
+}>): DataStoreRegistry<T>;
+
+// @alpha
 export function decodeSchemaCompatibilitySnapshot(encodedSchema: JsonCompatibleReadOnly, validator?: FormatValidator): SimpleTreeSchema;
 
 // @public @sealed @system
@@ -425,9 +431,9 @@ export function encodeSchemaCompatibilitySnapshot(simpleSchema: SimpleTreeSchema
 export function enumFromStrings<TScope extends string, const Members extends readonly string[]>(factory: SchemaFactory<TScope>, members: Members): (<TValue extends Members[number]>(value: TValue) => TValue extends unknown ? NodeFromSchema<ReturnType<typeof singletonSchema<TScope, TValue>>> : never) & { [Index in Extract<keyof Members, `${number}`> extends `${infer N extends number}` ? N : never as Members[Index]]: TreeNodeSchemaClass<ScopedSchemaName<TScope, Members[Index]>, NodeKind.Object, TreeNode & {
         readonly value: Members[Index];
     }, Record<string, never>, true, Record<string, never>, undefined>; } & {
-    readonly schema: UnionToTuple<Members[number] extends unknown ? { [Index in Extract<keyof Members, `${number}`> extends `${infer N extends number}` ? N : never as Members[Index]]: TreeNodeSchemaClass<ScopedSchemaName<TScope, Members[Index]>, NodeKind.Object, TreeNode & {
-            readonly value: Members[Index];
-        }, Record<string, never>, true, Record<string, never>, undefined>; }[Members[number]] : never>;
+    readonly schema: { -readonly [Position in keyof Members]: TreeNodeSchemaClass<ScopedSchemaName<TScope, Members[Position]>, NodeKind.Object, TreeNode & {
+            readonly value: Members[Position];
+        }, Record<string, never>, true, Record<string, never>, undefined>; };
 };
 
 // @beta @sealed @system
@@ -2235,6 +2241,7 @@ export interface SharedTreeFormatOptions {
 
 // @alpha @input
 export interface SharedTreeOptions extends SharedTreeOptionsBeta, Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions> {
+    readonly enableDetachedRootEditing?: boolean;
     readonly enableSharedBranches?: boolean;
     readonly retainHistory?: boolean | number;
     shouldEncodeIncrementally?: IncrementalEncodingPolicy;
@@ -2361,7 +2368,6 @@ export interface SnapshotSchemaCompatibilityOptions {
 
 // @alpha @input
 export interface StagedSchemaUpgradePolicy {
-    readonly includeAlreadyEnabledUpgrades?: boolean;
     includeStaged(upgrade: SchemaUpgrade): boolean;
     includeStagedOptional(upgrade: SchemaUpgrade): boolean;
 }

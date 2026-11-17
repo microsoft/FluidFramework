@@ -22,6 +22,7 @@ import {
 } from "../../core/index.js";
 import { ReferenceCountedBase, getOrCreate, hasSome } from "../../util/index.js";
 import { SynchronousCursor, prefixFieldPath, prefixPath } from "../treeCursorUtils.js";
+import type { ChunkInlineCursor } from "./chunkCursor.js";
 
 /**
  * Create a tree chunk with ref count 1.
@@ -40,7 +41,7 @@ export function uniformChunk(shape: ChunkShape, values: TreeValue[]): TreeChunk 
  * allowing deduplication of shape information and storing of content as a flat sequence of values.
  */
 export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
-	public idCompressor: undefined | IIdCompressor;
+	public idCompressor: undefined | Pick<IIdCompressor, "decompress">;
 	/**
 	 * Create a tree chunk with ref count 1.
 	 *
@@ -50,7 +51,7 @@ export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 	public constructor(
 		public shape: ChunkShape,
 		public values: TreeValue[],
-		idCompressor?: IIdCompressor,
+		idCompressor?: Pick<IIdCompressor, "decompress">,
 	) {
 		super();
 		this.idCompressor = shape.treeShape.mayContainCompressedIds ? idCompressor : undefined;
@@ -65,7 +66,7 @@ export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 	}
 
 	public clone(): UniformChunk {
-		return new UniformChunk(this.shape, [...this.values]);
+		return new UniformChunk(this.shape, [...this.values], this.idCompressor);
 	}
 
 	public cursor(): Cursor {
@@ -340,7 +341,11 @@ class NodePositionInfo implements UpPath {
  * Tracks a flat `positionIndex` and derives each node's position info from the shape's shared
  * {@link TreeShape.positions} plus the node's top-level index.
  */
-class Cursor extends SynchronousCursor implements ChunkedCursor {
+class Cursor extends SynchronousCursor implements ChunkedCursor, ChunkInlineCursor {
+	public get rootLength(): number {
+		return this.shape.topLevelLength;
+	}
+
 	private positionIndex!: number; // When in fields mode, this points to the parent node.
 
 	/** Position info for the current node, or `undefined` when in root field. */

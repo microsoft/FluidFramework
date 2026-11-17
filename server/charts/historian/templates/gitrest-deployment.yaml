@@ -29,15 +29,6 @@ spec:
         release: {{ .Release.Name }}
     spec:
       containers:
-      - name: {{ template "gitssh.fullname" . }}
-        image: "{{ .Values.gitssh.image }}"
-        imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
-        ports:
-        - name: ssh
-          containerPort: 22
-        volumeMounts:
-        - name: data
-          mountPath: /home/git
       - name: {{ template "gitrest.fullname" . }}
         image: "{{ .Values.gitrest.image }}"
         imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}

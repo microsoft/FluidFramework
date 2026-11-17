@@ -12,7 +12,6 @@ import {
 	DataObjectFactoryType,
 	ITestObjectProvider,
 	createSummarizer,
-	getContainerEntryPointBackCompat,
 	summarizeNow,
 	type ITestContainerConfig,
 	type ITestFluidObject,
@@ -165,7 +164,7 @@ async function make4DepthTreeView(
 				[LoaderHeader.version]: summaryVersion,
 			}));
 
-	const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+	const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 	const tree = await dataObject.getSharedObject<ITree>(treeId);
 	const view = tree.viewWith(viewConfig);
 
