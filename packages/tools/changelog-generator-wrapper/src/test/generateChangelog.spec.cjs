@@ -187,6 +187,25 @@ Visible details.
 		await generateAndAssertSnapshot("changelog.html-boundary.md", { first, second });
 	});
 
+	// A blank separator alone cannot terminate a raw HTML block such as <pre>.
+	it("keeps the next entry's heading and formatting outside EOF-open raw HTML", async () => {
+		const first = `---
+"example-package": minor
+---
+Raw HTML example
+
+<pre>
+`;
+		const second = `---
+"example-package": minor
+---
+Next change
+
+**Important** details.
+`;
+		await generateAndAssertSnapshot("changelog.raw-html-boundary.md", { first, second });
+	});
+
 	// An open fence is valid at a standalone document's EOF, but must be closed before another changeset is appended.
 	it("keeps the next entry outside an EOF-terminated code fence", async () => {
 		const first = `---

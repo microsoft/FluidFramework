@@ -228,7 +228,7 @@ href="https://example.com">Hello</a>
 		assert.equal(actual, expected);
 	});
 
-	// A top-level HTML block ends at a blank line, not at its closing tag.
+	// Blank-line-terminated HTML needs a separator even when its tags are already closed.
 	// Parse concatenated formatter output to verify the next entry remains a Markdown heading.
 	it("separates an entry ending in HTML from the next entry", async () => {
 		const first = await format("First\n\n<div>Notice</div>");
@@ -241,6 +241,60 @@ href="https://example.com">Hello</a>
 #### Second
 
 Visible details.
+`;
+		assert.equal(actual, expected);
+	});
+
+	// These raw HTML blocks end at a closing tag or EOF, not at a blank line.
+	// Each standalone changeset's EOF must be made explicit before the next entry is appended.
+	for (const { opening, closing } of [
+		{ opening: "<pre>", closing: "</pre>" },
+		{ opening: "<script>", closing: "</script>" },
+		{ opening: "<style>", closing: "</style>" },
+		{ opening: "<textarea>", closing: "</textarea>" },
+		{ opening: '  <PrE class="example">', closing: "</PrE>" },
+		{ opening: '<textarea data-label="example">', closing: "</textarea>" },
+	]) {
+		it(`closes an EOF-open ${JSON.stringify(opening)} block before the next entry`, async () => {
+			const first = await format(`First\n\n${opening}`);
+			const second = await format("Second\n\n**Important** details.");
+			const actual = String(remark().processSync(`${first}\n${second}`));
+			const expected = `#### First
+
+${opening}
+${closing}
+
+#### Second
+
+**Important** details.
+`;
+			assert.equal(actual, expected);
+		});
+	}
+
+	for (const body of [
+		"<pre>Notice</pre>",
+		"<script>Notice</script>",
+		"<style>Notice</style>",
+		"<textarea>Notice</textarea>",
+		'<PrE class="example">Notice</pRE>',
+		"<prelude>Notice</prelude>",
+		"```html\n<pre>\n```",
+	]) {
+		it(`does not add an HTML closer to ${JSON.stringify(body)}`, async () => {
+			const actual = await format(`Title\n\n${body}`);
+			const expected = `#### Title\n\n${body}\n`;
+			assert.equal(actual, expected);
+		});
+	}
+
+	it("closes only the code fence when an EOF-terminated example contains a literal HTML tag", async () => {
+		const actual = await format("Title\n\n```html\n<pre>");
+		const expected = `#### Title
+
+\`\`\`html
+<pre>
+\`\`\`
 `;
 		assert.equal(actual, expected);
 	});

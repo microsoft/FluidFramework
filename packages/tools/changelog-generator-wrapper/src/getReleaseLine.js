@@ -81,6 +81,41 @@ function getMissingClosingFence(body, tree) {
 }
 
 /**
+ * Finds a closing tag needed to keep the final top-level raw HTML block from consuming the next changeset.
+ *
+ * @param {ReturnType<typeof remark.parse>} tree - The body parsed before any source replacements.
+ * @returns {string | undefined} The missing closing tag, or undefined if no raw HTML closer is needed.
+ */
+function getMissingHtmlClosingTag(tree) {
+	const finalBlock = tree.children.at(-1);
+	if (finalBlock?.type !== "html") {
+		return undefined;
+	}
+
+	// Unlike ordinary HTML blocks, these blocks do not end at a blank line.
+	// Inspect only parsed HTML so literal tags inside code examples remain unchanged.
+	const tag = finalBlock.value.match(/^ {0,3}<(pre|script|style|textarea)(?=\s|>)/i)?.[1];
+	if (tag === undefined) {
+		return undefined;
+	}
+	const closingTag = `</${tag}>`;
+	return finalBlock.value.toLowerCase().includes(closingTag.toLowerCase())
+		? undefined
+		: closingTag;
+}
+
+/**
+ * Finds a closer needed to keep the final top-level code or raw HTML block from consuming the next changeset.
+ *
+ * @param {string} body - The unmodified changeset body.
+ * @param {ReturnType<typeof remark.parse>} tree - The body parsed before any source replacements.
+ * @returns {string | undefined} The missing fence or HTML closing tag, or undefined if no closer is needed.
+ */
+function getMissingBlockCloser(body, tree) {
+	return getMissingClosingFence(body, tree) ?? getMissingHtmlClosingTag(tree);
+}
+
+/**
  * Formats a changeset as a package changelog entry with a level-4 title.
  *
  * @remarks
@@ -90,7 +125,8 @@ function getMissingClosingFence(body, tree) {
  * This preserves relative nesting regardless of the heading levels used in the changeset.
  * Headings whose adjusted levels exceed 6 become bold labels because Markdown does not support deeper headings.
  * These labels retain paragraph boundaries and enclosing list or blockquote prefixes so adjacent content remains separate.
- * Entries end with a newline and any EOF-terminated top-level code fence is closed before the next entry is appended.
+ * Entries end with a newline.
+ * EOF-open top-level code fences and `pre`, `script`, `style`, and `textarea` HTML blocks are closed before the next entry is appended.
  *
  * @param changeset - The source changeset.
  * Its `summary` property contains the full Markdown content, including the title and body.
@@ -125,9 +161,9 @@ const getReleaseLine = async (changeset, type, options) => {
 	let body = bodyLines.join("\n");
 	const tree = processor.parse(body);
 
-	// A fenced code block may end at EOF in a standalone changeset.
+	// Fenced code and raw HTML may end at EOF in a standalone changeset.
 	// Record a missing closer before heading replacements change source offsets; the combined changelog has no per-entry EOF.
-	const missingFence = getMissingClosingFence(body, tree);
+	const missingBlockCloser = getMissingBlockCloser(body, tree);
 	let shallowestDepth = 6;
 
 	// Find the shallowest heading across the whole body, not just the first heading encountered.
@@ -220,12 +256,12 @@ const getReleaseLine = async (changeset, type, options) => {
 		true,
 	);
 
-	// Close an EOF-terminated code block on its own line so the next changeset is not rendered as part of the code example.
-	if (missingFence !== undefined) {
-		body += `${body.endsWith("\n") ? "" : "\n"}${missingFence}`;
+	// Close an EOF-open block on its own line so it cannot absorb the next changeset's heading or formatting.
+	if (missingBlockCloser !== undefined) {
+		body += `${body.endsWith("\n") ? "" : "\n"}${missingBlockCloser}`;
 	}
 
-	// Changesets joins entries with one newline. Supply another so trailing HTML cannot consume the next entry's heading.
+	// Changesets joins entries with one newline. Supply another for HTML blocks that end at blank lines.
 	return `${title}\n${body}${body.endsWith("\n") ? "" : "\n"}`;
 };
 
