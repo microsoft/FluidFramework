@@ -82,16 +82,11 @@ jobs:
           BASE_REF: ${{ github.base_ref }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          git diff "origin/${BASE_REF}...${PR_HEAD_SHA}" --numstat > /tmp/numstat.txt
-
-          # Lines changed: insertions + deletions, ignoring binary files (shown as '-' in numstat)
-          LINES=$(awk '$1 ~ /^[0-9]+$/ && $2 ~ /^[0-9]+$/ {sum+=$1+$2} END{print sum+0}' /tmp/numstat.txt)
-          FILES=$(wc -l < /tmp/numstat.txt | tr -d ' ')
-
-          # Distinct packages touched (top-level dirs under packages/, experimental/, examples/)
-          PACKAGES=$(awk '{print $3}' /tmp/numstat.txt \
-            | grep -E '^(packages|experimental|examples)/' \
-            | cut -d/ -f2 | sort -u | wc -l | tr -d ' ')
+          git diff "origin/${BASE_REF}...${PR_HEAD_SHA}" --numstat -z > /tmp/numstat.bin
+          METRICS=$(python3 .github/scripts/pr_review_propose.py metrics /tmp/numstat.bin)
+          LINES=$(echo "$METRICS" | jq -r '.lines')
+          FILES=$(echo "$METRICS" | jq -r '.files')
+          PACKAGES=$(echo "$METRICS" | jq -r '.packages')
 
           echo "lines=$LINES"       >> "$GITHUB_OUTPUT"
           echo "files=$FILES"       >> "$GITHUB_OUTPUT"
@@ -133,7 +128,7 @@ jobs:
           # pr_review_propose.py (build-comment) and pr-review-confirm.yml.
           gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate \
             --jq 'map(select(.user.login == "github-actions[bot]" and (.body | contains("<!-- pr-review-confirm -->")))) | last // {} | .body // ""' \
-            > /tmp/prior-body.md || true
+            > /tmp/prior-body.md
           if [ -s /tmp/prior-body.md ]; then
             echo "found=true" >> "$GITHUB_OUTPUT"
             START_CHECKED=$(python3 .github/scripts/pr_review_propose.py is-start-checked /tmp/prior-body.md)
