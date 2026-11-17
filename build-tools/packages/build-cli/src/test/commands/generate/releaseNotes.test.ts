@@ -56,11 +56,9 @@ describe("generate:releaseNotes", () => {
 	});
 
 	/**
-	 * Commits the current fixture, generates release notes, and compares the entire document with a snapshot.
-	 *
-	 * @param snapshotFileName - The snapshot file name within this suite's fixtures directory.
+	 * Commits the current fixture and generates release notes using the real CLI.
 	 */
-	async function generateAndAssertSnapshot(snapshotFileName: string): Promise<void> {
+	async function generateReleaseNotes(): Promise<void> {
 		// Changeset loading inspects Git history for commit metadata, so provide committed source files.
 		await execa("git", ["add", "."], { cwd: testDir });
 		await execa(
@@ -78,10 +76,6 @@ describe("generate:releaseNotes", () => {
 			],
 			{ cwd: testDir },
 		);
-		const { stdout: commitHash } = await execa("git", ["rev-parse", "HEAD"], {
-			cwd: testDir,
-		});
-
 		// Keep both CLI repository discovery and cwd-relative Markdown metadata lookup inside the fixture.
 		await execa(
 			process.execPath,
@@ -98,6 +92,18 @@ describe("generate:releaseNotes", () => {
 			],
 			{ cwd: testDir, env: { _FLUID_ROOT_: testDir } },
 		);
+	}
+
+	/**
+	 * Generates release notes and compares the entire document with a snapshot.
+	 *
+	 * @param snapshotFileName - The snapshot file name within this suite's fixtures directory.
+	 */
+	async function generateAndAssertSnapshot(snapshotFileName: string): Promise<void> {
+		await generateReleaseNotes();
+		const { stdout: commitHash } = await execa("git", ["rev-parse", "HEAD"], {
+			cwd: testDir,
+		});
 
 		// Snapshot the entire document, including the table of contents, generated metadata, and footer.
 		// Substitute only the fixture's full and seven-character commit hashes so Git timestamps cannot affect the comparison.
@@ -112,7 +118,28 @@ describe("generate:releaseNotes", () => {
 		assert.equal(actual, expected);
 	}
 
-	// Establish the generated document structure for an ordinary changeset without any body headings to normalize.
+	it("release notes generation does not modify source changesets", async () => {
+		const expected = `---
+"example-package": minor
+"__section": other
+---
+Improve memory usage
+
+# Examples
+
+#### Deep details
+
+Details.
+`;
+		const changesetPath = path.join(testDir, ".changeset", "source.md");
+		await writeFile(changesetPath, expected);
+
+		await generateReleaseNotes();
+
+		const actual = await readFile(changesetPath, "utf8");
+		assert.equal(actual, expected);
+	});
+
 	it("generates release notes for a simple changeset", async () => {
 		const changeset = `---
 "example-package": minor
@@ -129,37 +156,36 @@ Items now load without unnecessary retries.
 	// Source levels 1 and 2 must become levels 4 and 5, beneath the generated level-3 change title.
 	// Skipping to source level 4 deliberately maps "Deep details" to level 7, exercising the bold-label fallback.
 	it("normalizes each body before adding generated titles and change details", async () => {
-		const firstChangeset = [
-			"---",
-			'"example-package": minor',
-			'"__section": other',
-			"---",
-			"Improve memory usage",
-			"",
-			"# Examples",
-			"",
-			"## Measurements",
-			"",
-			"#### Deep details",
-			"",
-			"```markdown",
-			"# A code example",
-			"```",
-			"",
-		].join("\n");
+		const firstChangeset = `---
+"example-package": minor
+"__section": other
+---
+Improve memory usage
+
+# Examples
+
+## Measurements
+
+#### Deep details
+
+\`\`\`markdown
+# A code example
+\`\`\`
+`;
 		await writeFile(path.join(testDir, ".changeset", "first.md"), firstChangeset);
 
-		// Authors can choose heading levels independently for each changeset.
-		// This level-6 heading must become level 4, not inherit the first body's offset and become a bold label.
-		await writeFile(
-			path.join(testDir, ".changeset", "second.md"),
-			'---\n"example-package": minor\n"__section": other\n---\nNext change\n\n###### Another top-level heading\n\nDetails.\n',
-		);
-		await generateAndAssertSnapshot("releaseNotes.normalized-headings.md");
+		const secondChangeset = `---
+"example-package": minor
+"__section": other
+---
+Next change
 
-		// Normalization is output-only, preserving the author's source for generators with different target heading depths.
-		const actual = await readFile(path.join(testDir, ".changeset", "first.md"), "utf8");
-		const expected = firstChangeset;
-		assert.equal(actual, expected);
+###### Another top-level heading
+
+Details.
+`;
+		await writeFile(path.join(testDir, ".changeset", "second.md"), secondChangeset);
+
+		await generateAndAssertSnapshot("releaseNotes.normalized-headings.md");
 	});
 });
