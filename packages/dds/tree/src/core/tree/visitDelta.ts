@@ -650,10 +650,17 @@ function attachPass(
 }
 
 /**
- * Converts a chunk of trees into an array of cursors.
+ * Converts a chunk of trees into an array of cursors, one at each top-level node.
+ * @remarks
+ * A chunk with one node, as a build of one new value has, gets the chunk's own cursor in that node rather than a fork of it.
  *
  * TODO: Update the visitDelta logic and downstream APIs to avoid splitting up sequences into individual nodes.
  */
 function nodeCursorsFromChunk(trees: TreeChunk): ITreeCursorSynchronous[] {
-	return mapCursorField(trees.cursor(), (c) => c.fork());
+	const cursor = trees.cursor();
+	if (trees.topLevelLength === 1) {
+		cursor.enterNode(0);
+		return [cursor];
+	}
+	return mapCursorField(cursor, (c) => c.fork());
 }
