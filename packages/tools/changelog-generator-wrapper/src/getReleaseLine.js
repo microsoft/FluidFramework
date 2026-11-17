@@ -12,6 +12,11 @@ const { visit } = require("unist-util-visit");
  */
 const MINIMUM_BODY_HEADING_LEVEL = 5;
 
+/**
+ * Matches a blank line, including blockquote continuation markers.
+ */
+const BLANK_LINE_REGEX = /^[\t >]*$/;
+
 /* eslint-disable tsdoc/syntax -- JavaScript type annotations use JSDoc syntax. */
 
 /**
@@ -23,6 +28,7 @@ const MINIMUM_BODY_HEADING_LEVEL = 5;
  * The shallowest body heading becomes level 5, and all other body headings receive the same offset.
  * This preserves relative nesting regardless of the heading levels used in the changeset.
  * Headings whose adjusted levels exceed 6 become bold labels because Markdown does not support deeper headings.
+ * These labels retain paragraph boundaries and enclosing list or blockquote prefixes so adjacent content remains separate.
  *
  * @param changeset - The source changeset.
  * Its `summary` property contains the full Markdown content, including the title and body.
@@ -70,11 +76,13 @@ const getReleaseLine = async (changeset, type, options) => {
 	visit(
 		tree,
 		"heading",
-		(node) => {
+		(node, index) => {
 			const start = node.position?.start.offset;
 			const end = node.position?.end.offset;
-			if (start === undefined || end === undefined) {
-				throw new Error("Parsed changeset headings must have source positions.");
+			if (start === undefined || end === undefined || index === undefined) {
+				throw new Error(
+					"Parsed changeset headings must have source positions and a parent index.",
+				);
 			}
 
 			// Apply the same offset even when source heading levels are skipped.
@@ -104,8 +112,35 @@ const getReleaseLine = async (changeset, type, options) => {
 							],
 			});
 
-			// Discard the stringifier's trailing newline; the source already contains the original line breaks.
-			body = body.slice(0, start) + replacement.trimEnd() + body.slice(end);
+			// Keep existing line breaks for headings, but give bold labels the blank lines that paragraphs require.
+			let text = replacement.trimEnd();
+			if (depth > 6 && text !== "") {
+				const lineStart = body.lastIndexOf("\n", start - 1) + 1;
+
+				// Repeat quote markers and indentation on inserted lines, replacing list markers with continuation spaces.
+				// A bare blank line or an unindented label could otherwise split the enclosing quote or list item.
+				const prefix = body.slice(lineStart, start).replace(/[^\t >]/g, " ");
+				if (index > 0 && lineStart > 0) {
+					const previousLineStart = body.lastIndexOf("\n", lineStart - 2) + 1;
+					const previousLine = body.slice(previousLineStart, lineStart - 1);
+					if (!BLANK_LINE_REGEX.test(previousLine)) {
+						text = `\n${prefix}${text}`;
+					}
+				}
+
+				const nextLineStart = body.indexOf("\n", end);
+				if (nextLineStart !== -1) {
+					const nextLineEnd = body.indexOf("\n", nextLineStart + 1);
+					const nextLine = body.slice(
+						nextLineStart + 1,
+						nextLineEnd === -1 ? body.length : nextLineEnd,
+					);
+					if (!BLANK_LINE_REGEX.test(nextLine)) {
+						text += `\n${prefix}`;
+					}
+				}
+			}
+			body = body.slice(0, start) + text + body.slice(end);
 		},
 		true,
 	);

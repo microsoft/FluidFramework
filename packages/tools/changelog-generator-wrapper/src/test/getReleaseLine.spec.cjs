@@ -10,6 +10,7 @@ const { tmpdir } = require("node:os");
 const path = require("node:path");
 const { promisify } = require("node:util");
 const { after, before, describe, it } = require("mocha");
+const { remark } = require("remark");
 
 const { getReleaseLine } = require("../getReleaseLine.js");
 const { getDependencyReleaseLine } = require("../getDependencyReleaseLine.js");
@@ -61,7 +62,7 @@ describe("changelog formatter", () => {
 		);
 		await writeFile(
 			path.join(repoDir, ".changeset", "example.md"),
-			'---\n"example-package": minor\n---\nImprove memory usage\n\nDetails.\n\n# Example measurements\n\nMeasurements.\n',
+			'---\n"example-package": minor\n---\nImprove memory usage\n\nDetails.\n\n# Example measurements\n\nMeasurements.\n\n###### Details\n    const value = 1;\n',
 		);
 		await writeFile(
 			path.join(repoDir, ".changeset", "second.md"),
@@ -171,6 +172,158 @@ describe("changelog formatter", () => {
 			result,
 			"#### Improve items\n\n##### Examples\n\n**Compare `before` with [after](https://example.com)**",
 		);
+	});
+
+	// ATX headings can separate blocks without blank lines, but bold paragraphs cannot.
+	// Inspect parsed output so visually plausible Markdown cannot silently merge prose or turn examples into ordinary text.
+	it("preserves block boundaries around an overflowing heading next to prose", async () => {
+		const output = await format("Improve items\n\n# Examples\n\nIntro.\n### Details\nMore.");
+		const blocks = remark().parse(output).children.slice(2);
+		assert.deepEqual(
+			blocks.map((node) => node.type),
+			["paragraph", "paragraph", "paragraph"],
+		);
+		assert.equal(blocks[0].children[0].value, "Intro.");
+		assert.equal(blocks[1].children[0].type, "strong");
+		assert.equal(blocks[1].children[0].children[0].value, "Details");
+		assert.equal(blocks[2].children[0].value, "More.");
+	});
+
+	it("preserves indented code immediately after an overflowing heading", async () => {
+		const output = await format(
+			"Improve items\n\n# Examples\n\n###### Details\n    const value = 1;",
+		);
+		const blocks = remark().parse(output).children.slice(2);
+		assert.deepEqual(
+			blocks.map((node) => node.type),
+			["paragraph", "code"],
+		);
+		assert.equal(blocks[0].children[0].type, "strong");
+		assert.equal(blocks[0].children[0].children[0].value, "Details");
+		assert.equal(blocks[1].value, "const value = 1;");
+	});
+
+	it("preserves a horizontal rule immediately after an overflowing heading", async () => {
+		const output = await format("Improve items\n\n# Root\n\n### Deep\n---");
+		const blocks = remark().parse(output).children.slice(2);
+
+		// Without a separator, "---" would become a Setext underline and promote the label to a level-2 heading.
+		assert.deepEqual(
+			blocks.map((node) => node.type),
+			["paragraph", "thematicBreak"],
+		);
+		assert.equal(blocks[0].children[0].type, "strong");
+		assert.equal(blocks[0].children[0].children[0].value, "Deep");
+	});
+
+	it("keeps adjacent overflowing headings as separate bold paragraphs", async () => {
+		const output = await format(
+			"Improve items\n\n# Examples\n\n### First\n#### Second\nMore.",
+		);
+		const blocks = remark().parse(output).children.slice(2);
+		assert.deepEqual(
+			blocks.map((node) => node.type),
+			["paragraph", "paragraph", "paragraph"],
+		);
+		assert.equal(blocks[0].children[0].children[0].value, "First");
+		assert.equal(blocks[1].children[0].children[0].value, "Second");
+		assert.equal(blocks[2].children[0].value, "More.");
+	});
+
+	for (const { name, firstPrefix, prefix, containers } of [
+		{ name: "blockquotes", firstPrefix: "> ", prefix: "> ", containers: ["blockquote"] },
+		{ name: "list items", firstPrefix: "- ", prefix: "  ", containers: ["list", "listItem"] },
+		{
+			name: "ordered lists inside blockquotes",
+			firstPrefix: "> 12. ",
+			prefix: ">     ",
+			containers: ["blockquote", "list", "listItem"],
+		},
+	]) {
+		it(`preserves block boundaries inside ${name}`, async () => {
+			const lines = [
+				"Intro.",
+				"### Details",
+				"More.",
+				"### Code",
+				"    const value = 1;",
+				"### Rule",
+				"---",
+			];
+			const source = lines
+				.map((line, index) => `${index === 0 ? firstPrefix : prefix}${line}`)
+				.join("\n");
+			const output = await format(`Improve items\n\n# Examples\n\n${source}`);
+			let blocks = remark().parse(output).children.slice(2);
+
+			// Added separators must not split a quote or let a label escape its original list item.
+			for (const type of containers) {
+				assert.equal(blocks.length, 1);
+				assert.equal(blocks[0].type, type);
+				blocks = blocks[0].children;
+			}
+			assert.deepEqual(
+				blocks.map((node) => node.type),
+				[
+					"paragraph",
+					"paragraph",
+					"paragraph",
+					"paragraph",
+					"code",
+					"paragraph",
+					"thematicBreak",
+				],
+			);
+			for (const [index, label] of [
+				[1, "Details"],
+				[3, "Code"],
+				[5, "Rule"],
+			]) {
+				assert.equal(blocks[index].children[0].type, "strong");
+				assert.equal(blocks[index].children[0].children[0].value, label);
+			}
+			assert.equal(blocks[4].value, "const value = 1;");
+		});
+	}
+
+	// A label at the end of a container must not absorb following plain text into that quote or list.
+	for (const { name, prefix, type } of [
+		{ name: "blockquote", prefix: "> ", type: "blockquote" },
+		{ name: "list item", prefix: "- ", type: "list" },
+	]) {
+		it(`keeps following prose outside a ${name} ending with an overflowing heading`, async () => {
+			const output = await format(
+				`Improve items\n\n# Examples\n\n${prefix}### Details\nOutside.`,
+			);
+			const blocks = remark().parse(output).children;
+			assert.deepEqual(
+				blocks.map((node) => node.type),
+				["heading", "heading", type, "paragraph"],
+			);
+			assert.equal(blocks[3].children[0].value, "Outside.");
+		});
+	}
+
+	it("preserves a quoted ordered list starting with an overflowing heading", async () => {
+		const output = await format(
+			"Improve items\n\n# Examples\n\n> 12. ### Details\n>         const value = 1;\n\nOutside.",
+		);
+		const blocks = remark().parse(output).children;
+		assert.deepEqual(
+			blocks.map((node) => node.type),
+			["heading", "heading", "blockquote", "paragraph"],
+		);
+		const list = blocks[2].children[0];
+		assert.equal(list.type, "list");
+		assert.equal(list.start, 12);
+		const item = list.children[0];
+		assert.deepEqual(
+			item.children.map((node) => node.type),
+			["paragraph", "code"],
+		);
+		assert.equal(item.children[0].children[0].type, "strong");
+		assert.equal(item.children[1].value, "const value = 1;");
+		assert.equal(blocks[3].children[0].value, "Outside.");
 	});
 
 	// An empty overflowing heading must not produce "****", which Markdown interprets as an unintended horizontal rule.
@@ -293,10 +446,8 @@ describe("changelog formatter", () => {
 			{ cwd: integrationDir },
 		);
 		const changelog = await readFile(path.join(integrationDir, "CHANGELOG.md"), "utf8");
-		const { remark } = await import("remark");
-		const headings = remark()
-			.parse(changelog)
-			.children.filter((node) => node.type === "heading");
+		const tree = remark().parse(changelog);
+		const headings = tree.children.filter((node) => node.type === "heading");
 
 		// Package -> version -> change category -> first entry -> its subsection -> next entry.
 		// Returning to level 4 is the regression guard: the next change must not belong beneath the previous subsection.
@@ -304,6 +455,22 @@ describe("changelog formatter", () => {
 			headings.map((node) => node.depth),
 			[1, 2, 3, 4, 5, 4],
 		);
+
+		// Check the final serialized changelog, not just the formatter output: the example must still be a code block.
+		const labelIndex = tree.children.findIndex(
+			(node) =>
+				node.type === "paragraph" &&
+				node.children[0]?.type === "strong" &&
+				node.children[0].children[0]?.type === "text" &&
+				node.children[0].children[0].value === "Details",
+		);
+		assert.notEqual(labelIndex, -1, "The deep section must remain a standalone bold label.");
+		const code = tree.children[labelIndex + 1];
+		assert.ok(code?.type === "code");
+		assert.equal(code.value, "const value = 1;");
+		const nextEntry = tree.children[labelIndex + 2];
+		assert.ok(nextEntry?.type === "heading");
+		assert.equal(nextEntry.depth, 4);
 
 		// Changing entry layout must preserve Changesets' version and bump-category headings, as well as PR navigation.
 		assert.ok(changelog.includes("## 1.1.0"));
