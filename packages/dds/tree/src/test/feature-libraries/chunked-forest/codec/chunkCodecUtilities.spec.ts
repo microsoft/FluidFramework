@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import { DiscriminatedUnionDispatcher } from "../../../../codec/index.js";
 import {
 	Counter,
@@ -167,12 +169,18 @@ describe("chunkEncodingUtilities", () => {
 			assert.equal(getChecked(data, index), value);
 		}
 		for (const index of [-1, data.length, 0.5, Number.NaN, Infinity, -Infinity]) {
-			assert.throws(() => getChecked(data, index), /missing array entry/);
+			assert.throws(
+				() => getChecked(data, index),
+				validateAssertionError(/missing array entry/),
+			);
 		}
 		const sparse: number[] = [];
 		sparse.length = 1;
 		for (const missing of [[], [undefined], sparse]) {
-			assert.throws(() => getChecked(missing, 0), /missing array entry/);
+			assert.throws(
+				() => getChecked(missing, 0),
+				validateAssertionError(/missing array entry/),
+			);
 		}
 	});
 
@@ -182,21 +190,30 @@ describe("chunkEncodingUtilities", () => {
 			assert.equal(getFullyChecked(data, index), value);
 		}
 		for (const index of [-1, data.length]) {
-			assert.throws(() => getFullyChecked(data, index), /missing array entry/);
+			assert.throws(
+				() => getFullyChecked(data, index),
+				validateAssertionError(/missing array entry/),
+			);
 		}
 		const sparse: number[] = [];
 		sparse.length = 1;
 		for (const missing of [[], [undefined], sparse]) {
-			assert.throws(() => getFullyChecked(missing, 0), /missing array entry/);
+			assert.throws(
+				() => getFullyChecked(missing, 0),
+				validateAssertionError(/missing array entry/),
+			);
 		}
 		for (const index of [0.5, Number.NaN, Infinity, -Infinity]) {
-			assert.throws(() => getFullyChecked(data, index), /invalid array index/);
+			assert.throws(
+				() => getFullyChecked(data, index),
+				validateAssertionError(/invalid array index/),
+			);
 		}
 		for (const index of ["0", "length", "map", {}, null, undefined, true]) {
 			assert.throws(
 				// @ts-expect-error Serialized data can violate the index type.
 				() => getFullyChecked(data, index),
-				/invalid array index/,
+				validateAssertionError(/invalid array index/),
 			);
 		}
 	});

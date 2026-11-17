@@ -257,6 +257,20 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 				preEdit();
 				this.detachEdit(source, destination);
 			}
+			public replace(
+				source: FieldKey,
+				range: Range,
+				destination: FieldKey,
+				id: DeltaDetachedNodeId,
+			): void {
+				preEdit();
+				assert(
+					source !== destination,
+					0xdc1 /* Replacement source and destination must differ */,
+				);
+				this.detachEdit(range, destination);
+				this.attachEdit(source, range.end - range.start, range.start);
+			}
 			/**
 			 * Attaches the nodes from the given source field into the current field.
 			 * Does not invalidate dependents.

@@ -10,6 +10,7 @@ import {
 	type DeltaVisitor,
 	type FieldKey,
 	combineVisitors,
+	createAnnouncedVisitor,
 } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 
@@ -86,6 +87,47 @@ class LoggingAnnouncedVisitor extends LoggingVisitor implements AnnouncedVisitor
 const fieldKey: FieldKey = brand("field");
 
 describe("combineVisitors", () => {
+	it("announces replacement around all nested visitors", () => {
+		const actual: string[] = [];
+		const combined = combineVisitors([
+			combineVisitors([new LoggingAnnouncedVisitor("av1", actual)]),
+			new LoggingVisitor("v", actual),
+			combineVisitors([new LoggingAnnouncedVisitor("av2", actual)]),
+		]);
+		combined.replace(fieldKey, { start: 2, end: 4 }, brand("outgoing"), { minor: 42 });
+		assert.deepEqual(actual, [
+			"av1: beforeReplace",
+			"av2: beforeReplace",
+			"av1: replace",
+			"v: replace",
+			"av2: replace",
+			"av1: afterReplace",
+			"av2: afterReplace",
+		]);
+	});
+	it("forwards omitted replacement callbacks to detach and attach callbacks", () => {
+		const calls: unknown[][] = [];
+		const visitor = createAnnouncedVisitor({
+			beforeDetach: (...args) => calls.push(["beforeDetach", ...args]),
+			beforeAttach: (...args) => calls.push(["beforeAttach", ...args]),
+			detach: (...args) => calls.push(["detach", ...args]),
+			attach: (...args) => calls.push(["attach", ...args]),
+			afterDetach: (...args) => calls.push(["afterDetach", ...args]),
+			afterAttach: (...args) => calls.push(["afterAttach", ...args]),
+		});
+		const range = { start: 2, end: 4 };
+		const destination: FieldKey = brand("outgoing");
+		const id = { minor: 42 };
+		combineVisitors([visitor]).replace(fieldKey, range, destination, id);
+		assert.deepEqual(calls, [
+			["beforeDetach", range, destination, true],
+			["beforeAttach", fieldKey, 2, 2],
+			["detach", range, destination, id, true],
+			["attach", fieldKey, 2, 2],
+			["afterDetach", 2, 2, destination, true],
+			["afterAttach", fieldKey, range],
+		]);
+	});
 	it("calls all visitors in order", () => {
 		const actual: string[] = [];
 		const combined = combineVisitors([
