@@ -75,7 +75,7 @@ This is intended for testing.
 #### Release-note snapshots
 
 The release-note generation tests compare full documents with [checked-in Markdown snapshots](./src/test/commands/generate/fixtures).
-After building this package and its workspace dependencies, run these commands from the repository root to compile the tests and check the snapshots:
+After building this package and its workspace dependencies, run these commands to compile the tests and check the snapshots:
 
 ```bash
 pnpm run build:test
