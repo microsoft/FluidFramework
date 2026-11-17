@@ -143,23 +143,24 @@ export function customFromCursor<TChild>(
 	) => TChild,
 ): CustomTree<TChild> {
 	const type = reader.type;
+	const value = reader.value;
 
 	switch (type) {
 		case numberSchema.identifier:
 		case booleanSchema.identifier:
 		case nullSchema.identifier:
 		case stringSchema.identifier: {
-			assert(reader.value !== undefined, 0xa50 /* out of schema: missing value */);
-			assert(!isFluidHandle(reader.value), 0xa51 /* out of schema: unexpected FluidHandle */);
-			return reader.value;
+			assert(value !== undefined, 0xa50 /* out of schema: missing value */);
+			assert(!isFluidHandle(value), 0xa51 /* out of schema: unexpected FluidHandle */);
+			return value;
 		}
 		case handleSchema.identifier: {
-			assert(reader.value !== undefined, 0xa52 /* out of schema: missing value */);
-			assert(isFluidHandle(reader.value), 0xa53 /* out of schema: expected FluidHandle */);
-			return reader.value;
+			assert(value !== undefined, 0xa52 /* out of schema: missing value */);
+			assert(isFluidHandle(value), 0xa53 /* out of schema: expected FluidHandle */);
+			return value;
 		}
 		default: {
-			assert(reader.value === undefined, 0xa54 /* out of schema: unexpected value */);
+			assert(value === undefined, 0xa54 /* out of schema: unexpected value */);
 			const nodeSchema =
 				storedSchema.get(type) ?? fail(0xb2e /* missing schema for type in cursor */);
 			const arrayTypes = tryStoredSchemaAsArray(nodeSchema);

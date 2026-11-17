@@ -362,7 +362,10 @@ function decodeUniform(
 	let values: TreeValue[];
 	const encodedSize = plan.encodedSize * repetitions;
 	assertNonNegativeSafeInteger(encodedSize);
-	assert(encodedSize <= stream.data.length - stream.offset, "incomplete uniform chunk data");
+	assert(
+		encodedSize <= stream.data.length - stream.offset,
+		0xdd6 /* incomplete uniform chunk data */,
+	);
 	if (
 		plan.valuesAreVerbatim &&
 		stream.offset === 0 &&
@@ -493,7 +496,7 @@ function readIdentifierValue(
 	const value = readStream(stream);
 	assert(
 		typeof value === "number" || typeof value === "string",
-		"identifier must be string or number",
+		0xdd7 /* identifier must be string or number */,
 	);
 	return typeof value === "string"
 		? value
@@ -578,7 +581,7 @@ export class NestedArrayDecoder implements ChunkDecoder {
 				return emptyChunk;
 			}
 		} else {
-			assert(Array.isArray(data), "expected nested array data");
+			assert(Array.isArray(data), 0xdd8 /* expected nested array data */);
 		}
 		return this.decodeArray(data);
 	}
@@ -591,7 +594,10 @@ export class NestedArrayDecoder implements ChunkDecoder {
 				? this.decodeGeneral.bind(this)
 				: (data) => {
 						if (typeof data === "number") {
-							assert(plan.encodedSize === 0, "expected data for nonempty uniform encoding");
+							assert(
+								plan.encodedSize === 0,
+								0xdd9 /* expected data for nonempty uniform encoding */,
+							);
 							return decodeUniform(plan, data, { data: [], offset: 0 });
 						}
 						if (data.length === 0) {
@@ -599,7 +605,7 @@ export class NestedArrayDecoder implements ChunkDecoder {
 						}
 						assert(
 							plan.encodedSize > 0 && data.length % plan.encodedSize === 0,
-							"incomplete uniform chunk data",
+							0xdda /* incomplete uniform chunk data */,
 						);
 						return decodeUniform(plan, data.length / plan.encodedSize, {
 							data,
@@ -629,7 +635,10 @@ export class NestedArrayDecoder implements ChunkDecoder {
 			while (inner.offset !== inner.data.length) {
 				const previousOffset = inner.offset;
 				chunks.push(decoder.decode(inner));
-				assert(inner.offset > previousOffset, "nested array decoder must consume data");
+				assert(
+					inner.offset > previousOffset,
+					0xddb /* nested array decoder must consume data */,
+				);
 			}
 		}
 

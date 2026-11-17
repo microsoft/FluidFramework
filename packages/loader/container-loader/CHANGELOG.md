@@ -1,5 +1,64 @@
 # @fluidframework/container-loader
 
+## 3.13.0
+
+### Minor Changes
+
+- Preserve unreferenced data stores and attachments in captured container state ([#28680](https://github.com/microsoft/FluidFramework/pull/28680)) [606251d1cbd](https://github.com/microsoft/FluidFramework/commit/606251d1cbd278a670b06d987f7797f0be176be0)
+
+  With the default `"inline"` blob capture mode, `captureFullContainerState` retains all structural snapshot contents, including unreferenced data stores and their DDSs.
+  This lets a resumed session process operations that reference these stores again without fetching historical structural blobs from storage.
+  Default inline capture also retains GC-unreferenced attachment payloads, since restoring a data store reference does not emit another `BlobAttach` operation.
+  Capture does not reliably omit attachment blobs that garbage collection has tombstoned or deleted; their contents may still be included, so do not rely on capture to remove them.
+
+  In both `"inline"` and `"reference"` modes, `captureFullContainerState` now rejects containers that declare loading groups anywhere in the snapshot, including in unreferenced subtrees; previously those subtrees were ignored.
+  If capture is rejected for loading groups, use a regular online container load instead; this capture API does not yet support those containers.
+
+- Container state capture is available on the legacy beta API surface ([#28272](https://github.com/microsoft/FluidFramework/pull/28272)) [be01c89dbec](https://github.com/microsoft/FluidFramework/commit/be01c89dbec159a3e09cb9e396321dbb47ba4cbf)
+
+  You can now import [`captureFullContainerState`](https://fluidframework.com/docs/api/container-loader/#capturefullcontainerstate-function) and [`ICaptureFullContainerStateProps`](https://fluidframework.com/docs/api/container-loader/icapturefullcontainerstateprops-interface) from `@fluidframework/container-loader/legacy`.
+  These APIs capture container state using driver services without loading a runtime.
+  Their behavior is unchanged, and they remain available from the legacy alpha entrypoint.
+
+  ```typescript
+  import {
+    captureFullContainerState,
+    type ICaptureFullContainerStateProps,
+  } from "@fluidframework/container-loader/legacy";
+
+  // ...
+  const options: ICaptureFullContainerStateProps = {
+    urlResolver,
+    documentServiceFactory,
+    request,
+  };
+  const pendingLocalState = await captureFullContainerState(options);
+  ```
+
+- Capture reusable container state ([#28703](https://github.com/microsoft/FluidFramework/pull/28703)) [de4a4dd235b](https://github.com/microsoft/FluidFramework/commit/de4a4dd235b3bf6d42661e4d8cf11de7aaa397e1)
+
+  The new `ContainerAlpha.serializeAttached` method makes capturing an attached container's state more convenient.
+  For attached containers, callers explicitly choose whether to include unsequenced local changes.
+  With `includePendingLocalState: false`, `serializeAttached` omits local changes and session-specific state and the returned state can safely be used to load multiple containers connected to the original document.
+  `includePendingLocalState: true` has the same behavior and restrictions as `getPendingLocalState`: close the source container before loading the state, never load the same state more than once, and replace stored state after each reconnect.
+  In both cases, pending-state capture must be enabled when the container is created or loaded: the client must be interactive, and the `Fluid.Container.enableOfflineFull` configuration flag must not be `false` (it defaults to `true`).
+  Otherwise, `serializeAttached` throws a `UsageError`.
+
+  ```typescript
+  import { asLegacyAlpha } from "@fluidframework/container-loader/legacy/alpha";
+
+  const containerAlpha = asLegacyAlpha(container);
+  const state = await containerAlpha.serializeAttached({
+    includePendingLocalState: false,
+  });
+  // Safe: reuse the serialized state for multiple instances of the same document.
+  const first = await loader.resolve(request, state);
+  const second = await loader.resolve(request, state);
+  ```
+
+  For detached or attaching containers, continue to use the existing `serialize()` method.
+  Serialization while attaching is not supported by `serializeAttached`.
+
 ## 3.12.0
 
 Dependency updates only.

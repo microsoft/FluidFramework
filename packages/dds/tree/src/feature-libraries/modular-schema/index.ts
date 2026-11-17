@@ -16,16 +16,16 @@ export type {
 } from "./schemaDiscrepancy.js";
 export { isNeverField, isNeverTree } from "./isNeverTree.js";
 export {
-	addCrossFieldQuery,
-	type CrossFieldManager,
+	type ComposeNodeManager,
 	type CrossFieldMap,
 	type CrossFieldQuerySet,
-	CrossFieldTarget,
+	type DetachedNodeEntry,
+	type InvertNodeManager,
+	NodeMoveType,
+	type RebaseNodeManager,
 	setInCrossFieldMap,
 } from "./crossFieldQueries.js";
 export {
-	ChangesetLocalIdSchema,
-	EncodedChangeAtomId,
 	EncodedRevisionInfo,
 	EncodedModularChangesetV1,
 	EncodedNodeChangeset,
@@ -35,12 +35,11 @@ export { FlexFieldKind, type FullSchemaPolicy } from "./fieldKind.js";
 export {
 	type ChildChangeInfo,
 	EditFilterStatus,
-	type FilterDetachFunc,
 	type FilterAttachFunc,
 	type FilterAttachResult,
+	type FilterDetachFunc,
 	type FilterDetachResult,
 	type FieldChangeHandler,
-	type FieldChangeDelta,
 	type FieldChangeEncodingContext,
 	type FieldChangeDecodingContext,
 	type FieldChangeRebaser,
@@ -52,7 +51,6 @@ export {
 	type NodeChangePruner,
 	referenceFreeFieldChangeRebaser,
 	type RebaseRevisionMetadata,
-	type RelevantRemovedRootsFromChild,
 	type ToDelta,
 	NodeAttachState,
 } from "./fieldChangeHandler.js";
@@ -64,9 +62,9 @@ export type {
 	FieldChangeset,
 	HasFieldChanges,
 	ModularChangeset,
-	NoChangeConstraint,
 	NodeExistsConstraint,
 	NodeId,
+	RebaseVersion,
 } from "./modularChangeTypes.js";
 export {
 	convertGenericChange,
@@ -81,7 +79,6 @@ export {
 	type GlobalEditDescription,
 	type FieldEditDescription,
 	rebaseRevisionMetadataFromInfo,
-	intoDelta,
 	relevantRemovedRoots,
 	updateRefreshers,
 } from "./modularChangeFamily.js";
@@ -96,7 +93,5 @@ export type {
 export { DefaultRevisionReplacer } from "./defaultRevisionReplacer.js";
 export { minimizeModularChangeset } from "./minimizeModularChange.js";
 export { DefaultAtomIdAliasAllocator } from "./defaultAtomIdAliasAllocator.js";
-export {
-	isChangesetValid as isModularChangesetValid,
-	normalizeChangeset,
-} from "./modularChangeUtils.js";
+export { isChangesetValid as isModularChangesetValid } from "./modularChangeUtils.js";
+export { intoDelta } from "./modularChangeDelta.js";

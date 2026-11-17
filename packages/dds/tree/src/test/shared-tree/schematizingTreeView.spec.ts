@@ -654,9 +654,9 @@ describe("SchematizingSimpleTreeView", () => {
 			new MockNodeIdentifierManager(),
 		);
 
-		// The unknown optional address field does not block viewing, but an upgrade cannot remove it.
+		// The unknown optional address field permits viewing and is retained by upgrades.
 		assert.equal(viewSpecific.compatibility.canView, true);
-		assert.equal(viewSpecific.compatibility.canUpgrade, false);
+		assert.equal(viewSpecific.compatibility.canUpgrade, true);
 
 		// The document is already initialized, and there are no differences that prevent viewing.
 		assert.equal(viewSpecific.compatibility.canInitialize, false);
@@ -721,9 +721,9 @@ describe("SchematizingSimpleTreeView", () => {
 			new MockNodeIdentifierManager(),
 		);
 
-		// Unknown optional fields permit viewing and moving people, but an upgrade cannot remove address.
+		// Unknown optional fields permit viewing and moving people, and upgrades retain address.
 		assert.equal(viewSpecific.compatibility.canView, true);
-		assert.equal(viewSpecific.compatibility.canUpgrade, false);
+		assert.equal(viewSpecific.compatibility.canUpgrade, true);
 
 		// The document is already initialized, and the unknown field does not prevent viewing.
 		assert.equal(viewSpecific.compatibility.canInitialize, false);
@@ -1086,7 +1086,7 @@ describe("SchematizingSimpleTreeView", () => {
 		);
 	});
 
-	it("reports upgrade blockers on request when unknown optional fields permit viewing", () => {
+	it("reports upgrade blockers on request when detached content needs an omitted definition", () => {
 		class Stored extends schema.object("OnDemand", {
 			x: schema.number,
 			hidden: schema.optional(schema.number),
@@ -1098,6 +1098,14 @@ describe("SchematizingSimpleTreeView", () => {
 		) {}
 		const checkout = checkoutWithInitialTree(new TreeViewConfiguration({ schema: Stored }), {
 			x: 1,
+		});
+		const initial = toUpgradeSchema(Stored);
+		checkout.updateSchema({
+			rootFieldSchema: initial.rootFieldSchema,
+			nodeSchema: new Map([
+				...initial.nodeSchema,
+				...toUpgradeSchema(schema.string).nodeSchema,
+			]),
 		});
 		const view = asBeta(
 			new SchematizingSimpleTreeView(
@@ -1113,20 +1121,10 @@ describe("SchematizingSimpleTreeView", () => {
 		assert(!compatibility.upgrade.isCompatible);
 		const expected = [
 			{
-				mismatch: "allowedTypes",
-				location: { nodeType: Viewed.identifier, fieldKey: "hidden" },
-				proposed: [],
-				stored: [schema.number.identifier],
+				mismatch: "missingNodeSchema",
+				nodeType: schema.string.identifier,
 				reason:
-					'Cannot upgrade field "hidden" of node type "com.example.OnDemand": the proposed schema removes allowed node types ["com.fluidframework.leaf.number"].',
-			},
-			{
-				mismatch: "fieldKind",
-				location: { nodeType: Viewed.identifier, fieldKey: "hidden" },
-				proposed: "Forbidden",
-				stored: "Optional",
-				reason:
-					'Cannot upgrade field "hidden" of node type "com.example.OnDemand": changing from zero or one child to no children is not permitted by the schema upgrade rules.',
+					'Cannot upgrade node type "com.fluidframework.leaf.string": its stored definition is missing from the proposed schema.',
 			},
 		];
 		const incompatibilities = compatibility.upgrade.incompatibilities;
@@ -1203,6 +1201,14 @@ describe("SchematizingSimpleTreeView", () => {
 		const checkout = checkoutWithInitialTree(new TreeViewConfiguration({ schema: Stored }), {
 			x: 5,
 		});
+		const initial = toUpgradeSchema(Stored);
+		checkout.updateSchema({
+			rootFieldSchema: initial.rootFieldSchema,
+			nodeSchema: new Map([
+				...initial.nodeSchema,
+				...toUpgradeSchema(schema.string).nodeSchema,
+			]),
+		});
 		const view = new SchematizingSimpleTreeView(
 			checkout,
 			new TreeViewConfiguration({ schema: Viewed }),
@@ -1220,20 +1226,10 @@ describe("SchematizingSimpleTreeView", () => {
 
 		assert.deepEqual(previous.upgrade.incompatibilities, [
 			{
-				mismatch: "allowedTypes",
-				location: { nodeType: Viewed.identifier, fieldKey: "hidden" },
-				proposed: [],
-				stored: [schema.number.identifier],
+				mismatch: "missingNodeSchema",
+				nodeType: schema.string.identifier,
 				reason:
-					'Cannot upgrade field "hidden" of node type "com.example.DeferredDisposal": the proposed schema removes allowed node types ["com.fluidframework.leaf.number"].',
-			},
-			{
-				mismatch: "fieldKind",
-				location: { nodeType: Viewed.identifier, fieldKey: "hidden" },
-				proposed: "Forbidden",
-				stored: "Optional",
-				reason:
-					'Cannot upgrade field "hidden" of node type "com.example.DeferredDisposal": changing from zero or one child to no children is not permitted by the schema upgrade rules.',
+					'Cannot upgrade node type "com.fluidframework.leaf.string": its stored definition is missing from the proposed schema.',
 			},
 		]);
 	});

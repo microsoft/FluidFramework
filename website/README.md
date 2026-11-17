@@ -467,6 +467,7 @@ The following npm scripts are supported in this directory:
 | `generate-api-documentation` | `dotenv -- node ./infra/generate-api-documentation.mjs` | Generate API documentation from downloaded API model artifacts. |
 | `generate-versions` | `dotenv -- node ./infra/generate-versions.mjs` | |
 | `preinstall` | `node ../scripts/only-pnpm.cjs` | Ensure developer is using `pnpm`. |
+| `install-no-frozen` | `node ../scripts/install-no-frozen.cjs` | |
 | `lint` | `concurrently npm:eslint npm:prettier` | Check for linter violations. |
 | `lint:fix` | `npm run eslint:fix && npm run prettier:fix` | Auto-fix linter violations. |
 | `prettier` | `prettier --check . --cache --ignore-path ../.prettierignore` | Check for formatting issues with `prettier`. |

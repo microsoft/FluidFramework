@@ -48,7 +48,8 @@ export interface Message {
 		| typeof MessageFormatVersion.v3
 		| typeof MessageFormatVersion.v4
 		| typeof MessageFormatVersion.v6
-		| typeof MessageFormatVersion.v7;
+		| typeof MessageFormatVersion.v7
+		| typeof MessageFormatVersion.vDetachedRoots;
 }
 
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
@@ -74,6 +75,7 @@ export const Message = <ChangeSchema extends TSchema>(
 				Type.Literal(MessageFormatVersion.v4),
 				Type.Literal(MessageFormatVersion.v6),
 				Type.Literal(MessageFormatVersion.v7),
+				Type.Literal(MessageFormatVersion.vDetachedRoots),
 			]),
 		),
 	});

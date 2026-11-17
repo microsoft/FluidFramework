@@ -31,7 +31,11 @@ import {
 	applySchemaOp,
 	applyTransactionBoundary,
 } from "./fuzzEditReducers.js";
-import { createFuzzSchema, deterministicIdCompressorFactory } from "./fuzzUtils.js";
+import {
+	createFuzzSchema,
+	defaultTreePackageStatics,
+	deterministicIdCompressorFactory,
+} from "./fuzzUtils.js";
 import { type GeneratedFuzzNode, GeneratedFuzzValueType } from "./operationTypes.js";
 
 /**
@@ -44,7 +48,7 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 	it("rejects node identifiers outside the supported namespaces", () => {
 		for (const nodeType of ["upgrade", "otherNamespace.upgrade"]) {
 			assert.throws(
-				() => createFuzzSchema([nodeType]),
+				() => createFuzzSchema([nodeType], defaultTreePackageStatics.newSchemaFactory),
 				/Expected a treeFuzz or built-in leaf schema identifier/,
 			);
 		}
@@ -56,7 +60,11 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 			const schema = schemaFactory.object("upgrade", { value: schemaFactory.string });
 			const storedSchema = new TreeStoredSchemaRepository(toInitialSchema(schema));
 			assert.throws(
-				() => simpleSchemaFromStoredSchema(storedSchema),
+				() =>
+					simpleSchemaFromStoredSchema(
+						storedSchema,
+						defaultTreePackageStatics.newSchemaFactory,
+					),
 				/Expected a treeFuzz or built-in leaf schema identifier/,
 			);
 		}
@@ -72,18 +80,23 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 			"com.fluidframework.leaf.handle",
 		]) {
 			assert.throws(
-				() => createFuzzSchema([nodeType, nodeType]),
+				() =>
+					createFuzzSchema([nodeType, nodeType], defaultTreePackageStatics.newSchemaFactory),
 				/Duplicate fuzz node schema identifier/,
 			);
 		}
 	});
 
 	function setValue(view: FuzzView, value: GeneratedFuzzNode): void {
-		applyFieldEdit(view, {
-			type: "fieldEdit",
-			parentNodePath: undefined,
-			change: { type: "optional", edit: { type: "set", value } },
-		});
+		applyFieldEdit(
+			view,
+			{
+				type: "fieldEdit",
+				parentNodePath: undefined,
+				change: { type: "optional", edit: { type: "set", value } },
+			},
+			defaultTreePackageStatics,
+		);
 	}
 
 	function synchronizeAndCheckViews(state: FuzzTestState): void {
@@ -147,20 +160,24 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 	scenario("remote upgrades reconstruct string-valued GUID schemas", (state) => {
 		const originalRemoteView = viewFromState(state, state.clients[1]);
 		applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
-		applyFieldEdit(viewFromState(state), {
-			type: "fieldEdit",
-			parentNodePath: undefined,
-			change: {
-				type: "optional",
-				edit: {
-					type: "set",
-					value: {
-						type: GeneratedFuzzValueType.GUIDNode,
-						value: { guid: "treeFuzz.upgrade" },
+		applyFieldEdit(
+			viewFromState(state),
+			{
+				type: "fieldEdit",
+				parentNodePath: undefined,
+				change: {
+					type: "optional",
+					edit: {
+						type: "set",
+						value: {
+							type: GeneratedFuzzValueType.GUIDNode,
+							value: { guid: "treeFuzz.upgrade" },
+						},
 					},
 				},
 			},
-		});
+			defaultTreePackageStatics,
+		);
 		state.containerRuntimeFactory.processAllMessages();
 		const remoteView = viewFromState(state, state.clients[1]);
 		assert.notEqual(remoteView, originalRemoteView);
@@ -173,7 +190,7 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 
 	scenario("stored GUID schemas round-trip without changing their value type", (state) => {
 		const checkout = viewFromState(state).checkout;
-		const schemaFactory = new SchemaFactory("treeFuzz");
+		const schemaFactory = defaultTreePackageStatics.newSchemaFactory("treeFuzz");
 		// Construct the expected schema independently of the helper used during reconstruction.
 		const allowedTypes = [
 			schemaFactory.string,
@@ -198,7 +215,12 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 		);
 		checkout.updateSchema(expectedSchema);
 		expectSchemaEqual(
-			toInitialSchema(simpleSchemaFromStoredSchema(checkout.storedSchema)),
+			toInitialSchema(
+				simpleSchemaFromStoredSchema(
+					checkout.storedSchema,
+					defaultTreePackageStatics.newSchemaFactory,
+				),
+			),
 			expectedSchema,
 		);
 	});
@@ -211,7 +233,14 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 				contents: { type: "fork", branchNumber: undefined },
 			});
 			const fork = viewFromState(state, state.client, 0);
-			fork.checkout.updateSchema(toInitialSchema(createFuzzSchema(["treeFuzz.forkUpgrade"])));
+			fork.checkout.updateSchema(
+				toInitialSchema(
+					createFuzzSchema(
+						["treeFuzz.forkUpgrade"],
+						defaultTreePackageStatics.newSchemaFactory,
+					),
+				),
+			);
 			const head = fork.branchHistory.getHead()?.revision;
 			assert.equal(fork.checkout.transaction.size, 0);
 			assert.throws(
@@ -251,6 +280,7 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 					applyFieldEdit(
 						viewFromState(state, state.client, operation.forkedViewIndex),
 						operation.edit,
+						defaultTreePackageStatics,
 					);
 				}
 			}
@@ -264,14 +294,18 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 			applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
 			const checkout = viewFromState(state).checkout;
 			applyTransactionBoundary(state, "start");
-			applyFieldEdit(viewFromState(state), {
-				type: "fieldEdit",
-				parentNodePath: undefined,
-				change: {
-					type: "optional",
-					edit: { type: "set", value: { type: GeneratedFuzzValueType.Number, value: 42 } },
+			applyFieldEdit(
+				viewFromState(state),
+				{
+					type: "fieldEdit",
+					parentNodePath: undefined,
+					change: {
+						type: "optional",
+						edit: { type: "set", value: { type: GeneratedFuzzValueType.Number, value: 42 } },
+					},
 				},
-			});
+				defaultTreePackageStatics,
+			);
 			applyTransactionBoundary(state, "abort");
 			assert.equal(checkout.disposed, false);
 			assert.equal(viewFromState(state).checkout, checkout);
@@ -302,11 +336,15 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 	scenario("schema upgrades preserve existing detached content", (state) => {
 		const checkout = viewFromState(state).checkout;
 		setValue(viewFromState(state), { type: GeneratedFuzzValueType.Number, value: 42 });
-		applyFieldEdit(viewFromState(state), {
-			type: "fieldEdit",
-			parentNodePath: undefined,
-			change: { type: "optional", edit: { type: "clear" } },
-		});
+		applyFieldEdit(
+			viewFromState(state),
+			{
+				type: "fieldEdit",
+				parentNodePath: undefined,
+				change: { type: "optional", edit: { type: "clear" } },
+			},
+			defaultTreePackageStatics,
+		);
 		const removed = checkout.getRemovedRoots();
 		assert(removed.length > 0);
 		applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
