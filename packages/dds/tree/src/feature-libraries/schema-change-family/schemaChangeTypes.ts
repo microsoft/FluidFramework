@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
+
 import type { TreeStoredSchema } from "../../core/index.js";
 import { defaultSchemaPolicy } from "../default-schema/index.js";
 import { allowsRepoSuperset } from "../modular-schema/index.js";
@@ -39,9 +41,7 @@ export abstract class SchemaChangeset {
 	 * @throws if this changeset is {@link SchemaChangeset.isConflicted | conflicted}.
 	 */
 	public get output(): TreeStoredSchema {
-		if (this.isConflicted) {
-			throw new Error("Cannot get output of a conflicted changeset");
-		}
+		assert(!this.isConflicted, "Cannot get output of a conflicted changeset");
 		return this.getOutput();
 	}
 
@@ -151,6 +151,7 @@ export class CompareAndSwapSchemaChangeset extends SchemaChangeset {
 	}
 
 	protected override hasConflicts(): boolean {
+		// TODO: Decide whether CAS comparisons should include metadata before the end of phase 3
 		return !areSchemasEquivalent(this.original, this.input);
 	}
 

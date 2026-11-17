@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	LeafNodeStoredSchema,
 	type TreeNodeSchemaIdentifier,
@@ -101,7 +103,7 @@ const implementations: readonly ChangesetImplementation[] = [
 		create: (input, proposed, _original, isRollback) =>
 			new WideningSchemaChangeset(input, proposed, isRollback),
 		expectedOutput: {
-			proposedWider: numberString,
+			proposedWider: number.wider,
 			proposedNarrower: number,
 			metadataOnly: numberWithMetadata,
 		},
@@ -125,7 +127,7 @@ const implementations: readonly ChangesetImplementation[] = [
 		create: (input, proposed, original, isRollback) =>
 			new CompareAndSwapSchemaChangeset(input, proposed, original, isRollback),
 		expectedOutput: {
-			proposedWider: numberString,
+			proposedWider: number.wider,
 			proposedNarrower: number.narrower,
 			metadataOnly: numberWithMetadata,
 		},
@@ -192,7 +194,10 @@ describe("SchemaChangeset", () => {
 					} else if (change instanceof NoopSchemaChangeset) {
 						assert.equal(change.output, number);
 					} else {
-						assert.throws(() => change.output, /Cannot get output of a conflicted changeset/);
+						assert.throws(
+							() => change.output,
+							validateAssertionError(/Cannot get output of a conflicted changeset/),
+						);
 					}
 				});
 			}
@@ -233,8 +238,8 @@ describe("SchemaChangeset", () => {
 					const over = new CompareAndSwapSchemaChangeset(number, string, empty);
 					const rebased = change.rebase(over);
 					assert.equal(rebased.input, number);
-					assert.equal(rebased.output, implementation.expectedOutput.proposedWider);
 					assert.equal(rebased.isConflicted, false);
+					assert.equal(rebased.output, implementation.expectedOutput.proposedWider);
 					assert.equal(rebased.isRollback, change.isRollback);
 				});
 			}
@@ -379,7 +384,10 @@ describe("SchemaChangeset", () => {
 				assert.equal(change.isConflicted, expected);
 				assert.equal(change.isConflicted, expected);
 				if (expected) {
-					assert.throws(() => change.output, /Cannot get output of a conflicted changeset/);
+					assert.throws(
+						() => change.output,
+						validateAssertionError(/Cannot get output of a conflicted changeset/),
+					);
 				} else {
 					assert.equal(change.output, number);
 				}
