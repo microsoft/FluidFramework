@@ -10,32 +10,7 @@ import type {
 
 /**
  * This file defines the external facing API for the {@link ServiceClient} and related types.
- *
- * It provides an API surface at a similar abstraction level to aqueduct and fluid-static, but is intended to be a replacement for those which solves several problems with them.
- * Mainly it strives to have the encapsulation of implementation details (including all legacy APIs from aqueduct and lower level internals) like fluid-static
- * while being both more flexible and simpler.
- *
- * This aims to be the cleanest practical way to build applications on the Fluid Framework Client.
- * There are however several known cases where the API quality was sacrificed to ease initial implementation,
- * since some of the unification desired in this API's design are not yet implemented in the underlying Fluid Framework Client code or require additional work to implement.
- * These cases are called out with TODOs in this file.
- * These should be considered and addressed before stabilizing this API past alpha.
- *
- * All code interacting through this API surface within a single client must avoid using multiple copies of any Fluid Framework client package (at the same or different versions).
- * This mirrors the `@public` "declarative model" APIs and is a deliberate simplification of what is allowed in the legacy API surface.
- * It is enforced best-effort only: `@sealed` nominal erased types catch many mismatches at compile time, and factory identity checks throw a UsageError ("Conflicting ... with same type") at run time, but the checking is not exhaustive.
- * See `LayerCompatibilityUnified.md` for the full policy, rationale, and failure signatures.
- *
- * TODO:
- * Before stabilizing any of this past beta, evaluate whether this single-copy requirement must be relaxed, and if so how.
- * Whatever rule is chosen (relaxed or not) should be enforced at both compile time and run time as much as possible.
- *
- * TODO:
- * Fault isolation should be considered in this API design.
- * When are exceptions recoverable and how?
- * Likely we can fault isolate exceptions to containers in most cases,
- * and containers can indicate their status by being closed or disposed.
- * Non fatal errors should not be exceptions.
+ * See {@link ServiceClient} for an overview of this API surface and its design direction.
  */
 
 // #region Registry types
@@ -357,6 +332,58 @@ export type DataStoreRegistry<out T = unknown> = Registry<Promise<DataStoreKind<
 
 /**
  * A connection to a Fluid storage service.
+ * @remarks
+ * The Fluid Framework provides a couple of different API surfaces for working with Fluid services, containers, and data stores:
+ *
+ * 1. The `@legacy @beta` "encapsulated API", which despite its name is problematic for leaking lots of Fluid Framework implementation details.
+ * 2. The `@public` "declarative API" in `@fluidframework/fluid-static`, which hides the underlying loader and runtime abstractions,
+ * but makes some opinionated choices about how the root of the container is setup, and has limited expressiveness:
+ * there is no viable path for existing documents made with the "encapsulated API" to migrate to the "declarative API".
+ * 3. The `@alpha` "ServiceClient" API, aims to provide the best of both APIs:
+ * the flexibility to work with existing documents while encapsulating Fluid Framework details, and being simple and easy to use.
+ * It is intended as a path forward for users of either of the other APIs, eventually to replace both of them.
+ * It is also a work in progress. An overview of it is below.
+ *
+ * A user of the `ServiceClient` API can obtain a client from a service-specific API, such as {@link @fluidframework/tinylicious-driver#createTinyliciousServiceClient}.
+ * For in-memory use, call {@link @fluidframework/local-driver#startEphemeralService} and use the returned service's {@link @fluidframework/local-driver#LocalService.defaultClient | defaultClient},
+ * or call its {@link @fluidframework/local-driver#LocalService.newClient | newClient} method to create a client with custom options.
+ *
+ * From that a {@link FluidContainer} is {@link ServiceClient.createContainer|created} or {@link ServiceClient.loadContainer|loaded}.
+ * The container's content takes the form of {@link DataStore|data stores}.
+ *
+ * All code interacting through this surface within a single client must use a single copy of each Fluid Framework client package.
+ * This matches the public declarative API model, rather than the more permissive legacy layering model.
+ * See {@link https://github.com/microsoft/FluidFramework/blob/main/LayerCompatibilityUnified.md | the unified layer compatibility policy}.
+ *
+ * @privateRemarks
+ * The long-term design intent is to converge on a single exposed, eventually public Fluid Framework client API surface,
+ * incorporating existing application-facing data APIs and replacing the competing container and data-store abstractions.
+ *
+ * Migration should be incremental for existing applications, without requiring an immediate rewrite or any changes to their persisted document layouts.
+ * As needed, APIs can be added to both:
+ * 1. Supporting mixing code using the new API with existing legacy code to enable incremental migration.
+ * These should be tagged `@legacy` and eventually be deprecated and removed.
+ * 2. Supporting existing documents in the new APIs which were created using the legacy API using patterns no longer recommended or supported by the default/main non-legacy API surface.
+ * These should be tagged `@legacy`, and eventually get stabilized to `@public` (while still `@legacy`), and never removed.
+ * These will include support for custom named channels and a data store compatible with fluid-static's layout.
+ * The goal is to provide those options without exposing legacy factories, contexts, or runtime interfaces,
+ * so applications can eventually remove their remaining dependencies on the `@legacy @beta` and `fluid-static` API surface without abandoning existing documents.
+ * Once migration paths cover existing uses, the superseded legacy APIs could be deprecated and then removed in a future major version,
+ * while retaining the narrowly scoped old-document interoperability helpers that are still needed.
+ *
+ * Keeping the implementation details behind a smaller, clearer API boundary should make future internal changes substantially easier,
+ * without forcing corresponding changes on applications.
+ *
+ * TODO:
+ * Before stabilizing any of this past beta, evaluate whether this single-copy package requirement must be relaxed, and if so how.
+ * Whatever rule is chosen (relaxed or not) should be enforced at both compile time and run time as much as possible.
+ *
+ * TODO:
+ * Fault isolation should be considered in this API design.
+ * When are exceptions recoverable and how?
+ * Likely we can fault isolate exceptions to containers in most cases,
+ * and containers can indicate their status by being closed or disposed.
+ * Non fatal errors should not be exceptions.
  * @sealed
  * @alpha
  */
