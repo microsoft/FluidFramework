@@ -166,35 +166,6 @@ assert.equal(result.canView, true);
 
 This is useful for verifying that each phase of your rollout maintains the expected compatibility relationships.
 
-### Testing Composition Across Versions
-
-To verify that an earlier client preserves a completed rollout, define an earlier schema that stages a type and a later schema that fully enables it.
-Create a document with the later schema, then open it with the earlier client's restrictive policy.
-The earlier view should still read and edit values of the enabled type, and a call to `upgradeSchema()` must keep that type allowed by the stored schema.
-If the view requests no other additions, verify that the call leaves the stored schema unchanged and emits no schema-change event or operation.
-
-Extend that scenario to cover how upgrades combine during a rollout:
-
-- The earlier view adds its own optional field to a newer document while retaining fields that it does not declare.
-- A selected token enables a new type while another type, staged but not selected, is already permitted by the stored schema.
-- A shared token is enabled at only one of two fields; preservation leaves the other field unchanged until the policy explicitly enables it.
-- A remote schema change refreshes the other client's compatibility and staged-upgrade status.
-- A summary and reload preserve the composed stored schema and any data unknown to the reduced view.
-
-Also initialize a fresh document with the earlier view and restrictive policy.
-Unlike the upgraded document, it should still exclude the staged type: preserving an enabled staged upgrade in one document must not enable it in another.
-Apply the same distinction to removed optional fields: an existing document retains them, while a fresh document created with the reduced view has no such field declarations.
-
-These live-document tests complement the <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">snapshot validator</ApiLink>.
-It requires the current schema to be able to view or upgrade documents from every historical snapshot.
-Within the collaboration window, historical views must also be able to view or upgrade documents created with the current schema.
-Accepting either `canView` or `canUpgrade` allows rollouts where a client must upgrade before accessing a document, including an older client restoring a removed optional field.
-The validator does not apply those upgrades, so test the application code that performs them before reading or editing.
-
-Snapshots also describe view-schema versions rather than every possible stored history.
-The helpers currently assume restrictive staging instead of honoring configured upgrade policies, and they do not preserve staged optionality when reconstructing a schema.
-Use live-document tests to cover those limitations, including documents with partially enabled tokens.
-
 ## Tips
 
 - **Use `independentView`** for isolated tests that don't require a Fluid service connection.
