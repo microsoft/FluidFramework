@@ -55,6 +55,77 @@ describe("generate:releaseNotes", () => {
 		await rm(testDir, { recursive: true });
 	});
 
+	/**
+	 * Commits the current fixture, generates release notes, and compares the entire document with a snapshot.
+	 *
+	 * @param snapshotFileName - The snapshot file name within this suite's fixtures directory.
+	 */
+	async function generateAndAssertSnapshot(snapshotFileName: string): Promise<void> {
+		// Changeset loading inspects Git history for commit metadata, so provide committed source files.
+		await execa("git", ["add", "."], { cwd: testDir });
+		await execa(
+			"git",
+			[
+				"-c",
+				"user.name=Test",
+				"-c",
+				"user.email=test@example.com",
+				"-c",
+				"commit.gpgsign=false",
+				"commit",
+				"-m",
+				"Add release-note fixtures",
+			],
+			{ cwd: testDir },
+		);
+		const { stdout: commitHash } = await execa("git", ["rev-parse", "HEAD"], {
+			cwd: testDir,
+		});
+
+		// Keep both CLI repository discovery and cwd-relative Markdown metadata lookup inside the fixture.
+		await execa(
+			process.execPath,
+			[
+				path.resolve(import.meta.dirname, "../../../../bin/run.js"),
+				"generate:releaseNotes",
+				"-g",
+				"client",
+				"-t",
+				"minor",
+				"--outFile",
+				"release-notes.md",
+				"--quiet",
+			],
+			{ cwd: testDir, env: { _FLUID_ROOT_: testDir } },
+		);
+
+		// Snapshot the entire document, including the table of contents, generated metadata, and footer.
+		// Substitute only the fixture's full and seven-character commit hashes so Git timestamps cannot affect the comparison.
+		const actual = await readFile(path.join(testDir, "release-notes.md"), "utf8");
+		const snapshot = await readFile(
+			path.join(import.meta.dirname, "fixtures", snapshotFileName),
+			"utf8",
+		);
+		const expected = snapshot
+			.replaceAll("<COMMIT_HASH>", commitHash)
+			.replaceAll("<SHORT_COMMIT_HASH>", commitHash.slice(0, 7));
+		assert.equal(actual, expected);
+	}
+
+	// Establish the generated document structure for an ordinary changeset without any body headings to normalize.
+	it("generates release notes for a simple changeset", async () => {
+		const changeset = `---
+"example-package": minor
+"__section": other
+---
+Improve item loading
+
+Items now load without unnecessary retries.
+`;
+		await writeFile(path.join(testDir, ".changeset", "simple.md"), changeset);
+		await generateAndAssertSnapshot("releaseNotes.baseline.md");
+	});
+
 	// Source levels 1 and 2 must become levels 4 and 5, beneath the generated level-3 change title.
 	// Skipping to source level 4 deliberately maps "Deep details" to level 7, exercising the bold-label fallback.
 	it("normalizes each body before adding generated titles and change details", async () => {
@@ -84,83 +155,7 @@ describe("generate:releaseNotes", () => {
 			path.join(testDir, ".changeset", "second.md"),
 			'---\n"example-package": minor\n"__section": other\n---\nNext change\n\n###### Another top-level heading\n\nDetails.\n',
 		);
-
-		// Changeset loading inspects Git history for commit metadata, so provide committed source files.
-		await execa("git", ["add", "."], { cwd: testDir });
-		await execa(
-			"git",
-			[
-				"-c",
-				"user.name=Test",
-				"-c",
-				"user.email=test@example.com",
-				"-c",
-				"commit.gpgsign=false",
-				"commit",
-				"-m",
-				"Add release-note fixtures",
-			],
-			{ cwd: testDir },
-		);
-
-		// Keep both CLI repository discovery and cwd-relative Markdown metadata lookup inside the fixture.
-		await execa(
-			process.execPath,
-			[
-				path.resolve(import.meta.dirname, "../../../../bin/run.js"),
-				"generate:releaseNotes",
-				"-g",
-				"client",
-				"-t",
-				"minor",
-				"--outFile",
-				"release-notes.md",
-				"--quiet",
-			],
-			{ cwd: testDir, env: { _FLUID_ROOT_: testDir } },
-		);
-
-		const output = await readFile(path.join(testDir, "release-notes.md"), "utf8");
-
-		// Readers should see sibling level-3 change titles, with body headings nested at levels 4 and 5.
-		// Generated "Change details" must remain level 4 and must not influence the per-body normalization offset.
-		for (const { title, expected } of [
-			{
-				title: "### Improve memory usage",
-				expected: `### Improve memory usage
-
-#### Examples
-
-##### Measurements
-
-**Deep details**
-
-\`\`\`markdown
-# A code example
-\`\`\`
-
-`,
-			},
-			{
-				title: "### Next change",
-				expected: `### Next change
-
-#### Another top-level heading
-
-Details.
-
-`,
-			},
-		]) {
-			// Compare complete emitted bodies while excluding variable commit metadata and the generated table of contents.
-			// Include line boundaries in both markers so a heading at the wrong depth cannot match a suffix of a deeper one.
-			const start = output.indexOf(`\n${title}\n`);
-			assert.notEqual(start, -1, `Expected a standalone "${title}" heading.`);
-			const end = output.indexOf("\n#### Change details\n", start + 1);
-			assert.ok(end > start, `Expected level-4 change details after "${title}".`);
-			const actual = output.slice(start + 1, end + 1);
-			assert.equal(actual, expected);
-		}
+		await generateAndAssertSnapshot("releaseNotes.normalized-headings.md");
 
 		// Normalization is output-only, preserving the author's source for generators with different target heading depths.
 		const actual = await readFile(path.join(testDir, ".changeset", "first.md"), "utf8");
