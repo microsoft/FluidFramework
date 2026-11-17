@@ -1026,13 +1026,18 @@ export type SchemaAllowedTypesDiscrepancy = {
 };
 
 /**
- * Indicates that a field has different field kinds in the view and stored schemas.
+ * A difference between the view and stored field kinds that prevents viewing.
  *
  * @remarks
  * A field's kind specifies how many children it permits, not which node types those children can have.
- * For example, a {@link SchemaStatics.required | required field} (`"Value"`) must have exactly one child.
- * An {@link SchemaStatics.optional | optional field} (`"Optional"`) can have zero or one child.
+ * For example, a {@link SchemaStatics.required | required field} must have exactly one child.
+ * An {@link SchemaStatics.optional | optional field} can have zero or one child.
  * If you change between these field kinds, you change whether a child can be absent.
+ *
+ * A staged optional field in the view is compatible with a required field in the stored schema.
+ * This transition does not produce a field-kind discrepancy.
+ * Differences in allowed node types can still prevent viewing and are reported separately.
+ * Whether an upgrade is permitted is checked separately and reported through {@link SchemaUpgradeIncompatibility}.
  * @sealed @beta
  */
 export type SchemaFieldKindDiscrepancy = {
@@ -1076,11 +1081,13 @@ export type SchemaValueSchemaDiscrepancy = {
 	 */
 	readonly nodeType: string;
 	/**
-	 * The value schema required by the view, or undefined when it does not constrain values.
+	 * The value schema required by the view.
+	 * Current leaf schemas specify a concrete value type, such as `"Number"` or `"String"`.
 	 */
 	readonly view: string | undefined;
 	/**
-	 * The value schema recorded in the stored schema, or undefined when it does not constrain values.
+	 * The value schema recorded in the stored schema.
+	 * Current leaf schemas specify a concrete value type, such as `"Number"` or `"String"`.
 	 */
 	readonly stored: string | undefined;
 };
@@ -1235,11 +1242,13 @@ export type SchemaUpgradeValueSchemaIncompatibility = {
 	 */
 	readonly nodeType: string;
 	/**
-	 * The proposed value schema, or undefined when it does not constrain values.
+	 * The proposed value schema.
+	 * Current leaf schemas specify a concrete value type, such as `"Number"` or `"String"`.
 	 */
 	readonly proposed: string | undefined;
 	/**
-	 * The stored value schema, or undefined when it does not constrain values.
+	 * The stored value schema.
+	 * Current leaf schemas specify a concrete value type, such as `"Number"` or `"String"`.
 	 */
 	readonly stored: string | undefined;
 };
