@@ -10,9 +10,7 @@ import path from "node:path";
 import execa from "execa";
 import { afterEach, beforeEach, describe, it } from "mocha";
 
-// Exercise the real CLI, not just the Markdown plugin.
-// Author-written headings must fit beneath generated change titles without taking over the document outline.
-describe("generate:releaseNotes heading normalization", () => {
+describe("generate:releaseNotes", () => {
 	let testDir: string;
 
 	// Provide a minimal release group, workspace, and configuration for normal CLI discovery.
