@@ -337,8 +337,8 @@ export type DataStoreRegistry<out T = unknown> = Registry<Promise<DataStoreKind<
  *
  * 1. The `@legacy @beta` "encapsulated API", which despite its name is problematic for leaking lots of Fluid Framework implementation details.
  * 2. The `@public` "declarative API" in `@fluidframework/fluid-static`, which hides the underlying loader and runtime abstractions,
- * but makes some opinionated choices about how the root of the container is setup, and has limited expressiveness:
- * there is no viable path for existing documents made with the "encapsulated API" to migrate to the "declarative API".
+ * but makes some opinionated choices about how the root of the container is setup, and has limited expressiveness.
+ * As a result of these limitations, there is no viable path for existing documents made with the "encapsulated API" to migrate to the "declarative API".
  * 3. The `@alpha` "ServiceClient" API, aims to provide the best of both APIs:
  * the flexibility to work with existing documents while encapsulating Fluid Framework details, and being simple and easy to use.
  * It is intended as a path forward for users of either of the other APIs, eventually to replace both of them.
