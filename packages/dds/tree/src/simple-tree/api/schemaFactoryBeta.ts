@@ -35,7 +35,7 @@ export interface SchemaStaticsBeta {
 	 * This allows for an incremental rollout of a schema change to add a {@link TreeNodeSchema} to an {@link AllowedTypes} without breaking cross version collaboration.
 	 * A guide on this process can be found here: https://fluidframework.com/docs/data-structures/tree/schema-evolution/allowed-types-rollout
 	 *
-	 * Staging separates the view's ability to handle a type from the document's permission to store it.
+	 * Staging separates the view's ability to handle a type from whether the document allows it to be stored.
 	 * By default, {@link TreeView.initialize} creates a document that does not allow the staged type at that location, and {@link TreeView.upgradeSchema} does not add it where it is not yet allowed.
 	 * The view can handle either stored state, but writing a value of the staged type is rejected until the document permits it.
 	 *
@@ -45,7 +45,7 @@ export interface SchemaStaticsBeta {
 	 * The document then permits writing values of that type at the declared location.
 	 *
 	 * Once the stored schema permits the type, a view that still stages it can read and write those values.
-	 * Subsequent upgrades preserve that permission at the same location, so turning a feature flag off does not remove support from documents already upgraded.
+	 * Subsequent upgrades preserve that already-enabled upgrade at the same location, so turning a feature flag off does not remove support from documents already upgraded.
 	 *
 	 * For recursive schemas, use {@link SchemaStaticsBeta.stagedRecursive} instead.
 	 * It offers equivalent runtime behavior with relaxed compile-time typing for recursive type.

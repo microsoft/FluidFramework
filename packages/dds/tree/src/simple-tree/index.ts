@@ -153,7 +153,7 @@ export {
 	comparePersistedSchema,
 	type ConciseTree,
 	checkSchemaCompatibility,
-	getViewBlockers,
+	getSchemaIncompatibilityDetails,
 	isSchemaUpgradeAllowed,
 	type Unenforced,
 	type System_Unsafe,

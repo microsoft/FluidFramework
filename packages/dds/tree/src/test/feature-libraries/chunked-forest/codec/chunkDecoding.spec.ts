@@ -753,7 +753,10 @@ describe("chunkDecoding", () => {
 		it("rejects malformed uniform data", () => {
 			const shapes: EncodedChunkShape[] = [{ a: 1 }, { c: { type: "number", value: true } }];
 			assert.throws(() => decodeField(shapes, [0, [{}]]));
-			assert.throws(() => decodeField(shapes, [0, 2]), /expected data/);
+			assert.throws(
+				() => decodeField(shapes, [0, 2]),
+				validateAssertionError(/expected data/),
+			);
 			assert.throws(
 				() =>
 					decodeField(
@@ -765,7 +768,7 @@ describe("chunkDecoding", () => {
 						],
 						[0, [1, 2, 3]],
 					),
-				/incomplete uniform chunk data/,
+				validateAssertionError(/incomplete uniform chunk data/),
 			);
 		});
 	});

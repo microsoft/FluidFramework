@@ -15,7 +15,7 @@ import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js"
 import { NodeKind } from "../core/index.js";
 import { allowsRepoSuperset, defaultSchemaPolicy } from "../../feature-libraries/index.js";
 import { resolveStoredSchemaGenerationOptions } from "../toStoredSchema.js";
-import { getSchemaUpgradeCandidate, type TreeSchema } from "../treeSchema.js";
+import { getSchemaUpgradeCandidate, toInitialSchema, type TreeSchema } from "../treeSchema.js";
 
 import {
 	getDiscrepanciesInAllowedContent,
@@ -33,7 +33,7 @@ import type { SchemaCompatibilityStatusAlpha, SchemaDiscrepancy } from "./tree.j
  * @param storedSchema - The stored schema to check against the view.
  * @returns The viewing blockers, or `undefined` if `viewSchema` can view `storedSchema` as-is.
  */
-export function getViewBlockers(
+export function getSchemaIncompatibilityDetails(
 	viewSchema: TreeSchema,
 	storedSchema: TreeStoredSchema,
 ): readonly SchemaDiscrepancy[] | undefined {
@@ -60,7 +60,7 @@ export function isSchemaUpgradeAllowed(
 ): boolean {
 	return (
 		allowsRepoSuperset(defaultSchemaPolicy, storedSchema, candidate) &&
-		getViewBlockers(viewSchema, candidate) === undefined
+		getSchemaIncompatibilityDetails(viewSchema, candidate) === undefined
 	);
 }
 
@@ -207,13 +207,15 @@ export function checkSchemaCompatibility(
 		configuredPolicy,
 	);
 
-	// The upgrade must preserve existing permissions and allow this view to read and edit the resulting schema.
+	// The upgrade must continue to allow all content permitted by the stored schema and let this view read and edit the resulting schema.
 	const canUpgrade = isSchemaUpgradeAllowed(viewSchema, stored, wouldUpgradeTo);
 
-	// If true, then upgrading has no effect on what can be stored in the document.
-	// TODO: This should likely be changed to indicate up a schema upgrade would be a no-op, including stored schema metadata.
+	// `isEquivalent` (deprecated) compares the view's generated schema, independently of upgrades already enabled in this document.
+	const viewStoredSchema = toInitialSchema(viewSchema.root, configuredPolicy);
 	const isEquivalent =
-		canView && canUpgrade && allowsRepoSuperset(policy, wouldUpgradeTo, stored);
+		canView &&
+		allowsRepoSuperset(policy, stored, viewStoredSchema) &&
+		allowsRepoSuperset(policy, viewStoredSchema, stored);
 
 	return {
 		canView,

@@ -43,7 +43,7 @@ export interface StagedSchemaUpgradePolicy {
  * Use the properties and methods on this object to obtain staged-schema generation options
  * for different scenarios:
  *
- * - {@link StagedSchemaUpgradePolicyFactory.restrictive} — no new staged permissions (default)
+ * - {@link StagedSchemaUpgradePolicyFactory.restrictive} — no new staged upgrades (default)
  *
  * - {@link StagedSchemaUpgradePolicyFactory.permissive} — all staged upgrades enabled
  *
@@ -54,7 +54,7 @@ export interface StagedSchemaUpgradePolicy {
  * // Enable specific upgrades:
  * const options = StagedSchemaUpgradePolicy.enabledStagedUpgrades(myUpgrade);
  *
- * // Use restrictive (default, no new staged permissions):
+ * // Use restrictive (default, no new staged upgrades):
  * const options = StagedSchemaUpgradePolicy.restrictive;
  *
  * // Use permissive (all staged upgrades, useful for testing):
@@ -66,13 +66,13 @@ export interface StagedSchemaUpgradePolicy {
  */
 export interface StagedSchemaUpgradePolicyFactory {
 	/**
-	 * Restrictive policy — introduces no new staged permissions to the stored schema.
+	 * Restrictive policy — enables no new staged upgrades.
 	 *
 	 * @remarks
 	 * Use this default policy when a client should not introduce any staged changes.
 	 * New documents then exclude staged allowed types and require staged-optional fields.
 	 * Existing documents may already allow those types or missing fields because another client enabled them.
-	 * Upgrades preserve those existing permissions, so selecting this policy does not undo another client's rollout.
+	 * Already-enabled upgrades are preserved, so selecting this policy does not undo another client's rollout.
 	 */
 	readonly restrictive: StagedSchemaUpgradePolicy;
 
@@ -84,7 +84,7 @@ export interface StagedSchemaUpgradePolicyFactory {
 	 * future document shapes before enabling staged upgrades broadly.
 	 *
 	 * With this policy, a newly initialized document allows every staged type and treats every staged-optional field as optional.
-	 * For an existing document, an upgrade adds whichever of those permissions are still missing while preserving permissions already stored.
+	 * For an existing document, this policy enables any remaining staged upgrades while preserving those already enabled.
 	 */
 	readonly permissive: StagedSchemaUpgradePolicy;
 
@@ -96,7 +96,7 @@ export interface StagedSchemaUpgradePolicyFactory {
 	 * In a new document, the corresponding staged types are included and staged-optional fields become optional; unselected changes remain disabled.
 	 *
 	 * In an existing document, unselected changes may already be enabled.
-	 * An upgrade preserves those permissions while adding the selected changes.
+	 * Those already-enabled upgrades are preserved while the selected changes are enabled.
 	 *
 	 * Passing no tokens selects no new staged changes and is equivalent to {@link StagedSchemaUpgradePolicyFactory.restrictive}.
 	 *

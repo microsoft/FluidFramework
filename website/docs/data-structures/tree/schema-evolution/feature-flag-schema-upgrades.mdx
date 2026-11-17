@@ -27,7 +27,7 @@ By default, new documents exclude those types and keep those fields required, so
 
 An existing document may already permit the change because another client enabled it.
 Upgrades preserve that document's enabled types and optionality, even when the current client's policy does not enable them.
-The policy therefore controls which new permissions a client may introduce, not which existing permissions it may remove.
+The policy therefore controls which new staged upgrades a client may enable, not which existing upgrades it may remove.
 
 With `TreeViewConfigurationAlpha`, you can selectively enable specific staged upgrades at view construction time:
 
@@ -56,7 +56,7 @@ const view = tree.viewWith(
 When a view is constructed with enabled staged upgrades:
 
 - <ApiLink package="fluid-framework" api="(TreeViewAlpha:interface).initialize">`initialize()`</ApiLink> includes the enabled staged changes in the new document's stored schema.
-- <ApiLink package="fluid-framework" api="TreeView.upgradeSchema">`upgradeSchema()`</ApiLink> adds them when upgrading an existing document, while preserving any existing staged permissions in the document.
+- <ApiLink package="fluid-framework" api="TreeView.upgradeSchema">`upgradeSchema()`</ApiLink> enables them when upgrading an existing document, while preserving any already-enabled staged upgrades.
 - `compatibility` reflects the enabled upgrades when determining what actions are possible.
 
 The upgrade set is fixed at view construction time and cannot be changed afterwards.
@@ -109,7 +109,7 @@ import { StagedSchemaUpgradePolicy } from "@fluidframework/tree/alpha";
 function openDocument(tree, featureFlags) {
     const stagedUpgradePolicy = featureFlags.enableRgbColors
         ? StagedSchemaUpgradePolicy.enabledStagedUpgrades(rgbUpgrade)
-        : undefined; // Restrictive: no new staged permissions; existing ones are preserved.
+        : undefined; // Restrictive: no new staged upgrades; existing ones are preserved.
 
     const view = tree.viewWith(
         new TreeViewConfigurationAlpha({
@@ -176,7 +176,7 @@ const config = new TreeViewConfiguration({ schema: Board });
 Once a document's stored schema has been upgraded, it cannot be downgraded.
 Turning the feature flag off must therefore stop new enablement rather than undo enablement in existing documents.
 With the flag off, this client's policy excludes `RgbColor` from new documents and does not add it to documents that still permit only strings.
-For a document that already permits `RgbColor`, however, `upgradeSchema()` retains that permission while applying any other compatible additions.
+For a document that already permits `RgbColor`, however, `upgradeSchema()` preserves that enabled upgrade while applying any other compatible additions.
 
 This makes a feature-flag rollback safe only while the client retains the staged reading support:
 
@@ -214,7 +214,7 @@ The query only reports the stored state; it does not perform the upgrade.
     Supplement them with the stored-state tests described below.
 
 - **Test the stored states your rollout can produce.**
-  Different feature-flag combinations can produce different stored permissions for the same view schema.
+  Different feature-flag combinations can enable different staged upgrades for the same view schema.
   Compatibility snapshots currently assume restrictive staging, so they do not exercise every enabled or partially enabled state.
   Cover those states with [live-document tests](./testing-schema-upgrades.mdx), including upgrades by clients whose flags are off.
 

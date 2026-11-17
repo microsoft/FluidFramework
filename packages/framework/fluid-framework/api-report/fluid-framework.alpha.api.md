@@ -395,6 +395,12 @@ export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutp
 export type DataStoreRegistry<out T = unknown> = Registry<Promise<DataStoreKind<T>>>;
 
 // @alpha
+export function dataStoreRegistryFromIterable<T = unknown>(entries: Iterable<DataStoreKind<T> | {
+    type: string;
+    kind: () => Promise<DataStoreKind<T>>;
+}>): DataStoreRegistry<T>;
+
+// @alpha
 export function decodeSchemaCompatibilitySnapshot(encodedSchema: JsonCompatibleReadOnly, validator?: FormatValidator): SimpleTreeSchema;
 
 // @public @sealed @system
@@ -2243,6 +2249,7 @@ export interface SharedTreeFormatOptions {
 
 // @alpha @input
 export interface SharedTreeOptions extends SharedTreeOptionsBeta, Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions> {
+    readonly enableDetachedRootEditing?: boolean;
     readonly enableSharedBranches?: boolean;
     readonly retainHistory?: boolean | number;
     shouldEncodeIncrementally?: IncrementalEncodingPolicy;

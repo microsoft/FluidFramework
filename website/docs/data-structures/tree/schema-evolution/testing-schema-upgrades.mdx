@@ -31,7 +31,6 @@ But how do you create such a document in a test?
 Simply initializing a document with the staged schema does not produce that future state: the default policy still excludes `RgbColor`.
 Calling `upgradeSchema()` under that same policy does not add it either.
 To create the upgraded state for a test, use **runtime schema upgrades** to explicitly enable the token when constructing the view.
-You can then test whether a client whose flag is off can use that document and preserve its enabled type during later upgrades.
 
 ## Creating Test Documents with Future Schema
 

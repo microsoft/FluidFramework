@@ -1,5 +1,13 @@
 # @fluidframework/container-runtime
 
+## 3.13.0
+
+### Minor Changes
+
+- Datastore attachment no longer emits duplicate attached notifications ([#28740](https://github.com/microsoft/FluidFramework/pull/28740)) [30ac74fe56e](https://github.com/microsoft/FluidFramework/commit/30ac74fe56e7c9d57315c9a7cc14eb86e883ef11)
+
+  The container runtime now calls a local datastore channel's `setAttachState(Attached)` once when the datastore becomes attached, instead of twice. This prevents duplicate `"attached"` events from the standard datastore runtime. Repeated requests to mark the same datastore as attached continue to produce no additional notifications.
+
 ## 3.12.0
 
 ### Minor Changes

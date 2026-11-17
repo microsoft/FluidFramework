@@ -151,10 +151,13 @@ export class SchemaComponent implements TransitiveSchemaInfo {
 	 */
 	public static fromSchema(schema: TreeNodeSchema): SchemaComponent {
 		const component = getOrCreateSchemaComponent(schema);
-		assert(
-			component.definitions !== undefined,
-			0xd9f /* Expected a validated schema component */,
-		);
+		// Identifiers reachable from a component were validated if they were when building definitions which include them.
+		if (!componentsWithValidatedIdentifiers.has(component)) {
+			assert(
+				component.definitions !== undefined,
+				0xd9f /* Expected a validated schema component */,
+			);
+		}
 		return component;
 	}
 
@@ -458,8 +461,8 @@ export interface SchemaUpgradeCandidate {
  * Composes a candidate upgrade target from the view schema, existing stored schema, and configured staged-upgrade policy.
  *
  * @remarks
- * Start with the stored schema selected by the view and its policy, then combine it with existing permissions at corresponding fields.
- * This separates the policy's decision to introduce a permission from the need to preserve it once enabled.
+ * Start with the stored schema selected by the view and its policy, then combine it with the existing stored field schemas.
+ * This separates the policy's decision to enable a staged upgrade from the need to preserve one already enabled.
  * Construction follows these rules:
  *
  * - Matching fields retain their stored allowed types and add types selected by the view and supplied policy.
@@ -467,16 +470,16 @@ export interface SchemaUpgradeCandidate {
  * - Shared tokens do not make preservation global: an enabled change remains at its stored field, while other fields gain it only if the policy enables the token.
  * - For each included object type whose view allows unknown optional fields, omitted stored optional fields are retained with their allowed types and metadata.
  * - Existing node definitions referenced by retained fields are included, along with the definitions they reference.
- * Types known to the view use their current declarations with field permissions composed as above; types unknown to the view retain their stored definitions.
+ * Types known to the view use their current declarations with allowed types and optionality composed as above; types unknown to the view retain their stored definitions.
  *
  * The result is a proposal, not an approved upgrade.
  * Retaining an allowed type can still leave a candidate that the view cannot read, and other schema differences can still violate upgrade rules.
- * Before applying the candidate, callers must use {@link isSchemaUpgradeAllowed} to check both preservation of stored permissions and read/write compatibility with the view.
+ * Before applying the candidate, callers must use {@link isSchemaUpgradeAllowed} to check that all previously allowed content remains allowed and that the view can read and edit documents using the candidate.
  * They remain responsible for deciding whether that permitted upgrade would make any change.
  *
  * @param viewSchema - The view schema for which the upgrade target is being constructed.
  * @param storedSchema - The existing stored schema from which to construct the upgrade target.
- * @param policy - The policy that selects new staged permissions. Existing permissions are preserved independently at each location.
+ * @param policy - The policy that selects new staged upgrades. Already-enabled upgrades are preserved independently at each location.
  *
  * @returns The candidate stored schema and the locations of retained unknown optional fields.
  */
@@ -524,7 +527,7 @@ export function getSchemaUpgradeCandidate(
 				}
 			}
 
-			// For each field, combine its existing stored permissions with the additions requested by the view and policy.
+			// For each field, preserve its already-enabled upgrades while adding the schema changes requested by the view and policy.
 			// Preserving an already-enabled change in one field must not enable it in other fields that share the same token.
 			//
 			// Arrays also use stored object fields; their element types follow the same composition rule.
@@ -562,7 +565,10 @@ export function getSchemaUpgradeCandidate(
 					}
 				}
 			} else {
-				assert(candidate instanceof LeafNodeStoredSchema, "Unsupported stored node schema");
+				assert(
+					candidate instanceof LeafNodeStoredSchema,
+					0xda7 /* Unsupported stored node schema */,
+				);
 			}
 		}
 
@@ -584,7 +590,7 @@ export function getSchemaUpgradeCandidate(
  *
  * @remarks
  * The stored representation is shared by objects and arrays, but their view rules differ.
- * Both compose permissions for declared fields; only object views that allow unknown optional fields can also retain omitted fields.
+ * Both preserve enabled upgrades for declared fields; only object views that allow unknown optional fields can also retain omitted fields.
  *
  * Field maps may belong to cached schemas, so this helper copies only the parts it changes rather than modifying either input.
  * It handles this node's fields only; the caller must follow their type references and validate the complete candidate.
@@ -610,7 +616,7 @@ function composeObjectNodeSchema(
 		const propertyKey = viewObject?.storedKeyToPropertyKey.get(fieldKey);
 
 		// The candidate already declares this stored field.
-		// Combine its requested permissions with the existing ones so disabled staging cannot narrow the field.
+		// Preserve already-enabled upgrades alongside the requested changes so disabled staging cannot narrow the field.
 		if (candidateField !== undefined) {
 			const composed = composeFieldSchema(
 				candidateField,
@@ -647,7 +653,7 @@ function composeObjectNodeSchema(
 }
 
 /**
- * Composes the shared entry field of a stored map node with the candidate's requested permissions.
+ * Combines the shared entry field schema of a stored map node with the candidate's entry field schema.
  *
  * @remarks
  * All map entries use the same field schema, so preserving its allowed types preserves them for every entry.
@@ -855,8 +861,21 @@ function materializeDefinitions(roots: Iterable<SchemaComponent>): TreeSchema["d
 			components.add(dependency);
 		}
 	}
+	// Every component visited has all the components it reaches in `components`, whose identifiers are unique.
+	for (const component of components) {
+		componentsWithValidatedIdentifiers.add(component);
+	}
 	return definitions;
 }
+
+/**
+ * Components whose reachable schemas are known to have unique identifiers, because definitions including them all were built.
+ * @remarks
+ * {@link SchemaComponent.fromSchema} validates a component's reachable identifiers by building its definitions.
+ * A component in this set does not need to, which avoids building a map of the reachable definitions
+ * for each node schema first used in a tree whose schema was validated as a whole.
+ */
+const componentsWithValidatedIdentifiers = new WeakSet<SchemaComponent>();
 
 /**
  * Adds a schema to an identity-deduplicated graph, rejecting identifier collisions.
