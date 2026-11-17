@@ -433,7 +433,7 @@ describe("snapshotCompatibilityChecker", () => {
 				createTreeSchema(historical.schema),
 				stored,
 				StagedSchemaUpgradePolicy.restrictive,
-			).schema,
+			),
 			stored,
 		);
 

@@ -16,7 +16,7 @@ import {
 	type TreeStoredSchema,
 } from "../core/index.js";
 import { defaultSchemaPolicy, FieldKinds } from "../feature-libraries/index.js";
-import { compareStrings, getOrCreate, oneFromIterable } from "../util/index.js";
+import { getOrCreate, oneFromIterable } from "../util/index.js";
 
 import {
 	Context,
@@ -417,47 +417,6 @@ export function toUpgradeSchema(
 }
 
 /**
- * Identifies an optional field retained by the stored object schema but absent from its corresponding view schema.
- */
-export interface RetainedUnknownOptionalField {
-	/**
-	 * The stored identifier of the object type that contains the field.
-	 */
-	readonly nodeType: TreeNodeSchemaIdentifier;
-
-	/**
-	 * The stored field key of the retained unknown optional field.
-	 *
-	 * @remarks
-	 * This key corresponds to the field as stored in the schema, not necessarily the property name used in application code.
-	 */
-	readonly fieldKey: FieldKey;
-}
-
-/**
- * A candidate stored schema and the unknown optional fields retained while constructing it.
- *
- * @remarks
- * This result describes a proposed upgrade that has not yet been validated.
- * Before applying it, callers must use {@link isSchemaUpgradeAllowed} to check that the proposed schema still permits all content allowed by the existing stored schema and that the requesting view can read and edit documents using it.
- */
-export interface SchemaUpgradeCandidate {
-	/**
-	 * The complete candidate stored schema, not a patch or an applied change.
-	 */
-	readonly schema: TreeStoredSchema;
-
-	/**
-	 * Stored optional fields retained on object types declared by the view, but omitted from those view declarations.
-	 *
-	 * @remarks
-	 * This records the locations retained during construction, independently of whether the complete candidate passes upgrade validation.
-	 * Each location appears once, sorted by node identifier and then stored field key; the array is empty when none are retained.
-	 */
-	readonly retainedUnknownOptionalFields: readonly RetainedUnknownOptionalField[];
-}
-
-/**
  * Composes a candidate upgrade target from the view schema, existing stored schema, and configured staged-upgrade policy.
  *
  * @remarks
@@ -481,13 +440,13 @@ export interface SchemaUpgradeCandidate {
  * @param storedSchema - The existing stored schema from which to construct the upgrade target.
  * @param policy - The policy that selects new staged upgrades. Already-enabled upgrades are preserved independently at each location.
  *
- * @returns The candidate stored schema and the locations of retained unknown optional fields.
+ * @returns The complete candidate stored schema.
  */
 export function getSchemaUpgradeCandidate(
 	viewSchema: TreeSchema,
 	storedSchema: TreeStoredSchema,
 	policy: StagedSchemaUpgradePolicy,
-): SchemaUpgradeCandidate {
+): TreeStoredSchema {
 	const initial = toStoredSchema(viewSchema.root, policy);
 
 	return runSchemaInitialization(() => {
@@ -498,7 +457,6 @@ export function getSchemaUpgradeCandidate(
 		);
 		const nodeSchema = new Map(initial.nodeSchema);
 		const pending = new Set([...nodeSchema.keys(), ...rootFieldSchema.types]);
-		const retainedUnknownOptionalFields: RetainedUnknownOptionalField[] = [];
 
 		// Iterate over all reachable node types, including those added while processing fields.
 		// Iteration visits newly added identifiers; duplicates are ignored, so recursive references do not repeat work.
@@ -537,13 +495,7 @@ export function getSchemaUpgradeCandidate(
 			) {
 				const viewObject =
 					viewNode !== undefined && isObjectNodeSchema(viewNode) ? viewNode : undefined;
-				candidate = composeObjectNodeSchema(
-					candidate,
-					storedNode,
-					viewObject,
-					identifier,
-					retainedUnknownOptionalFields,
-				);
+				candidate = composeObjectNodeSchema(candidate, storedNode, viewObject);
 			} else if (
 				storedNode instanceof MapNodeStoredSchema &&
 				candidate instanceof MapNodeStoredSchema
@@ -572,16 +524,7 @@ export function getSchemaUpgradeCandidate(
 			}
 		}
 
-		// Report retained fields in a consistent order, regardless of the order in which schema traversal discovers them.
-		// Sort first by stored node identifier, then by stored field key for fields on the same node type.
-		retainedUnknownOptionalFields.sort(
-			(a, b) =>
-				compareStrings(a.nodeType, b.nodeType) || compareStrings(a.fieldKey, b.fieldKey),
-		);
-		return {
-			schema: { rootFieldSchema, nodeSchema },
-			retainedUnknownOptionalFields,
-		};
+		return { rootFieldSchema, nodeSchema };
 	});
 }
 
@@ -598,8 +541,6 @@ export function getSchemaUpgradeCandidate(
  * @param candidate - The node produced by converting the view or retaining an unknown stored type.
  * @param storedNode - The existing stored definition of the same node type.
  * @param viewObject - The view's object declaration, or `undefined` if the type is unknown or is not an object.
- * @param identifier - The stored node identifier used to report retained field locations.
- * @param retainedUnknownOptionalFields - The report to which newly retained unknown optional field locations are appended.
  *
  * @returns The original candidate if unchanged, or a new node with the composed fields and candidate metadata.
  */
@@ -607,8 +548,6 @@ function composeObjectNodeSchema(
 	candidate: ObjectNodeStoredSchema,
 	storedNode: ObjectNodeStoredSchema,
 	viewObject: ObjectNodeSchemaPrivate | undefined,
-	identifier: TreeNodeSchemaIdentifier,
-	retainedUnknownOptionalFields: RetainedUnknownOptionalField[],
 ): ObjectNodeStoredSchema {
 	let fields: Map<FieldKey, TreeFieldStoredSchema> | undefined;
 	for (const [fieldKey, field] of storedNode.objectNodeFields) {
@@ -636,12 +575,11 @@ function composeObjectNodeSchema(
 			propertyKey === undefined
 		) {
 			// The view omits this optional field but permits unknown optional fields.
-			// Retain the stored definition unchanged and report its location instead of composing a declared field.
+			// Retain the stored definition unchanged instead of composing a declared field.
 			// `candidate` may still reference a node from `toStoredSchema`'s cached result.
 			// Copy its fields before adding document-specific retained fields, so the cached conversion remains unchanged.
 			fields ??= new Map(candidate.objectNodeFields);
 			fields.set(fieldKey, field);
-			retainedUnknownOptionalFields.push({ nodeType: identifier, fieldKey });
 		}
 	}
 
