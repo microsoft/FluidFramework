@@ -170,7 +170,7 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 			}
 		}
 
-		// Normalizes changeset headings to ensure they do not conflict with the generated release note headings, which reserve levels 1-3.
+		// Normalizes headings in changeset body to ensure they do not conflict with the generated release note headings, which reserve levels 1-3.
 		const changesetBodyProcessor = remark().use(remarkGfm).use(normalizeReleaseNoteHeadings);
 
 		const body = new StringBuilder();
