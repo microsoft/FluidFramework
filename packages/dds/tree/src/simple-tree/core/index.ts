@@ -12,6 +12,7 @@ export {
 	type InnerNode,
 	tryDisposeTreeNode,
 	getInnerNode,
+	getInnerNodeFromTarget,
 	treeNodeFromAnchor,
 	getSimpleNodeSchemaFromInnerNode,
 	SimpleContextSlot,

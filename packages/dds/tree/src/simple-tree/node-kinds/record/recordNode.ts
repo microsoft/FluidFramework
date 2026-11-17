@@ -23,6 +23,7 @@ import {
 	typeSchemaSymbol,
 	type UnhydratedFlexTreeNode,
 	getInnerNode,
+	getInnerNodeFromTarget,
 	getKernel,
 	type InternalTreeNode,
 	type NodeSchemaMetadata,
@@ -108,7 +109,7 @@ function createRecordNodeProxy(
 			}
 
 			if (typeof key === "string") {
-				const innerNode = getInnerNode(receiver);
+				const innerNode = getInnerNodeFromTarget(target, receiver);
 				const field = innerNode.tryGetField(brand(key));
 				if (field !== undefined) {
 					return tryGetTreeNodeForField(field);

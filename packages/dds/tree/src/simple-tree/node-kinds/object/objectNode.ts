@@ -40,6 +40,7 @@ import {
 	type TreeNode,
 	type UnhydratedFlexTreeNode,
 	getInnerNode,
+	getInnerNodeFromTarget,
 	getOrCreateNodeFromInnerNode,
 	type NodeSchemaMetadata,
 	type ImplicitAllowedTypes,
@@ -328,7 +329,7 @@ function createProxyHandler(
 			}
 			const fieldInfo = schema.flexKeyMap.get(propertyKey);
 			if (fieldInfo !== undefined) {
-				const flexNode = getInnerNode(proxy);
+				const flexNode = getInnerNodeFromTarget(target, proxy);
 				debugAssert(() => !flexNode.context.isDisposed() || "FlexTreeNode is disposed");
 				if (flexNode.tryGetSingleContent !== undefined) {
 					// Read the content without creating a field object for it.

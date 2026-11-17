@@ -108,6 +108,47 @@ describe("simple-tree proxies", () => {
 		});
 	});
 
+	describeHydration("reading content through the proxy", (init) => {
+		const sfa = new SchemaFactoryAlpha("proxyReads");
+		class Child extends sfa.object("Child", { content: sfa.number }) {}
+		class Items extends sfa.array("Items", Child) {}
+		class Values extends sfa.record("Values", sfa.number) {}
+		class Root extends sfa.object("Root", {
+			object: Child,
+			items: Items,
+			values: Values,
+		}) {}
+		const content = { object: { content: 1 }, items: [{ content: 2 }], values: { a: 3 } };
+
+		it("reads object properties, array items and record entries of the node itself", () => {
+			const root = init(Root, content);
+			assert.equal(root.object.content, 1);
+			assert.equal(root.items[0]?.content, 2);
+			assert.equal(root.items[1], undefined);
+			assert.equal(root.items.length, 1);
+			assert.equal(root.values.a, 3);
+		});
+
+		it("rejects reads through objects which inherit from a node", () => {
+			const root = init(Root, content);
+			const inheritsObject = Object.create(root.object) as Child;
+			assert.throws(
+				() => inheritsObject.content,
+				validateAssertionError(/Expected tree node to have kernel/),
+			);
+			const inheritsArray = Object.create(root.items) as Items;
+			assert.throws(
+				() => inheritsArray[0],
+				validateAssertionError(/Expected tree node to have kernel/),
+			);
+			const inheritsRecord = Object.create(root.values) as Values;
+			assert.throws(
+				() => inheritsRecord.a,
+				validateAssertionError(/Expected tree node to have kernel/),
+			);
+		});
+	});
+
 	it("isTreeNode - inserted", () => {
 		const config = new TreeViewConfiguration({ schema: Schema });
 

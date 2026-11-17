@@ -175,7 +175,9 @@ export class TreeNodeKernel {
 			writable: false,
 			configurable: true,
 		});
-		assert(attached && tryGetKernel(node) === this, "Node must hold its kernel");
+		assert(attached, "Node must hold its kernel");
+		// Reading the kernel back checks that a proxy node forwards it to its target: a slow read, so only in debug builds.
+		debugAssert(() => tryGetKernel(node) === this || "Node must hold its kernel");
 
 		if (innerNode instanceof UnhydratedFlexTreeNode) {
 			// Unhydrated case
@@ -751,6 +753,20 @@ export function getSimpleContextFromInnerNode(innerNode: InnerNode): Context {
 export function getInnerNode(treeNode: TreeNode): InnerNode {
 	const kernel = getKernel(treeNode);
 	return kernel.getInnerNode();
+}
+
+/**
+ * {@link getInnerNode} for a node implemented as a proxy, called from one of the proxy's traps.
+ * @remarks
+ * Reads the kernel from the proxy's target, which holds it, so the proxy's traps do not run again.
+ * @param target - The proxy's target.
+ * @param node - The node (the proxy, or the receiver of a trap) the trap was called for.
+ */
+export function getInnerNodeFromTarget(target: object, node: TreeNode): InnerNode {
+	const kernel = (target as { [kernelSlot]?: unknown })[kernelSlot];
+	return kernel instanceof TreeNodeKernel && kernel.node === node
+		? kernel.getInnerNode()
+		: getInnerNode(node);
 }
 
 /**

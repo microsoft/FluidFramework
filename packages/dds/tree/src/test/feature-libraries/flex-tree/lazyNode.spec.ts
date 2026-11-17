@@ -18,6 +18,7 @@ import {
 	rootFieldKey,
 } from "../../../core/index.js";
 import { Context } from "../../../feature-libraries/flex-tree/context.js";
+import { LazyField } from "../../../feature-libraries/flex-tree/lazyField.js";
 import { LazyTreeNode } from "../../../feature-libraries/flex-tree/lazyNode.js";
 import { withObservation } from "../../../feature-libraries/flex-tree/observer.js";
 import {
@@ -215,6 +216,54 @@ describe("LazyNode", () => {
 			assert.throws(() => item.value);
 			source.dispose();
 			target.dispose();
+		});
+
+		it(`finds known nodes of a sequence only in bounds and only for nodes already read (${name})`, () => {
+			const sf = new SchemaFactory("known-nodes");
+			class Item extends sf.object("Item", { value: sf.number }) {}
+			class Items extends sf.array("Items", Item) {}
+			const view = createIndependentTreeAlpha({ forest }).viewWith(
+				new TreeViewConfiguration({ schema: Items }),
+			);
+			view.initialize([{ value: 0 }, { value: 1 }, { value: 2 }]);
+			const items = view.root;
+			const field = getInnerNode(items).getBoxed(EmptyKey);
+			assert(field instanceof LazyField);
+			const lazy = (node: Item): LazyTreeNode => {
+				const inner = getInnerNode(node);
+				assert(inner instanceof LazyTreeNode);
+				return inner;
+			};
+			assert.equal(field.knownNodeAt(0), undefined);
+			const first = items[0];
+			const third = items[2];
+			assert(first !== undefined && third !== undefined);
+			assert.equal(field.knownNodeAt(0), lazy(first));
+			assert.equal(field.knownNodeAt(1), undefined);
+			assert.equal(field.knownNodeAt(3), undefined);
+
+			// Reading an item already read does not read the array's length.
+			let lengthReads = 0;
+			const lengthGetter =
+				Object.getOwnPropertyDescriptor(LazyField.prototype, "length")?.get ?? assert.fail();
+			Object.defineProperty(field, "length", {
+				get: () => {
+					lengthReads++;
+					return lengthGetter.call(field) as number;
+				},
+				configurable: true,
+			});
+			assert.equal(items[2], third);
+			assert.equal(lengthReads, 0);
+			assert.equal(items[3], undefined);
+			assert.equal(lengthReads, 1);
+
+			items.removeAt(1);
+			assert.equal(field.knownNodeAt(1), lazy(third));
+			assert.equal(field.knownNodeAt(2), undefined);
+			assert.equal(items[2], undefined);
+			assert.equal(items[1], third);
+			view.dispose();
 		});
 
 		describe(`reads after an edit (${name})`, () => {

@@ -353,6 +353,14 @@ export interface FlexTreeSequenceField extends FlexTreeField {
 	atIndex(index: number): FlexTreeUnknownUnboxed;
 
 	/**
+	 * Gets the node at `index`, if it is a node (not a leaf) whose flex tree node already exists, without reading the field's length.
+	 * @returns The node, or undefined if there is no such node (including when `index` is out of bounds).
+	 * @remarks
+	 * Implemented where reading the length of the field can be slower than finding such a node.
+	 */
+	knownNodeAt?(index: number): FlexTreeNode | undefined;
+
+	/**
 	 * Gets a node of this field by its index with unboxing.
 	 * @param index - Zero-based index of the item to retrieve. Negative values are interpreted from the end of the sequence.
 	 *
