@@ -129,7 +129,7 @@ export function ensureExclusiveBasicChunk(
 		}
 		// Splitting can replace and release the original chunk, so read the current array entry.
 		const isolatedChunk = chunks[finalIndexOfChunk] ?? oob();
-		assert(isolatedChunk.topLevelLength === 1, "expected an isolated node");
+		assert(isolatedChunk.topLevelLength === 1, 0xda9 /* expected an isolated node */);
 		const cursor = isolatedChunk.cursor();
 		cursor.firstNode();
 		// Acquire the replacement's owned reference before releasing the array's old reference.
@@ -310,10 +310,26 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 				this.forest.#events.emit("afterRootFieldCreated", destination);
 			},
 			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
+				this.forest.#events.emit("beforeChange");
 				this.attachEdit(source, count, destination);
 			},
 			detach(source: Range, destination: FieldKey, id: DeltaDetachedNodeId): void {
+				this.forest.#events.emit("beforeChange");
 				this.detachEdit(source, destination);
+			},
+			replace(
+				source: FieldKey,
+				range: Range,
+				destination: FieldKey,
+				id: DeltaDetachedNodeId,
+			): void {
+				this.forest.#events.emit("beforeChange");
+				assert(
+					source !== destination,
+					0xdaa /* Replacement source and destination must differ */,
+				);
+				this.detachEdit(range, destination);
+				this.attachEdit(source, range.end - range.start, range.start);
 			},
 			/**
 			 * Attaches the range into the current field by transferring it from the given source path.
@@ -322,7 +338,6 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 			 * @param destination - The index in the current field at which to attach the content.
 			 */
 			attachEdit(source: FieldKey, count: number, destination: PlaceIndex): void {
-				this.forest.#events.emit("beforeChange");
 				const parent = this.getParent();
 				assert(
 					parent.mutableChunk !== this.forest.roots || parent.key !== source,
@@ -376,7 +391,6 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 				// 2. Uniform chunk is shared: copy it (and parent path as needed), and update the copy.
 				// 3. Fallback to detach then attach (Which will copy parents and convert to basic chunks as needed).
 
-				this.forest.#events.emit("beforeChange");
 				const parent = this.getParent();
 				const sourceField = parent.mutableChunk.fields.get(parent.key) ?? [];
 				assert(source.start <= source.end, 0xd24 /* Detach range start must not exceed end */);

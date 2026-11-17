@@ -27,7 +27,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { Container } from "../container.js";
+import { asLegacyAlpha, Container } from "../container.js";
 import { Loader } from "../loader.js";
 import type { IPendingDetachedContainerState } from "../serializedStateManager.js";
 
@@ -45,6 +45,38 @@ const documentServiceFactoryFailProxy = failSometimeProxy<
 });
 
 describe("loader unit test", () => {
+	it("serializeAttached rejects detached and attaching containers", async () => {
+		const loader = new Loader({
+			codeLoader: createTestCodeLoaderProxy(),
+			documentServiceFactory: documentServiceFactoryFailProxy,
+			urlResolver: failProxy(),
+			configProvider: {
+				getRawConfig: (name): ConfigTypes => {
+					if (name === "Fluid.Container.DisableCloseOnAttachFailure") {
+						return true;
+					}
+					return name === "Fluid.Container.enableOfflineFull" ? false : undefined;
+				},
+			},
+		});
+		const detached = asLegacyAlpha(await loader.createDetachedContainer({ package: "none" }));
+		for (const includePendingLocalState of [true, false]) {
+			await assert.rejects(
+				detached.serializeAttached({ includePendingLocalState }),
+				/Container must be attached, open, and not disposed/,
+			);
+		}
+		await assert.rejects(detached.attach({ url: "none" }));
+		assert.equal(detached.attachState, AttachState.Attaching);
+		assert.equal(detached.closed, false);
+		for (const includePendingLocalState of [true, false]) {
+			await assert.rejects(
+				detached.serializeAttached({ includePendingLocalState }),
+				/Container must be attached, open, and not disposed/,
+			);
+		}
+	});
+
 	it("rehydrateDetachedContainerFromSnapshot with invalid format", async () => {
 		const loader = new Loader({
 			codeLoader: failProxy(),

@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import {
 	type ChangeAtomIdMap,
+	type DeltaFieldChanges,
 	type RevisionTag,
 	type TaggedChange,
 	makeAnonChange,
@@ -21,8 +22,6 @@ import type {
 	NodeId,
 	ToDelta,
 } from "../feature-libraries/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { FieldChangeDelta } from "../feature-libraries/modular-schema/fieldChangeHandler.js";
 import {
 	forEachInNestedMap,
 	nestedMapFromFlatList,
@@ -206,8 +205,8 @@ function prune<T>(
 
 function toDelta<T>(
 	change: ChangesetWrapper<T>,
-	fieldToDelta: (change: T, deltaFromChild: ToDelta) => FieldChangeDelta,
-): FieldChangeDelta {
+	fieldToDelta: (change: T, deltaFromChild: ToDelta) => DeltaFieldChanges,
+): DeltaFieldChanges {
 	const deltaFromChild = (id: NodeId) => {
 		const node = tryGetFromNestedMap(change.nodes, id.revision, id.localId);
 		assert(node !== undefined, "Unknown node ID");
