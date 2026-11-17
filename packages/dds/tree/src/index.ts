@@ -122,6 +122,8 @@ export {
 	type SchemaViewIncompatibility,
 	type SchemaUpgradeIncompatibility,
 	type SchemaDiscrepancy,
+	type SchemaDiscrepancyFieldLocation,
+	type SchemaIncompatibilityReason,
 	type SchemaAllowedTypesDiscrepancy,
 	type SchemaFieldKindDiscrepancy,
 	type SchemaValueSchemaDiscrepancy,

@@ -584,10 +584,7 @@ export interface RunTransactionParamsBeta {
 // @beta @sealed
 export type SchemaAllowedTypesDiscrepancy = {
     readonly mismatch: "allowedTypes";
-    readonly location: "root" | {
-        readonly nodeType: string;
-        readonly fieldKey: string | undefined;
-    };
+    readonly location: SchemaDiscrepancyFieldLocation;
     readonly view: readonly string[];
     readonly stagedView?: readonly string[];
     readonly stored: readonly string[];
@@ -612,6 +609,12 @@ export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus
 
 // @beta @sealed
 export type SchemaDiscrepancy = SchemaAllowedTypesDiscrepancy | SchemaFieldKindDiscrepancy | SchemaValueSchemaDiscrepancy | SchemaNodeKindDiscrepancy;
+
+// @beta @sealed
+export type SchemaDiscrepancyFieldLocation = "root" | {
+    readonly nodeType: string;
+    readonly fieldKey: string | undefined;
+};
 
 // @public @sealed
 export class SchemaFactory<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactory_base {
@@ -675,10 +678,7 @@ export interface SchemaFactoryOptions {
 // @beta @sealed
 export type SchemaFieldKindDiscrepancy = {
     readonly mismatch: "fieldKind";
-    readonly location: "root" | {
-        readonly nodeType: string;
-        readonly fieldKey: string | undefined;
-    };
+    readonly location: SchemaDiscrepancyFieldLocation;
     readonly view: string;
     readonly stored: string;
     readonly viewIsStagedOptional?: true;
@@ -686,6 +686,9 @@ export type SchemaFieldKindDiscrepancy = {
 
 // @public @system
 const schemaIdentifierBrand: unique symbol;
+
+// @beta @sealed
+export type SchemaIncompatibilityReason = string;
 
 // @beta @sealed
 export type SchemaNodeKindDiscrepancy = {
@@ -732,11 +735,8 @@ export class SchemaUpgrade {
 // @beta @sealed
 export type SchemaUpgradeAllowedTypesIncompatibility = {
     readonly mismatch: "allowedTypes";
-    readonly reason: string;
-    readonly location: "root" | {
-        readonly nodeType: string;
-        readonly fieldKey: string | undefined;
-    };
+    readonly reason: SchemaIncompatibilityReason;
+    readonly location: SchemaDiscrepancyFieldLocation;
     readonly proposed: readonly string[];
     readonly stored: readonly string[];
 };
@@ -744,11 +744,8 @@ export type SchemaUpgradeAllowedTypesIncompatibility = {
 // @beta @sealed
 export type SchemaUpgradeFieldKindIncompatibility = {
     readonly mismatch: "fieldKind";
-    readonly reason: string;
-    readonly location: "root" | {
-        readonly nodeType: string;
-        readonly fieldKey: string | undefined;
-    };
+    readonly reason: SchemaIncompatibilityReason;
+    readonly location: SchemaDiscrepancyFieldLocation;
     readonly proposed: string;
     readonly stored: string;
 };
@@ -759,14 +756,14 @@ export type SchemaUpgradeIncompatibility = SchemaUpgradeAllowedTypesIncompatibil
 // @beta @sealed
 export type SchemaUpgradeMissingNodeSchemaIncompatibility = {
     readonly mismatch: "missingNodeSchema";
-    readonly reason: string;
+    readonly reason: SchemaIncompatibilityReason;
     readonly nodeType: string;
 };
 
 // @beta @sealed
 export type SchemaUpgradeNodeKindIncompatibility = {
     readonly mismatch: "nodeKind";
-    readonly reason: string;
+    readonly reason: SchemaIncompatibilityReason;
     readonly nodeType: string;
     readonly proposed: string;
     readonly stored: string;
@@ -775,14 +772,14 @@ export type SchemaUpgradeNodeKindIncompatibility = {
 // @beta @sealed
 export type SchemaUpgradeUnsatisfiedNodeSchemaIncompatibility = {
     readonly mismatch: "nodeSchemaCannotBeSatisfied";
-    readonly reason: string;
+    readonly reason: SchemaIncompatibilityReason;
     readonly nodeType: string;
 };
 
 // @beta @sealed
 export type SchemaUpgradeValueSchemaIncompatibility = {
     readonly mismatch: "valueSchema";
-    readonly reason: string;
+    readonly reason: SchemaIncompatibilityReason;
     readonly nodeType: string;
     readonly proposed: string | undefined;
     readonly stored: string | undefined;
@@ -791,7 +788,7 @@ export type SchemaUpgradeValueSchemaIncompatibility = {
 // @beta @sealed
 export type SchemaUpgradeViewIncompatibility = {
     readonly mismatch: "viewIncompatibleAfterUpgrade";
-    readonly reason: string;
+    readonly reason: SchemaIncompatibilityReason;
     readonly incompatibilities: readonly SchemaViewIncompatibility[];
 };
 
@@ -805,7 +802,7 @@ export type SchemaValueSchemaDiscrepancy = {
 
 // @beta @sealed
 export type SchemaViewIncompatibility = SchemaDiscrepancy & {
-    readonly reason: string;
+    readonly reason: SchemaIncompatibilityReason;
 };
 
 // @public @system

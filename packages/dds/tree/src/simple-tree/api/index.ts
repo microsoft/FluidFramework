@@ -27,6 +27,8 @@ export type {
 	SchemaViewIncompatibility,
 	SchemaUpgradeIncompatibility,
 	SchemaDiscrepancy,
+	SchemaDiscrepancyFieldLocation,
+	SchemaIncompatibilityReason,
 	SchemaAllowedTypesDiscrepancy,
 	SchemaFieldKindDiscrepancy,
 	SchemaValueSchemaDiscrepancy,

@@ -34,6 +34,7 @@ import type {
 	CompatibilityResult,
 	SchemaViewIncompatibility,
 	SchemaUpgradeIncompatibility,
+	SchemaDiscrepancyFieldLocation,
 } from "./tree.js";
 
 /**
@@ -234,7 +235,7 @@ function getPostUpgradeViewIncompatibilities(
 
 function formatDiscrepancyLocation(
 	value: SchemaDiscrepancyLocation,
-): Extract<SchemaViewIncompatibility, { mismatch: "fieldKind" }>["location"] {
+): SchemaDiscrepancyFieldLocation {
 	return value.identifier === undefined
 		? "root"
 		: { nodeType: value.identifier, fieldKey: value.fieldKey };

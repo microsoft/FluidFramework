@@ -947,6 +947,42 @@ export type SchemaDiscrepancy =
 	| SchemaValueSchemaDiscrepancy
 	| SchemaNodeKindDiscrepancy;
 
+/**
+ * The location of a field described by a schema discrepancy or upgrade incompatibility.
+ *
+ * @remarks
+ * `"root"` identifies the document's root field.
+ * Otherwise, the location identifies a field within a node schema.
+ *
+ * @sealed @beta
+ */
+export type SchemaDiscrepancyFieldLocation =
+	| "root"
+	| {
+			/**
+			 * The identifier of the node schema that contains the field.
+			 */
+			readonly nodeType: string;
+			/**
+			 * The stored field key, or undefined for a map's implicit field.
+			 * An array's elements use the empty string as their stored field key.
+			 */
+			readonly fieldKey: string | undefined;
+	  };
+
+/**
+ * A human-readable explanation of a schema requirement that prevents viewing or upgrading.
+ *
+ * @remarks
+ * Use this text for logging and debugging.
+ * The text can change between releases.
+ * To handle an incompatibility programmatically, check `mismatch` and its associated fields instead of parsing the explanation.
+ * The explanation describes the failed requirement, but cannot determine which fix is appropriate for your application.
+ *
+ * @sealed @beta
+ */
+export type SchemaIncompatibilityReason = string;
+
 /* eslint-disable @typescript-eslint/consistent-type-definitions -- Object aliases preserve the original inline variants' index-signature assignability. */
 
 /**
@@ -963,17 +999,8 @@ export type SchemaAllowedTypesDiscrepancy = {
 	readonly mismatch: "allowedTypes";
 	/**
 	 * The field with the discrepancy.
-	 *
-	 * `"root"` identifies the root field. Otherwise, `nodeType` identifies the containing
-	 * node schema and `fieldKey` identifies its field. `fieldKey` is undefined for a map
-	 * node's implicit field.
 	 */
-	readonly location:
-		| "root"
-		| {
-				readonly nodeType: string;
-				readonly fieldKey: string | undefined;
-		  };
+	readonly location: SchemaDiscrepancyFieldLocation;
 	/**
 	 * Non-staged node type identifiers allowed by the view schema but not the stored schema.
 	 */
@@ -981,7 +1008,9 @@ export type SchemaAllowedTypesDiscrepancy = {
 	/**
 	 * Staged node type identifiers allowed by the view schema but not the stored schema.
 	 *
-	 * @remarks These types provide rollout context but do not cause the discrepancy.
+	 * @remarks
+	 * Staging permits these types to be absent from the stored schema, so their absence does not block viewing.
+	 * They are included here to distinguish these permitted differences from the blocking differences in `view` and `stored`.
 	 */
 	readonly stagedView?: readonly string[];
 	/**
@@ -1010,17 +1039,8 @@ export type SchemaFieldKindDiscrepancy = {
 	readonly mismatch: "fieldKind";
 	/**
 	 * The field with the discrepancy.
-	 *
-	 * `"root"` identifies the root field. Otherwise, `nodeType` identifies the containing
-	 * node schema and `fieldKey` identifies its field. `fieldKey` is undefined for a map
-	 * node's implicit field.
 	 */
-	readonly location:
-		| "root"
-		| {
-				readonly nodeType: string;
-				readonly fieldKey: string | undefined;
-		  };
+	readonly location: SchemaDiscrepancyFieldLocation;
 	/**
 	 * The field kind required by the view schema.
 	 */
@@ -1129,7 +1149,8 @@ export type SchemaUpgradeIncompatibility =
  * An upgrade must continue to allow the stored field's node types.
  * The `stored` list identifies the types that the proposed schema no longer allows.
  * Removing these types blocks the upgrade.
- * The `proposed` list identifies any added types, but adding types does not cause this failure.
+ * The `proposed` list identifies types that the proposed schema adds, to show both sides of the change.
+ * Those additions are permitted; this entry is reported because the change also removes the types listed in `stored`.
  * Types that both schemas allow do not appear in either list.
  *
  * For example, suppose a field allows numbers and strings, but the proposed schema allows numbers and booleans.
@@ -1143,20 +1164,13 @@ export type SchemaUpgradeIncompatibility =
 export type SchemaUpgradeAllowedTypesIncompatibility = {
 	readonly mismatch: "allowedTypes";
 	/**
-	 * A human-readable explanation of the failed schema requirement.
-	 * Intended for diagnostics, not parsing or choosing an application-specific fix.
+	 * Explains which allowed types the proposed schema removes.
 	 */
-	readonly reason: string;
+	readonly reason: SchemaIncompatibilityReason;
 	/**
-	 * The root field, or the containing node identifier and stored field key.
-	 * The field key is undefined for a map's implicit field.
+	 * The field with the incompatibility.
 	 */
-	readonly location:
-		| "root"
-		| {
-				readonly nodeType: string;
-				readonly fieldKey: string | undefined;
-		  };
+	readonly location: SchemaDiscrepancyFieldLocation;
 	/**
 	 * Node type identifiers allowed only by the proposed schema.
 	 * Empty if the proposed schema adds no allowed node types.
@@ -1174,7 +1188,8 @@ export type SchemaUpgradeAllowedTypesIncompatibility = {
  *
  * @remarks
  * Because field kinds determine how many children a field permits, changing the kind can exclude previously allowed content.
- * For example, changing `"Optional"` (zero or one child) to `"Value"` (exactly one) would stop accepting an absent child.
+ * For example, changing an optional field (zero or one child) to a required field (exactly one child) would stop accepting an absent child.
+ * The structured fields identify these kinds as `"Optional"` and `"Value"`, respectively.
  * Accepting the same content is not the only requirement: upgrade rules also restrict some transitions
  * to prevent clients from repeatedly upgrading back and forth.
  * @sealed @beta
@@ -1182,20 +1197,13 @@ export type SchemaUpgradeAllowedTypesIncompatibility = {
 export type SchemaUpgradeFieldKindIncompatibility = {
 	readonly mismatch: "fieldKind";
 	/**
-	 * A human-readable explanation of the failed schema requirement.
-	 * Intended for diagnostics, not parsing or choosing an application-specific fix.
+	 * Explains why the field-kind transition is not permitted.
 	 */
-	readonly reason: string;
+	readonly reason: SchemaIncompatibilityReason;
 	/**
-	 * The root field, or the containing node identifier and stored field key.
-	 * The field key is undefined for a map's implicit field.
+	 * The field with the incompatibility.
 	 */
-	readonly location:
-		| "root"
-		| {
-				readonly nodeType: string;
-				readonly fieldKey: string | undefined;
-		  };
+	readonly location: SchemaDiscrepancyFieldLocation;
 	/**
 	 * The proposed field kind.
 	 */
@@ -1220,10 +1228,9 @@ export type SchemaUpgradeFieldKindIncompatibility = {
 export type SchemaUpgradeValueSchemaIncompatibility = {
 	readonly mismatch: "valueSchema";
 	/**
-	 * A human-readable explanation of the failed schema requirement.
-	 * Intended for diagnostics, not parsing or choosing an application-specific fix.
+	 * Explains why the proposed leaf value schema is incompatible with the stored value schema.
 	 */
-	readonly reason: string;
+	readonly reason: SchemaIncompatibilityReason;
 	/**
 	 * The leaf node schema identifier.
 	 */
@@ -1252,10 +1259,9 @@ export type SchemaUpgradeValueSchemaIncompatibility = {
 export type SchemaUpgradeNodeKindIncompatibility = {
 	readonly mismatch: "nodeKind";
 	/**
-	 * A human-readable explanation of the failed schema requirement.
-	 * Intended for diagnostics, not parsing or choosing an application-specific fix.
+	 * Explains why the node-kind transition is not permitted.
 	 */
-	readonly reason: string;
+	readonly reason: SchemaIncompatibilityReason;
 	/**
 	 * The node schema identifier.
 	 */
@@ -1281,10 +1287,9 @@ export type SchemaUpgradeNodeKindIncompatibility = {
 export type SchemaUpgradeMissingNodeSchemaIncompatibility = {
 	readonly mismatch: "missingNodeSchema";
 	/**
-	 * A human-readable explanation of the failed schema requirement.
-	 * Intended for diagnostics, not parsing or choosing an application-specific fix.
+	 * Identifies the stored node definition missing from the proposed schema.
 	 */
-	readonly reason: string;
+	readonly reason: SchemaIncompatibilityReason;
 	/**
 	 * The missing stored node schema identifier.
 	 */
@@ -1304,10 +1309,9 @@ export type SchemaUpgradeMissingNodeSchemaIncompatibility = {
 export type SchemaUpgradeUnsatisfiedNodeSchemaIncompatibility = {
 	readonly mismatch: "nodeSchemaCannotBeSatisfied";
 	/**
-	 * A human-readable explanation identifying the unsatisfied field or map requirement.
-	 * Intended for diagnostics, not parsing or choosing an application-specific fix.
+	 * Identifies the unsatisfied field or map requirement.
 	 */
-	readonly reason: string;
+	readonly reason: SchemaIncompatibilityReason;
 	/**
 	 * The stored node schema identifier.
 	 */
@@ -1318,21 +1322,22 @@ export type SchemaUpgradeUnsatisfiedNodeSchemaIncompatibility = {
  * The upgrade candidate meets the stored-schema upgrade rules, but the view cannot use it, so no upgrade takes place.
  *
  * @remarks
+ * The nested incompatibilities explain why the view cannot use the candidate, not why it cannot use the current stored schema.
+ *
+ * @example
  * For example, suppose a task's stored schema allows its priority to be a number or a string.
  * The view adds an optional notes field but allows only numbers for priority.
  * The candidate adds notes and keeps both priority types, so it still allows all content permitted by the stored schema.
  * However, the view does not support string priorities, so the view rejects the upgrade.
  * No upgrade takes place, and the stored schema remains unchanged.
- * The nested incompatibilities explain why the view cannot use the candidate, not why it cannot use the current stored schema.
  * @sealed @beta
  */
 export type SchemaUpgradeViewIncompatibility = {
 	readonly mismatch: "viewIncompatibleAfterUpgrade";
 	/**
-	 * A human-readable explanation of why the upgrade would not enable viewing.
-	 * Intended for diagnostics, not parsing or choosing an application-specific fix.
+	 * Explains why the upgrade would not enable viewing.
 	 */
-	readonly reason: string;
+	readonly reason: SchemaIncompatibilityReason;
 	/**
 	 * The nonempty list of viewing incompatibilities with the proposed stored schema.
 	 */
@@ -1346,18 +1351,15 @@ export type SchemaUpgradeViewIncompatibility = {
  *
  * @remarks
  * To help you diagnose the failure, this combines the structured details from {@link SchemaDiscrepancy} with a human-readable reason.
- * The reason explains the failed schema requirement, but cannot determine which change is appropriate for your application.
- * Use it for diagnostics rather than programmatic handling: its wording is not stable API,
- * so application logic should use `mismatch` and the structured fields instead.
+ * See {@link SchemaIncompatibilityReason} for guidance on using the reason.
  *
  * @sealed @beta
  */
 export type SchemaViewIncompatibility = SchemaDiscrepancy & {
 	/**
-	 * A human-readable explanation of the failed schema requirement and its location.
-	 * Intended for diagnostics, not parsing or choosing an application-specific fix.
+	 * Explains the failed schema requirement and its location.
 	 */
-	readonly reason: string;
+	readonly reason: SchemaIncompatibilityReason;
 };
 
 /**
