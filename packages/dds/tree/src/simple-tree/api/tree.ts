@@ -1189,7 +1189,6 @@ export type SchemaUpgradeAllowedTypesIncompatibility = {
  * @remarks
  * Because field kinds determine how many children a field permits, changing the kind can exclude previously allowed content.
  * For example, changing an optional field (zero or one child) to a required field (exactly one child) would stop accepting an absent child.
- * The structured fields identify these kinds as `"Optional"` and `"Value"`, respectively.
  * Accepting the same content is not the only requirement: upgrade rules also restrict some transitions
  * to prevent clients from repeatedly upgrading back and forth.
  * @sealed @beta
