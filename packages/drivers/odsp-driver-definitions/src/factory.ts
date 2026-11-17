@@ -208,6 +208,11 @@ export interface HostStoragePolicy {
 	 * As for other authorization errors, the driver clears its cached snapshot of the document when a snapshot request fails with the challenge.
 	 * But a load can still succeed, because the driver can use a cached snapshot without waiting for the service.
 	 * A later request, such as connecting to the delta stream or fetching ops, then gets the challenge, and the container closes with the error.
+	 *
+	 * While the container is connected, the driver also refreshes its join session with the service in the background.
+	 * If a refresh gets the challenge, the driver ends the delta stream connection with the error, and the container reconnects.
+	 * The container then closes with the error, unless the token fetcher returns a token that satisfies the challenge.
+	 *
 	 * So check for a claims challenge in the error of the container's `closed` event as well as in load errors.
 	 *
 	 * To identify a claims challenge, look for an `errorType` of `authorizationError` with a non-empty `claims` value.
