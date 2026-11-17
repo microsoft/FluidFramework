@@ -44,12 +44,37 @@ const basicOnlyChunkCompressor: ChunkCompressor = {
 };
 
 /**
- * BasicChunk storage and cursor conformance.
- * Shared traversal regressions live in chunkCursor.spec.ts.
+ * BasicChunk storage, adapter write-back, and cursor conformance.
+ * Shared traversal regressions live in chunkCursor.spec.ts; generic field edits and normalization live in chunkEditTraversal.spec.ts.
  * The chunkTree/chunkField reuse tests stay here as integration coverage of BasicChunk reference ownership;
  * general chunking coverage is in chunkTree.spec.ts.
  */
 describe("basicChunk", () => {
+	describe("BasicChunkLocalCursor", () => {
+		it("registers and removes fields without changing child reference counts", () => {
+			const parent = new BasicChunk(brand("parent"), new Map());
+			const cursor = parent.getEditCursor();
+			assert.equal(cursor.getFieldChunks(), undefined);
+			cursor.enterNode(0);
+			cursor.enterField(EmptyKey);
+			const chunks = cursor.getFieldChunks();
+			assert(chunks !== undefined);
+			assert.equal(parent.fields.has(EmptyKey), false);
+			const child = new BasicChunk(brand("child"), new Map());
+			chunks.push(child);
+			cursor.setFieldChunks(chunks);
+			assert.equal(parent.fields.get(EmptyKey), chunks);
+			assert.equal(child.isShared(), false);
+			assert.equal(chunks.pop(), child);
+			cursor.setFieldChunks(chunks);
+			assert.equal(parent.fields.has(EmptyKey), false);
+			assert.equal(cursor.getFieldLength(), 0);
+			assert.equal(child.isUnreferenced(), false);
+			child.referenceRemoved();
+			parent.referenceRemoved();
+		});
+	});
+
 	it("calling chunkTree on existing chunk adds a reference", () => {
 		const data: JsonableTree = { type: brand("Foo"), value: "test" };
 		const inputCursor = cursorForJsonableTreeNode(data);

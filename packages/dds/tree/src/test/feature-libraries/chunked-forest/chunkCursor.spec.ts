@@ -42,6 +42,7 @@ import {
  * Shared ChunkTraversal/ChunkCursor navigation and ChunkSequenceCursor's field-only contract.
  * SequenceChunk cursor integration is intentionally covered here, alongside mixed-format and nested-sequence traversal.
  * BasicChunk and UniformChunk cursor conformance suites remain in basicChunk.spec.ts and uniformChunk.spec.ts.
+ * Editing traversal and sequence write-back are covered in chunkEditTraversal.spec.ts.
  */
 describe("chunkCursor", () => {
 	describe("ChunkSequenceCursor", () => {
@@ -145,6 +146,68 @@ describe("chunkCursor", () => {
 			assert.equal(cursor.nextNode(), false);
 			assert.equal(cursor.getFieldLength(), 1);
 			root.referenceRemoved();
+		});
+
+		it("prepares owned storage before obtaining an adapter and rejects editing forks", () => {
+			const original = numericBasicChunk(1);
+			const replacement = numericBasicChunk(2);
+			const chunks: TreeChunk[] = [original];
+			const calls: string[] = [];
+			const cursor = new ChunkCursor(new ChunkSequenceCursor(chunks), {
+				prepareChunk: (owned, index) => {
+					assert.equal(owned, chunks);
+					assert.equal(index, 0);
+					calls.push("prepare");
+					chunks[0] = replacement;
+					original.referenceRemoved();
+					return { chunk: replacement, indexOfChunk: 0, indexWithinChunk: 0 };
+				},
+				cursorForChunk: (chunk) => {
+					assert.equal(chunk, replacement);
+					assert.equal(original.isUnreferenced(), true);
+					calls.push("adapter");
+					return replacement.getEditCursor();
+				},
+			});
+			assert(cursor.firstNode());
+			assert.equal(cursor.value, 2);
+			assert.deepEqual(calls, ["prepare", "adapter"]);
+			assert.throws(() => cursor.fork(), /Editing navigation must not be forked/);
+			assert.equal(cursor.restoreOwningField(), 0);
+			assert.equal(cursor.getFieldLength(), 1);
+			cursor.releaseNavigation();
+			assert.throws(() => cursor.value, /Cursor has been freed/);
+			assert.equal(replacement.isUnreferenced(), false);
+			replacement.referenceRemoved();
+		});
+
+		it("retains specialized inline reads when uniform chunks also support editing", () => {
+			class CountingUniformChunk extends UniformChunk {
+				public firstNodeCalls = 0;
+
+				public override cursor(): ReturnType<UniformChunk["cursor"]> {
+					const localCursor = super.cursor();
+					const firstNode = localCursor.firstNode.bind(localCursor);
+					localCursor.firstNode = () => {
+						this.firstNodeCalls++;
+						return firstNode();
+					};
+					return localCursor;
+				}
+			}
+			const key: FieldKey = brand("value");
+			const leaf = new TreeShape(brand(numberSchema.identifier), true, []);
+			const shape = new TreeShape(brand("object"), false, [[key, leaf, 1]]);
+			const chunk = new CountingUniformChunk(shape.withTopLevelLength(2), [1, 2]);
+			const cursor = ChunkCursor.fromChunks([chunk]);
+			cursor.enterNode(1);
+			cursor.enterField(key);
+			assert(cursor.firstNode());
+			assert.equal(cursor.value, 2);
+			assert.equal(chunk.firstNodeCalls, 1);
+			const editor = chunk.getEditCursor();
+			assert.equal(editor.getFieldChunks, undefined);
+			chunk.referenceRemoved();
 		});
 
 		it("refreshes inline capabilities after reset and releases them on clear without changing forks", () => {

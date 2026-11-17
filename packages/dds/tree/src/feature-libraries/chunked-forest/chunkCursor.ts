@@ -136,12 +136,28 @@ interface ChunkCursorFrame {
 }
 
 /**
+ * Editing policy invoked before entering separately owned child storage.
+ * The owning field adapter remains active during preparation.
+ */
+export interface ChunkNavigationHooks {
+	/** Makes the selected child safe to enter and returns its updated owning-array location. */
+	prepareChunk(
+		chunks: readonly TreeChunk[],
+		index: number,
+		location?: ReturnType<typeof locateNodeInChunks>,
+	): ReturnType<typeof locateNodeInChunks>;
+	/** Creates an adapter at the prepared child's root field. */
+	cursorForChunk(chunk: TreeChunk): ChunkLocalCursor;
+}
+
+/**
  * Composes {@link ChunkLocalCursor} navigation into traversal over the complete tree.
  *
  * @remarks
  * Uses one active adapter and a stack of {@link ChunkCursorFrame}s for suspended fields.
  * The traversal state owns no counted references to chunks.
  * {@link ChunkSequenceCursor} boundaries contribute offsets, but not nodes, to tree paths.
+ * Editors compose a cursor with ownership hooks rather than inheriting navigation.
  */
 export abstract class ChunkTraversal
 	extends SynchronousCursor
@@ -166,8 +182,12 @@ export abstract class ChunkTraversal
 	/**
 	 * Starts traversal at the root field exposed by a {@link ChunkLocalCursor}.
 	 * @param local - Adapter positioned at its chunk's root field. The traversal takes control of its navigation state.
+	 * @param navigationHooks - Optional editing policy. Omit for read-only navigation.
 	 */
-	public constructor(local: ChunkLocalCursor) {
+	public constructor(
+		local: ChunkLocalCursor,
+		private readonly navigationHooks?: ChunkNavigationHooks,
+	) {
 		super();
 		this.local = local;
 	}
@@ -251,6 +271,7 @@ export abstract class ChunkTraversal
 	 * @param target - Traversal with no suspended frames in {@link ChunkTraversal.parentStack}.
 	 */
 	protected copyTo(target: ChunkTraversal): void {
+		assert(this.navigationHooks === undefined, "Editing navigation must not be forked");
 		target.local = this.local.fork();
 		// Read navigation does not mutate the child arrays. Copy mutable frame positions and adapter state,
 		// but keep references to the same content arrays rather than copying the stored tree.
@@ -320,11 +341,15 @@ export abstract class ChunkTraversal
 
 	/**
 	 * Creates a {@link ChunkLocalCursor} at the selected child chunk's root field.
+	 * Editing calls this after {@link ChunkNavigationHooks.prepareChunk} resolves ownership.
+	 * Editing hooks obtain the child's editing adapter instead of reusing a read adapter.
 	 * @param chunk - Selected child whose storage is borrowed.
 	 * @param reuse - Exited adapter offered for reuse under {@link CompositeChunk.getLocalCursor}'s contract.
 	 */
 	protected cursorForChunk(chunk: TreeChunk, reuse?: ChunkLocalCursor): ChunkLocalCursor {
-		return ChunkTraversal.localCursor(chunk, reuse);
+		return this.navigationHooks === undefined
+			? ChunkTraversal.localCursor(chunk, reuse)
+			: this.navigationHooks.cursorForChunk(chunk);
 	}
 
 	public enterNode(index: number): void {
@@ -361,7 +386,9 @@ export abstract class ChunkTraversal
 				return;
 			}
 			const { chunk, indexOfChunk, indexWithinChunk } =
-				selectedLocation ?? locateNodeInChunks(chunks, localIndex);
+				this.navigationHooks === undefined
+					? (selectedLocation ?? locateNodeInChunks(chunks, localIndex))
+					: this.navigationHooks.prepareChunk(chunks, localIndex, selectedLocation);
 			selectedLocation = undefined;
 			const chunkStartIndex = localIndex - indexWithinChunk;
 			const transparent = this.local.atChunkRoot();
@@ -508,8 +535,33 @@ export abstract class ChunkTraversal
 
 /**
  * A {@link ChunkedCursor} that uses {@link ChunkTraversal} to navigate across chunk boundaries.
+ * Read-only forks copy navigation state without adding counted references; cursors with editing hooks cannot fork.
  */
 export class ChunkCursor extends ChunkTraversal implements ChunkedCursor {
+	/** Borrows the active storage adapter for an editor's format-specific operations. */
+	public get localAdapter(): ChunkLocalCursor {
+		return this.local;
+	}
+
+	/** Tests the selected field under the original root node, without exposing boundary frames. */
+	public isRootField(key: FieldKey): boolean {
+		return this.parentStack.length === 0 && this.local.getFieldKey() === key;
+	}
+
+	/**
+	 * Restores the field owning the active chunk before an editor replaces that chunk.
+	 * Returns the exited chunk's starting node index in the restored field.
+	 */
+	public restoreOwningField(): number {
+		assert(this.parentStack.length > 0, "Root chunk must support field edits");
+		return this.restoreParent().chunkStartIndex;
+	}
+
+	/** Releases borrowed adapters and frames without changing content reference counts. */
+	public releaseNavigation(): void {
+		this.clearTraversal();
+	}
+
 	/**
 	 * Creates a read cursor at a chunk's root field.
 	 * @remarks

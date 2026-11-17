@@ -28,12 +28,12 @@ import {
 	type ChunkLocalCursor,
 	type ChunkInlineCursor,
 } from "./chunkCursor.js";
-import { getFieldLength } from "./chunkEditing.js";
+import { type ChunkEditCursor, type EditableChunk, getFieldLength } from "./chunkEditing.js";
 
 /**
  * General purpose one node chunk.
  */
-export class BasicChunk extends ReferenceCountedBase implements CompositeChunk {
+export class BasicChunk extends ReferenceCountedBase implements EditableChunk, CompositeChunk {
 	public readonly topLevelLength: number = 1;
 
 	/**
@@ -80,6 +80,11 @@ export class BasicChunk extends ReferenceCountedBase implements CompositeChunk {
 		return new BasicChunkLocalCursor(this);
 	}
 
+	public getEditCursor(): BasicChunkLocalCursor {
+		assert(!this.isShared(), "Editing requires exclusive chunk ownership");
+		return this.getLocalCursor();
+	}
+
 	protected onUnreferenced(): void {
 		for (const children of this.fields.values()) {
 			for (const child of children) {
@@ -95,7 +100,7 @@ export class BasicChunk extends ReferenceCountedBase implements CompositeChunk {
  * Navigates the node and its field keys.
  * {@link ChunkCursor} enters the child chunks exposed by {@link BasicChunkLocalCursor.getFieldChunks}.
  */
-export class BasicChunkLocalCursor implements ChunkInlineCursor {
+export class BasicChunkLocalCursor implements ChunkInlineCursor, ChunkEditCursor {
 	public get rootLength(): number {
 		return this.chunk.topLevelLength;
 	}
@@ -111,6 +116,7 @@ export class BasicChunkLocalCursor implements ChunkInlineCursor {
 	 * Starts at the {@link dummyRoot} field containing the supplied {@link BasicChunk}'s node.
 	 * @remarks
 	 * The caller must keep the chunk alive while using the cursor.
+	 * Edits additionally require the caller to keep the chunk exclusively owned.
 	 */
 	public constructor(
 		/** Borrowed node storage, replaced only when the exited adapter is reused. */
@@ -250,5 +256,15 @@ export class BasicChunkLocalCursor implements ChunkInlineCursor {
 		cursor.keys = this.keys;
 		cursor.keyIndex = this.keyIndex;
 		return cursor;
+	}
+
+	public setFieldChunks(chunks: TreeChunk[]): void {
+		assert(this.depth === 2, "Expected a field owned by the node");
+		assert(!this.chunk.isShared(), "Editing requires exclusive chunk ownership");
+		if (chunks.length === 0) {
+			this.chunk.fields.delete(this.getFieldKey());
+		} else {
+			this.chunk.fields.set(this.getFieldKey(), chunks);
+		}
 	}
 }
