@@ -124,6 +124,10 @@ export function normalizeReleaseNoteHeadings(): (tree: Root) => void {
 		const offset = MINIMUM_BODY_HEADING_LEVEL - shallowestDepth;
 
 		visit(tree, "heading", (node, index, parent) => {
+			// Code-span line endings render as spaces; retaining physical newlines would break normalized ATX headings.
+			visit(node, "inlineCode", (code) => {
+				code.value = code.value.replace(/\r\n?|\n/g, " ");
+			});
 			const depth = node.depth + offset;
 			if (depth === MINIMUM_BODY_HEADING_LEVEL || depth === 5 || depth === 6) {
 				node.depth = depth;

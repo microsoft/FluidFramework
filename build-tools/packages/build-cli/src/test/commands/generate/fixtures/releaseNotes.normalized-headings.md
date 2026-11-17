@@ -22,6 +22,8 @@
 # A code example
 ```
 
+> #### `x y`
+
 #### Change details
 
 Commit: [`<SHORT_COMMIT_HASH>`](https://github.com/example/repo/commit/<COMMIT_HASH>)

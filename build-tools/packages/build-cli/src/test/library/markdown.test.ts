@@ -120,6 +120,20 @@ const value = 1;
 		assert.equal(actual, expected);
 	});
 
+	// Setext headings can contain multiline code spans, whereas their normalized ATX replacements cannot span lines.
+	// Re-parse and serialize the emitted Markdown so a broken code span cannot pass as a valid transformed AST.
+	for (const { source, expectedHeading } of [
+		{ source: "`x\ny`\n===", expectedHeading: "#### `x y`" },
+		{ source: "> `x\n> y`\n> ===", expectedHeading: "> #### `x y`" },
+		{ source: "- `x\n  y`\n  ===", expectedHeading: "* #### `x y`" },
+	]) {
+		it(`preserves multiline code spans in ${JSON.stringify(source)}`, () => {
+			const actual = String(remark().processSync(normalize(source)));
+			const expected = `${expectedHeading}\n`;
+			assert.equal(actual, expected);
+		});
+	}
+
 	// Serializing an empty bold label as "****" would introduce a horizontal rule the author did not request.
 	it("does not turn empty overflowing headings into thematic breaks", () => {
 		const actual = normalize("# Examples\n\n####");

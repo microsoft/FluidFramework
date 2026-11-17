@@ -186,6 +186,10 @@ Improve memory usage
 \`\`\`markdown
 # A code example
 \`\`\`
+
+> \`x
+> y\`
+> ===
 `;
 		await writeFile(path.join(testDir, ".changeset", "first.md"), firstChangeset);
 

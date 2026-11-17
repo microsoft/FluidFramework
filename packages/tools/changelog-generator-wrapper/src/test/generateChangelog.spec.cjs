@@ -142,6 +142,10 @@ Measurements.
 
 ###### Details
     const value = 1;
+
+> \`x
+> y\`
+> ===
 `;
 
 		const second = `---
@@ -156,5 +160,44 @@ Branch details.
 			example,
 			second,
 		});
+	});
+
+	// HTML blocks need a blank line before the following entry, even when their tags are already closed.
+	it("keeps the next entry separate after a trailing HTML block", async () => {
+		const first = `---
+"example-package": minor
+---
+HTML notice
+
+<div>Notice</div>
+`;
+		const second = `---
+"example-package": minor
+---
+Next change
+
+Visible details.
+`;
+		await generateAndAssertSnapshot("changelog.html-boundary.md", { first, second });
+	});
+
+	// An open fence is valid at a standalone document's EOF, but must be closed before another changeset is appended.
+	it("keeps the next entry outside an EOF-terminated code fence", async () => {
+		const first = `---
+"example-package": minor
+---
+Code example
+
+\`\`\`js
+example();
+`;
+		const second = `---
+"example-package": minor
+---
+Next change
+
+Visible details.
+`;
+		await generateAndAssertSnapshot("changelog.fence-boundary.md", { first, second });
 	});
 });

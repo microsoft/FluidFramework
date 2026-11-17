@@ -13,9 +13,56 @@ const { visit } = require("unist-util-visit");
 const MINIMUM_BODY_HEADING_LEVEL = 5;
 
 /**
- * Matches a blank line, including blockquote continuation markers.
+ * Matches blank content after the enclosing container prefix has been removed.
  */
-const BLANK_LINE_REGEX = /^[\t >]*$/;
+const BLANK_LINE_REGEX = /^[\t ]*$/;
+
+/**
+ * Checks for a blank line without mistaking indented quote characters in code for container markers.
+ *
+ * @param {string} line - The source line to inspect.
+ * @param {string} prefix - The enclosing heading's list and blockquote continuation prefix.
+ * @returns {boolean} Whether the line contains only whitespace within that container.
+ */
+function isBlankLine(line, prefix) {
+	const containerPrefix = prefix.trimEnd();
+	const content = line.startsWith(containerPrefix) ? line.slice(containerPrefix.length) : line;
+	return BLANK_LINE_REGEX.test(content);
+}
+
+/**
+ * Finds a closing fence needed to keep the final top-level code block from consuming the next changeset.
+ *
+ * @param {string} body - The unmodified changeset body.
+ * @param {ReturnType<typeof remark.parse>} tree - The body parsed before any source replacements.
+ * @returns {string | undefined} The missing closing fence, or undefined if the final block needs no closer.
+ */
+function getMissingClosingFence(body, tree) {
+	const finalBlock = tree.children.at(-1);
+	if (finalBlock?.type !== "code") {
+		return undefined;
+	}
+
+	const start = finalBlock.position?.start.offset;
+	const end = finalBlock.position?.end.offset;
+	if (start === undefined || end === undefined) {
+		throw new Error("Parsed changeset code blocks must have source positions.");
+	}
+	const lineStart = body.lastIndexOf("\n", start - 1) + 1;
+	const source = body.slice(lineStart, end);
+
+	// Inspect original indentation so an indented code line containing backticks is not treated as an opening fence.
+	const openingFence = source.match(/^ {0,3}(`{3,}|~{3,})/)?.[1];
+	const lastLineStart = source.lastIndexOf("\n");
+	const closingFence =
+		lastLineStart === -1
+			? undefined
+			: source.slice(lastLineStart + 1).match(/^ {0,3}(`{3,}|~{3,})[\t ]*$/)?.[1];
+	if (openingFence !== undefined && !closingFence?.startsWith(openingFence)) {
+		return openingFence;
+	}
+	return undefined;
+}
 
 /**
  * Formats a changeset as a package changelog entry with a level-4 title.
@@ -27,6 +74,7 @@ const BLANK_LINE_REGEX = /^[\t >]*$/;
  * This preserves relative nesting regardless of the heading levels used in the changeset.
  * Headings whose adjusted levels exceed 6 become bold labels because Markdown does not support deeper headings.
  * These labels retain paragraph boundaries and enclosing list or blockquote prefixes so adjacent content remains separate.
+ * Entries end with a newline and any EOF-terminated top-level code fence is closed before the next entry is appended.
  *
  * @param changeset - The source changeset.
  * Its `summary` property contains the full Markdown content, including the title and body.
@@ -51,7 +99,7 @@ const getReleaseLine = async (changeset, type, options) => {
 		},
 	);
 	if (bodyLines.length === 0) {
-		return title;
+		return `${title}\n`;
 	}
 
 	const processor = remark();
@@ -59,6 +107,10 @@ const getReleaseLine = async (changeset, type, options) => {
 	// Preserve the body's blank lines and indentation, which can be significant in Markdown code blocks.
 	let body = bodyLines.join("\n");
 	const tree = processor.parse(body);
+
+	// A fenced code block may end at EOF in a standalone changeset.
+	// Record a missing closer before heading replacements change source offsets; the combined changelog has no per-entry EOF.
+	const missingFence = getMissingClosingFence(body, tree);
 	let shallowestDepth = 6;
 
 	// Find the shallowest heading across the whole body, not just the first heading encountered.
@@ -81,6 +133,11 @@ const getReleaseLine = async (changeset, type, options) => {
 					"Parsed changeset headings must have source positions and a parent index.",
 				);
 			}
+
+			// Code-span line endings render as spaces; physical newlines would split an ATX heading or lose its container prefix.
+			visit(node, "inlineCode", (code) => {
+				code.value = code.value.replace(/\r\n?|\n/g, " ");
+			});
 
 			// Apply the same offset even when source heading levels are skipped.
 			// Preserve their inline children so links, code spans, and emphasis survive the conversion.
@@ -120,7 +177,7 @@ const getReleaseLine = async (changeset, type, options) => {
 				if (index > 0 && lineStart > 0) {
 					const previousLineStart = body.lastIndexOf("\n", lineStart - 2) + 1;
 					const previousLine = body.slice(previousLineStart, lineStart - 1);
-					if (!BLANK_LINE_REGEX.test(previousLine)) {
+					if (!isBlankLine(previousLine, prefix)) {
 						text = `\n${prefix}${text}`;
 					}
 				}
@@ -132,7 +189,7 @@ const getReleaseLine = async (changeset, type, options) => {
 						nextLineStart + 1,
 						nextLineEnd === -1 ? body.length : nextLineEnd,
 					);
-					if (!BLANK_LINE_REGEX.test(nextLine)) {
+					if (!isBlankLine(nextLine, prefix)) {
 						text += `\n${prefix}`;
 					}
 				}
@@ -142,7 +199,13 @@ const getReleaseLine = async (changeset, type, options) => {
 		true,
 	);
 
-	return `${title}\n${body}`;
+	// Close an EOF-terminated code block on its own line so the next changeset is not rendered as part of the code example.
+	if (missingFence !== undefined) {
+		body += `${body.endsWith("\n") ? "" : "\n"}${missingFence}`;
+	}
+
+	// Changesets joins entries with one newline. Supply another so trailing HTML cannot consume the next entry's heading.
+	return `${title}\n${body}${body.endsWith("\n") ? "" : "\n"}`;
 };
 
 exports.getReleaseLine = getReleaseLine;

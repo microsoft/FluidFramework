@@ -108,7 +108,7 @@ describe("changelog formatter", () => {
 	// Each entry needs its own section so its body headings cannot appear to contain subsequent changes.
 	it("formats the summary as a heading instead of a list item", async () => {
 		const actual = await format("Improve items");
-		const expected = "#### Improve items";
+		const expected = "#### Improve items\n";
 		assert.equal(actual, expected);
 	});
 
@@ -118,7 +118,7 @@ describe("changelog formatter", () => {
 			"Improve items\n\nDetails.\n\n#### Examples\n\nExample.\n\n##### Measurements\n\nNumbers.\n\n###### Details\n\nMore details.",
 		);
 		const expected =
-			"#### Improve items\n\nDetails.\n\n##### Examples\n\nExample.\n\n###### Measurements\n\nNumbers.\n\n**Details**\n\nMore details.";
+			"#### Improve items\n\nDetails.\n\n##### Examples\n\nExample.\n\n###### Measurements\n\nNumbers.\n\n**Details**\n\nMore details.\n";
 		assert.equal(actual, expected);
 	});
 
@@ -127,7 +127,7 @@ describe("changelog formatter", () => {
 	for (const depth of [1, 2, 3, 4, 5, 6]) {
 		it(`normalizes a level-${depth} body heading to level 5`, async () => {
 			const actual = await format(`Improve items\n\n${"#".repeat(depth)} Examples`);
-			const expected = "#### Improve items\n\n##### Examples";
+			const expected = "#### Improve items\n\n##### Examples\n";
 			assert.equal(actual, expected);
 		});
 	}
@@ -137,7 +137,8 @@ describe("changelog formatter", () => {
 		const actual = await format(
 			"Improve items\n\n## Examples\n\n#### Details\n\n###### More details",
 		);
-		const expected = "#### Improve items\n\n##### Examples\n\n**Details**\n\n**More details**";
+		const expected =
+			"#### Improve items\n\n##### Examples\n\n**Details**\n\n**More details**\n";
 		assert.equal(actual, expected);
 	});
 
@@ -147,7 +148,7 @@ describe("changelog formatter", () => {
 			"Improve items\n\n###### Details\n\n## Examples\n\n### Measurements",
 		);
 		const expected =
-			"#### Improve items\n\n**Details**\n\n##### Examples\n\n###### Measurements";
+			"#### Improve items\n\n**Details**\n\n##### Examples\n\n###### Measurements\n";
 		assert.equal(actual, expected);
 	});
 
@@ -158,9 +159,93 @@ describe("changelog formatter", () => {
 
 		// Converting a section heading to a bold label must not flatten its inline code or links into plain text.
 		const expected =
-			"#### Improve items\n\n##### Examples\n\n**Compare `before` with [after](https://example.com)**";
+			"#### Improve items\n\n##### Examples\n\n**Compare `before` with [after](https://example.com)**\n";
 		assert.equal(actual, expected);
 	});
+
+	// A top-level HTML block ends at a blank line, not at its closing tag.
+	// Parse concatenated formatter output to verify the next entry remains a Markdown heading.
+	it("separates an entry ending in HTML from the next entry", async () => {
+		const first = await format("First\n\n<div>Notice</div>");
+		const second = await format("Second\n\nVisible details.");
+		const actual = String(remark().processSync(`${first}\n${second}`));
+		const expected = `#### First
+
+<div>Notice</div>
+
+#### Second
+
+Visible details.
+`;
+		assert.equal(actual, expected);
+	});
+
+	// EOF closes a fence within a standalone changeset, but not after the next entry has been appended.
+	for (const fence of ["```", "~~~~"]) {
+		it(`closes an EOF-terminated ${fence} code fence before the next entry`, async () => {
+			const first = await format(`First\n\n${fence}js\nexample();`);
+			const second = await format("Second\n\nVisible details.");
+			const actual = String(remark().processSync(`${first}\n${second}`));
+			const expected = `#### First
+
+\`\`\`js
+example();
+\`\`\`
+
+#### Second
+
+Visible details.
+`;
+			assert.equal(actual, expected);
+		});
+	}
+
+	for (const { source, expectedBody } of [
+		{ source: "```", expectedBody: "```\n```" },
+		{ source: "```js\nexample();\n~~~", expectedBody: "```js\nexample();\n~~~\n```" },
+		{ source: "  ```js\n    ```", expectedBody: "  ```js\n    ```\n```" },
+		{ source: "```js\nexample();\n````", expectedBody: "```js\nexample();\n````" },
+		{ source: "    ```", expectedBody: "    ```" },
+	]) {
+		it(`preserves fence semantics for ${JSON.stringify(source)}`, async () => {
+			const actual = await format(`Title\n\n${source}`);
+			const expected = `#### Title\n\n${expectedBody}\n`;
+			assert.equal(actual, expected);
+		});
+	}
+
+	// Code-span line endings render as spaces, but retaining their physical newlines would split an ATX heading.
+	for (const { source, expectedHeading } of [
+		{ source: "`x\ny`\n===", expectedHeading: "##### `x y`" },
+		{ source: "> `x\n> y`\n> ===", expectedHeading: "> ##### `x y`" },
+		{ source: "- `x\n  y`\n  ===", expectedHeading: "* ##### `x y`" },
+	]) {
+		it(`preserves multiline code spans in ${JSON.stringify(source)}`, async () => {
+			const actual = await formatCanonical(`Title\n\n${source}`);
+			const expected = `#### Title\n\n${expectedHeading}\n`;
+			assert.equal(actual, expected);
+		});
+	}
+
+	for (const { prefix, expectedCode } of [
+		{ prefix: "", expectedCode: "```\n>\ncode\n```" },
+		{ prefix: "> ", expectedCode: "> ```\n> >\n> code\n> ```" },
+	]) {
+		it(`preserves indented quote-only code lines with prefix ${JSON.stringify(prefix)}`, async () => {
+			const actual = await formatCanonical(
+				`Title\n\n# Root\n\n${prefix}### Example\n${prefix}    >\n${prefix}    code`,
+			);
+			const expected = `#### Title
+
+##### Root
+
+${prefix}**Example**
+${prefix.trimEnd()}
+${expectedCode}
+`;
+			assert.equal(actual, expected);
+		});
+	}
 
 	// ATX headings can separate blocks without blank lines, but bold paragraphs cannot.
 	// Explicit blank lines in the expected Markdown keep prose and code examples separate from each bold label.
@@ -180,7 +265,8 @@ Intro.
 
 **Details**
 
-More.`;
+More.
+`;
 		assert.equal(actual, expected);
 	});
 
@@ -197,7 +283,8 @@ More.`;
 
 **Details**
 
-    const value = 1;`;
+    const value = 1;
+`;
 		assert.equal(actual, expected);
 	});
 
@@ -215,7 +302,8 @@ More.`;
 
 **Deep**
 
----`;
+---
+`;
 		assert.equal(actual, expected);
 	});
 
@@ -235,7 +323,8 @@ More.`);
 
 **Second**
 
-More.`;
+More.
+`;
 		assert.equal(actual, expected);
 	});
 
@@ -399,7 +488,7 @@ Outside.
 			"#### Actual heading",
 		].join("\n");
 		const actual = await format(`Improve items\n\n${body}`);
-		const expected = `#### Improve items\n\n${body.replace("#### Actual heading", "##### Actual heading")}`;
+		const expected = `#### Improve items\n\n${body.replace("#### Actual heading", "##### Actual heading")}\n`;
 		assert.equal(actual, expected);
 	});
 
@@ -420,7 +509,7 @@ Outside.
 
 		// Compare the entire body, not just parsed node types, to catch formatting churn in tables, lists, and code indentation.
 		const actual = await format(`Improve items\n\n${body}`);
-		const expected = `#### Improve items\n\n${body}`;
+		const expected = `#### Improve items\n\n${body}\n`;
 		assert.equal(actual, expected);
 	});
 
@@ -430,21 +519,21 @@ Outside.
 			"Improve items\n\n> #### Quoted heading\n\n- ##### Nested heading\n\n  List details.",
 		);
 		const expected =
-			"#### Improve items\n\n> ##### Quoted heading\n\n- ###### Nested heading\n\n  List details.";
+			"#### Improve items\n\n> ##### Quoted heading\n\n- ###### Nested heading\n\n  List details.\n";
 		assert.equal(actual, expected);
 	});
 
 	// Both hash-prefixed (ATX) and underline-style (Setext) headings must preserve their relative levels in the output.
 	it("nests shallower ATX and Setext headings beneath the entry title", async () => {
 		const actual = await format("Improve items\n\n# Heading\n\nSetext heading\n---");
-		const expected = "#### Improve items\n\n##### Heading\n\n###### Setext heading";
+		const expected = "#### Improve items\n\n##### Heading\n\n###### Setext heading\n";
 		assert.equal(actual, expected);
 	});
 
 	// Windows line endings must not leave carriage returns in titles or interfere with recognizing body headings.
 	it("handles Windows line endings", async () => {
 		const actual = await format("Improve items\r\n\r\n#### Examples\r\n\r\nDetails.");
-		const expected = "#### Improve items\n\n##### Examples\n\nDetails.";
+		const expected = "#### Improve items\n\n##### Examples\n\nDetails.\n";
 		assert.equal(actual, expected);
 	});
 
@@ -462,7 +551,7 @@ Outside.
 			result.startsWith("#### Improve items ([#42](https://example.com/repo/pull/42)) ["),
 		);
 		assert.ok(result.includes(`](https://example.com/repo/commit/${hash})`));
-		assert.ok(result.endsWith("\n\nDetails."));
+		assert.ok(result.endsWith("\n\nDetails.\n"));
 	});
 
 	// Authors may preview an uncommitted changeset; missing Git metadata must not hide its content or leave empty link markup.
@@ -472,7 +561,7 @@ Outside.
 			"minor",
 			{ ...linkOptions, gitlogOptions: { repo: repoDir } },
 		);
-		const expected = "#### New change\n\nDetails.";
+		const expected = "#### New change\n\nDetails.\n";
 		assert.equal(actual, expected);
 	});
 
