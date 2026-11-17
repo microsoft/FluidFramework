@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-import { performance } from "node:perf_hooks";
 
 import {
 	BenchmarkMode,
@@ -619,7 +618,7 @@ describe("chunked-forest coalescing benchmarks", () => {
 	describe("Application read traversal", () => {
 		for (const { name, create } of applicationReadFixtures) {
 			for (const size of performanceMode ? [1000, 10000] : [10]) {
-				for (const warm of [false, true]) {
+				for (const repeated of [false, true]) {
 					for (const operation of [
 						"iterate",
 						"export concise",
@@ -652,29 +651,18 @@ describe("chunked-forest coalescing benchmarks", () => {
 								assert(result !== undefined);
 							}
 						};
-						const warmUp = (): void => {
-							// Warm code on a separate document, leaving first-read samples untouched.
-							const fixture = create(Math.min(size, 1000));
-							const end = performance.now() + 1000;
-							let result: unknown;
-							do {
-								result = run(fixture);
-							} while (performance.now() < end);
-							verify(fixture, result);
-						};
-						const timing = warm
+						// The library warms repeated reads on the same fixture before collecting batches.
+						// First reads need a fresh fixture per invocation, including warmup, with setup outside the timer.
+						const timing = repeated
 							? benchmarkDuration({
 									benchmarkFnCustom: async (state) => {
 										const fixture = create(size);
-										verify(fixture, run(fixture));
 										let result: unknown;
 										state.timeAllBatches(() => {
 											result = run(fixture);
 										});
 										verify(fixture, result);
 									},
-									maxBenchmarkDurationSeconds: 3,
-									minBatchCount: 30,
 								})
 							: benchmarkDurationBatchless({
 									benchmarkFn: (state) => {
@@ -688,18 +676,10 @@ describe("chunked-forest coalescing benchmarks", () => {
 											verify(fixture, result);
 										} while (running);
 									},
-									maxBenchmarkDurationSeconds: 3,
-									minSampleCount: 12,
 								});
 						benchmarkIt({
-							title: `${name}, ${size} rows, ${warm ? "repeated" : "first"} ${operation}`,
+							title: `${name}, ${size} rows, ${repeated ? "repeated" : "first"} ${operation}`,
 							...timing,
-							run: async (timer) => {
-								if (performanceMode) {
-									warmUp();
-								}
-								return timing.run(timer);
-							},
 						});
 					}
 				}
