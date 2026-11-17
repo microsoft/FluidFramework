@@ -1275,10 +1275,8 @@ export interface SchemaCompatibilityStatus {
 	 *
 	 * Object views that allow {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields} can also omit stored optional fields without preventing later upgrades.
 	 * The target retains those fields and the node definitions they require, rather than deleting content the reduced view cannot see.
-	 * This retention applies to existing documents; a new document initialized with the reduced view does not include the omitted fields.
 	 *
 	 * The target is accepted only if it satisfies the stored-schema upgrade rules and gives the requesting view read/write access.
-	 * Retaining optional fields therefore does not permit removing required fields, narrowing allowed types, or introducing other incompatible changes.
 	 */
 	readonly canUpgrade: boolean;
 
