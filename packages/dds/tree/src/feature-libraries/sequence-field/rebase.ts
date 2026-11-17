@@ -133,7 +133,7 @@ class RebaseQueue {
 			if (mark.type === "Rename") {
 				count = moveEffects.getNewRenameForBaseRename(mark.idOverride, count).length;
 				count = moveEffects.getBaseRename(
-					mark.cellId ?? fail("Rename mark should have cell ID"),
+					mark.cellId ?? fail(0xdcb /* Rename mark should have cell ID */),
 					count,
 				).length;
 			}
@@ -338,7 +338,7 @@ function rebaseMarkIgnoreChild(
 				baseMark.count,
 			).value;
 
-			assert(baseMark.cellId !== undefined, "Rename should target empty cells");
+			assert(baseMark.cellId !== undefined, 0xdcc /* Rename should target empty cells */);
 			const baseRootRename = moveEffects.getBaseRename(baseMark.cellId, baseMark.count).value;
 			const doesBaseMoveAndDetach =
 				baseRootRename !== undefined &&
