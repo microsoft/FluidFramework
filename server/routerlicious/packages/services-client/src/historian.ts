@@ -99,6 +99,13 @@ export class Historian implements IHistorian {
 			: this.getHeaderDirect(sha);
 	}
 
+	public async initializeDocumentStorage(): Promise<void> {
+		if (!this.historianApi) {
+			throw new NetworkError(400, "Storage initialization requires internal Historian.");
+		}
+		await this.restWrapper.post("/internal/document-storage/initialize", undefined);
+	}
+
 	public async getFullTree(sha: string): Promise<any> {
 		return this.restWrapper.get(`/tree/${encodeURIComponent(sha)}`, this.getQueryString());
 	}

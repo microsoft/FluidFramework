@@ -42,6 +42,7 @@ declare type current_as_old_for_Class_BasicRestWrapper = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Class_GitManager": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_GitManager = requireAssignableTo<TypeOnly<old.GitManager>, TypeOnly<current.GitManager>>
 
 /*
@@ -78,6 +79,7 @@ declare type current_as_old_for_Class_Heap = requireAssignableTo<TypeOnly<curren
  * typeValidation.broken:
  * "Class_Historian": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_Historian = requireAssignableTo<TypeOnly<old.Historian>, TypeOnly<current.Historian>>
 
 /*

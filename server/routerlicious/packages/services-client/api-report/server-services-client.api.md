@@ -26,7 +26,7 @@ import type { SummaryObject } from '@fluidframework/protocol-definitions';
 
 // @internal (undocumented)
 export class BasicRestWrapper extends RestWrapper {
-    constructor(baseurl?: string, defaultQueryString?: Record<string, string | number | boolean>, maxBodyLength?: number, maxContentLength?: number, defaultHeaders?: RawAxiosRequestHeaders, axios?: AxiosInstance, refreshDefaultQueryString?: (() => Record<string, string | number | boolean>) | undefined, refreshDefaultHeaders?: (() => RawAxiosRequestHeaders) | undefined, getCorrelationId?: (() => string | undefined) | undefined, getTelemetryContextProperties?: (() => Record<string, string | number | boolean> | undefined) | undefined, refreshTokenIfNeeded?: ((authorizationHeader: RawAxiosRequestHeaders) => Promise<RawAxiosRequestHeaders | undefined>) | undefined, logHttpMetrics?: ((requestProps: IBasicRestWrapperMetricProps) => void) | undefined, getCallingServiceName?: (() => string | undefined) | undefined);
+    constructor(baseurl?: string, defaultQueryString?: Record<string, string | number | boolean>, maxBodyLength?: number, maxContentLength?: number, defaultHeaders?: RawAxiosRequestHeaders, axios?: AxiosInstance, refreshDefaultQueryString?: (() => Record<string, string | number | boolean>) | undefined, refreshDefaultHeaders?: (() => RawAxiosRequestHeaders) | undefined, getCorrelationId?: (() => string | undefined) | undefined, getTelemetryContextProperties?: (() => Record<string, string | number | boolean> | undefined) | undefined, refreshTokenIfNeeded?: ((authorizationHeader: RawAxiosRequestHeaders) => Promise<RawAxiosRequestHeaders | undefined>) | undefined, logHttpMetrics?: ((requestProps: IBasicRestWrapperMetricProps) => void) | undefined, getCallingServiceName?: (() => string | undefined) | undefined, preserveErrorSource?: boolean);
     // (undocumented)
     protected request<T>(requestConfig: AxiosRequestConfig, statusCode: number, canRetry?: boolean): Promise<T>;
 }
@@ -170,6 +170,8 @@ export class GitManager implements IGitManager {
     getSummary(sha: string): Promise<IWholeFlatSummary>;
     getTree(root: string, recursive?: boolean): Promise<resources.ITree>;
     // (undocumented)
+    initializeDocumentStorage(): Promise<void>;
+    // (undocumented)
     upsertRef(branch: string, commitSha: string): Promise<resources.IRef>;
     write(branch: string, inputTree: api.ITree, parents: string[], message: string): Promise<resources.ICommit>;
 }
@@ -253,6 +255,8 @@ export class Historian implements IHistorian {
     getTag(tag: string): Promise<resources.ITag>;
     // (undocumented)
     getTree(sha: string, recursive: boolean): Promise<resources.ITree>;
+    // (undocumented)
+    initializeDocumentStorage(): Promise<void>;
     // (undocumented)
     updateRef(ref: string, params: resources.IPatchRefParams): Promise<resources.IRef>;
 }
@@ -374,6 +378,7 @@ export interface IGitManager {
     getSummary(sha: string): Promise<IWholeFlatSummary>;
     // (undocumented)
     getTree(root: string, recursive: boolean): Promise<resources.ITree>;
+    initializeDocumentStorage?(): Promise<void>;
     // (undocumented)
     upsertRef(branch: string, commitSha: string): Promise<resources.IRef>;
     // (undocumented)
@@ -432,6 +437,7 @@ export interface IGitService {
     getTag(tag: string): Promise<resources.ITag>;
     // (undocumented)
     getTree(sha: string, recursive: boolean): Promise<resources.ITree>;
+    initializeDocumentStorage?(): Promise<void>;
     // (undocumented)
     updateRef(ref: string, params: resources.IPatchRefParams): Promise<resources.IRef>;
 }

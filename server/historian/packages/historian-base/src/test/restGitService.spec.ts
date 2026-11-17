@@ -302,6 +302,34 @@ describe("RestGitService Git object SHA validation", () => {
 			sinon.assert.notCalled(downstream);
 		});
 
+		it("reuses ephemeral content across creation-only storage routing changes", async () => {
+			const cache = new TestCache();
+			const initial = new RestGitService(
+				storage,
+				false,
+				tenantId,
+				documentId,
+				cache,
+				"creation-account",
+				undefined,
+				true,
+			);
+			const subsequent = new RestGitService(
+				storage,
+				false,
+				tenantId,
+				documentId,
+				cache,
+				undefined,
+				undefined,
+				true,
+			);
+			const downstream = sandbox.stub(BasicRestWrapper.prototype, "get").resolves(commit);
+			await initial.getCommit(canonicalSha, true);
+			assert.strictEqual(await subsequent.getCommit(canonicalSha, true), commit);
+			sinon.assert.calledOnce(downstream);
+		});
+
 		it("uses the same isolated namespace for background blob fills", async () => {
 			const cache = new TestCache();
 			const service = new RestGitService(storage, false, tenantId, documentId, cache);

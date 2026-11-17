@@ -655,12 +655,13 @@ export class RestGitService {
 	}
 
 	private getNamespacedCacheKey(key: string): string {
+		const storageName = this.isEphemeralContainer === true ? undefined : this.storageName;
 		return [
 			"ownership-v2",
 			encodeURIComponent(this.tenantId),
 			encodeURIComponent(this.documentId),
 			this.isEphemeralContainer === true ? "ephemeral" : "durable",
-			encodeURIComponent(this.storageName ?? ""),
+			encodeURIComponent(storageName ?? ""),
 			encodeURIComponent(this.accessProof?.physicalContainerName ?? ""),
 			encodeURIComponent(this.accessProof?.layoutVersion ?? ""),
 			encodeURIComponent(this.accessProof?.lifecycleVersion ?? ""),

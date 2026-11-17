@@ -4,6 +4,7 @@
  */
 
 import type { ICreateRepoParams } from "@fluidframework/gitresources";
+import { NetworkError } from "@fluidframework/server-services-client";
 import { handleResponse } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import type nconf from "nconf";
@@ -20,6 +21,33 @@ export function create(
 ): Router {
 	const router: Router = Router();
 	const repoPerDocEnabled: boolean = store.get("git:repoPerDocEnabled") ?? false;
+
+	for (const [operation, method] of [
+		["initialize", "initializeDocumentStorage"],
+		["backfill", "backfillDocumentStorage"],
+	] as const) {
+		router.post(
+			`/repos/:owner/:repo/internal/document-storage/${operation}`,
+			(request, response) => {
+				const params = getRepoManagerParamsFromRequest(request);
+				const result = (async () => {
+					if (!repoPerDocEnabled || params.isEphemeralContainer === true) {
+						throw new NetworkError(400, "Durable document storage is required.", false);
+					}
+					const execute = repoManagerFactory[method];
+					if (execute === undefined) {
+						throw new NetworkError(
+							501,
+							"Document storage initialization is not configured.",
+							false,
+						);
+					}
+					await execute.call(repoManagerFactory, params);
+				})().catch((error) => logAndThrowApiError(error, request, params));
+				handleResponse(result, response, undefined, undefined, 204);
+			},
+		);
+	}
 
 	/**
 	 * Creates a new git repository

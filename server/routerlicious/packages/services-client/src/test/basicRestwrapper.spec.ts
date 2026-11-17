@@ -11,6 +11,7 @@ import { CorrelationIdHeaderName } from "../constants";
 import { BasicRestWrapper } from "../restWrapper";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { jwtDecode } from "jwt-decode";
+import { NetworkError } from "../error";
 
 describe("BasicRestWrapper", () => {
 	const baseurl = "https://fake.microsoft.com";
@@ -146,6 +147,48 @@ describe("BasicRestWrapper", () => {
 	});
 
 	describe(".get", () => {
+		for (const preserveErrorSource of [undefined, false, true]) {
+			for (const source of ["documentStorage:metadataMissing", undefined, 42]) {
+				it(`preserves only opted-in string error sources (${preserveErrorSource}, ${source})`, async () => {
+					const transport = Axios.create();
+					const adapter = new AxiosMockAdapter(transport);
+					adapter.onGet(requestUrl).reply(409, { message: "Missing metadata", source });
+					const wrapper = new BasicRestWrapper(
+						baseurl,
+						{},
+						undefined,
+						undefined,
+						{},
+						transport,
+						undefined,
+						undefined,
+						undefined,
+						undefined,
+						undefined,
+						undefined,
+						undefined,
+						preserveErrorSource,
+					);
+					try {
+						await assert.rejects(wrapper.get(requestUrl), (error: unknown) => {
+							assert.ok(error instanceof NetworkError);
+							assert.strictEqual(error.code, 409);
+							assert.ok(typeof error.details === "object");
+							assert.strictEqual(
+								error.details.source,
+								preserveErrorSource && typeof source === "string"
+									? source
+									: `[get] request to [${baseurl}] failed with [409] status code`,
+							);
+							return true;
+						});
+					} finally {
+						adapter.restore();
+					}
+				});
+			}
+		}
+
 		it("Invalid Response Code should reject Promise", async () => {
 			// arrange
 			const rw = new BasicRestWrapper(
