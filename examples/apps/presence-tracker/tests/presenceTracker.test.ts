@@ -179,7 +179,8 @@ test.describe("presence-tracker", () => {
 							) => boolean
 						)(expectation),
 					expected,
-					{ timeout: 300 },
+					// Presence propagation spans two browser clients and the local service.
+					{ timeout: 5000 },
 				)
 				.catch(async () => {
 					const attendeeData = await targetPage.evaluate(() => ({
