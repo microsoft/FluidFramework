@@ -349,8 +349,8 @@ export type DataStoreRegistry<out T = unknown> = Registry<Promise<DataStoreKind<
  * For in-memory use, call {@link @fluidframework/local-driver#startEphemeralService} and use the returned service's {@link @fluidframework/local-driver#LocalService.defaultClient | defaultClient},
  * or call its {@link @fluidframework/local-driver#LocalService.newClient | newClient} method to create a client with custom options.
  *
- * From that a {@link FluidContainer} is {@link ServiceClient.createContainer|created} or {@link ServiceClient.loadContainer|loaded}.
- * The container's content takes the form of {@link DataStore|data stores}.
+ * From that a {@link FluidContainer} is {@link ServiceClient.(createContainer:1)|created} or {@link ServiceClient.loadContainer|loaded}.
+ * The container's content takes the form of {@link DataStoreKind|data stores}.
  *
  * All code interacting through this surface within a single client must use a single copy of each Fluid Framework client package.
  * This matches the public declarative API model, rather than the more permissive legacy layering model.
