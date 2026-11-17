@@ -1,0 +1,172 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import {
+	takeAsync,
+	type AsyncGenerator,
+	type IRandom,
+} from "@fluid-private/stochastic-test-utils";
+import {
+	createDDSFuzzSuite,
+	type DDSFuzzClientFactory,
+	type DDSFuzzModel,
+	type DDSFuzzSuiteOptions,
+	type DDSFuzzTestState,
+} from "@fluid-private/test-dds-utils";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+
+import { ITree, type NodeBuilderData } from "../../../simple-tree/index.js";
+import { configuredSharedTree, type ISharedTree } from "../../../treeFactory.js";
+import { validateFuzzTreeConsistency } from "../../utils.js";
+
+import {
+	makeOpGenerator,
+	type EditGeneratorOpWeights,
+	type FuzzView,
+} from "./fuzzEditGenerators.js";
+import { fuzzReducer } from "./fuzzEditReducers.js";
+import {
+	createFuzzSchema,
+	defaultTreePackageStatics,
+	deterministicIdCompressorFactory,
+	failureDirectory,
+	populatedInitialState,
+	treeToPackageStatics,
+	type FuzzNode,
+	type TreePackageStatics,
+} from "./fuzzUtils.js";
+import type { Operation } from "./operationTypes.js";
+import { createRevertFuzzTestSuites } from "./undoRedo.fuzz.test.js";
+
+export function createCompatFuzzSuite(
+	factoryForCompat: IChannelFactory<ITree>,
+	compatPackageStatics: TreePackageStatics,
+	compatVersion: MinimumVersionForCollab,
+) {
+	const factories: readonly [IChannelFactory<ISharedTree>, TreePackageStatics][] = [
+		[factoryForCompat as IChannelFactory<ISharedTree>, compatPackageStatics],
+		[
+			makeFactorySupportingVersion(compatVersion) as IChannelFactory<ISharedTree>,
+			defaultTreePackageStatics,
+		],
+	];
+	const compatFuzzModel: DDSFuzzModel<
+		IChannelFactory<ISharedTree>,
+		Operation,
+		DDSFuzzTestState<IChannelFactory<ISharedTree>, number>,
+		number
+	> = {
+		workloadName: "SharedTree Compat",
+		factory: new CompatFuzzClientFactory(factories, undefined),
+		generatorFactory,
+		reducer: fuzzReducer,
+		validateConsistency: validateFuzzTreeConsistency,
+	};
+
+	createDDSFuzzSuite(compatFuzzModel, options);
+
+	createRevertFuzzTestSuites(new CompatFuzzClientFactory(factories, populatedInitialState));
+}
+
+// AB#11436: Currently manually disposing the view when applying the schema op is causing a double dispose issue. Once this issue has been resolved, re-enable schema ops.
+const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
+	set: 3,
+	clear: 1,
+	insert: 5,
+	remove: 5,
+	intraFieldMove: 5,
+	crossFieldMove: 5,
+	start: 1,
+	commit: 1,
+	abort: 1,
+	fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
+	schema: 0,
+	nodeConstraint: 0, // TODO: Enable when node existence constraints are supported across versions.
+	fork: 1,
+	merge: 1,
+};
+
+const generatorFactory = (): AsyncGenerator<
+	Operation,
+	DDSFuzzTestState<IChannelFactory<ISharedTree>>
+> => takeAsync(100, makeOpGenerator(editGeneratorOpWeights));
+
+const baseOptions: Partial<DDSFuzzSuiteOptions> = {
+	numberOfClients: 3,
+	clientJoinOptions: {
+		maxNumberOfClients: 6,
+		clientAddProbability: 0.1,
+	},
+	reconnectProbability: 0.5,
+};
+
+const runsPerBatch = 50;
+
+const options: Partial<DDSFuzzSuiteOptions> = {
+	...baseOptions,
+	defaultTestCount: runsPerBatch,
+	saveFailures: {
+		directory: failureDirectory,
+	},
+	clientJoinOptions: {
+		clientAddProbability: 0,
+		maxNumberOfClients: 3,
+	},
+	detachedStartOptions: {
+		numOpsBeforeAttach: 5,
+		// AB#43127: fully allowing rehydrate after attach is currently not supported in tests (but should be in prod) due to limitations in the test mocks.
+		attachingBeforeRehydrateDisable: true,
+	},
+	reconnectProbability: 0.1,
+	idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
+	skipMinimization: true,
+};
+
+function makeFactorySupportingVersion(
+	version: MinimumVersionForCollab,
+): IChannelFactory<ITree> {
+	return configuredSharedTree({ minVersionForCollab: version }).getFactory();
+}
+
+export class CompatFuzzClientFactory
+	implements DDSFuzzClientFactory<IChannelFactory<ISharedTree>, number>
+{
+	public constructor(
+		private readonly factories: readonly [IChannelFactory<ISharedTree>, TreePackageStatics][],
+		private readonly initialState: NodeBuilderData<typeof FuzzNode> | undefined,
+	) {}
+
+	public generateClientConfiguration(random: IRandom): number {
+		return random.integer(0, this.factories.length - 1);
+	}
+
+	public getFactory(clientConfiguration: number): IChannelFactory<ISharedTree> {
+		const [factory, statics] = this.factories[clientConfiguration];
+		return {
+			type: factory.type,
+			attributes: factory.attributes,
+			load: async (runtime, id, services, channelAttributes) => {
+				const tree = await factory.load(runtime, id, services, channelAttributes);
+				treeToPackageStatics.set(tree, statics);
+				return tree;
+			},
+			create: (runtime, id) => {
+				const tree = factory.create(runtime, id);
+				treeToPackageStatics.set(tree, statics);
+
+				const view = tree.viewWith(
+					statics.newTreeViewConfiguration({
+						schema: createFuzzSchema([], statics.newSchemaFactory),
+					}),
+				);
+				(view as FuzzView).initialize(this.initialState);
+				view.dispose();
+
+				return tree;
+			},
+		};
+	}
+}

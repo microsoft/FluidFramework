@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { Static } from "@sinclair/typebox";
+import type { Static } from "typebox";
 
 import { strictEnum, type Values } from "../../../../util/index.js";
 

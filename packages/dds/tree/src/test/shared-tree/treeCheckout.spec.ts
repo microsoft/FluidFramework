@@ -421,13 +421,11 @@ describe("sharedTreeView", () => {
 				"subtree",
 				"change",
 				"subtree",
-				"change",
 				"after",
 				"editStart",
 				"subtree",
 				"change",
 				"subtree",
-				"change",
 				"after",
 				"unsubscribe",
 				"editStart",
@@ -467,13 +465,11 @@ describe("sharedTreeView", () => {
 				"subtree-rootFieldKey-0",
 				"change-rootFieldKey-0",
 				"subtree-rootFieldKey-0",
-				"change-rootFieldKey-0",
 				"after",
 				"editStart",
 				"subtree-rootFieldKey-0",
 				"change-rootFieldKey-0",
 				"subtree-rootFieldKey-0",
-				"change-rootFieldKey-0",
 				"after",
 				"unsubscribe",
 				"editStart",
@@ -1807,7 +1803,7 @@ describe("sharedTreeView", () => {
 			const newSchema = sf.optional([sf.string, Added]);
 			const provider = new TestTreeProviderLite(
 				2,
-				new SharedTreeTestFactory(() => {}, undefined, { forest: ForestTypeOptimized }),
+				SharedTreeTestFactory.build(() => {}, undefined, { forest: ForestTypeOptimized }),
 			);
 			const [a, b] = provider.trees;
 			const aView = a.kernel.viewWith(new TreeViewConfiguration({ schema: oldSchema }));
@@ -1821,9 +1817,9 @@ describe("sharedTreeView", () => {
 			provider.synchronizeMessages();
 
 			// Only B's root rebases over A's edit. The independent fork retains its upgraded schema.
-			assert.equal(bView.compatibility.isEquivalent, false);
+			assert.equal(bView.compatibility.canView, false);
 			expectSchemaEqual(bView.checkout.storedSchema, toUpgradeSchema(oldSchema));
-			assert.equal(fork.compatibility.isEquivalent, true);
+			assert.equal(fork.compatibility.canView, true);
 			expectSchemaEqual(fork.checkout.storedSchema, toUpgradeSchema(newSchema));
 			assert.equal(fork.checkout.transaction.size, 0);
 			fork.root = new Added({ value: "fork data" });
@@ -2651,7 +2647,7 @@ describe("sharedTreeView", () => {
 			assert.equal(view1Revertibles.length, 1);
 			view1.runTransaction(() => {
 				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
-				// TODO AD#57584: Use such an operation here when one is available
+				// TODO: AB#57584: Use such an operation here when one is available
 				view1.root.insertAtEnd({ id: "B" });
 				view1.root.insertAtEnd({ id: "C" });
 			});
@@ -2688,7 +2684,7 @@ describe("sharedTreeView", () => {
 			assert.equal(view1Revertibles.length, 1);
 			view1.runTransaction(() => {
 				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
-				// TODO AD#57584: Use such an operation here when one is available
+				// TODO: AB#57584: Use such an operation here when one is available
 				view1.root.insertAtEnd({ id: "B" });
 				view1.root.insertAtEnd({ id: "C" });
 			});
@@ -2750,7 +2746,7 @@ describe("sharedTreeView", () => {
 			assert.equal(view1Revertibles.length, 1);
 			await view1.runTransactionAsync(async () => {
 				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
-				// TODO AD#57584: Use such an operation here when one is available
+				// TODO: AB#57584: Use such an operation here when one is available
 				view1.root.insertAtEnd({ id: "B" });
 				view1.root.insertAtEnd({ id: "C" });
 			});
@@ -2787,7 +2783,7 @@ describe("sharedTreeView", () => {
 			assert.equal(view1Revertibles.length, 1);
 			await view1.runTransactionAsync(async () => {
 				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
-				// TODO AD#57584: Use such an operation here when one is available
+				// TODO: AB#57584: Use such an operation here when one is available
 				view1.root.insertAtEnd({ id: "B" });
 				view1.root.insertAtEnd({ id: "C" });
 			});

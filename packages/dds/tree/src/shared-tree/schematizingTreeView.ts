@@ -39,6 +39,8 @@ import {
 	setField,
 	normalizeFieldSchema,
 	checkSchemaCompatibility,
+	isSchemaUpgradeAllowed,
+	getSchemaUpgradeCandidate,
 	type InsertableContent,
 	type StagedSchemaUpgradePolicy,
 	type TreeViewConfiguration,
@@ -59,10 +61,8 @@ import {
 	prepareForInsertionContextless,
 	type FieldSchema,
 	tryDisposeTreeNode,
-	FieldSchemaAlpha,
 	type TreeViewConfigurationAlpha,
 	toInitialSchema,
-	toUpgradeSchema,
 	type TreeBranchHistory,
 	type TreeLocationResolver,
 	type TreeLocation,
@@ -274,7 +274,7 @@ export class SchematizingSimpleTreeView<
 				: SchemaIdentityInternal.extract(configAlpha.schemaIdentity);
 		if (identity?.expectedHash !== undefined) {
 			const { expectedHash, schemaHasher: hasher } = identity;
-			const actualHash = hasher(configAlpha.schema, this.stagedUpgradePolicy);
+			const actualHash = hasher(toInitialSchema(configAlpha.schema, this.stagedUpgradePolicy));
 			if (actualHash !== expectedHash) {
 				throw new UsageError(
 					`Expected schema hash does not match the configured schema. Expected ${JSON.stringify(expectedHash)}, got ${JSON.stringify(actualHash)}.`,
@@ -335,7 +335,7 @@ export class SchematizingSimpleTreeView<
 		}
 
 		const schema = toInitialSchema(this.config.schema, this.stagedUpgradePolicy);
-		const schemaHash = this.computeSchemaHash(this.stagedUpgradePolicy);
+		const schemaHash = this.computeSchemaHash(schema);
 		this.runSchemaEdit(() => {
 			// This has to be the contextless version, since when "initialize" is called (right after this),
 			// it will do a schema change which would dispose of the current context (see inside `update`).
@@ -400,10 +400,11 @@ export class SchematizingSimpleTreeView<
 	public upgradeSchema(): void {
 		this.ensureUndisposed();
 
-		const upgradePolicy = this.effectiveUpgradePolicy;
-		const newSchema = toUpgradeSchema(this.viewSchema.root, upgradePolicy);
+		const upgradePolicy = this.stagedUpgradePolicy;
 		const storedSchema = this.checkout.storedSchema.clone();
-		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
+		const newSchema = getSchemaUpgradeCandidate(this.viewSchema, storedSchema, upgradePolicy);
+
+		if (!isSchemaUpgradeAllowed(this.viewSchema, storedSchema, newSchema)) {
 			throw new UsageError(
 				"Existing stored schema cannot be upgraded to the requested schema (see TreeView.compatibility.canUpgrade).",
 			);
@@ -413,7 +414,7 @@ export class SchematizingSimpleTreeView<
 			return;
 		}
 
-		const schemaHash = this.computeSchemaHash(upgradePolicy);
+		const schemaHash = this.computeSchemaHash(newSchema);
 		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
 		if (schemaHash !== undefined) {
 			this.breaker.logger?.sendTelemetryEvent({
@@ -423,16 +424,11 @@ export class SchematizingSimpleTreeView<
 		}
 	}
 
-	private computeSchemaHash(
-		stagedUpgradePolicy: StagedSchemaUpgradePolicy,
-	): string | undefined {
+	private computeSchemaHash(schema: TreeStoredSchema): string | undefined {
 		const identity = (this.config as Partial<ITreeViewConfigurationAlpha>).schemaIdentity;
 		return identity === undefined
 			? undefined
-			: SchemaIdentityInternal.extract(identity).schemaHasher(
-					this.config.schema,
-					stagedUpgradePolicy,
-				);
+			: SchemaIdentityInternal.extract(identity).schemaHasher(schema);
 	}
 
 	public isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus {
@@ -440,28 +436,6 @@ export class SchematizingSimpleTreeView<
 			this.failDisposed();
 		}
 		return this.currentEnabledUpgrades.get(upgrade) ?? "disabled";
-	}
-
-	private get effectiveUpgradePolicy(): StagedSchemaUpgradePolicy {
-		const configuredPolicy = this.stagedUpgradePolicy;
-		if (configuredPolicy.includeAlreadyEnabledUpgrades !== true) {
-			return configuredPolicy;
-		}
-		const enabledUpgrades = this.currentEnabledUpgrades;
-		assert(
-			enabledUpgrades !== undefined,
-			0xd3e /* Enabled upgrades must be available for an active view */,
-		);
-		if (enabledUpgrades.size === 0) {
-			return configuredPolicy;
-		}
-
-		return {
-			includeStaged: (upgrade) =>
-				configuredPolicy.includeStaged(upgrade) || enabledUpgrades.has(upgrade),
-			includeStagedOptional: (upgrade) =>
-				configuredPolicy.includeStagedOptional(upgrade) || enabledUpgrades.has(upgrade),
-		};
 	}
 
 	/**
@@ -563,18 +537,9 @@ export class SchematizingSimpleTreeView<
 				this.nodeKeyManager,
 			);
 			assert(!slots.has(SimpleContextSlot), 0xa47 /* extra simple tree context */);
-			assert(
-				this.rootFieldSchema instanceof FieldSchemaAlpha,
-				0xbfa /* all field schema should be FieldSchemaAlpha */,
-			);
 			slots.set(
 				SimpleContextSlot,
-				new HydratedContext(
-					this.flexTreeContext,
-					HydratedContext.schemaMapFromRootSchema(
-						this.rootFieldSchema.allowedTypesFull.evaluate(),
-					),
-				),
+				new HydratedContext(this.flexTreeContext, this.viewSchema.definitions),
 			);
 
 			// Trigger "rootChanged" events if the root changes in the future.
@@ -745,10 +710,11 @@ export class SchematizingSimpleTreeView<
 
 	@throwIfBroken
 	public rewindTo(revision: string): void {
-		assert(
-			this.checkout instanceof TreeCheckout,
-			0xd78 /* Rewinding requires a checkout that supports branch replacement */,
-		);
+		if (!(this.checkout instanceof TreeCheckout)) {
+			throw new UsageError(
+				"Rewinding is not supported on a branch created by `tree.forkBranch()` or `branch.fork()`, or on its views. Consider `revertTo` instead.",
+			);
+		}
 		this.checkout.rewindTo(revision);
 	}
 

@@ -173,6 +173,66 @@ describe("Transport and endpoint unit tests", () => {
 		assert(!guestToHostMessageValidator.check({ hostUpdateAck: {} }));
 	});
 
+	it("accepts supported primitives in payloads and nested records", () => {
+		for (const value of [null, true, false, 0, -1.5, "", "text"]) {
+			assert.doesNotThrow(() => validateTreePayloadVocabulary(value));
+			assert.doesNotThrow(() =>
+				validateTreePayloadVocabulary(normalizeTransportData({ values: [value] })),
+			);
+		}
+	});
+
+	it("allows undefined only as an object property in codec payloads", () => {
+		for (const value of [{ optional: undefined }, [{ nested: { optional: undefined } }]]) {
+			assert.doesNotThrow(() => validateTreePayloadVocabulary(normalizeTransportData(value)));
+		}
+		for (const value of [undefined, [undefined], { nested: [undefined] }]) {
+			assert.throws(
+				() => validateTreePayloadVocabulary(normalizeTransportData(value)),
+				/Invalid sandbox tree payload/,
+			);
+		}
+	});
+
+	it("rejects negative zero throughout codec payloads", () => {
+		for (const value of [-0, [-0], { value: -0 }]) {
+			assert.throws(
+				() => validateTreePayloadVocabulary(normalizeTransportData(value)),
+				/Invalid sandbox tree payload/,
+			);
+		}
+	});
+
+	it("rejects unsupported payload values without inspecting their properties", () => {
+		const recordWithGetter = Object.defineProperty({}, "value", {
+			enumerable: true,
+			get: () => {
+				throw new Error("Rejected objects must not be inspected.");
+			},
+		});
+		for (const value of [
+			Number.NaN,
+			Infinity,
+			-Infinity,
+			1n,
+			Symbol("value"),
+			() => {},
+			new Map(),
+			new Date(),
+			new Uint8Array(1),
+			recordWithGetter,
+		]) {
+			const nested: Record<string, unknown> = Object.create(null);
+			nested.value = [value];
+			for (const payload of [value, nested]) {
+				assert.throws(
+					() => validateTreePayloadVocabulary(payload),
+					/Invalid sandbox tree payload/,
+				);
+			}
+		}
+	});
+
 	it("restores null prototypes after MessagePort reconstructs ordinary records", async () => {
 		const { host, guest } = setupTransportCodecs();
 		const input = { nested: [{ type: "__sandbox_object__", value: "data" }] };
@@ -681,6 +741,34 @@ describe("Host and Guest round-trip integration tests", () => {
 			() => validateTreePayloadVocabulary(new ArrayBuffer(0)),
 			/Invalid sandbox tree payload/,
 		);
+	});
+
+	it("does not inspect handle properties during payload or message validation", () => {
+		const handle = new MockHandle(new ArrayBuffer(0));
+		Object.defineProperty(handle, "throwingProperty", {
+			enumerable: true,
+			get: () => {
+				throw new Error("Handle properties must not be inspected.");
+			},
+		});
+		Object.assign(handle, { cycle: handle });
+
+		for (const payload of [handle, [handle], normalizeTransportData({ nested: [handle] })]) {
+			assert.doesNotThrow(() => validateTreePayloadVocabulary(payload));
+			assert(
+				guestToHostMessageValidator.check(
+					normalizeTransportData({
+						guestChange: {
+							changeId: 0,
+							mainRevision: "root",
+							trunkRevision: "root",
+							change: payload,
+							idSpaceShardToken: exampleIdSpaceShardToken,
+						},
+					}),
+				),
+			);
+		}
 	});
 
 	it("rejects unsupported values, cycles, and sparse arrays in both directions", () => {

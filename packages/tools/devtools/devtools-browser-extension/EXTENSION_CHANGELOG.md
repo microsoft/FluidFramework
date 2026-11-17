@@ -1,8 +1,8 @@
 # Fluid Framework Developer Tools
 
-# Unpublished
-
-<!-- Enumerate unpublished changes here. They can be merged into release sections when the next release is published. -->
+> [!WARNING]
+> This package is deprecated and will no longer be maintained.
+> We do not intend to publish any future versions to the browser extension stores.
 
 # 1.1.2
 

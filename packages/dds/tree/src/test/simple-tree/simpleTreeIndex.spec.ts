@@ -21,6 +21,8 @@ import {
 	SchemaFactoryBeta,
 	ObjectNodeSchema,
 } from "../../simple-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Verify index setup does not rediscover schema.
+import { getTreeNodeSchemaPrivateData } from "../../simple-tree/core/index.js";
 import { brand } from "../../util/index.js";
 import { getView } from "../utils.js";
 
@@ -55,6 +57,62 @@ function createView(child?: InsertableTypedNode<typeof IndexableChild>) {
 }
 
 describe("simple tree indexes", () => {
+	it("reuses cached definitions without rediscovering schema", () => {
+		const sf = new SchemaFactory("indexLookupReuse");
+		class Child extends sf.object("Child", { id: sf.identifier }) {}
+		class Parent extends sf.object("Parent", { id: sf.identifier, child: Child }) {}
+		const view = getView(new TreeViewConfiguration({ schema: Parent }));
+		view.initialize({ id: "parent", child: { id: "child" } });
+		let reads = 0;
+		for (const node of [Parent, Child]) {
+			const data = getTreeNodeSchemaPrivateData(node);
+			const types = data.childAllowedTypes;
+			Object.defineProperty(data, "childAllowedTypes", {
+				get() {
+					reads++;
+					return types;
+				},
+			});
+		}
+		const index = createTreeIndex(
+			view,
+			(node) => (node === Parent || node === Child ? "id" : undefined),
+			(nodes) => nodes,
+			isStringKey,
+		);
+		try {
+			assert.equal(reads, 0);
+			assert.equal(index.get("parent")?.[0], view.root);
+			assert.equal(index.get("child")?.[0], view.root.child);
+		} finally {
+			index.dispose();
+			view.dispose();
+		}
+	});
+
+	it("preserves explicit schema order and deduplication", () => {
+		const { view } = createView(new IndexableChild({ childKey: childId }));
+		const seen: TreeNodeSchema[] = [];
+		const index = createTreeIndex(
+			view,
+			(node) => {
+				seen.push(node);
+				return node === IndexableParent ? parentKey : childKey;
+			},
+			(nodes) => nodes,
+			isStringKey,
+			[IndexableChild, IndexableParent, IndexableChild],
+		);
+		try {
+			assert.deepEqual(seen, [IndexableChild, IndexableParent]);
+			assert.equal(index.get(parentId)?.[0], view.root);
+			assert.equal(index.get(childId)?.[0], view.root.child);
+		} finally {
+			index.dispose();
+			view.dispose();
+		}
+	});
+
 	function keyFieldSelector(schema: TreeNodeSchema) {
 		if (
 			schema.identifier === IndexableParent.identifier ||

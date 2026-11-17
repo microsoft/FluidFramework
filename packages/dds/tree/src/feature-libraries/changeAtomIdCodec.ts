@@ -10,8 +10,7 @@ import type {
 	RevisionTag,
 	RevisionTagSchema,
 } from "../core/index.js";
-
-import { EncodedChangeAtomId } from "./modular-schema/index.js";
+import { EncodedChangeAtomId } from "../core/index.js";
 
 export function makeChangeAtomIdCodec(
 	revisionTagCodec: JsonCodecPart<

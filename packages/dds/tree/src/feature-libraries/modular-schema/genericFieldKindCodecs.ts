@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { type ICodecFamily, type IJsonCodec, makeCodecFamily } from "../../codec/index.js";
+import {
+	eraseEncodedType,
+	type ICodecFamily,
+	type IJsonCodec,
+	makeCodecFamily,
+} from "../../codec/index.js";
 
 import type {
 	FieldChangeEncodingContext,
@@ -18,13 +23,13 @@ export function makeGenericChangeCodec(): ICodecFamily<
 	FieldChangeEncodingContext,
 	FieldChangeDecodingContext
 > {
-	return makeCodecFamily([[1, makeV1Codec()]]);
+	return makeCodecFamily([[1, eraseEncodedType(makeV1Codec())]]);
 }
 
 function makeV1Codec(): IJsonCodec<
 	GenericChangeset,
-	EncodedGenericChangeset,
-	EncodedGenericChangeset,
+	EncodedGenericChangeset<typeof EncodedNodeChangeset>,
+	EncodedGenericChangeset<typeof EncodedNodeChangeset>,
 	FieldChangeEncodingContext,
 	FieldChangeDecodingContext
 > {
@@ -32,14 +37,14 @@ function makeV1Codec(): IJsonCodec<
 		encode: (
 			change: GenericChangeset,
 			context: FieldChangeEncodingContext,
-		): EncodedGenericChangeset => {
-			const encoded: EncodedGenericChangeset = change
+		): EncodedGenericChangeset<typeof EncodedNodeChangeset> => {
+			const encoded: EncodedGenericChangeset<typeof EncodedNodeChangeset> = change
 				.toArray()
 				.map(([index, nodeChange]) => [index, context.encodeNode(nodeChange)]);
 			return encoded;
 		},
 		decode: (
-			encoded: EncodedGenericChangeset,
+			encoded: EncodedGenericChangeset<typeof EncodedNodeChangeset>,
 			context: FieldChangeDecodingContext,
 		): GenericChangeset => {
 			return newGenericChangeset(

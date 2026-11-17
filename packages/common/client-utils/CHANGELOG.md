@@ -1,5 +1,26 @@
 # @fluid-internal/client-utils
 
+## 3.13.0
+
+### Minor Changes
+
+- Reduce the memory used by event emitters with one listener per event ([#28719](https://github.com/microsoft/FluidFramework/pull/28719)) [d7730b8aaf5](https://github.com/microsoft/FluidFramework/commit/d7730b8aaf507aef4505cf012456f29a226be9cd)
+
+  An event emitter now keeps an event's only listener directly, and creates a set of listeners only when the event has a second one.
+  Most emitters have one listener per event: for example, a tree node with a `nodeChanged` listener uses about 300 bytes less memory.
+
+## 3.12.0
+
+Dependency updates only.
+
+## 3.11.0
+
+Dependency updates only.
+
+## 3.10.0
+
+Dependency updates only.
+
 ## 3.7.0
 
 Dependency updates only.

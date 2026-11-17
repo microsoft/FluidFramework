@@ -403,15 +403,7 @@ module.exports = {
 		},
 		"markdown-magic": {
 			inputGlobs: [],
-			outputGlobs: [
-				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
-				// have generated markdown files at today. Once we can upgrade to a later version of
-				// globby things might be faster.
-				"{azure,examples,experimental,packages}/*/*/*.md",
-				"{azure,examples,experimental,packages}/*/*/*/*.md",
-				"{azure,examples,experimental,packages}/*/*/*/*/*.md",
-				"tools/markdown-magic/**/*.md",
-			],
+			outputGlobs: ["**/*.md", "**/*.mdx", "!**/node_modules/**"],
 			gitignore: ["input", "output"],
 		},
 		// eslint-config-fluid specific declarative task to print configs

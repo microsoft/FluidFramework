@@ -48,12 +48,15 @@ import {
 import {
 	type IExistingFileInfo,
 	type INewFileInfo,
+	type NewFileLocation,
 	createOdspLogger,
 	getJoinSessionCacheKey,
 	getOdspResolvedUrl,
 	isNewFileInfo,
 	toInstrumentedOdspStorageTokenFetcher,
 	toInstrumentedOdspTokenFetcher,
+	tryGetNewFileParentFolderId,
+	tryGetNewFilePath,
 } from "./odspUtils.js";
 import { copyRequestHeaders } from "./requestHeaders.js";
 
@@ -197,16 +200,13 @@ export class OdspDocumentServiceFactoryCore
 		} else if (odspResolvedUrl.fileName) {
 			const [, queryString] = odspResolvedUrl.url.split("?");
 			const searchParams = new URLSearchParams(queryString);
-			const filePath = searchParams.get("path");
-			if (filePath === undefined || filePath === null) {
-				throw new Error("File path should be provided!!");
-			}
+			const location = getNewFileLocation(searchParams);
 			createShareLinkParam = getSharingLinkParams(this.hostPolicy, searchParams);
 			fileInfo = {
 				type: "New",
 				driveId: odspResolvedUrl.driveId,
 				siteUrl: odspResolvedUrl.siteUrl,
-				filePath,
+				...location,
 				filename: odspResolvedUrl.fileName,
 				createLinkType: createShareLinkParam,
 			};
@@ -244,6 +244,7 @@ export class OdspDocumentServiceFactoryCore
 			{
 				eventName: "CreateNew",
 				isWithSummaryUpload: true,
+				isWithParentFolderId: fileInfo.type === "New" && fileInfo.parentFolderId !== undefined,
 				createShareLinkParam: createShareLinkParam
 					? JSON.stringify(createShareLinkParam)
 					: undefined,
@@ -441,6 +442,32 @@ export class OdspDocumentServiceFactoryCore
 			clientIsSummarizer,
 		);
 	}
+}
+
+/**
+ * Gets the location of the folder in which to create a new file from the query parameters of a create-new request URL.
+ * @throws An `Error` if the parameters don't identify exactly one folder by either its path or a non-empty item ID.
+ */
+function getNewFileLocation(searchParams: URLSearchParams): NewFileLocation {
+	const filePath = tryGetNewFilePath(searchParams);
+	const parentFolderId = tryGetNewFileParentFolderId(searchParams);
+	if (parentFolderId === undefined) {
+		if (filePath === undefined) {
+			throw new Error(
+				"Either a file path or a parent folder ID must be provided to create a new file",
+			);
+		}
+		return { filePath };
+	}
+	if (filePath !== undefined) {
+		throw new Error(
+			"Only one of a file path or a parent folder ID can be provided to create a new file",
+		);
+	}
+	if (parentFolderId === "") {
+		throw new Error("The parent folder ID for a new file must not be empty");
+	}
+	return { parentFolderId };
 }
 
 /**

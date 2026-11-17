@@ -170,18 +170,31 @@ export interface Mark {
 	readonly fields?: FieldMap;
 
 	/**
-	 * When set, indicates that some pre-existing content is being detached and sent to the given detached field.
+	 * When set, detaches {@link Mark.count} pre-existing nodes and assigns them consecutive
+	 * {@link DetachedNodeId}s starting at this ID, in field order.
 	 */
 	readonly detach?: DetachedNodeId;
 
 	/**
-	 * When set, indicates that some content is being attached from the given detached field.
+	 * When set, attaches {@link Mark.count} nodes identified by consecutive {@link DetachedNodeId}s
+	 * starting at this ID, in ID order.
 	 */
 	readonly attach?: DetachedNodeId;
 }
 
 /**
  * A globally unique ID for a node in a detached field.
+ * @remarks
+ * The combination of {@link DetachedNodeId.major | major} and {@link DetachedNodeId.minor | minor}
+ * identifies the node, not its position in a field.
+ *
+ * A consecutive range of IDs keeps `major` fixed and increments `minor`.
+ * For a range starting at `{ major, minor }`, the ID at offset `i` is `{ major, minor: minor + i }`.
+ * Operations that interpret an ID as the start of a range specify the range's length separately.
+ * For example, {@link Mark.attach} and {@link Mark.detach} use {@link Mark.count}.
+ *
+ * Offsetting an arbitrary ID does not imply that the resulting ID has been allocated or identifies a related node.
+ * Producers of a delta must use consecutive IDs when an operation requires a range.
  */
 export interface DetachedNodeId {
 	/** Revision in which the ID was allocated, if applicable. */

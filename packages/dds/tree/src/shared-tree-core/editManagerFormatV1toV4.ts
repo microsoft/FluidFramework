@@ -4,8 +4,8 @@
  */
 
 import type { SessionId } from "@fluidframework/id-compressor";
-import * as Type from "@sinclair/typebox";
-import type { ObjectOptions, TSchema } from "@sinclair/typebox";
+import * as Type from "typebox/type";
+import type { TObjectOptions, TSchema } from "typebox";
 
 import { SessionIdSchema } from "../core/index.js";
 
@@ -17,7 +17,7 @@ import {
 	SummarySessionBranch,
 } from "./editManagerFormatCommons.js";
 
-const noAdditionalProps: ObjectOptions = { additionalProperties: false };
+const noAdditionalProps: TObjectOptions = { additionalProperties: false };
 
 // Many of the return types in this module are intentionally derived, rather than explicitly specified.
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
@@ -31,7 +31,8 @@ export interface EncodedEditManager<TChangeset> {
 		| typeof EditManagerFormatVersion.v3
 		| typeof EditManagerFormatVersion.v4
 		| typeof EditManagerFormatVersion.v6
-		| typeof EditManagerFormatVersion.v7;
+		| typeof EditManagerFormatVersion.v7
+		| typeof EditManagerFormatVersion.vDetachedRoots;
 }
 
 export const EncodedEditManager = <ChangeSchema extends TSchema>(
@@ -47,6 +48,7 @@ export const EncodedEditManager = <ChangeSchema extends TSchema>(
 				Type.Literal(EditManagerFormatVersion.v4),
 				Type.Literal(EditManagerFormatVersion.v6),
 				Type.Literal(EditManagerFormatVersion.v7),
+				Type.Literal(EditManagerFormatVersion.vDetachedRoots),
 			]),
 			trunk: Type.Array(SequencedCommit(tChange, includeCustomMetadata)),
 			branches: Type.Array(

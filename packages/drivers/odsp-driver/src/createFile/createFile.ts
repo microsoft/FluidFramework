@@ -201,17 +201,28 @@ function encodeFilePath(path: string | undefined): string {
 	return path ? encodeURIComponent(path.startsWith("/") ? path : `/${path}`) : "";
 }
 
+/**
+ * Builds the drive-relative item path that addresses a new file,
+ * in either the folder at `filePath` or the folder whose item ID is `parentFolderId`.
+ * @param newFileInfo - Information about the file to create.
+ * @param encodedFilename - URI-encoded name of the file to create.
+ */
+function getNewFileItemPath(newFileInfo: INewFileInfo, encodedFilename: string): string {
+	return newFileInfo.parentFolderId === undefined
+		? `items/root:${encodeFilePath(newFileInfo.filePath)}/${encodedFilename}`
+		: `items/${encodeURIComponent(newFileInfo.parentFolderId)}:/${encodedFilename}`;
+}
+
 export async function createNewEmptyFluidFile(
 	getAuthHeader: InstrumentedStorageTokenFetcher,
 	newFileInfo: INewFileInfo,
 	logger: TelemetryLoggerExt,
 	epochTracker: EpochTracker,
 ): Promise<{ itemId: string; fileName: string }> {
-	const filePath = encodeFilePath(newFileInfo.filePath);
 	const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.tmp`);
 	const initialUrl = `${getApiRoot(new URL(newFileInfo.siteUrl))}/drives/${
 		newFileInfo.driveId
-	}/items/root:${filePath}/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
+	}/${getNewFileItemPath(newFileInfo, encodedFilename)}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
 
 	return getWithRetryForTokenRefresh(async (options) => {
 		const url = initialUrl;
@@ -337,11 +348,8 @@ export async function createNewFluidFileFromSummary(
 	epochTracker: EpochTracker,
 	forceAccessTokenViaAuthorizationHeader: boolean,
 ): Promise<ICreateFileResponse> {
-	const filePath = encodeFilePath(newFileInfo.filePath);
 	const encodedFilename = encodeURIComponent(newFileInfo.filename);
-	const baseUrl =
-		`${getApiRoot(new URL(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
-		`${filePath}/${encodedFilename}`;
+	const baseUrl = `${getApiRoot(new URL(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/${getNewFileItemPath(newFileInfo, encodedFilename)}`;
 
 	const containerSnapshot = convertSummaryIntoContainerSnapshot(createNewSummary);
 

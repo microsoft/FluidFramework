@@ -47,6 +47,7 @@ import {
 	assertValidRange,
 	brand,
 	breakingMethod,
+	replaceArrayRange,
 	type Breakable,
 	type WithBreakable,
 } from "../../util/index.js";
@@ -256,6 +257,20 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 				preEdit();
 				this.detachEdit(source, destination);
 			}
+			public replace(
+				source: FieldKey,
+				range: Range,
+				destination: FieldKey,
+				id: DeltaDetachedNodeId,
+			): void {
+				preEdit();
+				assert(
+					source !== destination,
+					0xdc1 /* Replacement source and destination must differ */,
+				);
+				this.detachEdit(range, destination);
+				this.attachEdit(source, range.end - range.start, range.start);
+			}
 			/**
 			 * Attaches the nodes from the given source field into the current field.
 			 * Does not invalidate dependents.
@@ -284,8 +299,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 				);
 				assertValidIndex(destination, existingDestinationField, true);
 				const currentField = getOrCreateField(parent, key);
-				// TODO: this will fail for very large insertions due to argument limits.
-				currentField.splice(destination, 0, ...sourceField);
+				replaceArrayRange(currentField, destination, destination, sourceField);
 				this.forest.delete(source);
 			}
 			/**

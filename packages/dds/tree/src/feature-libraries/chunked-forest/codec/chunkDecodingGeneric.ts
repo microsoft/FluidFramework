@@ -12,7 +12,7 @@ import type { BrandedType, IdDecodingContext } from "../../../util/index.js";
 import {
 	type ChunkDecoder,
 	type StreamCursor,
-	getChecked,
+	getFullyChecked,
 	readStream,
 } from "./chunkCodecUtilities.js";
 import type { IncrementalDecoder } from "./codecs.js";
@@ -32,10 +32,14 @@ export function decode<TEncodedShape extends object, TContext>(
 	rootDecoder: ChunkDecoder,
 ): TreeChunk[] {
 	const decoders = batch.shapes.map((shape) => decoderLibrary.dispatch(shape, context));
+	for (const decoder of decoders) {
+		decoder.initialize(decoders);
+	}
+	rootDecoder.initialize(decoders);
 	const chunks: TreeChunk[] = [];
 	for (const field of batch.data) {
 		const stream = { data: field, offset: 0 };
-		const result = rootDecoder.decode(decoders, stream);
+		const result = rootDecoder.decode(stream);
 		assert(
 			stream.offset === stream.data.length,
 			0x73a /* expected decode to consume full stream */,
@@ -71,7 +75,7 @@ export class DecoderContext<TEncodedShape = unknown> {
 		if (typeof encoded === "string") {
 			return encoded as T;
 		}
-		return getChecked(this.identifiers, encoded) as T;
+		return getFullyChecked(this.identifiers, encoded) as T;
 	}
 }
 

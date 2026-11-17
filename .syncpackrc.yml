@@ -35,6 +35,19 @@ semverGroups:
       - "**"
     range: "~"
 
+  # The internal codec helpers in packages/dds/tree/src/util/typebox.ts depend on TypeBox's record metadata and memory construction.
+  # Allow patch fixes, but require explicit validation of behavior, types, and bundle size before minor upgrades.
+  # Keep the CLI example aligned with Tree; remove this exception when the helpers use supported public builders.
+  - label: "TypeBox helper compatibility requires tilde dependency ranges"
+    dependencies:
+      - "typebox"
+    dependencyTypes:
+      - "prod"
+    packages:
+      - "@fluidframework/tree"
+      - "@fluid-example/tree-cli-app"
+    range: "~"
+
   - label: "engines.node should always use >= ranges"
     dependencyTypes:
       - "engines"

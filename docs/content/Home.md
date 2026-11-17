@@ -13,3 +13,4 @@ This documentation is aimed at developers working in this repository, and covers
 - [Guidelines](./Guidelines.md)
 - [Development Environment](./Development-Environment.md)
 - [Architecture](./Architecture.md)
+- [Whitepapers](./whitepapers.md)

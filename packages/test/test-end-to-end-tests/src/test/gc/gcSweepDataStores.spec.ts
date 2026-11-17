@@ -46,8 +46,6 @@ import {
 	ITestObjectProvider,
 	toIDeltaManagerFull,
 	createSummarizer,
-	getContainerEntryPointBackCompat,
-	getDataStoreEntryPointBackCompat,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -192,13 +190,13 @@ const ensureSynchronizedAndSummarize = async (
  */
 async function summarizeWithSweepReadyDS(clock: SinonFakeTimers) {
 	const container = await provider.makeTestContainer(testContainerConfig);
-	const defaultDataObject = await getContainerEntryPointBackCompat<ITestDataObject>(container);
+	const defaultDataObject = (await container.getEntryPoint()) as ITestDataObject;
 	await waitForContainerConnection(container);
 
 	const handleKey = "handle";
 	const dataStore =
 		await defaultDataObject._context.containerRuntime.createDataStore(TestDataObjectType);
-	const testDataObject = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore);
+	const testDataObject = (await dataStore.entryPoint.get()) as ITestDataObject;
 	assert(
 		testDataObject !== undefined,
 		"Should have been able to retrieve testDataObject from entryPoint",
@@ -657,8 +655,7 @@ describeCompat("GC data store sweep tests", "NoCompat", function (getTestObjectP
 			const ds2key = "ds2";
 			const dataStore =
 				await defaultDataObject._context.containerRuntime.createDataStore(TestDataObjectType);
-			const testDataObject =
-				await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore);
+			const testDataObject = (await dataStore.entryPoint.get()) as ITestDataObject;
 			assert(
 				testDataObject !== undefined,
 				"Should have been able to retrieve testDataObject from entryPoint",

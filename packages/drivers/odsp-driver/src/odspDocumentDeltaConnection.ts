@@ -354,6 +354,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		new Map();
 	private flushOpNonce: string | undefined;
 	private flushDeferred: Deferred<FlushResult> | undefined;
+	private flushStartTime: number | undefined;
 	private connectionNotYetDisposedTimeout: ReturnType<typeof setTimeout> | undefined;
 	// Due to socket reuse(multiplexing), we can get "disconnect" event from other clients in the socket reference.
 	// So, a race condition could happen, where this client is establishing connection and listening for "connect_document_success"
@@ -524,10 +525,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 				"process involving flush() was cancelled OR unsupported concurrency",
 			);
 		}
+		const start = performanceNow();
 		this.socket.emit("flush_ops", this.clientId, { nonce });
 
 		this.flushOpNonce = nonce;
 		this.flushDeferred = new Deferred<FlushResult>();
+		this.flushStartTime = start;
 		return this.flushDeferred.promise;
 	}
 
@@ -637,6 +640,11 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 				}
 				this.logger.sendTelemetryEvent({
 					eventName: "FlushResult",
+					duration:
+						this.flushStartTime === undefined
+							? undefined
+							: performanceNow() - this.flushStartTime,
+					driverVersion: pkgVersion,
 					code: result.code,
 					sequenceNumber: seq,
 					category,
@@ -644,6 +652,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 				this.flushDeferred!.resolve(result);
 				this.flushDeferred = undefined;
 				this.flushOpNonce = undefined;
+				this.flushStartTime = undefined;
 			}
 		});
 
@@ -833,6 +842,25 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	 * Disconnect from the websocket
 	 */
 	protected disconnectCore(err: IAnyDriverError): void {
+		// The response listener has been removed, so an in-flight flush can no longer complete.
+		const flushDeferred = this.flushDeferred;
+		const flushStartTime = this.flushStartTime;
+		this.flushOpNonce = undefined;
+		flushDeferred?.reject(err);
+		this.flushDeferred = undefined;
+		this.flushStartTime = undefined;
+
+		if (flushDeferred !== undefined) {
+			this.logger.sendTelemetryEvent({
+				eventName: "FlushCancelledOnDisconnect",
+				category: "generic",
+				duration: flushStartTime === undefined ? undefined : performanceNow() - flushStartTime,
+				driverVersion: pkgVersion,
+				errorType: err.errorType,
+				canRetry: err.canRetry,
+			});
+		}
+
 		const socket = this.socketReference;
 		assert(socket !== undefined, 0x0a2 /* "reentrancy not supported!" */);
 		this.socketReference = undefined;

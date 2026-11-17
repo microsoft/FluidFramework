@@ -153,6 +153,7 @@ export {
 	type ConciseTree,
 	checkSchemaCompatibility,
 	getSchemaIncompatibilityDetails,
+	isSchemaUpgradeAllowed,
 	type Unenforced,
 	type System_Unsafe,
 	type ArrayNodeCustomizableSchemaUnsafe,
@@ -335,13 +336,7 @@ export {
 	prepareForInsertion,
 	prepareForInsertionContextless,
 } from "./prepareForInsertion.js";
-export {
-	toStoredSchema,
-	convertFieldKind,
-	toUpgradeSchema,
-	toInitialSchema,
-	toUnhydratedSchema,
-} from "./toStoredSchema.js";
+export { toUnhydratedSchema, convertFieldKind } from "./toStoredSchema.js";
 export {
 	numberSchema,
 	stringSchema,
@@ -351,4 +346,13 @@ export {
 } from "./leafNodeSchema.js";
 export type { LeafSchema, StringSchema } from "./leafNodeSchema.js";
 export { getUnhydratedContext } from "./createContext.js";
-export { type TreeSchema, createTreeSchema } from "./treeSchema.js";
+export {
+	type TreeSchema,
+	type TransitiveSchemaInfo,
+	createTreeSchema,
+	getSchemaUpgradeCandidate,
+	SchemaComponent,
+	toStoredSchema,
+	toUpgradeSchema,
+	toInitialSchema,
+} from "./treeSchema.js";

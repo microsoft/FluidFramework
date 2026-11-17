@@ -15,7 +15,6 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
 const mapId = "mapKey";
@@ -61,12 +60,12 @@ function generate(name: string, input: any[], output: any[]): void {
 		beforeEach("createSharedMaps", async () => {
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(createContainerConfig);
-			dataStore1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+			dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
 			sharedMap1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(loadContainerConfig);
-			dataStore2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+			dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			sharedMap2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 			closeContainer2 = () => {
 				container2.close();
@@ -75,7 +74,7 @@ function generate(name: string, input: any[], output: any[]): void {
 
 			// Load the Container that was created by the first client.
 			const container3 = await provider.loadTestContainer(loadContainerConfig);
-			const dataStore3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
+			const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 			sharedMap3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 		});
 

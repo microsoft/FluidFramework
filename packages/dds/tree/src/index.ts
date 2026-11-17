@@ -64,6 +64,7 @@ export {
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
+	type TreeBranchHandleAlpha,
 	minimize,
 } from "./shared-tree/index.js";
 

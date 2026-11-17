@@ -350,9 +350,9 @@ export function encodeSchemaCompatibilitySnapshot(simpleSchema: SimpleTreeSchema
 export function enumFromStrings<TScope extends string, const Members extends readonly string[]>(factory: SchemaFactory<TScope>, members: Members): (<TValue extends Members[number]>(value: TValue) => TValue extends unknown ? NodeFromSchema<ReturnType<typeof singletonSchema<TScope, TValue>>> : never) & { [Index in Extract<keyof Members, `${number}`> extends `${infer N extends number}` ? N : never as Members[Index]]: TreeNodeSchemaClass<ScopedSchemaName<TScope, Members[Index]>, NodeKind.Object, TreeNode & {
         readonly value: Members[Index];
     }, Record<string, never>, true, Record<string, never>, undefined>; } & {
-    readonly schema: UnionToTuple<Members[number] extends unknown ? { [Index in Extract<keyof Members, `${number}`> extends `${infer N extends number}` ? N : never as Members[Index]]: TreeNodeSchemaClass<ScopedSchemaName<TScope, Members[Index]>, NodeKind.Object, TreeNode & {
-            readonly value: Members[Index];
-        }, Record<string, never>, true, Record<string, never>, undefined>; }[Members[number]] : never>;
+    readonly schema: { -readonly [Position in keyof Members]: TreeNodeSchemaClass<ScopedSchemaName<TScope, Members[Position]>, NodeKind.Object, TreeNode & {
+            readonly value: Members[Position];
+        }, Record<string, never>, true, Record<string, never>, undefined>; };
 };
 
 // @alpha
@@ -1407,6 +1407,7 @@ export interface SchemaCompatibilityStatus {
     readonly canInitialize: boolean;
     readonly canUpgrade: boolean;
     readonly canView: boolean;
+    // @deprecated
     readonly isEquivalent: boolean;
 }
 
@@ -1628,6 +1629,7 @@ export interface SharedTreeFormatOptions {
 
 // @alpha @input
 export interface SharedTreeOptions extends SharedTreeOptionsBeta, Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions> {
+    readonly enableDetachedRootEditing?: boolean;
     readonly enableSharedBranches?: boolean;
     readonly retainHistory?: boolean | number;
     shouldEncodeIncrementally?: IncrementalEncodingPolicy;
@@ -1754,7 +1756,6 @@ export interface SnapshotSchemaCompatibilityOptions {
 
 // @alpha @input
 export interface StagedSchemaUpgradePolicy {
-    readonly includeAlreadyEnabledUpgrades?: boolean;
     includeStaged(upgrade: SchemaUpgrade): boolean;
     includeStagedOptional(upgrade: SchemaUpgrade): boolean;
 }
@@ -2153,6 +2154,13 @@ export interface TreeBranchEvents extends TreeBranchEventsBeta {
 // @beta @sealed
 export interface TreeBranchEventsBeta {
     changed(data: ChangeMetadataBeta): void;
+}
+
+// @alpha @sealed
+export interface TreeBranchHandleAlpha extends IDisposable {
+    dispose(): void;
+    fork(): TreeBranchHandleAlpha;
+    viewWith<TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>): TreeViewAlpha<TSchema>;
 }
 
 // @alpha @sealed
@@ -2592,6 +2600,7 @@ export interface ViewableTree {
 export interface ViewableTreeAlpha extends ViewableTree {
     exportSimpleSchema(): SimpleTreeSchema;
     exportVerbose(): VerboseTree | undefined;
+    forkBranch(): TreeBranchHandleAlpha;
 }
 
 // @alpha

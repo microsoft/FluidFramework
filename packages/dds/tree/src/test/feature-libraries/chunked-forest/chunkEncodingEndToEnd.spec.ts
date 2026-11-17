@@ -19,6 +19,7 @@ import {
 	type ChangesetLocalId,
 	type FieldKey,
 	type JsonableTree,
+	type MutableTreeStoredSchema,
 	mapCursorField,
 	RevisionTagCodec,
 	rootFieldKey,
@@ -55,6 +56,8 @@ import {
 	DefaultChangeFamily,
 	DefaultEditBuilder,
 	ForestSummarizer,
+	SchemaSummarizer,
+	schemaCodecBuilder,
 	type ModularChangeset,
 	TreeCompressionStrategy,
 	buildChunkedForest,
@@ -87,7 +90,6 @@ import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 import {
 	MockTreeCheckout,
 	checkoutWithContent,
-	forestWithContent,
 	getView,
 	makeTestFieldBatchContexts,
 	mintRevisionTag,
@@ -100,6 +102,15 @@ const options: CodecWriteOptions = {
 };
 
 const fieldBatchCodec = fieldBatchCodecBuilder.build(options);
+function createSchemaSummarizer(schema: MutableTreeStoredSchema): SchemaSummarizer {
+	return new SchemaSummarizer(
+		schema,
+		{ getCurrentSeq: () => 0 },
+		schemaCodecBuilder.build(options),
+		options.minVersionForCollab,
+	);
+}
+
 const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 const idCompressor = createIdCompressor(sessionId, SerializationVersion.V3);
 const revisionTagCodec = new RevisionTagCodec(idCompressor);
@@ -208,6 +219,7 @@ describe("End to end chunked encoding", () => {
 
 		const forestSummarizer = new ForestSummarizer(
 			checkout.forest,
+			createSchemaSummarizer(checkout.storedSchema),
 			context,
 			decodeContext,
 			options,
@@ -237,13 +249,14 @@ describe("End to end chunked encoding", () => {
 		const chunk = new UniformChunk(numberShape.withTopLevelLength(4), [1, 2, 3, 4]);
 		assert(!chunk.isShared());
 
-		const forest = forestWithContent({
+		const checkout = checkoutWithContent({
 			schema: jsonSequenceRootSchema,
 			initialTree: chunk.cursor(),
 		});
 
 		const forestSummarizer = new ForestSummarizer(
-			forest,
+			checkout.forest,
+			createSchemaSummarizer(checkout.storedSchema),
 			context,
 			decodeContext,
 			options,
@@ -280,6 +293,7 @@ describe("End to end chunked encoding", () => {
 
 			const forestSummarizer = new ForestSummarizer(
 				checkout.forest,
+				createSchemaSummarizer(checkout.storedSchema),
 				encoderContext,
 				decoderContext,
 				options,
@@ -307,6 +321,7 @@ describe("End to end chunked encoding", () => {
 
 			const forestSummarizer = new ForestSummarizer(
 				checkout.forest,
+				createSchemaSummarizer(checkout.storedSchema),
 				encoderContext,
 				decoderContext,
 				options,
@@ -329,6 +344,7 @@ describe("End to end chunked encoding", () => {
 
 			const forestSummarizer = new ForestSummarizer(
 				checkout.forest,
+				createSchemaSummarizer(checkout.storedSchema),
 				encoderContext,
 				decoderContext,
 				options,
