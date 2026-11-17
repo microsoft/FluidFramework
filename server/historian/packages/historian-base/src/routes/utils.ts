@@ -39,6 +39,8 @@ import {
 	type ISimplifiedCustomDataRetriever,
 	type ICreateGitServiceArgs,
 	type IDocumentAccessProof,
+	type ITrustedCreateContext,
+	type ITrustedCreateContextResolver,
 } from "../services";
 import { Constants, parseToken } from "../utils";
 
@@ -504,6 +506,43 @@ export interface ICreateGitServiceResult {
 	accessProof?: IDocumentAccessProof;
 }
 
+export async function resolveTrustedCreateContext({
+	tenantId,
+	documentId,
+	resolver,
+	opaqueToken,
+	containerTypeHint,
+}: {
+	tenantId: string;
+	documentId: string;
+	resolver: ITrustedCreateContextResolver | undefined;
+	opaqueToken: string | undefined;
+	containerTypeHint?: "ephemeral" | "durable";
+}): Promise<ITrustedCreateContext> {
+	if (resolver === undefined || opaqueToken === undefined) {
+		throw new NetworkError(404, "Document is deleted and cannot be accessed.");
+	}
+	let context: ITrustedCreateContext;
+	try {
+		context = await resolver.resolve({ tenantId, documentId, opaqueToken, containerTypeHint });
+	} catch (error) {
+		Lumberjack.warning(
+			"Trusted document creation context was rejected.",
+			getLumberBaseProperties(documentId, tenantId),
+			error,
+		);
+		throw new NetworkError(404, "Document is deleted and cannot be accessed.");
+	}
+	if (
+		context.tenantId !== tenantId ||
+		context.documentId !== documentId ||
+		context.expiresAtMs <= Date.now()
+	) {
+		throw new NetworkError(404, "Document is deleted and cannot be accessed.");
+	}
+	return context;
+}
+
 export async function createGitServiceWithAccess(
 	createArgs: ICreateGitServiceArgs,
 ): Promise<ICreateGitServiceResult> {
@@ -589,6 +628,36 @@ export async function createGitServiceWithAccess(
 		throw new NetworkError(500, "Document access authorizer returned an invalid proof.");
 	}
 	const documentId = accessProof?.documentId ?? tokenDocumentId;
+	const gitrestOwnershipValidation =
+		config.get("restGitService:gitrestOwnershipValidation") === true;
+	let documentRequest: ReturnType<IDocumentManager["readDocument"]> | undefined;
+	const readDocument = () =>
+		(documentRequest ??= documentManager.readDocument(tenantId, documentId).catch((error) => {
+			documentRequest = undefined;
+			throw error;
+		}));
+	const requestDocumentManager: IDocumentManager = gitrestOwnershipValidation
+		? {
+				readDocument: (requestedTenant, requestedDocument, options) =>
+					requestedTenant === tenantId &&
+					requestedDocument === documentId &&
+					options === undefined
+						? readDocument()
+						: documentManager.readDocument(requestedTenant, requestedDocument, options),
+				readStaticProperties: documentManager.readStaticProperties.bind(documentManager),
+				purgeStaticCache: documentManager.purgeStaticCache.bind(documentManager),
+		  }
+		: documentManager;
+	const requestStorageNameRetriever:
+		| (IStorageNameRetriever & {
+				getForRequest?(
+					tenant: string,
+					document: string,
+					read: () => ReturnType<IDocumentManager["readDocument"]>,
+				): Promise<string>;
+				getWithDocumentDetails?(tenant: string, document: IDocument): Promise<string>;
+		  })
+		| undefined = storageNameRetriever;
 
 	const customData: ITenantCustomDataExternal = details.customData;
 	const simplifiedCustomData = simplifiedCustomDataRetriever?.get(customData);
@@ -607,7 +676,7 @@ export async function createGitServiceWithAccess(
 					: await checkAndCacheIsEphemeral({
 							documentId,
 							tenantId,
-							documentManager,
+							documentManager: requestDocumentManager,
 							ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
 							isEphemeralContainerOverride: isEphemeralContainer,
 							cache,
@@ -622,7 +691,7 @@ export async function createGitServiceWithAccess(
 			tenantId,
 			documentId,
 			isEphemeral,
-			createArgs,
+			{ ...createArgs, documentManager: requestDocumentManager },
 		);
 	}
 
@@ -633,31 +702,70 @@ export async function createGitServiceWithAccess(
 		calculatedStorageName = undefined;
 	} else if (initialUpload && storageName && documentAccessAuthorizer === undefined) {
 		calculatedStorageName = storageName;
-	} else if (summaryAccessContext?.isEphemeralContainer === true) {
-		// FRS EC summaries use RedisFS, selected by the ephemeral flag. Azure Blob storageName
+	} else if (
+		summaryAccessContext?.isEphemeralContainer === true ||
+		(gitrestOwnershipValidation && postIsEphemeral)
+	) {
+		// EC requests use RedisFS, selected by the ephemeral flag. Azure Blob storageName
 		// applies only to durable containers. Calling the retriever for a local EC hit would
 		// reintroduce the Alfred/Riddler lookup that the summary access fast path avoids.
 		calculatedStorageName = undefined;
 	} else {
 		calculatedStorageName =
 			summaryAccessContext?.storageName ??
-			(await storageNameRetriever?.get(tenantId, documentId)) ??
+			(await (gitrestOwnershipValidation && requestStorageNameRetriever?.getForRequest
+				? requestStorageNameRetriever.getForRequest(tenantId, documentId, readDocument)
+				: storageNameRetriever?.get(tenantId, documentId))) ??
 			customData?.storageName;
 	}
+	const recoverDocumentStorage =
+		gitrestOwnershipValidation && !postIsEphemeral && accessProof === undefined
+			? async () => {
+					const document = await validateSummaryDocument({
+						tenantId,
+						authorization,
+						documentManager: requestDocumentManager,
+						operation: "get",
+						routeType: "notApplicable",
+						ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
+					});
+					const authoritativeStorageName =
+						document.storageName ??
+						(await requestStorageNameRetriever?.getWithDocumentDetails?.(
+							tenantId,
+							document,
+						)) ??
+						customData?.storageName;
+					if (
+						document.isEphemeralContainer === true ||
+						typeof authoritativeStorageName !== "string" ||
+						authoritativeStorageName !== calculatedStorageName
+					) {
+						throw new NetworkError(
+							403,
+							"Document storage ownership does not match.",
+							false,
+						);
+					}
+					await service.backfillDocumentStorage();
+			  }
+			: undefined;
+	const service: RestGitService = new RestGitService(
+		details.storage,
+		writeToExternalStorage,
+		tenantId,
+		documentId,
+		cache,
+		calculatedStorageName,
+		storageUrl,
+		postIsEphemeral,
+		maxCacheableSummarySize,
+		simplifiedCustomData,
+		accessProof,
+		recoverDocumentStorage,
+	);
 	return {
-		service: new RestGitService(
-			details.storage,
-			writeToExternalStorage,
-			tenantId,
-			documentId,
-			cache,
-			calculatedStorageName,
-			storageUrl,
-			postIsEphemeral,
-			maxCacheableSummarySize,
-			simplifiedCustomData,
-			accessProof,
-		),
+		service,
 		accessProof,
 	};
 }

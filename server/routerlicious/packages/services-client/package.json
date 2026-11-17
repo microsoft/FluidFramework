@@ -98,6 +98,18 @@
 			},
 			"Class_Historian": {
 				"forwardCompat": false
+			},
+			"Class_NetworkError": {
+				"backCompat": false
+			},
+			"ClassStatics_NetworkError": {
+				"backCompat": false
+			},
+			"Enum_InternalErrorCode": {
+				"backCompat": false
+			},
+			"Interface_INetworkErrorDetails": {
+				"backCompat": false
 			}
 		},
 		"entrypoint": "public"

@@ -21,3 +21,10 @@ Before calling backfill, the caller must validate the tenant, document, and stor
 against the authoritative document record.
 The provider hook must validate its routing parameters and write ownership metadata conditionally,
 without overwriting a conflicting owner.
+
+If existing durable storage has no ownership metadata, return HTTP 409 with
+`internalErrorCode: "DocumentStorageMetadataMissing"` (the server client's
+`InternalErrorCode.DocumentStorageMetadataMissing`).
+Historian uses this exact code to trigger authoritative validation and conditional backfill.
+An error `source` is diagnostic only; older clients replace it in transit.
+Other ownership failures must not use the missing-metadata code.

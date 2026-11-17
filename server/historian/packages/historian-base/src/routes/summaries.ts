@@ -146,7 +146,10 @@ export function create(
 		allowDisabledTenant = false,
 		query?: Query,
 	): Promise<{ service: RestGitService; access?: ISummaryAccessContext }> {
-		if (documentAccessAuthorizer !== undefined) {
+		if (
+			documentAccessAuthorizer !== undefined ||
+			config.get("restGitService:gitrestOwnershipValidation") === true
+		) {
 			const { service, accessProof } = await utils.createGitServiceWithAccess({
 				config,
 				tenantId,
@@ -251,34 +254,18 @@ export function create(
 					outcome: "exempted",
 				});
 			} else {
-				if (
-					trustedCreateContextResolver === undefined ||
-					opaqueCreateContext === undefined
-				) {
-					throw new NetworkError(404, "Document is deleted and cannot be accessed.");
-				}
-				try {
-					trustedCreateContext = await trustedCreateContextResolver.resolve({
-						tenantId,
-						documentId,
-						opaqueToken: opaqueCreateContext,
-						containerTypeHint:
-							isEphemeralContainer === undefined
-								? undefined
-								: isEphemeralContainer
-								? "ephemeral"
-								: "durable",
-					});
-				} catch {
-					throw new NetworkError(404, "Document is deleted and cannot be accessed.");
-				}
-				if (
-					trustedCreateContext.tenantId !== tenantId ||
-					trustedCreateContext.documentId !== documentId ||
-					trustedCreateContext.expiresAtMs <= Date.now()
-				) {
-					throw new NetworkError(404, "Document is deleted and cannot be accessed.");
-				}
+				trustedCreateContext = await utils.resolveTrustedCreateContext({
+					tenantId,
+					documentId,
+					resolver: trustedCreateContextResolver,
+					opaqueToken: opaqueCreateContext,
+					containerTypeHint:
+						isEphemeralContainer === undefined
+							? undefined
+							: isEphemeralContainer
+							? "ephemeral"
+							: "durable",
+				});
 			}
 			service = await utils.createGitService({
 				config,

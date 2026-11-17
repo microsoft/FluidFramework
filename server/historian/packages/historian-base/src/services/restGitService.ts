@@ -67,6 +67,7 @@ function validateGitSha(sha: string): void {
 export class RestGitService {
 	private readonly restWrapper: RestWrapper;
 	private readonly lumberProperties: Record<string, any>;
+	private documentStorageRecovery: Promise<void> | undefined;
 
 	constructor(
 		private readonly storage: ITenantStorage,
@@ -80,6 +81,7 @@ export class RestGitService {
 		private readonly maxCacheableSummarySize?: number,
 		private readonly simplifiedCustomData?: string,
 		private readonly accessProof?: IDocumentAccessProof,
+		private readonly recoverDocumentStorage?: () => Promise<void>,
 	) {
 		const defaultHeaders: RawAxiosRequestHeaders =
 			storageName !== undefined
@@ -149,6 +151,41 @@ export class RestGitService {
 			logHttpMetrics,
 			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
+	}
+
+	public async initializeDocumentStorage(): Promise<void> {
+		await this.writeDocumentStorage("initialize");
+	}
+
+	public async backfillDocumentStorage(): Promise<void> {
+		await this.writeDocumentStorage("backfill");
+	}
+
+	private async writeDocumentStorage(operation: "initialize" | "backfill"): Promise<void> {
+		const url = `/repos/${this.getRepoPath()}/internal/document-storage/${operation}`;
+		await this.restWrapper
+			.post(url, undefined)
+			.catch(getRequestErrorTranslator(url, "POST", this.lumberProperties));
+	}
+
+	private withDocumentStorageRecovery<T>(request: () => Promise<T>): Promise<T> {
+		const recover = this.recoverDocumentStorage;
+		if (this.isEphemeralContainer === true || recover === undefined) {
+			return request();
+		}
+		return request().catch(async (error: unknown) => {
+			if (!(error instanceof NetworkError) || error.code !== 409) {
+				throw error;
+			}
+			// Older clients preserve this wire field but replace the remote error source.
+			const internalErrorCode: string | undefined = error.internalErrorCode;
+			if (internalErrorCode !== "DocumentStorageMetadataMissing") {
+				throw error;
+			}
+			this.documentStorageRecovery ??= recover();
+			await this.documentStorageRecovery;
+			return request();
+		});
 	}
 
 	public async getBlob(tenantId: string, sha: string, useCache: boolean): Promise<git.IBlob> {
@@ -524,9 +561,11 @@ export class RestGitService {
 	}
 
 	private async get<T>(url: string): Promise<T> {
-		return this.restWrapper
-			.get<T>(url)
-			.catch(getRequestErrorTranslator(url, "GET", this.lumberProperties));
+		return this.withDocumentStorageRecovery(() =>
+			this.restWrapper
+				.get<T>(url)
+				.catch(getRequestErrorTranslator(url, "GET", this.lumberProperties)),
+		);
 	}
 
 	private async post<T>(
@@ -534,25 +573,31 @@ export class RestGitService {
 		requestBody: any,
 		query?: Record<string, string | number | boolean>,
 	): Promise<T> {
-		return this.restWrapper
-			.post<T>(url, requestBody, query, {
-				"Content-Type": "application/json",
-			})
-			.catch(getRequestErrorTranslator(url, "POST", this.lumberProperties));
+		return this.withDocumentStorageRecovery(() =>
+			this.restWrapper
+				.post<T>(url, requestBody, query, {
+					"Content-Type": "application/json",
+				})
+				.catch(getRequestErrorTranslator(url, "POST", this.lumberProperties)),
+		);
 	}
 
 	private async delete<T>(url: string, headers?: any): Promise<T> {
-		return this.restWrapper
-			.delete<T>(url, undefined, headers)
-			.catch(getRequestErrorTranslator(url, "DELETE", this.lumberProperties));
+		return this.withDocumentStorageRecovery(() =>
+			this.restWrapper
+				.delete<T>(url, undefined, headers)
+				.catch(getRequestErrorTranslator(url, "DELETE", this.lumberProperties)),
+		);
 	}
 
 	private async patch<T>(url: string, requestBody: any): Promise<T> {
-		return this.restWrapper
-			.patch<T>(url, requestBody, undefined, {
-				"Content-Type": "application/json",
-			})
-			.catch(getRequestErrorTranslator(url, "PATCH", this.lumberProperties));
+		return this.withDocumentStorageRecovery(() =>
+			this.restWrapper
+				.patch<T>(url, requestBody, undefined, {
+					"Content-Type": "application/json",
+				})
+				.catch(getRequestErrorTranslator(url, "PATCH", this.lumberProperties)),
+		);
 	}
 
 	/**

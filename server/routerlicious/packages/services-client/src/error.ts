@@ -21,6 +21,11 @@ export enum InternalErrorCode {
 	 * The token has been revoked.
 	 */
 	TokenRevoked = "TokenRevoked",
+
+	/**
+	 * Durable document storage requires authoritative ownership validation before backfill.
+	 */
+	DocumentStorageMetadataMissing = "DocumentStorageMetadataMissing",
 }
 
 /**
