@@ -36,17 +36,12 @@ if (view.compatibility.canUpgrade) {
 }
 ```
 
-The upgrade adds `isApproved` without removing the stored `notes` field or its content.
-New documents initialized with `After` do not include `notes` in their stored schema.
-Removing required fields and incompatible changes to declared fields or node types remain unsupported.
+In the above example, the stored schema upgrade adds `isApproved` while preserving the existing `notes` field.
 
-Schema compatibility snapshot checks now accept either direct viewing or a safe upgrade in both directions.
+Schema compatibility snapshot checks now accept either direct viewing or a safe upgrade in both directions, rather than only supporting upgrade in a forwards direction.
 For versions within `minVersionForCollaboration`, `snapshotSchemaCompatibility` requires `canView || canUpgrade` for each version viewing documents created with the other schema.
 The current version must also be able to view or upgrade documents from every historical snapshot outside that collaboration window.
 Clients that can already view a document remain supported even when they cannot upgrade it; clients that can do neither are rejected.
-
-A successful snapshot check does not apply the upgrade or change the compatibility flags.
-When `canView` is false and `canUpgrade` is true, the application must still call `upgradeSchema()` before accessing the document through that view.
 
 #### Staged permissions are preserved at each stored location
 
