@@ -1497,6 +1497,15 @@ export abstract class CheckoutBase implements ITreeCheckout {
 	private readonly onAncestryTrimmed = (revisions: RevisionTag[]): void => {
 		// When the branch is trimmed, we can garbage collect any repair data whose latest relevant revision is one of the
 		// trimmed revisions.
+		// Commits without repair data (such as inserts) need no edit to the forest.
+		const hasRepairData = revisions.some(
+			(revision) =>
+				this._removedRoots.getRootsLastTouchedByRevision(revision)[Symbol.iterator]().next()
+					.done !== true,
+		);
+		if (!hasRepairData) {
+			return;
+		}
 		this.withCombinedVisitor((visitor) => {
 			for (const revision of revisions) {
 				// get all the roots last created or used by the revision
