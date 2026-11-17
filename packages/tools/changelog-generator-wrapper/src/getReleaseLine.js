@@ -17,8 +17,6 @@ const MINIMUM_BODY_HEADING_LEVEL = 5;
  */
 const BLANK_LINE_REGEX = /^[\t >]*$/;
 
-/* eslint-disable tsdoc/syntax -- JavaScript type annotations use JSDoc syntax. */
-
 /**
  * Formats a changeset as a package changelog entry with a level-4 title.
  *
@@ -39,7 +37,6 @@ const BLANK_LINE_REGEX = /^[\t >]*$/;
  *
  * @type {typeof import("changesets-format-with-issue-links").default.getReleaseLine}
  */
-/* eslint-enable tsdoc/syntax */
 const getReleaseLine = async (changeset, type, options) => {
 	const [summary, ...bodyLines] = changeset.summary.split(/\r?\n/);
 
