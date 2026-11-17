@@ -214,6 +214,41 @@ export function simpleStoredSchemaToStoredSchema(
 }
 
 /**
+ * Converts a view {@link SimpleFieldSchema} into a {@link TreeFieldStoredSchema}, as {@link toStoredSchema} does for the root field.
+ */
+export function toStoredFieldSchema(
+	field: SimpleFieldSchema<SchemaType.View>,
+	options: StagedSchemaUpgradePolicy,
+): TreeFieldStoredSchema {
+	return convertField(
+		filterFieldAllowedTypes(field, options) as SimpleFieldSchema<SchemaType.Stored>,
+	);
+}
+
+/**
+ * The stored schema of a view node schema without staged schema upgrades, shared by every root it is reachable from.
+ * @remarks
+ * Only for node schema which have no staged allowed types or staged optional fields, and so whose stored schema is the same for every {@link StagedSchemaUpgradePolicy}.
+ * Sharing them means that the roots of a schema (such as the roots content is created or imported under, and the root of a view)
+ * hold one stored schema for each node schema, rather than one each.
+ */
+export function getSharedNodeStoredSchema(
+	schema: SimpleNodeSchema<SchemaType.View>,
+): TreeNodeStoredSchema {
+	return getOrCreate(sharedNodeStoredSchemas, schema, () =>
+		getStoredSchema(transformSimpleNodeSchema(schema, StagedSchemaUpgradePolicy.restrictive)),
+	);
+}
+
+/**
+ * Cache for {@link getSharedNodeStoredSchema}.
+ */
+const sharedNodeStoredSchemas = new WeakMap<
+	SimpleNodeSchema<SchemaType.View>,
+	TreeNodeStoredSchema
+>();
+
+/**
  * Convert a {@link SimpleFieldSchema} into a {@link TreeFieldStoredSchema}.
  */
 export function convertField(

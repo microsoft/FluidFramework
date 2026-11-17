@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { FieldKinds } from "../../feature-libraries/index.js";
+import { TreeAlpha } from "../../shared-tree/index.js";
 import {
 	getTreeNodeSchemaPrivateData,
 	StagedSchemaUpgradePolicy,
@@ -18,6 +19,7 @@ import {
 	normalizeFieldSchema,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
+	TreeViewConfigurationAlpha,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { createFieldSchema } from "../../simple-tree/fieldSchema.js";
@@ -35,6 +37,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/treeSchema.js";
 import { testSchema } from "../testTrees.js";
+import { brand } from "../../util/index.js";
 import { createSchemaGraph } from "./schemaTestUtils.js";
 
 // getTreeNodeSchemaInitializedData is also exercised through TreeNodeValid in treeNodeValid.spec.ts.
@@ -422,6 +425,108 @@ describe("createContext", () => {
 				}
 			});
 		}
+		describe("contexts of components included in other definitions", () => {
+			function setup() {
+				const sf = new SchemaFactoryAlpha("includedContexts");
+				class Leaf extends sf.object("Leaf", { value: sf.number }) {}
+				class Middle extends sf.object("Middle", { leaf: Leaf }) {}
+				class Other extends sf.object("Other", {}) {}
+				class Top extends sf.object("Top", { middle: Middle, other: Other }) {}
+				// Building the definitions of Top includes those of Middle.
+				assert.equal(new TreeViewConfigurationAlpha({ schema: Top }).definitions.size, 5);
+				return { Leaf, Middle, Other, Top, number: sf.number };
+			}
+
+			it("look up exactly the schema reachable from the component, without definitions of their own", () => {
+				const { Leaf, Middle, Other, Top, number } = setup();
+				const descriptor =
+					Object.getOwnPropertyDescriptor(SchemaComponent.prototype, "definitions") ??
+					assert.fail("SchemaComponent has a definitions getter");
+				const built: SchemaComponent[] = [];
+				Object.defineProperty(SchemaComponent.prototype, "definitions", {
+					...descriptor,
+					get(this: SchemaComponent) {
+						built.push(this);
+						return descriptor.get?.call(this) as unknown;
+					},
+				});
+				let context;
+				try {
+					context = getUnhydratedContext(Middle);
+				} finally {
+					Object.defineProperty(SchemaComponent.prototype, "definitions", descriptor);
+				}
+				assert.deepEqual(built, []);
+				assert.equal(context.schema.size, 3);
+				assert.strictEqual(context.schema.get(Middle.identifier), Middle);
+				assert.strictEqual(context.schema.get(Leaf.identifier), Leaf);
+				assert.equal(context.schema.get(Top.identifier), undefined);
+				assert.equal(context.schema.has(Other.identifier), false);
+				assert.equal(context.schema.has(Leaf.identifier), true);
+				assert.deepEqual(
+					new Map(context.schema),
+					new Map<string, unknown>([
+						[Middle.identifier, Middle],
+						[Leaf.identifier, Leaf],
+						[number.identifier, number],
+					]),
+				);
+				const visited: string[] = [];
+				// eslint-disable-next-line unicorn/no-array-for-each -- Tests the map's forEach.
+				context.schema.forEach((schema, identifier, map) => {
+					assert.strictEqual(schema.identifier, identifier);
+					assert.strictEqual(map, context.schema);
+					visited.push(identifier);
+				});
+				assert.deepEqual(visited.sort(), [...context.schema.keys()].sort());
+				assert.deepEqual(
+					[...context.schema.values()].map((schema) => schema.identifier).sort(),
+					[Leaf.identifier, Middle.identifier, number.identifier].sort(),
+				);
+				assert.deepEqual(
+					new Map(context.schema),
+					new Map(SchemaComponent.fromSchema(Middle).definitions),
+				);
+			});
+
+			it("share stored schema with their roots", () => {
+				const { Leaf, Middle, Top } = setup();
+				const context = getUnhydratedContext(Middle);
+				const stored = toStoredSchema(Middle, StagedSchemaUpgradePolicy.permissive);
+				assert.strictEqual(context.flexContext.schema.nodeSchema, stored.nodeSchema);
+				assert.strictEqual(
+					toStoredSchema(Middle, StagedSchemaUpgradePolicy.restrictive),
+					stored,
+				);
+				assert.equal(stored.nodeSchema.size, 3);
+				assert.equal(stored.nodeSchema.get(brand(Top.identifier)), undefined);
+				assert.strictEqual(
+					stored.nodeSchema.get(brand(Leaf.identifier)),
+					toStoredSchema(Top, StagedSchemaUpgradePolicy.restrictive).nodeSchema.get(
+						brand(Leaf.identifier),
+					),
+				);
+			});
+
+			it("reject types not reachable from the component as before", () => {
+				const { Leaf, Middle, Other } = setup();
+				const imported = TreeAlpha.importVerbose(Middle, {
+					type: Middle.identifier,
+					fields: { leaf: { type: Leaf.identifier, fields: { value: 1 } } },
+				});
+				assert.equal(imported.leaf.value, 1);
+				assert.throws(
+					() =>
+						TreeAlpha.importVerbose(Middle, {
+							type: Middle.identifier,
+							fields: { leaf: { type: Other.identifier, fields: {} } },
+						}),
+					validateUsageError(
+						`Failed to parse tree due to occurrence of type ${JSON.stringify(Other.identifier)} which is not defined in this context.`,
+					),
+				);
+			});
+		});
 		describe("catalog contexts", () => {
 			for (const testCase of testSchema) {
 				it(testCase.name, () => {
@@ -440,7 +545,7 @@ describe("createContext", () => {
 					const data = getRootSchemaDerivedData(root);
 					const context = data.context;
 					assert.strictEqual(getRootSchemaDerivedData(root).context, context);
-					assert.strictEqual(context.schema, data.treeSchema.definitions);
+					assert.deepEqual(new Map(context.schema), new Map(data.treeSchema.definitions));
 					assert.deepEqual(context.flexContext.schema.nodeSchema, expected.nodeSchema);
 					assert.deepEqual(
 						context.flexContext.schema.nodeSchema,

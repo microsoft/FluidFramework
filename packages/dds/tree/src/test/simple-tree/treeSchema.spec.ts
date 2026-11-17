@@ -76,7 +76,7 @@ describe("treeSchema", () => {
 				});
 			}
 			const parentComponent = SchemaComponent.fromSchema(parent);
-			assert.deepEqual(parentComponent.dependencies, new Set([childComponent]));
+			assert.deepEqual(parentComponent.dependencies, [childComponent]);
 			assert.deepEqual(
 				new Set(parentComponent.definitions.values()),
 				new Set([parent, child, leaf]),
@@ -204,8 +204,18 @@ describe("treeSchema", () => {
 			assert.strictEqual(dependency, SchemaComponent.fromSchema(b));
 			assert.deepEqual(rootComponent.members, [root]);
 			assert.deepEqual(new Set(dependency.members), new Set([a, b]));
-			assert.deepEqual(rootComponent.dependencies, new Set([dependency]));
-			assert.equal(dependency.dependencies.size, 0);
+			assert.deepEqual(rootComponent.dependencies, [dependency]);
+			assert.equal(dependency.dependencies.length, 0);
+		});
+		it("shares one immutable empty list of dependencies between components without any", () => {
+			const [root, a, b] = createSchemaGraph([[1, 2], [], []]);
+			assert(root !== undefined && a !== undefined && b !== undefined);
+			const componentA = SchemaComponent.fromSchema(a);
+			const componentB = SchemaComponent.fromSchema(b);
+			assert.notStrictEqual(componentA, componentB);
+			assert.strictEqual(componentA.dependencies, componentB.dependencies);
+			assert(Object.isFrozen(componentA.dependencies));
+			assert.equal(SchemaComponent.fromSchema(root).dependencies.length, 2);
 		});
 		it("propagates lazy schema evaluation errors", () => {
 			const sf = new SchemaFactoryAlpha("failure");
