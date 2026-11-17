@@ -28,7 +28,8 @@
 		"lint:fix": "npm run format && npm run eslint:fix",
 		"test": "npm run test:mocha",
 		"test:mocha": "npm run test:mocha:cjs",
-		"test:mocha:cjs": "mocha"
+		"test:mocha:cjs": "mocha",
+		"test:update-snapshots": "pnpm test:mocha:cjs --snapshot"
 	},
 	"dependencies": {
 		"@changesets/cli": "^2.29.8",

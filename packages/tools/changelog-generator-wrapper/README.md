@@ -49,7 +49,23 @@ Run `pnpm --filter @fluid-private/changelog-generator-wrapper test:mocha` to tes
 The tests use temporary Git repositories and do not consume the repository's changesets.
 
 [The end-to-end generation suite](./src/test/generateChangelog.spec.cjs) compares full changelogs with [checked-in snapshots](./src/test/fixtures) for a simple patch and heading normalization across multiple changes.
-The tests substitute fixture commit hashes in the expected snapshots so each run can use a fresh repository.
+The tests replace fixture commit hashes with placeholders so each run can use a fresh repository without snapshot churn.
+
+### Checking and updating snapshots
+
+To run the tests, run:
+
+```bash
+pnpm run test:mocha
+```
+
+To create or update snapshots after an intentional output change, run:
+
+```bash
+pnpm run test:update-snapshots
+```
+
+Snapshots are saved under `src/test/fixtures`.
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
 <!-- prettier-ignore-start -->

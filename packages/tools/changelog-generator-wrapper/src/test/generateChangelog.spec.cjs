@@ -13,6 +13,11 @@ const { afterEach, beforeEach, describe, it } = require("mocha");
 
 const execFileAsync = promisify(execFile);
 
+/**
+ * Use `pnpm run test:update-snapshots` to regenerate the checked-in snapshots.
+ */
+const regenerateSnapshots = process.argv.includes("--snapshot");
+
 describe("changelog generation", () => {
 	let testDir;
 
@@ -26,11 +31,11 @@ describe("changelog generation", () => {
 	});
 
 	/**
-	 * Generates a complete changelog and compares it with a checked-in Markdown snapshot.
+	 * Generates a complete changelog and compares it with a checked-in Markdown snapshot, or updates it in regeneration mode.
 	 *
 	 * @param {string} snapshotFileName - The snapshot file name within this suite's fixtures directory.
 	 * @param {Record<string, string>} changesets - Changeset contents keyed by file name without the extension.
-	 * @returns {Promise<void>} Resolves when the generated document matches its snapshot.
+	 * @returns {Promise<void>} Resolves when the snapshot has been checked or regenerated.
 	 */
 	async function generateAndAssertSnapshot(snapshotFileName, changesets) {
 		await mkdir(path.join(testDir, ".changeset"));
@@ -95,16 +100,18 @@ describe("changelog generation", () => {
 		});
 		const [hash, abbreviatedHash] = stdout.trim().split("\n");
 
-		// Compare the entire emitted document, substituting only the commit hashes that vary between fixture runs.
-		const actual = await readFile(path.join(testDir, "CHANGELOG.md"), "utf8");
-		const snapshot = await readFile(
-			path.join(__dirname, "fixtures", snapshotFileName),
-			"utf8",
-		);
-		const expected = snapshot
-			.replaceAll("<COMMIT_HASH>", hash)
-			.replaceAll("<SHORT_COMMIT_HASH>", abbreviatedHash);
-		assert.equal(actual, expected);
+		// Replace full hashes before their abbreviated forms so regenerated snapshots retain stable placeholders.
+		const output = await readFile(path.join(testDir, "CHANGELOG.md"), "utf8");
+		const actual = output
+			.replaceAll(hash, "<COMMIT_HASH>")
+			.replaceAll(abbreviatedHash, "<SHORT_COMMIT_HASH>");
+		const snapshotPath = path.join(__dirname, "fixtures", snapshotFileName);
+		if (regenerateSnapshots) {
+			await writeFile(snapshotPath, actual);
+		} else {
+			const expected = await readFile(snapshotPath, "utf8");
+			assert.equal(actual, expected);
+		}
 	}
 
 	// Establish the package/version/category structure and navigation links without body headings to normalize.

@@ -10,6 +10,19 @@ import path from "node:path";
 import execa from "execa";
 import { afterEach, beforeEach, describe, it } from "mocha";
 
+/**
+ * Use `pnpm run test:update-snapshots` to regenerate the checked-in snapshots.
+ */
+const regenerateSnapshots = process.argv.includes("--snapshot");
+
+/**
+ * Read and write source snapshots, including when this test runs from the compiled `lib/test` directory.
+ */
+const snapshotsDirectory = path.resolve(
+	import.meta.dirname,
+	"../../../../src/test/commands/generate/fixtures",
+);
+
 describe("generate:releaseNotes", () => {
 	let testDir: string;
 
@@ -95,7 +108,7 @@ describe("generate:releaseNotes", () => {
 	}
 
 	/**
-	 * Generates release notes and compares the entire document with a snapshot.
+	 * Generates release notes and compares the entire document with a snapshot, or updates it in regeneration mode.
 	 *
 	 * @param snapshotFileName - The snapshot file name within this suite's fixtures directory.
 	 */
@@ -106,16 +119,18 @@ describe("generate:releaseNotes", () => {
 		});
 
 		// Snapshot the entire document, including the table of contents, generated metadata, and footer.
-		// Substitute only the fixture's full and seven-character commit hashes so Git timestamps cannot affect the comparison.
-		const actual = await readFile(path.join(testDir, "release-notes.md"), "utf8");
-		const snapshot = await readFile(
-			path.join(import.meta.dirname, "fixtures", snapshotFileName),
-			"utf8",
-		);
-		const expected = snapshot
-			.replaceAll("<COMMIT_HASH>", commitHash)
-			.replaceAll("<SHORT_COMMIT_HASH>", commitHash.slice(0, 7));
-		assert.equal(actual, expected);
+		// Replace full hashes before their abbreviated forms so regenerated snapshots retain stable placeholders.
+		const output = await readFile(path.join(testDir, "release-notes.md"), "utf8");
+		const actual = output
+			.replaceAll(commitHash, "<COMMIT_HASH>")
+			.replaceAll(commitHash.slice(0, 7), "<SHORT_COMMIT_HASH>");
+		const snapshotPath = path.join(snapshotsDirectory, snapshotFileName);
+		if (regenerateSnapshots) {
+			await writeFile(snapshotPath, actual);
+		} else {
+			const expected = await readFile(snapshotPath, "utf8");
+			assert.equal(actual, expected);
+		}
 	}
 
 	it("release notes generation does not modify source changesets", async () => {
