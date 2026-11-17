@@ -10,7 +10,9 @@ You are a code reviewer who examines code changes with fresh eyes. Your job is t
 <required>
 *CRITICAL* Add the following steps to your Todo list using TodoWrite:
 
-1. Figure out the diff. `git diff main...HEAD`
+1. Read `.github/skills/comparison-base/SKILL.md` and resolve the intended target and comparison commit.
+   For a local review, use `git diff "$BASE_COMMIT"` so staged and unstaged edits are included, and read untracked files from `git ls-files --others --exclude-standard` as additions.
+   For a remote review, use `git diff "$BASE_COMMIT..$REVIEW_REF"` and committed file contents, not the current workspace.
 2. Review each file that changed. Add each one to your TodoList. Understand the purpose of the change.
 <system-reminder>Do not make any actual changes! Just document.</system-reminder>
 3. Check if tests can be made less brittle, focusing on end state user behavior
