@@ -320,10 +320,10 @@ describe("Schema Evolution Examples", () => {
 		}
 	});
 
-	// Tests validating user scenarios around removal of fields from object schema.
-	// Removal of optional fields is supported (when `allowUnknownOptionalFields` is enabled, which is the default).
-	// Removal of required fields is not supported.
-	describe("Field removal", () => {
+	// Tests validating removal of field declarations from object view schema, not deletion of stored fields or data.
+	// Optional fields can be omitted from the view when `allowUnknownOptionalFields` is enabled (the default).
+	// Required fields cannot be omitted from the view.
+	describe("Field removal from view schema", () => {
 		/**
 		 * "V1" schema in many test cases below.
 		 * Task schema declares an optional `foo` field that stores a number.
@@ -1139,140 +1139,86 @@ describe("Schema Evolution Examples", () => {
 		});
 
 		/**
-		 * V1 declares `foo?: Foo`; V2 removes foo and declares `bar?: Bar`.
+		 * V1 declares `foo?: Foo`.
+		 * V2 omits foo from its view schema and declares `bar?: Bar`.
+		 *
 		 * Each node type is reachable only through its version's optional field.
-		 * Both upgrade directions must retain the unknown field and its type while adding the known field and its type.
+		 * Upgrading a V1 document through V2 must retain `foo` and `Foo` while adding an initially empty `bar` field and the `Bar` type.
+		 * Both clients must still edit their nested data and reopen their views without another upgrade.
 		 */
-		describe("replace an optional field with a different node-valued field", () => {
+		it("replaces an optional view field with a different node-valued field", () => {
 			class Foo extends factory.object("Foo", { text: factory.string }) {}
-			class TaskWithFooNode extends factory.object(
+			class TaskV1 extends factory.object(
 				"Task",
 				{ title: factory.string, foo: factory.optional(Foo) },
 				{ allowUnknownOptionalFields: true },
 			) {}
 
 			class Bar extends factory.object("Bar", { text: factory.string }) {}
-			class TaskWithBarNode extends factory.object(
+			class TaskV2 extends factory.object(
 				"Task",
 				{ title: factory.string, bar: factory.optional(Bar) },
 				{ allowUnknownOptionalFields: true },
 			) {}
 
-			const schemas = { V1: TaskWithFooNode, V2: TaskWithBarNode };
+			const provider = new TestTreeProviderLite(2);
+			const [documentTree, readerTree] = provider.trees;
 
-			// The reader always adds its own field and node type to a document created by the opposite version.
-			for (const [createdWith, viewedWith] of [
-				["V1", "V2"],
-				["V2", "V1"],
-			] as const) {
-				it(`${createdWith} document -> ${viewedWith} view (upgrade required)`, () => {
-					const provider = new TestTreeProviderLite(2);
-					const [documentTree, readerTree] = provider.trees;
+			// V1 stores a Foo node that V2's view does not declare.
+			const creator = documentTree.viewWith(new TreeViewConfiguration({ schema: TaskV1 }));
+			creator.initialize({ title: initialTitle, foo: new Foo({ text: "Original Foo" }) });
+			provider.synchronizeMessages();
 
-					// #region Step 1: Store a node whose type the other version does not declare.
-					const creator = documentTree.viewWith(
-						new TreeViewConfiguration({ schema: schemas[createdWith] }),
-					);
-					creator.initialize({
-						title: initialTitle,
-						...(createdWith === "V1"
-							? { foo: new Foo({ text: "Original Foo" }) }
-							: { bar: new Bar({ text: "Original Bar" }) }),
-					});
-					provider.synchronizeMessages();
-					// #endregion Step 1
+			// V2 adds bar and Bar while retaining the unknown foo field and its Foo definition.
+			const reader = readerTree.viewWith(new TreeViewConfiguration({ schema: TaskV2 }));
+			assert.equal(reader.compatibility.canView, false);
+			assert.equal(reader.compatibility.canUpgrade, true);
+			reader.upgradeSchema();
+			assert.equal(reader.compatibility.canView, true);
+			assert.equal(reader.root.bar, undefined);
+			reader.root.bar = new Bar({ text: "Original Bar" });
+			provider.synchronizeMessages();
 
-					// #region Step 2: Upgrade while retaining the other version's field and type.
-					const reader = readerTree.viewWith(
-						new TreeViewConfiguration({ schema: schemas[viewedWith] }),
-					);
-					assert.equal(reader.compatibility.canView, false);
-					assert.equal(
-						reader.compatibility.canUpgrade,
-						true,
-						"The upgrade must preserve the unknown node-valued field and its node type",
-					);
-					reader.upgradeSchema();
-					assert.equal(reader.compatibility.canView, true);
-
-					// A V1 reader adds Foo; a V2 reader adds Bar. The upgrade itself creates no field value.
-					if ("foo" in reader.root) {
-						assert.equal(reader.root.foo, undefined);
-						reader.root.foo = new Foo({ text: "Original Foo" });
-					} else {
-						assert.equal(reader.root.bar, undefined);
-						reader.root.bar = new Bar({ text: "Original Bar" });
-					}
-					provider.synchronizeMessages();
-					// #endregion Step 2
-
-					// #region Step 3: Each client can still edit the node type known only to its own schema.
-					assert.equal(creator.compatibility.canView, true);
-					if ("foo" in creator.root) {
-						assert(creator.root.foo instanceof Foo);
-						assert.equal(creator.root.foo.text, "Original Foo");
-						creator.root.foo.text = "Edited Foo";
-					} else {
-						assert(creator.root.bar instanceof Bar);
-						assert.equal(creator.root.bar.text, "Original Bar");
-						creator.root.bar.text = "Edited Bar";
-					}
-					provider.synchronizeMessages();
-
-					if ("foo" in reader.root) {
-						assert(reader.root.foo instanceof Foo);
-						assert.equal(reader.root.foo.text, "Original Foo");
-						reader.root.foo.text = "Edited Foo";
-					} else {
-						assert(reader.root.bar instanceof Bar);
-						assert.equal(reader.root.bar.text, "Original Bar");
-						reader.root.bar.text = "Edited Bar";
-					}
-					provider.synchronizeMessages();
-
-					// Both nodes are stored, but each view exposes only its own field.
-					verifyReadWrite({
-						provider,
-						creator: {
-							view: creator,
-							expectedFields:
-								createdWith === "V1"
-									? { foo: { text: "Edited Foo" } }
-									: { bar: { text: "Edited Bar" } },
-						},
-						reader: {
-							view: reader,
-							expectedFields:
-								viewedWith === "V1"
-									? { foo: { text: "Edited Foo" } }
-									: { bar: { text: "Edited Bar" } },
-						},
-					});
-					creator.dispose();
-					reader.dispose();
-					// #endregion Step 3
-
-					// #region Step 4: Reopen both schemas without upgrading and read the synchronized node edits.
-					// Whichever version created the document, both node types must remain usable afterward.
-					const viewV1 = documentTree.viewWith(
-						new TreeViewConfiguration({ schema: TaskWithFooNode }),
-					);
-					const viewV2 = readerTree.viewWith(
-						new TreeViewConfiguration({ schema: TaskWithBarNode }),
-					);
-					assert.equal(viewV1.compatibility.canView, true);
-					assert.equal(viewV2.compatibility.canView, true);
-					assert(viewV1.root.foo instanceof Foo);
-					assert(viewV2.root.bar instanceof Bar);
-					assert.equal(viewV1.root.foo.text, "Edited Foo");
-					assert.equal(viewV2.root.bar.text, "Edited Bar");
-					assert.equal(viewV1.root.title, "Edited by creator");
-					assert.equal(viewV2.root.title, "Edited by creator");
-					viewV1.dispose();
-					viewV2.dispose();
-					// #endregion Step 4
-				});
+			class CombinedTask extends factory.object("Task", {
+				title: factory.string,
+				foo: factory.optional(Foo),
+				bar: factory.optional(Bar),
+			}) {}
+			for (const tree of provider.trees) {
+				expectSchemaEqual(tree.kernel.checkout.storedSchema, toUpgradeSchema(CombinedTask));
 			}
+
+			// Each client edits its own nested data without exposing or losing the other client's field.
+			assert.equal(creator.compatibility.canView, true);
+			assert(creator.root.foo instanceof Foo);
+			assert.equal(creator.root.foo.text, "Original Foo");
+			creator.root.foo.text = "Edited Foo";
+			provider.synchronizeMessages();
+			assert(reader.root.bar instanceof Bar);
+			assert.equal(reader.root.bar.text, "Original Bar");
+			reader.root.bar.text = "Edited Bar";
+			provider.synchronizeMessages();
+			verifyReadWrite({
+				provider,
+				creator: { view: creator, expectedFields: { foo: { text: "Edited Foo" } } },
+				reader: { view: reader, expectedFields: { bar: { text: "Edited Bar" } } },
+			});
+			creator.dispose();
+			reader.dispose();
+
+			// Reopening both views must expose the synchronized nested edits without another upgrade.
+			const viewV1 = documentTree.viewWith(new TreeViewConfiguration({ schema: TaskV1 }));
+			const viewV2 = readerTree.viewWith(new TreeViewConfiguration({ schema: TaskV2 }));
+			assert.equal(viewV1.compatibility.canView, true);
+			assert.equal(viewV2.compatibility.canView, true);
+			assert(viewV1.root.foo instanceof Foo);
+			assert(viewV2.root.bar instanceof Bar);
+			assert.equal(viewV1.root.foo.text, "Edited Foo");
+			assert.equal(viewV2.root.bar.text, "Edited Bar");
+			assert.equal(viewV1.root.title, "Edited by creator");
+			assert.equal(viewV2.root.title, "Edited by creator");
+			viewV1.dispose();
+			viewV2.dispose();
 		});
 
 		/**
