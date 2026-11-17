@@ -106,7 +106,9 @@ See `.agency/plugins/nori/skills/finishing-a-development-branch/SKILL.md`
 
 ### Step 5: Push Updates
 
-**Push changes to PR:**
+Push only when the user explicitly authorized publishing updates to this PR.
+Respect local-only instructions; addressing review feedback does not itself authorize a push.
+Before an authorized push, verify the destination remote and branch.
 
 ```bash
 git push
@@ -122,7 +124,7 @@ git push
 - Fixed [item 2]: [brief description]
   ...
 
-Changes pushed to PR. Options:
+Report whether changes remain local or were pushed with authorization. Options:
 
 1. **Done** - PR is ready for re-review
 2. **More feedback** - Additional changes needed

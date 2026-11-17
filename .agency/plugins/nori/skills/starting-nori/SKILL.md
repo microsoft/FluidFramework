@@ -27,8 +27,8 @@ If you were dispatched as a subagent to execute a specific task, skip this skill
 - *CRITICAL* Add each element of this checklist to your Todo list using TodoWrite. DO NOT BE LAZY.
 - Research how to best solve my question WITHOUT making code changes by doing the following:
   - Search for relevant skills in the available skills list.
-  - Use subagents to do your deep research. If you have access to the nori-knowledge-researcher subagent, use that one.
-<system-reminder> You can run many research subagents in parallel. </system-reminder>
+  - Research directly for a small task or a single continuous code trace. Delegate only substantial, independent questions when the active runtime provides suitable subagents.
+  - If available and relevant, use the nori-knowledge-researcher subagent for a bounded knowledge-base question.
 - Read and follow the `writing-plans` skill.
 - Present plan to me and ask for feedback.
   - If I have feedback, modify the plan. Repeat until I approve.
@@ -54,8 +54,8 @@ Do not make changes to third party APIs.
 - *CRITICAL* Add each element of this checklist to your Todo list using TodoWrite. DO NOT BE LAZY.
 - Research how to best solve my question WITHOUT making code changes by doing the following:
   - Search for relevant skills in the available skills list.
-  - Use subagents to do your deep research. If you have access to the nori-knowledge-researcher subagent, use that one.
-<system-reminder> You can run many research subagents in parallel. </system-reminder>
+  - Research directly for a small task or a single continuous code trace. Delegate only substantial, independent questions when the active runtime provides suitable subagents.
+  - If available and relevant, use the nori-knowledge-researcher subagent for a bounded knowledge-base question.
 - Read and follow the `writing-plans` skill.
 - Present plan to me and ask for feedback.
   - If I have feedback, modify the plan. Repeat until I approve.
@@ -81,7 +81,7 @@ If you disagree, even if it is a gut feeling, PUSH BACK.
 YAGNI. Do not add features that are not explicitly asked for.
 Comments document the code, not the process. Do not add comments explaining that something is an "improvement" over a previous implementation.
 Prefer to use third party libraries instead of rolling your own. Ask before installing.
-Fix all tests that fail, even if it is not your code that broke the test.
+Fix failures caused by or directly coupled to the task. Report unrelated baseline failures without expanding the change to fix them.
 NEVER test just mocked behavior.
 NEVER ignore test output and system logs.
 Always root cause bugs.
