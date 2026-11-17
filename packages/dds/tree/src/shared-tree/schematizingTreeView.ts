@@ -12,7 +12,12 @@ import type {
 import { assert } from "@fluidframework/core-utils/internal";
 import { tagSchemaArtifacts, UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { anchorSlot, rootFieldKey, type RevertToOptionsAlpha } from "../core/index.js";
+import {
+	anchorSlot,
+	rootFieldKey,
+	type RevertToOptionsAlpha,
+	type TreeStoredSchema,
+} from "../core/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
@@ -34,6 +39,8 @@ import {
 	setField,
 	normalizeFieldSchema,
 	checkSchemaCompatibility,
+	isSchemaUpgradeAllowed,
+	getSchemaUpgradeCandidate,
 	type InsertableContent,
 	type StagedSchemaUpgradePolicy,
 	type TreeViewConfiguration,
@@ -54,10 +61,8 @@ import {
 	prepareForInsertionContextless,
 	type FieldSchema,
 	tryDisposeTreeNode,
-	FieldSchemaAlpha,
 	type TreeViewConfigurationAlpha,
 	toInitialSchema,
-	toUpgradeSchema,
 	type TreeBranchHistory,
 	type TreeLocationResolver,
 	type TreeLocation,
@@ -69,9 +74,16 @@ import {
 	type StagedUpgradeStatus,
 	type ITreeViewConfigurationAlpha,
 	SchemaIdentityInternal,
+	isObjectNodeSchema,
+	FieldKind,
+	NodeKind,
+	type SchemaType,
+	type SimpleObjectFieldSchema,
+	type TreeNodeSchema,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
+	brand,
 	breakingClass,
 	disposeSymbol,
 	isReadonlyArray,
@@ -81,7 +93,49 @@ import {
 } from "../util/index.js";
 
 import { canInitialize, initialize, initializerFromChunk } from "./schematizeTree.js";
+import { exportSimpleSchema } from "./sharedTree.js";
 import { type CheckoutBase, TreeCheckout } from "./treeCheckout.js";
+
+/**
+ * Gets the {@link TreeContextAlpha.unknownFieldSchemas | unknown field schemas} of `viewSchema` in `storedSchema`.
+ * @returns A map from each object node schema in `viewSchema` that has unknown fields
+ * to the stored schema of those fields, keyed by stored key.
+ * Object node schemas without unknown fields are omitted.
+ */
+function getUnknownFieldSchemas(
+	viewSchema: TreeSchema,
+	storedSchema: TreeStoredSchema,
+): TreeContextAlpha["unknownFieldSchemas"] {
+	const result = new Map<
+		TreeNodeSchema,
+		ReadonlyMap<string, SimpleObjectFieldSchema<SchemaType.Stored>>
+	>();
+	const simpleStoredSchema = exportSimpleSchema(storedSchema);
+	for (const nodeSchema of viewSchema.definitions.values()) {
+		if (!isObjectNodeSchema(nodeSchema) || !nodeSchema.allowUnknownOptionalFields) {
+			continue;
+		}
+		const storedNodeSchema = simpleStoredSchema.definitions.get(nodeSchema.identifier);
+		if (storedNodeSchema?.kind !== NodeKind.Object) {
+			continue;
+		}
+		const fields = new Map<string, SimpleObjectFieldSchema<SchemaType.Stored>>();
+		for (const [storedKey, fieldSchema] of storedNodeSchema.fields) {
+			// Skip fields with no allowed types, such as forbidden fields: they can never have content.
+			if (
+				!nodeSchema.storedKeyToPropertyKey.has(brand(storedKey)) &&
+				fieldSchema.kind === FieldKind.Optional &&
+				fieldSchema.simpleAllowedTypes.size > 0
+			) {
+				fields.set(storedKey, fieldSchema);
+			}
+		}
+		if (fields.size > 0) {
+			result.set(nodeSchema, fields);
+		}
+	}
+	return result;
+}
 
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
@@ -134,6 +188,13 @@ export class SchematizingSimpleTreeView<
 	 * @remarks Undefined if and only if uninitialized or disposed.
 	 */
 	private currentEnabledUpgrades: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus> | undefined;
+	/**
+	 * Cached {@link SchematizingSimpleTreeView.unknownFieldSchemas}.
+	 * @remarks
+	 * Computed lazily on first access.
+	 * Reset to `undefined` when the stored schema changes or the view is disposed, so the next access recomputes it.
+	 */
+	private currentUnknownFieldSchemas: TreeContextAlpha["unknownFieldSchemas"] | undefined;
 	public readonly events: Listenable<TreeViewEvents & TreeBranchEvents> &
 		IEmitter<TreeViewEvents & TreeBranchEvents> &
 		HasListeners<TreeViewEvents & TreeBranchEvents> = createEmitter();
@@ -213,7 +274,7 @@ export class SchematizingSimpleTreeView<
 				: SchemaIdentityInternal.extract(configAlpha.schemaIdentity);
 		if (identity?.expectedHash !== undefined) {
 			const { expectedHash, schemaHasher: hasher } = identity;
-			const actualHash = hasher(configAlpha.schema, this.stagedUpgradePolicy);
+			const actualHash = hasher(toInitialSchema(configAlpha.schema, this.stagedUpgradePolicy));
 			if (actualHash !== expectedHash) {
 				throw new UsageError(
 					`Expected schema hash does not match the configured schema. Expected ${JSON.stringify(expectedHash)}, got ${JSON.stringify(actualHash)}.`,
@@ -274,7 +335,7 @@ export class SchematizingSimpleTreeView<
 		}
 
 		const schema = toInitialSchema(this.config.schema, this.stagedUpgradePolicy);
-		const schemaHash = this.computeSchemaHash(this.stagedUpgradePolicy);
+		const schemaHash = this.computeSchemaHash(schema);
 		this.runSchemaEdit(() => {
 			// This has to be the contextless version, since when "initialize" is called (right after this),
 			// it will do a schema change which would dispose of the current context (see inside `update`).
@@ -339,10 +400,11 @@ export class SchematizingSimpleTreeView<
 	public upgradeSchema(): void {
 		this.ensureUndisposed();
 
-		const upgradePolicy = this.effectiveUpgradePolicy;
-		const newSchema = toUpgradeSchema(this.viewSchema.root, upgradePolicy);
+		const upgradePolicy = this.stagedUpgradePolicy;
 		const storedSchema = this.checkout.storedSchema.clone();
-		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
+		const newSchema = getSchemaUpgradeCandidate(this.viewSchema, storedSchema, upgradePolicy);
+
+		if (!isSchemaUpgradeAllowed(this.viewSchema, storedSchema, newSchema)) {
 			throw new UsageError(
 				"Existing stored schema cannot be upgraded to the requested schema (see TreeView.compatibility.canUpgrade).",
 			);
@@ -352,7 +414,7 @@ export class SchematizingSimpleTreeView<
 			return;
 		}
 
-		const schemaHash = this.computeSchemaHash(upgradePolicy);
+		const schemaHash = this.computeSchemaHash(newSchema);
 		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
 		if (schemaHash !== undefined) {
 			this.breaker.logger?.sendTelemetryEvent({
@@ -362,16 +424,11 @@ export class SchematizingSimpleTreeView<
 		}
 	}
 
-	private computeSchemaHash(
-		stagedUpgradePolicy: StagedSchemaUpgradePolicy,
-	): string | undefined {
+	private computeSchemaHash(schema: TreeStoredSchema): string | undefined {
 		const identity = (this.config as Partial<ITreeViewConfigurationAlpha>).schemaIdentity;
 		return identity === undefined
 			? undefined
-			: SchemaIdentityInternal.extract(identity).schemaHasher(
-					this.config.schema,
-					stagedUpgradePolicy,
-				);
+			: SchemaIdentityInternal.extract(identity).schemaHasher(schema);
 	}
 
 	public isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus {
@@ -379,28 +436,6 @@ export class SchematizingSimpleTreeView<
 			this.failDisposed();
 		}
 		return this.currentEnabledUpgrades.get(upgrade) ?? "disabled";
-	}
-
-	private get effectiveUpgradePolicy(): StagedSchemaUpgradePolicy {
-		const configuredPolicy = this.stagedUpgradePolicy;
-		if (configuredPolicy.includeAlreadyEnabledUpgrades !== true) {
-			return configuredPolicy;
-		}
-		const enabledUpgrades = this.currentEnabledUpgrades;
-		assert(
-			enabledUpgrades !== undefined,
-			0xd3e /* Enabled upgrades must be available for an active view */,
-		);
-		if (enabledUpgrades.size === 0) {
-			return configuredPolicy;
-		}
-
-		return {
-			includeStaged: (upgrade) =>
-				configuredPolicy.includeStaged(upgrade) || enabledUpgrades.has(upgrade),
-			includeStagedOptional: (upgrade) =>
-				configuredPolicy.includeStagedOptional(upgrade) || enabledUpgrades.has(upgrade),
-		};
 	}
 
 	/**
@@ -488,6 +523,7 @@ export class SchematizingSimpleTreeView<
 	private update(): void {
 		this.disposeFlexView();
 
+		this.currentUnknownFieldSchemas = undefined;
 		const compatibility = this.computeCompatibility();
 		this.currentCompatibility = compatibility;
 
@@ -501,18 +537,9 @@ export class SchematizingSimpleTreeView<
 				this.nodeKeyManager,
 			);
 			assert(!slots.has(SimpleContextSlot), 0xa47 /* extra simple tree context */);
-			assert(
-				this.rootFieldSchema instanceof FieldSchemaAlpha,
-				0xbfa /* all field schema should be FieldSchemaAlpha */,
-			);
 			slots.set(
 				SimpleContextSlot,
-				new HydratedContext(
-					this.flexTreeContext,
-					HydratedContext.schemaMapFromRootSchema(
-						this.rootFieldSchema.allowedTypesFull.evaluate(),
-					),
-				),
+				new HydratedContext(this.flexTreeContext, this.viewSchema.definitions),
 			);
 
 			// Trigger "rootChanged" events if the root changes in the future.
@@ -608,6 +635,15 @@ export class SchematizingSimpleTreeView<
 		anchors.slots.delete(SimpleContextSlot);
 	}
 
+	public get unknownFieldSchemas(): TreeContextAlpha["unknownFieldSchemas"] {
+		this.ensureUndisposed();
+		this.currentUnknownFieldSchemas ??= getUnknownFieldSchemas(
+			this.viewSchema,
+			this.checkout.storedSchema,
+		);
+		return this.currentUnknownFieldSchemas;
+	}
+
 	public get compatibility(): SchemaCompatibilityStatusBeta {
 		if (!this.currentCompatibility) {
 			this.failDisposed();
@@ -625,6 +661,7 @@ export class SchematizingSimpleTreeView<
 		this.checkout.forest.anchors.slots.delete(ViewSlot);
 		this.currentCompatibility = undefined;
 		this.currentEnabledUpgrades = undefined;
+		this.currentUnknownFieldSchemas = undefined;
 		this.onDispose?.();
 		if (this.disposeCheckoutOnDispose && !this.checkout.disposed) {
 			// Checkouts that are 1:1 with views (e.g. non-shared, non-BranchCheckout) are also disposed
@@ -673,10 +710,11 @@ export class SchematizingSimpleTreeView<
 
 	@throwIfBroken
 	public rewindTo(revision: string): void {
-		assert(
-			this.checkout instanceof TreeCheckout,
-			0xd78 /* Rewinding requires a checkout that supports branch replacement */,
-		);
+		if (!(this.checkout instanceof TreeCheckout)) {
+			throw new UsageError(
+				"Rewinding is not supported on a branch created by `tree.forkBranch()` or `branch.fork()`, or on its views. Consider `revertTo` instead.",
+			);
+		}
 		this.checkout.rewindTo(revision);
 	}
 

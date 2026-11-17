@@ -15,9 +15,7 @@ import {
 } from "@fluid-internal/client-utils";
 import type {
 	IAudience,
-	ISelf,
 	ICriticalContainerError,
-	IAudienceEvents,
 } from "@fluidframework/container-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import type {
@@ -253,7 +251,6 @@ import {
 	Outbox,
 	RemoteMessageProcessor,
 	tryGetDeserializedRuntimeOpCopy,
-	type OutboundBatch,
 	type BatchResubmitInfo,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
@@ -284,9 +281,11 @@ import {
 	DefaultSummaryConfiguration,
 	DocumentsSchemaController,
 	electedSummarizerBlobName,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type EnqueueSummarizeResult,
 	extractSummaryMetadataMessage,
 	formCreateSummarizerFn,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type IBaseSummarizeResult,
 	type IConnectableRuntime,
 	type IContainerRuntimeMetadata,
@@ -296,9 +295,13 @@ import {
 	type IDocumentSchemaChangeMessageIncoming,
 	type IDocumentSchemaCurrent,
 	type IDocumentSchemaFeatures,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type IEnqueueSummarizeOptions,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type IGeneratedSummaryStats,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type IGenerateSummaryTreeResult,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type IOnDemandSummarizeOptions,
 	type IRefreshSummaryAckOptions,
 	type IRootSummarizerNodeWithGC,
@@ -306,6 +309,7 @@ import {
 	isSummariesDisabled,
 	isSummaryOnRequest,
 	type ISubmitSummaryOptions,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type ISummarizeResults,
 	type ISummarizerInternalsProvider,
 	type ISummarizerRuntime,
@@ -315,11 +319,13 @@ import {
 	recentBatchInfoBlobName,
 	RetriableSummaryError,
 	rootHasIsolatedChannels,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	type SubmitSummaryResult,
 	type Summarizer,
 	SummarizerClientElection,
 	summarizerClientType,
 	summarizerRequestUrl,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	SummaryCollection,
 	SummaryManager,
 	validateSummaryHeuristicConfiguration,
@@ -685,39 +691,6 @@ export function getDeviceSpec(): {
 		hardwareConcurrency: navigator.hardwareConcurrency,
 	};
 }
-
-/**
- * Older loader doesn't have a submitBatchFn member, this is the older way of submitting a batch.
- * Rather than exposing the submitFn (now deprecated) and IDeltaManager (dangerous to hand out) to the Outbox,
- * we can provide a partially-applied function to keep those items private to the ContainerRuntime.
- */
-export const makeLegacySendBatchFn =
-	(
-		submitFn: (
-			type: MessageType,
-			contents: unknown,
-			batch: boolean,
-			appData?: unknown,
-		) => number,
-		deltaManager: Pick<IDeltaManager<unknown, unknown>, "flush">,
-	) =>
-	(batch: OutboundBatch): number => {
-		// Default to negative one to match Container.submitBatch behavior
-		let clientSequenceNumber: number = -1;
-		for (const message of batch.messages) {
-			clientSequenceNumber = submitFn(
-				MessageType.Operation,
-				// For back-compat (submitFn only works on deserialized content)
-				message.contents === undefined ? undefined : JSON.parse(message.contents),
-				true, // batch
-				message.metadata,
-			);
-		}
-
-		deltaManager.flush();
-
-		return clientSequenceNumber;
-	};
 
 /**
  * Extract last message from the snapshot metadata.
@@ -1755,7 +1728,6 @@ export class ContainerRuntime
 			clientDetails,
 			connected,
 			baseSnapshot,
-			submitFn,
 			submitBatchFn,
 			submitSummaryFn,
 			submitSignalFn,
@@ -1818,10 +1790,7 @@ export class ContainerRuntime
 
 		// Here we could wrap/intercept on these functions to block/modify outgoing messages if needed.
 		// This makes ContainerRuntime the final gatekeeper for outgoing messages.
-		// back-compat: ADO #1385: Make this call unconditional in the future
-		this.submitSummaryFn =
-			submitSummaryFn ??
-			((summaryOp, refseq) => submitFn(MessageType.Summarize, summaryOp, false));
+		this.submitSummaryFn = submitSummaryFn;
 
 		const sequenceAndSubmitSignal = (
 			envelope: UnsequencedSignalEnvelope,
@@ -2258,13 +2227,10 @@ export class ContainerRuntime
 			createChildLogger({ logger: this.baseLogger, namespace: "InboundBatchAggregator" }),
 		);
 
-		const legacySendBatchFn = makeLegacySendBatchFn(submitFn, this.innerDeltaManager);
-
 		this.outbox = new Outbox({
 			shouldSend: () => this.shouldSendOps(),
 			pendingStateManager: this.pendingStateManager,
 			submitBatchFn,
-			legacySendBatchFn,
 			compressor: new OpCompressor(this.mc.logger),
 			splitter: opSplitter,
 			config: {
@@ -2306,31 +2272,6 @@ export class ContainerRuntime
 		});
 
 		this._audience = audience;
-		if (audience.getSelf === undefined) {
-			// back-compat, added in 2.0 RC3.
-			// Purpose: deal with cases when we run against old loader that does not have newly added capabilities
-			audience.getSelf = () => {
-				const clientId = this._getClientId();
-				return clientId === undefined
-					? undefined
-					: ({
-							clientId,
-							client: audience.getMember(clientId),
-						} satisfies ISelf);
-			};
-
-			let oldClientId = this.clientId;
-			this.on("connected", () => {
-				const clientId = this.clientId;
-				assert(clientId !== undefined, 0x975 /* can't be undefined */);
-				(audience as unknown as TypedEventEmitter<IAudienceEvents>).emit(
-					"selfChanged",
-					{ clientId: oldClientId },
-					{ clientId, client: audience.getMember(clientId) },
-				);
-				oldClientId = clientId;
-			});
-		}
 
 		this.signalAudience = signalAudience;
 
@@ -2356,11 +2297,10 @@ export class ContainerRuntime
 		// We haven't emitted hasStagedChangesChanged yet, but this is the baseline so we know to emit when it changes
 		this.lastEmittedHasStagedChanges = this.computeCurrentHasStagedChanges();
 
-		// Reference Sequence Number may have just changed, and it must be consistent across a batch,
-		// so we should flush now to clear the way for the next ops.
-		// NOTE: This will be redundant whenever CR.process was called for the op (since we flush there too) -
-		// But we need this coverage for old loaders that don't call ContainerRuntime.process for non-runtime messages.
-		// (We have to call flush _before_ processing a runtime op, but after is ok for non-runtime op)
+		// Flush ops generated during message processing before the next message advances the reference sequence number.
+		// The protocol handler runs before ContainerRuntime.process and can itself generate ops, so the flush at the
+		// start of process() alone cannot prevent batches from mixing reference sequence numbers.
+		// See https://github.com/microsoft/FluidFramework/pull/24276#issuecomment-2902640564.
 		this.deltaManager.on("op", () => this.flush());
 
 		this.mc.logger.sendTelemetryEvent({
@@ -2511,6 +2451,7 @@ export class ContainerRuntime
 						this.summaryConfiguration.initialSummarizerDelayMs,
 				};
 
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const summaryCollection: SummaryCollection = new SummaryCollection(
 			this.deltaManager,
 			this.baseLogger,
@@ -4020,15 +3961,26 @@ export class ContainerRuntime
 		// since we mark whole batches as "staged" or not to indicate whether to submit them.
 		this.flush();
 
+		let inboundPause: Promise<void> | undefined;
+		const verifyStageControls = (): void => {
+			if (this.stageControls !== stageControls) {
+				throw new UsageError("Not in staging mode");
+			}
+		};
+		const resumeInbound = (): void => {
+			if (inboundPause !== undefined) {
+				inboundPause = undefined;
+				this._deltaManager.inbound.resume();
+			}
+		};
+
 		// Note: `silent` is captured from the enclosing `enterStagingModeCore` call.
 		// When `true`, both enter and exit events are suppressed (see orderSequentially).
 		const exitStagingMode = (
 			discardOrCommit: () => IPendingMessage["batchInfo"][],
 			exitMethod: "commit" | "discard",
 		): void => {
-			if (this.stageControls !== stageControls) {
-				throw new UsageError("Not in staging mode");
-			}
+			verifyStageControls();
 			try {
 				PerformanceEvent.timedExec(
 					this.mc.logger,
@@ -4041,6 +3993,7 @@ export class ContainerRuntime
 						this.outbox.flush();
 
 						this.stageControls = undefined;
+						resumeInbound();
 
 						const batchInfos = discardOrCommit();
 						event.reportProgress({
@@ -4059,6 +4012,9 @@ export class ContainerRuntime
 				const normalizedError = normalizeError(error);
 				this.closeFn(normalizedError);
 				throw normalizedError;
+			} finally {
+				// Also release the pause if the final flush fails before staging mode is cleared.
+				resumeInbound();
 			}
 			if (!silent) {
 				this.emit("stagingModeChanged", {
@@ -4069,6 +4025,15 @@ export class ContainerRuntime
 		};
 
 		const stageControls: StageControlsInternal = {
+			pauseInbound: async () => {
+				verifyStageControls();
+				inboundPause ??= this._deltaManager.inbound.pause();
+				return inboundPause;
+			},
+			resumeInbound: () => {
+				verifyStageControls();
+				resumeInbound();
+			},
 			discardChanges: () =>
 				exitStagingMode(() => {
 					// Pop all staged batches from the PSM and roll them back in LIFO order
@@ -4674,6 +4639,7 @@ export class ContainerRuntime
 	 * @param options - options controlling how the summary is generated or submitted
 	 */
 
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
 		const {
 			cancellationToken,
@@ -4938,6 +4904,7 @@ export class ContainerRuntime
 					? undefined
 					: calculateStats(summaryTree.tree[gcTreeKey]);
 
+			// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 			const summaryStats: IGeneratedSummaryStats = {
 				dataStoreCount: this.channelCollection.size,
 				summarizedDataStoreCount: this.channelCollection.size - handleCount,
@@ -4947,6 +4914,7 @@ export class ContainerRuntime
 				summaryNumber,
 				...partialStats,
 			};
+			// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 			const generateSummaryData: Omit<IGenerateSummaryTreeResult, "stage" | "error"> = {
 				referenceSequenceNumber: summaryRefSeqNum,
 				minimumSequenceNumber,
@@ -5064,6 +5032,7 @@ export class ContainerRuntime
 		minimumSequenceNumber: number,
 		finalAttempt: boolean,
 		beforeSummaryGeneration: boolean,
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	): Promise<IBaseSummarizeResult | undefined> {
 		if (!this.isOpDirty) {
 			return;
@@ -5850,6 +5819,7 @@ export class ContainerRuntime
 			.catch(this.closeFn);
 	};
 
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
 		if (this._summarizer !== undefined) {
 			return this._summarizer.summarizeOnDemand(options);
@@ -5863,6 +5833,7 @@ export class ContainerRuntime
 		}
 	}
 
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
 		if (this._summarizer !== undefined) {
 			return this._summarizer.enqueueSummarize(options);

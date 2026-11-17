@@ -1,5 +1,100 @@
 # @fluidframework/runtime-utils
 
+## 3.13.0
+
+### Minor Changes
+
+- Legacy data-store factories can now be used with the alpha ServiceClient APIs ([#28723](https://github.com/microsoft/FluidFramework/pull/28723)) [5452cc6fe9c](https://github.com/microsoft/FluidFramework/commit/5452cc6fe9c54b6c3b533876a48611f088bcfefd)
+
+  Two new `@legacy` `@alpha` APIs have been added to help existing users of the `@legacy` API surface incrementally adopt the new `@alpha` [`ServiceClient`](https://fluidframework.com/docs/api/fluid-framework/serviceclient-interface) APIs.
+
+  The new `dataStoreKindFromFactory` function in `@fluidframework/runtime-utils/legacy/alpha` lets you use an existing data-store factory as an alpha `DataStoreKind`.
+  It preserves the original factory, child registry, entry point, and persisted representation without adding persisted objects.
+  This includes factories that create registered child data stores during initialization.
+  Repeated calls with the same factory return the same kind.
+  Supply the factory's entry-point type as the generic type argument when needed.
+  The function does not validate that type or change the container's root-discovery convention.
+
+  For applications with other root-discovery conventions, `fluidContainerFromLegacy` exposes an attached legacy container and an application-selected root value through the alpha container API.
+  Pass the service-facing reload ID explicitly; a driver's resolved URL ID may instead be an internal identifier such as an ODSP document hash.
+  Factories used for alpha creation must already be registered in the existing runtime.
+  Closing the returned view closes the original container.
+
+  ```typescript
+  import {
+    dataStoreKindFromFactory,
+    fluidContainerFromLegacy,
+  } from "@fluidframework/runtime-utils/legacy/alpha";
+
+  // Use your existing factory, attached container, root value, and service reload ID.
+  const kind = dataStoreKindFromFactory<typeof root>(factory);
+  const registry = async (type: string) => {
+    if (type !== kind.type) {
+      throw new Error(`Unknown data-store type: ${type}`);
+    }
+    return kind;
+  };
+  const container = fluidContainerFromLegacy(
+    legacyContainer,
+    root,
+    registry,
+    reloadId,
+  );
+  const newDataStore = await container.createDataStore(kind);
+  ```
+
+## 3.12.0
+
+Dependency updates only.
+
+## 3.11.0
+
+Dependency updates only.
+
+## 3.10.0
+
+### Minor Changes
+
+- Deprecate summarizer implementation APIs ([#28599](https://github.com/microsoft/FluidFramework/pull/28599)) [d44fce67369](https://github.com/microsoft/FluidFramework/commit/d44fce67369deecee23892b7ac68159bc2099913)
+
+  Direct summarizer control, detailed summarizer results, and summary collection APIs from `@fluidframework/container-runtime` are deprecated.
+  These APIs expose implementation details and are intended to become internal.
+  The following APIs are deprecated:
+  - Direct control: `ISummarizer`, `ISummarizeOptions`, `IOnDemandSummarizeOptions`, and `ISummarizeResults`.
+  - Enqueue support: `IEnqueueSummarizeOptions` and `EnqueueSummarizeResult`.
+  - Result stages: `SummarizeResultPart`, `SubmitSummaryResult`, `IBaseSummarizeResult`, `IGenerateSummaryTreeResult`, `IUploadSummaryResult`, `ISubmitSummaryOpResult`, `SubmitSummaryFailureData`, and `SummaryStage`.
+  - Result metadata and acknowledgements: `IRetriableFailureError`, `IGeneratedSummaryStats`, `IBroadcastSummaryResult`, `IAckSummaryResult`, and `INackSummaryResult`.
+  - Collection and message wrappers: `SummaryCollection`, `ISummary`, `IAckedSummary`, `ISummaryOpMessage`, `ISummaryAckMessage`, and `ISummaryNackMessage`.
+  - Collection watchers and events: `IClientSummaryWatcher`, `ISummaryCollectionOpEvents`, `OpActionEventName`, and `OpActionEventListener`.
+
+  For application-requested summaries, use `loadAndSummarize` from `@fluidframework/container-loader/legacy`.
+  This is the recommended migration API for most customers:
+
+  ```typescript
+  import { loadAndSummarize } from "@fluidframework/container-loader/legacy";
+
+  // props supplies the loader services and request.
+  const { version, referenceSequenceNumber } = await loadAndSummarize(props);
+  ```
+
+  `loadAndSummarize` manages loading and disposing the summarizer container and requests an on-demand summary without requiring the application to manage summarizer implementation details.
+  It waits for service acknowledgement and returns the acknowledged snapshot version and the reference sequence number of its summary proposal.
+  Use `version` with `LoaderHeader.version` on drivers that support loading snapshot versions.
+  The API rejects on failure.
+  Enqueueing, collection watching, and detailed stage promises are implementation-level controls that are intentionally not exposed by this API.
+
+  The older `loadSummarizerContainerAndMakeSummary` API is intended for specialized integrations that do not provide service acknowledgement ops.
+  Most customers should use `loadAndSummarize` instead.
+  The older API's success requires submission and broadcast, and its proposal handle is not guaranteed to identify an acknowledged snapshot version.
+
+  `SummaryTreeBuilder` and `convertToSummaryTreeWithStats` from `@fluidframework/runtime-utils` are also deprecated as implementation utilities intended to become internal.
+  There is no supported replacement for these tree-building and conversion utilities.
+  The loader API is not a replacement for building summary trees.
+
+  This change preserves existing exports, signatures, and behavior.
+  Internal implementations in the Fluid Framework repository can continue using these APIs.
+  No internalization version or date is specified.
+
 ## 3.7.0
 
 Dependency updates only.

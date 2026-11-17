@@ -136,18 +136,18 @@ class TreeContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	public constructor(
 		treeRootDataObjectFactory: TreeDataObjectFactory<TreeRootDataObject>,
 		config: {
-			minVersionForCollab: OldestSupportedClientVersion;
+			oldestSupportedClient: OldestSupportedClientVersion;
 			runtimeOptions?: Partial<IContainerRuntimeOptions>;
 		},
 	) {
 		super({
 			registryEntries: [treeRootDataObjectFactory.registryEntry],
 			runtimeOptions: {
-				...defaultRuntimeOptionsForMinVersion(config.minVersionForCollab),
+				...defaultRuntimeOptionsForMinVersion(config.oldestSupportedClient),
 				...config.runtimeOptions,
 			},
 			provideEntryPoint,
-			oldestSupportedClient: config.minVersionForCollab,
+			oldestSupportedClient: config.oldestSupportedClient,
 		});
 		this.#treeRootDataObjectFactory = treeRootDataObjectFactory;
 	}
@@ -290,9 +290,9 @@ export function createTreeContainerRuntimeFactory(props: {
 		);
 	}
 
-	const minVersionForCollab = oldestSupportedClient ?? minVersionForCollaboration;
+	const resolvedOldestSupportedClient = oldestSupportedClient ?? minVersionForCollaboration;
 	assert(
-		minVersionForCollab !== undefined,
+		resolvedOldestSupportedClient !== undefined,
 		0xd3d /* A supported client version must be defined */,
 	);
 
@@ -303,7 +303,7 @@ export function createTreeContainerRuntimeFactory(props: {
 		new TreeRootDataObjectFactory(sharedObjects, registry),
 		{
 			runtimeOptions: runtimeOptionOverrides,
-			minVersionForCollab,
+			oldestSupportedClient: resolvedOldestSupportedClient,
 		},
 	);
 }

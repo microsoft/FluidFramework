@@ -59,6 +59,7 @@ import {
 	GCDataBuilder,
 	RequestParser,
 	RuntimeHeaders,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	SummaryTreeBuilder,
 	addBlobToSummary,
 	convertSnapshotTreeToSummaryTree,
@@ -257,7 +258,7 @@ export function formParentContext<
 			return context.addedGCOutboundRoute(...args);
 		},
 		getCreateChildSummarizerNodeFn: (...args) => {
-			return context.getCreateChildSummarizerNodeFn?.(...args);
+			return context.getCreateChildSummarizerNodeFn(...args);
 		},
 		deleteChildSummarizerNode: (...args) => {
 			return context.deleteChildSummarizerNode(...args);
@@ -1291,6 +1292,7 @@ export class ChannelCollection
 	 * Create a summary. Used when attaching or serializing a detached container.
 	 */
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const builder = new SummaryTreeBuilder();
 		this.visitLocalBoundContextsDuringAttach(
 			(contextId: string, context: FluidDataStoreContext) => {
@@ -1416,6 +1418,7 @@ export class ChannelCollection
 		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats> {
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const summaryBuilder = new SummaryTreeBuilder();
 		await this.visitContextsDuringSummary(
 			async (contextId: string, context: FluidDataStoreContext) => {

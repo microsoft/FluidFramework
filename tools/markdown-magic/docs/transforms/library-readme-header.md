@@ -21,11 +21,22 @@ Valid values for `packageScopeNotice` are `FRAMEWORK`, `EXAMPLE`, `EXPERIMENTAL`
 
 Import instructions appear only when the package exports an `alpha`, `beta`, or `legacy` path.
 
-## Example
+## Examples
+
+### Markdown
 
 The following marker generates a header for an experimental package and installs it as a development dependency:
 
 ```markdown
 <!-- markdown-magic:begin {"transform":"library-readme-header","packageScopeNotice":"EXPERIMENTAL","devDependency":true,"headingLevel":2} -->
 <!-- markdown-magic:end -->
+```
+
+### MDX
+
+For an MDX document, use MDX comments:
+
+```mdx
+{/* markdown-magic:begin {"transform":"library-readme-header","packageScopeNotice":"EXPERIMENTAL","devDependency":true,"headingLevel":2} */}
+{/* markdown-magic:end */}
 ```

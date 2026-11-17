@@ -93,8 +93,17 @@ export interface IForestSubscription extends WithBreakable {
 	 * @remarks
 	 * Similar to {@link chunkField} but it creates chunks optimized for this specific forest by using its compression policy.
 	 * The provided data must be compatible with the forest's current schema.
+	 * The cursor's content is borrowed: the caller must retain its owning references for the duration of the call.
+	 * Each returned array entry transfers one owned chunk reference to the caller, including entries that reuse existing chunks.
+	 * @param shouldRechunk - Whether to traverse an existing non-uniform chunk instead of reusing its subtree.
+	 * This callback borrows the chunk without taking ownership.
+	 * Return `false` for subtrees already optimized for the forest's current schema and policy to preserve their identities and skip their descendants.
+	 * Uniform chunks are reused without calling this callback.
 	 */
-	chunkField(cursor: ITreeCursorSynchronous): TreeChunk[];
+	chunkField(
+		cursor: ITreeCursorSynchronous,
+		shouldRechunk?: (chunk: TreeChunk) => boolean,
+	): TreeChunk[];
 
 	/**
 	 * Allocates a cursor in the "cleared" state.

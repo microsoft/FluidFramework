@@ -19,7 +19,9 @@ The transform removes leading and trailing whitespace from the selected text.
 
 If `language` is absent, the transform creates a code fence without a language identifier.
 
-## Example
+## Examples
+
+### Markdown
 
 The following marker includes TypeScript source after the first five lines:
 
@@ -33,4 +35,21 @@ The following marker includes the last two lines from a source that ends with a 
 ```markdown
 <!-- markdown-magic:begin {"transform":"include-code","path":"./example.ts","language":"typescript","start":-3,"end":-1} -->
 <!-- markdown-magic:end -->
+```
+
+### MDX
+
+For an MDX document, use MDX comments.
+The following marker includes TypeScript source after the first five lines:
+
+```mdx
+{/* markdown-magic:begin {"transform":"include-code","path":"./example.ts","language":"typescript","start":5} */}
+{/* markdown-magic:end */}
+```
+
+The following marker includes the last two lines from a source that ends with a line ending:
+
+```mdx
+{/* markdown-magic:begin {"transform":"include-code","path":"./example.ts","language":"typescript","start":-3,"end":-1} */}
+{/* markdown-magic:end */}
 ```

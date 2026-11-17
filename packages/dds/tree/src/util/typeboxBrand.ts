@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "@sinclair/typebox";
-import type { IntegerOptions, NumberOptions, TUnsafe } from "@sinclair/typebox";
+import * as Type from "typebox/type";
+import type { TNumberOptions, TUnsafe } from "typebox";
 
 /**
  * Create a TypeBox string schema for a branded string type.
@@ -25,7 +25,7 @@ export function brandedStringType<T extends string>(): TUnsafe<T> {
  * {@link brandedStringType} but for numbers.
  */
 export function brandedNumberType<T extends number>(
-	options?: NumberOptions | undefined,
+	options?: TNumberOptions | undefined,
 ): TUnsafe<T> {
 	// See comments on `brandedStringType`.
 	return Type.Number(options) as unknown as TUnsafe<T>;
@@ -36,7 +36,7 @@ export function brandedNumberType<T extends number>(
  * Like {@link brandedNumberType}, this validates the numeric constraints, not the brand's origin.
  */
 export function brandedIntegerType<T extends number>(
-	options?: IntegerOptions | undefined,
+	options?: TNumberOptions | undefined,
 ): TUnsafe<T> {
 	return Type.Unsafe<T>(Type.Integer(options));
 }

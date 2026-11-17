@@ -26,14 +26,20 @@ import type { IThrottler } from "../throttler.js";
 
 import type { ISummarizerClientElection } from "./summarizerClientElection.js";
 import type {
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	IEnqueueSummarizeOptions,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	IOnDemandSummarizeOptions,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	ISummarizer,
 } from "./summarizerTypes.js";
 import { stopReasonCanRunLastSummary } from "./summarizerUtils.js";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import type { SummaryCollection } from "./summaryCollection.js";
 import type {
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	EnqueueSummarizeResult,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	ISummarizeResults,
 } from "./summaryDelayLoadedModule/index.js";
 
@@ -101,6 +107,7 @@ export class SummaryManager
 	private readonly initialDelayMs: number;
 	private latestClientId: string | undefined;
 	private state = SummaryManagerState.Off;
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	private summarizer?: ISummarizer;
 	private pendingStopReason?: SummarizerStopReason;
 	private _disposed = false;
@@ -126,6 +133,7 @@ export class SummaryManager
 		private readonly clientElection: ISummarizerClientElection,
 		private readonly connectedState: IConnectedState,
 		private readonly summaryCollection: Pick<
+			// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 			SummaryCollection,
 			"opsSinceLastAck" | "addOpListener" | "removeOpListener"
 		>,
@@ -134,6 +142,7 @@ export class SummaryManager
 		 * Creates summarizer by asking interactive container to spawn summarizing container and
 		 * get back its Summarizer instance.
 		 */
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		private readonly createSummarizerFn: () => Promise<ISummarizer>,
 		private readonly startThrottler: IThrottler,
 		{
@@ -491,6 +500,7 @@ export class SummaryManager
 		return startWithInitialDelay;
 	}
 
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
 		if (this.summarizer === undefined) {
 			throw new Error("No running summarizer client");
@@ -499,6 +509,7 @@ export class SummaryManager
 		return this.summarizer.summarizeOnDemand(options);
 	}
 
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
 		if (this.summarizer === undefined) {
 			throw new Error("No running summarizer client");
@@ -521,6 +532,7 @@ export class SummaryManager
 
 	private readonly forwardedEventsCleanup: (() => void)[] = [];
 
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	private setupForwardedEvents(summarizer: ISummarizer): void {
 		for (const event of [
 			"summarize",

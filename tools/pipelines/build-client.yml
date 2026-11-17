@@ -51,6 +51,11 @@ parameters:
   type: string
   default: repo
 
+- name: installAllPlatforms
+  displayName: Save dependencies for all supported platforms
+  type: boolean
+  default: false
+
 trigger:
   branches:
     include:
@@ -110,6 +115,7 @@ trigger:
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
+    - tools/pipelines/templates/include-install.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/include-vars-telemetry-generator.yml
@@ -175,6 +181,7 @@ pr:
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
+    - tools/pipelines/templates/include-install.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-vars-telemetry-generator.yml
     - tools/pipelines/templates/upload-telemetry/*
@@ -196,6 +203,7 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     packageTypesOverride: ${{ parameters.packageTypesOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+    installAllPlatforms: ${{ parameters.installAllPlatforms }}
     interdependencyRange: ${{ parameters.interdependencyRange }}
     # Disabled: coverage performance regressed in Node 22 and further in Node 24, causing test timeouts
     # that need mitigation before coverage can be reenabled.

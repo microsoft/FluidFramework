@@ -38,7 +38,7 @@
             "storedKey": "foo"
           }
         },
-        "allowUnknownOptionalFields": false
+        "allowUnknownOptionalFields": true
       }
     }
   }

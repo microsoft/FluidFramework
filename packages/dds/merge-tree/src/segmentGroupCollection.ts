@@ -45,17 +45,15 @@ export class SegmentGroupCollection {
 	}
 
 	public copyTo(segmentGroups: SegmentGroupCollection): void {
-		walkList(this.segmentGroups, (sg) => segmentGroups.enqueueOnCopy(sg.data, this.segment));
-	}
-
-	private enqueueOnCopy(segmentGroup: SegmentGroup, sourceSegment: ISegmentLeaf): void {
-		this.enqueue(segmentGroup);
-		if (segmentGroup.previousProps) {
-			// duplicate the previousProps for this segment
-			const index = segmentGroup.segments.indexOf(sourceSegment);
-			if (index !== -1) {
-				segmentGroup.previousProps.push(segmentGroup.previousProps[index]);
+		walkList(this.segmentGroups, ({ data: segmentGroup }) => {
+			segmentGroups.enqueue(segmentGroup);
+			if (segmentGroup.previousProps) {
+				// duplicate the previousProps for this segment
+				const index = segmentGroup.segments.indexOf(this.segment);
+				if (index !== -1) {
+					segmentGroup.previousProps.push(segmentGroup.previousProps[index]);
+				}
 			}
-		}
+		});
 	}
 }

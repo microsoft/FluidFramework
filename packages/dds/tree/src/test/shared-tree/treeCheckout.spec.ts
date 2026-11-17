@@ -421,13 +421,11 @@ describe("sharedTreeView", () => {
 				"subtree",
 				"change",
 				"subtree",
-				"change",
 				"after",
 				"editStart",
 				"subtree",
 				"change",
 				"subtree",
-				"change",
 				"after",
 				"unsubscribe",
 				"editStart",
@@ -467,13 +465,11 @@ describe("sharedTreeView", () => {
 				"subtree-rootFieldKey-0",
 				"change-rootFieldKey-0",
 				"subtree-rootFieldKey-0",
-				"change-rootFieldKey-0",
 				"after",
 				"editStart",
 				"subtree-rootFieldKey-0",
 				"change-rootFieldKey-0",
 				"subtree-rootFieldKey-0",
-				"change-rootFieldKey-0",
 				"after",
 				"unsubscribe",
 				"editStart",
@@ -1807,7 +1803,7 @@ describe("sharedTreeView", () => {
 			const newSchema = sf.optional([sf.string, Added]);
 			const provider = new TestTreeProviderLite(
 				2,
-				new SharedTreeTestFactory(() => {}, undefined, { forest: ForestTypeOptimized }),
+				SharedTreeTestFactory.build(() => {}, undefined, { forest: ForestTypeOptimized }),
 			);
 			const [a, b] = provider.trees;
 			const aView = a.kernel.viewWith(new TreeViewConfiguration({ schema: oldSchema }));
@@ -1821,9 +1817,9 @@ describe("sharedTreeView", () => {
 			provider.synchronizeMessages();
 
 			// Only B's root rebases over A's edit. The independent fork retains its upgraded schema.
-			assert.equal(bView.compatibility.isEquivalent, false);
+			assert.equal(bView.compatibility.canView, false);
 			expectSchemaEqual(bView.checkout.storedSchema, toUpgradeSchema(oldSchema));
-			assert.equal(fork.compatibility.isEquivalent, true);
+			assert.equal(fork.compatibility.canView, true);
 			expectSchemaEqual(fork.checkout.storedSchema, toUpgradeSchema(newSchema));
 			assert.equal(fork.checkout.transaction.size, 0);
 			fork.root = new Added({ value: "fork data" });

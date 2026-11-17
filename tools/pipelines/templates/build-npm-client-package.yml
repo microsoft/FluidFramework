@@ -13,7 +13,6 @@
 #   downstream test pipelines.
 # - Runs tests in dedicated jobs (coverage + per-task fan-out) rather than only
 #   inline in the main build job.
-# - Builds and publishes the devtools browser extension artifact.
 # - Includes client-specific telemetry and artifact shaping used by internal
 #   CI and follow-on workflows.
 #
@@ -84,6 +83,10 @@ parameters:
 - name: buildToolsVersionToInstall
   type: string
   default: repo
+
+- name: installAllPlatforms
+  type: boolean
+  default: false
 
 # Parameter for modifying the 'types' field in the package.json.
 # If the value 'none' is provided, the 'types' field in package.json will remain unchanged.
@@ -196,6 +199,7 @@ extends:
     # Skip tagging if Github PR coming from a fork;  This skips Microsoft security checks that won't work on forks.
     settings:
       skipBuildTagsForGitHubPullRequests: true
+      networkIsolationPolicy: DefaultDeny,CFSClean,CFSClean2,CFSClean3
     customBuildTags:
       - ES365AIMigrationTooling
     stages:
@@ -345,6 +349,7 @@ extends:
               - template: /tools/pipelines/templates/include-install.yml@self
                 parameters:
                   buildDirectory: '${{ parameters.buildDirectory }}'
+                  installAllPlatforms: ${{ parameters.installAllPlatforms }}
                   # The compat-workspaces lockfile is committed to the FluidFramework repo and changes
                   # whenever legacy package versions are added or removed. Including it in the pnpm store
                   # cache key ensures a cache miss whenever the set of compat packages changes.
@@ -514,30 +519,6 @@ extends:
                       echo "##vso[task.logissue type=error]Build should not create extraneous files"
                       exit -1;
                     fi
-
-              # Devtools
-              - task: Bash@3
-                displayName: Inject devtools telemetry logger token
-                inputs:
-                  targetType: 'inline'
-                  script: |
-                    set -eu -o pipefail
-                    echo Generating .env
-                    echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/tools/devtools/devtools-browser-extension/.env
-
-              - task: Npm@1
-                displayName: Build devtools
-                inputs:
-                  command: 'custom'
-                  workingDir: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/tools/devtools/devtools-browser-extension/
-                  customCommand: 'run webpack'
-
-              - task: 1ES.PublishPipelineArtifact@1
-                displayName: Publish Artifact - Devtools Browser Extension
-                inputs:
-                  targetPath: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/tools/devtools/devtools-browser-extension/dist/bundle/'
-                  artifactName: 'devtools-extension-bundle_attempt-$(System.JobAttempt)'
-                  publishLocation: 'pipeline'
 
             templateContext:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)

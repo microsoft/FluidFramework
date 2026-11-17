@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "node:assert";
+import * as sinon from "sinon";
 import {
+	IFileSystemManagerParams,
 	IRepoManagerParams,
 	IsomorphicGitManagerFactory,
 	MemFsManagerFactory,
@@ -65,7 +67,7 @@ describe("isomorphic-git manager", () => {
 		undefined /* apiSamplingPeriod */,
 		gitMaxBlobSizeBytes,
 	);
-	const repoManagerParams: Required<IRepoManagerParams> = {
+	const repoManagerParams: IRepoManagerParams = {
 		repoOwner: "fluid",
 		repoName: "test",
 		storageRoutingId: {
@@ -81,6 +83,178 @@ describe("isomorphic-git manager", () => {
 
 	afterEach(() => {
 		fsFactory.volume.reset();
+	});
+
+	describe("ephemeral filesystem isolation", () => {
+		const sandbox = sinon.createSandbox();
+		const physicalContainerName = "pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
+		afterEach(() => sandbox.restore());
+
+		function createFactory(repoPerDocEnabled: boolean, includeEphemeral = true) {
+			const durable = new MemFsManagerFactory(fsMaxFileSizeBytes);
+			const ephemeral = new MemFsManagerFactory(fsMaxFileSizeBytes);
+			const durableCreate = sandbox.spy(durable, "create");
+			const ephemeralCreate = sandbox.spy(ephemeral, "create");
+			const factory = new IsomorphicGitManagerFactory(
+				{ useRepoOwner: false },
+				{
+					defaultFileSystemManagerFactory: durable,
+					ephemeralFileSystemManagerFactory: includeEphemeral ? ephemeral : undefined,
+				},
+				new NullExternalStorageManager(),
+				repoPerDocEnabled,
+				false,
+				true,
+				undefined,
+				gitMaxBlobSizeBytes,
+			);
+			return { factory, durableCreate, ephemeralCreate };
+		}
+
+		for (const repoPerDocEnabled of [false, true]) {
+			it(`creates and opens isolated EC and DC repositories with per-doc=${repoPerDocEnabled}`, async () => {
+				const { factory, durableCreate, ephemeralCreate } =
+					createFactory(repoPerDocEnabled);
+				const durable = await factory.create(repoManagerParams);
+				const ephemeralParams = {
+					...repoManagerParams,
+					isEphemeralContainer: true,
+					fileSystemManagerParams: { storageName: "storage-account" },
+				};
+				const ephemeral = await factory.create(ephemeralParams);
+				const blob = await ephemeral.createBlob({
+					content: "ephemeral",
+					encoding: "utf-8",
+				});
+				await assert.rejects(durable.getBlob(blob.sha));
+				const reopened = await factory.open(ephemeralParams);
+				assert.strictEqual(
+					(await reopened.getBlob(blob.sha)).content,
+					Buffer.from("ephemeral").toString("base64"),
+				);
+				assert.strictEqual(ephemeral.path, repoPerDocEnabled ? "fluid/test" : "test");
+				sinon.assert.calledOnce(durableCreate);
+				sinon.assert.calledTwice(ephemeralCreate);
+				await factory.open(repoManagerParams);
+				sinon.assert.calledTwice(durableCreate);
+			});
+
+			for (const operation of ["create", "open"] as const) {
+				it(`rejects ${operation} without an EC filesystem before DC access with per-doc=${repoPerDocEnabled}`, async () => {
+					const { factory, durableCreate } = createFactory(repoPerDocEnabled, false);
+					await factory.create(repoManagerParams);
+					durableCreate.resetHistory();
+
+					await assert.rejects(
+						factory[operation]({ ...repoManagerParams, isEphemeralContainer: true }),
+						{ name: "NetworkError", code: 503, canRetry: false },
+					);
+
+					sinon.assert.notCalled(durableCreate);
+				});
+
+				const routingCases: IFileSystemManagerParams[] = [
+					{ physicalContainerName },
+					{ storageLayoutVersion: "v2" },
+					{ storageLifecycleVersion: "generation-1" },
+					{
+						physicalContainerName,
+						storageLayoutVersion: "v2",
+						storageLifecycleVersion: "generation-1",
+					},
+				];
+				for (const routing of routingCases) {
+					it(`rejects mixed EC/DC ${operation} routing ${Object.keys(routing).join(
+						",",
+					)} with per-doc=${repoPerDocEnabled}`, async () => {
+						const { factory, durableCreate, ephemeralCreate } =
+							createFactory(repoPerDocEnabled);
+
+						await assert.rejects(
+							factory[operation]({
+								...repoManagerParams,
+								isEphemeralContainer: true,
+								fileSystemManagerParams: routing,
+							}),
+							{
+								name: "NetworkError",
+								code: 400,
+								canRetry: false,
+								message: "Ephemeral requests cannot use durable storage routing.",
+							},
+						);
+
+						sinon.assert.notCalled(durableCreate);
+						sinon.assert.notCalled(ephemeralCreate);
+					});
+				}
+			}
+		}
+	});
+
+	it("uses the authorized physical container as the repository root", async () => {
+		const physicalContainerName = "pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+		const repoManager = await repoManagerFactory.create({
+			...repoManagerParams,
+			repoName: "physical-root-test",
+			storageRoutingId: {
+				tenantId: "fluid",
+				documentId: "physical-root-test",
+			},
+			fileSystemManagerParams: {
+				...repoManagerParams.fileSystemManagerParams,
+				physicalContainerName,
+				storageLayoutVersion: "v2",
+				storageLifecycleVersion: "generation-1",
+			},
+		});
+
+		assert.strictEqual(repoManager.path, `${physicalContainerName}/physical-root-test`);
+	});
+
+	it("rejects physical-container routing when repo-per-document mode is disabled", async () => {
+		const repoPerTenantFactory = new IsomorphicGitManagerFactory(
+			{ useRepoOwner: false },
+			{ defaultFileSystemManagerFactory: fsFactory },
+			new NullExternalStorageManager(),
+			false /* repoPerDocEnabled */,
+			false /* enableRepositoryManagerMetrics */,
+			true /* enableSlimGitInit */,
+			undefined /* apiSamplingPeriod */,
+			gitMaxBlobSizeBytes,
+		);
+
+		await assert.rejects(
+			repoPerTenantFactory.create({
+				...repoManagerParams,
+				fileSystemManagerParams: {
+					...repoManagerParams.fileSystemManagerParams,
+					physicalContainerName:
+						"pd2-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+					storageLayoutVersion: "v2",
+					storageLifecycleVersion: "generation-1",
+				},
+			}),
+			(error: unknown) =>
+				error instanceof Error &&
+				error.message === "Physical-container routing requires repo-per-document mode.",
+		);
+	});
+
+	it("rejects an invalid physical container supplied directly to the factory", async () => {
+		await assert.rejects(
+			repoManagerFactory.create({
+				...repoManagerParams,
+				fileSystemManagerParams: {
+					...repoManagerParams.fileSystemManagerParams,
+					physicalContainerName: "../victim",
+					storageLayoutVersion: "v2",
+					storageLifecycleVersion: "generation-1",
+				},
+			}),
+			/Invalid physical container name/,
+		);
 	});
 
 	describe("ref SHA validation", () => {

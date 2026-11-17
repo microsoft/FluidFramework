@@ -54,6 +54,7 @@ export {
 	scoped,
 	type ScopedSchemaName,
 	type ObjectSchemaOptionsAlpha,
+	type ObjectSchemaOptionsBeta,
 	type ObjectSchemaOptions,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
@@ -62,10 +63,9 @@ export {
 export type { SchemaStaticsBeta } from "./schemaFactoryBeta.js";
 export type { SchemaStaticsAlpha, NodeProvider } from "./schemaFactoryAlpha.js";
 export {
+	type SchemaFactoryOptions,
 	type SchemaFactoryBetaOptions,
-	composeSchemaFactoryBetaOptions,
 	type SchemaFactoryAlphaOptions,
-	composeSchemaFactoryAlphaOptions,
 } from "./schemaFactoryOptions.js";
 export {
 	eraseSchemaDetails,
@@ -126,6 +126,7 @@ export { getSimpleSchema } from "./getSimpleSchema.js";
 export {
 	checkSchemaCompatibility,
 	getSchemaIncompatibilityDetails,
+	isSchemaUpgradeAllowed,
 } from "./schemaCompatibilityTester.js";
 export { type StagedUpgradeStatus } from "./schemaCompatibilityTester.js";
 export type {

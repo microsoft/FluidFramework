@@ -74,8 +74,8 @@ function writeTreeSectionCore(treesNode: NodeCore, snapshotTree: ISnapshotTree):
 		// We could be smarter here and not use dictionary where we are sure reuse is unlikely, but
 		// it does not feel like it's worth it.
 		addDictionaryStringProperty(treeNode, "name", path);
-		if (snapshotTree.unreferenced) {
-			addBoolProperty(treeNode, "unreferenced", snapshotTree.unreferenced);
+		if (value.unreferenced) {
+			addBoolProperty(treeNode, "unreferenced", value.unreferenced);
 		}
 		// Only write children prop if either blobs or trees are present.
 		if (Object.keys(value.blobs).length > 0 || Object.keys(value.trees).length > 0) {

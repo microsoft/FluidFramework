@@ -24,6 +24,7 @@ export {
 	unbrand,
 } from "./brand.js";
 export { brandedIntegerType, brandedNumberType, brandedStringType } from "./typeboxBrand.js";
+export { stringKeyRecord, typeboxInterface } from "./typebox.js";
 export {
 	brandOpaque,
 	extractFromOpaque,
@@ -115,6 +116,7 @@ export {
 	iterableHasSome,
 } from "./utils.js";
 export { ReferenceCountedBase, type ReferenceCounted } from "./referenceCounting.js";
+export { StringPiece, StringSequence, stringBufferSize } from "./stringStorage.js";
 
 export type {
 	_RecursiveTrick,
@@ -140,8 +142,11 @@ export {
 
 export {
 	RangeMap,
+	type RangeMapEntry,
 	type RangeQueryResult,
+	type RangeQueryResultFragment,
 	newIntegerRangeMap,
+	areAdjacentIntegerRanges,
 } from "./rangeMap.js";
 
 export {
@@ -189,4 +194,4 @@ export {
 	type IdDecoderOptionsWithOriginator,
 } from "./compressedIds.js";
 
-export { merge, assertStructuralEquality, hasConflict } from "./objMerge.js";
+export { merge, hasConflict, type ObjectTransform } from "./objMerge.js";

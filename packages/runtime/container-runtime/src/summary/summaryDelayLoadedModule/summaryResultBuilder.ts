@@ -6,27 +6,38 @@
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 
 import type {
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	IRetriableFailureError,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	SubmitSummaryFailureData,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	SubmitSummaryResult,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	SummarizeResultPart,
 } from "../summarizerTypes.js";
 
 import type {
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	IAckSummaryResult,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	IBroadcastSummaryResult,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	INackSummaryResult,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	ISummarizeResults,
 } from "./summaryResultTypes.js";
 
 export class SummarizeResultBuilder {
 	public readonly summarySubmitted = new Deferred<
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		SummarizeResultPart<SubmitSummaryResult, SubmitSummaryFailureData>
 	>();
 	public readonly summaryOpBroadcasted = new Deferred<
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		SummarizeResultPart<IBroadcastSummaryResult>
 	>();
 	public readonly receivedSummaryAckOrNack = new Deferred<
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		SummarizeResultPart<IAckSummaryResult, INackSummaryResult>
 	>();
 
@@ -38,8 +49,11 @@ export class SummarizeResultBuilder {
 	 */
 	public fail(
 		message: string,
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		error: IRetriableFailureError,
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		submitFailureResult?: SubmitSummaryFailureData,
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		nackSummaryResult?: INackSummaryResult,
 	): void {
 		assert(
@@ -47,6 +61,7 @@ export class SummarizeResultBuilder {
 			0x25e /* "no reason to call fail if all promises have been completed" */,
 		);
 
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const result: SummarizeResultPart<undefined> = {
 			success: false,
 			message,
@@ -60,6 +75,7 @@ export class SummarizeResultBuilder {
 		this.summaryOpBroadcasted.resolve(result);
 		this.receivedSummaryAckOrNack.resolve({ ...result, data: nackSummaryResult });
 	}
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	public build(): ISummarizeResults {
 		return {
 			summarySubmitted: this.summarySubmitted.promise,

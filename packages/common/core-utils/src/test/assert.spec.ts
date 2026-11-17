@@ -14,7 +14,7 @@ import {
 	nonProductionConditionalsIncluded,
 	onAssertionFailure,
 	prefixPredicate,
-} from "../assert.js";
+} from "../index.js";
 
 describe("assert", () => {
 	it("Validate Shortcode Format", () => {

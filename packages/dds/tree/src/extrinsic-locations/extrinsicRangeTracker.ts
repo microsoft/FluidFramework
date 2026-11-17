@@ -122,7 +122,7 @@ export class ExtrinsicRangeTracker<
 			const ranges = this.ensureRanges();
 			assert(
 				context === TreeAlpha.context(ranges),
-				"Content and ranges must belong to the same tree context.",
+				0xd7f /* Content and ranges must belong to the same tree context. */,
 			);
 			const anchors = new Map<TRange, ActiveRangeAnchors>();
 			this.#anchors = anchors;
@@ -149,11 +149,17 @@ export class ExtrinsicRangeTracker<
 						}),
 						events.on("committing", () => {
 							const snapshot = snapshots.pop();
-							assert(snapshot !== undefined, "A nested transaction must have a snapshot.");
+							assert(
+								snapshot !== undefined,
+								0xd80 /* A nested transaction must have a snapshot. */,
+							);
 						}),
 						events.on("aborted", () => {
 							const snapshot = snapshots.pop();
-							assert(snapshot !== undefined, "A nested transaction must have a snapshot.");
+							assert(
+								snapshot !== undefined,
+								0xd81 /* A nested transaction must have a snapshot. */,
+							);
 							// Inverse deltas cannot recover offsets lost when a removal collapses an anchor.
 							// Restore them only after the content has been restored by rollback.
 							for (const [range, { start, end }] of snapshot) {
@@ -256,7 +262,7 @@ export class ExtrinsicRangeTracker<
 		const anchors = this.#anchors?.get(node);
 		assert(
 			this.#anchors === undefined || anchors !== undefined,
-			"Every range must have anchors while editing content.",
+			0xd82 /* Every range must have anchors while editing content. */,
 		);
 		return {
 			start: anchors?.start.index ?? node.start,
@@ -305,9 +311,12 @@ export class ExtrinsicRangeTracker<
 		this.#checkNotEditingContent();
 		const node = this.#findRange(key);
 		this.transactOnContent(() => {
-			assert(this.#anchors !== undefined, "Range edits must run in an editing scope.");
+			assert(
+				this.#anchors !== undefined,
+				0xd83 /* Range edits must run in an editing scope. */,
+			);
 			const anchors = this.#anchors.get(node);
-			assert(anchors !== undefined, "A range being removed must have anchors.");
+			assert(anchors !== undefined, 0xd84 /* A range being removed must have anchors. */);
 			anchors.start.dispose();
 			anchors.end.dispose();
 			this.#anchors.delete(node);
@@ -325,12 +334,12 @@ export class ExtrinsicRangeTracker<
 
 	#requireRanges(): RangeMap<TRange> {
 		const ranges = this.getRanges();
-		assert(ranges !== undefined, "Range edits require initialized storage.");
+		assert(ranges !== undefined, 0xd85 /* Range edits require initialized storage. */);
 		return ranges;
 	}
 
 	#setAnchors(range: TRange, start: number, end: number): void {
-		assert(this.#anchors !== undefined, "Range edits must run in an editing scope.");
+		assert(this.#anchors !== undefined, 0xd86 /* Range edits must run in an editing scope. */);
 		const startAnchor = createArrayInsertionAnchor(this.content, start);
 		let endAnchor: ArrayPlaceAnchor;
 		try {

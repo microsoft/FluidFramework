@@ -34,14 +34,8 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/explicit-module-boundary-types": "off",
 			"@typescript-eslint/no-unsafe-argument": "off",
 			"@typescript-eslint/no-unsafe-assignment": "off",
-			"jsdoc/require-description": "warn",
-			"unicorn/no-null": "off",
-		},
-	},
-	{
-		files: ["src/**/*.ts"],
-		ignores: ["src/test/**"],
-		rules: {
+			// TODO: Remove this override once Tree consumes eslint-config-fluid 15,
+			// which includes these TypeBox subpaths in its shared allowlist.
 			"import-x/no-internal-modules": [
 				"error",
 				{
@@ -49,6 +43,89 @@ const config: Linter.Config[] = [
 						"@fluidframework/*/internal{,/**}",
 						"@fluid-experimental/**",
 						"@fluid-internal/**",
+						"typebox/compile",
+						"typebox/error",
+						"typebox/format",
+						"typebox/guard",
+						"typebox/schema",
+						"typebox/system",
+						"typebox/type",
+						"typebox/value",
+						"*/index.js",
+					],
+				},
+			],
+			"jsdoc/require-description": "warn",
+			"no-restricted-syntax": [
+				"error",
+				{
+					selector: "ExportAllDeclaration",
+					message:
+						"Exporting * is not permitted. You should export only named items you intend to export.",
+				},
+				"ForInStatement",
+				// TODO: Once Tree consumes eslint-config-fluid 15, reuse its shared restrictions
+				// instead of duplicating them here, but retain the Tree-specific builder restriction below.
+				// These import restrictions mirror eslint-config-fluid 15:
+				// named type imports come from `typebox`, while runtime schema builders use
+				// `import * as Type from "typebox/type"`.
+				{
+					selector: 'ImportDeclaration[source.value="typebox"] > ImportNamespaceSpecifier',
+					message:
+						"Import TypeBox types by name with `import type` from `typebox`, and import the runtime namespace from `typebox/type`.",
+				},
+				{
+					selector: 'ImportDeclaration[source.value="typebox"] > ImportDefaultSpecifier',
+					message:
+						"Do not use the TypeBox aggregate. Import the runtime namespace from `typebox/type`.",
+				},
+				{
+					selector: 'ImportDeclaration[source.value="typebox/type"] > ImportDefaultSpecifier',
+					message: 'Import the TypeBox runtime with `import * as Type from "typebox/type"`.',
+				},
+				{
+					selector: 'ImportDeclaration[source.value="typebox/type"] > ImportSpecifier',
+					message:
+						'Import the TypeBox runtime with `import * as Type from "typebox/type"`; import types by name from `typebox`.',
+				},
+				{
+					selector:
+						'ImportDeclaration[source.value="typebox"]:not([importKind="type"]) > ImportSpecifier:not([importKind="type"])',
+					message:
+						'Runtime TypeBox imports must use `import * as Type from "typebox/type"`; only type imports may come from `typebox`.',
+				},
+				{
+					// The import policy above reserves `Type` for the TypeBox runtime namespace.
+					selector:
+						'CallExpression[callee.object.name="Type"][callee.property.name=/^(Interface|Record)$/]',
+					message:
+						"Use the specialized helpers in `src/util/typebox.ts`; these general TypeBox builders load the type-instantiation engine.",
+				},
+			],
+			"unicorn/no-null": "off",
+		},
+	},
+	{
+		files: ["src/**/*.ts"],
+		ignores: ["src/test/**"],
+		rules: {
+			// TODO: Once Tree consumes eslint-config-fluid 15, reuse its shared allowlist
+			// for TypeBox subpaths while retaining the Noble allowance below.
+			"import-x/no-internal-modules": [
+				"error",
+				{
+					allow: [
+						"@fluidframework/*/internal{,/**}",
+						"@fluid-experimental/**",
+						"@fluid-internal/**",
+						"typebox/compile",
+						"typebox/error",
+						"typebox/format",
+						"typebox/guard",
+						"typebox/schema",
+						"typebox/system",
+						"typebox/type",
+						"typebox/value",
 						"*/index.js",
 						// Noble exposes its public APIs through package subpaths.
 						"@noble/hashes/**",
@@ -77,6 +154,28 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/strict-boolean-expressions": "warn",
 			// Import namespace validation is also expensive and low-value for test-only imports.
 			"import-x/namespace": "warn",
+			// TODO: Once Tree consumes eslint-config-fluid 15, reuse its shared allowlist
+			// for TypeBox subpaths while retaining the broader Fluid test imports.
+			"import-x/no-internal-modules": [
+				"error",
+				{
+					allow: [
+						"@fluid*/**",
+						"@fluidframework/*/internal{,/**}",
+						"@fluid-experimental/**",
+						"@fluid-internal/**",
+						"typebox/compile",
+						"typebox/error",
+						"typebox/format",
+						"typebox/guard",
+						"typebox/schema",
+						"typebox/system",
+						"typebox/type",
+						"typebox/value",
+						"*/index.js",
+					],
+				},
+			],
 			// Regex optimization suggestions are not important for test code paths.
 			"unicorn/better-regex": "warn",
 			// #endregion

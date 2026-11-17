@@ -4,6 +4,15 @@
 
 ```ts
 
+// @beta @sealed @legacy
+export interface AcknowledgedSummary {
+    readonly referenceSequenceNumber: number;
+    readonly version: string;
+}
+
+// @beta @legacy
+export function captureFullContainerState(input: ICaptureFullContainerStateProps): Promise<string>;
+
 // @public
 export enum ConnectionState {
     CatchingUp = 1,
@@ -31,6 +40,15 @@ export interface IBaseProtocolHandler {
     setConnectionState(connected: boolean, clientId: string | undefined): any;
     // (undocumented)
     snapshot(): IQuorumSnapshot;
+}
+
+// @beta @legacy @input
+export interface ICaptureFullContainerStateProps {
+    readonly blobCaptureMode?: "inline" | "reference" | undefined;
+    readonly documentServiceFactory: IDocumentServiceFactory;
+    readonly logger?: ITelemetryBaseLogger | undefined;
+    readonly request: IRequest;
+    readonly urlResolver: IUrlResolver;
 }
 
 // @beta @deprecated @legacy (undocumented)
@@ -159,6 +177,9 @@ export interface IScribeProtocolState {
     // (undocumented)
     values: [string, ICommittedProposal][];
 }
+
+// @beta @legacy
+export function loadAndSummarize(loadSummarizerContainerProps: ILoadSummarizerContainerProps): Promise<AcknowledgedSummary>;
 
 // @beta @legacy
 export function loadContainerToSequenceNumber(props: ILoadContainerToSequenceNumberProps): Promise<IContainer>;

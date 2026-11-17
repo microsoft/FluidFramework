@@ -8,6 +8,7 @@
   - [Importing from this package](#importing-from-this-package)
   - [API Documentation](#api-documentation)
   - [Fluid Loader](#fluid-loader)
+  - [Creating and loading an acknowledged summary](#creating-and-loading-an-acknowledged-summary)
   - [Expectations from host implementers](#expectations-from-host-implementers)
   - [Expectations from container runtime and data store implementers](#expectations-from-container-runtime-and-data-store-implementers)
   - [Container Lifetime](#container-lifetime)
@@ -85,6 +86,49 @@ Storage includes snapshots as well as the live and persisted operation stream.
 
 The consensus system allows clients within the collaboration window to agree on container's properties. One
 example of this is the npm package that should be loaded to process operations applied to the container.
+
+## Creating and loading an acknowledged summary
+
+`loadSummarizerContainerAndMakeSummary` loads a summarizer container, requests a summary, and disposes the container after the attempt.
+Success requires summary submission and broadcast.
+The loader does not explicitly wait for the service ACK, although the runtime may wait for it as part of its retry behavior.
+The returned `summaryResults.summaryInfo.handle` identifies the broadcast summary proposal.
+It is not guaranteed to identify an acknowledged snapshot that can be loaded with `LoaderHeader.version`.
+Use the `version` returned by `loadAndSummarize` when an acknowledged snapshot version is required.
+
+To migrate code that uses direct summarizer APIs to generate a summary and then load its acknowledged version, use `loadAndSummarize`:
+
+```typescript
+import { LoaderHeader } from "@fluidframework/container-definitions/legacy";
+import {
+	loadExistingContainer,
+	loadAndSummarize,
+} from "@fluidframework/container-loader/legacy";
+
+// props supplies codeLoader, urlResolver, documentServiceFactory, and request.
+const { version, referenceSequenceNumber } =
+	await loadAndSummarize(props);
+const container = await loadExistingContainer({
+	...props,
+	request: {
+		...props.request,
+		headers: { ...props.request.headers, [LoaderHeader.version]: version },
+	},
+});
+// Use container, then dispose it when finished.
+```
+
+`loadAndSummarize` returns `{ version, referenceSequenceNumber }` after service acknowledgement and rejects on error.
+`version` comes from `summaryAckOp.contents.handle`, suitable for `LoaderHeader.version` on drivers that support loading snapshot versions.
+`referenceSequenceNumber` comes from the matching summary proposal and identifies the document state captured by the summary.
+The summarizer container stays alive until acknowledgement.
+A NACK, runtime timeout, disconnection, closure, or disposal causes the attempt to fail.
+The runtime handles summary retries and times out if the service ACK does not arrive.
+The loader imposes no additional timeout beyond the runtime's summary timeouts.
+The loader retries every failed attempt once with a fresh container, regardless of error retryability.
+This follows the one-retry approach introduced in [PR #25977](https://github.com/microsoft/FluidFramework/pull/25977).
+A fresh load can succeed if a transient condition has resolved, but recovery is not guaranteed.
+Both returned values describe the successful attempt.
 
 ## Expectations from host implementers
 

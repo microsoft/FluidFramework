@@ -52,7 +52,11 @@ export type {
 	ChannelConfigurationAttachedContext,
 	ConfigurationChangeResult,
 } from "./channelConfiguration.js";
-export { defineDataStore, sharedObjectRegistryFromIterable } from "./dataStoreKind.js";
+export {
+	dataStoreRegistryFromIterable,
+	defineDataStore,
+	sharedObjectRegistryFromIterable,
+} from "./dataStoreKind.js";
 export { makeStubDataStoreKind } from "./stubSharedObject.js";
 export type {
 	DataStoreOptions,

@@ -16,11 +16,17 @@ export type Audience = IAudience;
 // @public
 export function compareFluidHandles(a: IFluidHandle, b: IFluidHandle): boolean;
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export function convertToSummaryTreeWithStats(snapshot: ITree, fullTree?: boolean): ISummaryTreeWithStats;
 
 // @beta @legacy
 export const create404Response: (request: IRequest) => IResponse;
+
+// @alpha @legacy
+export function dataStoreKindFromFactory<T = unknown>(factory: IFluidDataStoreFactory): DataStoreKind<T>;
+
+// @alpha @legacy
+export function fluidContainerFromLegacy<T>(container: IContainer, data: T, registry: DataStoreRegistry, id: string): FluidContainerAttached<T>;
 
 // @beta @legacy
 export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
@@ -84,7 +90,7 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
     abstract preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime & T>;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     constructor(params?: {
         groupId?: string;

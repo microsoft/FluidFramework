@@ -38,11 +38,11 @@ model: inherit
 
 # Step 4: Sync Remote docs.md Files
 
-- Check if the 'nori-sync-docs' skill exists at `.claude/skills/nori-sync-docs/SKILL.md`.
-  - If it does not exist, skip this step.
+- Check whether the optional `nori-sync-docs` skill is available in the active Agency profile.
+  - If it is not available, skip this step.
 - Ask the user if they want to sync all docs.md files to the remote server.
   - If the user declines, skip this step.
-- Read and follow `.claude/skills/nori-sync-docs/SKILL.md` to sync all noridocs to the remote server.
+- Invoke `nori-sync-docs` by skill name to sync all noridocs to the remote server.
 
 </required>
 
@@ -60,7 +60,7 @@ model: inherit
 
 1. **Analyze Implementation Details**
 
-   - Read the context provided by Claude Code.
+   - Read the context provided by the GitHub Copilot session.
    - Read through the git diff and the github PR.
    - Read any existing docs.md files in any folders that have changes.
    - Read specific files to understand logic

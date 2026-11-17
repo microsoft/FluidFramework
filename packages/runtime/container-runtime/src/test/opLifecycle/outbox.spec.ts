@@ -21,7 +21,6 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 import type { ICompressionRuntimeOptions } from "../../compressionDefinitions.js";
 import { CompressionAlgorithms } from "../../compressionDefinitions.js";
-import { makeLegacySendBatchFn } from "../../containerRuntime.js";
 import {
 	ContainerMessageType,
 	type LocalContainerRuntimeMessage,
@@ -102,21 +101,6 @@ describe("Outbox", () => {
 				return state.opsSubmitted;
 			},
 		}) satisfies Partial<IContainerContext> as IContainerContext;
-
-	const getMockLegacyContext = (): Partial<IContainerContext> => ({
-		deltaManager: getMockDeltaManager() as IDeltaManager<
-			ISequencedDocumentMessage,
-			IDocumentMessage
-		>,
-		clientDetails: { capabilities: { interactive: true } },
-		updateDirtyContainerState: (_dirty: boolean) => {},
-		submitFn: (type: MessageType, contents: unknown, batch: boolean, appData?: unknown) => {
-			state.individualOpsSubmitted.push({ type, contents, batch, appData });
-			state.opsSubmitted++;
-			return state.opsSubmitted;
-		},
-		connected: true,
-	});
 
 	const getMockCompressor = (): Partial<OpCompressor> => ({
 		compressBatch: (batch: OutboundSingletonBatch): OutboundSingletonBatch => {
@@ -242,15 +226,12 @@ describe("Outbox", () => {
 		immediateMode?: boolean;
 		generateIdAllocationOp?: () => LocalBatchMessage | undefined;
 	}) => {
-		const { submitFn, submitBatchFn, deltaManager } = params.context;
-
-		const legacySendBatchFn = makeLegacySendBatchFn(submitFn, deltaManager);
+		const { submitBatchFn } = params.context;
 
 		return new Outbox({
 			shouldSend: () => state.canSendOps,
 			pendingStateManager: getMockPendingStateManager() as PendingStateManager,
 			submitBatchFn,
-			legacySendBatchFn,
 			compressor: getMockCompressor() as OpCompressor,
 			splitter: getMockSplitter(
 				params.enableChunking ?? false,
@@ -515,51 +496,6 @@ describe("Outbox", () => {
 				localOpMetadata: message.localOpMetadata,
 				opMetadata: message.metadata,
 				batchStartCsn: i === 2 ? -1 : 1, // Third batch got no CSN as it was not submitted
-			})),
-		);
-	});
-
-	it("Uses legacy path for legacy contexts", () => {
-		const outbox = getOutbox({ context: getMockLegacyContext() as IContainerContext });
-		const messages = [
-			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-			createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-			createMessage(ContainerMessageType.FluidDataStoreOp, "2"),
-			createMessage(ContainerMessageType.FluidDataStoreOp, "3"),
-		];
-
-		// Flush 1
-		outbox.submit(messages[0]);
-		outbox.submit(messages[1]);
-		outbox.submit(messages[2]);
-		outbox.flush();
-
-		// Flush 2
-		outbox.submit(messages[3]);
-		outbox.flush();
-
-		assert.equal(state.opsSubmitted, messages.length);
-		assert.equal(state.batchesSubmitted.length, 0);
-		assert.deepEqual(state.individualOpsSubmitted.length, messages.length);
-		assert.equal(state.deltaManagerFlushCalls, 2);
-
-		// Note the expected CSN here is fixed to the batch's starting CSN
-		const expectedMessageOrderWithCsn = [
-			// Flush 1 (Main)
-			[messages[0], 1],
-			[messages[1], 1],
-			[messages[2], 1],
-			// Flush 2 (Main)
-			[messages[3], 4],
-		] as const;
-		assert.deepEqual(
-			state.pendingOpContents,
-			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				runtimeOp: message.runtimeOp,
-				referenceSequenceNumber: message.referenceSequenceNumber,
-				localOpMetadata: message.localOpMetadata,
-				opMetadata: message.metadata,
-				batchStartCsn: csn,
 			})),
 		);
 	});

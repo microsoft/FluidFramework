@@ -14,11 +14,22 @@ The transform reads the package name from `package.json`. For a scoped package, 
 | `includeHeading`  | boolean | `true`           | Include the `API Documentation` heading.                | When enabled, the transform determines the depth from the marker position. See [Generated headings](../../README.md#generated-headings). |
 | `headingLevel`    | integer | Inferred         | Set the context heading level from 1 through 6.         | This value overrides the depth inferred from the marker position.                                                                            |
 
-## Example
+## Examples
+
+### Markdown
 
 The following marker generates API documentation without a heading:
 
 ```markdown
 <!-- markdown-magic:begin {"transform":"api-docs","includeHeading":false} -->
 <!-- markdown-magic:end -->
+```
+
+### MDX
+
+For an MDX document, use MDX comments:
+
+```mdx
+{/* markdown-magic:begin {"transform":"api-docs","includeHeading":false} */}
+{/* markdown-magic:end */}
 ```

@@ -18,6 +18,8 @@ import type {
 	ITenantService,
 	ISimplifiedCustomDataRetriever,
 	IPostEphemeralContainerChecker,
+	IDocumentAccessAuthorizer,
+	ITrustedCreateContextResolver,
 } from "../services";
 
 /* eslint-disable import-x/no-internal-modules */
@@ -62,6 +64,8 @@ export function create(
 	ephemeralDocumentTTLSec?: number,
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 	postEphemeralContainerChecker?: IPostEphemeralContainerChecker,
+	documentAccessAuthorizer?: IDocumentAccessAuthorizer,
+	trustedCreateContextResolver?: ITrustedCreateContextResolver,
 ): IRoutes {
 	const commonRouteParams: CommonRouteParams = [
 		config,
@@ -78,17 +82,54 @@ export function create(
 	];
 	return {
 		git: {
-			blobs: blobs.create(...commonRouteParams),
-			commits: commits.create(...commonRouteParams),
-			refs: refs.create(...commonRouteParams),
-			tags: tags.create(...commonRouteParams),
-			trees: trees.create(...commonRouteParams),
+			blobs: blobs.create(
+				...commonRouteParams,
+				documentAccessAuthorizer,
+				trustedCreateContextResolver,
+			),
+			commits: commits.create(
+				...commonRouteParams,
+				documentAccessAuthorizer,
+				trustedCreateContextResolver,
+			),
+			refs: refs.create(
+				...commonRouteParams,
+				documentAccessAuthorizer,
+				trustedCreateContextResolver,
+			),
+			tags: tags.create(
+				...commonRouteParams,
+				documentAccessAuthorizer,
+				trustedCreateContextResolver,
+			),
+			trees: trees.create(
+				...commonRouteParams,
+				documentAccessAuthorizer,
+				trustedCreateContextResolver,
+			),
 		},
 		repository: {
-			commits: repositoryCommits.create(...commonRouteParams),
-			contents: contents.create(...commonRouteParams),
-			headers: headers.create(...commonRouteParams),
+			commits: repositoryCommits.create(
+				...commonRouteParams,
+				documentAccessAuthorizer,
+				trustedCreateContextResolver,
+			),
+			contents: contents.create(
+				...commonRouteParams,
+				documentAccessAuthorizer,
+				trustedCreateContextResolver,
+			),
+			headers: headers.create(
+				...commonRouteParams,
+				documentAccessAuthorizer,
+				trustedCreateContextResolver,
+			),
 		},
-		summaries: summaries.create(...commonRouteParams, postEphemeralContainerChecker),
+		summaries: summaries.create(
+			...commonRouteParams,
+			postEphemeralContainerChecker,
+			documentAccessAuthorizer,
+			trustedCreateContextResolver,
+		),
 	};
 }

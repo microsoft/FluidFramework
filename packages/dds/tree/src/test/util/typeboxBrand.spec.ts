@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import type { Static } from "@sinclair/typebox";
+import type { Static } from "typebox";
 
 import { extractJsonValidator } from "../../codec/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";

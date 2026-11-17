@@ -8,6 +8,7 @@ import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import type { IPromiseTimerResult } from "@fluidframework/core-utils/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import type { ISummaryCancellationToken, IRetriableFailureError } from "./summarizerTypes.js";
 
 export type raceTimerResult<T> =
@@ -121,6 +122,7 @@ export const getFailMessage = (errorCode: SummarizeErrorCode): string =>
 /**
  * Errors type for errors hit during summary that may be retriable.
  */
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 export class RetriableSummaryError extends LoggingError implements IRetriableFailureError {
 	constructor(
 		message: string,

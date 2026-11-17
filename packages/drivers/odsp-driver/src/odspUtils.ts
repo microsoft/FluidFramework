@@ -307,15 +307,50 @@ export interface IFileInfoBase {
 	driveId: string;
 }
 
-export interface INewFileInfo extends IFileInfoBase {
+interface INewFileInfoBase extends IFileInfoBase {
 	type: "New";
 	filename: string;
-	filePath: string;
 	/**
 	 * application can request creation of a share link along with the creation of a new file
 	 * by passing in an optional param to specify the kind of sharing link
 	 */
 	createLinkType?: ISharingLinkKind;
+}
+
+/**
+ * Location of the folder in which to create a new file:
+ * either its path relative to the drive root, or its item ID.
+ */
+export type NewFileLocation =
+	| {
+			filePath: string;
+			parentFolderId?: undefined;
+	  }
+	| {
+			parentFolderId: string;
+			filePath?: undefined;
+	  };
+
+export type INewFileInfo = INewFileInfoBase & NewFileLocation;
+
+/**
+ * Reads the path of the folder in which to create a new file from the query parameters of a create-new request URL.
+ * @returns The path, or `undefined` if the parameters don't include one.
+ * An empty path refers to the root of the drive.
+ */
+export function tryGetNewFilePath(searchParams: URLSearchParams): string | undefined {
+	return searchParams.get("path") ?? undefined;
+}
+
+/**
+ * Reads the item ID of the folder in which to create a new file from the query parameters of a create-new request URL.
+ * @returns The item ID, or `undefined` if the parameters don't include one.
+ * An empty item ID is returned as is, so that callers can reject it.
+ */
+export function tryGetNewFileParentFolderId(
+	searchParams: URLSearchParams,
+): string | undefined {
+	return searchParams.get("parentFolderId") ?? undefined;
 }
 
 export interface IExistingFileInfo extends IFileInfoBase {

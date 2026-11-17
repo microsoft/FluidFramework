@@ -10,7 +10,7 @@ import { schemaCodecBuilder } from "../../feature-libraries/index.js";
 import type { JsonCompatible } from "../../util/index.js";
 import type { SchemaUpgrade } from "../core/index.js";
 import { normalizeFieldSchema, type ImplicitFieldSchema } from "../fieldSchema.js";
-import { toStoredSchema } from "../toStoredSchema.js";
+import { toStoredSchema } from "../treeSchema.js";
 
 import { TreeViewConfigurationAlpha } from "./configuration.js";
 import { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";
@@ -30,9 +30,7 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * This only includes the "persisted" subset of schema information, which means the portion which gets included in documents.
  * It thus uses "persisted" keys, see {@link FieldProps.key}.
  *
- * If two schemas have identical "persisted" schema, then they are considered {@link SchemaCompatibilityStatus.isEquivalent|equivalent}.
- *
- * See also {@link comparePersistedSchema}.
+ * Use {@link comparePersistedSchema} to check whether your view schema can view or upgrade a document with this persisted schema.
  *
  * @example
  * An application could use this API to generate a `schema.json` file when it first releases,

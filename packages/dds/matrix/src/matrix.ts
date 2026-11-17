@@ -34,6 +34,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ObjectStoragePartition,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils/internal";
 import {
@@ -692,6 +693,7 @@ export class SharedMatrix<T = any>
 	}
 
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const builder = new SummaryTreeBuilder();
 		builder.addWithStats(
 			SnapshotPath.rows,
