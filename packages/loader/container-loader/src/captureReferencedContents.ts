@@ -145,11 +145,9 @@ export async function parseGcSnapshotData(
 }
 
 /**
- * Walks a snapshot and inlines the contents of every blob reachable without
- * crossing an `unreferenced` subtree boundary. Subtrees flagged
- * `unreferenced: true` are skipped entirely — the summarizer sets that flag
- * from GC state, so honouring it filters out dead subtrees without a
- * separate GC-path traversal.
+ * Walks a snapshot and inlines all structural blob contents, including those
+ * in unreferenced subtrees. Saved or future ops can reference these data stores
+ * again, so their snapshot contents must be retained.
  *
  * The root-level `.blobs` subtree is special-cased: only its `.redirectTable`
  * blob is read, because attachment blob contents are captured separately via
@@ -172,8 +170,8 @@ export async function readReferencedSnapshotBlobs(
 
 /**
  * Synchronously walks the snapshot tree and gathers the set of blob ids that
- * should be inlined. Subtrees flagged `unreferenced: true` are skipped
- * entirely. The root-level `.blobs` subtree is special-cased: only its
+ * should be inlined, including those in unreferenced subtrees.
+ * The root-level `.blobs` subtree is special-cased: only its
  * `.redirectTable` id is collected, because attachment blob contents are
  * captured separately via {@link captureReferencedAttachmentBlobs}.
  */
@@ -182,9 +180,6 @@ function collectReferencedBlobIds(
 	isRoot: boolean,
 	ids: Set<string>,
 ): void {
-	if (tree.unreferenced === true) {
-		return;
-	}
 	for (const blobId of Object.values(tree.blobs)) {
 		ids.add(blobId);
 	}
@@ -215,10 +210,12 @@ function toTreeAndReader(
 }
 
 /**
- * Fetches attachment blob contents from a snapshot, filtered by GC
- * reachability. Blobs GC has explicitly marked unreferenced, tombstoned, or
- * deleted are skipped. Blobs absent from the GC graph are kept — GC state
- * lags behind recent attachments and dropping them would lose live data.
+ * Fetches attachment blob contents from a snapshot, excluding tombstoned or
+ * deleted local IDs. Eligible storage-ID aliases can retain the same payload.
+ * Unreferenced blobs are kept because saved or future ops can reference their
+ * owning data store again without a new BlobAttach op.
+ * Blobs absent from the GC graph are also kept unless their local IDs are
+ * tombstoned or deleted.
  * If `gcData` is `undefined`, every attachment blob is returned.
  *
  * The returned map is keyed by attachment blob storage id. Values are the
@@ -290,26 +287,12 @@ async function readRedirectTable(
 }
 
 /**
- * Collects the set of blob localIds that GC has explicitly marked as
- * unreferenced (via `unreferencedTimestampMs` on a gc node), tombstoned, or
- * deleted. Tombstones and deletedNodes are applied regardless of whether
- * `gcState` is present — they are authoritative on their own and must not
- * be silently dropped when gc state is absent but tombstone/deleted lists
- * exist.
+ * Collects tombstoned or deleted attachment local IDs, regardless of whether
+ * `gcState` is present. GC-unreferenced attachments remain eligible for capture.
  */
 function collectUnreferencedBlobLocalIds(gcData: IGcSnapshotData): Set<string> {
 	const blobPathPrefix = `/${blobManagerBasePath}/`;
 	const unreferenced = new Set<string>();
-	if (gcData.gcState !== undefined) {
-		for (const [nodePath, nodeData] of Object.entries(gcData.gcState.gcNodes)) {
-			if (
-				nodePath.startsWith(blobPathPrefix) &&
-				nodeData.unreferencedTimestampMs !== undefined
-			) {
-				unreferenced.add(nodePath.slice(blobPathPrefix.length));
-			}
-		}
-	}
 	for (const nodePath of [...(gcData.tombstones ?? []), ...(gcData.deletedNodes ?? [])]) {
 		if (nodePath.startsWith(blobPathPrefix)) {
 			unreferenced.add(nodePath.slice(blobPathPrefix.length));
@@ -371,8 +354,8 @@ export function extractBlobAttachReferences(
 }
 
 /**
- * Set of attachment-blob localIds that GC has marked unreferenced,
- * tombstoned, or deleted in the base snapshot. `undefined` if `gcData`
+ * Set of attachment-blob local IDs marked tombstoned or deleted in the
+ * base snapshot. GC-unreferenced attachments are not excluded. `undefined` if `gcData`
  * is `undefined` (GC disabled / pre-GC document).
  *
  * @internal
@@ -384,11 +367,11 @@ export function unreferencedAttachmentBlobLocalIds(
 }
 
 /**
- * Inline attachment blob contents for the given `(localId, storageId)`
- * references. Skips entries already present in `existing` (de-dupe with
- * the snapshot path) and entries whose `localId` is in
- * `unreferencedLocalIds`. Returns only the freshly-read entries; the
- * caller merges them into the existing map.
+ * Inline attachment blob contents for the given `(localId, storageId)` references.
+ * Skips entries already present in `existing` (de-dupe with the snapshot path) and entries whose `localId` is in `unreferencedLocalIds`.
+ * `unreferencedLocalIds` contains only tombstoned or deleted local IDs.
+ * Attachments marked unreferenced by garbage collection are intentionally inlined.
+ * Returns only the freshly-read entries; the caller merges them into the existing map.
  *
  * @internal
  */
@@ -422,13 +405,14 @@ export async function inlineAttachmentBlobsByReference(
 /**
  * Returns true if any referenced subtree of `baseSnapshot` declares a
  * `groupId` — the snapshot-tree wire field that carries the runtime's
- * loading-group identifier. Subtrees flagged `unreferenced` are skipped —
- * a dead subtree's `groupId` would not be loaded by the runtime either.
+ * loading-group identifier. On 3.11, loading-group validation deliberately
+ * continues to skip subtrees flagged `unreferenced`, preserving existing
+ * validation behavior even though capture retains their structural contents.
  *
  * `captureFullContainerState` does not yet support loading groups: prefetching
  * per-group snapshots adds a code path that has no end-to-end coverage and no
  * known production consumer. Callers use this to fail fast with a `UsageError`
- * rather than silently producing a pending state that omits group data.
+ * for groups detected by this check. Groups in skipped subtrees are not validated.
  */
 export function snapshotHasLoadingGroups(baseSnapshot: ISnapshotTree): boolean {
 	if (baseSnapshot.unreferenced === true) {
