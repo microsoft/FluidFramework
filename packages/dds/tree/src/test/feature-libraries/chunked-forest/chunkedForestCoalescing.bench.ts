@@ -30,6 +30,8 @@ import type {
 import { EmptyKey, rootFieldKey, TreeStoredSchemaRepository } from "../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	buildChunkedForest,
@@ -70,8 +72,6 @@ import { FormattedText, PlainText } from "../../../text/index.js";
 import { configuredSharedTree } from "../../../treeFactory.js";
 import { brand } from "../../../util/index.js";
 import { configureBenchmarkHooks, TestTreeProviderLite } from "../../utils.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
 
 /** Iteration counts for the memory benchmarks (mirrors the shared `iterationSettings` helper). */
 const iterationSettings = { keepIterations: 4, warmUpIterations: 2 };

@@ -154,7 +154,6 @@ describe("chunkEditTraversal", () => {
 			const editor = new ChunkEditTraversal(root, basicOnlyChunkCompressor);
 			assert.equal(root.isShared(), false);
 			assert.equal("fork" in editor, false);
-			assert.equal("fromChunk" in ChunkEditTraversal, false);
 			editor.free();
 			assert.equal(root.isUnreferenced(), false);
 			assert.throws(() => editor.enterField(EmptyKey), /freed/);

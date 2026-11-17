@@ -87,9 +87,6 @@ class SequenceEditCursor extends ChunkSequenceCursor implements ChunkEditCursor 
 	public override getFieldChunks(): TreeChunk[] {
 		return this.chunk.subChunks;
 	}
-	public override fork(): SequenceEditCursor {
-		return new SequenceEditCursor(this.chunk);
-	}
 	public setFieldChunks(chunks: TreeChunk[]): void {
 		assert(!this.chunk.isShared(), "Editing requires exclusive chunk ownership");
 		assert(chunks === this.chunk.subChunks, "Expected the sequence's own child array");

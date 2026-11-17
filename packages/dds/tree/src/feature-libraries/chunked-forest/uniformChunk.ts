@@ -8,7 +8,6 @@ import type { SessionSpaceCompressedId, IIdCompressor } from "@fluidframework/id
 
 import {
 	CursorLocationType,
-	type ChunkedCursor,
 	type FieldKey,
 	type FieldUpPath,
 	type PathRootPrefix,
@@ -17,6 +16,7 @@ import {
 	type TreeValue,
 	type UpPath,
 	type Value,
+	type ChunkedCursor,
 	type TreeChunk,
 	cursorChunk,
 	dummyRoot,
