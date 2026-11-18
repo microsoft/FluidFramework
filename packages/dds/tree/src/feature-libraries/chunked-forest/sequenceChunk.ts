@@ -26,6 +26,10 @@ export class SequenceChunk
 {
 	public readonly topLevelLength: number;
 
+	public supportsRootEdits(): boolean {
+		return true;
+	}
+
 	/**
 	 * Creates a {@link SequenceChunk} with reference count 1.
 	 * @remarks

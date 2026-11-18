@@ -73,6 +73,10 @@ export class UniformChunk extends ReferenceCountedBase implements EditableChunk 
 		return this.shape.topLevelLength;
 	}
 
+	public supportsRootEdits(): boolean {
+		return true;
+	}
+
 	public clone(): UniformChunk {
 		return new UniformChunk(this.shape, [...this.values], this.idCompressor);
 	}

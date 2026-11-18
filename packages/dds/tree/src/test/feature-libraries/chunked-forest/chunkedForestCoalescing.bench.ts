@@ -449,7 +449,12 @@ function formattedRangeFixture(): LeafEditFixture {
 	return {
 		forest: forestFromView(view),
 		edit: () => view.root.formatRange(0, formattedTextLength, { bold: true }),
-		verify: () => assert.equal(view.root.getUniformRun(0), formattedTextLength),
+		verify: () => {
+			assert.equal(view.root.getUniformRun(0), formattedTextLength);
+			for (const atom of formattedAtoms(view.root)) {
+				assert.equal(atom.format.bold, true);
+			}
+		},
 	};
 }
 

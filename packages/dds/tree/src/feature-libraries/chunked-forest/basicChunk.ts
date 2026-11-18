@@ -36,6 +36,10 @@ import { type ChunkEditCursor, type EditableChunk, getFieldLength } from "./chun
 export class BasicChunk extends ReferenceCountedBase implements EditableChunk, CompositeChunk {
 	public readonly topLevelLength: number = 1;
 
+	public supportsRootEdits(): boolean {
+		return false;
+	}
+
 	/**
 	 * Create a tree chunk with ref count 1.
 	 * Caller must have already accounted for references via `fields` to the children in the fields map (via `referenceAdded`).

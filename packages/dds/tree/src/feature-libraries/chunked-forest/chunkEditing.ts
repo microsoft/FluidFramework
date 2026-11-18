@@ -16,6 +16,13 @@ import type { ChunkLocalCursor } from "./chunkCursor.js";
  */
 export interface EditableChunk extends TreeChunk {
 	/**
+	 * Whether edits to the root sequence can succeed without replacing this chunk.
+	 * @remarks
+	 * False lets the shared editing layer skip speculative cloning before replacing the chunk.
+	 * Subclasses that add root editing support must override this capability.
+	 */
+	supportsRootEdits(): boolean;
+	/**
 	 * Creates an independently mutable copy with one owned reference.
 	 */
 	clone(): EditableChunk;
@@ -53,6 +60,7 @@ export interface ChunkEditCursor extends ChunkLocalCursor {
 	 * The caller has already updated the array and its counted references; this method must not change reference counts.
 	 * Requires an exclusively owned field and leaves the adapter at that field.
 	 * Edits to a chunk's root sequence must preserve {@link ChunkLocalCursor.rootLength}.
+	 * The array must be the same object returned by {@link ChunkEditCursor.getFieldChunks}, not a replacement array.
 	 * @param chunks - The exposed array after editing, including an array returned for a previously absent field.
 	 */
 	setFieldChunks?(chunks: TreeChunk[]): void;

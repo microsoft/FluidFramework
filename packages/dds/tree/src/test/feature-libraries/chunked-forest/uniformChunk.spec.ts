@@ -99,13 +99,13 @@ describe("uniformChunk", () => {
 					const chunk = new UniformChunk(pointShape.withTopLevelLength(1), [1, 2]);
 					const emptyChild = new SequenceChunk([]);
 					const incoming = new SequenceChunk([emptyChild]);
-					if (shared) {
-						incoming.referenceAdded();
-					}
 					const cursor = chunk.cursor();
 					if (nested) {
 						cursor.enterNode(0);
 						cursor.enterField(xField);
+					}
+					if (shared) {
+						incoming.referenceAdded();
 					}
 					assert.deepEqual(cursor.trySplice({ start: 0, end: 0 }, [incoming]), []);
 					assert.deepEqual(chunk.values, [1, 2]);
@@ -144,6 +144,19 @@ describe("uniformChunk", () => {
 			assert.equal(outgoing, incoming);
 			assert.deepEqual(outgoing.values, [5]);
 			assert.equal(outgoing.isShared(), false);
+		});
+		it("replaces a nested leaf with a nonzero field offset", () => {
+			const chunk = new UniformChunk(pointShape.withTopLevelLength(3), [1, 2, 3, 4, 5, 6]);
+			const incoming = new UniformChunk(numberShape.withTopLevelLength(1), [99]);
+			const cursor = chunk.cursor();
+			cursor.enterNode(2);
+			cursor.enterField(yField);
+			const removed = cursor.trySplice({ start: 0, end: 1 }, [incoming]);
+			assert(removed?.[0] instanceof UniformChunk);
+			assert.deepEqual(chunk.values, [1, 2, 3, 4, 5, 99]);
+			assert.deepEqual(removed[0].values, [6]);
+			removed[0].referenceRemoved();
+			chunk.referenceRemoved();
 		});
 		it("replaces a range of root leaves", () => {
 			// The range starts inside the chunk and leaves values on both sides, checking the root-field offset calculation.

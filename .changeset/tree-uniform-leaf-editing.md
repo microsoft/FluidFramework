@@ -15,7 +15,7 @@ The effect depends on the document schema, workload, and environment.
 
 #### Example measurements
 
-Local benchmarks set `bold` from `false` to `true` across a fresh 1,000-character formatted-text document using `formatRange(0, 1000, { bold: true })`.
+Local benchmarks set `bold` from `false` to `true` across a fresh 1,000-character formatted-text document using [`formatRange(0, 1000, { bold: true })`](https://fluidframework.com/docs/api/v3/tree/formattedtext-namespace/members-interface#formatrange-methodsignature).
 Each character has five formatting properties: bold, italic, underline, size, and font.
 The comparison isolates these editing changes from earlier read-traversal improvements.
 

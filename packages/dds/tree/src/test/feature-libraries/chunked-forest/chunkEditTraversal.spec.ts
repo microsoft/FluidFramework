@@ -143,6 +143,50 @@ describe("chunkEditTraversal", () => {
 			snapshot.referenceRemoved();
 		});
 
+		it("normalizes the requested node after a preceding chunk", () => {
+			const valueKey: FieldKey = brand("value");
+			const addedKey: FieldKey = brand("added");
+			const leaf = new TreeShape(brand(numberSchema.identifier), true, []);
+			const shape = new TreeShape(brand("object"), false, [[valueKey, leaf, 1]]);
+			const original = new UniformChunk(shape.withTopLevelLength(2), [1, 2]);
+			const root = new BasicChunk(
+				brand("root"),
+				new Map([[EmptyKey, [numericBasicChunk(0), original]]]),
+			);
+			const editor = new ChunkEditTraversal(root, basicOnlyChunkCompressor);
+			editor.enterField(EmptyKey);
+			// The selected node is at index 1 in the uniform chunk but index 2 in the root field.
+			editor.enterNode(2);
+			editor.enterField(addedKey);
+			assert.deepEqual(editor.splice({ start: 0, end: 0 }, [numericBasicChunk(99)]), []);
+			editor.free();
+
+			const reader = root.cursor();
+			reader.enterNode(0);
+			reader.enterField(EmptyKey);
+			reader.enterNode(2);
+			reader.enterField(addedKey);
+			assert.equal(reader.getFieldLength(), 1, "Expected the added field on logical node 2");
+			reader.enterNode(0);
+			assert.equal(reader.value, 99);
+			reader.exitNode();
+			reader.exitField();
+			reader.enterField(valueKey);
+			reader.enterNode(0);
+			assert.equal(reader.value, 2);
+			reader.exitNode();
+			reader.exitField();
+			reader.exitNode();
+			reader.enterNode(1);
+			reader.enterField(addedKey);
+			assert.equal(reader.getFieldLength(), 0);
+			reader.exitField();
+			reader.enterField(valueKey);
+			reader.enterNode(0);
+			assert.equal(reader.value, 1);
+			root.referenceRemoved();
+		});
+
 		it("requires an exclusive root and borrows its reference", () => {
 			const root = new BasicChunk(brand("root"), new Map());
 			root.referenceAdded();
@@ -236,6 +280,91 @@ describe("chunkEditTraversal", () => {
 	});
 
 	describe("trySpliceField", () => {
+		for (const shared of [false, true]) {
+			it(`consumes empty incoming chunks without registering empty fields (shared: ${shared})`, () => {
+				for (const existingField of [false, true]) {
+					const root = new BasicChunk(brand("root"), new Map());
+					if (existingField) {
+						root.fields.set(EmptyKey, [numericBasicChunk(1)]);
+					}
+					const emptyChild = new SequenceChunk([]);
+					const incoming = new SequenceChunk([emptyChild]);
+					const editor = new ChunkEditTraversal(root, basicOnlyChunkCompressor);
+					editor.enterField(EmptyKey);
+					if (shared) {
+						incoming.referenceAdded();
+					}
+					assert.deepEqual(editor.splice({ start: 0, end: 0 }, [incoming]), []);
+					assert.equal(editor.getFieldLength(), existingField ? 1 : 0);
+					editor.free();
+
+					const reader = root.cursor();
+					reader.enterNode(0);
+					assert.equal(reader.firstField(), existingField);
+					if (existingField) {
+						reader.enterNode(0);
+						assert.equal(reader.value, 1);
+					}
+					assert.equal(incoming.isShared(), false);
+					assert.equal(incoming.isUnreferenced(), !shared);
+					assert.equal(emptyChild.isUnreferenced(), !shared);
+					if (shared) {
+						incoming.referenceRemoved();
+					}
+					assert.equal(emptyChild.isUnreferenced(), true);
+					root.referenceRemoved();
+				}
+			});
+		}
+
+		it("filters empty incoming chunks from replacements without modifying the input array", () => {
+			const original = numericBasicChunk(1);
+			const root = new BasicChunk(brand("root"), new Map([[EmptyKey, [original]]]));
+			const editor = new ChunkEditTraversal(root, basicOnlyChunkCompressor);
+			editor.enterField(EmptyKey);
+			const before = new SequenceChunk([]);
+			const after = new SequenceChunk([]);
+			const replacement = numericBasicChunk(2);
+			const content = [before, replacement, after];
+			assert.deepEqual(editor.splice({ start: 0, end: 1 }, content), [original]);
+			assert.deepEqual(content, [before, replacement, after]);
+			assert.deepEqual(root.fields.get(EmptyKey), [replacement]);
+			assert.equal(before.isUnreferenced(), true);
+			assert.equal(after.isUnreferenced(), true);
+			assert.equal(replacement.isUnreferenced(), false);
+
+			const empty = new SequenceChunk([]);
+			assert.deepEqual(editor.splice({ start: 0, end: 1 }, [empty]), [replacement]);
+			assert.equal(empty.isUnreferenced(), true);
+			assert.equal(root.fields.has(EmptyKey), false);
+			editor.free();
+			original.referenceRemoved();
+			replacement.referenceRemoved();
+			root.referenceRemoved();
+		});
+
+		it("replaces a shared BasicChunk without cloning it or touching its child references", () => {
+			const child = numericBasicChunk(1);
+			const original = new BasicChunk(brand("object"), new Map([[EmptyKey, [child]]]));
+			original.referenceAdded();
+			original.clone = (): never => assert.fail("Unexpected clone");
+			child.referenceAdded = (): never => assert.fail("Unexpected child reference addition");
+			const root = new BasicChunk(brand("root"), new Map([[EmptyKey, [original]]]));
+			const editor = new ChunkEditTraversal(root, basicOnlyChunkCompressor);
+			editor.enterField(EmptyKey);
+			const replacement = numericBasicChunk(2);
+			assert.deepEqual(editor.splice({ start: 0, end: 1 }, [replacement]), [original]);
+			assert.deepEqual(root.fields.get(EmptyKey), [replacement]);
+			assert.equal(original.isShared(), true);
+			assert.equal(child.isShared(), false);
+			assert.equal(child.isUnreferenced(), false);
+			editor.free();
+			original.referenceRemoved();
+			original.referenceRemoved();
+			assert.equal(child.isUnreferenced(), true);
+			root.referenceRemoved();
+		});
+
 		it("finalizes generic field edits after a format-specific splice declines", () => {
 			const parent = new BasicChunk(brand("parent"), new Map());
 			const cursor: BasicChunkLocalCursor & ChunkEditCursor = parent.getEditCursor();
@@ -316,6 +445,10 @@ describe("chunkEditTraversal", () => {
 		class RootEditableLeaf extends BasicChunk {
 			public calls = 0;
 			public lastClone: RootEditableLeaf | undefined;
+
+			public override supportsRootEdits(): boolean {
+				return true;
+			}
 
 			public constructor(
 				private readonly accepts: boolean,

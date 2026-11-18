@@ -66,7 +66,16 @@ export function trySpliceField(
 		cursor.setFieldChunks !== undefined,
 		"Exposed child arrays require write-back support",
 	);
-	const removed = spliceChunkField(chunks, range, content, compressor);
+	const nonEmptyContent = content.some((chunk) => chunk.topLevelLength === 0)
+		? content.filter((chunk) => {
+				if (chunk.topLevelLength === 0) {
+					chunk.referenceRemoved();
+					return false;
+				}
+				return true;
+			})
+		: content;
+	const removed = spliceChunkField(chunks, range, nonEmptyContent, compressor);
 	cursor.setFieldChunks(chunks);
 	return removed;
 }
@@ -87,7 +96,11 @@ function spliceChunkField(
 	const count = range.end - range.start;
 	if (count > 0 && count === getFieldLength(content)) {
 		const { chunk, indexOfChunk, indexWithinChunk } = locateNodeInChunks(chunks, range.start);
-		if (isEditableChunk(chunk) && indexWithinChunk + count <= chunk.topLevelLength) {
+		if (
+			isEditableChunk(chunk) &&
+			chunk.supportsRootEdits() &&
+			indexWithinChunk + count <= chunk.topLevelLength
+		) {
 			// Keep a speculative clone out of the owning array until the edit succeeds, so a declined attempt
 			// leaves the parent's reference unchanged and can fall back without consuming incoming content.
 			const editable = chunk.isShared() ? chunk.clone() : chunk;
@@ -255,7 +268,7 @@ export class ChunkEditTraversal
 	 * @remarks
 	 * Editing traversal enters only storage that provides a child-array hook, a format-specific splice hook, or both.
 	 */
-	private editingCursor(): ChunkEditCursor {
+	private get editingCursor(): ChunkEditCursor {
 		const local = this.navigation.localAdapter;
 		assert("getFieldChunks" in local || "trySplice" in local, "Expected an editing cursor");
 		return local as ChunkEditCursor;
@@ -267,8 +280,7 @@ export class ChunkEditTraversal
 		index: number,
 		existingLocation?: ReturnType<typeof locateNodeInChunks>,
 	): ReturnType<typeof locateNodeInChunks> {
-		const owned =
-			this.editingCursor().getFieldChunks?.() ?? fail("Expected owned child chunks");
+		const owned = this.editingCursor.getFieldChunks?.() ?? fail("Expected owned child chunks");
 		assert(owned === chunks, "Expected the active owning array");
 		const location = existingLocation ?? locateNodeInChunks(owned, index);
 		const { chunk, indexOfChunk } = location;
@@ -303,11 +315,11 @@ export class ChunkEditTraversal
 	 * @returns Owned chunks containing the removed nodes.
 	 */
 	public splice(range: Range, content: readonly TreeChunk[]): TreeChunk[] {
-		let removed = trySpliceField(this.editingCursor(), range, content, this.compressor);
+		let removed = trySpliceField(this.editingCursor, range, content, this.compressor);
 		if (removed === undefined) {
 			// A declined attempt preserves the tree and incoming references, so normalization can retry the same edit.
 			this.normalizeCurrentField();
-			removed = trySpliceField(this.editingCursor(), range, content, this.compressor);
+			removed = trySpliceField(this.editingCursor, range, content, this.compressor);
 			assert(removed !== undefined, "Basic chunks must support owned-field edits");
 		}
 		return removed;
@@ -346,7 +358,7 @@ export class ChunkEditTraversal
 	 */
 	private enterBasicNode(index: number): void {
 		const chunks =
-			this.editingCursor().getFieldChunks?.() ?? fail("Expected separately stored children");
+			this.editingCursor.getFieldChunks?.() ?? fail("Expected separately stored children");
 		ensureExclusiveBasicChunk(chunks, index, this.compressor);
 		this.enterNode(index);
 	}
