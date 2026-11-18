@@ -48,128 +48,128 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Require oldest supported clients to use Fluid Framework 2.0 or later ([#28127](https://github.com/microsoft/FluidFramework/pull/28127)) [98956144ada](https://github.com/microsoft/FluidFramework/commit/98956144ada9cfc3a278e73adb2d5812b5ce2a67)
+#### Require oldest supported clients to use Fluid Framework 2.0 or later ([#28127](https://github.com/microsoft/FluidFramework/pull/28127)) [98956144ada](https://github.com/microsoft/FluidFramework/commit/98956144ada9cfc3a278e73adb2d5812b5ce2a67)
 
-  Client 3.0 narrows
-  [`OldestSupportedClientVersion`](https://fluidframework.com/docs/api/runtime-definitions/oldestsupportedclientversion-typealias)
-  to stable 2.x versions and 3.x minor checkpoints whose patch is zero. The deprecated
-  [`MinimumVersionForCollab`](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias)
-  alias inherits the same restriction and remains available until Client 4.0.
+Client 3.0 narrows
+[`OldestSupportedClientVersion`](https://fluidframework.com/docs/api/runtime-definitions/oldestsupportedclientversion-typealias)
+to stable 2.x versions and 3.x minor checkpoints whose patch is zero. The deprecated
+[`MinimumVersionForCollab`](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias)
+alias inherits the same restriction and remains available until Client 4.0.
 
-  Container runtimes now reject values below `"2.0.0"` and prerelease values. APIs that still
-  permit the setting to be omitted use `"2.0.0"`, with the same runtime defaults and validation
-  as explicitly passing `"2.0.0"`.
+Container runtimes now reject values below `"2.0.0"` and prerelease values. APIs that still
+permit the setting to be omitted use `"2.0.0"`, with the same runtime defaults and validation
+as explicitly passing `"2.0.0"`.
 
-  Before upgrading an application to Client 3.0, upgrade every active deployment that must
-  collaborate to Fluid Framework 2.0.0 or later. Explicit compatibility settings must use the
-  canonical property or Azure, ODSP, or Tinylicious service-client argument with a stable 2.x
-  version or a 3.x minor checkpoint such as `"3.1.0"`:
+Before upgrading an application to Client 3.0, upgrade every active deployment that must
+collaborate to Fluid Framework 2.0.0 or later. Explicit compatibility settings must use the
+canonical property or Azure, ODSP, or Tinylicious service-client argument with a stable 2.x
+version or a 3.x minor checkpoint such as `"3.1.0"`:
 
-  ```typescript
-  const { container } = await azureClient.getContainer(
-    id,
-    schema,
-    "2.0.0", // oldestSupportedClient
-  );
-  ```
+```typescript
+const { container } = await azureClient.getContainer(
+  id,
+  schema,
+  "2.0.0", // oldestSupportedClient
+);
+```
 
-  See [microsoft/FluidFramework#27460](https://github.com/microsoft/FluidFramework/issues/27460)
-  for migration context.
+See [microsoft/FluidFramework#27460](https://github.com/microsoft/FluidFramework/issues/27460)
+for migration context.
 
-- Removal of direct CommonJS support ([#28124](https://github.com/microsoft/FluidFramework/pull/28124)) [0f84e3b8878](https://github.com/microsoft/FluidFramework/commit/0f84e3b8878a5e75b2253976d98fd963bbd9db88)
+#### Removal of direct CommonJS support ([#28124](https://github.com/microsoft/FluidFramework/pull/28124)) [0f84e3b8878](https://github.com/microsoft/FluidFramework/commit/0f84e3b8878a5e75b2253976d98fd963bbd9db88)
 
-  Direct `require()` import is no longer directly supported.
-  Package is transpiled as ECMAScript Module.
+Direct `require()` import is no longer directly supported.
+Package is transpiled as ECMAScript Module.
 
-  See [Removal of direct CommonJS support in v3.0](https://github.com/microsoft/FluidFramework/issues/27444) for more information.
+See [Removal of direct CommonJS support in v3.0](https://github.com/microsoft/FluidFramework/issues/27444) for more information.
 
-- Require modern TypeScript module resolution ([#27970](https://github.com/microsoft/FluidFramework/pull/27970)) [325e2016ca9](https://github.com/microsoft/FluidFramework/commit/325e2016ca9978d4a1f7552c97ba34feac9df41f)
+#### Require modern TypeScript module resolution ([#27970](https://github.com/microsoft/FluidFramework/pull/27970)) [325e2016ca9](https://github.com/microsoft/FluidFramework/commit/325e2016ca9978d4a1f7552c97ba34feac9df41f)
 
-  Fluid Framework Client packages no longer include type declaration compatibility entrypoints for TypeScript's legacy Node10 resolution mode (`"moduleResolution": "node"` or `"node10"`).
-  Applications upgrading to Fluid Framework 3.0 must use one of the following supported configurations:
-  - `"module": "Node16"` with `"moduleResolution": "Node16"`
-  - `"module": "NodeNext"` with `"moduleResolution": "NodeNext"`
-  - `"module": "ESNext"` with `"moduleResolution": "Bundler"`
+Fluid Framework Client packages no longer include type declaration compatibility entrypoints for TypeScript's legacy Node10 resolution mode (`"moduleResolution": "node"` or `"node10"`).
+Applications upgrading to Fluid Framework 3.0 must use one of the following supported configurations:
+- `"module": "Node16"` with `"moduleResolution": "Node16"`
+- `"module": "NodeNext"` with `"moduleResolution": "NodeNext"`
+- `"module": "ESNext"` with `"moduleResolution": "Bundler"`
 
-  Existing public package entrypoints exposed through `package.json` exports, including `/alpha`, `/beta`, and `/legacy`, remain available under supported module resolution modes.
+Existing public package entrypoints exposed through `package.json` exports, including `/alpha`, `/beta`, and `/legacy`, remain available under supported module resolution modes.
 
-  See [Removal of Node10 resolutions in v3.0](https://github.com/microsoft/FluidFramework/issues/27457) for more information.
+See [Removal of Node10 resolutions in v3.0](https://github.com/microsoft/FluidFramework/issues/27457) for more information.
 
-- Client packages now target ES2022 ([#27846](https://github.com/microsoft/FluidFramework/pull/27846)) [91c78541bdd](https://github.com/microsoft/FluidFramework/commit/91c78541bddcbca5d6c5f357b023eeaee617d885)
+#### Client packages now target ES2022 ([#27846](https://github.com/microsoft/FluidFramework/pull/27846)) [91c78541bdd](https://github.com/microsoft/FluidFramework/commit/91c78541bddcbca5d6c5f357b023eeaee617d885)
 
-  The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
-  The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
-  All actively supported Node.js versions and evergreen browsers already meet this requirement.
+The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
+The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
+All actively supported Node.js versions and evergreen browsers already meet this requirement.
 
-  Note that Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the README for every client package.
+Note that Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the README for every client package.
 
-  It is possible this change could impact users of less up to date JavaScript runtimes.
-  Impacted users can use a tool like [babel](https://babeljs.io/) to transpile out unsupported language features.
+It is possible this change could impact users of less up to date JavaScript runtimes.
+Impacted users can use a tool like [babel](https://babeljs.io/) to transpile out unsupported language features.
 
-- Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
+#### Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
 
-  FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
+FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
 
 ## 2.116.0
 
 ### Minor Changes
 
-- Rename minVersionForCollab to oldestSupportedClient ([#27806](https://github.com/microsoft/FluidFramework/pull/27806)) [86b912170c](https://github.com/microsoft/FluidFramework/commit/86b912170c0e12ebeb481c5201f923c72bf94498)
+#### Rename minVersionForCollab to oldestSupportedClient ([#27806](https://github.com/microsoft/FluidFramework/pull/27806)) [86b912170c](https://github.com/microsoft/FluidFramework/commit/86b912170c0e12ebeb481c5201f923c72bf94498)
 
-  The cross-client compatibility parameter has new names:
-  - The
-    [`MinimumVersionForCollab`](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias)
-    type is now
-    [`OldestSupportedClientVersion`](https://fluidframework.com/docs/api/runtime-definitions/oldestsupportedclientversion-typealias).
-  - [`LoadContainerRuntimeParams.minVersionForCollab`](https://fluidframework.com/docs/api/container-runtime/loadcontainerruntimeparams-interface#minversionforcollab-propertysignature)
-    is now
-    [`LoadContainerRuntimeParams.oldestSupportedClient`](https://fluidframework.com/docs/api/container-runtime/loadcontainerruntimeparams-interface#oldestsupportedclient-propertysignature).
-  - [`BaseContainerRuntimeFactoryProps.minVersionForCollab`](https://fluidframework.com/docs/api/aqueduct/basecontainerruntimefactoryprops-interface#minversionforcollab-propertysignature)
-    is now
-    [`BaseContainerRuntimeFactoryProps.oldestSupportedClient`](https://fluidframework.com/docs/api/aqueduct/basecontainerruntimefactoryprops-interface#oldestsupportedclient-propertysignature).
-  - [`createTreeContainerRuntimeFactory`](https://fluidframework.com/docs/api/fluid-static/#createtreecontainerruntimefactory-function)
-    now accepts `oldestSupportedClient`.
-    `minVersionForCollaboration` remains available as a deprecated overload.
-  - `@fluidframework/driver-definitions` now exports its minor-only version type as
-    [`OldestSupportedServiceClientVersion`](https://fluidframework.com/docs/api/driver-definitions/oldestsupportedserviceclientversion-typealias),
-    and
-    [`ServiceOptions.oldestSupportedClient`](https://fluidframework.com/docs/api/driver-definitions/serviceoptions-interface#oldestsupportedclient-propertysignature)
-    is available.
-  - [`AzureClient`](https://fluidframework.com/docs/api/azure-client/azureclient-class),
-    [`OdspClient`](https://fluidframework.com/docs/api/odsp-client/odspclient-class),
-    and
-    [`TinyliciousClient`](https://fluidframework.com/docs/api/tinylicious-client/tinyliciousclient-class)
-    methods now use `oldestSupportedClient` and
-    [`OldestSupportedClientVersion`](https://fluidframework.com/docs/api/runtime-definitions/oldestsupportedclientversion-typealias)
-    in their signatures.
+The cross-client compatibility parameter has new names:
+- The
+  [`MinimumVersionForCollab`](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias)
+  type is now
+  [`OldestSupportedClientVersion`](https://fluidframework.com/docs/api/runtime-definitions/oldestsupportedclientversion-typealias).
+- [`LoadContainerRuntimeParams.minVersionForCollab`](https://fluidframework.com/docs/api/container-runtime/loadcontainerruntimeparams-interface#minversionforcollab-propertysignature)
+  is now
+  [`LoadContainerRuntimeParams.oldestSupportedClient`](https://fluidframework.com/docs/api/container-runtime/loadcontainerruntimeparams-interface#oldestsupportedclient-propertysignature).
+- [`BaseContainerRuntimeFactoryProps.minVersionForCollab`](https://fluidframework.com/docs/api/aqueduct/basecontainerruntimefactoryprops-interface#minversionforcollab-propertysignature)
+  is now
+  [`BaseContainerRuntimeFactoryProps.oldestSupportedClient`](https://fluidframework.com/docs/api/aqueduct/basecontainerruntimefactoryprops-interface#oldestsupportedclient-propertysignature).
+- [`createTreeContainerRuntimeFactory`](https://fluidframework.com/docs/api/fluid-static/#createtreecontainerruntimefactory-function)
+  now accepts `oldestSupportedClient`.
+  `minVersionForCollaboration` remains available as a deprecated overload.
+- `@fluidframework/driver-definitions` now exports its minor-only version type as
+  [`OldestSupportedServiceClientVersion`](https://fluidframework.com/docs/api/driver-definitions/oldestsupportedserviceclientversion-typealias),
+  and
+  [`ServiceOptions.oldestSupportedClient`](https://fluidframework.com/docs/api/driver-definitions/serviceoptions-interface#oldestsupportedclient-propertysignature)
+  is available.
+- [`AzureClient`](https://fluidframework.com/docs/api/azure-client/azureclient-class),
+  [`OdspClient`](https://fluidframework.com/docs/api/odsp-client/odspclient-class),
+  and
+  [`TinyliciousClient`](https://fluidframework.com/docs/api/tinylicious-client/tinyliciousclient-class)
+  methods now use `oldestSupportedClient` and
+  [`OldestSupportedClientVersion`](https://fluidframework.com/docs/api/runtime-definitions/oldestsupportedclientversion-typealias)
+  in their signatures.
 
-  The previous property and type names in `@fluidframework/runtime-definitions`,
-  `@fluidframework/container-runtime`, `@fluidframework/aqueduct`, and
-  `@fluidframework/fluid-static` are deprecated and will be removed in future
-  releases. Where both old and new property names remain available, specifying both
-  is an error. The alpha `MinimumVersionForCollaboration` type and
-  `ServiceOptions.minVersionForCollaboration` property are replaced directly rather
-  than retained as aliases.
+The previous property and type names in `@fluidframework/runtime-definitions`,
+`@fluidframework/container-runtime`, `@fluidframework/aqueduct`, and
+`@fluidframework/fluid-static` are deprecated and will be removed in future
+releases. Where both old and new property names remain available, specifying both
+is an error. The alpha `MinimumVersionForCollaboration` type and
+`ServiceOptions.minVersionForCollaboration` property are replaced directly rather
+than retained as aliases.
 
-  ```typescript
-  // Before
-  const runtime = await loadContainerRuntime({
-    context,
-    registryEntries,
-    provideEntryPoint,
-    minVersionForCollab: "2.40.0",
-  });
+```typescript
+// Before
+const runtime = await loadContainerRuntime({
+  context,
+  registryEntries,
+  provideEntryPoint,
+  minVersionForCollab: "2.40.0",
+});
 
-  // After
-  const runtime = await loadContainerRuntime({
-    context,
-    registryEntries,
-    provideEntryPoint,
-    oldestSupportedClient: "2.40.0",
-  });
-  ```
+// After
+const runtime = await loadContainerRuntime({
+  context,
+  registryEntries,
+  provideEntryPoint,
+  oldestSupportedClient: "2.40.0",
+});
+```
 
-  Telemetry property names are unchanged.
+Telemetry property names are unchanged.
 
 ## 2.115.0
 
@@ -203,12 +203,12 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Service client createContainer/getContainer overloads taking CompatibilityMode are deprecated ([#27212](https://github.com/microsoft/FluidFramework/pull/27212)) [3e951b4abf](https://github.com/microsoft/FluidFramework/commit/3e951b4abfc61ea78a3e3e4a891e34e374c76efb)
+#### Service client createContainer/getContainer overloads taking CompatibilityMode are deprecated ([#27212](https://github.com/microsoft/FluidFramework/pull/27212)) [3e951b4abf](https://github.com/microsoft/FluidFramework/commit/3e951b4abfc61ea78a3e3e4a891e34e374c76efb)
 
-  The `createContainer` and `getContainer` overloads on `AzureClient`, `OdspClient`, and `TinyliciousClient` (plus `AzureClient.viewContainerVersion`) that accept a [`CompatibilityMode`](https://fluidframework.com/docs/api/fluid-static/compatibilitymode-typealias) (`"1"` / `"2"`) argument are now deprecated.
-  Pass a [`MinimumVersionForCollab`](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias) SemVer string instead — it specifies the minimum collaborating client version directly.
+The `createContainer` and `getContainer` overloads on `AzureClient`, `OdspClient`, and `TinyliciousClient` (plus `AzureClient.viewContainerVersion`) that accept a [`CompatibilityMode`](https://fluidframework.com/docs/api/fluid-static/compatibilitymode-typealias) (`"1"` / `"2"`) argument are now deprecated.
+Pass a [`MinimumVersionForCollab`](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias) SemVer string instead — it specifies the minimum collaborating client version directly.
 
-  See [issue #23289](https://github.com/microsoft/FluidFramework/issues/23289) for migration details and removal tracking.
+See [issue #23289](https://github.com/microsoft/FluidFramework/issues/23289) for migration details and removal tracking.
 
 ## 2.101.0
 
@@ -218,9 +218,9 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+#### Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
 
-  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
 
 ## 2.93.0
 
@@ -394,43 +394,43 @@ Dependency updates only.
 
 ### Minor Changes
 
-- odsp-client: Move odsp-client out of experimental ([#21024](https://github.com/microsoft/FluidFramework/pull/21024)) [8461a406f3](https://github.com/microsoft/FluidFramework/commit/8461a406f3086ced7e38a19f70d71cca72667333)
+#### odsp-client: Move odsp-client out of experimental ([#21024](https://github.com/microsoft/FluidFramework/pull/21024)) [8461a406f3](https://github.com/microsoft/FluidFramework/commit/8461a406f3086ced7e38a19f70d71cca72667333)
 
-  The scope of the odsp-client package is changed from `@fluid-experimental/odsp-client` to `@fluidframework/odsp-client`.
+The scope of the odsp-client package is changed from `@fluid-experimental/odsp-client` to `@fluidframework/odsp-client`.
 
-- Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+#### Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
 
-  Update package implementations to use TypeScript 5.4.5.
+Update package implementations to use TypeScript 5.4.5.
 
 ## 2.0.0-rc.4.0.0
 
 ### Minor Changes
 
-- Rename `AzureMember.userName` to `AzureMember.name` and `IMember.userId` to `IMember.id` [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
-  1. Renamed `AzureMember.userName` to `AzureMember.name` to establish uniform naming across odsp-client and azure-client.
-  2. Renamed `IMember.userId` to `IMember.id` to align with the properties received from AFR.
+#### Rename `AzureMember.userName` to `AzureMember.name` and `IMember.userId` to `IMember.id` [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+1. Renamed `AzureMember.userName` to `AzureMember.name` to establish uniform naming across odsp-client and azure-client.
+2. Renamed `IMember.userId` to `IMember.id` to align with the properties received from AFR.
 
 ## 2.0.0-rc.3.0.0
 
 ### Major Changes
 
-- Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+#### Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
 
-  Fluid Framework packages have been updated to use the [package.json "exports"
-  field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
-  TypeScript types and implementation code.
+Fluid Framework packages have been updated to use the [package.json "exports"
+field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
+TypeScript types and implementation code.
 
-  This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-  - `"moduleResolution": "Node16"` with `"module": "Node16"`
-  - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
+This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
+- `"moduleResolution": "Node16"` with `"module": "Node16"`
+- `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 
-  We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
-  for use with modern versions of Node.js _and_ Bundlers.
-  [See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
-  regarding the module and moduleResolution options.
+We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
+for use with modern versions of Node.js _and_ Bundlers.
+[See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
+regarding the module and moduleResolution options.
 
-  **Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
-  to distinguish stable APIs from those that are in development.**
+**Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
+to distinguish stable APIs from those that are in development.**
 
 ## 2.0.0-rc.2.0.0
 
@@ -440,34 +440,34 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
+#### Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
 
-  The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
-  - @fluidframework/gitresources
-  - @fluidframework/server-kafka-orderer
-  - @fluidframework/server-lambdas
-  - @fluidframework/server-lambdas-driver
-  - @fluidframework/server-local-server
-  - @fluidframework/server-memory-orderer
-  - @fluidframework/protocol-base
-  - @fluidframework/server-routerlicious
-  - @fluidframework/server-routerlicious-base
-  - @fluidframework/server-services
-  - @fluidframework/server-services-client
-  - @fluidframework/server-services-core
-  - @fluidframework/server-services-ordering-kafkanode
-  - @fluidframework/server-services-ordering-rdkafka
-  - @fluidframework/server-services-ordering-zookeeper
-  - @fluidframework/server-services-shared
-  - @fluidframework/server-services-telemetry
-  - @fluidframework/server-services-utils
-  - @fluidframework/server-test-utils
-  - tinylicious
+The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
+- @fluidframework/gitresources
+- @fluidframework/server-kafka-orderer
+- @fluidframework/server-lambdas
+- @fluidframework/server-lambdas-driver
+- @fluidframework/server-local-server
+- @fluidframework/server-memory-orderer
+- @fluidframework/protocol-base
+- @fluidframework/server-routerlicious
+- @fluidframework/server-routerlicious-base
+- @fluidframework/server-services
+- @fluidframework/server-services-client
+- @fluidframework/server-services-core
+- @fluidframework/server-services-ordering-kafkanode
+- @fluidframework/server-services-ordering-rdkafka
+- @fluidframework/server-services-ordering-zookeeper
+- @fluidframework/server-services-shared
+- @fluidframework/server-services-telemetry
+- @fluidframework/server-services-utils
+- @fluidframework/server-test-utils
+- tinylicious
 
-- Updated @fluidframework/protocol-definitions ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
+#### Updated @fluidframework/protocol-definitions ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
 
-  The @fluidframework/protocol-definitions dependency has been upgraded to v3.1.0. [See the full
-  changelog.](https://github.com/microsoft/FluidFramework/blob/main/common/lib/protocol-definitions/CHANGELOG.md#310)
+The @fluidframework/protocol-definitions dependency has been upgraded to v3.1.0. [See the full
+changelog.](https://github.com/microsoft/FluidFramework/blob/main/common/lib/protocol-definitions/CHANGELOG.md#310)
 
 ## 2.0.0-internal.8.0.0
 
