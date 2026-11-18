@@ -18,10 +18,10 @@ import { resolveStoredSchemaGenerationOptions } from "../toStoredSchema.js";
 import { getSchemaUpgradeCandidate, toInitialSchema, type TreeSchema } from "../treeSchema.js";
 
 import {
-	getIncompatibilitiesInAllowedContent,
-	type Incompatibility,
+	getDiscrepanciesInAllowedContent,
+	type Discrepancy,
 	type UpgradeLocationCollector,
-} from "./incompatibilities.js";
+} from "./discrepancies.js";
 import type { SchemaCompatibilityStatusBeta, SchemaDiscrepancy } from "./tree.js";
 
 /**
@@ -37,14 +37,12 @@ export function getSchemaIncompatibilityDetails(
 	viewSchema: TreeSchema,
 	storedSchema: TreeStoredSchema,
 ): readonly SchemaDiscrepancy[] | undefined {
-	const incompatibilities = [
-		...getIncompatibilitiesInAllowedContent(viewSchema, storedSchema),
-	];
-	if (incompatibilities.length === 0) {
+	const discrepancies = [...getDiscrepanciesInAllowedContent(viewSchema, storedSchema)];
+	if (discrepancies.length === 0) {
 		return undefined;
 	}
 
-	return incompatibilities.map(formatSchemaDiscrepancy);
+	return discrepancies.map(formatSchemaDiscrepancy);
 }
 
 /**
@@ -66,7 +64,7 @@ export function isSchemaUpgradeAllowed(
 	);
 }
 
-function formatSchemaDiscrepancy(value: Incompatibility): SchemaDiscrepancy {
+function formatSchemaDiscrepancy(value: Discrepancy): SchemaDiscrepancy {
 	switch (value.mismatch) {
 		case "allowedTypes": {
 			return {
@@ -168,7 +166,7 @@ export function checkSchemaCompatibility(
 	const policy = defaultSchemaPolicy;
 	const configuredPolicy = resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades);
 
-	// Collect upgrade locations during the incompatibility walk (single pass).
+	// Collect upgrade locations during the discrepancy walk (single pass).
 	const totalLocations = new Map<SchemaUpgrade, number>();
 	const enabledLocations = new Map<SchemaUpgrade, number>();
 	const upgradeCollector: UpgradeLocationCollector = {
@@ -186,21 +184,21 @@ export function checkSchemaCompatibility(
 		},
 	};
 
-	// View schema allows a subset of documents that stored schema does, and the incompatibilities are allowed by policy
+	// View schema allows a subset of documents that stored schema does, and the discrepancies are allowed by policy
 	// determined by the view schema (i.e. objects with extra optional fields in the stored schema have opted into allowing this.
 	// In the future, this would also include things like:
 	// - fields with more allowed types in the stored schema than in the view schema have out-of-schema "unknown content" adapters
-	// Complete the full walk even after finding an incompatibility so incompatibility details and
+	// Complete the full walk even after finding an incompatibility so discrepancy details and
 	// staged-upgrade status contain all available information for debugging.
-	const viewIncompatibilities: SchemaDiscrepancy[] = [];
-	for (const incompatibility of getIncompatibilitiesInAllowedContent(
+	const discrepancies: SchemaDiscrepancy[] = [];
+	for (const discrepancy of getDiscrepanciesInAllowedContent(
 		viewSchema,
 		stored,
 		upgradeCollector,
 	)) {
-		viewIncompatibilities.push(formatSchemaDiscrepancy(incompatibility));
+		discrepancies.push(formatSchemaDiscrepancy(discrepancy));
 	}
-	const canView = viewIncompatibilities.length === 0;
+	const canView = discrepancies.length === 0;
 
 	const enabledUpgrades = computeUpgradeStatuses(totalLocations, enabledLocations);
 	const wouldUpgradeTo = getSchemaUpgradeCandidate(viewSchema, stored, configuredPolicy);
@@ -219,7 +217,7 @@ export function checkSchemaCompatibility(
 		canView,
 		canUpgrade,
 		isEquivalent,
-		discrepancies: canView ? undefined : viewIncompatibilities,
+		discrepancies: canView ? undefined : discrepancies,
 		enabledUpgrades,
 	};
 }

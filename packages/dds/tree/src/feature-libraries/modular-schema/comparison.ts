@@ -198,6 +198,10 @@ export function allowsRepoSuperset(
 	original: TreeStoredSchema,
 	superset: TreeStoredSchema,
 ): boolean {
+	if (original === superset) {
+		return true;
+	}
+
 	{
 		if (
 			!allowsFieldSuperset(
