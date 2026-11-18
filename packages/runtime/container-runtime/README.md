@@ -53,6 +53,7 @@ Nested aliases are persisted in the collection's `.aliases` blob.
 New explicit child IDs cannot use `.aliases` or the `_` prefix reserved for generated IDs.
 Detached ID allocation checks restored child IDs and aliases rather than assuming that a snapshot contains a dense sequence of IDs.
 Existing legacy child names remain loadable, but a legacy `.aliases` child prevents adding alias metadata that would overwrite it.
+Legacy `_channels` and `_custom` request prefixes still resolve unless a child or alias has that name.
 That blob is omitted when there are no aliases.
 Existing DDS slots have their original `.attributes` and payload, not a synthetic data-store envelope.
 Collections can load those slots and later add native composites after the application's rollout and framework-version target permit them.

@@ -440,7 +440,7 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 		const child = (await childStore.entryPoint.get()) as IFluidDataStoreChannelCollection;
 		const leaf = await getRoot(child);
 		leaf.set("value", 42);
-		assert.equal(await childStore.trySetAlias("named"), "Success");
+		assert.equal(await childStore.trySetAlias("_custom"), "Success");
 		root.set("child", childStore.entryPoint);
 		await provider.ensureSynchronized();
 
@@ -455,8 +455,9 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 		});
 		const parent2 = (await remote.getEntryPoint()) as IFluidDataStoreChannelCollection;
 		const child2 = (await (
-			await parent2.getDataStoreEntryPoint("named")
+			await parent2.getDataStoreEntryPoint("_custom")
 		).get()) as IFluidDataStoreChannelCollection;
+		assert.equal((await parent2.request({ url: "/_custom" })).value, child2);
 		assert.equal((await getRoot(child2)).get("value"), 42);
 
 		const graph = await parent2.getGCData();

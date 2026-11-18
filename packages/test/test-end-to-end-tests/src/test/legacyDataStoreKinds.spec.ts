@@ -378,6 +378,18 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		assert.equal(oldChild.get("value"), 43);
 		const collection = collections.get(alpha.data);
 		assert(collection !== undefined);
+		for (const url of [
+			"/later-old-child",
+			"/_channels/later-old-child",
+			"/_custom/later-old-child",
+		]) {
+			const response = await collection.request({
+				url,
+				headers: { viaHandle: true, wait: false },
+			});
+			assert.equal(response.status, 200, url);
+			assert.equal(response.value, newView, url);
+		}
 		const newChild = await collection.createDataStore(leafFactory);
 		const newMap = (await newChild.entryPoint.get()) as ISharedMap;
 		newMap.set("value", 44);

@@ -31,6 +31,7 @@ import {
 	addBlobToSummary,
 	GCDataBuilder,
 	generateHandleContextPath,
+	RequestParser,
 	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
 import { DataCorruptionError, UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -248,10 +249,19 @@ export class NativeChannelCollection
 	}
 
 	public override async request(request: IRequest): Promise<IResponse> {
-		if (request.url === "" || request.url === "/") {
+		const parser = RequestParser.create(request);
+		const id = parser.pathParts[0];
+		if (id === undefined) {
 			return { status: 200, mimeType: "fluid/object", value: await this.entryPoint.get() };
 		}
-		return super.request(request);
+		if (id === "_channels" || id === "_custom") {
+			await this.waitIfPendingAlias(id);
+			// Legacy data stores treated these segments as routing prefixes, not child names.
+			if (!this.contexts.has(id) && !this.aliases.has(id)) {
+				return this.request(parser.createSubRequest(1));
+			}
+		}
+		return super.request(parser);
 	}
 
 	/**
