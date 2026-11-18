@@ -785,6 +785,18 @@ export function snapshotSchemaCompatibility(
 	}
 }
 
+/**
+ * Formats a version-level compatibility failure with indented diagnostic reasons.
+ *
+ * @remarks
+ * Preserves diagnostic order and nests viewing reasons beneath the upgrade failure they explain.
+ * Multiline reasons have their continuation lines aligned with the bullet text.
+ * The summary is left unprefixed because the caller adds its first-level bullet.
+ *
+ * @param message - The summary identifying the failed operation and the versions involved.
+ * @param incompatibilities - The diagnostics for the failed viewing or upgrade operation.
+ * @returns The summary followed by diagnostic bullets, ready for inclusion in the combined error message.
+ */
 function formatCompatibilityFailure(
 	message: string,
 	incompatibilities: readonly (SchemaViewIncompatibility | SchemaUpgradeIncompatibility)[],
