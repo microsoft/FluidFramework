@@ -48,6 +48,7 @@ import type {
 import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
 import type { TreeViewConfiguration } from "./configuration.js";
+import type { TreeHistoryCompaction } from "./historyCompaction.js";
 import type { TreeLocationResolver } from "./locations.js";
 import type { StagedUpgradeStatus } from "./schemaCompatibilityTester.js";
 import type {
@@ -196,6 +197,13 @@ export interface ITreeAlpha extends ITree, ViewableTreeAlpha {
 	 * Any one of them can be checked out using {@link ITreeAlpha.viewSharedBranchWith}.
 	 */
 	getSharedBranchIds(): string[];
+
+	/**
+	 * APIs for application-guided compaction of this tree's retained history.
+	 * @remarks
+	 * Compaction applies to the tree as a whole rather than to any one view or branch.
+	 */
+	readonly historyCompaction: TreeHistoryCompaction;
 
 	/**
 	 * Returns a view of the tree on the specified shared branch, using the provided schema.

@@ -22,7 +22,7 @@ import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 /**
  * A lazily constructed implementation of {@link TreeBranchCommitMetadata} that wraps a {@link GraphCommit}.
  */
-class LazyTreeBranchCommitMetadata implements TreeBranchCommitMetadata {
+export class LazyTreeBranchCommitMetadata implements TreeBranchCommitMetadata {
 	/**
 	 * Holds a copy of data that may become inaccessible when the commit is trimmed.
 	 */

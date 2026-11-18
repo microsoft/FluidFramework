@@ -3,17 +3,23 @@
  * Licensed under the MIT License.
  */
 
+import { createEmitter, performanceNow } from "@fluid-internal/client-utils";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor, StableId } from "@fluidframework/id-compressor";
-import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
+import type {
+	IExperimentalIncrementalSummaryContext,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+	OldestSupportedClientVersion,
+} from "@fluidframework/runtime-definitions/internal";
 import type {
 	IChannelView,
 	IFluidSerializer,
 	SharedKernel,
 } from "@fluidframework/shared-object-base/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { UsageError, type TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { lt } from "semver-ts";
 
 import {
@@ -32,6 +38,7 @@ import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
+	type RevisionTag,
 	RevisionTagCodec,
 	type TreeFieldStoredSchema,
 	type TreeNodeStoredSchema,
@@ -43,6 +50,7 @@ import {
 	moveToDetachedField,
 } from "../core/index.js";
 import {
+	DefaultRevisionReplacer,
 	DetachedFieldIndexSummarizer,
 	FieldBatchDecodingContext,
 	FieldKinds,
@@ -67,9 +75,14 @@ import {
 	makeMessageCodecBuilder,
 	type SharedTreeCoreOptionsInternal,
 	MessageFormatVersion,
+	messageCodecName,
 	SharedTreeCore,
 	EditManagerFormatVersion,
 	makeEditManagerCodecBuilder,
+	createHistoryCompactionStats,
+	type HistoryCompactionRange,
+	type HistoryCompactionStats,
+	type HistoryTrace,
 } from "../shared-tree-core/index.js";
 import {
 	type ImplicitFieldSchema,
@@ -90,10 +103,15 @@ import {
 	type SimpleObjectFieldSchema,
 	type SimpleAllowedTypeAttributes,
 	type SchemaType,
+	type PlanCompaction,
+	type SummaryHistoryCompactionOptions,
+	type CommitRevision,
+	type TreeHistoryCompactionEvents,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
 	breakingClass,
+	isJsonObject,
 	type JsonCompatible,
 	throwIfBroken,
 } from "../util/index.js";
@@ -105,6 +123,7 @@ import type {
 	ForestTypeOptimized,
 } from "./forestTypeOptimized.js";
 import { ForestTypeReference } from "./forestTypeReference.js";
+import { LazyTreeBranchCommitMetadata } from "./history.js";
 import {
 	getCodecTreeForChangeFormat,
 	SharedTreeChangeFormatVersion,
@@ -195,6 +214,19 @@ export class SharedTreeKernel
 	private readonly checkouts: Map<BranchId, TreeCheckout> = new Map();
 
 	/**
+	 * Compaction policy run before each summary, from {@link SharedTreeOptions.historyCompaction}.
+	 */
+	private readonly summaryCompactionPlan: PlanCompaction | undefined;
+
+	/**
+	 * Whether this tree writes the message format that can carry preserved revisions.
+	 * @remarks See {@link SummaryHistoryCompactionOptions.enableRevisionPreservation}.
+	 */
+	private readonly supportsRevisionPreservation: boolean;
+
+	private readonly historyCompactionEvents = createEmitter<TreeHistoryCompactionEvents>();
+
+	/**
 	 * The app-facing API for SharedTree implemented by this Kernel.
 	 * @remarks
 	 * This is the API grafted onto the ISharedObject which apps can access.
@@ -212,6 +244,7 @@ export class SharedTreeKernel
 		initialSequenceNumber: number,
 		idCompressor: IIdCompressor,
 		optionsParam: SharedTreeOptionsInternal,
+		private readonly getIsSummarizerClient: () => boolean = () => false,
 	) {
 		const retainHistory = optionsParam.retainHistory;
 		if (
@@ -221,7 +254,7 @@ export class SharedTreeKernel
 		) {
 			throw new UsageError("retainHistory must be a boolean or a nonnegative safe integer");
 		}
-		const options: Required<SharedTreeOptionsInternal> = {
+		const options: Required<Omit<SharedTreeOptionsInternal, "historyCompaction">> = {
 			...defaultSharedTreeOptions,
 			...optionsParam,
 			retainHistory: retainHistory ?? defaultSharedTreeOptions.retainHistory,
@@ -326,6 +359,9 @@ export class SharedTreeKernel
 			idCompressor,
 			schema,
 			defaultSchemaPolicy,
+			undefined,
+			undefined,
+			getIsSummarizerClient,
 		);
 
 		this.checkout = createTreeCheckout(idCompressor, this.mintRevisionTag, revisionTagCodec, {
@@ -350,8 +386,229 @@ export class SharedTreeKernel
 			createSharedBranch: this.createSharedBranch.bind(this),
 			getSharedBranchName: this.getSharedBranchName.bind(this),
 			getSharedBranchIds: this.getSharedBranchIds.bind(this),
+			historyCompaction: {
+				requestPlannedCompaction: (planCompaction) =>
+					this.runPlannedCompaction(planCompaction, "manual"),
+				setRevisionPreserved: (revision, preserved) =>
+					this.setCommitRevisionPreserved(revision, preserved),
+				isRevisionPreserved: (revision) => this.isCommitRevisionPreserved(revision),
+				events: this.historyCompactionEvents,
+			},
 			kernel: this,
 		};
+		this.summaryCompactionPlan = optionsParam.historyCompaction?.planCompaction;
+		this.supportsRevisionPreservation =
+			options.writeVersionOverrides.get(messageCodecName) ===
+			MessageFormatVersion.vHistoryCompaction;
+		this.historyTrace?.record("HistoryConfigured", {
+			retainHistory: options.retainHistory,
+			summaryPolicyConfigured: this.summaryCompactionPlan !== undefined,
+			revisionPreservationEnabled: this.supportsRevisionPreservation,
+		});
+	}
+
+	// Usage errors are reported before any state changes, so they do not need to break the tree.
+	@throwIfBroken
+	private setCommitRevisionPreserved(revision: CommitRevision, preserved: boolean): void {
+		this.historyTrace?.record("PreservationRequested", { preserved });
+		if (!this.supportsRevisionPreservation) {
+			this.historyTrace?.record("PreservationRequestFailed", {
+				reason: "notEnabled",
+			});
+			throw new UsageError(
+				"setRevisionPreserved requires SharedTreeOptions.historyCompaction.enableRevisionPreservation (and is not supported with shared branches or detached-root editing)",
+			);
+		}
+		const tag = this.idCompressor.tryRecompress(revision as StableId);
+		if (tag === undefined) {
+			if (!preserved) {
+				this.historyTrace?.record("PreservationRequestIgnored", {
+					reason: "unknownRevision",
+					preserved,
+				});
+				return;
+			}
+			this.historyTrace?.record("PreservationRequestFailed", {
+				reason: "unknownRevision",
+			});
+			throw new UsageError(`Unknown revision: ${revision}`);
+		}
+		if (!this.setRevisionPreserved(tag, preserved)) {
+			this.historyTrace?.record("PreservationRequestFailed", {
+				reason: "revisionNotInHistory",
+			});
+			throw new UsageError(
+				`Revision ${revision} cannot be preserved because it is not in the main branch's history`,
+			);
+		}
+	}
+
+	protected override isSummarizerClient(): boolean {
+		return this.getIsSummarizerClient();
+	}
+
+	protected override onRevisionPreservationRejected(revision: RevisionTag): void {
+		assert(revision !== "root", "The root revision cannot be preserved");
+		this.historyCompactionEvents.emit(
+			"revisionPreservationRejected",
+			this.idCompressor.decompress(revision) as CommitRevision,
+		);
+	}
+
+	@throwIfBroken
+	private isCommitRevisionPreserved(revision: CommitRevision): boolean {
+		const tag = this.idCompressor.tryRecompress(revision as StableId);
+		const preserved = tag !== undefined && this.isRevisionPreserved(tag);
+		this.historyTrace?.record("PreservationQueried", { preserved });
+		return preserved;
+	}
+
+	public override summarizeCore(
+		serializer: IFluidSerializer,
+		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
+		fullTree?: boolean,
+	): ISummaryTreeWithStats {
+		const operationId = this.historyTrace?.nextOperationId();
+		this.historyTrace?.record("SummaryStarted", { operationId });
+		try {
+			this.compactHistoryForSummary(operationId);
+			const summary = super.summarizeCore(
+				serializer,
+				telemetryContext,
+				incrementalSummaryContext,
+				fullTree,
+			);
+			this.historyTrace?.record("SummaryCompleted", { operationId });
+			return summary;
+		} catch (error: unknown) {
+			this.historyTrace?.record("SummaryFailed", { operationId });
+			throw error;
+		}
+	}
+
+	/**
+	 * Runs the configured summary compaction policy, if any.
+	 * @remarks
+	 * A faulty policy must not block summarization or break the tree.
+	 * {@link SharedTreeKernel.runPlannedCompaction} only logs planning errors for summary passes, and never lets them break the tree.
+	 */
+	private compactHistoryForSummary(summaryOperationId?: number): void {
+		const plan = this.summaryCompactionPlan;
+		if (plan === undefined) {
+			this.historyTrace?.record("CompactionSkipped", {
+				summaryOperationId,
+				trigger: "summary",
+				reason: "noPolicyConfigured",
+			});
+			return;
+		}
+		this.runPlannedCompaction(plan, "summary", summaryOperationId);
+	}
+
+	/**
+	 * Runs a "whole branch history" compaction pass: the application plans ranges, and each range is composed once.
+	 * @remarks
+	 * The plan is read and validated before anything changes, so a policy error or malformed plan leaves the history unchanged.
+	 * Planning errors are rethrown for manual passes and only logged for summary passes.
+	 * Either way, they are rethrown (if at all) only after the engine call returns, so they do not break the tree.
+	 * Errors from the engine itself break the tree, because the history may have been partially rewritten.
+	 */
+	@throwIfBroken
+	private runPlannedCompaction(
+		planCompaction: PlanCompaction,
+		trigger: "manual" | "summary",
+		summaryOperationId?: number,
+	): number {
+		const started = performanceNow();
+		const statistics = {
+			removedCount: 0,
+			policyCallCount: 0,
+			defaultMergeCount: 0,
+			replacementMergeCount: 0,
+			// Total serialized size of the metadata in the plan, to monitor metadata growth.
+			replacementMetadataLength: 0,
+			// Total time spent in the application's policy, in milliseconds.
+			policyDurationMs: 0,
+			historyCommitCount: 0,
+		};
+		const passStats = createHistoryCompactionStats();
+		let failureSource: "policy" | "plan" | "engine" | undefined;
+		let engineError: unknown;
+		// Planning errors are rethrown after the engine call returns, so that they do not break the tree:
+		// nothing has changed when planning fails.
+		let planningError: { readonly error: unknown } | undefined;
+		const operationId = this.historyTrace?.nextOperationId();
+		this.historyTrace?.record("CompactionStarted", {
+			operationId,
+			summaryOperationId,
+			trigger,
+		});
+		try {
+			statistics.removedCount = this.compactHistoryByPlan(
+				(history) => {
+					statistics.policyCallCount++;
+					statistics.historyCommitCount = history.length;
+					const policyStarted = performanceNow();
+					let ranges: HistoryCompactionRange[];
+					try {
+						ranges = planCompactionRanges(history, this.idCompressor, planCompaction);
+					} catch (error: unknown) {
+						failureSource = error instanceof UsageError ? "plan" : "policy";
+						this.historyTrace?.record("CompactionPolicyFailed", {
+							operationId,
+							policyCallCount: statistics.policyCallCount,
+							failureSource,
+						});
+						if (trigger === "manual") {
+							planningError = { error };
+						}
+						return [];
+					} finally {
+						statistics.policyDurationMs += performanceNow() - policyStarted;
+					}
+					for (const range of ranges) {
+						if (range.metadata !== undefined) {
+							statistics.replacementMetadataLength += JSON.stringify(
+								range.metadata.metadata,
+							).length;
+						}
+					}
+					return ranges;
+				},
+				(updated, obsolete) => new DefaultRevisionReplacer(updated, obsolete),
+				(range) => {
+					if (range.metadata === undefined) {
+						statistics.defaultMergeCount++;
+					} else {
+						statistics.replacementMergeCount++;
+					}
+				},
+				passStats,
+				operationId,
+			);
+			if (planningError !== undefined) {
+				throw planningError.error;
+			}
+			return statistics.removedCount;
+		} catch (error: unknown) {
+			if (failureSource === undefined) {
+				failureSource = "engine";
+				engineError = error;
+			}
+			throw error;
+		} finally {
+			reportCompaction(
+				this.breaker.logger,
+				this.historyTrace,
+				operationId,
+				trigger,
+				started,
+				failureSource,
+				engineError,
+				{ ...statistics, ...passStats },
+			);
+		}
 	}
 
 	private registerCheckout(branchId: BranchId, checkout: TreeCheckout): void {
@@ -546,6 +803,7 @@ export const changeFormatVersionForEditManager = DependentFormatVersion.fromPair
 	[EditManagerFormatVersion.v6, SharedTreeChangeFormatVersion.v5],
 	[EditManagerFormatVersion.v7, SharedTreeChangeFormatVersion.v5],
 	[EditManagerFormatVersion.vDetachedRoots, SharedTreeChangeFormatVersion.vDetachedRoots],
+	[EditManagerFormatVersion.vHistoryCompaction, SharedTreeChangeFormatVersion.v5],
 ]);
 
 /**
@@ -564,6 +822,7 @@ export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs<
 	[MessageFormatVersion.v6, SharedTreeChangeFormatVersion.v5],
 	[MessageFormatVersion.v7, SharedTreeChangeFormatVersion.v5],
 	[MessageFormatVersion.vDetachedRoots, SharedTreeChangeFormatVersion.vDetachedRoots],
+	[MessageFormatVersion.vHistoryCompaction, SharedTreeChangeFormatVersion.v5],
 ]);
 
 function getCodecTreeForEditManagerFormat(
@@ -731,6 +990,20 @@ export interface SharedTreeOptions
 	 * We recommend {@link ForestOptions.forest|configuring SharedTree} with the {@link ForestTypeOptimized|optimized forest implementation} to reduce the performance impact of this validation.
 	 */
 	readonly validateRebasedCommitsBeforeResubmission?: boolean;
+
+	/**
+	 * Application-guided history compaction that runs each time this SharedTree writes a summary.
+	 *
+	 * @defaultValue `undefined` (no compaction when summarizing)
+	 *
+	 * @remarks
+	 * Only has an effect when {@link SharedTreeOptions.retainHistory} keeps history beyond the collaboration window.
+	 * Like `retainHistory`, this option is local to each SharedTree instance; it is not stored in the document.
+	 * Because the summarizer client is created from the same application code, it receives the same policy,
+	 * and the compacted history is what gets persisted.
+	 * See {@link SummaryHistoryCompactionOptions}.
+	 */
+	readonly historyCompaction?: SummaryHistoryCompactionOptions;
 }
 
 export interface SharedTreeOptionsInternal
@@ -760,7 +1033,9 @@ export interface SharedTreeFormatOptions {
 	treeEncodeType: TreeCompressionStrategy;
 }
 
-export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
+export const defaultSharedTreeOptions: Required<
+	Omit<SharedTreeOptionsInternal, "historyCompaction">
+> = {
 	jsonValidator: FormatValidatorNoOp,
 	minVersionForCollab: FluidClientVersion.v2_0,
 	forest: ForestTypeReference,
@@ -883,4 +1158,112 @@ function exportSimpleNodeSchemaStored(
 		};
 	}
 	fail(0xacb /* invalid schema kind */);
+}
+
+/**
+ * Records the outcome of a compaction pass as a history trace event and a `HistoryCompaction` telemetry event.
+ * @remarks
+ * Not a method of {@link SharedTreeKernel}, because it runs after a failed pass may have broken the tree.
+ */
+function reportCompaction(
+	logger: TelemetryLoggerExt | undefined,
+	historyTrace: HistoryTrace | undefined,
+	operationId: number | undefined,
+	trigger: "manual" | "summary",
+	started: number,
+	failureSource: "policy" | "plan" | "engine" | undefined,
+	engineError: unknown,
+	statistics: HistoryCompactionStats & Record<string, number>,
+): void {
+	const durationMs = performanceNow() - started;
+	const status = failureSource === undefined ? "success" : "failure";
+	historyTrace?.record("CompactionCompleted", {
+		operationId,
+		trigger,
+		status,
+		failureSource,
+		durationMs,
+		...statistics,
+	});
+	const event = {
+		eventName: "HistoryCompaction",
+		trigger,
+		status,
+		failureSource,
+		durationMs,
+		...statistics,
+	};
+	if (failureSource === undefined) {
+		logger?.sendTelemetryEvent(event);
+	} else {
+		// Policy errors can contain application data, so only report the failure category.
+		// Engine errors come from Fluid itself, so they are attached to help diagnose them.
+		logger?.sendErrorEvent(event, engineError);
+	}
+}
+
+/**
+ * Asks the application for a whole-history compaction plan, and converts it to validated, ordered trunk index ranges.
+ * @remarks
+ * This is not a method of {@link SharedTreeKernel} because its methods are wrapped so that any error breaks the tree,
+ * and errors from the application's policy must be catchable without breaking it.
+ * @throws A `UsageError` if the plan names a revision that is not in `history`, has a reversed or overlapping range,
+ * or provides metadata that is not a JSON object.
+ */
+function planCompactionRanges(
+	history: readonly GraphCommit<SharedTreeChange>[],
+	idCompressor: IIdCompressor,
+	planCompaction: PlanCompaction,
+): HistoryCompactionRange[] {
+	const plan = planCompaction(
+		history.map(
+			(commit) => new LazyTreeBranchCommitMetadata(commit, idCompressor, () => undefined),
+		),
+	);
+	const indexByRevision = new Map<RevisionTag, number>(
+		history.map((commit, index) => [commit.revision, index]),
+	);
+	const indexOf = (revision: CommitRevision): number => {
+		let tag: RevisionTag | undefined;
+		try {
+			tag = idCompressor.tryRecompress(revision as StableId);
+		} catch {
+			// Not a well-formed revision, so it cannot be in the history.
+		}
+		const index = tag === undefined ? undefined : indexByRevision.get(tag);
+		if (index === undefined) {
+			throw new UsageError(
+				`Compaction plan names revision ${revision}, which is not in the history`,
+			);
+		}
+		return index;
+	};
+	const ranges = plan.ranges.map((range): HistoryCompactionRange => {
+		const oldestIndex = indexOf(range.oldest);
+		const newestIndex = indexOf(range.newest);
+		if (oldestIndex > newestIndex) {
+			throw new UsageError(
+				"A compaction range's oldest commit must not be newer than its newest",
+			);
+		}
+		if (range.metadata !== undefined && !isJsonObject(range.metadata)) {
+			throw new UsageError("A compaction range's metadata must be a JSON object");
+		}
+		return {
+			oldestIndex,
+			newestIndex,
+			metadata:
+				range.metadata === undefined ? undefined : { metadata: range.metadata, children: [] },
+		};
+	});
+	ranges.sort((a, b) => a.oldestIndex - b.oldestIndex);
+	for (let index = 1; index < ranges.length; index++) {
+		if (
+			(ranges[index]?.oldestIndex ?? fail("Expected a range")) <=
+			(ranges[index - 1]?.newestIndex ?? fail("Expected a range"))
+		) {
+			throw new UsageError("Compaction ranges must not overlap");
+		}
+	}
+	return ranges;
 }

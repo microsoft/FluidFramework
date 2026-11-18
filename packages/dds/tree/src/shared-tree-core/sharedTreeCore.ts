@@ -54,10 +54,17 @@ import type { BranchId, SharedTreeBranch } from "./branch.js";
 import { BranchCommitEnricher } from "./branchCommitEnricher.js";
 import type { ChangeEnricher } from "./changeEnricher.js";
 import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
-import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
+import {
+	EditManager,
+	minimumPossibleSequenceNumber,
+	type HistoryCompactionRange,
+	type HistoryCompactionStats,
+	type RevisionReplacerFactory,
+} from "./editManager.js";
 import { makeEditManagerCodecBuilder } from "./editManagerCodecs.js";
 import type { EditManagerFormatVersion, SeqNumber } from "./editManagerFormatCommons.js";
 import { EditManagerSummarizer } from "./editManagerSummarizer.js";
+import { HistoryTrace } from "./historyTrace.js";
 import { type MessageEncodingContext, makeMessageCodecBuilder } from "./messageCodecs.js";
 import type { MessageFormatVersion } from "./messageFormat.js";
 import type { DecodedMessage } from "./messageTypes.js";
@@ -116,6 +123,7 @@ export class SharedTreeCore<
 	implements WithBreakable, Summarizable
 {
 	private readonly editManager: EditManager<TEditor, TChange, TChangeProcessingContext>;
+	protected readonly historyTrace: HistoryTrace | undefined;
 	private readonly summarizables: readonly Summarizable[];
 	/**
 	 * The sequence number that this instance is at.
@@ -171,6 +179,7 @@ export class SharedTreeCore<
 		schemaPolicy: SchemaPolicy,
 		enrichmentConfig?: EnrichmentConfig<TChange>,
 		public readonly getEditor: () => TEditor = () => this.getLocalBranch().editor,
+		getIsSummarizerClient: () => boolean = () => false,
 	) {
 		super(
 			summarizablesTreeKey,
@@ -198,12 +207,19 @@ export class SharedTreeCore<
 		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
 		 */
 		const localSessionId = idCompressor.localSessionId;
+		this.historyTrace = HistoryTrace.create(
+			logger,
+			sharedObject.id,
+			localSessionId,
+			getIsSummarizerClient,
+		);
 		this.editManager = new EditManager(
 			changeFamily,
 			localSessionId,
 			this.mintRevisionTag,
 			(branchId) => this.registerSharedBranch(branchId),
 			rebaseLogger,
+			this.historyTrace,
 		);
 		this.editManager.setHistoryRetention(coreOptions.retainHistory ?? false);
 
@@ -226,6 +242,7 @@ export class SharedTreeCore<
 				coreOptions.healUnresolvableIdentifiersOnDecode === true
 					? { sharedObjectId: sharedObject.id, logger }
 					: undefined,
+				this.historyTrace,
 			),
 			...summarizables,
 		];
@@ -395,6 +412,11 @@ export class SharedTreeCore<
 			this.sharedObject.isAttached() === (this.detachedRevision === undefined),
 			0x95a /* Detached revision should only be set when not attached */,
 		);
+		this.historyTrace?.record("CommitSubmissionStarted", {
+			mainBranch: branchId === "main",
+			isResubmit,
+			detached: this.detachedRevision !== undefined,
+		});
 
 		// Edits submitted before the first attach are treated as sequenced because they will be included
 		// in the attach summary that is uploaded to the service.
@@ -415,6 +437,10 @@ export class SharedTreeCore<
 			// Advancing the MSN also triggers trimming, so suppress it here as well
 			// to keep the new commits readable by the remaining event handlers.
 			this.editManager.advanceMinimumSequenceNumber(newRevision, false);
+			this.historyTrace?.record("CommitSequencedWhileDetached", {
+				mainBranch: branchId === "main",
+				sequenceNumber: newRevision,
+			});
 			return undefined;
 		}
 
@@ -433,6 +459,10 @@ export class SharedTreeCore<
 		);
 
 		this.getResubmitMachine(branchId).onCommitSubmitted(enrichedCommit);
+		this.historyTrace?.record("CommitSubmitted", {
+			mainBranch: branchId === "main",
+			isResubmit,
+		});
 	}
 
 	protected submitBranchCreation(branchId: BranchId, branchName?: string): void {
@@ -519,6 +549,29 @@ export class SharedTreeCore<
 					);
 					break;
 				}
+				case "preserveRevision": {
+					this.historyTrace?.record("PreservationOpReceived", {
+						local,
+						preserved: message.preserved,
+						rejected: message.rejected === true,
+						sequenceNumber: envelope.sequenceNumber,
+					});
+					// Commits earlier in this bunch must be in the trunk before the revision is looked up.
+					if (branchId !== undefined) {
+						processBunch(branchId);
+					}
+					if (message.rejected === true) {
+						this.processPreserveRevisionRejection(message.revision, local);
+					} else if (
+						// Applied for local messages too: this is idempotent with the optimistic local application,
+						// and re-applies it if the commit had not been sequenced yet when the pin was requested.
+						!this.editManager.setRevisionPreserved(message.revision, message.preserved)
+					) {
+						// Only preserving can fail: another client preserved a revision this client has already trimmed or compacted.
+						this.onPreserveRevisionIgnored(message.revision, local);
+					}
+					break;
+				}
 				default: {
 					unreachableCase(type);
 				}
@@ -569,6 +622,128 @@ export class SharedTreeCore<
 			.filter((id): id is SessionSpaceCompressedId => id !== "main")
 			.map((id) => this.idCompressor.decompress(id));
 	}
+	/**
+	 * Compacts the main branch's retained history according to a plan of commit ranges.
+	 * @remarks See {@link EditManager.compactHistoryByPlan}.
+	 */
+	public compactHistoryByPlan(
+		planRanges: (
+			history: readonly GraphCommit<TChange>[],
+			eligibleCount: number,
+		) => readonly HistoryCompactionRange[],
+		createRevisionReplacer: RevisionReplacerFactory,
+		onRangeCompacted?: (range: HistoryCompactionRange) => void,
+		stats?: HistoryCompactionStats,
+		operationId?: number,
+	): number {
+		return this.editManager.compactHistoryByPlan(
+			planRanges,
+			createRevisionReplacer,
+			onRangeCompacted,
+			stats,
+			operationId,
+		);
+	}
+
+	/**
+	 * Marks or unmarks a main-branch revision as preserved from history compaction, locally and for all other clients.
+	 * @returns `false` (and sends nothing) if the revision is not in the main branch's history.
+	 * @remarks
+	 * The change is applied locally right away and sent as an op, so every client (including the summarizer) applies it.
+	 * The current message format must support "preserveRevision" messages, which the caller is responsible for checking.
+	 * See {@link EditManager.setRevisionPreserved}.
+	 */
+	public setRevisionPreserved(revision: RevisionTag, preserved: boolean): boolean {
+		if (!this.editManager.setRevisionPreserved(revision, preserved)) {
+			return false;
+		}
+		this.submitMessage(
+			{
+				type: "preserveRevision",
+				sessionId: this.editManager.localSessionId,
+				revision,
+				preserved,
+			},
+			this.schemaAndPolicy,
+		);
+		this.historyTrace?.record("PreservationOpSubmitted", { preserved });
+		return true;
+	}
+
+	/**
+	 * Called when a sequenced request to preserve `revision` is ignored because this client no longer has the revision.
+	 * @remarks
+	 * The client that requested it has already marked the revision as preserved, but this client cannot honour that.
+	 * If this client is the summarizer, whose history is the one that is persisted, it sends a rejection
+	 * so that every client (including the one that requested it) unmarks the revision. See `PreserveRevisionMessage.rejected`.
+	 */
+	private onPreserveRevisionIgnored(revision: RevisionTag, local: boolean): void {
+		const isSummarizer = this.isSummarizerClient();
+		if (isSummarizer) {
+			this.submitMessage(
+				{
+					type: "preserveRevision",
+					sessionId: this.editManager.localSessionId,
+					revision,
+					preserved: false,
+					rejected: true,
+				},
+				this.schemaAndPolicy,
+			);
+		}
+		this.breaker.logger?.sendTelemetryEvent({
+			eventName: "PreserveRevisionIgnored",
+			isSummarizer,
+			rejectionSent: isSummarizer,
+			local,
+		});
+		this.historyTrace?.record("PreservationIgnored", {
+			local,
+			rejectionSent: isSummarizer,
+		});
+	}
+
+	/**
+	 * Processes the summarizer's report that it could not preserve `revision`.
+	 */
+	private processPreserveRevisionRejection(revision: RevisionTag, local: boolean): void {
+		const wasPreserved = this.editManager.isRevisionPreserved(revision);
+		this.editManager.setRevisionPreserved(revision, false);
+		this.historyTrace?.record("PreservationRejected", { local, wasPreserved });
+		this.breaker.logger?.sendTelemetryEvent({
+			eventName: "PreserveRevisionRejected",
+			wasPreserved,
+			local,
+		});
+		if (wasPreserved) {
+			this.onRevisionPreservationRejected(revision);
+		}
+	}
+
+	/**
+	 * Whether this client is the summarizer client.
+	 * @remarks Only the summarizer sends rejections for preserve requests it cannot honour. Defaults to `false`.
+	 */
+	protected isSummarizerClient(): boolean {
+		return false;
+	}
+
+	/**
+	 * Called when the summarizer rejects a request to preserve `revision` that this client had marked as preserved.
+	 * The revision is no longer preserved when this is called.
+	 */
+	protected onRevisionPreservationRejected(revision: RevisionTag): void {
+		// Nothing to do by default.
+	}
+
+	/**
+	 * Whether the given revision is preserved from history compaction.
+	 * @remarks See {@link EditManager.isRevisionPreserved}.
+	 */
+	public isRevisionPreserved(revision: RevisionTag): boolean {
+		return this.editManager.isRevisionPreserved(revision);
+	}
+
 	public createSharedBranch(branchName?: string): string {
 		if (branchName !== undefined && branchName.length > SharedTreeCore.maxBranchNameLength) {
 			throw new UsageError(
@@ -642,6 +817,10 @@ export class SharedTreeCore<
 				this.submitBranchCreation(message.branchId, message.branchName);
 				break;
 			}
+			case "preserveRevision": {
+				this.submitMessage(message, this.schemaAndPolicy);
+				break;
+			}
 			default: {
 				unreachableCase(type);
 			}
@@ -673,6 +852,14 @@ export class SharedTreeCore<
 				this.editManager.removeBranch(message.branchId);
 				break;
 			}
+			case "preserveRevision": {
+				// A rejection is not applied locally when it is sent, so there is nothing to roll back.
+				if (message.rejected !== true) {
+					// Approximation: this restores the opposite state, which is wrong if the request did not change the state.
+					this.editManager.setRevisionPreserved(message.revision, !message.preserved);
+				}
+				break;
+			}
 			default: {
 				unreachableCase(type);
 			}
@@ -699,6 +886,10 @@ export class SharedTreeCore<
 			}
 			case "branch": {
 				this.editManager.addNewBranch(message.branchId, message.branchName);
+				break;
+			}
+			case "preserveRevision": {
+				this.editManager.setRevisionPreserved(message.revision, message.preserved);
 				break;
 			}
 			default: {

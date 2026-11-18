@@ -465,7 +465,6 @@ export type SharedTreeWithContainerRuntime = ISharedTree & {
 export class TestTreeProviderLite {
 	private readonly runtimeFactory: MockContainerRuntimeFactoryWithOpBunching;
 	public readonly trees: readonly SharedTreeWithContainerRuntime[];
-	public readonly logger: IMockLoggerExt = createMockLoggerExt();
 	/**
 	 * Map from clientId to container runtime.
 	 */
@@ -497,6 +496,7 @@ export class TestTreeProviderLite {
 		private readonly factory: IChannelFactory<ITree> = DefaultTestSharedTreeKind.getFactory(),
 		useDeterministicSessionIds = true,
 		private readonly flushMode: FlushMode = FlushMode.Immediate,
+		public readonly logger: IMockLoggerExt = createMockLoggerExt(),
 	) {
 		this.runtimeFactory = new MockContainerRuntimeFactoryWithOpBunching({
 			flushMode,

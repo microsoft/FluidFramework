@@ -236,6 +236,7 @@ export function testCodec(): void {
 			EditManagerFormatVersion.v6,
 			EditManagerFormatVersion.v7,
 			EditManagerFormatVersion.vDetachedRoots,
+			EditManagerFormatVersion.vHistoryCompaction,
 		]);
 		makeDiscontinuedEncodingTestSuite(family, [
 			EditManagerFormatVersion.v1,
@@ -246,6 +247,34 @@ export function testCodec(): void {
 		makeEncodingTestSuite(family, testCases, undefined, [
 			EditManagerFormatVersion.vSharedBranches,
 		]);
+
+		describe("vHistoryCompaction", () => {
+			const codec = family.resolve(EditManagerFormatVersion.vHistoryCompaction);
+			const data: SummaryData<TestChange> = {
+				main: { trunk: trunkCommits, peerLocalBranches: new Map() },
+				preservedRevisions: [trunkCommits[2].revision, trunkCommits[0].revision],
+			};
+
+			it("stores preserved revisions as indices into the trunk", () => {
+				const encoded = codec.encode(data, dummyContext) as {
+					preservedTrunkIndices: number[];
+				};
+				assert.deepEqual(encoded.preservedTrunkIndices, [0, 2]);
+				const decoded = codec.decode(encoded, dummyContext);
+				assert.deepEqual(decoded.preservedRevisions, [
+					trunkCommits[0].revision,
+					trunkCommits[2].revision,
+				]);
+			});
+
+			it("rejects an index outside the trunk", () => {
+				const encoded = codec.encode(data, dummyContext) as {
+					preservedTrunkIndices: number[];
+				};
+				encoded.preservedTrunkIndices.push(trunkCommits.length);
+				assert.throws(() => codec.decode(encoded, dummyContext), /out of range/);
+			});
+		});
 
 		it("Extra properties on commits are omitted from encoding", () => {
 			interface ExtraData {

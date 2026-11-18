@@ -242,6 +242,18 @@ export enum CommitOutcome {
 // @alpha
 export type CommitRevision = string;
 
+// @alpha @input
+export interface CompactionPlan {
+    readonly ranges: readonly CompactionRange[];
+}
+
+// @alpha @input
+export interface CompactionRange {
+    readonly metadata?: JsonCompatibleReadOnlyObject;
+    readonly newest: CommitRevision;
+    readonly oldest: CommitRevision;
+}
+
 // @alpha
 export function comparePersistedSchema(persisted: JsonCompatible, view: ImplicitFieldSchema, options: ICodecOptions): Omit<SchemaCompatibilityStatusBeta, "canInitialize">;
 
@@ -840,6 +852,7 @@ export interface ITreeAlpha extends ITree, ViewableTreeAlpha {
     createSharedBranch(name?: string): string;
     getSharedBranchIds(): string[];
     getSharedBranchName(branchId: string): string | undefined;
+    readonly historyCompaction: TreeHistoryCompaction;
     viewSharedBranchWith<TRoot extends ImplicitFieldSchema>(branchId: string, config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
 }
 
@@ -1198,6 +1211,9 @@ export namespace PlainText {
     const Tree: Statics & TreeNodeSchema<"com.fluidframework.text.Text", NodeKind, Members & TreeNode & WithType<"com.fluidframework.text.Text", NodeKind, unknown>, never, false>;
     export type Tree = Members & TreeNode & WithType<"com.fluidframework.text.Text">;
 }
+
+// @alpha @input
+export type PlanCompaction = (history: readonly TreeBranchCommitMetadata[]) => CompactionPlan;
 
 // @beta @system
 export type PopUnion<Union, AsOverloadedFunction = UnionToIntersection<Union extends unknown ? (f: Union) => void : never>> = AsOverloadedFunction extends (a: infer First) => void ? First : never;
@@ -1721,6 +1737,7 @@ export interface SharedTreeFormatOptions {
 export interface SharedTreeOptions extends SharedTreeOptionsBeta, Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions> {
     readonly enableDetachedRootEditing?: boolean;
     readonly enableSharedBranches?: boolean;
+    readonly historyCompaction?: SummaryHistoryCompactionOptions;
     readonly retainHistory?: boolean | number;
     shouldEncodeIncrementally?: IncrementalEncodingPolicy;
     readonly validateCommitsOnFirstSubmission?: boolean;
@@ -1865,6 +1882,12 @@ export type StagedUpgradeStatus = "disabled" | "partial" | "enabled";
 
 // @alpha @sealed @system
 export type StringSchema = LeafSchema<"string", string> & SimpleLeafNodeSchema;
+
+// @alpha @input
+export interface SummaryHistoryCompactionOptions {
+    readonly enableRevisionPreservation?: boolean;
+    readonly planCompaction?: PlanCompaction;
+}
 
 // @beta @system
 export namespace System_TableSchema {
@@ -2324,6 +2347,19 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 export interface TreeGapCaptureOptions {
     readonly affinity?: "before" | "after" | undefined;
     readonly movePolicy?: "follow" | undefined;
+}
+
+// @alpha @sealed
+export interface TreeHistoryCompaction {
+    readonly events: Listenable<TreeHistoryCompactionEvents>;
+    isRevisionPreserved(revision: CommitRevision): boolean;
+    requestPlannedCompaction(planCompaction: PlanCompaction): number;
+    setRevisionPreserved(revision: CommitRevision, preserved: boolean): void;
+}
+
+// @alpha @sealed
+export interface TreeHistoryCompactionEvents {
+    revisionPreservationRejected(revision: CommitRevision): void;
 }
 
 // @alpha @sealed

@@ -20,6 +20,7 @@ import type { ChangeFamilyEditor, SchemaAndPolicy } from "../core/index.js";
 import type { IdentifierHealingConfig, JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { EditManager, SummaryData } from "./editManager.js";
+import type { HistoryTrace } from "./historyTrace.js";
 import type {
 	EditManagerDecodingContext,
 	EditManagerEncodingContext,
@@ -92,6 +93,7 @@ export class EditManagerSummarizer<TChangeset, TChangeProcessingContext>
 		private readonly schemaAndPolicy?: SchemaAndPolicy,
 		/** See {@link IdentifierHealingConfig}. */
 		private readonly healing?: IdentifierHealingConfig,
+		private readonly historyTrace?: HistoryTrace,
 	) {
 		super(
 			EditManagerSummarizer.key,
@@ -117,31 +119,55 @@ export class EditManagerSummarizer<TChangeset, TChangeProcessingContext>
 			hasSchemaChange: (change) => this.editManager.changeFamily.hasSchemaChange(change),
 			isSummary: true,
 		};
-		const jsonCompatible = this.codec.encode(this.editManager.getSummaryData(), context);
-		const dataString = stringify(jsonCompatible);
-		builder.addBlob(stringKey, dataString);
+		const operationId = this.historyTrace?.nextOperationId();
+		this.historyTrace?.record("HistoryEncodeStarted", { operationId });
+		try {
+			const data = this.editManager.getSummaryData();
+			const jsonCompatible = this.codec.encode(data, context);
+			const dataString = stringify(jsonCompatible);
+			builder.addBlob(stringKey, dataString);
+			this.historyTrace?.record("HistoryEncoded", {
+				operationId,
+				mainCommitCount: data.main.trunk.length,
+				serializedLength: dataString.length,
+			});
+		} catch (error: unknown) {
+			this.historyTrace?.record("HistoryEncodeFailed", { operationId });
+			throw error;
+		}
 	}
 
 	protected async loadInternal(
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
 	): Promise<void> {
-		const schemaBuffer: ArrayBufferLike = await services.readBlob(stringKey);
+		const operationId = this.historyTrace?.nextOperationId();
+		this.historyTrace?.record("HistoryLoadStarted", { operationId });
+		try {
+			const schemaBuffer: ArrayBufferLike = await services.readBlob(stringKey);
 
-		// After the awaits, validate that the data is in a clean state.
-		// This detects any data that could have been accidentally added through
-		// invalid means and is about to be overwritten.
-		assert(
-			this.editManager.isEmpty(),
-			0x42c /* There should not already be stored EditManager data when loading from summary */,
-		);
+			// After the awaits, validate that the data is in a clean state.
+			// This detects any data that could have been accidentally added through
+			// invalid means and is about to be overwritten.
+			assert(
+				this.editManager.isEmpty(),
+				0x42c /* There should not already be stored EditManager data when loading from summary */,
+			);
 
-		const summary = parse(bufferToString(schemaBuffer, "utf8")) as JsonCompatibleReadOnly;
-		const data = this.codec.decode(summary, {
-			idCompressor: this.idCompressor,
-			isSummary: true,
-			healing: this.healing,
-		});
-		this.editManager.loadSummaryData(data);
+			const summary = parse(bufferToString(schemaBuffer, "utf8")) as JsonCompatibleReadOnly;
+			const data = this.codec.decode(summary, {
+				idCompressor: this.idCompressor,
+				isSummary: true,
+				healing: this.healing,
+			});
+			this.editManager.loadSummaryData(data);
+			this.historyTrace?.record("HistoryLoadCompleted", {
+				operationId,
+				mainCommitCount: data.main.trunk.length,
+			});
+		} catch (error: unknown) {
+			this.historyTrace?.record("HistoryLoadFailed", { operationId });
+			throw error;
+		}
 	}
 }

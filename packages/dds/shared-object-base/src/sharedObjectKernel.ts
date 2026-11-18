@@ -159,6 +159,8 @@ class SharedObjectFromKernel<
 			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
 			minVersionForCollab,
 			oldestSupportedClient: minVersionForCollab,
+			// "summarizer" is the client type the container runtime uses for summarizer clients.
+			isSummarizerClient: () => this.deltaManager.clientDetails?.type === "summarizer",
 		};
 	}
 
@@ -327,6 +329,14 @@ export interface KernelArgs {
 	 * for details about this compatibility setting.
 	 */
 	readonly oldestSupportedClient: OldestSupportedClientVersion;
+
+	/**
+	 * Whether this client is the summarizer client.
+	 * @remarks
+	 * The client's type can change when it reconnects, so this is a function.
+	 * When omitted, the client is not a summarizer.
+	 */
+	readonly isSummarizerClient?: () => boolean;
 }
 
 /**

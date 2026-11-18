@@ -60,6 +60,9 @@ export { EditManagerSummarizer } from "./editManagerSummarizer.js";
 export {
 	EditManager,
 	minimumPossibleSequenceNumber,
+	createHistoryCompactionStats,
+	type HistoryCompactionStats,
+	type HistoryCompactionRange,
 	type SummaryData,
 	type SharedBranchSummaryData,
 } from "./editManager.js";
@@ -88,3 +91,4 @@ export {
 	encodeCustomMetadataTree,
 } from "./customMetadataCodec.js";
 export { EncodedCustomMetadataTree } from "./customMetadataFormat.js";
+export type { HistoryTrace } from "./historyTrace.js";

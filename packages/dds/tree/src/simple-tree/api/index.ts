@@ -54,6 +54,14 @@ export type {
 } from "./tree.js";
 export { asTreeViewAlpha } from "./tree.js";
 export type {
+	CompactionPlan,
+	CompactionRange,
+	PlanCompaction,
+	SummaryHistoryCompactionOptions,
+	TreeHistoryCompaction,
+	TreeHistoryCompactionEvents,
+} from "./historyCompaction.js";
+export type {
 	TreeLocation,
 	TextLocationNode,
 	CapturedTreeLocation,

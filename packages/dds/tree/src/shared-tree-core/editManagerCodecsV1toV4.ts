@@ -117,6 +117,7 @@ function doesVersionSupportCustomMetadata(version: EditManagerFormatVersion): bo
 		}
 		case unbrand(EditManagerFormatVersion.v7):
 		case unbrand(EditManagerFormatVersion.vSharedBranches):
+		case unbrand(EditManagerFormatVersion.vHistoryCompaction):
 		case unbrand(EditManagerFormatVersion.vDetachedRoots): {
 			return true;
 		}

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { createEmitter } from "@fluid-internal/client-utils";
+import { createEmitter, performanceNow } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
@@ -18,6 +18,8 @@ import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	CommitKind,
+	type CustomMetadataTree,
+	type RevisionReplacer,
 	type GraphCommit,
 	type RevisionTag,
 	findAncestor,
@@ -49,6 +51,7 @@ import {
 	minSequenceId,
 	sequenceIdComparator,
 } from "./sequenceIdUtils.js";
+import type { HistoryTrace } from "./historyTrace.js";
 
 export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_INTEGER);
 const minimumPossibleSequenceId: SequenceId = {
@@ -80,6 +83,12 @@ export class EditManager<
 > {
 	private readonly trimmer = createEmitter<BranchTrimmingEvents>();
 	private readonly trimState = { trimmedCommitCount: 0 };
+
+	/**
+	 * Main-branch revisions that history compaction must not remove.
+	 * @remarks See {@link EditManager.setRevisionPreserved}.
+	 */
+	private readonly preservedRevisions = new Set<RevisionTag>();
 
 	private readonly sharedBranches = new Map<
 		BranchId,
@@ -139,6 +148,7 @@ export class EditManager<
 		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly onSharedBranchCreated?: (branchId: BranchId) => void,
 		logger?: TelemetryLoggerExt,
+		private readonly historyTrace?: HistoryTrace,
 	) {
 		this.trunkBase = {
 			revision: rootRevision,
@@ -201,7 +211,8 @@ export class EditManager<
 			0xd79 /* historyRetention must be a boolean or a nonnegative safe integer */,
 		);
 		this.historyRetention = value;
-		this.trimHistory();
+		this.historyTrace?.record("RetentionConfigured", { retainHistory: value });
+		this.trimHistory("configuration");
 	}
 
 	/**
@@ -296,13 +307,13 @@ export class EditManager<
 		const offAfterRebase = branch.events.on("afterChange", (args) => {
 			if (args.type === "rebase") {
 				this.trackBranch(branch);
-				this.trimHistory();
+				this.trimHistory("forkRebased");
 			}
 		});
 		// When the branch is disposed, update our branch set and trim the trunk
 		const offDispose = branch.events.on("dispose", () => {
 			this.untrackBranch(branch);
-			this.trimHistory();
+			this.trimHistory("forkDisposed");
 			offBeforeRebase();
 			offAfterRebase();
 			offDispose();
@@ -321,6 +332,10 @@ export class EditManager<
 
 		assert(!branches.has(b), 0x670 /* Branch was registered more than once */);
 		branches.add(b);
+		this.historyTrace?.record("ForkTracked", {
+			baseSequenceNumber: sequenceId.sequenceNumber,
+			baseIndexInBatch: sequenceId.indexInBatch,
+		});
 	}
 
 	private untrackBranch(
@@ -338,6 +353,10 @@ export class EditManager<
 		if (branches.size === 0) {
 			this.trunkBranches.delete(sequenceId);
 		}
+		this.historyTrace?.record("ForkUntracked", {
+			baseSequenceNumber: sequenceId.sequenceNumber,
+			baseIndexInBatch: sequenceId.indexInBatch,
+		});
 	}
 
 	/**
@@ -370,6 +389,10 @@ export class EditManager<
 		allowHistoryTrimming = true,
 	): void {
 		if (minimumSequenceNumber === this.minimumSequenceNumber) {
+			this.historyTrace?.record("MinimumSequenceNumberUnchanged", {
+				minimumSequenceNumber,
+				allowHistoryTrimming,
+			});
 			return;
 		}
 
@@ -378,9 +401,14 @@ export class EditManager<
 			0x476 /* number must be larger or equal to current minimumSequenceNumber. */,
 		);
 
+		this.historyTrace?.record("MinimumSequenceNumberAdvanced", {
+			previousMinimumSequenceNumber: this.minimumSequenceNumber,
+			minimumSequenceNumber,
+			allowHistoryTrimming,
+		});
 		this.minimumSequenceNumber = minimumSequenceNumber;
 		if (allowHistoryTrimming) {
-			this.trimHistory();
+			this.trimHistory("minimumSequenceNumber");
 		}
 	}
 
@@ -388,7 +416,7 @@ export class EditManager<
 	 * Uses the retention policy, latest known minimum sequence number, and registered branch bases
 	 * to evict trunk commits that are no longer needed.
 	 */
-	private trimHistory(): void {
+	private trimHistory(trigger: string): void {
 		const msnBound = this.getUpperTrimmingBoundForMinimumSequenceNumber();
 		const forkBound = this.getUpperTrimmingBoundForLocalForks();
 		const historyBound = this.getUpperTrimmingBoundForHistory();
@@ -397,76 +425,329 @@ export class EditManager<
 			minSequenceId(forkBound, historyBound),
 		);
 		const mainBranch = this.getSharedBranch("main");
+		const operationId = this.historyTrace?.nextOperationId();
+		const commitsBefore = mainBranch.sequenceIdToCommit.size - 1;
+		this.historyTrace?.record("TrimEvaluated", {
+			operationId,
+			trigger,
+			retainHistory: this.historyRetention,
+			commitsBefore,
+			msnBound: `${msnBound.sequenceNumber}:${msnBound.indexInBatch ?? 0}`,
+			forkBound: `${forkBound.sequenceNumber}:${forkBound.indexInBatch ?? 0}`,
+			historyBound: `${historyBound.sequenceNumber}:${historyBound.indexInBatch ?? 0}`,
+			limitedByCollaboration: equalSequenceIds(trunkTailSequenceId, msnBound),
+			limitedByFork:
+				this.trunkBranches.size > 0 && equalSequenceIds(trunkTailSequenceId, forkBound),
+			limitedByRetention:
+				this.historyRetention !== false &&
+				this.historyRetention !== 0 &&
+				equalSequenceIds(trunkTailSequenceId, historyBound),
+		});
 
-		const [sequenceId, latestEvicted] = mainBranch.getClosestTrunkCommit(
-			maxSequenceId(
-				trunkTailSequenceId,
-				mainBranch.sequenceIdToCommit.minKey() ?? minimumPossibleSequenceId,
-			),
+		try {
+			const [sequenceId, latestEvicted] = mainBranch.getClosestTrunkCommit(
+				maxSequenceId(
+					trunkTailSequenceId,
+					mainBranch.sequenceIdToCommit.minKey() ?? minimumPossibleSequenceId,
+				),
+			);
+
+			// Don't do any work if the commit found by the search is already the tail of the trunk
+			if (latestEvicted === this.trunkBase) {
+				this.historyTrace?.record("TrimCompleted", {
+					operationId,
+					trigger,
+					removedCount: 0,
+					commitsAfter: commitsBefore,
+					reason: "alreadyAtBound",
+				});
+				return;
+			}
+
+			// This mutation is a performance hack. If commits are truly immutable, then changing the trunk's tail requires
+			// regenerating the entire commit graph. Instead, we can simply chop off the tail like this if we're certain
+			// that there are no outstanding references to any of the commits being removed (other than the references via
+			// the trunk). The peer branches have been rebased to the head of the trunk, the local branch is already rebased
+			// to the head of the trunk, and all other branches are tracked by `trunkBranches` and known to be ahead of or at
+			// `newTrunkBase`. Therefore, no branches should have unique references to any of the commits being evicted here.
+			// We mutate the most recent of the evicted commits to become the new trunk base. That way, any other commits that
+			// have parent pointers to the latest evicted commit will stay linked, even though that it is no longer part of the trunk.
+			const newTrunkBase = latestEvicted as Mutable<GraphCommit<TChangeset>>;
+
+			// collect the revisions that will be trimmed to send as part of the branch trimmed event
+			const trimmedCommits = getPathFromBase(newTrunkBase, this.trunkBase) as Mutable<
+				GraphCommit<TChangeset>
+			>[];
+			const trimmedRevisions = trimmedCommits.map((c) => c.revision);
+			// A preserved revision only protects a commit from compaction, not from the retention limit.
+			// Once the commit is trimmed there is nothing left to preserve.
+			let preservedRevisionsRemoved = 0;
+			for (const revision of trimmedRevisions) {
+				if (this.preservedRevisions.delete(revision)) {
+					preservedRevisionsRemoved++;
+				}
+			}
+
+			// The minimum sequence number informs us that all peer branches are at least caught up to the tail commit,
+			// so rebase them accordingly. This is necessary to prevent peer branches from referencing any evicted commits.
+			mainBranch.trimHistory(latestEvicted, sequenceId);
+
+			// Custom metadata shares the lifetime of its commit, so it must be dropped when the commit is
+			// trimmed. The new trunk base stays reachable as the sentinel for the remaining history, so its
+			// metadata is cleared rather than trapped; fully evicted commits get the throwing trap below.
+			newTrunkBase.customMetadata = undefined;
+
+			// Access to the intrinsic properties of trimmed commits indicates a bug in SharedTree.
+			// Throwing lowers the risk of such a bug causing data loss or corruption.
+			for (const commit of trimmedCommits.slice(0, -1)) {
+				Reflect.defineProperty(commit, "change", {
+					get: () =>
+						fail(0xa5e /* Should not access 'change' property of an evicted commit */),
+				});
+				Reflect.defineProperty(commit, "revision", {
+					get: () =>
+						assert(
+							false,
+							0xa5f /* Should not access 'revision' property of an evicted commit */,
+						),
+				});
+				Reflect.defineProperty(commit, "customMetadata", {
+					get: () =>
+						fail(0xd36 /* Should not access 'customMetadata' property of an evicted commit */),
+				});
+				Reflect.defineProperty(commit, "parent", {
+					get: () =>
+						assert(
+							false,
+							0xa60 /* Should not access 'parent' property of an evicted commit */,
+						),
+				});
+				commit.wasTrimmed = true;
+			}
+
+			// Dropping the parent field (transitively) removes references to the evicted commits so they can be garbage collected.
+			// Allowing the `parent` property to be read from the trunk base (despite it being a trimmed commit) spares readers from having to check `wasTrimmed` in order to safely find the root commit.
+			delete newTrunkBase.parent;
+			newTrunkBase.wasTrimmed = true;
+			this.trunkBase = newTrunkBase;
+			this.trimState.trimmedCommitCount += trimmedRevisions.length;
+
+			this.historyTrace?.record("TrimCompleted", {
+				operationId,
+				trigger,
+				removedCount: trimmedRevisions.length,
+				preservedRevisionsRemoved,
+				commitsAfter: mainBranch.sequenceIdToCommit.size - 1,
+			});
+			this.trimmer.emit("ancestryTrimmed", trimmedRevisions);
+		} catch (error: unknown) {
+			this.historyTrace?.record("TrimFailed", { operationId, trigger });
+			throw error;
+		}
+	}
+
+	/**
+	 * Compacts the main branch's retained history according to a plan of commit ranges ("whole branch history" compaction).
+	 * @param planRanges - Called once with every sequenced commit on the main branch's trunk, oldest first,
+	 * and the number of those commits (from the oldest) that are eligible for compaction.
+	 * Returns the ranges to combine, as inclusive indices into `history`.
+	 * Ranges must be ordered oldest first, must not overlap, and must have `oldestIndex <= newestIndex`.
+	 * The caller is responsible for validating application input; malformed ranges here are a bug.
+	 * @param createRevisionReplacer - Creates the replacer that re-tags each composed change with the revision of the range's newest commit.
+	 * @param onRangeCompacted - Called after each range is combined.
+	 * @param stats - If provided, filled in with statistics about the pass, including those before a later failure.
+	 * @returns The number of commits removed from the history.
+	 * @remarks
+	 * Only commits that are retained by the {@link EditManager.setHistoryRetention | retention policy} are in `history`.
+	 * Commits that are still needed for collaboration (the collaboration window) or by registered branches (local forks) are not eligible,
+	 * and a range that extends past the newest eligible commit is skipped.
+	 * The newest eligible commit can be the newest commit of a range, but is never removed, because later commits depend on its output state.
+	 * A range that contains a {@link EditManager.setRevisionPreserved | preserved} commit is skipped,
+	 * so a preserved commit's change and metadata remain unchanged by compaction.
+	 * A range with a single commit is skipped.
+	 *
+	 * Each range is composed in a single call to the change family's `compose` (see {@link SharedBranch.composeTrunkRange}).
+	 * Composition happens in place: the composed commit keeps the revision, sequence ID, and object identity of the range's newest commit,
+	 * so commits based on it remain linked to it.
+	 * Before the first composition, every peer branch is rebased onto the newest eligible commit,
+	 * so no peer branch references a commit that compaction removes.
+	 *
+	 * `planRanges` is called before any change is made, so if it throws, the history is unchanged.
+	 */
+	public compactHistoryByPlan(
+		planRanges: (
+			history: readonly GraphCommit<TChangeset>[],
+			eligibleCount: number,
+		) => readonly HistoryCompactionRange[],
+		createRevisionReplacer: RevisionReplacerFactory,
+		onRangeCompacted?: (range: HistoryCompactionRange) => void,
+		stats?: HistoryCompactionStats,
+		operationId?: number,
+	): number {
+		const mainBranch = this.getSharedBranch("main");
+		const correctnessBound = minSequenceId(
+			this.getUpperTrimmingBoundForMinimumSequenceNumber(),
+			this.getUpperTrimmingBoundForLocalForks(),
 		);
-
-		// Don't do any work if the commit found by the search is already the tail of the trunk
-		if (latestEvicted === this.trunkBase) {
-			return;
+		const newestEligible = mainBranch.sequenceIdToCommit.getPairOrNextLower(correctnessBound);
+		const history = getPathFromBase(mainBranch.trunk.getHead(), this.trunkBase);
+		const eligibleCount =
+			newestEligible === undefined
+				? 0
+				: getPathFromBase(newestEligible[1], this.trunkBase).length;
+		this.historyTrace?.record("CompactionEligibility", {
+			operationId,
+			eligibleCommitCount: eligibleCount,
+			historyCommitCount: history.length,
+			minimumSequenceNumber: this.minimumSequenceNumber,
+			upperSequenceNumber: correctnessBound.sequenceNumber,
+			upperIndexInBatch: correctnessBound.indexInBatch,
+			reason: newestEligible === undefined ? "noEligibleHistory" : undefined,
+		});
+		if (stats !== undefined) {
+			stats.eligibleCommitCount = eligibleCount;
 		}
 
-		// This mutation is a performance hack. If commits are truly immutable, then changing the trunk's tail requires
-		// regenerating the entire commit graph. Instead, we can simply chop off the tail like this if we're certain
-		// that there are no outstanding references to any of the commits being removed (other than the references via
-		// the trunk). The peer branches have been rebased to the head of the trunk, the local branch is already rebased
-		// to the head of the trunk, and all other branches are tracked by `trunkBranches` and known to be ahead of or at
-		// `newTrunkBase`. Therefore, no branches should have unique references to any of the commits being evicted here.
-		// We mutate the most recent of the evicted commits to become the new trunk base. That way, any other commits that
-		// have parent pointers to the latest evicted commit will stay linked, even though that it is no longer part of the trunk.
-		const newTrunkBase = latestEvicted as Mutable<GraphCommit<TChangeset>>;
-
-		// collect the revisions that will be trimmed to send as part of the branch trimmed event
-		const trimmedCommits = getPathFromBase(newTrunkBase, this.trunkBase) as Mutable<
-			GraphCommit<TChangeset>
-		>[];
-		const trimmedRevisions = trimmedCommits.map((c) => c.revision);
-
-		// The minimum sequence number informs us that all peer branches are at least caught up to the tail commit,
-		// so rebase them accordingly. This is necessary to prevent peer branches from referencing any evicted commits.
-		mainBranch.trimHistory(latestEvicted, sequenceId);
-
-		// Custom metadata shares the lifetime of its commit, so it must be dropped when the commit is
-		// trimmed. The new trunk base stays reachable as the sentinel for the remaining history, so its
-		// metadata is cleared rather than trapped; fully evicted commits get the throwing trap below.
-		newTrunkBase.customMetadata = undefined;
-
-		// Access to the intrinsic properties of trimmed commits indicates a bug in SharedTree.
-		// Throwing lowers the risk of such a bug causing data loss or corruption.
-		for (const commit of trimmedCommits.slice(0, -1)) {
-			Reflect.defineProperty(commit, "change", {
-				get: () => fail(0xa5e /* Should not access 'change' property of an evicted commit */),
-			});
-			Reflect.defineProperty(commit, "revision", {
-				get: () =>
-					assert(
-						false,
-						0xa5f /* Should not access 'revision' property of an evicted commit */,
-					),
-			});
-			Reflect.defineProperty(commit, "customMetadata", {
-				get: () =>
-					fail(0xd36 /* Should not access 'customMetadata' property of an evicted commit */),
-			});
-			Reflect.defineProperty(commit, "parent", {
-				get: () =>
-					assert(false, 0xa60 /* Should not access 'parent' property of an evicted commit */),
-			});
-			commit.wasTrimmed = true;
+		const ranges = planRanges(history, eligibleCount);
+		if (stats !== undefined) {
+			stats.plannedRangeCount = ranges.length;
 		}
+		this.historyTrace?.record("CompactionPlanReceived", {
+			operationId,
+			plannedRangeCount: ranges.length,
+			historyCommitCount: history.length,
+		});
 
-		// Dropping the parent field (transitively) removes references to the evicted commits so they can be garbage collected.
-		// Allowing the `parent` property to be read from the trunk base (despite it being a trimmed commit) spares readers from having to check `wasTrimmed` in order to safely find the root commit.
-		delete newTrunkBase.parent;
-		newTrunkBase.wasTrimmed = true;
-		this.trunkBase = newTrunkBase;
-		this.trimState.trimmedCommitCount += trimmedRevisions.length;
+		let removedCount = 0;
+		let peersRebased = false;
+		let previousNewest = -1;
+		for (const [rangeIndex, range] of ranges.entries()) {
+			const { oldestIndex, newestIndex } = range;
+			assert(
+				oldestIndex > previousNewest && newestIndex >= oldestIndex,
+				"Compaction ranges must be ordered and must not overlap",
+			);
+			assert(newestIndex < history.length, "Compaction range must be within the history");
+			previousNewest = newestIndex;
 
-		this.trimmer.emit("ancestryTrimmed", trimmedRevisions);
+			const skipReason =
+				newestIndex === oldestIndex
+					? "singleCommit"
+					: newestIndex >= eligibleCount
+						? "notEligible"
+						: history
+									.slice(oldestIndex, newestIndex + 1)
+									.some((commit) => this.preservedRevisions.has(commit.revision))
+							? "preservedRevision"
+							: undefined;
+			if (skipReason !== undefined) {
+				if (stats !== undefined) {
+					stats.skippedRangeCount++;
+				}
+				this.historyTrace?.record("CompactionRangeSkipped", {
+					operationId,
+					rangeIndex,
+					rangeLength: newestIndex - oldestIndex + 1,
+					reason: skipReason,
+				});
+				continue;
+			}
+
+			if (!peersRebased) {
+				assert(newestEligible !== undefined, "Expected an eligible commit");
+				this.rebasePeersForCompaction(newestEligible[1], stats, operationId);
+				peersRebased = true;
+			}
+			const commits = history.slice(oldestIndex, newestIndex + 1);
+			const composeStarted = performanceNow();
+			mainBranch.composeTrunkRange(commits, createRevisionReplacer, range.metadata);
+			const composeDurationMs = performanceNow() - composeStarted;
+			removedCount += commits.length - 1;
+			if (stats !== undefined) {
+				stats.composeCallCount++;
+				stats.composedChangeCount += commits.length;
+				stats.composeDurationMs += composeDurationMs;
+				stats.combinedRangeCount++;
+			}
+			this.historyTrace?.record("CompactionRangeMerged", {
+				operationId,
+				rangeIndex,
+				rangeLength: commits.length,
+				removedCount,
+				composeDurationMs,
+			});
+			onRangeCompacted?.(range);
+		}
+		return removedCount;
+	}
+
+	private rebasePeersForCompaction(
+		newestEligible: GraphCommit<TChangeset>,
+		stats: HistoryCompactionStats | undefined,
+		operationId: number | undefined,
+	): void {
+		const mainBranch = this.getSharedBranch("main");
+		const started = performanceNow();
+		// A peer branch may be based on (or contain) a commit that is about to be composed away.
+		// Every peer has seen the newest eligible commit (it is within the minimum sequence number bound),
+		// so rebasing peers onto it removes their references to the commits that compaction removes.
+		mainBranch.rebasePeersOnto(newestEligible);
+		const rebaseDurationMs = performanceNow() - started;
+		this.historyTrace?.record("CompactionPeersRebased", {
+			operationId,
+			peerBranchCount: mainBranch.getPeerBranchCount(),
+			rebaseDurationMs,
+		});
+		if (stats !== undefined) {
+			stats.peerBranchCount = mainBranch.getPeerBranchCount();
+			stats.peerRebaseDurationMs = rebaseDurationMs;
+		}
+	}
+
+	/**
+	 * Marks or unmarks a main-branch revision as preserved, so that {@link EditManager.compactHistoryByPlan} never combines it with another commit.
+	 * @param revision - The revision of a commit on the main branch's trunk or in its local (not yet sequenced) commits.
+	 * @param preserved - Whether the revision should be preserved.
+	 * @returns `false` if `preserved` is `true` but the revision is not in the main branch's history
+	 * (for example because it was already trimmed or compacted away), in which case nothing changes. Otherwise `true`.
+	 * @remarks
+	 * Preserving a revision does not keep it beyond the retention limit: it is dropped when its commit is trimmed.
+	 * This method is idempotent so it can be applied both optimistically and again when the corresponding op is sequenced.
+	 */
+	public setRevisionPreserved(revision: RevisionTag, preserved: boolean): boolean {
+		const wasPreserved = this.preservedRevisions.has(revision);
+		if (!preserved) {
+			this.preservedRevisions.delete(revision);
+			this.historyTrace?.record("PreservationUpdated", {
+				preserved,
+				wasPreserved,
+				accepted: true,
+			});
+			return true;
+		}
+		const mainBranch = this.getSharedBranch("main");
+		if (
+			!mainBranch.hasTrunkCommit(revision) &&
+			!mainBranch.getLocalCommits().some((commit) => commit.revision === revision)
+		) {
+			this.historyTrace?.record("PreservationUpdated", { preserved, accepted: false });
+			return false;
+		}
+		this.preservedRevisions.add(revision);
+		this.historyTrace?.record("PreservationUpdated", {
+			preserved,
+			wasPreserved,
+			accepted: true,
+		});
+		return true;
+	}
+
+	/**
+	 * Whether the given revision is preserved from history compaction.
+	 * @remarks See {@link EditManager.setRevisionPreserved}.
+	 */
+	public isRevisionPreserved(revision: RevisionTag): boolean {
+		return this.preservedRevisions.has(revision);
 	}
 
 	public isEmpty(): boolean {
@@ -481,7 +762,7 @@ export class EditManager<
 
 	public getSummaryData(): SummaryData<TChangeset> {
 		// Trimming the trunk before serializing ensures that the trunk data in the summary is as minimal as possible.
-		this.trimHistory();
+		this.trimHistory("summary");
 
 		const mainBranch = this.getSharedBranch("main");
 		const minSeqNumberToSummarize: SequenceId = {
@@ -506,7 +787,15 @@ export class EditManager<
 			}
 		}
 		const mainSummary = mainBranch.getSummaryData(minBaseSeqId, this.trunkBase.revision);
-		return { main: mainSummary, branches, originator: this.localSessionId };
+		const preservedRevisions = mainSummary.trunk
+			.map((commit) => commit.revision)
+			.filter((revision) => this.preservedRevisions.has(revision));
+		return {
+			main: mainSummary,
+			branches,
+			originator: this.localSessionId,
+			...(preservedRevisions.length > 0 ? { preservedRevisions } : {}),
+		};
 	}
 
 	public loadSummaryData(data: SummaryData<TChangeset>): void {
@@ -521,6 +810,9 @@ export class EditManager<
 		const mainBranch =
 			this.sharedBranches.get("main") ?? fail(0xc58 /* Main branch must exist */);
 		mainBranch.loadSummaryData(data.main, trunkRevisionCache);
+		for (const revision of data.preservedRevisions ?? []) {
+			this.preservedRevisions.add(revision);
+		}
 		if (data.branches !== undefined) {
 			for (const [branchId, branchData] of data.branches) {
 				const baseCommit =
@@ -541,6 +833,12 @@ export class EditManager<
 		// This prevents the trimming of superfluous commits when the summarizer's history retention policy is more generous than the loader's policy.
 		// If this changes, uncomment the next line to trim superfluous commits.
 		// this.trimHistory();
+		this.historyTrace?.record("HistoryLoaded", {
+			mainCommitCount: data.main.trunk.length,
+			preservedRevisionCount: this.preservedRevisions.size,
+			minimumSequenceNumber: this.minimumSequenceNumber,
+			trimmingDeferred: true,
+		});
 	}
 
 	public getTrunkHead(branchId: BranchId): GraphCommit<TChangeset> {
@@ -751,8 +1049,16 @@ export class EditManager<
 			referenceSequenceNumber,
 			onSequenceLocalCommit,
 		);
+		this.historyTrace?.record("CommitsSequenced", {
+			sequenceNumber,
+			referenceSequenceNumber,
+			commitCount: newCommits.length,
+			local: areLocalCommits,
+			mainBranch: branchId === "main",
+			allowHistoryTrimming,
+		});
 		if (allowHistoryTrimming) {
-			this.trimHistory();
+			this.trimHistory("commitsSequenced");
 		}
 	}
 
@@ -773,10 +1079,86 @@ export class EditManager<
 /**
  * The in-memory data that summaries contain
  */
+/**
+ * Statistics about one {@link EditManager.compactHistoryByPlan} pass, used for telemetry.
+ */
+export interface HistoryCompactionStats {
+	/**
+	 * The number of trunk commits eligible for compaction when the pass started.
+	 */
+	eligibleCommitCount: number;
+	/**
+	 * The number of peer branches rebased before the first composition, or 0 if nothing was composed.
+	 */
+	peerBranchCount: number;
+	/**
+	 * Time spent rebasing peer branches before the first composition, in milliseconds.
+	 */
+	peerRebaseDurationMs: number;
+	/**
+	 * The number of calls to the change family's `compose`, which is one per combined range.
+	 */
+	composeCallCount: number;
+	/**
+	 * The total number of changes passed to `compose` across all calls, which is the total number of commits in the combined ranges.
+	 */
+	composedChangeCount: number;
+	/**
+	 * Total time spent composing and re-tagging changes, in milliseconds.
+	 */
+	composeDurationMs: number;
+	/**
+	 * The number of ranges in the application's plan.
+	 */
+	plannedRangeCount: number;
+	/**
+	 * The number of ranges combined.
+	 */
+	combinedRangeCount: number;
+	/**
+	 * The number of ranges skipped because they were not eligible, contained a preserved commit, or had a single commit.
+	 */
+	skippedRangeCount: number;
+}
+
+/**
+ * A range of trunk commits to combine, as inclusive indices into the history given to {@link EditManager.compactHistoryByPlan}.
+ */
+export interface HistoryCompactionRange {
+	readonly oldestIndex: number;
+	readonly newestIndex: number;
+	/**
+	 * Replaces the metadata of every commit in the range. When omitted, the metadata of the range's commits is merged as by {@link SharedBranch.composeTrunkRange}.
+	 */
+	readonly metadata?: CustomMetadataTree;
+}
+
+/**
+ * Creates a zeroed {@link HistoryCompactionStats}.
+ */
+export function createHistoryCompactionStats(): HistoryCompactionStats {
+	return {
+		eligibleCommitCount: 0,
+		peerBranchCount: 0,
+		peerRebaseDurationMs: 0,
+		composeCallCount: 0,
+		composedChangeCount: 0,
+		composeDurationMs: 0,
+		plannedRangeCount: 0,
+		combinedRangeCount: 0,
+		skippedRangeCount: 0,
+	};
+}
+
 export interface SummaryData<TChangeset> {
 	readonly originator?: SessionId;
 	readonly main: SharedBranchSummaryData<TChangeset>;
 	readonly branches?: ReadonlyMap<BranchId, SharedBranchSummaryData<TChangeset>>;
+	/**
+	 * Main-branch revisions that are preserved from history compaction (see {@link EditManager.setRevisionPreserved}).
+	 * @remarks Only encoded by {@link EditManagerFormatVersion.vHistoryCompaction}; other formats drop it.
+	 */
+	readonly preservedRevisions?: readonly RevisionTag[];
 }
 
 export interface SharedBranchSummaryData<TChangeset> {
@@ -1021,7 +1403,9 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 	}
 
 	public trimHistory(newBase: GraphCommit<TChangeset>, sequenceId: SequenceId): void {
-		this.rebasePeers(newBase);
+		this.rebasePeersOnto(newBase);
+		// The metadata for new trunk base revision needs to be deleted before modifying it.
+		this.commitMetadata.delete(newBase.revision);
 
 		this.sequenceIdToCommit.editRange(
 			minimumPossibleSequenceId,
@@ -1053,17 +1437,88 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 		);
 	}
 
-	private rebasePeers(commit: GraphCommit<TChangeset>): void {
+	/**
+	 * Composes a run of adjacent trunk commits into the newest of them, in a single call to `compose`.
+	 * @remarks
+	 * The newest commit is mutated in place, so that commits which have it as their parent remain linked to it.
+	 * It keeps its revision and sequence ID, and its change refers only to that revision.
+	 * Its metadata becomes `mergedMetadata` if provided.
+	 * Otherwise it becomes the left fold of {@link composeCustomMetadata} over the commits' metadata, oldest first,
+	 * so that flattening the metadata lets newer commits' metadata win where several commits use the same property.
+	 */
+	public composeTrunkRange(
+		commits: readonly GraphCommit<TChangeset>[],
+		createRevisionReplacer: RevisionReplacerFactory,
+		mergedMetadata?: CustomMetadataTree,
+	): void {
+		const oldest = commits[0];
+		const newest = commits.at(-1);
+		assert(oldest !== undefined && newest !== undefined, "Cannot compose an empty range");
+		assert(oldest.parent !== undefined, "The trunk base cannot be composed away");
+		let metadata: CustomMetadataTree | undefined;
+		for (const [index, commit] of commits.entries()) {
+			assert(
+				index === 0 || commit.parent === commits[index - 1],
+				"Only adjacent commits can be composed",
+			);
+			assert(
+				this.commitMetadata.has(commit.revision),
+				"Only sequenced trunk commits can be composed",
+			);
+			metadata =
+				index === 0
+					? commit.customMetadata
+					: composeCustomMetadata(metadata, commit.customMetadata);
+		}
+
+		const composed = newest as Mutable<GraphCommit<TChangeset>>;
+		const { rebaser } = this.changeFamily;
+		const composedChange = rebaser.compose(
+			commits.map((commit) => tagChange(commit.change, commit.revision)),
+		);
+		composed.change = rebaser.changeRevision(
+			composedChange,
+			createRevisionReplacer(
+				newest.revision,
+				new Set(commits.map((commit) => commit.revision)),
+			),
+		);
+		composed.customMetadata = mergedMetadata ?? metadata;
+		composed.parent = oldest.parent;
+
+		for (const commit of commits.slice(0, -1)) {
+			const commitMetadata = this.commitMetadata.get(commit.revision);
+			assert(commitMetadata !== undefined, "Expected trunk commit metadata");
+			this.sequenceIdToCommit.delete(commitMetadata.sequenceId);
+			this.commitMetadata.delete(commit.revision);
+		}
+	}
+
+	/**
+	 * Rebases every peer branch that is behind `commit` onto it.
+	 * @remarks
+	 * Peer branches that already include `commit` are unchanged.
+	 * `commit` must be a trunk commit that every peer has seen (i.e. at or below the minimum sequence number).
+	 */
+	public rebasePeersOnto(commit: GraphCommit<TChangeset>): void {
 		for (const [, branch] of this.peerLocalBranches) {
 			branch.rebaseOnto(this.trunk, commit);
 		}
+	}
 
-		// The metadata for new trunk base revision needs to be deleted before modifying it.
-		this.commitMetadata.delete(commit.revision);
+	public getPeerBranchCount(): number {
+		return this.peerLocalBranches.size;
 	}
 
 	public getLocalCommits(): readonly GraphCommit<TChangeset>[] {
 		return this.localCommits;
+	}
+
+	/**
+	 * Whether a sequenced commit with the given revision is in this branch's trunk (excluding the trunk base).
+	 */
+	public hasTrunkCommit(revision: RevisionTag): boolean {
+		return this.commitMetadata.has(revision);
 	}
 
 	/**
@@ -1337,3 +1792,30 @@ type OnSequenceCommit<TChangeset> = (
 	sequenceId: SequenceId,
 	prevSequenceId: SequenceId,
 ) => void;
+
+/**
+ * Creates a {@link RevisionReplacer} that replaces the `obsolete` revisions with `updated`.
+ */
+export type RevisionReplacerFactory = (
+	updated: RevisionTag,
+	obsolete: Set<RevisionTag | undefined>,
+) => RevisionReplacer;
+
+/**
+ * Combines the metadata of two composed commits by making them siblings in a new metadata tree.
+ * @remarks
+ * Sibling order matches commit order, so when the result is flattened the later commit's metadata wins.
+ * If only one commit has metadata, that metadata is used unchanged.
+ */
+function composeCustomMetadata(
+	before: CustomMetadataTree | undefined,
+	after: CustomMetadataTree | undefined,
+): CustomMetadataTree | undefined {
+	if (before === undefined) {
+		return after;
+	}
+	if (after === undefined) {
+		return before;
+	}
+	return { metadata: undefined, children: [before, after] };
+}
