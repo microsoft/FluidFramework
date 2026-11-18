@@ -21,16 +21,15 @@ The comparison isolates these editing changes from earlier read-traversal improv
 
 | Metric | Before | After | Change |
 | --- | --- | --- | --- |
-| Local edit time | 211 ms | 169 ms | 20% less |
-| Memory retained by the edited tree view | 15.11 MiB | 12.84 MiB | 15% less |
-| Receive queued edits from another client | 74.6 ms | 32.9 ms | 56% less |
-| Merge edits from a fork | 60.9 ms | 27.1 ms | 56% less |
+| Local edit time | 191 ms | 147 ms | 23% less |
+| Memory retained by the edited tree view | 15.12 MiB | 12.85 MiB | 15% less |
+| Receive queued edits from another client | 70.4 ms | 34.4 ms | 51% less |
+| Merge edits from a fork | 61.4 ms | 29.6 ms | 52% less |
 
 Measurements use Node.js 22.23.2 and report means across two runs per implementation in an interleaved comparison.
 Local edit timing excludes document initialization and result verification.
 Memory figures are per document after garbage collection, including content and editing history retained by the tree view; they do not measure peak memory.
 
 Remote-receive timing covers decoding and applying already-received edits in an in-memory test environment, excluding sender work and network delay.
-Remote-receive timings varied more between runs than local and fork-merge timings.
 Fork-merge timing excludes creating and editing the fork.
 Neither incoming-edit case includes concurrent local edits on the receiver.
