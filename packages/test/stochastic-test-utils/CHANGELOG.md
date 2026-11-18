@@ -48,16 +48,16 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Removal of direct CommonJS support ([#28124](https://github.com/microsoft/FluidFramework/pull/28124)) [0f84e3b8878](https://github.com/microsoft/FluidFramework/commit/0f84e3b8878a5e75b2253976d98fd963bbd9db88)
+#### Removal of direct CommonJS support ([#28124](https://github.com/microsoft/FluidFramework/pull/28124)) [0f84e3b8878](https://github.com/microsoft/FluidFramework/commit/0f84e3b8878a5e75b2253976d98fd963bbd9db88)
 
-  Direct `require()` import is no longer directly supported.
-  Package is transpiled as ECMAScript Module.
+Direct `require()` import is no longer directly supported.
+Package is transpiled as ECMAScript Module.
 
-  See [Removal of direct CommonJS support in v3.0](https://github.com/microsoft/FluidFramework/issues/27444) for more information.
+See [Removal of direct CommonJS support in v3.0](https://github.com/microsoft/FluidFramework/issues/27444) for more information.
 
-- Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
+#### Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
 
-  FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
+FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
 
 ## 2.116.0
 
@@ -275,9 +275,9 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+#### Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
 
-  Update package implementations to use TypeScript 5.4.5.
+Update package implementations to use TypeScript 5.4.5.
 
 ## 2.0.0-rc.4.0.0
 
@@ -307,10 +307,10 @@ Dependency updates only.
 
 ### Minor Changes
 
-- @fluid-internal/stochastic-test-utils renamed to @fluid-private/stochastic-test-utils ([#17697](https://github.com/microsoft/FluidFramework/issues/17697)) [92941a780f](https://github.com/microsoft/FluidFramework/commits/92941a780f7c60be4087b3280a6c4da36359ae5b)
+#### @fluid-internal/stochastic-test-utils renamed to @fluid-private/stochastic-test-utils ([#17697](https://github.com/microsoft/FluidFramework/issues/17697)) [92941a780f](https://github.com/microsoft/FluidFramework/commits/92941a780f7c60be4087b3280a6c4da36359ae5b)
 
-  The @fluid-internal/stochastic-test-utils has been renamed to @fluid-private/stochastic-test-utils. This package is
-  intended for use within the Fluid Framework repo and is not published externally.
+The @fluid-internal/stochastic-test-utils has been renamed to @fluid-private/stochastic-test-utils. This package is
+intended for use within the Fluid Framework repo and is not published externally.
 
 ## 2.0.0-internal.7.2.0
 
