@@ -24,7 +24,11 @@ import {
 	UNKNOWN_SECTION,
 } from "../../library/changesets.js";
 import { BaseCommand } from "../../library/commands/base.js";
-import { addHeadingLinks, stripSoftBreaks } from "../../library/markdown.js";
+import {
+	addHeadingLinks,
+	normalizeReleaseNoteHeadings,
+	stripSoftBreaks,
+} from "../../library/markdown.js";
 import { RELEASE_NOTES_TOC_LINK_TEXT } from "../../library/releaseNotes.js";
 import { difference } from "../../library/sets.js";
 
@@ -166,6 +170,9 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 			}
 		}
 
+		// Normalizes headings in changeset body to ensure they do not conflict with the generated release note headings, which reserve levels 1-3.
+		const changesetBodyProcessor = remark().use(remarkGfm).use(normalizeReleaseNoteHeadings);
+
 		const body = new StringBuilder();
 		for (const [name, { heading: sectionHead }] of sectionsToBuild.entries()) {
 			this.verbose(`Building "${name}" section with header: ${sectionHead}`);
@@ -192,7 +199,10 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 				) {
 					const pr = change.commit?.githubPullRequest;
 					const changeTitle = pr === undefined ? change.summary : `${change.summary} (#${pr})`;
-					body.append(`### ${changeTitle}\n\n${change.body}\n\n`);
+
+					// Normalize each body before adding generated headings, which must not affect its relative hierarchy.
+					const changeBody = String(changesetBodyProcessor.processSync(change.body));
+					body.append(`### ${changeTitle}\n\n${changeBody}\n\n`);
 
 					body.append(`#### Change details\n\n`);
 					if (change.commit?.sha !== undefined) {
