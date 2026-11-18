@@ -30,6 +30,7 @@ import { type Mutable, brand, getOrCreate, mapIterable } from "../util/index.js"
 
 import {
 	SharedTreeBranch,
+	HistoryUpdateScope,
 	type BranchTrimState,
 	type BranchTrimmingEvents,
 	onForkTransitive,
@@ -80,6 +81,7 @@ export class EditManager<
 > {
 	private readonly trimmer = createEmitter<BranchTrimmingEvents>();
 	private readonly trimState = { trimmedCommitCount: 0 };
+	public readonly historyUpdates = new HistoryUpdateScope();
 
 	private readonly sharedBranches = new Map<
 		BranchId,
@@ -164,6 +166,7 @@ export class EditManager<
 			mintRevisionTag,
 			this.trimState,
 			this.telemetryEventBatcher,
+			this.historyUpdates,
 		);
 		mainTrunk.trimmer = this.trimmer;
 
@@ -389,6 +392,10 @@ export class EditManager<
 	 * to evict trunk commits that are no longer needed.
 	 */
 	private trimHistory(): void {
+		this.historyUpdates.run(() => this.historyUpdates.deferCleanup(this.trimHistoryCore));
+	}
+
+	private readonly trimHistoryCore = (): void => {
 		const msnBound = this.getUpperTrimmingBoundForMinimumSequenceNumber();
 		const forkBound = this.getUpperTrimmingBoundForLocalForks();
 		const historyBound = this.getUpperTrimmingBoundForHistory();
@@ -467,7 +474,7 @@ export class EditManager<
 		this.trimState.trimmedCommitCount += trimmedRevisions.length;
 
 		this.trimmer.emit("ancestryTrimmed", trimmedRevisions);
-	}
+	};
 
 	public isEmpty(): boolean {
 		for (const branch of this.sharedBranches.values()) {
@@ -481,7 +488,7 @@ export class EditManager<
 
 	public getSummaryData(): SummaryData<TChangeset> {
 		// Trimming the trunk before serializing ensures that the trunk data in the summary is as minimal as possible.
-		this.trimHistory();
+		this.historyUpdates.run(this.trimHistoryCore);
 
 		const mainBranch = this.getSharedBranch("main");
 		const minSeqNumberToSummarize: SequenceId = {
@@ -698,6 +705,26 @@ export class EditManager<
 		branchId: BranchId,
 		allowHistoryTrimming = true,
 	): void {
+		this.historyUpdates.run(() =>
+			this.addSequencedChangesCore(
+				newCommits,
+				sessionId,
+				sequenceNumber,
+				referenceSequenceNumber,
+				branchId,
+				allowHistoryTrimming,
+			),
+		);
+	}
+
+	private addSequencedChangesCore(
+		newCommits: readonly GraphCommit<TChangeset>[],
+		sessionId: SessionId,
+		sequenceNumber: SeqNumber,
+		referenceSequenceNumber: SeqNumber,
+		branchId: BranchId,
+		allowHistoryTrimming: boolean,
+	): void {
 		assert(newCommits.length > 0, 0xad8 /* Expected at least one sequenced change */);
 		assert(
 			sequenceNumber > this.minimumSequenceNumber,
@@ -865,6 +892,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 			mintRevisionTag,
 			trimState,
 			telemetryEventBatcher,
+			this.trunk.historyUpdates,
 		);
 		this.localBranch.trimmer = branchTrimmer;
 

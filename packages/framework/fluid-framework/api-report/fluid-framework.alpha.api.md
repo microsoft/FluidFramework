@@ -896,6 +896,20 @@ export function getSimpleSchema(schema: ImplicitFieldSchema): SimpleTreeSchema<S
 // @alpha
 export type HandleConverter<TCustom> = (data: IFluidHandle) => TCustom;
 
+// @alpha @sealed
+export interface HistoryChange {
+    readonly addedCount: number;
+    readonly reason: "append" | "trim" | "rebase" | "rollback";
+    readonly removedCount: number;
+}
+
+// @alpha @sealed
+export interface HistoryUpdate {
+    readonly changes: readonly HistoryChange[];
+    readonly lengthAfter: number;
+    readonly lengthBefore: number;
+}
+
 // @alpha @input
 export interface ICodecOptions {
     readonly jsonValidator: FormatValidator;
@@ -2865,6 +2879,7 @@ export interface TreeBranchCommitMetadata {
 // @alpha @sealed
 export interface TreeBranchEvents extends TreeBranchEventsBeta {
     changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
+    historyChanged(update: HistoryUpdate): void;
 }
 
 // @beta @sealed

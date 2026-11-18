@@ -233,6 +233,8 @@ export {
 	FormatVersion, 
 	FormattedText, 
 	HandleConverter, 
+	HistoryChange,
+	HistoryUpdate,
 	ICodecOptions, 
 	ITreeAlpha, 
 	ITreeViewConfigurationAlpha, 

@@ -124,6 +124,66 @@ export interface BranchTrimmingEvents {
 }
 
 /**
+ * Defers history notifications until the outermost synchronous update has completed.
+ * Branches with shared ancestry use the same scope so nested trimming is included.
+ */
+export class HistoryUpdateScope {
+	private depth = 0;
+	private readonly cleanups = new Set<() => void>();
+	private readonly notifications = new Set<() => void>();
+
+	public run<TResult>(update: () => TResult): TResult {
+		this.depth++;
+		let succeeded = false;
+		try {
+			const result = update();
+			succeeded = true;
+			return result;
+		} finally {
+			this.depth--;
+			if (this.depth === 0) {
+				try {
+					if (succeeded) {
+						// Internal change listeners may still need the commits being evicted.
+						// Finish those listeners before cleanup, and finish cleanup before notifying apps.
+						this.depth++;
+						try {
+							while (this.cleanups.size > 0) {
+								const cleanups = [...this.cleanups];
+								this.cleanups.clear();
+								for (const cleanup of cleanups) {
+									cleanup();
+								}
+							}
+						} finally {
+							this.depth--;
+						}
+						const notifications = [...this.notifications];
+						this.notifications.clear();
+						for (const notify of notifications) {
+							notify();
+						}
+					}
+				} finally {
+					this.cleanups.clear();
+					this.notifications.clear();
+				}
+			}
+		}
+	}
+
+	public defer(notification: () => void): void {
+		assert(this.depth > 0, "History notifications require an active update scope.");
+		this.notifications.add(notification);
+	}
+
+	public deferCleanup(cleanup: () => void): void {
+		assert(this.depth > 0, "History cleanup requires an active update scope.");
+		this.cleanups.add(cleanup);
+	}
+}
+
+/**
  * Count bookkeeping for branches whose ancestry is trimmed together.
  * @remarks
  * Branches share a reference to the same trim state, allowing implicit updating to all of their commit counts without O(branch count) updates.
@@ -180,6 +240,7 @@ export class SharedTreeBranch<
 	 * @param mintRevisionTag - used to generate a `RevisionTag` for each change.
 	 * @param trimState - shared count of commits trimmed from this branch's ancestry.
 	 * @param telemetryEventBatcher - an optional telemetry event batcher for collecting rebase statistics.
+	 * @param historyUpdates - The notification scope shared by branches with common ancestry.
 	 */
 	public constructor(
 		private head: GraphCommit<TChange>,
@@ -189,6 +250,7 @@ export class SharedTreeBranch<
 		private readonly telemetryEventBatcher?: TelemetryEventBatcher<
 			keyof RebaseStatsWithDuration
 		>,
+		public readonly historyUpdates = new HistoryUpdateScope(),
 	) {
 		this.editor = this.changeFamily.buildEditor(mintRevisionTag, (change) =>
 			this.apply(change, CommitKind.Default, undefined),
@@ -213,8 +275,10 @@ export class SharedTreeBranch<
 
 		this.unsubscribeBranchTrimmer?.();
 		this.branchTrimmer = branchTrimmer;
-		this.unsubscribeBranchTrimmer = branchTrimmer?.on("ancestryTrimmed", (commit) => {
-			this.#events.emit("ancestryTrimmed", commit);
+		this.unsubscribeBranchTrimmer = branchTrimmer?.on("ancestryTrimmed", (revisions) => {
+			this.historyUpdates.run(() => {
+				this.#events.emit("ancestryTrimmed", revisions);
+			});
 		});
 	}
 
@@ -267,9 +331,20 @@ export class SharedTreeBranch<
 			newCommits: [newHead],
 		} as const;
 
-		this.#events.emit("beforeChange", changeEvent);
-		this.setHead(newHead, 1);
-		this.#events.emit("afterChange", changeEvent);
+		this.changeHistory(changeEvent, newHead);
+	}
+
+	private changeHistory(
+		change: SharedTreeBranchChange<TChange>,
+		head: GraphCommit<TChange>,
+	): void {
+		this.historyUpdates.run(() => {
+			const removed = change.type === "append" ? [] : change.removedCommits;
+			const added = change.type === "remove" ? [] : change.newCommits;
+			this.#events.emit("beforeChange", change);
+			this.setHead(head, added.length - removed.length);
+			this.#events.emit("afterChange", change);
+		});
 	}
 
 	/**
@@ -328,6 +403,8 @@ export class SharedTreeBranch<
 			this.changeFamily,
 			mintRevisionTag,
 			this.trimState,
+			undefined,
+			this.historyUpdates,
 		);
 		if (commit === this.head) {
 			fork.logicalCommitCount = this.logicalCommitCount;
@@ -373,9 +450,7 @@ export class SharedTreeBranch<
 			newCommits,
 		} as const;
 
-		this.#events.emit("beforeChange", changeEvent);
-		this.setHead(newSourceHead, newCommits.length - deletedSourceCommits.length);
-		this.#events.emit("afterChange", changeEvent);
+		this.changeHistory(changeEvent, newSourceHead);
 	}
 
 	/**
@@ -410,9 +485,7 @@ export class SharedTreeBranch<
 			removedCommits,
 		} as const;
 
-		this.#events.emit("beforeChange", changeEvent);
-		this.setHead(commit, -removedCommits.length);
-		this.#events.emit("afterChange", changeEvent);
+		this.changeHistory(changeEvent, commit);
 	}
 
 	/**
@@ -451,9 +524,7 @@ export class SharedTreeBranch<
 			() => makeAnonChange(rebaser.compose(sourceCommits)),
 		);
 
-		this.#events.emit("beforeChange", changeEvent);
-		this.setHead(rebaseResult.newSourceHead, sourceCommits.length);
-		this.#events.emit("afterChange", changeEvent);
+		this.changeHistory(changeEvent, rebaseResult.newSourceHead);
 		return { sourceCommits };
 	}
 

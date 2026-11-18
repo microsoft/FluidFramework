@@ -48,6 +48,8 @@ export type {
 	TreeBranchEventsBeta,
 	TreeBranchCommitMetadata,
 	TreeBranchHistory,
+	HistoryUpdate,
+	HistoryChange,
 	TreeContextBeta,
 	TreeContextAlpha,
 	ITreeAlpha,
