@@ -16,6 +16,13 @@ The tables below distinguish two directions of compatibility: [backward compatib
 A client may be required to upgrade a document's stored schema before viewing it.
 Such a client's view schema is still considered compatible, so long as upgrading the document would make it viewable.
 
+:::important
+
+These results assume that the client's installed Fluid Framework library versions support the required upgrade and that its application code applies it.
+Snapshot checks use the currently installed runtime for every historical schema, so verify deployed runtime support separately as described under [Checking Compatibility](./index.mdx#checking-compatibility).
+
+:::
+
 All the examples below are modifying this schema:
 
 ```typescript

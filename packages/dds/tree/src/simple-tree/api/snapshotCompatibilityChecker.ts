@@ -25,6 +25,10 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * (described by `documentViewConfiguration.schema`).
  *
  * @remarks
+ * Both configurations are evaluated using the current version of this library.
+ * A result for a historical view does not establish that the version of this library deployed with that view supports the same upgrades.
+ * Use tests with the deployed runtime versions to verify that assumption before relying on upgrade-based collaboration.
+ *
  * Schema metadata does not affect compatibility.
  *
  * This function does not inspect document content.
@@ -348,11 +352,14 @@ export interface SnapshotSchemaCompatibilityOptions {
 	 * For each historical snapshot in that window, both its view and the current view must be able to use documents created by the other, either directly or after an upgrade.
 	 * Because an upgrade can be required, passing the snapshot check does not guarantee immediate viewing.
 	 * When {@link SchemaCompatibilityStatus.canView} is false but {@link SchemaCompatibilityStatus.canUpgrade} is true, the application must call {@link TreeView.upgradeSchema} before accessing the document.
+	 * Historical schemas are evaluated with the runtime executing the check, not the runtimes deployed with those clients.
+	 * Applications must verify that supported clients have both the runtime support and application code needed to perform any required upgrades.
 	 *
 	 * Typically applications will attempt to manage their deployment/update schedule such that all versions concurrently deployed can
 	 * collaborate to avoid users losing access to documents when other users upgrade the schema.
 	 * Such applications can set this to the oldest version currently deployed,
-	 * then rely on {@link snapshotSchemaCompatibility} to verify that no schema changes are made which would break collaboration with that (or newer) versions.
+	 * then use {@link snapshotSchemaCompatibility} to check schema compatibility with that (or newer) versions, alongside tests with their deployed runtime versions.
+	 * Setting this minimum does not update or prevent connections from older clients.
 	 *
 	 * This is the same approach used by {@link @fluidframework/runtime-definitions#OldestSupportedClientVersion}
 	 * except that type is specifically for use with the version of the Fluid Framework client packages,
@@ -437,6 +444,11 @@ export interface SnapshotSchemaCompatibilityOptions {
  * For versions within the collaboration window, the reverse must also hold: their views must be able to read or upgrade documents created by the current version.
  * These checks allow compatibility through an upgrade, but do not perform that upgrade.
  * Applications must therefore inspect {@link TreeView.compatibility} and apply any required {@link TreeView.upgradeSchema | upgrade} before accessing the document.
+ *
+ * All schema versions are evaluated using the current version of this library.
+ * Snapshots do not identify or execute the library versions deployed with historical clients.
+ * A historical view's ability to upgrade under the current version of this library therefore does not guarantee that a deployed older client can perform that upgrade.
+ * Before relying on upgrade-based collaboration, verify the required runtime support and application upgrade handling with tests using the supported clients' library versions.
  *
  * Proper use of this utility should do a good job at detecting schema compatibility issues,
  * however it currently does not do a good job of explaining exactly what change to the schema is causing the compatibility issues.

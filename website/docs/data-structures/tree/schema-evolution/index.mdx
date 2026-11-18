@@ -130,6 +130,15 @@ To check compatibility across releases, use snapshot validation in addition to d
 The current view must be able to use documents from every historical snapshot, either directly or after an upgrade.
 For historical versions within `minVersionForCollaboration`, the reverse must also hold: those views must be able to view or upgrade documents created with the current schema.
 
+:::important
+
+Snapshots describe schema declarations, and the validator evaluates all of them with the currently installed version of the Fluid Framework libraries.
+It does not run the library versions deployed with historical clients.
+A historical view's `canUpgrade` result therefore does not establish that an older client's runtime can perform that upgrade.
+Use mixed-runtime integration tests to verify this before relying on upgrade-based collaboration.
+
+:::
+
 Passing snapshot validation does not apply upgrades for your application or test every feature-flag configuration.
 The [snapshot helpers](./testing-schema-upgrades.mdx#checking-schema-compatibility-in-tests) currently assume restrictive staging, so supplement them with live-document tests for other policies and for code that calls `upgradeSchema()` when viewing requires it.
 
@@ -223,6 +232,14 @@ The two histories therefore differ as follows:
 | --- | --- |
 | Created with `notes`, then opened by the reduced view | The `notes` field is retained in the document, and it is treated as unknown content by the view. |
 | Created with the reduced view | The initial stored schema has no `notes` field. A client that declares `notes` must add its field schema through an upgrade before viewing. |
+
+:::caution Runtime prerequisite
+
+Before relying on older clients to upgrade while retaining unknown optional fields, first deploy a version of the application that uses Fluid Framework library version `3.14.0` or higher.
+Wait until every supported client in the collaboration window has that support before removing or replacing fields that require it.
+Rolling back application schema must not also roll back the required runtime support.
+
+:::
 
 Keeping unknown fields in the document does not make them visible to application code that copies a node's properties.
 When cloning nodes, use <ApiLink package="fluid-framework" api="(TreeBeta:interface).clone">`TreeBeta.clone()`</ApiLink> to preserve those fields rather than reconstructing nodes from visible properties.

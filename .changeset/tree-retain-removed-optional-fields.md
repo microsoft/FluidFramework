@@ -5,7 +5,7 @@
 ---
 Optional fields can be removed from application schema without blocking later upgrades
 
-Object schema with `allowUnknownOptionalFields` enabled can now omit previously stored optional fields and still upgrade existing documents.
+Object schema with [`allowUnknownOptionalFields`](https://fluidframework.com/docs/api/fluid-framework/objectschemaoptions-interface#allowunknownoptionalfields-propertysignature) enabled can now omit previously stored optional fields and still upgrade existing documents.
 SharedTree retains those fields and the node definitions they require, preserving their content for clients that still declare them.
 This supports rolling back schema changes or retiring features while continuing to evolve the schema.
 
@@ -42,3 +42,8 @@ Schema compatibility snapshot checks now accept either direct viewing or a safe 
 For versions within `minVersionForCollaboration`, `snapshotSchemaCompatibility` requires `canView || canUpgrade` for each version viewing documents created with the other schema.
 The current version must also be able to view or upgrade documents from every historical snapshot outside that collaboration window.
 Clients that can already view a document remain supported even when they cannot upgrade it; clients that can do neither are rejected.
+
+> [!IMPORTANT]
+> Snapshot checks evaluate historical schemas using the currently installed Fluid Framework library versions, not the versions deployed with older clients.
+> Before relying on older clients to upgrade while retaining unknown optional fields, deploy a version of the application that uses Fluid Framework library version `3.14.0` or higher.
+> Verify that all supported clients in the collaboration window have that support using mixed-runtime tests before removing or replacing fields that require it.
