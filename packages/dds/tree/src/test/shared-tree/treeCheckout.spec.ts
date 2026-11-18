@@ -1620,6 +1620,36 @@ describe("sharedTreeView", () => {
 			assert.deepEqual([...view.root], ["parent"]);
 			view.dispose();
 		});
+
+		for (const rewindCount of [0, 1, 2]) {
+			it(`lets history be trimmed after a fork rewound ${rewindCount} times is disposed`, () => {
+				const provider = new TestTreeProviderLite(1);
+				const view = provider.trees[0].kernel.viewWith(config);
+				view.initialize([]);
+				view.root.insertAtEnd("A");
+				provider.synchronizeMessages();
+				const revisionA = view.branchHistory.getHead()?.revision;
+				assert(revisionA !== undefined);
+				view.root.insertAtEnd("B");
+				provider.synchronizeMessages();
+
+				const fork = view.fork();
+				for (let i = 0; i < rewindCount; i++) {
+					fork.rewindTo(revisionA);
+				}
+				view.root.insertAtEnd("C");
+				provider.synchronizeMessages();
+				fork.root.insertAtEnd("D");
+				view.merge(fork);
+				provider.synchronizeMessages();
+				assert.deepEqual([...view.root].sort(), ["A", "B", "C", "D"]);
+
+				view.root.insertAtEnd("E");
+				provider.synchronizeMessages();
+				assert.equal(view.branchHistory.length, 1);
+				view.dispose();
+			});
+		}
 	});
 
 	describe("history", () => {
