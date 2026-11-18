@@ -324,6 +324,10 @@ export function allowsRepoSuperset(
 	superset: TreeStoredSchema,
 	discrepancies?: StoredSchemaUpgradeDiscrepancy[],
 ): boolean {
+	if (original === superset) {
+		return true;
+	}
+
 	let compatible = allowsFieldSuperset(
 		policy,
 		original,
