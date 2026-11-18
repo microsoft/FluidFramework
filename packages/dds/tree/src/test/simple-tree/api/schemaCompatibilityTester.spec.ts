@@ -957,7 +957,7 @@ describe("checkSchemaCompatibility", () => {
 							view: [],
 							stored: [factory.string.identifier],
 							reason:
-								'Cannot view field "" of node type ".diagnostics.Items": the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
+								'Cannot view array elements of node type ".diagnostics.Items" (stored key ""): the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
 						},
 					],
 				},
@@ -1070,6 +1070,105 @@ describe("checkSchemaCompatibility", () => {
 				compatibility.upgrade.incompatibilities[0]?.reason,
 				`Cannot upgrade node type ${JSON.stringify(View.identifier)}: changing the stored node representation from Map to Object is not permitted.`,
 			);
+		});
+
+		it("explains array and object field differences in both directions", () => {
+			class ArrayNode extends factory.array("diagnostics.ArrayObject", factory.number) {}
+			class ObjectNode extends factory.object("diagnostics.ArrayObject", {
+				x: factory.optional(factory.number),
+			}) {}
+			for (const [stored, view, fieldKey, arraySide] of [
+				[ArrayNode, ObjectNode, "", "stored"],
+				[ObjectNode, ArrayNode, "x", "proposed"],
+			] as const) {
+				const result = expectCompatibility(
+					{ view, stored: toUpgradeSchema(stored) },
+					{ canView: false, canUpgrade: false },
+				);
+				assert(!result.view.isCompatible);
+				assert(!result.upgrade.isCompatible);
+				const node = JSON.stringify(view.identifier);
+				const location =
+					fieldKey === ""
+						? `array elements of node type ${node} (stored key "")`
+						: `field "x" of node type ${node}`;
+				assertIncompatibilities(result.upgrade.incompatibilities, [
+					{
+						mismatch: "allowedTypes",
+						location: { nodeType: view.identifier, fieldKey },
+						proposed: [],
+						stored: [factory.number.identifier],
+					},
+					{
+						mismatch: "fieldKind",
+						location: { nodeType: view.identifier, fieldKey },
+						proposed: "Forbidden",
+						stored: fieldKey === "" ? "Sequence" : "Optional",
+					},
+				]);
+				assert.equal(
+					result.upgrade.incompatibilities[0]?.reason,
+					`Cannot upgrade ${location} (${arraySide} schema has array structure): the proposed schema removes allowed node types ["com.fluidframework.leaf.number"].`,
+				);
+				if (fieldKey === "") {
+					assert.equal(
+						result.view.incompatibilities[1]?.reason,
+						`Cannot view ${location}: the view permits no children, but the stored schema permits zero or more children.`,
+					);
+				}
+			}
+		});
+
+		it("explains array structure while preserving node-kind details", () => {
+			class ArrayNode extends factory.array("diagnostics.ArrayMap", factory.number) {}
+			class MapNode extends factory.map("diagnostics.ArrayMap", factory.number) {}
+			const upgrade = expectCompatibility(
+				{ view: ArrayNode, stored: toUpgradeSchema(MapNode) },
+				{ canView: false, canUpgrade: false },
+			).upgrade;
+			assert(!upgrade.isCompatible);
+			assertIncompatibilities(upgrade.incompatibilities, [
+				{
+					mismatch: "nodeKind",
+					nodeType: ArrayNode.identifier,
+					proposed: "Object",
+					stored: "Map",
+				},
+			]);
+			assert.equal(
+				upgrade.incompatibilities[0]?.reason,
+				`Cannot upgrade node type ${JSON.stringify(ArrayNode.identifier)}: changing the stored node representation from Map to Object (array structure) is not permitted.`,
+			);
+			const view = expectCompatibility(
+				{ view: MapNode, stored: toUpgradeSchema(ArrayNode) },
+				{ canView: false, canUpgrade: false },
+			).view;
+			assert(!view.isCompatible);
+			assert.equal(
+				view.incompatibilities[0]?.reason,
+				`Cannot view node type ${JSON.stringify(MapNode.identifier)}: the stored node structure does not match the view's Map definition (stored representation: Object (array structure)).`,
+			);
+		});
+
+		it("does not mistake an empty object key for array structure or block a valid upgrade", () => {
+			class OptionalObject extends factory.object("diagnostics.EmptyKey", {
+				"": factory.optional(factory.number),
+			}) {}
+			class RequiredObject extends factory.object("diagnostics.EmptyKey", {
+				"": factory.number,
+			}) {}
+			class ArrayNode extends factory.array("diagnostics.EmptyKey", factory.number) {}
+			const stored = toUpgradeSchema(OptionalObject);
+			const result = expectCompatibility(
+				{ view: RequiredObject, stored },
+				{ canView: false, canUpgrade: false },
+			);
+			assert(!result.upgrade.isCompatible);
+			assert.equal(
+				result.upgrade.incompatibilities[0]?.reason,
+				`Cannot upgrade field "" of node type ${JSON.stringify(RequiredObject.identifier)}: changing from zero or one child to exactly one child is not permitted by the schema upgrade rules.`,
+			);
+			expectCompatibility({ view: ArrayNode, stored }, { canView: false, canUpgrade: true });
 		});
 
 		it("reports missing stored node definitions even when unreachable from the root", () => {
