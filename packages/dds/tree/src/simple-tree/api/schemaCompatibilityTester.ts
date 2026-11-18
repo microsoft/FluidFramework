@@ -17,8 +17,8 @@ import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js"
 import { NodeKind } from "../core/index.js";
 import {
 	allowsRepoSuperset,
-	type SchemaDiscrepancyLocation,
-	type StoredSchemaUpgradeDiscrepancy,
+	type SchemaIncompatibilityLocation,
+	type StoredSchemaUpgradeIncompatibility,
 	SchemaComparisonMode,
 	compareSchemaVersions,
 	SchemaVersionComparison,
@@ -28,10 +28,10 @@ import { resolveStoredSchemaGenerationOptions } from "../toStoredSchema.js";
 import { getSchemaUpgradeCandidate, toInitialSchema, type TreeSchema } from "../treeSchema.js";
 
 import {
-	getDiscrepanciesInAllowedContent,
-	type Discrepancy,
+	getIncompatibilitiesInAllowedContent,
+	type Incompatibility,
 	type UpgradeLocationCollector,
-} from "./discrepancies.js";
+} from "./incompatibilities.js";
 import type {
 	SchemaCompatibilityStatusBeta,
 	CompatibilityResult,
@@ -58,8 +58,8 @@ export function isSchemaUpgradeAllowed(
 	return (
 		comparisonMode !== undefined &&
 		allowsRepoSuperset(defaultSchemaPolicy, storedSchema, candidate, comparisonMode) &&
-		getDiscrepanciesInAllowedContent(viewSchema, candidate)[Symbol.iterator]().next().done ===
-			true
+		getIncompatibilitiesInAllowedContent(viewSchema, candidate)[Symbol.iterator]().next()
+			.done === true
 	);
 }
 
@@ -105,14 +105,14 @@ function formatSchemaVersionIncompatibility(
 	};
 }
 
-function formatViewIncompatibility(value: Discrepancy): SchemaViewIncompatibility {
+function formatViewIncompatibility(value: Incompatibility): SchemaViewIncompatibility {
 	switch (value.mismatch) {
 		case "allowedTypes": {
 			const view = value.view.map(({ type }) => type.identifier).sort();
 			const stored = [...value.stored].sort();
 			return {
 				mismatch: value.mismatch,
-				location: formatDiscrepancyLocation(value),
+				location: formatIncompatibilityLocation(value),
 				view,
 				...(value.stagedView === undefined
 					? {}
@@ -138,7 +138,7 @@ function formatViewIncompatibility(value: Discrepancy): SchemaViewIncompatibilit
 		case "fieldKind": {
 			return {
 				mismatch: value.mismatch,
-				location: formatDiscrepancyLocation(value),
+				location: formatIncompatibilityLocation(value),
 				view: value.view,
 				stored: value.stored,
 				...(value.viewIsStagedOptional === true
@@ -172,19 +172,19 @@ function formatViewIncompatibility(value: Discrepancy): SchemaViewIncompatibilit
 }
 
 /**
- * Converts an internal upgrade discrepancy into a public incompatibility with a human-readable reason.
+ * Converts an internal upgrade incompatibility into a public incompatibility with a human-readable reason.
  *
  * @param value - The failed stored-schema upgrade requirement to describe.
  */
 function formatUpgradeIncompatibility(
-	value: StoredSchemaUpgradeDiscrepancy,
+	value: StoredSchemaUpgradeIncompatibility,
 ): SchemaUpgradeIncompatibility {
 	switch (value.mismatch) {
 		case "allowedTypes": {
 			const stored = [...value.stored].filter((type) => !value.proposed.has(type)).sort();
 			return {
 				mismatch: value.mismatch,
-				location: formatDiscrepancyLocation(value),
+				location: formatIncompatibilityLocation(value),
 				proposed: [...value.proposed].filter((type) => !value.stored.has(type)).sort(),
 				stored,
 				reason: `Cannot upgrade ${describeFieldLocation(value)}: the proposed schema removes allowed node types ${JSON.stringify(stored)}.`,
@@ -193,7 +193,7 @@ function formatUpgradeIncompatibility(
 		case "fieldKind": {
 			return {
 				mismatch: value.mismatch,
-				location: formatDiscrepancyLocation(value),
+				location: formatIncompatibilityLocation(value),
 				proposed: value.proposed,
 				stored: value.stored,
 				reason: `Cannot upgrade ${describeFieldLocation(value)}: changing from ${describeFieldKind(value.stored)} to ${describeFieldKind(value.proposed)} is not permitted by the schema upgrade rules.`,
@@ -256,11 +256,19 @@ function getSchemaUpgradeIncompatibilityDetails(
 	if (comparisonMode === undefined) {
 		return [formatSchemaVersionIncompatibility(stored, proposed)];
 	}
-	const discrepancies: StoredSchemaUpgradeDiscrepancy[] = [];
+	const incompatibilities: StoredSchemaUpgradeIncompatibility[] = [];
 	if (
-		!allowsRepoSuperset(defaultSchemaPolicy, stored, proposed, comparisonMode, discrepancies)
+		!allowsRepoSuperset(
+			defaultSchemaPolicy,
+			stored,
+			proposed,
+			comparisonMode,
+			incompatibilities,
+		)
 	) {
-		return discrepancies.map((discrepancy) => formatUpgradeIncompatibility(discrepancy));
+		return incompatibilities.map((incompatibility) =>
+			formatUpgradeIncompatibility(incompatibility),
+		);
 	}
 	return getPostUpgradeViewIncompatibilities(viewSchema, proposed);
 }
@@ -272,9 +280,9 @@ function getPostUpgradeViewIncompatibilities(
 	viewSchema: TreeSchema,
 	candidate: TreeStoredSchema,
 ): readonly SchemaUpgradeIncompatibility[] | undefined {
-	const incompatibilities = [...getDiscrepanciesInAllowedContent(viewSchema, candidate)].map(
-		(discrepancy) => formatViewIncompatibility(discrepancy),
-	);
+	const incompatibilities = [
+		...getIncompatibilitiesInAllowedContent(viewSchema, candidate),
+	].map((incompatibility) => formatViewIncompatibility(incompatibility));
 	return incompatibilities.length === 0
 		? undefined
 		: [
@@ -287,8 +295,8 @@ function getPostUpgradeViewIncompatibilities(
 			];
 }
 
-function formatDiscrepancyLocation(
-	value: SchemaDiscrepancyLocation,
+function formatIncompatibilityLocation(
+	value: SchemaIncompatibilityLocation,
 ): SchemaDiscrepancyFieldLocation {
 	return value.identifier === undefined
 		? "root"
@@ -299,7 +307,7 @@ function formatValueSchema(value: ValueSchema | undefined): string | undefined {
 	return value === undefined ? undefined : ValueSchema[value];
 }
 
-function describeFieldLocation(value: SchemaDiscrepancyLocation): string {
+function describeFieldLocation(value: SchemaIncompatibilityLocation): string {
 	return value.identifier === undefined
 		? "the root field"
 		: value.fieldKey === undefined
@@ -339,7 +347,7 @@ function describeValueSchema(value: ValueSchema | undefined): string {
 }
 
 function getStoredNodeKind(
-	schema: TreeNodeStoredSchema | Extract<Discrepancy, { mismatch: "nodeKind" }>["stored"],
+	schema: TreeNodeStoredSchema | Extract<Incompatibility, { mismatch: "nodeKind" }>["stored"],
 ): "Object" | "Map" | "Leaf" {
 	return schema === ObjectNodeStoredSchema || schema instanceof ObjectNodeStoredSchema
 		? "Object"
@@ -385,7 +393,7 @@ export function checkSchemaCompatibility(
 	const policy = defaultSchemaPolicy;
 	const configuredPolicy = resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades);
 
-	// Collect upgrade locations during the discrepancy walk (single pass).
+	// Collect upgrade locations during the incompatibility walk (single pass).
 	const totalLocations = new Map<SchemaUpgrade, number>();
 	const enabledLocations = new Map<SchemaUpgrade, number>();
 	const upgradeCollector: UpgradeLocationCollector = {
@@ -403,33 +411,39 @@ export function checkSchemaCompatibility(
 		},
 	};
 
-	// View schema allows a subset of documents that stored schema does, and the discrepancies are allowed by policy
+	// View schema allows a subset of documents that stored schema does, and the incompatibilities are allowed by policy
 	// determined by the view schema (i.e. objects with extra optional fields in the stored schema have opted into allowing this.
 	// In the future, this would also include things like:
 	// - fields with more allowed types in the stored schema than in the view schema have out-of-schema "unknown content" adapters
-	// Complete the full walk even after finding an incompatibility so discrepancy details and
+	// Complete the full walk even after finding an incompatibility so incompatibility details and
 	// staged-upgrade status contain all available information for debugging.
-	const discrepancies: SchemaViewIncompatibility[] = [];
-	for (const discrepancy of getDiscrepanciesInAllowedContent(
+	const viewIncompatibilities: SchemaViewIncompatibility[] = [];
+	for (const incompatibility of getIncompatibilitiesInAllowedContent(
 		viewSchema,
 		stored,
 		upgradeCollector,
 	)) {
-		discrepancies.push(formatViewIncompatibility(discrepancy));
+		viewIncompatibilities.push(formatViewIncompatibility(incompatibility));
 	}
-	const canView = discrepancies.length === 0;
+	const canView = viewIncompatibilities.length === 0;
 
 	const enabledUpgrades = computeUpgradeStatuses(totalLocations, enabledLocations);
 	const wouldUpgradeTo = getSchemaUpgradeCandidate(viewSchema, stored, configuredPolicy);
 
-	const upgradeDiscrepancies: StoredSchemaUpgradeDiscrepancy[] | undefined = canView
+	const upgradeIncompatibilities: StoredSchemaUpgradeIncompatibility[] | undefined = canView
 		? undefined
 		: [];
 	const comparisonMode = getSchemaUpgradeComparisonMode(stored, wouldUpgradeTo);
 	// The upgrade must continue to allow all content permitted by the stored schema and let this view read and edit the resulting schema.
 	const canUpgradeStored =
 		comparisonMode !== undefined &&
-		allowsRepoSuperset(policy, stored, wouldUpgradeTo, comparisonMode, upgradeDiscrepancies);
+		allowsRepoSuperset(
+			policy,
+			stored,
+			wouldUpgradeTo,
+			comparisonMode,
+			upgradeIncompatibilities,
+		);
 	const postUpgradeViewIncompatibilities =
 		canUpgradeStored && !canView
 			? getPostUpgradeViewIncompatibilities(viewSchema, wouldUpgradeTo)
@@ -437,8 +451,9 @@ export function checkSchemaCompatibility(
 	const canUpgrade =
 		canUpgradeStored &&
 		(canView
-			? getDiscrepanciesInAllowedContent(viewSchema, wouldUpgradeTo)[Symbol.iterator]().next()
-					.done === true
+			? getIncompatibilitiesInAllowedContent(viewSchema, wouldUpgradeTo)
+					[Symbol.iterator]()
+					.next().done === true
 			: postUpgradeViewIncompatibilities === undefined);
 
 	// `isEquivalent` (deprecated) compares the view's generated schema, independently of upgrades already enabled in this document.
@@ -456,11 +471,11 @@ export function checkSchemaCompatibility(
 
 	const view: CompatibilityResult<SchemaViewIncompatibility> = canView
 		? { isCompatible: true }
-		: { isCompatible: false, incompatibilities: discrepancies };
+		: { isCompatible: false, incompatibilities: viewIncompatibilities };
 	let upgradeResult: CompatibilityResult<SchemaUpgradeIncompatibility>;
 	if (canUpgrade) {
 		upgradeResult = { isCompatible: true };
-	} else if (upgradeDiscrepancies === undefined) {
+	} else if (upgradeIncompatibilities === undefined) {
 		// Repository snapshots use copy-on-write cloning so diagnostics can safely outlive this schema version.
 		const storedSnapshot = new TreeStoredSchemaRepository(stored);
 		let incompatibilities: readonly SchemaUpgradeIncompatibility[] | undefined;
@@ -487,8 +502,8 @@ export function checkSchemaCompatibility(
 				? [formatSchemaVersionIncompatibility(stored, wouldUpgradeTo)]
 				: canUpgradeStored
 					? postUpgradeViewIncompatibilities
-					: upgradeDiscrepancies.map((discrepancy) =>
-							formatUpgradeIncompatibility(discrepancy),
+					: upgradeIncompatibilities.map((incompatibility) =>
+							formatUpgradeIncompatibility(incompatibility),
 						);
 		assert(
 			incompatibilities !== undefined && incompatibilities.length > 0,
