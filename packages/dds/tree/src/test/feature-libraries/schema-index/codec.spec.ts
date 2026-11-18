@@ -9,6 +9,7 @@ import { strict as assert } from "node:assert";
 
 import {
 	currentVersion,
+	FluidClientVersion,
 	makeCodecFamily,
 	type CodecWriteOptions,
 } from "../../../codec/index.js";
@@ -25,6 +26,8 @@ import { schemaCodecBuilder } from "../../../feature-libraries/schema-index/code
 import { Format as FormatV1 } from "../../../feature-libraries/schema-index/formatV1.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { Format as FormatV2 } from "../../../feature-libraries/schema-index/formatV2.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { Format as FormatV3 } from "../../../feature-libraries/schema-index/formatV3.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import { SchemaFactory } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -35,6 +38,13 @@ import { type EncodingTestData, makeEncodingTestSuite } from "../../utils.js";
 const codecOptions: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,
 	minVersionForCollab: currentVersion,
+};
+const versionedCodecOptions: CodecWriteOptions = {
+	...codecOptions,
+	allowPossiblyIncompatibleWriteVersionOverrides: true,
+	writeVersionOverrides: new Map([
+		[schemaCodecBuilder.name, SchemaFormatVersion.v3Experimental],
+	]),
 };
 
 const schemaCodecs = makeCodecFamily(
@@ -57,17 +67,177 @@ const testCases: EncodingTestData<TreeStoredSchema, FormatV1> = {
 	],
 };
 
+const versionedTestCases: EncodingTestData<TreeStoredSchema, FormatV3> = {
+	successes: testCases.successes.map(([name, schema]) => [
+		name,
+		{
+			...schema,
+			schemaVersion: new Map([["com.fluidframework.test", 1]]),
+		},
+	]),
+};
+
 describe("SchemaIndex", () => {
 	useSnapshotDirectory();
 
-	it("SchemaIndexFormat - schema v1", () => {
-		// Capture the json schema for the format as a snapshot, so any change to what schema is allowed shows up in this tests.
-		takeJsonSnapshot(FormatV1);
+	describe("SchemaIndexFormat", () => {
+		it("schema v1", () => {
+			// Capture the json schema for the format as a snapshot, so any change to what schema is allowed shows up in this tests.
+			takeJsonSnapshot(FormatV1);
+		});
+
+		it("schema v2", () => {
+			// Capture the json schema for the format as a snapshot, so any change to what schema is allowed shows up in this tests.
+			takeJsonSnapshot(FormatV2);
+		});
+
+		it("experimental schema v3", () => {
+			takeJsonSnapshot(FormatV3);
+		});
 	});
 
-	it("SchemaIndexFormat - schema v2", () => {
-		// Capture the json schema for the format as a snapshot, so any change to what schema is allowed shows up in this tests.
-		takeJsonSnapshot(FormatV2);
+	it("encodes and decodes application schema versions in sorted order", () => {
+		const codec = schemaCodecBuilder.build(versionedCodecOptions);
+		const schema: TreeStoredSchema = {
+			...schema2,
+			schemaVersion: new Map([
+				["test.z", 2],
+				["test.a", 1],
+			]),
+		};
+
+		const encoded = codec.encode(schema);
+		assert.equal(
+			(encoded as { version: unknown }).version,
+			SchemaFormatVersion.v3Experimental,
+		);
+		assert.deepEqual((encoded as FormatV3).schemaVersion, [
+			["test.a", 1],
+			["test.z", 2],
+		]);
+		assert.deepEqual(codec.decode(encoded).schemaVersion, schema.schemaVersion);
+	});
+
+	it("round-trips schemas without application versions when the experimental format is explicitly selected", () => {
+		const codec = schemaCodecBuilder.build(versionedCodecOptions);
+
+		const encoded = codec.encode(schema2);
+		assert.equal(
+			(encoded as { version: unknown }).version,
+			SchemaFormatVersion.v3Experimental,
+		);
+		assert.equal((encoded as FormatV3).schemaVersion, undefined);
+		assert.deepEqual(codec.decode(encoded), schema2);
+	});
+
+	it("round-trips empty version maps and object prototype names", () => {
+		const codec = schemaCodecBuilder.build(versionedCodecOptions);
+		for (const schemaVersion of [
+			new Map<string, number>(),
+			new Map([
+				["__proto__", 0],
+				["constructor", Number.MAX_SAFE_INTEGER],
+			]),
+		]) {
+			const schema = { ...schema2, schemaVersion };
+			assert.deepEqual(codec.decode(codec.encode(schema)).schemaVersion, schemaVersion);
+		}
+	});
+
+	it("rejects unsorted application schema versions", () => {
+		const codec = schemaCodecBuilder.buildDecoder(codecOptions);
+		const encoded = {
+			version: SchemaFormatVersion.v3Experimental,
+			nodes: {},
+			root: { kind: "x" as FieldKindIdentifier, types: [] },
+			schemaVersion: [
+				["test.z", 1],
+				["test.a", 2],
+			],
+		} satisfies FormatV3;
+		assert.throws(() => codec.decode(encoded), /must be sorted/);
+	});
+
+	it("rejects negative application schema versions", () => {
+		const codec = schemaCodecBuilder.buildDecoder(codecOptions);
+		const encoded = {
+			version: SchemaFormatVersion.v3Experimental,
+			nodes: {},
+			root: { kind: "x" as FieldKindIdentifier, types: [] },
+			schemaVersion: [["test", -1]],
+		} satisfies FormatV3;
+		assert.throws(() => codec.decode(encoded));
+	});
+
+	it("rejects duplicate identifiers before converting versions to a map", () => {
+		const codec = schemaCodecBuilder.buildDecoder(codecOptions);
+		const encoded = {
+			version: SchemaFormatVersion.v3Experimental,
+			nodes: {},
+			root: { kind: "x" as FieldKindIdentifier, types: [] },
+			schemaVersion: [
+				["test", 1],
+				["test", 2],
+			],
+		} satisfies FormatV3;
+		assert.throws(() => codec.decode(encoded), /must be sorted.*no duplicates/);
+	});
+
+	it("rejects unsafe application schema versions", () => {
+		const codec = schemaCodecBuilder.buildDecoder(codecOptions);
+		const encoded = {
+			version: SchemaFormatVersion.v3Experimental,
+			nodes: {},
+			root: { kind: "x" as FieldKindIdentifier, types: [] },
+			schemaVersion: [["test", Number.MAX_SAFE_INTEGER + 1]],
+		} satisfies FormatV3;
+		assert.throws(() => codec.decode(encoded), /non-negative safe integers/);
+	});
+
+	it("omits application schema versions in stable formats", () => {
+		const schema: TreeStoredSchema = {
+			...schema2,
+			schemaVersion: new Map([["test", 1]]),
+		};
+
+		for (const codec of [codecV1, codecV2]) {
+			const encoded = codec.encode(schema);
+			assert.deepEqual(encoded, codec.encode(schema2));
+			assert.equal(codec.decode(encoded).schemaVersion, undefined);
+		}
+	});
+
+	it("does not select the experimental format through the collaboration version", () => {
+		for (const minVersionForCollab of [FluidClientVersion.v2_43, currentVersion]) {
+			const codec = schemaCodecBuilder.build({ ...codecOptions, minVersionForCollab });
+			assert.equal((codec.encode(schema2) as FormatV2).version, SchemaFormatVersion.v2);
+		}
+	});
+
+	it("rejects an experimental format override without allowing possible incompatibility", () => {
+		assert.throws(
+			() =>
+				schemaCodecBuilder.build({
+					...codecOptions,
+					writeVersionOverrides: versionedCodecOptions.writeVersionOverrides,
+				}),
+			/because it has minVersionForCollab undefined/,
+		);
+	});
+
+	it("accepts an explicit override to the experimental schema format", () => {
+		const codec = schemaCodecBuilder.build(versionedCodecOptions);
+		const schema: TreeStoredSchema = {
+			...schema2,
+			schemaVersion: new Map([["test", 1]]),
+		};
+
+		const encoded = codec.encode(schema);
+		assert.equal(
+			(encoded as { version: unknown }).version,
+			SchemaFormatVersion.v3Experimental,
+		);
+		assert.deepEqual(codec.decode(encoded).schemaVersion, schema.schemaVersion);
 	});
 
 	it("accepts valid data - schema v1", () => {
@@ -133,10 +303,17 @@ describe("SchemaIndex", () => {
 	});
 
 	describe("codec", () => {
-		makeEncodingTestSuite(schemaCodecs, testCases, (a, b) => {
+		const assertEquivalent = (a: TreeStoredSchema, b: TreeStoredSchema): void => {
 			assert(allowsRepoSuperset(defaultSchemaPolicy, a, b));
 			assert(allowsRepoSuperset(defaultSchemaPolicy, b, a));
-		});
+		};
+		makeEncodingTestSuite(schemaCodecs, testCases, assertEquivalent, [
+			SchemaFormatVersion.v1,
+			SchemaFormatVersion.v2,
+		]);
+		makeEncodingTestSuite(schemaCodecs, versionedTestCases, assertEquivalent, [
+			SchemaFormatVersion.v3Experimental,
+		]);
 	});
 
 	// TODO: testing SchemaIndex class itself, specifically for attachment and normal summaries.

@@ -13,7 +13,13 @@ import {
 } from "../../core/index.js";
 import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js";
 import { NodeKind } from "../core/index.js";
-import { allowsRepoSuperset, defaultSchemaPolicy } from "../../feature-libraries/index.js";
+import {
+	allowsRepoSuperset,
+	SchemaComparisonMode,
+	compareSchemaVersions,
+	SchemaVersionComparison,
+	defaultSchemaPolicy,
+} from "../../feature-libraries/index.js";
 import { resolveStoredSchemaGenerationOptions } from "../toStoredSchema.js";
 import { getSchemaUpgradeCandidate, toInitialSchema, type TreeSchema } from "../treeSchema.js";
 
@@ -58,8 +64,25 @@ export function isSchemaUpgradeAllowed(
 	storedSchema: TreeStoredSchema,
 	candidate: TreeStoredSchema,
 ): boolean {
+	const comparison = compareSchemaVersions(
+		storedSchema.schemaVersion,
+		candidate.schemaVersion,
+	);
+	if (
+		comparison === SchemaVersionComparison.Decrease ||
+		comparison === SchemaVersionComparison.Incompatible
+	) {
+		return false;
+	}
+
+	const comparisonMode =
+		comparison === SchemaVersionComparison.Increase &&
+		storedSchema.schemaVersion !== undefined &&
+		candidate.schemaVersion !== undefined
+			? SchemaComparisonMode.ContentOnly
+			: SchemaComparisonMode.Monotonic;
 	return (
-		allowsRepoSuperset(defaultSchemaPolicy, storedSchema, candidate) &&
+		allowsRepoSuperset(defaultSchemaPolicy, storedSchema, candidate, comparisonMode) &&
 		getSchemaIncompatibilityDetails(viewSchema, candidate) === undefined
 	);
 }
@@ -207,11 +230,17 @@ export function checkSchemaCompatibility(
 	const canUpgrade = isSchemaUpgradeAllowed(viewSchema, stored, wouldUpgradeTo);
 
 	// `isEquivalent` (deprecated) compares the view's generated schema, independently of upgrades already enabled in this document.
-	const viewStoredSchema = toInitialSchema(viewSchema.root, configuredPolicy);
+	const viewStoredSchema = toInitialSchema(
+		viewSchema.root,
+		configuredPolicy,
+		viewSchema.schemaVersion,
+	);
 	const isEquivalent =
 		canView &&
 		allowsRepoSuperset(policy, stored, viewStoredSchema) &&
-		allowsRepoSuperset(policy, viewStoredSchema, stored);
+		allowsRepoSuperset(policy, viewStoredSchema, stored) &&
+		compareSchemaVersions(stored.schemaVersion, viewStoredSchema.schemaVersion) ===
+			SchemaVersionComparison.Equal;
 
 	return {
 		canView,
