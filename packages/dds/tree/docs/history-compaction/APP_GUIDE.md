@@ -69,13 +69,17 @@ Each range names its `oldest` and `newest` commit (both inclusive) by revision.
 | Plan | Result |
 | --- | --- |
 | A commit in no range | Kept. |
-| A range without `metadata` | Combined into one commit, keeping `newest`'s revision. All original metadata trees are kept in `customTree`; flattened `custom` prefers newer values. |
+| A range without `metadata` | Combined into one commit, keeping the newest combined commit's revision. If correctness blocks the end of the range, only its eligible prefix is combined. Metadata trees of the combined commits are kept in `customTree`; flattened `custom` prefers newer values. |
 | A range with `metadata` (a JSON object) | Combined into one commit, keeping `newest`'s revision. The object replaces the metadata of every commit in the range, including their children. |
 
 The history includes commits that cannot be combined yet, so your plan can see where a run continues.
-SharedTree skips (without error) a range that has a single commit, that reaches into the collaboration window or an open local branch, or that contains a pinned commit.
-Skipped ranges can be combined by a later pass.
-Because a range is combined into its newest commit, the newest commit that can be combined can only be the newest commit of a range.
+SharedTree determines correctness eligibility; the app does not need to calculate it.
+If a range without replacement metadata reaches into the collaboration window or an open local branch's protected history, SharedTree combines only the eligible prefix, provided it has at least two commits.
+For example, if A–C are eligible but D–E are not, a plan for A–E combines A–C into C and leaves D–E unchanged.
+Ranges with replacement metadata wait until the whole range is eligible, because that metadata may describe the full range.
+Any range containing a pinned commit is skipped as a whole, even if the pin is outside the eligible prefix.
+A single-commit range, or a range with fewer than two eligible commits at its start, is also skipped without error.
+The policy can return skipped ranges or the remaining suffix in a later pass.
 Ranges must not overlap and must name revisions in the given history; otherwise the whole plan is rejected with a `UsageError` and nothing changes.
 
 Keep the policy fast, deterministic from commit metadata, and free of side effects.
@@ -158,7 +162,7 @@ Successful passes use the generic telemetry category; failed passes use the erro
 | `removedCount` | Commits removed by combining. |
 | `policyCallCount`, `policyDurationMs` | The policy is called once per pass; how long it took (including plan validation). |
 | `historyCommitCount`, `eligibleCommitCount` | How much history your policy saw, and how much of it could be combined. Low eligibility means the collaboration window, open branches, or a recent load limited the pass. |
-| `plannedRangeCount`, `combinedRangeCount`, `skippedRangeCount` | Ranges in your plan, how many were combined, and how many were skipped (single commit, not yet eligible, or containing a pin). |
+| `plannedRangeCount`, `combinedRangeCount`, `skippedRangeCount` | Ranges in your plan, how many were combined in full or as an eligible prefix, and how many were skipped (single commit, not yet eligible, or containing a pin). |
 | `defaultMergeCount`, `replacementMergeCount` | Combined ranges using the default merge versus replacement metadata. Their sum equals `combinedRangeCount`. |
 | `replacementMetadataLength` | Total JSON length of replacement metadata in your plan; a size proxy, not stored bytes. |
 | `composeCallCount`, `composedChangeCount`, `composeDurationMs` | Cost of combining: one compose call per combined range, over all of its commits. |
@@ -167,6 +171,7 @@ Successful passes use the generic telemetry category; failed passes use the erro
 Track pass latency, removal counts, and failure rates separately by `trigger`.
 A successful zero-removal pass with `eligibleCommitCount: 0` had nothing to combine; with eligible commits, compare `plannedRangeCount` and `skippedRangeCount` to see whether your plan asked for nothing or its ranges could not be combined yet.
 Telemetry does not identify why each range was skipped (the opt-in diagnostic trace in [DEV.md](./DEV.md) does) or measure byte or heap savings.
+The diagnostic trace also reports `CompactionRangeClipped`, with requested and eligible-prefix lengths; `CompactionRangeMerged` confirms the actual merge.
 The compaction payload excludes raw commit metadata, document content, and application exception text.
 
 Two events report pins that could not be kept (match by suffix; they contain no revisions):

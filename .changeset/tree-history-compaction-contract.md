@@ -12,12 +12,15 @@ It is exported from `@fluidframework/tree/alpha` and `fluid-framework/alpha`, al
 
 `requestPlannedCompaction(planCompaction)` calls your `PlanCompaction` callback once with the retained history, oldest first, as the same `TreeBranchCommitMetadata` objects the history APIs return (`revertTo` is always `undefined` inside the callback).
 The callback returns a plan: ranges of adjacent commits, each naming its `oldest` and `newest` commit by revision.
-Each range is combined into one commit that keeps the `newest` commit's revision.
+Each combined range keeps the newest combined commit's revision.
 By default the combined commit keeps all of the range's metadata; give the range a `metadata` object to use that object as the combined commit's metadata instead.
 The call returns how many commits were removed.
 
 Only history kept by the `retainHistory` option can be compacted.
-Ranges that include commits still needed for collaboration, or that local branches depend on, are skipped.
+For ranges without replacement metadata, SharedTree combines the eligible prefix and leaves commits still needed for collaboration or local branches unchanged.
+A prefix must contain at least two commits to be combined.
+Ranges with replacement metadata wait until the whole range is eligible, because their metadata may describe the full range.
+Ranges containing a preserved revision are always skipped as a whole, not shortened.
 If the callback throws or returns an invalid plan, the history is unchanged.
 
 ```typescript

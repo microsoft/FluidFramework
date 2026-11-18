@@ -553,14 +553,15 @@ export class EditManager<
 	 * Returns the ranges to combine, as inclusive indices into `history`.
 	 * Ranges must be ordered oldest first, must not overlap, and must have `oldestIndex <= newestIndex`.
 	 * The caller is responsible for validating application input; malformed ranges here are a bug.
-	 * @param createRevisionReplacer - Creates the replacer that re-tags each composed change with the revision of the range's newest commit.
-	 * @param onRangeCompacted - Called after each range is combined.
+	 * @param createRevisionReplacer - Creates the replacer that re-tags each composed change with the revision of the newest combined commit.
+	 * @param onRangeCompacted - Called with the actual range after it is combined, which may be an eligible prefix of the planned range.
 	 * @param stats - If provided, filled in with statistics about the pass, including those before a later failure.
 	 * @returns The number of commits removed from the history.
 	 * @remarks
 	 * Only commits that are retained by the {@link EditManager.setHistoryRetention | retention policy} are in `history`.
 	 * Commits that are still needed for collaboration (the collaboration window) or by registered branches (local forks) are not eligible,
-	 * and a range that extends past the newest eligible commit is skipped.
+	 * and a range without replacement metadata that extends past the newest eligible commit is clipped to its eligible prefix.
+	 * A range with replacement metadata waits until the whole range is eligible.
 	 * The newest eligible commit can be the newest commit of a range, but is never removed, because later commits depend on its output state.
 	 * A range that contains a {@link EditManager.setRevisionPreserved | preserved} commit is skipped,
 	 * so a preserved commit's change and metadata remain unchanged by compaction.
@@ -622,21 +623,26 @@ export class EditManager<
 		let peersRebased = false;
 		let previousNewest = -1;
 		for (const [rangeIndex, range] of ranges.entries()) {
-			const { oldestIndex, newestIndex } = range;
+			const { oldestIndex } = range;
 			assert(
-				oldestIndex > previousNewest && newestIndex >= oldestIndex,
+				oldestIndex > previousNewest && range.newestIndex >= oldestIndex,
 				"Compaction ranges must be ordered and must not overlap",
 			);
-			assert(newestIndex < history.length, "Compaction range must be within the history");
-			previousNewest = newestIndex;
+			assert(
+				range.newestIndex < history.length,
+				"Compaction range must be within the history",
+			);
+			previousNewest = range.newestIndex;
 
+			const newestIndex = Math.min(range.newestIndex, eligibleCount - 1);
 			const skipReason =
-				newestIndex === oldestIndex
+				range.newestIndex === oldestIndex
 					? "singleCommit"
-					: newestIndex >= eligibleCount
+					: newestIndex <= oldestIndex ||
+							(range.metadata !== undefined && newestIndex !== range.newestIndex)
 						? "notEligible"
 						: history
-									.slice(oldestIndex, newestIndex + 1)
+									.slice(oldestIndex, range.newestIndex + 1)
 									.some((commit) => this.preservedRevisions.has(commit.revision))
 							? "preservedRevision"
 							: undefined;
@@ -647,12 +653,20 @@ export class EditManager<
 				this.historyTrace?.record("CompactionRangeSkipped", {
 					operationId,
 					rangeIndex,
-					rangeLength: newestIndex - oldestIndex + 1,
+					rangeLength: range.newestIndex - oldestIndex + 1,
 					reason: skipReason,
 				});
 				continue;
 			}
 
+			if (newestIndex !== range.newestIndex) {
+				this.historyTrace?.record("CompactionRangeClipped", {
+					operationId,
+					rangeIndex,
+					requestedRangeLength: range.newestIndex - oldestIndex + 1,
+					rangeLength: newestIndex - oldestIndex + 1,
+				});
+			}
 			if (!peersRebased) {
 				assert(newestEligible !== undefined, "Expected an eligible commit");
 				this.rebasePeersForCompaction(newestEligible[1], stats, operationId);
@@ -676,7 +690,9 @@ export class EditManager<
 				removedCount,
 				composeDurationMs,
 			});
-			onRangeCompacted?.(range);
+			onRangeCompacted?.(
+				newestIndex === range.newestIndex ? range : { ...range, newestIndex },
+			);
 		}
 		return removedCount;
 	}

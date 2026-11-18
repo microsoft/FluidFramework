@@ -572,7 +572,7 @@ function setupPreservationWalkthrough(metadataMode: "default" | "replacement") {
 		runs: readonly (readonly string[])[],
 	): void => {
 		log(`STAGE: ${label} (${metadataMode} metadata)`);
-		// The plan does not look at pins or the collaboration window: SharedTree skips ranges that contain them.
+		// SharedTree checks pins and correctness independently of the plan.
 		compact(expectedRemoved, (history) => {
 			for (const commit of commits.values()) {
 				if (preservedNames.has(commit.metadata.name)) {
@@ -938,6 +938,90 @@ describe("History compaction", () => {
 				listCommits(view.branchHistory).map((commit) => commit.revision),
 			);
 		});
+
+		for (const trigger of ["manual", "summary"] as const) {
+			for (const replaceMetadata of [false, true]) {
+				it(`${trigger}: ${replaceMetadata ? "waits for the whole range with replacement metadata" : "combines the eligible prefix"} at a fork boundary`, async () => {
+					const policy: PlanCompaction = (history) => ({
+						ranges: [
+							{
+								oldest:
+									history.find((commit) => commit.custom?.group === 0)?.revision ??
+									assert.fail(),
+								newest: history.at(-1)?.revision ?? assert.fail(),
+								...(replaceMetadata ? { metadata: { label: "whole range" } } : {}),
+							},
+						],
+					});
+					const { provider, view, otherView } = generateHistory(
+						"append",
+						1,
+						3,
+						true,
+						trigger === "summary" ? policy : undefined,
+					);
+					const fork = view.fork();
+					const forkBase = fork.branchHistory.getHead()?.revision ?? assert.fail();
+					const forkLength = fork.root.length;
+					for (let index = 0; index < 3; index++) {
+						view.root.insertAtEnd("advance");
+						otherView.root.insertAtEnd("advance");
+						provider.synchronizeMessages();
+					}
+					const before = listCommits(view.branchHistory);
+					const oldestIndex = before.findIndex((commit) => commit.custom?.group === 0);
+					const forkIndex = before.findIndex((commit) => commit.revision === forkBase);
+					assert(forkIndex - oldestIndex >= 2);
+					const expectedRemoved = replaceMetadata ? 0 : forkIndex - oldestIndex - 1;
+					const content = [...view.root];
+					const start = provider.logger.events().length;
+					let summary: ISummaryTree | undefined;
+					if (trigger === "manual") {
+						assert.equal(
+							compactionOf(provider.trees[0]).requestPlannedCompaction(policy),
+							expectedRemoved,
+						);
+					} else {
+						summary = await summarize(provider.trees[0]);
+					}
+					const event = compactionEvent(provider, start);
+					assert.equal(event.removedCount, expectedRemoved);
+					assert.equal(event.composedChangeCount, replaceMetadata ? 0 : expectedRemoved + 1);
+					const after = listCommits(view.branchHistory);
+					assert.deepEqual(
+						after.map((commit) => commit.revision),
+						replaceMetadata
+							? before.map((commit) => commit.revision)
+							: [...before.slice(0, oldestIndex), ...before.slice(forkIndex - 1)].map(
+									(commit) => commit.revision,
+								),
+					);
+					assert.deepEqual([...view.root], content);
+					if (summary !== undefined) {
+						const loaded = await loadFromSummary(
+							summary,
+							provider.getCompressor(provider.trees[0]),
+						);
+						assert.deepEqual(
+							listCommits(loaded.kernel.checkout.branchHistory).map(
+								(commit) => commit.customTree,
+							),
+							after.map((commit) => commit.customTree),
+						);
+						assert.deepEqual([...loaded.viewWith(config).root], content);
+					}
+					fork.root.insertAtEnd("fork edit");
+					fork.rebaseOnto(view);
+					view.merge(fork);
+					provider.synchronizeMessages();
+					assert.deepEqual(
+						[...view.root],
+						[...content.slice(0, forkLength), "fork edit", ...content.slice(forkLength)],
+					);
+					assert.deepEqual([...view.root], [...otherView.root]);
+				});
+			}
+		}
 
 		it("skips ranges that are not yet eligible or that contain a preserved commit", () => {
 			const { provider, view } = generateHistory(
@@ -1575,9 +1659,7 @@ describe("History compaction", () => {
 		});
 
 		it("keeps more points in time within the same limit when compacting", () => {
-			// A group's range is only combined once all of it has left the collaboration window,
-			// so the newest two groups are still uncombined when the limit is applied.
-			const retained = 16;
+			const retained = 10;
 			const { view: compacted } = editInGroups(retained, 8, 3, (tree) =>
 				asAlpha(tree).historyCompaction.requestPlannedCompaction(planSameGroup()),
 			);
@@ -1845,6 +1927,38 @@ describe("History compaction", () => {
 			assert(events.some((event) => event.activity === "HistoryLoadStarted"));
 			assert(events.some((event) => event.activity === "HistoryLoadFailed"));
 			assert(!events.some((event) => event.activity === "HistoryLoadCompleted"));
+		});
+
+		it("traces a clipped range and reports only the commits actually combined", () => {
+			const logger = makeLogger();
+			const { provider, view } = generateHistory("append", 1, 3, true, undefined, logger);
+			const before = listCommits(view.branchHistory);
+			const oldestIndex = before.findIndex((commit) => commit.custom?.group === 0);
+			const removed = asAlpha(provider.trees[0]).historyCompaction.requestPlannedCompaction(
+				() => ({
+					ranges: [
+						{
+							oldest: before[oldestIndex].revision,
+							newest: before.at(-1)?.revision ?? assert.fail(),
+						},
+					],
+				}),
+			);
+			assert(removed > 0);
+			const events = traceEvents(logger);
+			const clipped = events.find((event) => event.activity === "CompactionRangeClipped");
+			assert(clipped !== undefined);
+			assert.equal(clipped.requestedRangeLength, before.length - oldestIndex);
+			assert.equal(clipped.rangeLength, removed + 1);
+			assert(Number(clipped.rangeLength) < Number(clipped.requestedRangeLength));
+			const merged = events.find((event) => event.activity === "CompactionRangeMerged");
+			assert.equal(merged?.operationId, clipped.operationId);
+			assert.equal(merged?.rangeIndex, clipped.rangeIndex);
+			assert.equal(merged?.rangeLength, clipped.rangeLength);
+			const completed = events.find((event) => event.activity === "CompactionCompleted");
+			assert.equal(completed?.combinedRangeCount, 1);
+			assert.equal(completed?.skippedRangeCount, 0);
+			assert.equal(completed?.composedChangeCount, removed + 1);
 		});
 
 		it("traces preserved-range skips and preservation operation processing", () => {

@@ -238,7 +238,8 @@ Already-connected clients do not have their in-memory histories rewritten by the
 SharedTree keeps a commit for one of two reasons:
 
 - **Needed for correctness:** something still depends on it.
-  The policy may see these commits, but a planned range that would remove one is skipped.
+  The policy may see these commits, but compaction never combines them.
+  A range without replacement metadata can still combine its eligible prefix.
 - **Kept only for history:** `retainHistory` is the only reason it exists.
   These are the only commits the policy can merge away.
 
@@ -344,7 +345,7 @@ The policy returns a `CompactionPlan`: a list of `CompactionRange`s, each naming
 | Range | Effect | Combined commit's metadata |
 | --- | --- | --- |
 | Not listed | Every point in time is kept. | Unchanged. |
-| A range without `metadata` | Combined into the range's newest commit. | Default merge: the left fold of `composeCustomMetadata` over the range, oldest first. For A, B, C: `{ metadata: undefined, children: [{ metadata: undefined, children: [A, B] }, C] }` (commits without metadata are left out). `custom` is flattened, newest wins on conflicting keys. |
+| A range without `metadata` | Combined into its newest eligible commit; only the eligible prefix is combined if correctness blocks the rest. | Default merge: the left fold of `composeCustomMetadata` over the combined commits, oldest first. For A, B, C: `{ metadata: undefined, children: [{ metadata: undefined, children: [A, B] }, C] }` (commits without metadata are left out). `custom` is flattened, newest wins on conflicting keys. |
 | A range with `metadata` | Combined into the range's newest commit. | The object **replaces** the metadata of every commit in the range: `custom` is the object, `customTree` is `{ metadata: object, children: [] }`. |
 
 The whole plan is validated **before** anything changes. A `UsageError` is thrown (and handled as in [§7.4](#74-errors)) when:
@@ -363,18 +364,22 @@ A valid range is **skipped** (not an error) when:
 | Skip reason (`CompactionRangeSkipped.reason`) | Meaning |
 | --- | --- |
 | `singleCommit` | `oldest` and `newest` are the same commit; there is nothing to combine. |
-| `notEligible` | The range's newest commit is not eligible yet: it is in the collaboration window, at or above an open local fork's base, or the trunk is not yet known after load. |
+| `notEligible` | Fewer than two commits at the start of the range are eligible, or the range has replacement metadata and is not fully eligible. Correctness can block commits in the collaboration window, at or above an open local fork's base, or before eligibility is known after load. |
 | `preservedRevision` | The range contains a pinned commit ([§9](#9-preserved-revisions-api)). |
 
-Because a range is combined into its newest commit, the newest eligible commit can only be the newest commit of a range.
-A skipped range is not retried within the pass; a later pass may combine it once it is eligible.
+Only correctness boundaries can shorten a range.
+If A–C are eligible but D–E are still needed for correctness, a plan for A–E without replacement metadata combines A–C into C and leaves D–E unchanged.
+A range with replacement metadata waits until the whole range is eligible, because that metadata may describe the full range.
+A preserved revision anywhere in the original requested range blocks the entire range, including when it lies beyond the eligible prefix.
+A skipped range or uncombined suffix is not retried within the pass; the policy must include it in a later plan.
 
 #### 7.3 Guarantees
 
 - Only history kept because of `retainHistory` is changed. With `retainHistory: false` (or `0`), `requestPlannedCompaction` returns `0`.
 - A commit needed for correctness is never removed ([§5](#5-commits-needed-for-correctness-vs-commits-kept-only-for-history)).
 - Each combined range is composed with **one** `compose` call over all of its commits.
-- The combined commit keeps the **newest** commit's revision. A preserved revision is therefore never renamed.
+- The combined commit keeps the **newest combined** commit's revision, which may be the end of an eligible prefix.
+  A preserved revision is never renamed.
 - A preserved commit is never combined with another commit, on any client, including the summarizer.
   A range containing it is skipped as a whole; to combine the commits on either side, plan ranges that end before and start after it.
 - Compaction changes only the calling client's in-memory history.
@@ -499,15 +504,14 @@ const SharedTree = configuredSharedTree({
 - **Trimming runs first and more often** (every MSN change), compaction only at the next summary.
   New raw commits fill the limit and can push older compacted points out before they are compacted.
   The limit holds about *N minus the commits made between two compactions* compacted points, plus the newer raw commits.
-- **A run is combined only once all of it is eligible.**
-  A plan like "one range per session" names the whole run, and a range whose newest commit is still in the collaboration window is skipped as a whole.
-  So the newest run stays uncombined until a later pass, and N must cover it as raw commits too.
+- **Eligible prefixes can be combined before the whole run is eligible.**
+  Without replacement metadata, a plan like "one range per session" can combine its eligible prefix while newer commits remain in the collaboration window.
+  With replacement metadata, the whole range waits until it is eligible, so N must cover that run as raw commits too.
 - **If more than N commits arrive between two summaries, compaction gains nothing for retention.**
   Pick N well above the expected commits per summary interval.
 
-The test "keeps more points in time within the same limit when compacting" uses N = 16 and 8 rounds of 3 commits (one group per round), compacting after each round.
+The test "keeps more points in time within the same limit when compacting" uses N = 10 and 8 rounds of 3 commits (one group per round), compacting after each round without replacement metadata.
 The compacted history covers more groups than the uncompacted one, and never holds more commits.
-(A smaller N would hold only the newest, not yet combined groups, so compaction would gain nothing.)
 
 A possible improvement, "compact before trimming", is listed in [§24.5](#245-smaller-open-items).
 
@@ -814,12 +818,15 @@ Unsequenced commits are never on the trunk.
 history = retained trunk, oldest first; eligibleCount as above
 ranges  = planRanges(history, eligibleCount)      // called once, before anything changes
 for each range, oldest first:
-    if single commit:                 skip ("singleCommit")
-    else if newestIndex >= eligibleCount: skip ("notEligible")
-    else if any commit is preserved:  skip ("preservedRevision")
+    newestCombined = min(newestIndex, eligibleCount - 1)
+    if single commit:                         skip ("singleCommit")
+    else if newestCombined <= oldestIndex:    skip ("notEligible")
+    else if replacement metadata and clipped: skip ("notEligible")
+    else if any requested commit is preserved: skip ("preservedRevision")
     else:
+        if clipped: record "CompactionRangeClipped"
         before the first combined range: rebase every peer branch onto the newest eligible commit
-        compose the range into its newest commit, in place, with one compose call
+        compose oldestIndex..newestCombined into newestCombined, in place, with one compose call
 ```
 
 In the kernel, `planRanges` is `planCompactionRanges`: it wraps the commits in `LazyTreeBranchCommitMetadata`, calls the app's `PlanCompaction` once,
@@ -929,7 +936,8 @@ An app that needs this must return replacement metadata with its own marker or c
 
 The tests "preserves old and newly sequenced revisions while compacting surrounding history" (default and replacement modes)
 author eleven nested-metadata commits in four sessions (A/B/C, D/E/F, G/H/I, J/K), pin and unpin in stages,
-plan one range per session on every pass, and check that ranges containing pinned or correctness-window commits are skipped.
+plan one range per session on every pass, and check that pinned ranges are skipped.
+Correctness-window commits are never combined; ranges without replacement metadata can combine an eligible prefix.
 
 | Pass | Pins and new edits | Still needed for correctness | Removed |
 | --- | --- | --- | --- |
@@ -1119,7 +1127,7 @@ It replaces the experimental `HistoryCompactionBeforeSummary` and `HistoryCompac
 | `historyCommitCount` | Retained trunk commits given to the policy. |
 | `eligibleCommitCount` | Trunk commits eligible this pass (below the window and every fork base). |
 | `plannedRangeCount` | Ranges in the plan. |
-| `combinedRangeCount` | Ranges combined. |
+| `combinedRangeCount` | Ranges combined in full or as an eligible prefix. |
 | `skippedRangeCount` | Ranges skipped (single commit, not eligible, or containing a pin). |
 | `defaultMergeCount` | Combined ranges without metadata (default merge). |
 | `replacementMergeCount` | Combined ranges with replacement metadata. |
@@ -1214,9 +1222,11 @@ The trace covers:
 - Fork tracking/untracking, so a fork-base restriction can be distinguished from the collaboration window.
 - Compaction passes: `CompactionStarted`, `CompactionEligibility` (eligible and retained counts, MSN and correctness bound),
   `CompactionPlanReceived` (planned range count), `CompactionRangeSkipped` (`rangeIndex`, `rangeLength`, and `reason`: `singleCommit`, `notEligible`, or `preservedRevision`),
+  `CompactionRangeClipped` (`rangeIndex`, `requestedRangeLength`, and eligible-prefix `rangeLength`, only when a prefix will be combined),
   `CompactionPeersRebased` (peer count and duration), `CompactionRangeMerged` (`rangeIndex`, `rangeLength`, cumulative `removedCount`, `composeDurationMs`),
   `CompactionPolicyFailed` (`failureSource`), and `CompactionCompleted` (status, failure source, and every `HistoryCompaction` counter).
-  A planned range is **not** a completed merge; look for `CompactionRangeMerged`.
+  A planned or clipped range is **not** a completed merge; look for `CompactionRangeMerged`.
+  Merge counts, composition inputs, and merged `rangeLength` describe only commits actually combined, not a protected suffix.
 - Preservation requests, queries, updates, operation submission/processing, ignored requests, and rejections.
 - Summary start/completion/failure and history encoding/loading start/completion/failure.
   `HistoryEncoded.serializedLength` is the JSON string length, not UTF-8 bytes or heap usage.
@@ -1303,6 +1313,11 @@ Also: `compactHistoryByPlan` tests in `src/test/shared-tree-core/edit-manager/ed
 and "keeps an idle peer's branch consistent when its last commit is composed away"),
 `customCommitMetadata.spec.ts` (metadata given to the plan),
 and pin round-trips in the message and EditManager codec tests.
+
+Eligible-prefix coverage includes collaboration-window clipping followed by a later full merge, prefixes with fewer than two eligible commits,
+replacement metadata waiting for full eligibility, and preserved revisions inside or beyond the eligible prefix.
+The public API tests exercise manual and summary-time clipping at a fork boundary, summary reload, and subsequent fork rebase/merge.
+Diagnostic tracing tests check requested versus combined lengths and counters for a clipped range.
 
 #### 21.2 End-to-end tests: `packages/test/test-end-to-end-tests/src/test/treeHistoryCompaction.spec.ts`
 
@@ -1445,6 +1460,30 @@ This is correct for deterministic policies, but its cost grows with retained his
 - **MSN-advance trigger** ([§8](#8-where-and-when-compaction-runs)): compacts as soon as a commit is history-only; helps long-lived interactive clients, but runs on the op hot path and would re-plan the whole retained history on every MSN change ([§24.2](#242-re-planning-cost)).
 - **`ancestryTrimmed`-like event for compaction** for apps that cache history.
 - **Shared branches:** only `main` is compacted.
+
+#### 24.6 Replacement metadata when only part of a range is eligible
+
+**Open question: how should range compaction handle replacement metadata when only part of a range is eligible?**
+
+Suppose the app requests compaction of A–E, but only A–C are eligible.
+D–E are still needed for collaboration or a local branch.
+Without replacement metadata, SharedTree can combine A–C, preserving their metadata and leaving D–E unchanged.
+But replacement metadata for A–E, such as `{ startTime: A.time, endTime: E.time }`, may be inaccurate for the combined A–C commit.
+
+| Option | Behavior | Tradeoff |
+| --- | --- | --- |
+| **1. Wait for the whole range (current prototype).** | Partially compact ranges only when they have no replacement metadata. A range with replacement metadata waits until it is fully eligible. | Keeps the metadata consistent with the requested range, but delays compaction and may keep skipping a range that extends through ongoing edits. |
+| **2. Apply the supplied metadata to the eligible prefix.** | Allow partial compaction with replacement metadata too. Callers must provide metadata valid for any eligible prefix. | Allows earlier compaction without another callback, but places the burden on callers and cannot safely use metadata that describes only the full range. |
+| **3. Compute metadata for the actual range.** | After SharedTree determines eligibility, invoke an app callback with the commits that will be combined. | Lets callers describe the actual prefix, but adds API complexity and callback work to the compaction pass. Not implemented. |
+
+**Decision needed:** do we prefer delayed compaction, caller-managed prefix-safe metadata, or an additional metadata callback?
+Option 1 is implemented for this experiment; it is not an agreed final API requirement.
+Options 2 and 3 are alternatives, not supported behavior.
+
+Preserved revisions are a separate barrier in all three options.
+A requested range containing a preserved revision is skipped entirely, even if the preserved revision is outside the eligible prefix.
+It is not shortened or split around the pin; callers can return separate ranges ending before and starting after it.
+See [§7.2](#72-return-value) for the current contract and [§11.1](#111-rule-1-a-range-containing-a-pin-is-skipped) for pin handling.
 
 ### 25. API review: findings and options
 

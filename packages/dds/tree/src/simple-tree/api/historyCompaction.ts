@@ -19,7 +19,8 @@ import type { SharedTreeOptions } from "../../shared-tree/index.js";
  * for example the newest commit's time as a deterministic reference time.
  * @remarks
  * Each commit in the history is a point in time that the application can show or restore.
- * Each {@link CompactionRange} becomes one commit that has the effect of every commit in the range and keeps the revision of the range's newest commit.
+ * Each combined {@link CompactionRange} becomes one commit that has the effect of the combined commits and keeps the revision of the newest combined commit.
+ * When correctness prevents combining the full range, SharedTree can combine its eligible prefix as described below.
  * The document states after the other commits in the range can no longer be restored.
  * For example, with history `A ← B ← C ← D ← E`, the plan `{ ranges: [{ oldest: B, newest: D }] }` turns it into `A ← (B+C+D) ← E`,
  * where `(B+C+D)` keeps D's revision.
@@ -32,17 +33,24 @@ import type { SharedTreeOptions } from "../../shared-tree/index.js";
  * **Which commits can be combined.**
  * A commit is first kept for correctness: while other clients may still be editing concurrently with it, SharedTree needs it to merge their edits.
  * Once every client has seen it (the minimum sequence number has passed it), it is only kept as history, and from then on it is eligible for compaction.
- * The plan cannot affect correctness, because SharedTree skips any range that contains a commit that is still needed to merge edits.
- * In particular, a range is skipped if it contains any of the following:
+ * The plan cannot affect correctness, because SharedTree never combines commits that are still needed to merge edits.
+ * The eligible part of history ends before either of the following:
  *
  * - A commit inside the collaboration window, which other clients may still be editing concurrently with.
  *
  * - A commit that an open branch of this tree (for example a fork of a view) is based on, or any later commit.
  *
- * - A commit marked with {@link TreeHistoryCompaction.setRevisionPreserved}.
+ * If a range extends past that boundary and has no replacement metadata, SharedTree combines only its eligible prefix,
+ * provided that prefix contains at least two commits.
+ * The combined commit keeps the newest eligible commit's revision, and the rest of the range is unchanged.
+ * If the range provides {@link CompactionRange.metadata}, the whole range is skipped until it is eligible,
+ * because the replacement metadata may describe the full range rather than its prefix.
+ *
+ * A range containing a commit marked with {@link TreeHistoryCompaction.setRevisionPreserved} is always skipped as a whole,
+ * even if the preserved commit is outside the eligible prefix.
  * Compaction does not change a preserved commit's change data or metadata, and does not combine commits across it.
  *
- * The newest eligible commit can be the newest commit of a range, but no range can extend past it, because the commits after it are based on its result.
+ * The newest eligible commit can be the newest combined commit, but is never removed, because later commits depend on its result.
  * Commits that are not yet sequenced (local edits that the service has not yet ordered) are not in `history`.
  * Commits outside the tree's history retention limit are removed by trimming before compaction runs, so they are not in `history` either.
  * A range with a single commit is skipped, because there is nothing to combine.
@@ -98,7 +106,8 @@ export interface CompactionRange {
 	 */
 	readonly oldest: CommitRevision;
 	/**
-	 * The revision of the newest commit in the range. The combined commit keeps this revision.
+	 * The revision of the newest commit in the requested range.
+	 * The combined commit keeps this revision unless only the eligible prefix is combined; see {@link PlanCompaction}.
 	 */
 	readonly newest: CommitRevision;
 	/**
@@ -114,6 +123,7 @@ export interface CompactionRange {
 	 * Once the range is combined, the metadata of the original commits is no longer available.
 	 *
 	 * When omitted, the combined commit keeps the metadata of every commit in the range; see {@link PlanCompaction}.
+	 * A range with replacement metadata is never partially combined: it waits until the whole range is eligible.
 	 */
 	readonly metadata?: JsonCompatibleReadOnlyObject;
 }
@@ -175,7 +185,9 @@ export interface TreeHistoryCompaction {
 	/**
 	 * Runs a compaction pass that combines the ranges of commits chosen by `planCompaction`.
 	 * @param planCompaction - Reads the whole retained history and returns the ranges to combine; see {@link PlanCompaction}.
-	 * Ranges that contain commits that are still needed for correctness are skipped.
+	 * Ranges without replacement metadata may be clipped to their eligible prefix.
+	 * Ranges with replacement metadata wait until the whole range is eligible.
+	 * Any range containing a preserved revision is skipped as a whole; see {@link PlanCompaction}.
 	 * @returns The number of commits removed from the history.
 	 * @throws The error thrown by `planCompaction`, or a `UsageError` if the plan is malformed. In either case the history is unchanged.
 	 */
