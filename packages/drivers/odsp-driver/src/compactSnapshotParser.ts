@@ -182,7 +182,7 @@ function readTreeSection(node: NodeCore): {
 						slowTreeStructureCount += result.slowTreeStructureCount;
 						treeStructureCountWithGroupId += result.treeStructureCountWithGroupId;
 						assert(treeNode.getBool(3), 0x3db /* Unreferenced if present should be true */);
-						snapshotTree.unreferenced = true;
+						result.snapshotTree.unreferenced = true;
 						continue;
 					}
 					break;
@@ -202,7 +202,6 @@ function readTreeSection(node: NodeCore): {
 		if (records.unreferenced !== undefined) {
 			assertBoolInstance(records.unreferenced, "Unreferenced flag should be bool");
 			assert(records.unreferenced, 0x281 /* "Unreferenced if present should be true" */);
-			snapshotTree.unreferenced = true;
 		}
 
 		const path = getStringInstance(records.name, "Path name should be string");
@@ -225,6 +224,9 @@ function readTreeSection(node: NodeCore): {
 			treeStructureCountWithGroupId += result.treeStructureCountWithGroupId;
 		} else {
 			trees[path] = { blobs: {}, trees: {} };
+		}
+		if (records.unreferenced === true && records.value === undefined) {
+			trees[path].unreferenced = true;
 		}
 	}
 	return { snapshotTree, slowTreeStructureCount, treeStructureCountWithGroupId };
