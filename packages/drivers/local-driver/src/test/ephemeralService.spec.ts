@@ -127,6 +127,23 @@ describe("EphemeralService", () => {
 			});
 		}
 
+		it("closes and disposes a detached container when entry-point retrieval fails", async () => {
+			const events: string[] = [];
+			const client = newService().newClient({
+				...options,
+				logger: { send: (event) => events.push(event.eventName) },
+			});
+			const error = new Error("Detached entry point failed");
+			mock.method(ContainerRuntime.prototype, "getEntryPoint", async () => {
+				throw error;
+			});
+			const dispose = mock.method(ContainerRuntime.prototype, "dispose");
+
+			await assert.rejects(client.createContainer(stubFactory), (cause) => cause === error);
+			assert(events.includes("fluid:telemetry:Container:ContainerClose"));
+			assert.equal(dispose.mock.callCount(), 1, "The detached runtime must be disposed");
+		});
+
 		it("forwards telemetry from created and loaded containers to the configured logger", async () => {
 			const events: string[] = [];
 			const client = newService().newClient({
