@@ -64,6 +64,7 @@ import {
 	type TreeViewConfigurationAlpha,
 	toInitialSchema,
 	type TreeBranchHistory,
+	type TreeHistoryCompaction,
 	type TreeLocationResolver,
 	type TreeLocation,
 	type CapturedTreeLocation,
@@ -744,6 +745,10 @@ export class SchematizingSimpleTreeView<
 
 	public get branchHistory(): TreeBranchHistory {
 		return this.checkout.branchHistory;
+	}
+
+	public get historyCompaction(): TreeHistoryCompaction {
+		return this.checkout.historyCompaction;
 	}
 
 	public readonly locations: TreeLocationResolver = (() => {

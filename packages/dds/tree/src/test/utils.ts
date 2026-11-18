@@ -188,6 +188,7 @@ import {
 	SchemaFactory,
 	type TreeView,
 	type TreeBranchHistory,
+	type TreeHistoryCompaction,
 	type UntypedTreeViewAlpha,
 	type TreeBranchEvents,
 	type ITree,
@@ -1682,6 +1683,9 @@ export class MockTreeCheckout implements ITreeCheckout {
 	}
 	public get branchHistory(): TreeBranchHistory {
 		throw new Error("'history' property not implemented in MockTreeCheckout.");
+	}
+	public get historyCompaction(): TreeHistoryCompaction {
+		throw new Error("'historyCompaction' property not implemented in MockTreeCheckout.");
 	}
 	public get locations(): never {
 		throw new Error("'locations' property not implemented in MockTreeCheckout.");
