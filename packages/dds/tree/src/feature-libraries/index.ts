@@ -83,8 +83,6 @@ export {
 	type FullSchemaPolicy,
 	allowsRepoSuperset,
 	allowsFieldSuperset,
-	type StoredSchemaUpgradeIncompatibility,
-	type SchemaIncompatibilityLocation,
 	type GenericChangeset,
 	genericFieldKind,
 	type HasFieldChanges,

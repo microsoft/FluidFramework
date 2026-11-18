@@ -21,9 +21,9 @@ import {
 } from "../../../feature-libraries/index.js";
 import {
 	findExtraAllowedTypes,
-	getIncompatibilitiesInAllowedContent,
+	getDiscrepanciesInAllowedContent,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/api/incompatibilities.js";
+} from "../../../simple-tree/api/discrepancies.js";
 import {
 	SchemaFactoryAlpha,
 	type AnnotatedAllowedType,
@@ -40,15 +40,13 @@ import { fieldSchema } from "../../utils.js";
 
 // Arbitrary schema name used in tests
 const testTreeNodeName = "tree";
-const testTreeNodeIdentifier = brand<TreeNodeSchemaIdentifier>(
-	"schema incompatibilities.tree",
-);
+const testTreeNodeIdentifier = brand<TreeNodeSchemaIdentifier>("schema discrepancies.tree");
 
-const schemaFactory = new SchemaFactoryAlpha("schema incompatibilities");
+const schemaFactory = new SchemaFactoryAlpha("schema discrepancies");
 const numberName = brand<TreeNodeSchemaIdentifier>(SchemaFactory.number.identifier);
 
 // TODO:#43720: Add tests for RecordNodeObjects
-describe("Schema Incompatibilities", () => {
+describe("Schema Discrepancies", () => {
 	it("Node kind difference for each possible combination", () => {
 		class ObjectNode extends schemaFactory.objectAlpha(testTreeNodeName, {}) {}
 		const objectNodeStoredSchema = toInitialSchema(ObjectNode);
@@ -61,7 +59,7 @@ describe("Schema Incompatibilities", () => {
 
 		assert.deepEqual(
 			[
-				...getIncompatibilitiesInAllowedContent(
+				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: ObjectNode }),
 					objectNodeStoredSchema,
 				),
@@ -71,7 +69,7 @@ describe("Schema Incompatibilities", () => {
 
 		assert.deepEqual(
 			[
-				...getIncompatibilitiesInAllowedContent(
+				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: ObjectNode }),
 					mapNodeStoredSchema,
 				),
@@ -88,7 +86,7 @@ describe("Schema Incompatibilities", () => {
 
 		assert.deepEqual(
 			[
-				...getIncompatibilitiesInAllowedContent(
+				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: ObjectNode }),
 					leafNodeStoredSchema,
 				),
@@ -105,7 +103,7 @@ describe("Schema Incompatibilities", () => {
 
 		assert.deepEqual(
 			[
-				...getIncompatibilitiesInAllowedContent(
+				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: MapNode }),
 					mapNodeStoredSchema,
 				),
@@ -115,7 +113,7 @@ describe("Schema Incompatibilities", () => {
 
 		assert.deepEqual(
 			[
-				...getIncompatibilitiesInAllowedContent(
+				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: MapNode }),
 					objectNodeStoredSchema,
 				),
@@ -152,7 +150,7 @@ describe("Schema Incompatibilities", () => {
 
 		assert.deepEqual(
 			[
-				...getIncompatibilitiesInAllowedContent(
+				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: mapNodeSchema1 }),
 					toInitialSchema(mapNodeSchema2),
 				),
@@ -177,7 +175,7 @@ describe("Schema Incompatibilities", () => {
 
 		assert.deepEqual(
 			[
-				...getIncompatibilitiesInAllowedContent(
+				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: mapNodeSchema2 }),
 					toInitialSchema(mapNodeSchema3),
 				),
@@ -191,7 +189,7 @@ describe("Schema Incompatibilities", () => {
 						{ metadata: {}, type: SchemaFactory.number },
 						{ metadata: {}, type: SchemaFactory.string },
 					],
-					stored: ["schema incompatibilities.array"],
+					stored: ["schema discrepancies.array"],
 				},
 			],
 		);
@@ -218,7 +216,7 @@ describe("Schema Incompatibilities", () => {
 
 		assert.deepEqual(
 			[
-				...getIncompatibilitiesInAllowedContent(
+				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: schemaFactory.optional(ObjectNode1) }),
 					objectNodeStoredSchema2,
 				),
@@ -228,7 +226,7 @@ describe("Schema Incompatibilities", () => {
 					fieldKey: undefined,
 					identifier: undefined,
 					mismatch: "allowedTypes",
-					stored: ["schema incompatibilities.tree2"],
+					stored: ["schema discrepancies.tree2"],
 					view: [
 						{
 							metadata: {},
@@ -241,7 +239,7 @@ describe("Schema Incompatibilities", () => {
 
 		assert.deepEqual(
 			[
-				...getIncompatibilitiesInAllowedContent(
+				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: schemaFactory.optional(MapNode) }),
 					objectNodeStoredSchema2,
 				),
@@ -251,7 +249,7 @@ describe("Schema Incompatibilities", () => {
 					fieldKey: undefined,
 					identifier: undefined,
 					mismatch: "allowedTypes",
-					stored: ["schema incompatibilities.tree2"],
+					stored: ["schema discrepancies.tree2"],
 					view: [
 						{
 							metadata: {},
@@ -279,7 +277,7 @@ describe("Schema Incompatibilities", () => {
 
 		assert.deepEqual(
 			[
-				...getIncompatibilitiesInAllowedContent(
+				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: objectNodeRoot1 }),
 					objectNodeStoredSchema2,
 				),
@@ -319,7 +317,7 @@ describe("Schema Incompatibilities", () => {
 
 		assert.deepEqual(
 			[
-				...getIncompatibilitiesInAllowedContent(
+				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: viewNumber }),
 					storedBooleanRoot,
 				),
@@ -336,7 +334,7 @@ describe("Schema Incompatibilities", () => {
 
 		assert.deepEqual(
 			[
-				...getIncompatibilitiesInAllowedContent(
+				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: viewNumber }),
 					storedNumberRoot,
 				),
@@ -378,7 +376,7 @@ describe("Schema Incompatibilities", () => {
 
 			assert.deepEqual(
 				[
-					...getIncompatibilitiesInAllowedContent(
+					...getDiscrepanciesInAllowedContent(
 						new TreeViewConfigurationAlpha({ schema: emptyTree }),
 						emptyLocalFieldTreeStored,
 					),
@@ -408,7 +406,7 @@ describe("Schema Incompatibilities", () => {
 
 			assert.deepEqual(
 				[
-					...getIncompatibilitiesInAllowedContent(
+					...getDiscrepanciesInAllowedContent(
 						new TreeViewConfigurationAlpha({ schema: ObjectNode }),
 						emptyTreeStored,
 					),
@@ -434,7 +432,7 @@ describe("Schema Incompatibilities", () => {
 						stored: forbiddenFieldKindIdentifier,
 					},
 					{
-						identifier: "schema incompatibilities.tree",
+						identifier: "schema discrepancies.tree",
 						fieldKey: "x",
 						mismatch: "fieldKind",
 						view: "Optional",
@@ -445,7 +443,7 @@ describe("Schema Incompatibilities", () => {
 
 			assert.deepEqual(
 				[
-					...getIncompatibilitiesInAllowedContent(
+					...getDiscrepanciesInAllowedContent(
 						new TreeViewConfigurationAlpha({ schema: ObjectNode }),
 						emptyLocalFieldTreeStored,
 					),
@@ -471,14 +469,14 @@ describe("Schema Incompatibilities", () => {
 						stored: forbiddenFieldKindIdentifier,
 					},
 					{
-						identifier: "schema incompatibilities.tree",
+						identifier: "schema discrepancies.tree",
 						fieldKey: "x",
 						mismatch: "allowedTypes",
 						view: [{ metadata: {}, type: SchemaFactory.number }],
 						stored: [],
 					},
 					{
-						identifier: "schema incompatibilities.tree",
+						identifier: "schema discrepancies.tree",
 						fieldKey: "x",
 						mismatch: "fieldKind",
 						view: "Optional",
