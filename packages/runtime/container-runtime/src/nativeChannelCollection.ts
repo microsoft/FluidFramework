@@ -189,8 +189,17 @@ export class NativeChannelCollection
 			undefined,
 			nativeFactory.isLeafChannel === true,
 		);
-		const channel = await factory.instantiateDataStore(context, false);
-		const store = await context.attachRuntime(factory, channel);
+		let store: IDataStore;
+		try {
+			store = await context.attachRuntime(factory);
+		} catch (error) {
+			if (this.contexts.isNotBound(childId)) {
+				context.dispose();
+				this.contexts.discardUnbound(childId);
+				this.parentContext.deleteChildSummarizerNode(childId);
+			}
+			throw error;
+		}
 		return {
 			entryPoint: store.entryPoint,
 			trySetAlias: async (alias) => {
@@ -223,6 +232,9 @@ export class NativeChannelCollection
 		}
 		const internal = toFluidHandleInternal(handle);
 		if (this.visible) {
+			if (this.context.containerRuntime.inStagingMode && !internal.isAttached) {
+				throw new UsageError("Cannot explicitly attach a channel while in staging mode");
+			}
 			internal.attachGraph();
 		} else {
 			this.boundHandles.add(internal);

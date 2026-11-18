@@ -48,9 +48,12 @@ Factory package paths remain container-relative so that legacy child-factory loo
 Physical containment is distinct from factory lookup: the legacy child-factory path can select a factory for a container-level peer without nesting that peer.
 Native collections instead place children beneath their containing data store without adding synthetic hosting stores or pointer objects.
 Storing a descendant's handle attaches the required ancestors.
+While staging, store the handle in a shared object instead of explicitly binding an unattached child to a visible collection.
+Committing the edit attaches the referenced child; discarding it does not.
 If a child becomes visible during its containing store's initialization, ancestor visibility is deferred until that store's runtime is bound and its entry point has finished initialization.
 Nested aliases are persisted in the collection's `.aliases` blob.
 New explicit child IDs cannot use `.aliases` or the `_` prefix reserved for generated IDs.
+If a factory fails before publishing its child, creation can be retried with the same ID.
 Detached ID allocation checks restored child IDs and aliases rather than assuming that a snapshot contains a dense sequence of IDs.
 Existing legacy child names remain loadable, but a legacy `.aliases` child prevents adding alias metadata that would overwrite it.
 Legacy `_channels` and `_custom` request prefixes still resolve unless a child or alias has that name.

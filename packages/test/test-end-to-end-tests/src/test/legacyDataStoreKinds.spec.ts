@@ -22,6 +22,7 @@ import type {
 	FluidContainerWithService,
 } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
+import { defineDataStore } from "@fluidframework/shared-object-base/internal";
 import type {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
@@ -620,7 +621,17 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		};
 		const parentKind = dataStoreKindFromFactory<ISharedMap>(parentFactory);
 		const parentKinds: DataStoreRegistry = async () => parentKind;
-		const runtimeFactory = await alphaFactory(parentKinds, parentKind);
+		const nested = defineDataStore<ISharedMap, ISharedMap>({
+			type: "nested-initializing-parent",
+			registry: parentKinds,
+			instantiateFirstTime: async (creator) => creator.createDataStore(parentKind),
+			view: async (map) => map,
+		});
+		const runtimeFactory = await alphaFactory(
+			async (type) => (type === nested.type ? nested : parentKind),
+			nested,
+			"3.12.0",
+		);
 		const container = await provider.createContainer(runtimeFactory);
 		const root = (await container.getEntryPoint()) as ISharedMap;
 		const alpha = fluidContainerFromLegacy(container, root, parentKinds, provider.documentId);
@@ -633,6 +644,9 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		const remote = await provider.loadContainer(runtimeFactory);
 		await provider.ensureSynchronized();
 		const remoteRoot = (await remote.getEntryPoint()) as ISharedMap;
+		const nestedChild = remoteRoot.get<IFluidHandle<ISharedMap>>("child");
+		assert(nestedChild !== undefined);
+		assert.equal((await nestedChild.get()).get("value"), 42);
 		const additionalHandle = remoteRoot.get<IFluidHandle<ISharedMap>>("additional");
 		assert(additionalHandle !== undefined);
 		const remoteAdditional = await additionalHandle.get();

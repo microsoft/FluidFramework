@@ -17,17 +17,18 @@ import type {
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
 } from "@fluidframework/datastore-definitions/internal";
-import type {
-	IFluidDataStoreChannel,
-	IExperimentalIncrementalSummaryContext,
-	IFluidDataStoreContext,
-	FluidDataStoreContextInternal,
-	IGarbageCollectionData,
-	IInboundSignalMessage,
-	IRuntimeMessageCollection,
-	ISummaryTreeWithStats,
-	ITelemetryContext,
-	OldestSupportedClientVersion,
+import {
+	encodeHandlesInContainerRuntime,
+	type IFluidDataStoreChannel,
+	type IExperimentalIncrementalSummaryContext,
+	type IFluidDataStoreContext,
+	type FluidDataStoreContextInternal,
+	type IGarbageCollectionData,
+	type IInboundSignalMessage,
+	type IRuntimeMessageCollection,
+	type ISummaryTreeWithStats,
+	type ITelemetryContext,
+	type OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	create404Response,
@@ -78,6 +79,7 @@ export class LeafChannelRuntime
 	private readonly handleContext: IFluidHandleContext;
 	private localActivity: "applyStashed" | "rollback" | undefined;
 	private readonly telemetryLogger: TelemetryLoggerExt;
+	public readonly submitMessagesWithoutEncodingHandles: boolean;
 
 	private constructor(
 		private readonly context: IFluidDataStoreContext,
@@ -89,6 +91,8 @@ export class LeafChannelRuntime
 		this.telemetryLogger = createChildLogger({ logger: context.baseLogger });
 		const { ILayerCompatDetails: compatibility } = context as IFluidDataStoreContext &
 			Partial<{ ILayerCompatDetails: ILayerCompatDetails }>;
+		this.submitMessagesWithoutEncodingHandles =
+			compatibility?.supportedFeatures.has(encodeHandlesInContainerRuntime) ?? false;
 		validateRuntimeCompatibility(
 			compatibility,
 			() => this.dispose(),

@@ -1682,7 +1682,7 @@ export class LocalDetachedFluidDataStoreContext
 
 	public async attachRuntime(
 		registry: IProvideFluidDataStoreFactory,
-		dataStoreChannel: IFluidDataStoreChannel,
+		channel?: IFluidDataStoreChannel,
 	): Promise<IDataStore> {
 		assert(this.detachedRuntimeCreation, 0x154 /* "runtime creation is already attached" */);
 		this.detachedRuntimeCreation = false;
@@ -1696,6 +1696,8 @@ export class LocalDetachedFluidDataStoreContext
 				const factory2 = await this.factoryFromPackagePath();
 				assert(factory2 === factory, 0x156 /* "Unexpected factory for package path" */);
 
+				// Native creation may need the registered child factories during instantiation.
+				const dataStoreChannel = channel ?? (await factory.instantiateDataStore(this, false));
 				await super.bindRuntime(dataStoreChannel, false /* existing */);
 
 				assert(

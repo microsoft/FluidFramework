@@ -242,6 +242,27 @@ describeCompat("Native leaf channels", "NoCompat", (getTestObjectProvider, apis)
 		assert.equal((await getMap(remote)).get("value"), 3);
 	});
 
+	it("attaches a staged leaf handle when the edit is committed", async () => {
+		const container = await provider.createContainer(runtimeFactory);
+		const root = await getMap(container);
+		const context = contexts.get(root);
+		assert(context !== undefined);
+		const store = await context.containerRuntime.createDataStore(factory.type);
+		const child = (await store.entryPoint.get()) as ISharedMap;
+		child.set("value", 42);
+		await provider.ensureSynchronized();
+		const stage = context.containerRuntime.enterStagingMode();
+		root.set("child", child.handle);
+		assert.equal(child.handle.isAttached, false);
+		stage.commitChanges();
+		await provider.ensureSynchronized();
+		assert.equal(child.handle.isAttached, true);
+		const remote = await provider.loadContainer(runtimeFactory);
+		const handle = (await getMap(remote)).get<IFluidHandle<ISharedMap>>("child");
+		assert(handle !== undefined);
+		assert.equal((await handle.get()).get("value"), 42);
+	});
+
 	it("hosts SharedTree with the container's ID compressor", async () => {
 		const { SharedTree } = apis.dds;
 		const { SchemaFactory, TreeViewConfiguration } = apis.dataRuntime.packages.tree;

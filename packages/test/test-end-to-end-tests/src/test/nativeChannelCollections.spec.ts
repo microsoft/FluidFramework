@@ -5,7 +5,8 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat } from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { stub } from "sinon";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { delay } from "@fluidframework/core-utils/internal";
@@ -524,6 +525,29 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 		);
 	});
 
+	itExpects(
+		"allows retrying a named child after factory initialization fails",
+		[{ eventName: "fluid:telemetry:FluidDataStoreContext:AttachRuntimeError" }],
+		async () => {
+			const container = await provider.createContainer(runtimeFactory);
+			const collection = (await container.getEntryPoint()) as IFluidDataStoreChannelCollection;
+			const failure = stub(leafFactory, "instantiateDataStore").rejects(
+				new Error("factory failed"),
+			);
+			try {
+				await assert.rejects(
+					collection.createDataStore(leafFactory, "retry"),
+					/factory failed/,
+				);
+			} finally {
+				failure.restore();
+			}
+			const child = await collection.createDataStore(leafFactory, "retry");
+			collection.bind(child.entryPoint);
+			assert.equal(await collection.getDataStoreEntryPoint("retry"), child.entryPoint);
+		},
+	);
+
 	it("allows a composite channel to be the root of another composite", async () => {
 		const rootFactory: IFluidDataStoreFactory & {
 			IFluidDataStoreRegistry: IFluidDataStoreRegistry;
@@ -598,8 +622,11 @@ describeCompat("Native channel collections", "NoCompat", (getTestObjectProvider,
 		root.set("value", 1);
 		await provider.ensureSynchronized();
 		const staging = legacy.context.containerRuntime.enterStagingMode();
+		const unbound = await collection.createDataStore(leafFactory);
+		assert.throws(() => collection.bind(unbound.entryPoint), /staging mode/);
 		root.set("value", 2);
 		staging.discardChanges();
+		assert.equal(unbound.entryPoint.isAttached, false);
 		assert.equal(root.get("value"), 1);
 
 		await provider.opProcessingController.pauseProcessing(container);
