@@ -3,24 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	type TreeStoredSchema,
-	type TreeNodeStoredSchema,
-	TreeStoredSchemaRepository,
 	ValueSchema,
 } from "../../core/index.js";
 import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js";
 import { NodeKind } from "../core/index.js";
-import {
-	allowsRepoSuperset,
-	defaultSchemaPolicy,
-	type SchemaIncompatibilityLocation,
-	type StoredSchemaUpgradeIncompatibility,
-} from "../../feature-libraries/index.js";
+import { allowsRepoSuperset, defaultSchemaPolicy } from "../../feature-libraries/index.js";
 import { resolveStoredSchemaGenerationOptions } from "../toStoredSchema.js";
 import { getSchemaUpgradeCandidate, toInitialSchema, type TreeSchema } from "../treeSchema.js";
 
@@ -29,13 +22,30 @@ import {
 	type Incompatibility,
 	type UpgradeLocationCollector,
 } from "./incompatibilities.js";
-import type {
-	SchemaCompatibilityStatusBeta,
-	CompatibilityResult,
-	SchemaViewIncompatibility,
-	SchemaUpgradeIncompatibility,
-	SchemaDiscrepancyFieldLocation,
-} from "./tree.js";
+import type { SchemaCompatibilityStatusBeta, SchemaDiscrepancy } from "./tree.js";
+
+/**
+ * Returns discrepancies that prevent the view from providing read/write access to documents using the stored schema.
+ * @remarks
+ * The returned set of discrepancies does not indicate whether an upgrade can make the document viewable.
+ *
+ * @param viewSchema - The view schema requesting access to the document.
+ * @param storedSchema - The stored schema to check against the view.
+ * @returns The viewing blockers, or `undefined` if `viewSchema` can view `storedSchema` as-is.
+ */
+export function getSchemaIncompatibilityDetails(
+	viewSchema: TreeSchema,
+	storedSchema: TreeStoredSchema,
+): readonly SchemaDiscrepancy[] | undefined {
+	const incompatibilities = [
+		...getIncompatibilitiesInAllowedContent(viewSchema, storedSchema),
+	];
+	if (incompatibilities.length === 0) {
+		return undefined;
+	}
+
+	return incompatibilities.map(formatSchemaDiscrepancy);
+}
 
 /**
  * Checks whether an upgrade candidate would enable the view to access the document.
@@ -52,248 +62,73 @@ export function isSchemaUpgradeAllowed(
 ): boolean {
 	return (
 		allowsRepoSuperset(defaultSchemaPolicy, storedSchema, candidate) &&
-		getIncompatibilitiesInAllowedContent(viewSchema, candidate)[Symbol.iterator]().next()
-			.done === true
+		getSchemaIncompatibilityDetails(viewSchema, candidate) === undefined
 	);
 }
 
-function formatViewIncompatibility(value: Incompatibility): SchemaViewIncompatibility {
+function formatSchemaDiscrepancy(value: Incompatibility): SchemaDiscrepancy {
 	switch (value.mismatch) {
 		case "allowedTypes": {
-			const view = value.view.map(({ type }) => type.identifier).sort();
-			const stored = [...value.stored].sort();
 			return {
 				mismatch: value.mismatch,
-				location: formatIncompatibilityLocation(value),
-				view,
+				location:
+					value.identifier === undefined
+						? "root"
+						: {
+								nodeType: value.identifier,
+								fieldKey: value.fieldKey,
+							},
+				view: value.view.map(({ type }) => type.identifier).sort(),
 				...(value.stagedView === undefined
 					? {}
 					: {
 							stagedView: value.stagedView.map(({ type }) => type.identifier).sort(),
 						}),
-				stored,
-				...(value.viewIsStagedOptional === true
-					? { viewIsStagedOptional: value.viewIsStagedOptional }
-					: {}),
-				reason: `Cannot view ${describeFieldLocation(value)}: ${[
-					view.length > 0
-						? `the view allows node types ${JSON.stringify(view)} that the stored schema does not allow`
-						: undefined,
-					stored.length > 0
-						? `the stored schema allows node types ${JSON.stringify(stored)} that the view does not allow`
-						: undefined,
-				]
-					.filter((difference) => difference !== undefined)
-					.join("; ")}.`,
+				stored: [...value.stored].sort(),
+				...(value.viewIsStagedOptional === true ? { viewIsStagedOptional: true } : {}),
 			};
 		}
 		case "fieldKind": {
 			return {
 				mismatch: value.mismatch,
-				location: formatIncompatibilityLocation(value),
+				location:
+					value.identifier === undefined
+						? "root"
+						: {
+								nodeType: value.identifier,
+								fieldKey: value.fieldKey,
+							},
 				view: value.view,
 				stored: value.stored,
-				...(value.viewIsStagedOptional === true
-					? { viewIsStagedOptional: value.viewIsStagedOptional }
-					: {}),
-				reason: `Cannot view ${describeFieldLocation(value)}: the view permits ${describeFieldKind(value.view)}, but the stored schema permits ${describeFieldKind(value.stored)}.`,
+				...(value.viewIsStagedOptional === true ? { viewIsStagedOptional: true } : {}),
 			};
 		}
 		case "valueSchema": {
 			return {
 				mismatch: value.mismatch,
 				nodeType: value.identifier,
-				view: formatValueSchema(value.view),
-				stored: formatValueSchema(value.stored),
-				reason: `Cannot view node type ${JSON.stringify(value.identifier)}: the view expects ${describeValueSchema(value.view)}, but the stored schema allows ${describeValueSchema(value.stored)}.`,
+				view: value.view === undefined ? undefined : ValueSchema[value.view],
+				stored: value.stored === undefined ? undefined : ValueSchema[value.stored],
 			};
 		}
 		case "nodeKind": {
+			const storedNodeKind =
+				value.stored === ObjectNodeStoredSchema
+					? "Object"
+					: value.stored === MapNodeStoredSchema
+						? "Map"
+						: "Leaf";
 			return {
 				mismatch: value.mismatch,
 				nodeType: value.identifier,
 				view: NodeKind[value.view],
-				stored: getStoredNodeKind(value.stored),
-				reason: `Cannot view node type ${JSON.stringify(value.identifier)}: the stored node structure does not match the view's ${NodeKind[value.view]} definition (stored representation: ${getStoredNodeKind(value.stored)}).`,
+				stored: storedNodeKind,
 			};
 		}
 		default: {
 			return unreachableCase(value);
 		}
 	}
-}
-
-/**
- * Converts an internal upgrade incompatibility into a public incompatibility with a human-readable reason.
- *
- * @param value - The failed stored-schema upgrade requirement to describe.
- */
-function formatUpgradeIncompatibility(
-	value: StoredSchemaUpgradeIncompatibility,
-): SchemaUpgradeIncompatibility {
-	switch (value.mismatch) {
-		case "allowedTypes": {
-			const stored = [...value.stored].filter((type) => !value.proposed.has(type)).sort();
-			return {
-				mismatch: value.mismatch,
-				location: formatIncompatibilityLocation(value),
-				proposed: [...value.proposed].filter((type) => !value.stored.has(type)).sort(),
-				stored,
-				reason: `Cannot upgrade ${describeFieldLocation(value)}: the proposed schema removes allowed node types ${JSON.stringify(stored)}.`,
-			};
-		}
-		case "fieldKind": {
-			return {
-				mismatch: value.mismatch,
-				location: formatIncompatibilityLocation(value),
-				proposed: value.proposed,
-				stored: value.stored,
-				reason: `Cannot upgrade ${describeFieldLocation(value)}: changing from ${describeFieldKind(value.stored)} to ${describeFieldKind(value.proposed)} is not permitted by the schema upgrade rules.`,
-			};
-		}
-		case "valueSchema": {
-			return {
-				mismatch: value.mismatch,
-				nodeType: value.identifier,
-				proposed: formatValueSchema(value.proposed),
-				stored: formatValueSchema(value.stored),
-				reason: `Cannot upgrade node type ${JSON.stringify(value.identifier)}: changing leaf values from ${describeValueSchema(value.stored)} to ${describeValueSchema(value.proposed)} is not permitted.`,
-			};
-		}
-		case "nodeKind": {
-			return {
-				mismatch: value.mismatch,
-				nodeType: value.identifier,
-				proposed: getStoredNodeKind(value.proposed),
-				stored: getStoredNodeKind(value.stored),
-				reason: `Cannot upgrade node type ${JSON.stringify(value.identifier)}: changing the stored node representation from ${getStoredNodeKind(value.stored)} to ${getStoredNodeKind(value.proposed)} is not permitted.`,
-			};
-		}
-		case "missingNodeSchema": {
-			return {
-				mismatch: value.mismatch,
-				nodeType: value.identifier,
-				reason: `Cannot upgrade node type ${JSON.stringify(value.identifier)}: its stored definition is missing from the proposed schema.`,
-			};
-		}
-		case "nodeSchemaCannotBeSatisfied": {
-			const { requirement } = value;
-			const cause =
-				requirement.kind === "requiredMapEntries"
-					? "the proposed map requires an entry for every possible key, which cannot be satisfied by a finite tree"
-					: requirement.allowedTypes.size === 0
-						? `required field ${JSON.stringify(requirement.fieldKey)} allows no child types`
-						: `required field ${JSON.stringify(requirement.fieldKey)} has no child type that can be constructed using the existing stored definitions (allowed types: ${JSON.stringify([...requirement.allowedTypes].sort())})`;
-			return {
-				mismatch: value.mismatch,
-				nodeType: value.identifier,
-				reason: `Cannot upgrade node type ${JSON.stringify(value.identifier)}: ${cause}.`,
-			};
-		}
-		default: {
-			return unreachableCase(value);
-		}
-	}
-}
-
-/**
- * Explains the schema requirements that prevent upgrading `stored` to `proposed`.
- */
-function getSchemaUpgradeIncompatibilityDetails(
-	viewSchema: TreeSchema,
-	stored: TreeStoredSchema,
-	proposed: TreeStoredSchema,
-): readonly SchemaUpgradeIncompatibility[] | undefined {
-	const incompatibilities: StoredSchemaUpgradeIncompatibility[] = [];
-	if (!allowsRepoSuperset(defaultSchemaPolicy, stored, proposed, incompatibilities)) {
-		return incompatibilities.map((incompatibility) =>
-			formatUpgradeIncompatibility(incompatibility),
-		);
-	}
-	return getPostUpgradeViewIncompatibilities(viewSchema, proposed);
-}
-
-/**
- * Explains why an otherwise permitted stored-schema upgrade would still prevent viewing.
- */
-function getPostUpgradeViewIncompatibilities(
-	viewSchema: TreeSchema,
-	candidate: TreeStoredSchema,
-): readonly SchemaUpgradeIncompatibility[] | undefined {
-	const incompatibilities = [
-		...getIncompatibilitiesInAllowedContent(viewSchema, candidate),
-	].map((incompatibility) => formatViewIncompatibility(incompatibility));
-	return incompatibilities.length === 0
-		? undefined
-		: [
-				{
-					mismatch: "viewIncompatibleAfterUpgrade",
-					reason:
-						"Cannot upgrade: the resulting stored schema would still prevent the view from reading or writing the document.",
-					incompatibilities,
-				},
-			];
-}
-
-function formatIncompatibilityLocation(
-	value: SchemaIncompatibilityLocation,
-): SchemaDiscrepancyFieldLocation {
-	return value.identifier === undefined
-		? "root"
-		: { nodeType: value.identifier, fieldKey: value.fieldKey };
-}
-
-function formatValueSchema(value: ValueSchema | undefined): string | undefined {
-	return value === undefined ? undefined : ValueSchema[value];
-}
-
-function describeFieldLocation(value: SchemaIncompatibilityLocation): string {
-	return value.identifier === undefined
-		? "the root field"
-		: value.fieldKey === undefined
-			? `map entries of node type ${JSON.stringify(value.identifier)}`
-			: `field ${JSON.stringify(value.fieldKey)} of node type ${JSON.stringify(value.identifier)}`;
-}
-
-function describeFieldKind(kind: string): string {
-	switch (kind) {
-		case "Value": {
-			return "exactly one child";
-		}
-		case "Optional": {
-			return "zero or one child";
-		}
-		case "Sequence": {
-			return "zero or more children";
-		}
-		case "Forbidden": {
-			return "no children";
-		}
-		case "Identifier": {
-			return "exactly one identifier string";
-		}
-		default: {
-			return `field kind ${JSON.stringify(kind)}`;
-		}
-	}
-}
-
-function describeValueSchema(value: ValueSchema | undefined): string {
-	return value === undefined
-		? "values without a value-type constraint"
-		: value === ValueSchema.FluidHandle
-			? "Fluid handle values"
-			: `${ValueSchema[value].toLowerCase()} values`;
-}
-
-function getStoredNodeKind(
-	schema: TreeNodeStoredSchema | Extract<Incompatibility, { mismatch: "nodeKind" }>["stored"],
-): "Object" | "Map" | "Leaf" {
-	return schema === ObjectNodeStoredSchema || schema instanceof ObjectNodeStoredSchema
-		? "Object"
-		: schema === MapNodeStoredSchema || schema instanceof MapNodeStoredSchema
-			? "Map"
-			: "Leaf";
 }
 
 /**
@@ -357,40 +192,21 @@ export function checkSchemaCompatibility(
 	// - fields with more allowed types in the stored schema than in the view schema have out-of-schema "unknown content" adapters
 	// Complete the full walk even after finding an incompatibility so incompatibility details and
 	// staged-upgrade status contain all available information for debugging.
-	const viewIncompatibilities: SchemaViewIncompatibility[] = [];
+	const viewIncompatibilities: SchemaDiscrepancy[] = [];
 	for (const incompatibility of getIncompatibilitiesInAllowedContent(
 		viewSchema,
 		stored,
 		upgradeCollector,
 	)) {
-		viewIncompatibilities.push(formatViewIncompatibility(incompatibility));
+		viewIncompatibilities.push(formatSchemaDiscrepancy(incompatibility));
 	}
 	const canView = viewIncompatibilities.length === 0;
 
 	const enabledUpgrades = computeUpgradeStatuses(totalLocations, enabledLocations);
 	const wouldUpgradeTo = getSchemaUpgradeCandidate(viewSchema, stored, configuredPolicy);
 
-	const upgradeIncompatibilities: StoredSchemaUpgradeIncompatibility[] | undefined = canView
-		? undefined
-		: [];
 	// The upgrade must continue to allow all content permitted by the stored schema and let this view read and edit the resulting schema.
-	const canUpgradeStored = allowsRepoSuperset(
-		policy,
-		stored,
-		wouldUpgradeTo,
-		upgradeIncompatibilities,
-	);
-	const postUpgradeViewIncompatibilities =
-		canUpgradeStored && !canView
-			? getPostUpgradeViewIncompatibilities(viewSchema, wouldUpgradeTo)
-			: undefined;
-	const canUpgrade =
-		canUpgradeStored &&
-		(canView
-			? getIncompatibilitiesInAllowedContent(viewSchema, wouldUpgradeTo)
-					[Symbol.iterator]()
-					.next().done === true
-			: postUpgradeViewIncompatibilities === undefined);
+	const canUpgrade = isSchemaUpgradeAllowed(viewSchema, stored, wouldUpgradeTo);
 
 	// `isEquivalent` (deprecated) compares the view's generated schema, independently of upgrades already enabled in this document.
 	const viewStoredSchema = toInitialSchema(viewSchema.root, configuredPolicy);
@@ -399,56 +215,11 @@ export function checkSchemaCompatibility(
 		allowsRepoSuperset(policy, stored, viewStoredSchema) &&
 		allowsRepoSuperset(policy, viewStoredSchema, stored);
 
-	const view: CompatibilityResult<SchemaViewIncompatibility> = canView
-		? { isCompatible: true }
-		: { isCompatible: false, incompatibilities: viewIncompatibilities };
-	let upgradeResult: CompatibilityResult<SchemaUpgradeIncompatibility>;
-	if (canUpgrade) {
-		upgradeResult = { isCompatible: true };
-	} else if (upgradeIncompatibilities === undefined) {
-		// Repository snapshots use copy-on-write cloning so diagnostics can safely outlive this schema version.
-		const storedSnapshot = new TreeStoredSchemaRepository(stored);
-		let incompatibilities: readonly SchemaUpgradeIncompatibility[] | undefined;
-		upgradeResult = {
-			isCompatible: false,
-			get incompatibilities() {
-				if (incompatibilities === undefined) {
-					incompatibilities = getSchemaUpgradeIncompatibilityDetails(
-						viewSchema,
-						storedSnapshot,
-						wouldUpgradeTo,
-					);
-					assert(
-						incompatibilities !== undefined,
-						"A blocked upgrade must have incompatibilities.",
-					);
-				}
-				return incompatibilities;
-			},
-		};
-	} else {
-		const incompatibilities = canUpgradeStored
-			? postUpgradeViewIncompatibilities
-			: upgradeIncompatibilities.map((incompatibility) =>
-					formatUpgradeIncompatibility(incompatibility),
-				);
-		assert(
-			incompatibilities !== undefined && incompatibilities.length > 0,
-			"A blocked upgrade must have incompatibilities.",
-		);
-		upgradeResult = {
-			isCompatible: false,
-			incompatibilities,
-		};
-	}
-
 	return {
-		view,
-		upgrade: upgradeResult,
-		canView: view.isCompatible,
-		canUpgrade: upgradeResult.isCompatible,
+		canView,
+		canUpgrade,
 		isEquivalent,
-		discrepancies: view.isCompatible ? undefined : view.incompatibilities,
+		discrepancies: canView ? undefined : viewIncompatibilities,
 		enabledUpgrades,
 	};
 }

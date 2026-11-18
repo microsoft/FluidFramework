@@ -21,10 +21,7 @@ import {
 	type TreeTypeSet,
 	type ValueSchema,
 } from "../../core/index.js";
-import {
-	FieldKinds,
-	type SchemaIncompatibilityLocation,
-} from "../../feature-libraries/index.js";
+import { FieldKinds } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import {
 	NodeKind,
@@ -88,7 +85,20 @@ export type FieldIncompatibility =
 /**
  * Information about where a field incompatibility is located within a collection of schemas.
  */
-export interface FieldIncompatibilityLocation extends SchemaIncompatibilityLocation {
+export interface FieldIncompatibilityLocation {
+	/**
+	 * The {@link TreeNodeSchemaIdentifier} that contains the incompatibility.
+	 *
+	 * Undefined iff the incompatibility is part of the root field schema.
+	 */
+	readonly identifier: TreeNodeSchemaIdentifier | undefined;
+	/**
+	 * The {@link FieldKey} for the field that contains the incompatibility.
+	 * Undefined when:
+	 * - the incompatibility is part of the root field schema
+	 * - the incompatibility is for 'all fields' of a map node
+	 */
+	readonly fieldKey: FieldKey | undefined;
 	/**
 	 * Whether the view field is a staged optional field.
 	 * Omitted when false.
