@@ -14,7 +14,7 @@ import { toStoredSchema } from "../treeSchema.js";
 
 import { TreeViewConfigurationAlpha } from "./configuration.js";
 import { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";
-import type { SchemaCompatibilityStatus } from "./tree.js";
+import type { SchemaCompatibilityStatusBeta } from "./tree.js";
 
 /**
  * Dumps the "persisted" schema subset of the provided `schema` into a deterministic JSON-compatible, semi-human-readable format.
@@ -83,8 +83,11 @@ export function extractPersistedSchema(
  * This function assumes the a stored schema derived from this view would be generated with the default restrictive staged upgrade policy.
  * @param options - {@link ICodecOptions} used when parsing the provided schema.
  *
- * @returns The ability of `view` to view and/or upgrade the persisted stored schema.
- * This is the same {@link SchemaCompatibilityStatus} a {@link TreeView} would report for this combination of schemas, without `canInitialize`.
+ * @returns The compatibility status that a {@link TreeView} using `view` would report for the persisted stored schema.
+ * As with {@link SchemaCompatibilityStatusBeta}, check `view` to determine whether the document is accessible
+ * and `upgrade` to determine whether a schema upgrade is permitted.
+ * Each failed result includes its own `incompatibilities` to explain what prevents that operation.
+ * The status omits `canInitialize` because this function compares schemas without opening a document.
  *
  * @example
  * An application could use {@link extractPersistedSchema} to generate a `schema.json` file for various versions of the app,
@@ -104,7 +107,7 @@ export function comparePersistedSchema(
 	persisted: JsonCompatible,
 	view: ImplicitFieldSchema,
 	options: ICodecOptions,
-): Omit<SchemaCompatibilityStatus, "canInitialize"> {
+): Omit<SchemaCompatibilityStatusBeta, "canInitialize"> {
 	const schemaCodec = schemaCodecBuilder.buildDecoder(options);
 	const stored = schemaCodec.decode(persisted);
 	const config = new TreeViewConfigurationAlpha({
