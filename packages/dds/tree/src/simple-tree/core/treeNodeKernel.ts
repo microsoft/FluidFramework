@@ -61,6 +61,20 @@ function tryGetKernel(candidate: unknown): TreeNodeKernel | undefined {
 	return kernel instanceof TreeNodeKernel && kernel.node === candidate ? kernel : undefined;
 }
 
+/**
+ * {@link tryGetKernel} for any value, including ones whose property reads throw.
+ * @remarks
+ * Reading the slot runs the `get` trap of a proxy, which throws for a revoked proxy or may throw for a proxy which is not a node.
+ * Such values are not nodes.
+ */
+function tryGetKernelOfValue(candidate: unknown): TreeNodeKernel | undefined {
+	try {
+		return tryGetKernel(candidate);
+	} catch {
+		return undefined;
+	}
+}
+
 export function getKernel(node: TreeNode): TreeNodeKernel {
 	const kernel = tryGetKernel(node);
 	assert(kernel !== undefined, 0x9b1 /* Expected tree node to have kernel */);
@@ -82,7 +96,7 @@ export function getKernel(node: TreeNode): TreeNodeKernel {
  * @returns true if the given 'candidate' is a hydrated TreeNode.
  */
 export function isTreeNode(candidate: unknown): candidate is TreeNode | Unhydrated<TreeNode> {
-	return tryGetKernel(candidate) !== undefined;
+	return tryGetKernelOfValue(candidate) !== undefined;
 }
 
 /**
@@ -93,7 +107,7 @@ export function isTreeNode(candidate: unknown): candidate is TreeNode | Unhydrat
  * Does not give schema for a {@link TreeLeafValue}.
  */
 export function tryGetTreeNodeSchema(value: unknown): undefined | TreeNodeSchema {
-	const kernel = tryGetKernel(value);
+	const kernel = tryGetKernelOfValue(value);
 	return kernel?.schema;
 }
 

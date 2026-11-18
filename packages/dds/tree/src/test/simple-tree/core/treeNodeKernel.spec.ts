@@ -70,6 +70,27 @@ describe("simple-tree proxies", () => {
 		}
 	});
 
+	it("isTreeNode - values whose property reads throw are not nodes", () => {
+		const { proxy: revoked, revoke } = Proxy.revocable({}, {});
+		revoke();
+		const rejectsSymbols = new Proxy(
+			{},
+			{
+				get: (target, key) => {
+					if (typeof key === "symbol") {
+						throw new TypeError("Symbol reads are not supported");
+					}
+					return Reflect.get(target, key) as unknown;
+				},
+			},
+		);
+		for (const value of [revoked, rejectsSymbols]) {
+			assert(!isTreeNode(value));
+			assert.equal(tryGetTreeNodeSchema(value), undefined);
+			assert(!(value instanceof ChildSchema));
+		}
+	});
+
 	describeHydration("the kernel slot is internal", (init) => {
 		const sf = new SchemaFactoryAlpha("kernelSlot");
 		class CustomObject extends sf.object("CustomObject", { a: sf.number }) {}
