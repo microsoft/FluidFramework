@@ -236,7 +236,7 @@ export class StringSequenceCursor<TNode>
 }
 
 /**
- * Creates a string field cursor without allocating per-atom nodes during traversal.
+ * Creates a string field cursor which lazily creates per-atom nodes during traversal.
  * @remarks
  * String storage has no underlying node objects.
  * Each call to {@link CursorWithNode.getNode | getNode} creates a new read-only view of the current atom,

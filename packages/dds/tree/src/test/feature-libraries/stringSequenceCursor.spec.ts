@@ -24,7 +24,9 @@ import {
 	type MapTreeFieldViewGeneric,
 	StringSequenceCursor,
 } from "../../feature-libraries/index.js";
-import { brand, StringSequence } from "../../util/index.js";
+import { brand, StringSequence, stringBufferSize } from "../../util/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { checkpointStride } from "../../util/stringStorage.js";
 import { testSpecializedFieldCursor } from "../cursorTestSuite.js";
 import { expectEqualFieldPaths, expectEqualPaths } from "../utils.js";
 
@@ -35,7 +37,7 @@ const second: FieldKey = brand("second");
 
 describe("string sequence cursors", () => {
 	for (const value of [0, false, null]) {
-		it(`delegates fields containing non-string values (${String(value)})`, () => {
+		it(`delegates fields containing non-string values ("${String(value)}")`, () => {
 			const nodes = Array.from({ length: 3 }, () => ({ type, value, fields: new Map() }));
 			const cursor = cursorForMapTreeNode<MinimalMapTreeNodeView>({
 				type: objectType,
@@ -70,8 +72,23 @@ describe("string sequence cursors", () => {
 		// Leaves cannot supply the non-empty child fields required by withKeys.
 		builders: {},
 		cursorFactory: (sequence: StringSequence) => cursorForStringSequence(type, sequence),
-		testData: ["", "abc", "a\u{1F600}b", "\uD800x\uDC00"].map((text) => ({
-			name: JSON.stringify(text),
+		testData: [
+			{ name: "empty", text: "" },
+			{ name: "single atom", text: "a" },
+			{ name: "short ASCII", text: "abc" },
+			// The surrogate pair is one atom, so atom indexes differ from UTF-16 offsets.
+			{ name: "mixed-width atoms", text: "a\u{1F600}b" },
+			// Unpaired surrogates must remain valid, separate atoms.
+			{ name: "lone surrogates", text: "\uD800x\uDC00" },
+			{ name: "long ASCII", text: "abc".repeat(checkpointStride) },
+			// Mixed-width atoms require offset lookup across multiple sparse checkpoints.
+			{ name: "multiple checkpoints", text: "ab\u{1F600}".repeat(checkpointStride) },
+			{
+				name: "multiple storage pieces",
+				text: `${"a".repeat(stringBufferSize - 1)}\u{1F600}b`,
+			},
+		].map(({ name, text }) => ({
+			name,
 			dataFactory: () => StringSequence.fromString(text),
 			reference: [...text].map((value) => ({ type, value })),
 			path: { parent: undefined, field: dummyRoot },

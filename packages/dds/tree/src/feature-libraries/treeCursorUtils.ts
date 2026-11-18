@@ -457,6 +457,9 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
  * Composes a stack cursor with cursors supplied for individual fields.
  * The outer cursor stays at the field while the inner cursor traverses its contents.
  * Leaving that root field returns control to the outer cursor.
+ *
+ * @remarks
+ * Inner cursors are created for any field that declares a specialized cursor implementation via {@link CursorAdapter.getFieldCursor}.
  */
 class FieldDelegatingCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNode> {
 	readonly #outer: StackCursor<TNode>;
