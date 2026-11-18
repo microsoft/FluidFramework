@@ -85,8 +85,6 @@ export {
 	SchemaComparisonMode,
 	compareSchemaVersions,
 	SchemaVersionComparison,
-	type StoredSchemaUpgradeIncompatibility,
-	type SchemaIncompatibilityLocation,
 	type GenericChangeset,
 	genericFieldKind,
 	type HasFieldChanges,

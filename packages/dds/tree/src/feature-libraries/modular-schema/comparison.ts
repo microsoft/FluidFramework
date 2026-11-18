@@ -10,9 +10,7 @@ import {
 	MapNodeStoredSchema,
 	Multiplicity,
 	ObjectNodeStoredSchema,
-	type FieldKey,
 	type TreeFieldStoredSchema,
-	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	type TreeTypeSet,
@@ -23,18 +21,6 @@ import { compareSets } from "../../util/index.js";
 
 import type { FullSchemaPolicy } from "./fieldKind.js";
 import { isNeverField, isNeverTree } from "./isNeverTree.js";
-import type {
-	SchemaIncompatibilityLocation,
-	StoredSchemaUpgradeIncompatibility,
-} from "./schemaIncompatibility.js";
-
-interface ComparisonDiagnostics extends SchemaIncompatibilityLocation {
-	readonly incompatibilities: StoredSchemaUpgradeIncompatibility[];
-}
-
-interface NodeComparisonDiagnostics extends ComparisonDiagnostics {
-	readonly identifier: TreeNodeSchemaIdentifier;
-}
 
 /**
  * Selects the rules used to compare allowed schema content.
@@ -71,9 +57,6 @@ export enum SchemaComparisonMode {
  * `undefined` TreeNodeStoredSchema means the schema is not present (and thus treated as a NeverTree).
  *
  * @param comparisonMode - The content comparison rules. Defaults to {@link SchemaComparisonMode.Monotonic}.
- * @param diagnostics - If you supply this argument, the function adds failed upgrade requirements to `diagnostics.incompatibilities`.
- * It keeps existing entries and compares the other fields to find more failures.
- * If you omit this argument, the function does not collect failure details and can stop at the first failure.
  */
 export function allowsTreeSuperset(
 	policy: FullSchemaPolicy,
@@ -81,44 +64,24 @@ export function allowsTreeSuperset(
 	original: TreeNodeStoredSchema | undefined,
 	superset: TreeNodeStoredSchema | undefined,
 	comparisonMode: SchemaComparisonMode = SchemaComparisonMode.Monotonic,
-	diagnostics?: NodeComparisonDiagnostics,
 ): boolean {
 	if (isNeverTree(policy, originalData, original)) {
 		return true;
 	}
 	if (isNeverTree(policy, originalData, superset)) {
-		if (diagnostics !== undefined) {
-			if (superset === undefined) {
-				diagnostics.incompatibilities.push({
-					mismatch: "missingNodeSchema",
-					identifier: diagnostics.identifier,
-				});
-			} else {
-				reportUnsatisfiedNodeSchemaRequirement(policy, originalData, superset, diagnostics);
-			}
-		}
 		return false;
 	}
 	assert(original !== undefined, 0x716 /* only never trees have undefined schema */);
 	assert(superset !== undefined, 0x717 /* only never trees have undefined schema */);
 	if (original instanceof LeafNodeStoredSchema) {
 		if (superset instanceof LeafNodeStoredSchema) {
-			const leafCompatible = allowsValueSuperset(original.leafValue, superset.leafValue);
-			if (!leafCompatible && diagnostics !== undefined) {
-				diagnostics.incompatibilities.push({
-					mismatch: "valueSchema",
-					identifier: diagnostics.identifier,
-					stored: original.leafValue,
-					proposed: superset.leafValue,
-				});
-			}
-			return leafCompatible;
+			return allowsValueSuperset(original.leafValue, superset.leafValue);
 		}
-		return reportNodeKindMismatch(original, superset, diagnostics);
+		return false;
 	}
 
 	if (superset instanceof LeafNodeStoredSchema) {
-		return reportNodeKindMismatch(original, superset, diagnostics);
+		return false;
 	}
 
 	assert(
@@ -138,104 +101,54 @@ export function allowsTreeSuperset(
 				original.mapFields,
 				superset.mapFields,
 				comparisonMode,
-				diagnostics,
 			);
 		}
-		return reportNodeKindMismatch(original, superset, diagnostics);
+		return false;
 	}
 
 	assert(original instanceof ObjectNodeStoredSchema, 0x895 /* unsupported node kind */);
-	let compatible = true;
-	const compareField = (fieldKey: FieldKey): boolean => {
-		const fieldCompatible = allowsFieldSuperset(
-			policy,
-			originalData,
-			original.objectNodeFields.get(fieldKey) ?? storedEmptyFieldSchema,
-			superset instanceof MapNodeStoredSchema
-				? superset.mapFields
-				: (superset.objectNodeFields.get(fieldKey) ?? storedEmptyFieldSchema),
-			comparisonMode,
-			diagnostics === undefined ? undefined : { ...diagnostics, fieldKey },
-		);
-		compatible = fieldCompatible && compatible;
-		// Keep visiting fields after a failure only when collecting diagnostics.
-		return fieldCompatible || diagnostics !== undefined;
-	};
 	if (superset instanceof MapNodeStoredSchema) {
-		for (const key of original.objectNodeFields.keys()) {
-			if (!compareField(key)) {
+		for (const [_key, field] of original.objectNodeFields) {
+			if (
+				!allowsFieldSuperset(policy, originalData, field, superset.mapFields, comparisonMode)
+			) {
 				return false;
 			}
 		}
-		return compatible;
+		return true;
 	}
 	assert(superset instanceof ObjectNodeStoredSchema, 0x896 /* unsupported node kind */);
 
-	const fieldsCompared = compareSets({
+	return compareSets({
 		a: original.objectNodeFields,
 		b: superset.objectNodeFields,
-		aExtra: compareField,
-		bExtra: compareField,
-		same: compareField,
+		aExtra: (originalField) =>
+			allowsFieldSuperset(
+				policy,
+				originalData,
+				original.objectNodeFields.get(originalField) ??
+					fail(0xb17 /* missing expected field */),
+				storedEmptyFieldSchema,
+				comparisonMode,
+			),
+		bExtra: (supersetField) =>
+			allowsFieldSuperset(
+				policy,
+				originalData,
+				storedEmptyFieldSchema,
+				superset.objectNodeFields.get(supersetField) ??
+					fail(0xb18 /* missing expected field */),
+				comparisonMode,
+			),
+		same: (sameField) =>
+			allowsFieldSuperset(
+				policy,
+				originalData,
+				original.objectNodeFields.get(sameField) ?? fail(0xb19 /* missing expected field */),
+				superset.objectNodeFields.get(sameField) ?? fail(0xb1a /* missing expected field */),
+				comparisonMode,
+			),
 	});
-	return compatible && fieldsCompared;
-}
-
-/**
- * Records a field or map requirement that prevents construction of the proposed node.
- *
- * @remarks
- * Before you call this helper, check that no finite tree can match `proposed`.
- * Use the existing stored definitions in `originalData` to check its child types.
- * The helper then records a map requirement or required object field that explains this failure.
- */
-function reportUnsatisfiedNodeSchemaRequirement(
-	policy: FullSchemaPolicy,
-	originalData: TreeStoredSchema,
-	proposed: TreeNodeStoredSchema,
-	diagnostics: NodeComparisonDiagnostics,
-): void {
-	if (proposed instanceof MapNodeStoredSchema) {
-		diagnostics.incompatibilities.push({
-			mismatch: "nodeSchemaCannotBeSatisfied",
-			identifier: diagnostics.identifier,
-			requirement: { kind: "requiredMapEntries" },
-		});
-		return;
-	}
-	assert(
-		proposed instanceof ObjectNodeStoredSchema,
-		"Only object and map node requirements can prevent construction of a defined node.",
-	);
-	for (const [fieldKey, field] of proposed.objectNodeFields) {
-		if (isNeverField(policy, originalData, field)) {
-			diagnostics.incompatibilities.push({
-				mismatch: "nodeSchemaCannotBeSatisfied",
-				identifier: diagnostics.identifier,
-				requirement: {
-					kind: "requiredField",
-					fieldKey,
-					allowedTypes: field.types,
-				},
-			});
-			return;
-		}
-	}
-	fail("A node that cannot be constructed must have an unsatisfied schema requirement.");
-}
-
-function reportNodeKindMismatch(
-	original: TreeNodeStoredSchema,
-	proposed: TreeNodeStoredSchema,
-	diagnostics: NodeComparisonDiagnostics | undefined,
-): false {
-	diagnostics?.incompatibilities.push({
-		mismatch: "nodeKind",
-		identifier: diagnostics.identifier,
-		stored: original,
-		proposed,
-	});
-	return false;
 }
 
 /**
@@ -257,10 +170,6 @@ export function allowsValueSuperset(
  *
  * @param comparisonMode - The content comparison rules. Defaults to {@link SchemaComparisonMode.Monotonic}.
  *
- * @param diagnostics - If you supply this argument, the function adds failed upgrade requirements to `diagnostics.incompatibilities`.
- * It keeps existing entries and checks both allowed types and field kinds so it can report a failure in each.
- * If you omit this argument, the function does not collect failure details and can stop at the first failure.
- *
  * @remarks
  * Schema versions are not checked here.
  *
@@ -273,7 +182,6 @@ export function allowsFieldSuperset(
 	original: TreeFieldStoredSchema,
 	superset: TreeFieldStoredSchema,
 	comparisonMode: SchemaComparisonMode = SchemaComparisonMode.Monotonic,
-	diagnostics?: ComparisonDiagnostics,
 ): boolean {
 	if (
 		comparisonMode === SchemaComparisonMode.ContentOnly &&
@@ -282,44 +190,23 @@ export function allowsFieldSuperset(
 		return true;
 	}
 
-	const typesCompatible = allowsTreeSchemaIdentifierSuperset(original.types, superset.types);
-	if (!typesCompatible) {
-		if (diagnostics === undefined) {
-			return false;
-		}
-		diagnostics.incompatibilities.push({
-			mismatch: "allowedTypes",
-			identifier: diagnostics.identifier,
-			fieldKey: diagnostics.fieldKey,
-			stored: original.types,
-			proposed: superset.types,
-		});
+	if (!allowsTreeSchemaIdentifierSuperset(original.types, superset.types)) {
+		return false;
 	}
 
 	if (original.kind === superset.kind) {
-		return typesCompatible;
+		return true;
 	}
 
 	const supersetKind = policy.fieldKinds.get(superset.kind) ?? fail(0xb1b /* missing kind */);
 
-	const kindCompatible =
-		comparisonMode === SchemaComparisonMode.Monotonic
-			? supersetKind.options.allowMonotonicUpgradeFrom.has(original.kind)
-			: allowsMultiplicitySuperset(
-					(policy.fieldKinds.get(original.kind) ?? fail(0xcab /* missing kind */))
-						.multiplicity,
-					supersetKind.multiplicity,
-				);
-	if (!kindCompatible && diagnostics !== undefined) {
-		diagnostics.incompatibilities.push({
-			mismatch: "fieldKind",
-			identifier: diagnostics.identifier,
-			fieldKey: diagnostics.fieldKey,
-			stored: original.kind,
-			proposed: superset.kind,
-		});
+	if (comparisonMode === SchemaComparisonMode.Monotonic) {
+		return supersetKind.options.allowMonotonicUpgradeFrom.has(original.kind);
+	} else {
+		const originalKind =
+			policy.fieldKinds.get(original.kind) ?? fail(0xcab /* missing kind */);
+		return allowsMultiplicitySuperset(originalKind.multiplicity, supersetKind.multiplicity);
 	}
-	return typesCompatible && kindCompatible;
 }
 
 /**
@@ -349,31 +236,29 @@ export function allowsTreeSchemaIdentifierSuperset(
  * it would have to compare everything anyway.
  *
  * @param comparisonMode - The content comparison rules. Defaults to {@link SchemaComparisonMode.Monotonic}.
- * @param incompatibilities - When provided, collect failed upgrade requirements instead of stopping at the first one.
  */
 export function allowsRepoSuperset(
 	policy: FullSchemaPolicy,
 	original: TreeStoredSchema,
 	superset: TreeStoredSchema,
 	comparisonMode: SchemaComparisonMode = SchemaComparisonMode.Monotonic,
-	incompatibilities?: StoredSchemaUpgradeIncompatibility[],
 ): boolean {
 	if (original === superset) {
 		return true;
 	}
 
-	let compatible = allowsFieldSuperset(
-		policy,
-		original,
-		original.rootFieldSchema,
-		superset.rootFieldSchema,
-		comparisonMode,
-		incompatibilities === undefined
-			? undefined
-			: { incompatibilities, identifier: undefined, fieldKey: undefined },
-	);
-	if (!compatible && incompatibilities === undefined) {
-		return false;
+	{
+		if (
+			!allowsFieldSuperset(
+				policy,
+				original,
+				original.rootFieldSchema,
+				superset.rootFieldSchema,
+				comparisonMode,
+			)
+		) {
+			return false;
+		}
 	}
 	// Check if all schemas in original are included in superset, and permit a superset of the node content.
 	// Note that any schema from `original.nodeSchema` can be used as the schema for a node at the root of a detached field,
@@ -386,20 +271,14 @@ export function allowsRepoSuperset(
 				schema,
 				superset.nodeSchema.get(key),
 				comparisonMode,
-				incompatibilities === undefined
-					? undefined
-					: { incompatibilities, identifier: key, fieldKey: undefined },
 			)
 		) {
-			if (incompatibilities === undefined) {
-				return false;
-			}
-			compatible = false;
+			return false;
 		}
 	}
 	// Any schema in superset not in original are already known to be superset of original since they are "never" due to being missing.
 	// Therefore, we do not need to check them.
-	return compatible;
+	return true;
 }
 
 /**

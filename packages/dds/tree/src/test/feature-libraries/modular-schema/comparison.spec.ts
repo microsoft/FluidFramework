@@ -20,11 +20,7 @@ import {
 	type TreeStoredSchema,
 	Multiplicity,
 } from "../../../core/index.js";
-import {
-	FieldKinds,
-	defaultSchemaPolicy,
-	type StoredSchemaUpgradeIncompatibility,
-} from "../../../feature-libraries/index.js";
+import { FieldKinds, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 import {
 	SchemaComparisonMode,
 	SchemaVersionComparison,
@@ -439,46 +435,8 @@ describe("Schema Comparison", () => {
 	// influences the types of schema changes we allow
 	describe("allowsRepoSuperset", () => {
 		const compareTwoRepo = (a: TreeStoredSchema, b: TreeStoredSchema): boolean => {
-			const compatible = allowsRepoSuperset(defaultSchemaPolicy, a, b);
-			const incompatibilities: StoredSchemaUpgradeIncompatibility[] = [];
-			assert.equal(
-				allowsRepoSuperset(defaultSchemaPolicy, a, b, undefined, incompatibilities),
-				compatible,
-			);
-			assert.equal(incompatibilities.length === 0, compatible);
-			return compatible;
+			return allowsRepoSuperset(defaultSchemaPolicy, a, b);
 		};
-
-		it("identifies an impossible requirement for every map key", () => {
-			const stored = new TreeStoredSchemaRepository({
-				rootFieldSchema: fieldOptionalEmptyTree,
-				nodeSchema: new Map([[emptyTree.name, emptyTree.schema]]),
-			});
-			const proposed = new TreeStoredSchemaRepository({
-				rootFieldSchema: fieldOptionalEmptyTree,
-				nodeSchema: new Map([
-					[emptyTree.name, new MapNodeStoredSchema(fieldRequiredEmptyTree)],
-				]),
-			});
-			const incompatibilities: StoredSchemaUpgradeIncompatibility[] = [];
-			assert.equal(
-				allowsRepoSuperset(
-					defaultSchemaPolicy,
-					stored,
-					proposed,
-					undefined,
-					incompatibilities,
-				),
-				false,
-			);
-			assert.deepEqual(incompatibilities, [
-				{
-					mismatch: "nodeSchemaCannotBeSatisfied",
-					identifier: emptyTree.name,
-					requirement: { kind: "requiredMapEntries" },
-				},
-			]);
-		});
 
 		it("Same rootFieldSchema with different TreeNodeStoredSchemas", () => {
 			// Test a bunch of different TreeStoredSchema which are all the same,

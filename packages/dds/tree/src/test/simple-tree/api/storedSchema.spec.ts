@@ -13,7 +13,6 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/storedSchema.js";
 import {
-	SchemaFactoryAlpha,
 	SchemaFactory,
 	TreeViewConfigurationAlpha,
 	type SchemaUpgrade,
@@ -22,39 +21,6 @@ import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js
 import { getStagedSchemaUpgrades, testDocuments } from "../../testTrees.js";
 
 describe("simple-tree storedSchema", () => {
-	it("exposes upgrade diagnostics when a persisted schema cannot be viewed or upgraded", () => {
-		const sf = new SchemaFactoryAlpha("persistedDiagnostics");
-		const persisted = extractPersistedSchema(
-			[sf.number, sf.string],
-			FluidClientVersion.v2_0,
-			() => assert.fail("This schema has no staged upgrades."),
-		);
-		const status = comparePersistedSchema(persisted, sf.number, {
-			jsonValidator: FormatValidatorBasic,
-		});
-		assert.equal(status.canView, false);
-		assert.equal(status.canUpgrade, false);
-		assert(!status.view.isCompatible);
-		assert(!status.upgrade.isCompatible);
-		assert.deepEqual(status.upgrade.incompatibilities, [
-			{
-				mismatch: "viewIncompatibleAfterUpgrade",
-				reason:
-					"Cannot upgrade: the resulting stored schema would still prevent the view from reading or writing the document.",
-				incompatibilities: [
-					{
-						mismatch: "allowedTypes",
-						location: "root",
-						view: [],
-						stored: [sf.string.identifier],
-						reason:
-							'Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
-					},
-				],
-			},
-		]);
-	});
-
 	it("retains a removed optional field when checking a historical persisted schema", () => {
 		const factory = new SchemaFactory("taskRollback");
 
