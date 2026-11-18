@@ -23,7 +23,10 @@ import {
 	type StableNodeIdentifier,
 } from "../../../feature-libraries/index.js";
 import { FieldKinds } from "../../../feature-libraries/index.js";
+import { asAlpha } from "../../../api.js";
 import {
+	createIndependentTreeAlpha,
+	independentView,
 	SchematizingSimpleTreeView,
 	TreeAlpha,
 	TreeBeta,
@@ -88,6 +91,7 @@ import {
 import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
 import { ajvValidator } from "../../codec/index.js";
 import {
+	AllowsUnknownOptionalFields,
 	hasUnknownOptionalFieldsDocument,
 	testDocumentIndependentView,
 	testDocuments,
@@ -4225,6 +4229,94 @@ describe("treeNodeApi", () => {
 					),
 				);
 			});
+
+			it("unknown optional fields with view", () => {
+				const view = testDocumentIndependentView(hasUnknownOptionalFieldsDocument);
+				const exported = TreeAlpha.exportVerbose(view.root as AllowsUnknownOptionalFields, {
+					keys: KeyEncodingOptions.allStoredKeys,
+				});
+
+				const imported = TreeAlpha.importVerbose(AllowsUnknownOptionalFields, exported, {
+					keys: KeyEncodingOptions.allStoredKeys,
+					view,
+				});
+
+				// A document whose stored schema does not allow the unknown optional fields rejects the import.
+				const otherView = independentView(
+					new TreeViewConfiguration({ schema: AllowsUnknownOptionalFields }),
+				);
+				otherView.initialize(new AllowsUnknownOptionalFields({}));
+				assert.throws(
+					() => {
+						otherView.root = imported;
+					},
+					validateUsageError(/Tree does not conform to schema/),
+				);
+
+				// The document that supplied the stored schema accepts the import.
+				view.root = imported;
+				assert.deepEqual(
+					TreeAlpha.exportVerbose(view.root as AllowsUnknownOptionalFields, {
+						keys: KeyEncodingOptions.allStoredKeys,
+					}),
+					exported,
+				);
+			});
+
+			it("errors on a missing view, a view without allStoredKeys, or a view that does not match the schema", () => {
+				class OptionalField extends schema.object("A", {
+					a: schema.optional(schema.string),
+				}) {}
+				const otherFactory = new SchemaFactoryAlpha("com.example");
+				class RequiredField extends otherFactory.object("A", { a: otherFactory.string }) {}
+				const data: VerboseTree = { type: OptionalField.identifier, fields: {} };
+
+				assert.throws(
+					() =>
+						// @ts-expect-error allStoredKeys requires a view.
+						TreeAlpha.importVerbose(OptionalField, data, {
+							keys: KeyEncodingOptions.allStoredKeys,
+						}),
+					validateUsageError(/requires a view/),
+				);
+
+				const tree = createIndependentTreeAlpha();
+				const view = asAlpha(
+					tree.viewWith(new TreeViewConfiguration({ schema: OptionalField })),
+				);
+				view.initialize(new OptionalField({}));
+				assert.throws(
+					() =>
+						TreeAlpha.importVerbose(RequiredField, data, {
+							keys: KeyEncodingOptions.allStoredKeys,
+							view,
+						}),
+					validateUsageError(/is not the same schema object as in the view schema/),
+				);
+				assert.throws(
+					() =>
+						TreeAlpha.importVerbose(OptionalField, data, {
+							keys: KeyEncodingOptions.knownStoredKeys,
+							// @ts-expect-error A view is allowed only with allStoredKeys.
+							view,
+						}),
+					validateUsageError(/only when importing with allStoredKeys/),
+				);
+				view.dispose();
+
+				const incompatibleView = asAlpha(
+					tree.viewWith(new TreeViewConfiguration({ schema: RequiredField })),
+				);
+				assert(!incompatibleView.compatibility.canView);
+				assert.throws(
+					() =>
+						TreeAlpha.importVerbose(RequiredField, data, {
+							keys: KeyEncodingOptions.allStoredKeys,
+							view: incompatibleView,
+						}),
+					validateUsageError(/cannot view its document/),
+				);
+			});
 		});
 
 		describe("exportVerbose", () => {
@@ -4371,6 +4463,12 @@ describe("treeNodeApi", () => {
 											});
 											expectTreesEqual(root, imported);
 										}
+
+										const importedWithView = TreeAlpha.importVerbose(view.schema, exported, {
+											keys: KeyEncodingOptions.allStoredKeys,
+											view,
+										});
+										expectTreesEqual(root, importedWithView);
 
 										const exportedKnown = TreeAlpha.exportVerbose(root, {
 											keys: KeyEncodingOptions.knownStoredKeys,

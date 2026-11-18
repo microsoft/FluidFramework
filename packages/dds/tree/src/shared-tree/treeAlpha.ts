@@ -75,7 +75,10 @@ import {
 	isObjectNodeSchema,
 	isTreeNode,
 	toInitialSchema,
-	type TreeParsingOptions,
+	type TreeImportOptions,
+	KeyEncodingOptions,
+	getUnhydratedContextWithStoredSchema,
+	getUnhydratedContext,
 	type NodeChangedData,
 	type TreeChangeEventsBeta,
 	type ConciseTree,
@@ -221,9 +224,11 @@ export interface TreeIdentifierUtils {
  * @remarks
  * Use via the {@link (TreeAlpha:variable)} singleton.
  *
- * The unhydrated node creation APIs in this interface do not support {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields}.
+ * The unhydrated node creation APIs in this interface do not support {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields},
+ * except {@link (TreeAlpha:interface).importVerbose} with a view (see {@link TreeImportOptions}).
  * This is because unknown optional fields still must have a schema: its just that the schema may come from the document's stored schema.
- * Unhydrated nodes created via this interface are not associated with any document, so there is nowhere for them to get schema for unknown optional fields.
+ * Unhydrated nodes created via this interface are not associated with any document, so there is nowhere for them to get schema for unknown optional fields,
+ * unless the caller provides a view of a document.
  * Note that {@link (TreeBeta:interface).clone} can create an unhydrated node with unknown optional fields, as it uses the source node's stored schema (if any).
  *
  * Export APIs in this interface include {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields}
@@ -232,7 +237,7 @@ export interface TreeIdentifierUtils {
  * @privateRemarks
  * TODO:
  * There should be a way to provide a source for defaulted identifiers for unhydrated node creation, either via these APIs or some way to add them to its output later.
- * If an option were added to these APIs, it could also be used to enable unknown optional fields.
+ * The view option of {@link TreeImportOptions} could be such an option, and could also be used to enable unknown optional fields in the other creation APIs.
  *
  * @sealed @alpha
  */
@@ -308,17 +313,21 @@ export interface TreeAlpha {
 	 * Construct tree content compatible with a field defined by the provided `schema`.
 	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
 	 * @param data - The data used to construct the field content. See {@link (TreeAlpha:interface).(exportVerbose:1)}.
+	 * @param options - Options for the import. See {@link TreeImportOptions}.
 	 * @remarks
-	 * This currently does not support input containing
-	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields| unknown optional fields} but does support
-	 * {@link SchemaStaticsBeta.staged | staged} allowed types.
+	 * This supports input containing
+	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields| unknown optional fields} only with a view (see {@link TreeImportOptions}).
+	 * It does support {@link SchemaStaticsBeta.staged | staged} allowed types.
+	 * With a view, staged allowed types are supported only if the stored schema of the document includes them.
 	 * Non-empty default values for fields are currently not supported (must be provided in the input).
 	 * The content will be validated against the schema and an error will be thrown if out of schema.
+	 * To copy a node that is available, use {@link (TreeBeta:interface).clone} instead.
+	 * It keeps unknown optional fields and does not convert the node to data.
 	 */
 	importVerbose<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		data: VerboseTree | undefined,
-		options?: TreeParsingOptions,
+		options?: TreeImportOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
 	/**
@@ -884,8 +893,16 @@ export const TreeAlpha: TreeAlpha = {
 	importVerbose<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		data: VerboseTree | undefined,
-		options?: TreeParsingOptions,
+		options?: TreeImportOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
+		const view = options?.view;
+		if (options?.keys === KeyEncodingOptions.allStoredKeys) {
+			if (view === undefined) {
+				throw new UsageError("Importing with allStoredKeys requires a view.");
+			}
+		} else if (view !== undefined) {
+			throw new UsageError("A view can be used only when importing with allStoredKeys.");
+		}
 		const config: TreeEncodingOptions = { ...options };
 		// Create a config which is standalone, and thus can be used without having to refer back to the schema.
 		const schemalessConfig = applySchemaToParserOptions(schema, config);
@@ -897,10 +914,31 @@ export const TreeAlpha: TreeAlpha = {
 			return undefined as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 		}
 		const cursor = cursorFromVerbose(data, schemalessConfig);
+		let context: Parameters<typeof createFromCursor>[3];
+		if (view !== undefined) {
+			// Use the stored schema of the view's document.
+			assert(view instanceof SchematizingSimpleTreeView, "Unexpected view implementation");
+			if (!view.compatibility.canView) {
+				throw new UsageError(
+					"Cannot import with a view that cannot view its document. See TreeView.compatibility.",
+				);
+			}
+			context = getUnhydratedContextWithStoredSchema(schema, view.checkout.storedSchema);
+			// The new nodes use the stored schema of the view's document, which is only known to be compatible with the view schema of the view.
+			const viewDefinitions = getUnhydratedContext(view.schema).schema;
+			for (const [schemaIdentifier, definition] of context.schema) {
+				if (viewDefinitions.get(schemaIdentifier) !== definition) {
+					throw new UsageError(
+						`The schema ${JSON.stringify(schemaIdentifier)} is not the same schema object as in the view schema of the view.`,
+					);
+				}
+			}
+		}
 		return createFromCursor(
 			schema,
 			cursor,
 			toStoredSchema(schema, toUnhydratedSchema).rootFieldSchema,
+			context,
 		);
 	},
 

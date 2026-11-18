@@ -51,6 +51,7 @@ export interface ObjectSchemaOptions {
 	 * The existing import and export APIs have similar problems.
 	 * For example currently the {@link (TreeAlpha:interface).exportVerbose|exportVerbose} API with stored keys preserves unknown optional fields,
 	 * but {@link Unhydrated} nodes produced by {@link TreeNode} constructors, insertable content, and {@link (TreeAlpha:interface).importVerbose|importVerbose} do not.
+	 * The exception is `importVerbose` with a view (see {@link TreeImportOptions}), which uses the stored schema of a document.
 	 * {@link (TreeBeta:interface).clone} however can be used to clone a node preserving unknown optional fields.
 	 * To check if a node has content in unknown optional fields, use {@link (TreeAlpha:interface).hasUnknownChildren}.
 	 *
