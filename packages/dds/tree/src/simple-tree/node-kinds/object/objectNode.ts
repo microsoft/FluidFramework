@@ -894,6 +894,50 @@ abstract class SingletonNodeBase extends CustomObjectNodeBase<Record<string, nev
 }
 
 /**
+ * Lets the statics of a base class which only have getters be shadowed by assignment, as data properties can be.
+ * @remarks
+ * Static fields compiled with `useDefineForClassFields: false` (such as `static override metadata = ...` in a subclass of a schema class)
+ * are assigned to the class rather than defined on it, and assigning to an inherited getter without a setter throws.
+ * Each setter defines an own data property on the class assigned to, as assigning to an inherited writable data property would.
+ */
+function allowAssignmentToStatics(
+	baseClass: abstract new (...args: never[]) => unknown,
+	keys: readonly (string | symbol)[],
+): void {
+	for (const key of keys) {
+		const descriptor =
+			Object.getOwnPropertyDescriptor(baseClass, key) ??
+			fail("Static to make assignable should be defined");
+		Object.defineProperty(baseClass, key, {
+			...descriptor,
+			set(this: object, value: unknown): void {
+				Object.defineProperty(this, key, {
+					value,
+					writable: true,
+					enumerable: true,
+					configurable: true,
+				});
+			},
+		});
+	}
+}
+
+// The statics a subclass of a schema class might redeclare as static fields.
+allowAssignmentToStatics(CustomObjectNodeBase, [
+	"identifier",
+	"info",
+	"implicitlyConstructable",
+	"metadata",
+	"persistedMetadata",
+	"allowUnknownOptionalFields",
+	"fields",
+	"flexKeyMap",
+	"storedKeyToPropertyKey",
+	"identifierFieldKeys",
+]);
+allowAssignmentToStatics(SingletonNodeBase, [Symbol.toStringTag]);
+
+/**
  * Defines an object node schema with no fields whose nodes have a `value` property returning `value`.
  * @remarks
  * Implements {@link singletonSchema}.

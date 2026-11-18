@@ -955,3 +955,47 @@ describeHydration(
 		});
 	},
 );
+
+describe("ObjectNode schema statics", () => {
+	// Static fields compiled with `useDefineForClassFields: false` are assigned to the class rather than defined on it.
+	// Assigning to an inherited property which only has a getter would throw, so these statics must accept assignment.
+	const assignableStatics = [
+		"identifier",
+		"info",
+		"implicitlyConstructable",
+		"metadata",
+		"persistedMetadata",
+		"allowUnknownOptionalFields",
+		"fields",
+		"flexKeyMap",
+		"storedKeyToPropertyKey",
+		"identifierFieldKeys",
+	] as const;
+
+	for (const key of assignableStatics) {
+		it(`can be shadowed by assigning ${key} on a subclass`, () => {
+			const sf = new SchemaFactoryAlpha("assignedStatics");
+			class Schema extends sf.object("Schema", { a: sf.number }) {}
+			const statics = Schema as unknown as Record<string, unknown>;
+			const value = statics[key];
+			statics[key] = value;
+			assert(Object.prototype.hasOwnProperty.call(Schema, key));
+			assert.strictEqual(statics[key], value);
+			assert.equal(new Schema({ a: 1 }).a, 1);
+		});
+	}
+
+	it("uses metadata assigned on a subclass, as a static field compiled without define semantics", () => {
+		const sf = new SchemaFactoryAlpha("assignedMetadata");
+		class Base extends sf.object("Base", { a: sf.number }) {}
+		class Schema extends sf.object("Schema", { a: sf.number }) {}
+		const metadata = { description: "assigned" };
+		(Schema as unknown as { metadata: unknown }).metadata = metadata;
+		assert.strictEqual(Schema.metadata, metadata);
+		assert.deepEqual(Base.metadata, {});
+		const view = getView(new TreeViewConfiguration({ schema: Schema }));
+		view.initialize(new Schema({ a: 1 }));
+		assert.equal(view.root.a, 1);
+		assert.strictEqual(Tree.schema(view.root).metadata, metadata);
+	});
+});

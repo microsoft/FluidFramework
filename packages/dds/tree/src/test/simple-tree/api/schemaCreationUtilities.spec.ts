@@ -306,6 +306,10 @@ describe("schemaCreationUtilities", () => {
 		assert(node instanceof Mode.A);
 		assert.equal(Tree.schema(node as unknown as TreeNode), CustomA);
 		assert.throws(() => new Mode.A(), validateUsageError(/Two schema classes were used/));
+		// A static field compiled with `useDefineForClassFields: false` is assigned rather than defined.
+		(CustomA as unknown as Record<symbol, unknown>)[Symbol.toStringTag] = "CustomA";
+		assert.equal(Object.prototype.toString.call(CustomA), "[object CustomA]");
+		assert.equal(Object.prototype.toString.call(Mode.B), "[object SingletonSchema(B)]");
 	});
 
 	it("adaptEnum example from docs", () => {
