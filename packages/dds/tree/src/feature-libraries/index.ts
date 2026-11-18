@@ -82,6 +82,8 @@ export {
 	FlexFieldKind,
 	type FullSchemaPolicy,
 	allowsRepoSuperset,
+	type StoredSchemaUpgradeIncompatibility,
+	type SchemaIncompatibilityLocation,
 	type GenericChangeset,
 	genericFieldKind,
 	type HasFieldChanges,
@@ -205,11 +207,12 @@ export { valueSchemaAllows } from "./valueUtilities.js";
 
 export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer.js";
 
+export { makeSchemaChangeCodec, EncodedSchemaChange } from "./schema-edits/index.js";
+
 export {
-	type SchemaChange,
-	makeSchemaChangeCodec,
-	EncodedSchemaChange,
-} from "./schema-edits/index.js";
+	type SchemaChangeset,
+	CompareAndSwapSchemaChangeset,
+} from "./schema-change-family/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";
 

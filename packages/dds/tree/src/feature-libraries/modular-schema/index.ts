@@ -10,6 +10,10 @@ export {
 	allowsTreeSuperset,
 	allowsMultiplicitySuperset,
 } from "./comparison.js";
+export type {
+	SchemaIncompatibilityLocation,
+	StoredSchemaUpgradeIncompatibility,
+} from "./schemaIncompatibility.js";
 export { isNeverField, isNeverTree } from "./isNeverTree.js";
 export {
 	type ComposeNodeManager,
