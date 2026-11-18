@@ -70,7 +70,10 @@ function selectConfigs(
 	) as CompatConfig[];
 }
 
-describe("compatibility selection", () => {
+describe("compatibility selection", function () {
+	// Fresh Node processes load the test APIs, which is slower with coverage enabled.
+	this.timeout(30000);
+
 	it("includes every supported FULL release band with both loader permutations", () => {
 		const baseVersion = "2.50.0";
 		const expectedDeltas = [-2, -3, -4, -5];
@@ -206,14 +209,20 @@ describe("compatibility selection", () => {
 		assert.deepEqual(getFullBackCompatVersionDeltas("2.10.0"), []);
 	});
 
-	it("preserves non-compat, adjacent layers, checkpoints, and combined ODSP selection", () => {
+	it("preserves non-compat selection", () => {
 		assert.deepEqual(
 			selectConfigs(["0"]).map(({ kind }) => kind),
 			[CompatKind.None],
 		);
+	});
+
+	it("preserves adjacent layer selection", () => {
 		const adjacent = selectConfigs(["-1"]);
 		assert.equal(adjacent.length, 8);
 		assert(adjacent.every(({ compatVersion }) => compatVersion === -1));
+	});
+
+	it("preserves checkpoint selection", () => {
 		const crossClient = selectConfigs(["CROSS_CLIENT"]);
 		assert.deepEqual(crossClient, genCrossClientCompatConfig());
 		// Checkpoints resolve patches independently of the exact OCV boundary.
@@ -224,12 +233,20 @@ describe("compatibility selection", () => {
 					createVersion === checkpointVersion || loadVersion === checkpointVersion,
 			),
 		);
+	});
+
+	// Each selection starts a fresh Node process. Keep independent scenarios in separate tests
+	// so their startup costs do not accumulate against one timeout.
+	it("preserves default selection", () => {
 		assert.deepEqual(selectConfigs(), [
 			...selectConfigs(["0"]),
-			...adjacent,
+			...selectConfigs(["-1"]),
 			...selectConfigs(["OCV"]),
-			...crossClient,
+			...genCrossClientCompatConfig(),
 		]);
+	});
+
+	it("preserves combined ODSP selection", () => {
 		assert.deepEqual(selectConfigs(["FULL", "OCV"], "odsp"), [
 			...selectConfigs(["FULL"]),
 			...selectConfigs(["OCV"]),
