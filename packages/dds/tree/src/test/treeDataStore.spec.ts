@@ -18,6 +18,7 @@ import {
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 	type ITree,
+	type TreeView,
 } from "../simple-tree/index.js";
 import { instantiateTreeFirstTime, defineTreeDataStore } from "../treeDataStore.js";
 import { SharedTree, SharedTreeAlpha } from "../treeFactory.js";
@@ -126,11 +127,18 @@ describe("treeDataStore", () => {
 			config: new TreeViewConfiguration({ schema: SchemaFactory.number }),
 			initializer: () => 1,
 		});
-		const container = await client.createAttachedContainer(kind);
+		const container = await client.createAttachedContainer(
+			kind,
+			dataStoreRegistryFromIterable<ITree | TreeView<typeof SchemaFactory.number>>([
+				kind,
+				SharedTreeAlpha,
+			]),
+		);
 		const remote = await client.loadContainer(container.id, kind);
 		assert.equal(remote.data.root, 1);
+		// Reject direct hosting within a tracked container so the test can clean up its runtime.
 		await assert.rejects(
-			client.createContainer(SharedTreeAlpha),
+			container.createDataStore(SharedTreeAlpha),
 			/Direct shared-object hosting requires/,
 		);
 	});

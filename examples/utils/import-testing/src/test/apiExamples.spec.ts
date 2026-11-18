@@ -61,8 +61,18 @@ describe("examples", () => {
 				},
 				view: async () => assert.fail("Invalid initialization must not construct a view"),
 			});
+			const fixtureKind = defineTreeDataStore({
+				type: "initialization-test-fixture",
+				config: new TreeViewConfiguration({ schema: SchemaFactory.number }),
+				initializer: () => 0,
+			});
+			// Keep the runtime owned by a tracked container even when data-store initialization fails.
+			const container = await client.createContainer(
+				fixtureKind,
+				dataStoreRegistryFromIterable([fixtureKind, kind]),
+			);
 			await assert.rejects(
-				client.createContainer(kind),
+				container.createDataStore(kind),
 				/did not return the root created with rootCreator/,
 			);
 		});
