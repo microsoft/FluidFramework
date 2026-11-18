@@ -21,7 +21,7 @@ import {
 	cursorChunk,
 	dummyRoot,
 } from "../../core/index.js";
-import { ReferenceCountedBase, getOrCreate, hasSome } from "../../util/index.js";
+import { getOrCreate, hasSome } from "../../util/index.js";
 import { SynchronousCursor, prefixFieldPath, prefixPath } from "../treeCursorUtils.js";
 import type { ChunkInlineCursor } from "./chunkCursor.js";
 
@@ -31,6 +31,9 @@ import {
 	getFieldLength,
 	validateChunkEditRange,
 } from "./chunkEditing.js";
+import { type ChunkEdit, MutableChunk } from "./chunkSequence.js";
+
+const ownedValues = Symbol("owned uniform values");
 
 /**
  * Create a tree chunk with ref count 1.
@@ -39,7 +42,7 @@ import {
  * @param values - provides exclusive ownership of this array to this object (which might mutate it in the future).
  */
 export function uniformChunk(shape: ChunkShape, values: TreeValue[]): TreeChunk {
-	return new UniformChunk(shape, values);
+	return UniformChunk.takeValues(shape, values);
 }
 
 /**
@@ -48,21 +51,51 @@ export function uniformChunk(shape: ChunkShape, values: TreeValue[]): TreeChunk 
  * Separates shape from content,
  * allowing deduplication of shape information and storing of content as a flat sequence of values.
  */
-export class UniformChunk extends ReferenceCountedBase implements EditableChunk {
-	public idCompressor: undefined | Pick<IIdCompressor, "decompress">;
+export class UniformChunk extends MutableChunk implements EditableChunk {
+	private compressor: undefined | Pick<IIdCompressor, "decompress">;
+	private chunkShape: ChunkShape;
+	private readonly chunkValues: TreeValue[];
+
+	public override hasStableTopLevelLength(): boolean {
+		return false;
+	}
+
+	public get shape(): ChunkShape {
+		return this.chunkShape;
+	}
+
+	public get values(): readonly TreeValue[] {
+		return this.chunkValues;
+	}
+
+	public get idCompressor(): undefined | Pick<IIdCompressor, "decompress"> {
+		return this.compressor;
+	}
+
+	/** Transfers exclusive ownership of a buffer, including buffers reused by decoding. */
+	public static takeValues(
+		shape: ChunkShape,
+		values: TreeValue[],
+		idCompressor?: Pick<IIdCompressor, "decompress">,
+	): UniformChunk {
+		return new UniformChunk(shape, values, idCompressor, ownedValues);
+	}
 	/**
 	 * Create a tree chunk with ref count 1.
 	 *
 	 * @param shape - describes the semantics and layout of `values`.
-	 * @param values - provides exclusive ownership of this array to this object (which might mutate it in the future).
+	 * @param values - Values copied into the chunk unless transferred by {@link UniformChunk.takeValues}.
 	 */
 	public constructor(
-		public shape: ChunkShape,
-		public values: TreeValue[],
+		shape: ChunkShape,
+		values: TreeValue[],
 		idCompressor?: Pick<IIdCompressor, "decompress">,
+		ownership?: typeof ownedValues,
 	) {
 		super();
-		this.idCompressor = shape.treeShape.mayContainCompressedIds ? idCompressor : undefined;
+		this.chunkShape = shape;
+		this.chunkValues = ownership === ownedValues ? values : [...values];
+		this.compressor = shape.treeShape.mayContainCompressedIds ? idCompressor : undefined;
 		assert(
 			shape.treeShape.valuesPerTopLevelNode * shape.topLevelLength === values.length,
 			0x4c3 /* invalid number of values for shape */,
@@ -78,16 +111,97 @@ export class UniformChunk extends ReferenceCountedBase implements EditableChunk 
 	}
 
 	public clone(): UniformChunk {
-		return new UniformChunk(this.shape, [...this.values], this.idCompressor);
+		this.assertCloneable();
+		return new UniformChunk(this.shape, this.chunkValues, this.idCompressor);
 	}
 
 	public cursor(): Cursor {
+		this.assertReadable();
 		return new Cursor(this);
 	}
 
-	public getEditCursor(): ChunkEditCursor {
+	public getEditCursor(edit?: ChunkEdit): Cursor & ChunkEditCursor {
 		assert(!this.isShared(), "Editing requires exclusive chunk ownership");
-		return this.cursor();
+		const scope = edit ?? this.acquireEditor(true);
+		scope.assertFor(this);
+		assert(scope.preserveLength, "Uniform editing cursors require stable chunk length");
+		return new Cursor(this, scope);
+	}
+
+	/** Appends compatible values through a length-changing editing scope. */
+	public append(
+		edit: ChunkEdit,
+		values: readonly TreeValue[],
+		length: number,
+		idCompressor?: Pick<IIdCompressor, "decompress">,
+	): void {
+		edit.assertFor(this);
+		assert(!edit.preserveLength, "Length-preserving edits cannot append nodes");
+		assert(
+			Number.isSafeInteger(length) &&
+				length > 0 &&
+				values.length === length * this.shape.treeShape.valuesPerTopLevelNode,
+			"Invalid appended values for chunk shape",
+		);
+		assert(
+			this.idCompressor === undefined ||
+				idCompressor === undefined ||
+				this.idCompressor === idCompressor,
+			"Incompatible chunk compressors",
+		);
+		edit.mutate(() => {
+			const count = values.length;
+			for (let index = 0; index < count; index++) {
+				const value = values[index];
+				assert(value !== undefined, "Missing appended chunk value");
+				this.chunkValues.push(value);
+			}
+			this.chunkShape = this.shape.treeShape.withTopLevelLength(this.topLevelLength + length);
+			if (this.shape.treeShape.mayContainCompressedIds) {
+				this.compressor ??= idCompressor;
+			}
+		});
+	}
+
+	/** Writes a prevalidated, shape-preserving range of leaf values. */
+	public replaceValues(edit: ChunkEdit, start: number, values: readonly TreeValue[]): void {
+		edit.assertFor(this);
+		assert(
+			start >= 0 && start + values.length <= this.chunkValues.length,
+			"Invalid value range",
+		);
+		edit.mutate(() => {
+			for (let index = 0; index < values.length; index++) {
+				const value = values[index];
+				assert(value !== undefined, "Missing replacement value");
+				this.chunkValues[start + index] = value;
+			}
+		});
+	}
+
+	/** Swaps a prevalidated leaf range with an externally owned incoming chunk. */
+	public swapValues(edit: ChunkEdit, start: number, incoming: UniformChunk): void {
+		edit.assertFor(this);
+		assert(
+			start >= 0 && start + incoming.values.length <= this.values.length,
+			"Invalid value range",
+		);
+		const incomingEdit = incoming.acquireEditor(true);
+		try {
+			edit.mutate(() =>
+				incomingEdit.mutate(() => {
+					for (let index = 0; index < incoming.chunkValues.length; index++) {
+						const previous = this.chunkValues[start + index];
+						const value = incoming.chunkValues[index];
+						assert(previous !== undefined && value !== undefined, "Missing leaf value");
+						this.chunkValues[start + index] = value;
+						incoming.chunkValues[index] = previous;
+					}
+				}),
+			);
+		} finally {
+			incomingEdit.close();
+		}
 	}
 
 	protected onUnreferenced(): void {}
@@ -394,7 +508,10 @@ class Cursor
 	private indexOfField: number = 0;
 
 	// TODO: support prefix (path above root, including index offset of chunk in its containing field)
-	public constructor(private readonly chunk: UniformChunk) {
+	public constructor(
+		private readonly chunk: UniformChunk,
+		private readonly edit?: ChunkEdit,
+	) {
 		super();
 		this.shape = this.chunk.shape;
 		this.treeShape = this.shape.treeShape;
@@ -420,6 +537,7 @@ class Cursor
 	}
 
 	public fork(): Cursor {
+		assert(this.edit === undefined, "Editing navigation must not be forked");
 		const cursor = new Cursor(this.chunk);
 		cursor.mode = this.mode;
 		cursor.fieldKey = this.fieldKey;
@@ -560,6 +678,8 @@ class Cursor
 	 * An owning parent's generic splice can use this to replace top-level leaves without splitting the {@link UniformChunk}.
 	 */
 	public trySplice(range: Range, content: readonly TreeChunk[]): TreeChunk[] | undefined {
+		assert(this.edit !== undefined, "An editing scope is required");
+		this.edit.assertFor(this.chunk);
 		assert(!this.chunk.isShared(), "Editing requires exclusive chunk ownership");
 		validateChunkEditRange(range, this.getFieldLength());
 		const count = range.end - range.start;
@@ -600,13 +720,7 @@ class Cursor
 		) {
 			// Reuse the exclusively owned incoming chunk as the outgoing content by swapping value slots.
 			// Matching shapes and compressor identities make raw values interchangeable, including compressed IDs.
-			for (let offset = 0; offset < count; offset++) {
-				const oldValue = this.chunk.values[valueOffset + offset];
-				const newValue = incoming.values[offset];
-				assert(oldValue !== undefined && newValue !== undefined, "Missing leaf value");
-				this.chunk.values[valueOffset + offset] = newValue;
-				incoming.values[offset] = oldValue;
-			}
+			this.chunk.swapValues(this.edit, valueOffset, incoming);
 			return [incoming];
 		}
 		// Validate and read every incoming leaf before mutating storage or consuming references.
@@ -626,20 +740,20 @@ class Cursor
 			}
 		}
 		// Outgoing values keep their original encoding and compressor; decoded incoming strings can be stored directly.
-		const removed = new UniformChunk(
+		const removed = UniformChunk.takeValues(
 			shape.withTopLevelLength(count),
 			this.chunk.values.slice(valueOffset, valueOffset + count),
 			this.chunk.idCompressor,
 		);
-		for (let offset = 0; offset < count; offset++) {
-			const value = values[offset];
-			assert(value !== undefined, "Missing replacement value");
-			this.chunk.values[valueOffset + offset] = value;
-		}
+		this.chunk.replaceValues(this.edit, valueOffset, values);
 		for (const chunk of content) {
 			chunk.referenceRemoved();
 		}
 		return [removed];
+	}
+
+	public release(commit = true): void {
+		this.edit?.close(commit);
 	}
 
 	public firstNode(): boolean {

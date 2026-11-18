@@ -36,6 +36,8 @@ import {
 import { isStableNodeIdentifier } from "../node-identifier/index.js";
 
 import { BasicChunk } from "./basicChunk.js";
+import { getFieldLength, locateNodeInChunks } from "./chunkEditing.js";
+import { ChunkSequenceEditor } from "./chunkSequence.js";
 import type { IncrementalEncodingPolicy } from "./codec/index.js";
 import { SequenceChunk } from "./sequenceChunk.js";
 import { type FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
@@ -722,14 +724,35 @@ export function chunkRange(
  * @returns The index in `chunks` (after modifications made by this function) where if a chunk were inserted at that index its first top level node would have index `nodeIndex` when treating `chunks` as a field.
  */
 export function splitFieldAtIndex(
-	chunks: TreeChunk[],
+	field: TreeChunk[] | ChunkSequenceEditor,
 	nodeIndex: number,
 	policy: ChunkCompressor,
 ): number {
+	const chunks = field instanceof ChunkSequenceEditor ? field.chunks : field;
 	assertNonNegativeSafeInteger(nodeIndex);
+	const length = getFieldLength(chunks);
+	assert(nodeIndex <= length, "nodeIndex exceeds total node count in field");
+	if (nodeIndex === 0) {
+		return 0;
+	}
+	if (nodeIndex === length) {
+		return chunks.length;
+	}
+	const location = locateNodeInChunks(chunks, nodeIndex);
+	if (location.indexWithinChunk === 0) {
+		return location.indexOfChunk;
+	}
+	if (field instanceof ChunkSequenceEditor) {
+		let splitIndex = 0;
+		field.transformRange(location.indexOfChunk, location.indexOfChunk + 1, (owned) => {
+			splitIndex = splitFieldAtIndex(owned, location.indexWithinChunk, policy);
+			return owned;
+		});
+		return location.indexOfChunk + splitIndex;
+	}
 	const bisectThreshold = policy.policy.uniformChunkNodeCountDynamicTargetMax;
-	let remaining = nodeIndex;
-	let chunkIndex = 0;
+	let remaining = location.indexWithinChunk;
+	let chunkIndex = location.indexOfChunk;
 	while (chunkIndex < chunks.length) {
 		if (remaining === 0) {
 			return chunkIndex;
@@ -757,14 +780,14 @@ export function splitFieldAtIndex(
 			const shape = chunk.shape.treeShape;
 			const valueSplit = splitPoint * shape.valuesPerTopLevelNode;
 			before = [
-				new UniformChunk(
+				UniformChunk.takeValues(
 					shape.withTopLevelLength(splitPoint),
 					chunk.values.slice(0, valueSplit),
 					chunk.idCompressor,
 				),
 			];
 			after = [
-				new UniformChunk(
+				UniformChunk.takeValues(
 					shape.withTopLevelLength(total - splitPoint),
 					chunk.values.slice(valueSplit),
 					chunk.idCompressor,
@@ -776,7 +799,7 @@ export function splitFieldAtIndex(
 			before = chunkRange(cursor, policy, splitPoint, false);
 			after = chunkRange(cursor, policy, total - splitPoint, true);
 		}
-		replaceArrayRange(chunks, chunkIndex, chunkIndex + 1, [...before, ...after]);
+		replaceArrayRange(field, chunkIndex, chunkIndex + 1, [...before, ...after]);
 		// Each replacement array entry owns a reference, whether constructed above or returned by chunkRange.
 		// Release the removed array slot's reference to the original chunk.
 		chunk.referenceRemoved();
@@ -806,15 +829,23 @@ export function splitFieldAtIndex(
  * them, so matching the two keeps repeated split/coalesce cycles from oscillating.
  */
 export function coalesceUniformChunks(
-	chunks: TreeChunk[],
+	field: TreeChunk[] | ChunkSequenceEditor,
 	policy: ChunkPolicy,
 	range?: IndexRange,
 ): void {
+	const chunks = field instanceof ChunkSequenceEditor ? field.chunks : field;
 	const rangeStart = range?.start ?? 0;
 	const rangeEnd = range?.end ?? chunks.length;
 	validateIndexRange(rangeStart, rangeEnd, chunks, "coalesceUniformChunks");
 	if (rangeEnd - rangeStart < 2) {
 		// Zero and 1 chunks are common cases, so as an optimization we return early as there is never anything to do for them.
+		return;
+	}
+	if (field instanceof ChunkSequenceEditor) {
+		field.transformRange(rangeStart, rangeEnd, (owned) => {
+			coalesceUniformChunks(owned, policy);
+			return owned;
+		});
 		return;
 	}
 
@@ -836,7 +867,7 @@ export function coalesceUniformChunks(
 	}
 
 	if (mutated) {
-		replaceArrayRange(chunks, rangeStart, rangeEnd, result);
+		replaceArrayRange(field, rangeStart, rangeEnd, result);
 	}
 }
 
@@ -894,18 +925,23 @@ export function tryCoalesceUniformChunks(
 		return undefined;
 	}
 
+	left.assertExternalOwnership();
+	right.assertExternalOwnership();
 	if (!left.isShared()) {
 		// In-place: grow `left` to absorb `right`. `left`'s sole array-slot ref is preserved
 		// and returned; `right`'s slot ref is released.
-		left.values.push(...right.values);
-		left.shape = leftTreeShape.withTopLevelLength(combinedTopLevel);
-		left.idCompressor ??= rightCompressor;
+		const edit = left.acquireEditor();
+		try {
+			left.append(edit, right.values, right.topLevelLength, rightCompressor);
+		} finally {
+			edit.close();
+		}
 		right.referenceRemoved();
 		return left;
 	}
 
 	// Left is shared: build a fresh merged chunk and release the two inputs.
-	const merged = new UniformChunk(
+	const merged = UniformChunk.takeValues(
 		leftTreeShape.withTopLevelLength(combinedTopLevel),
 		[...left.values, ...right.values],
 		leftCompressor ?? rightCompressor,

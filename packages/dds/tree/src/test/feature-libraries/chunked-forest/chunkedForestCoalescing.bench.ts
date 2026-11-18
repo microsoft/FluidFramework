@@ -27,14 +27,19 @@ import type {
 	TreeNodeSchemaIdentifier,
 	TreeValue,
 } from "../../../core/index.js";
-import { EmptyKey, rootFieldKey, TreeStoredSchemaRepository } from "../../../core/index.js";
+import {
+	EmptyKey,
+	rootFieldKey,
+	TreeStoredSchemaRepository,
+	aboveRootPlaceholder,
+} from "../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
-	buildChunkedForest,
+	ChunkedForest,
 	ensureExclusiveBasicChunk,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
@@ -77,7 +82,9 @@ import { configureBenchmarkHooks, TestTreeProviderLite } from "../../utils.js";
 const iterationSettings = { keepIterations: 4, warmUpIterations: 2 };
 
 /** Minimal structural view of a chunk that may have child fields, for walking the chunk tree. */
-type ChunkWithFields = TreeChunk & { readonly fields?: Map<FieldKey, TreeChunk[]> };
+type ChunkWithFields = TreeChunk & {
+	readonly fields?: ReadonlyMap<FieldKey, readonly TreeChunk[]>;
+};
 
 /**
  * `coalesceUniformChunks` only reads `uniformChunkNodeCountDynamicTargetMax` from its policy (the cap on
@@ -898,7 +905,7 @@ describe("chunked-forest coalescing benchmarks", () => {
 
 	// Compare two paths in the current implementation, not a historical implementation baseline.
 	// Setup creates the forest, incoming content, and optional snapshot outside timing; teardown is also excluded.
-	// Timing includes visitor acquisition, copy-on-write, optional forced BasicChunk conversion, and replacement.
+	// Timing includes copy-on-write, optional controlled BasicChunk conversion, forest creation, and replacement.
 	// The snapshot keeps the original roots shared through the edit to exercise copy-on-write.
 	describe("Leaf replacement timing", () => {
 		const field: FieldKey = brand("v");
@@ -915,38 +922,56 @@ describe("chunked-forest coalescing benchmarks", () => {
 							let running: boolean;
 							do {
 								const schema = new TreeStoredSchemaRepository(toInitialSchema(Row));
-								const forest = buildChunkedForest(
-									makeTreeChunker(
-										schema,
-										defaultSchemaPolicy,
-										defaultIncrementalEncodingPolicy,
-									),
+								const chunker = makeTreeChunker(
+									schema,
+									defaultSchemaPolicy,
+									defaultIncrementalEncodingPolicy,
 								);
 								// Seed one large chunk directly so every iteration starts identically, independent of initial chunk-size heuristics.
-								forest.roots.fields.set(rootFieldKey, [
-									new UniformChunk(
-										shape.withTopLevelLength(1000),
-										Array.from({ length: 1000 }, () => 1),
-									),
-								]);
-								forest.roots.fields.set(incomingField, [
-									new UniformChunk(shallowShape.withTopLevelLength(1), [2]),
-								]);
+								const initialRoot = new BasicChunk(
+									aboveRootPlaceholder,
+									new Map([
+										[
+											rootFieldKey,
+											[
+												new UniformChunk(
+													shape.withTopLevelLength(1000),
+													Array.from({ length: 1000 }, () => 1),
+												),
+											],
+										],
+										[
+											incomingField,
+											[new UniformChunk(shallowShape.withTopLevelLength(1), [2])],
+										],
+									]),
+								);
 								// Cloning roots shares both the destination and incoming storage, exercising safe handling of both sides of replacement.
-								const snapshot = shared ? forest.clone(schema) : undefined;
+								if (shared) {
+									initialRoot.referenceAdded();
+								}
+								const snapshot = shared
+									? new ChunkedForest(initialRoot, schema, chunker.clone(schema))
+									: undefined;
+								let forest: ChunkedForest | undefined;
 								running = state.time(() => {
-									const visitor = forest.acquireVisitor();
+									const root = shared ? initialRoot.clone() : initialRoot;
+									if (shared) {
+										initialRoot.referenceRemoved();
+									}
 									if (forceBasic) {
 										// Conversion stays inside the timer because it is the additional work this comparison measures.
-										const roots = forest.roots.fields.get(rootFieldKey);
-										if (roots === undefined) {
-											throw new Error("Missing benchmark roots");
-										}
+										const edit = root.acquireEditor();
+										const roots = root.acquireField(edit, rootFieldKey);
 										ensureExclusiveBasicChunk(roots, 500, {
-											policy: forest.chunker,
+											policy: chunker,
 											idCompressor: undefined,
 										});
+										roots.close();
+										edit.close();
 									}
+									forest = new ChunkedForest(root, schema, chunker);
+									const visitor = forest.acquireVisitor();
 									visitor.enterField(rootFieldKey);
 									visitor.enterNode(500);
 									visitor.enterField(field);
@@ -958,10 +983,19 @@ describe("chunked-forest coalescing benchmarks", () => {
 									visitor.exitField(rootFieldKey);
 									visitor.free();
 								});
-								snapshot?.roots.referenceRemoved();
-								snapshot?.chunker.dispose();
-								forest.roots.referenceRemoved();
-								forest.chunker.dispose();
+								for (const completed of [snapshot, forest]) {
+									if (completed !== undefined) {
+										const cleanup = completed.acquireVisitor();
+										for (const [key, chunks] of completed.roots.fields) {
+											cleanup.destroy(
+												key,
+												chunks.reduce((length, chunk) => length + chunk.topLevelLength, 0),
+											);
+										}
+										cleanup.free();
+										completed.chunker.dispose();
+									}
+								}
 							} while (running);
 						},
 						maxBenchmarkDurationSeconds,

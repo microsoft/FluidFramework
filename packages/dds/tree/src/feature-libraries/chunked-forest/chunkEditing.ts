@@ -10,11 +10,18 @@ import { assertNonNegativeSafeInteger } from "../../util/index.js";
 
 import type { ChunkCompressor } from "./chunkTree.js";
 import type { ChunkLocalCursor } from "./chunkCursor.js";
+import {
+	type ChunkEdit,
+	type ChunkSequenceEditor,
+	MutableChunk,
+	getChunkSequence,
+	findChunkIndex,
+} from "./chunkSequence.js";
 
 /**
  * A {@link TreeChunk} that supports navigation and optional edits without changing its representation.
  */
-export interface EditableChunk extends TreeChunk {
+export interface EditableChunk extends MutableChunk {
 	/**
 	 * Whether edits to the root sequence can succeed without replacing this chunk.
 	 * @remarks
@@ -29,41 +36,32 @@ export interface EditableChunk extends TreeChunk {
 	/**
 	 * Creates a {@link ChunkEditCursor} in the chunk's root field.
 	 * @remarks
-	 * The caller must exclusively own the chunk while using the cursor.
-	 * The adapter can expose child arrays through {@link ChunkEditCursor.getFieldChunks},
+	 * Contained chunks require an editor obtained from their owning sequence.
+	 * If omitted, an external owning reference supplies the editing authority.
+	 * Release the returned cursor before releasing that authority.
+	 * The adapter can expose field editors through {@link ChunkEditCursor.getFieldEditor},
 	 * support format-specific splices through {@link ChunkEditCursor.trySplice}, or both.
 	 */
-	getEditCursor(): ChunkEditCursor;
+	getEditCursor(edit?: ChunkEdit): ChunkEditCursor;
 }
 
 /**
  * A {@link ChunkLocalCursor} with format-specific editing support for an exclusively owned chunk.
  * @remarks
  * The shared editing layer handles generic splices to exposed child arrays and normalization of unsupported inline edits.
- * An adapter must supply {@link ChunkEditCursor.getFieldChunks}, {@link ChunkEditCursor.trySplice}, or both.
+ * An adapter must supply {@link ChunkEditCursor.getFieldEditor}, {@link ChunkEditCursor.trySplice}, or both.
  */
 export interface ChunkEditCursor extends ChunkLocalCursor {
 	/**
-	 * Returns the current field's mutable child chunk array, or undefined when no such array is exposed.
+	 * Borrows the current field's editor, or returns undefined for inline storage.
 	 * @remarks
-	 * The caller must make a child chunk exclusive before entering it for editing.
-	 * Requires fields mode. A sequence chunk exposes its root array; a node chunk's synthetic root has no child array.
-	 * Navigation into an exposed array belongs to the shared traversal, not this local cursor.
+	 * The adapter retains this scope until leaving the field or being released.
+	 * Navigation into child chunks belongs to the shared traversal, not this local cursor.
 	 * Entirely inline storage omits this hook and supplies {@link ChunkEditCursor.trySplice}, preserving specialized inline navigation.
 	 */
-	getFieldChunks?(): TreeChunk[] | undefined;
-	/**
-	 * Finalizes an edit to the child array returned by {@link ChunkEditCursor.getFieldChunks}.
-	 * @remarks
-	 * Required when the adapter exposes a child array; omitted for entirely inline storage.
-	 * Registers arrays for newly created fields and removes empty fields when required by the format.
-	 * The caller has already updated the array and its counted references; this method must not change reference counts.
-	 * Requires an exclusively owned field and leaves the adapter at that field.
-	 * Edits to a chunk's root sequence must preserve {@link ChunkLocalCursor.rootLength}.
-	 * The array must be the same object returned by {@link ChunkEditCursor.getFieldChunks}, not a replacement array.
-	 * @param chunks - The exposed array after editing, including an array returned for a previously absent field.
-	 */
-	setFieldChunks?(chunks: TreeChunk[]): void;
+	getFieldEditor?(): ChunkSequenceEditor | undefined;
+	/** Closes scopes, optionally discarding an unpublished speculative copy after a declined edit. */
+	release(commit?: boolean): void;
 	/**
 	 * Optionally replaces `range` using format-specific storage operations and returns the outgoing chunks.
 	 * @remarks
@@ -88,16 +86,19 @@ export interface ChunkEditCursor extends ChunkLocalCursor {
  * Checks whether a {@link TreeChunk} provides the {@link EditableChunk} contract.
  */
 export function isEditableChunk(chunk: TreeChunk): chunk is EditableChunk {
-	return "getEditCursor" in chunk;
+	return chunk instanceof MutableChunk && "getEditCursor" in chunk;
 }
 
 /**
  * Returns the sum of {@link TreeChunk.topLevelLength} over a chunk sequence.
  * @remarks
- * Scans the array on each call; the result is not cached.
+ * Owned sequences maintain this total during edits; unowned arrays are scanned.
  */
 export function getFieldLength(chunks: readonly TreeChunk[]): number {
-	return chunks.reduce((length, chunk) => length + chunk.topLevelLength, 0);
+	return (
+		getChunkSequence(chunks)?.length ??
+		chunks.reduce((length, chunk) => length + chunk.topLevelLength, 0)
+	);
 }
 
 /**
@@ -112,6 +113,16 @@ export function locateNodeInChunks(
 	index: number,
 ): { chunk: TreeChunk; indexOfChunk: number; indexWithinChunk: number } {
 	assertNonNegativeSafeInteger(index);
+	const ends = getChunkSequence(chunks)?.index;
+	if (ends !== undefined) {
+		const indexOfChunk = findChunkIndex(ends, index);
+		const chunk = chunks[indexOfChunk] ?? fail("missing edited node");
+		return {
+			chunk,
+			indexOfChunk,
+			indexWithinChunk: index - (indexOfChunk === 0 ? 0 : (ends[indexOfChunk - 1] ?? oob())),
+		};
+	}
 	let indexWithinChunk = index;
 	for (let indexOfChunk = 0; indexOfChunk < chunks.length; indexOfChunk++) {
 		const chunk = chunks[indexOfChunk] ?? oob();
