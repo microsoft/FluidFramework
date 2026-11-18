@@ -23,7 +23,7 @@ import {
 import {
 	FieldKinds,
 	defaultSchemaPolicy,
-	type StoredSchemaUpgradeDiscrepancy,
+	type StoredSchemaUpgradeIncompatibility,
 } from "../../../feature-libraries/index.js";
 import {
 	allowsFieldSuperset,
@@ -269,9 +269,12 @@ describe("Schema Comparison", () => {
 	describe("allowsRepoSuperset", () => {
 		const compareTwoRepo = (a: TreeStoredSchema, b: TreeStoredSchema): boolean => {
 			const compatible = allowsRepoSuperset(defaultSchemaPolicy, a, b);
-			const discrepancies: StoredSchemaUpgradeDiscrepancy[] = [];
-			assert.equal(allowsRepoSuperset(defaultSchemaPolicy, a, b, discrepancies), compatible);
-			assert.equal(discrepancies.length === 0, compatible);
+			const incompatibilities: StoredSchemaUpgradeIncompatibility[] = [];
+			assert.equal(
+				allowsRepoSuperset(defaultSchemaPolicy, a, b, incompatibilities),
+				compatible,
+			);
+			assert.equal(incompatibilities.length === 0, compatible);
 			return compatible;
 		};
 
@@ -286,12 +289,12 @@ describe("Schema Comparison", () => {
 					[emptyTree.name, new MapNodeStoredSchema(fieldRequiredEmptyTree)],
 				]),
 			});
-			const discrepancies: StoredSchemaUpgradeDiscrepancy[] = [];
+			const incompatibilities: StoredSchemaUpgradeIncompatibility[] = [];
 			assert.equal(
-				allowsRepoSuperset(defaultSchemaPolicy, stored, proposed, discrepancies),
+				allowsRepoSuperset(defaultSchemaPolicy, stored, proposed, incompatibilities),
 				false,
 			);
-			assert.deepEqual(discrepancies, [
+			assert.deepEqual(incompatibilities, [
 				{
 					mismatch: "nodeSchemaCannotBeSatisfied",
 					identifier: emptyTree.name,
