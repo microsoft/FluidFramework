@@ -48,7 +48,7 @@ describe("simple-tree storedSchema", () => {
 						view: [],
 						stored: [sf.string.identifier],
 						reason:
-							'Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
+							'Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"], which the view does not allow.',
 					},
 				],
 			},

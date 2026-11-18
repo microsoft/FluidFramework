@@ -18,7 +18,11 @@ import {
 	decodeSchemaCompatibilitySnapshot,
 	encodeSchemaCompatibilitySnapshot,
 } from "./simpleSchemaCodec.js";
-import type { SchemaCompatibilityStatusBeta } from "./tree.js";
+import type {
+	SchemaCompatibilityStatusBeta,
+	SchemaUpgradeIncompatibility,
+	SchemaViewIncompatibility,
+} from "./tree.js";
 
 /**
  * Reports the ability of a client's view configuration to view and/or upgrade a document's stored schema
@@ -442,10 +446,10 @@ export interface SnapshotSchemaCompatibilityOptions {
  * This will throw an exception if any snapshotted schema would result in documents that cannot be viewed (after using {@link TreeView.upgradeSchema}), or if any schema with a version greater than or equal to `minVersionForCollaboration` cannot view documents created with the `currentViewSchema`.
  * See {@link TreeView.compatibility} for more information.
  *
- * Proper use of this utility should do a good job at detecting schema compatibility issues,
- * however it currently does not do a good job of explaining exactly what change to the schema is causing the compatibility issues.
- * This is a known limitation that will be improved in future releases.
- * These improvements, as well as other changes, may change the exact messages produced by this function in the error cases: no stability of these messages should be assumed.
+ * Compatibility errors identify the affected versions and include the reasons that prevent the required viewing or upgrade operation.
+ * If an upgrade is blocked because its proposed stored schema would still prevent viewing, the error also includes the nested viewing reasons.
+ * These diagnostics describe schema constraints without inspecting document content.
+ * The exact wording of error messages may change and should not be used for programmatic handling.
  *
  * Unlike some other snapshot based testing tools, this stores more than just the current snapshot: historical snapshots are retained as well.
  * Retention of these additional historical snapshots, whose content can't be regenerated from the current schema, is necessary to properly test compatibility across versions.
@@ -729,9 +733,13 @@ export function snapshotSchemaCompatibility(
 	// Compare all snapshots against the current schema, using the compatibilityMap.
 	for (const [snapshotVersion, compatibility] of compatibilityMap) {
 		// Current should be able to view all versions.
-		if (!compatibility.currentViewOfSnapshotDocument.canUpgrade) {
+		const { upgrade } = compatibility.currentViewOfSnapshotDocument;
+		if (!upgrade.isCompatible) {
 			compatibilityErrors.push(
-				`Current version ${JSON.stringify(currentVersion)} cannot upgrade documents from ${JSON.stringify(snapshotVersion)}.`,
+				formatCompatibilityFailure(
+					`Current version ${JSON.stringify(currentVersion)} cannot upgrade documents from ${JSON.stringify(snapshotVersion)}.`,
+					upgrade.incompatibilities,
+				),
 			);
 		}
 
@@ -752,9 +760,13 @@ export function snapshotSchemaCompatibility(
 			// Collaboration with this version is expected to work.
 			if (versionComparer(snapshotVersion, minVersionForCollaboration) >= 0) {
 				// Check that the historical version can view documents from the current version, since collaboration with this one is expected to work.
-				if (!compatibility.snapshotViewOfCurrentDocument.canView) {
+				const { view } = compatibility.snapshotViewOfCurrentDocument;
+				if (!view.isCompatible) {
 					compatibilityErrors.push(
-						`Historical version ${JSON.stringify(snapshotVersion)} cannot view documents from ${JSON.stringify(currentVersion)}: these versions are expected to be able to collaborate due to the selected minVersionForCollaboration ${JSON.stringify(minVersionForCollaboration)}.`,
+						formatCompatibilityFailure(
+							`Historical version ${JSON.stringify(snapshotVersion)} cannot view documents from ${JSON.stringify(currentVersion)}: these versions are expected to be able to collaborate due to the selected \`minVersionForCollaboration\` ${JSON.stringify(minVersionForCollaboration)}.`,
+							view.incompatibilities,
+						),
 					);
 				}
 			} else {
@@ -771,6 +783,29 @@ export function snapshotSchemaCompatibility(
 	if (compatibilityErrors.length > 0) {
 		throw errorWithContext(compatibilityErrors.map((e) => ` - ${e}`).join("\n"));
 	}
+}
+
+function formatCompatibilityFailure(
+	message: string,
+	incompatibilities: readonly (SchemaViewIncompatibility | SchemaUpgradeIncompatibility)[],
+): string {
+	const lines = [message];
+
+	function appendReasons(
+		entries: readonly (SchemaViewIncompatibility | SchemaUpgradeIncompatibility)[],
+		indent: string,
+	): void {
+		for (const entry of entries) {
+			lines.push(`${indent}- ${entry.reason.split("\n").join(`\n${indent}  `)}`);
+			if (entry.mismatch === "viewIncompatibleAfterUpgrade") {
+				appendReasons(entry.incompatibilities, `${indent}  `);
+			}
+		}
+	}
+
+	// The final error assembly adds the first-level bullet only to the summary.
+	appendReasons(incompatibilities, "   ");
+	return lines.join("\n");
 }
 
 /**

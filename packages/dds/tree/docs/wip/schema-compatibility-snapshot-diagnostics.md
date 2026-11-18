@@ -1,6 +1,6 @@
 # Schema compatibility snapshot error diagnostics
 
-Status: proposed.
+Status: implemented.
 This document describes a change to consumer-facing error messages; it does not change schema compatibility rules.
 
 ## Context and goals
@@ -43,6 +43,8 @@ The checker must narrow on `isCompatible` before reading the array; checking the
 Each incompatibility has a `reason` intended for human-readable logging and debugging.
 Its wording is not stable API.
 The formatter should reuse that text rather than reproduce the diagnostic engine's rules or build a second description from structured fields.
+The allowed-type reasons use the revised "types [...], which ..." wording shown below.
+Apply that wording in the shared diagnostic engine so the snapshot checker continues to reuse `reason`.
 
 ## Proposed behavior
 
@@ -73,7 +75,7 @@ The distinction between viewing and upgrading remains important:
 
 ### Message layout
 
-Retain the existing first-level failure sentences and the context added by `errorWithContext`.
+Retain the existing first-level failure information and the context added by `errorWithContext`, while enclosing the option name `minVersionForCollaboration` in backticks as shown below.
 Add nested bullets immediately below each compatibility failure:
 
 ```text
@@ -142,7 +144,7 @@ The implementation should document the richer output without promising stable wo
 
 ## Sample errors
 
-The following are proposed outputs, not the output of the current checker.
+The following examples show the implemented output.
 The complete examples assume snapshots for `1.0.0` and `2.0.0` already exist and the latest matches the current schema, so no freshness message is needed.
 Paths are illustrative.
 Reason text follows the current diagnostic engine, but can change when that engine's wording changes.

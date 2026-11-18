@@ -77,10 +77,10 @@ function formatViewIncompatibility(value: Discrepancy): SchemaViewIncompatibilit
 					: {}),
 				reason: `Cannot view ${describeFieldLocation(value)}: ${[
 					view.length > 0
-						? `the view allows node types ${JSON.stringify(view)} that the stored schema does not allow`
+						? `the view allows node types ${JSON.stringify(view)}, which the stored schema does not allow`
 						: undefined,
 					stored.length > 0
-						? `the stored schema allows node types ${JSON.stringify(stored)} that the view does not allow`
+						? `the stored schema allows node types ${JSON.stringify(stored)}, which the view does not allow`
 						: undefined,
 				]
 					.filter((difference) => difference !== undefined)

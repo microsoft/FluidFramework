@@ -987,7 +987,7 @@ describe("SchematizingSimpleTreeView", () => {
 				view: ["com.fluidframework.leaf.string"],
 				stored: [],
 				reason:
-					'Cannot view the root field: the view allows node types ["com.fluidframework.leaf.string"] that the stored schema does not allow.',
+					'Cannot view the root field: the view allows node types ["com.fluidframework.leaf.string"], which the stored schema does not allow.',
 			},
 		]);
 		assert.throws(
@@ -1007,7 +1007,7 @@ describe("SchematizingSimpleTreeView", () => {
 							view: ["com.fluidframework.leaf.string"],
 							stored: [],
 							reason:
-								'Cannot view the root field: the view allows node types ["com.fluidframework.leaf.string"] that the stored schema does not allow.',
+								'Cannot view the root field: the view allows node types ["com.fluidframework.leaf.string"], which the stored schema does not allow.',
 						},
 					]),
 				});
@@ -1044,7 +1044,7 @@ describe("SchematizingSimpleTreeView", () => {
 				view: [],
 				stored: ["com.fluidframework.leaf.string"],
 				reason:
-					'Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
+					'Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"], which the view does not allow.',
 			},
 		]);
 		assert.throws(
@@ -1064,7 +1064,7 @@ describe("SchematizingSimpleTreeView", () => {
 							view: [],
 							stored: ["com.fluidframework.leaf.string"],
 							reason:
-								'Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
+								'Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"], which the view does not allow.',
 						},
 					]),
 				});
@@ -1178,7 +1178,7 @@ describe("SchematizingSimpleTreeView", () => {
 						view: [],
 						stored: [schema.string.identifier],
 						reason:
-							'Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
+							'Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"], which the view does not allow.',
 					},
 				],
 			},
@@ -1260,7 +1260,7 @@ describe("SchematizingSimpleTreeView", () => {
 						view: ["com.fluidframework.leaf.boolean"],
 						stored: ["com.fluidframework.leaf.string"],
 						reason:
-							'Cannot view the root field: the view allows node types ["com.fluidframework.leaf.boolean"] that the stored schema does not allow; the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
+							'Cannot view the root field: the view allows node types ["com.fluidframework.leaf.boolean"], which the stored schema does not allow; the stored schema allows node types ["com.fluidframework.leaf.string"], which the view does not allow.',
 					},
 				]),
 			});

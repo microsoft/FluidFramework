@@ -198,7 +198,7 @@ describe("Schema Evolution Examples", () => {
 					view: ["test.Canvas"],
 					stored: [],
 					reason:
-						'Cannot view the root field: the view allows node types ["test.Canvas"] that the stored schema does not allow.',
+						'Cannot view the root field: the view allows node types ["test.Canvas"], which the stored schema does not allow.',
 				},
 				{
 					mismatch: "fieldKind",
@@ -308,7 +308,7 @@ describe("Schema Evolution Examples", () => {
 					view: ["test.Counter"],
 					stored: [],
 					reason:
-						'Cannot view field "content" of node type "test.PositionedCanvasItem": the view allows node types ["test.Counter"] that the stored schema does not allow.',
+						'Cannot view field "content" of node type "test.PositionedCanvasItem": the view allows node types ["test.Counter"], which the stored schema does not allow.',
 				},
 			]);
 			assert.deepEqual(compat2.enabledUpgrades, new Map());

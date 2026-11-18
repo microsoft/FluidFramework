@@ -145,7 +145,7 @@ describe("checkSchemaCompatibility viewing incompatibilities", () => {
 		]);
 		assert.equal(
 			view.incompatibilities[0]?.reason,
-			'Cannot view the root field: the view allows node types ["com.fluidframework.leaf.string"] that the stored schema does not allow; the stored schema allows node types ["com.fluidframework.leaf.number"] that the view does not allow.',
+			'Cannot view the root field: the view allows node types ["com.fluidframework.leaf.string"], which the stored schema does not allow; the stored schema allows node types ["com.fluidframework.leaf.number"], which the view does not allow.',
 		);
 	});
 
@@ -246,7 +246,7 @@ describe("checkSchemaCompatibility viewing incompatibilities", () => {
 		]);
 		assert.equal(
 			view.incompatibilities[0]?.reason,
-			'Cannot view field "foo" of node type ".stagedAllowedTypeDetails": the stored schema allows node types ["com.fluidframework.leaf.null"] that the view does not allow.',
+			'Cannot view field "foo" of node type ".stagedAllowedTypeDetails": the stored schema allows node types ["com.fluidframework.leaf.null"], which the view does not allow.',
 		);
 	});
 
@@ -346,7 +346,7 @@ describe("isSchemaUpgradeAllowed", () => {
 				view: [],
 				stored: [factory.string.identifier],
 				reason:
-					'Cannot view field "priority" of node type ".Task": the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
+					'Cannot view field "priority" of node type ".Task": the stored schema allows node types ["com.fluidframework.leaf.string"], which the view does not allow.',
 			};
 			assert.deepEqual(upgrade.incompatibilities, [
 				{
@@ -713,7 +713,7 @@ describe("checkSchemaCompatibility", () => {
 							view: [],
 							stored: [factory.string.identifier],
 							reason:
-								'Cannot view field "" of node type ".diagnostics.Items": the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
+								'Cannot view field "" of node type ".diagnostics.Items": the stored schema allows node types ["com.fluidframework.leaf.string"], which the view does not allow.',
 						},
 					],
 				},
@@ -750,7 +750,7 @@ describe("checkSchemaCompatibility", () => {
 							location: { nodeType: ViewItems.identifier, fieldKey: undefined },
 							view: [],
 							stored: [factory.string.identifier],
-							reason: `Cannot view map entries of node type ${JSON.stringify(ViewItems.identifier)}: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.`,
+							reason: `Cannot view map entries of node type ${JSON.stringify(ViewItems.identifier)}: the stored schema allows node types ["com.fluidframework.leaf.string"], which the view does not allow.`,
 						},
 					],
 				},
