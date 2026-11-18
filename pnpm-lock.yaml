@@ -14915,13 +14915,13 @@ importers:
         version: 6.1.0
       changesets-format-with-issue-links:
         specifier: ^0.3.0
-        version: 0.3.0(@changesets/cli@2.29.8)(supports-color@10.2.2)
+        version: 0.3.0(@changesets/cli@2.29.8)(supports-color@8.1.1)
       remark:
         specifier: ^15.0.1
-        version: 15.0.1(supports-color@10.2.2)
+        version: 15.0.1(supports-color@8.1.1)
       remark-gfm:
         specifier: ^4.0.1
-        version: 4.0.1(supports-color@10.2.2)
+        version: 4.0.1(supports-color@8.1.1)
       typescript:
         specifier: catalog:TypeScript
         version: 6.0.3
@@ -14940,7 +14940,7 @@ importers:
         version: 2.0.3
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
-        version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@6.0.3)
+        version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@8.1.1)(typescript@6.0.3)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -14952,7 +14952,7 @@ importers:
         version: 10.0.3
       eslint:
         specifier: catalog:eslint
-        version: 9.39.1(jiti@2.6.1)(supports-color@10.2.2)
+        version: 9.39.1(jiti@2.6.1)(supports-color@8.1.1)
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
@@ -33627,14 +33627,6 @@ snapshots:
 
   change-case@5.4.4: {}
 
-  changesets-format-with-issue-links@0.3.0(@changesets/cli@2.29.8)(supports-color@10.2.2):
-    dependencies:
-      '@changesets/cli': 2.29.8(@types/node@22.19.17)
-      gitlog: 4.0.8(supports-color@10.2.2)
-      lodash: 4.18.1
-    transitivePeerDependencies:
-      - supports-color
-
   changesets-format-with-issue-links@0.3.0(@changesets/cli@2.29.8)(supports-color@8.1.1):
     dependencies:
       '@changesets/cli': 2.29.8(@types/node@22.19.17)
@@ -34661,7 +34653,7 @@ snapshots:
       tinyglobby: 0.2.15
       unrs-resolver: 1.11.1
     optionalDependencies:
-      eslint-plugin-import-x: 4.16.2(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@8.1.1)
+      eslint-plugin-import-x: 4.16.2(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)
     transitivePeerDependencies:
       - supports-color
 
@@ -35646,13 +35638,6 @@ snapshots:
   github-from-package@0.0.0: {}
 
   github-slugger@2.0.0: {}
-
-  gitlog@4.0.8(supports-color@10.2.2):
-    dependencies:
-      debug: 4.4.3(supports-color@10.2.2)
-      tslib: 2.8.1
-    transitivePeerDependencies:
-      - supports-color
 
   gitlog@4.0.8(supports-color@8.1.1):
     dependencies:
