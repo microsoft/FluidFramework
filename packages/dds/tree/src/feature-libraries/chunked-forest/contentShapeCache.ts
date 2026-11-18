@@ -297,14 +297,12 @@ export class ContentShapeCache {
 		if (length > this.limits.maxFieldLength) {
 			return undefined;
 		}
-		const transition = this.transitionKey(key, childShape, length);
-		if (transition === undefined) {
-			return undefined;
-		}
-		layout.next ??= new Map();
-		const existing = layout.next.get(transition);
-		if (existing !== undefined) {
-			return existing === false ? undefined : existing;
+		const knownTransition = this.transitionKey(key, childShape, length, false);
+		if (knownTransition !== undefined) {
+			const existing = layout.next?.get(knownTransition);
+			if (existing !== undefined) {
+				return existing === false ? undefined : existing;
+			}
 		}
 		const typeRoot = layout.typeRoot;
 		if (
@@ -313,6 +311,12 @@ export class ContentShapeCache {
 		) {
 			return undefined;
 		}
+		// Ids are only assigned for new layouts, so content which can't add layouts does not use up ids other types need.
+		const transition = knownTransition ?? this.transitionKey(key, childShape, length, true);
+		if (transition === undefined) {
+			return undefined;
+		}
+		layout.next ??= new Map();
 		this.layoutCount++;
 		typeRoot.typeLayouts++;
 		const positions = layout.positions + length * childShape.nodeCount;
@@ -364,17 +368,21 @@ export class ContentShapeCache {
 	}
 
 	/**
-	 * Packs a field's key, child shape and length into one number, or returns `undefined` if the key or shape can not
-	 * be assigned an id within the limits.
+	 * Packs a field's key, child shape and length into one number.
+	 *
+	 * @param assignIds - Whether to assign ids to a key or shape which has none.
+	 * @returns The packed number, or `undefined` if the key or shape has no id and can not be assigned one
+	 * (because `assignIds` is false or the limits are reached).
 	 */
 	private transitionKey(
 		key: FieldKey,
 		childShape: TreeShape,
 		length: number,
+		assignIds: boolean,
 	): number | undefined {
 		let keyId = this.fieldKeyIds.get(key);
 		if (keyId === undefined) {
-			if (this.fieldKeyIds.size >= this.limits.maxFieldKeys) {
+			if (!assignIds || this.fieldKeyIds.size >= this.limits.maxFieldKeys) {
 				return undefined;
 			}
 			keyId = this.fieldKeyIds.size;
@@ -382,7 +390,7 @@ export class ContentShapeCache {
 		}
 		let shapeId = this.childShapeIds.get(childShape);
 		if (shapeId === undefined) {
-			if (this.childShapeIds.size >= maxChildShapeIds) {
+			if (!assignIds || this.childShapeIds.size >= maxChildShapeIds) {
 				return undefined;
 			}
 			shapeId = this.childShapeIds.size;

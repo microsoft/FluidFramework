@@ -1654,6 +1654,7 @@ describe("chunkTree", () => {
 		function makeChunker(contentShapeOptions?: {
 			readonly shouldEncodeIncrementally?: ContentShapeOptions["shouldEncodeIncrementally"];
 			readonly limits?: Partial<ContentShapeOptions["limits"]>;
+			readonly uniformChunkNodeCount?: number;
 		}): Chunker {
 			const shouldEncodeIncrementally =
 				contentShapeOptions?.shouldEncodeIncrementally ?? defaultIncrementalEncodingPolicy;
@@ -1662,7 +1663,7 @@ describe("chunkTree", () => {
 				defaultSchemaPolicy,
 				defaultChunkPolicy.sequenceChunkSplitThreshold,
 				defaultChunkPolicy.sequenceChunkInlineThreshold,
-				defaultChunkPolicy.uniformChunkNodeCount,
+				contentShapeOptions?.uniformChunkNodeCount ?? defaultChunkPolicy.uniformChunkNodeCount,
 				defaultChunkPolicy.uniformChunkNodeCountDynamicTargetMax,
 				(type, shapes, chunkerSchema) =>
 					tryShapeFromNodeSchema(
@@ -1828,6 +1829,103 @@ describe("chunkTree", () => {
 			assert.equal(treeShapeOf(chunks[0]).type, Item.identifier);
 			assert(chunks[1] instanceof BasicChunk);
 			assertContent(chunks, content);
+		});
+
+		it("does not assign field key ids to layouts beyond the limit of their type", () => {
+			function labels(key: string): JsonableTree {
+				return {
+					type: brand(Labels.identifier),
+					fields: { [key]: [{ type: stringType, value: "v" }] },
+				};
+			}
+			const content = [labels("k1"), labels("k2"), labels("k3"), item("a")];
+			const chunks = chunkContent(
+				makeChunker({ limits: { maxLayoutsPerType: 1, maxFieldKeys: 2 } }),
+				content,
+			);
+			assert.equal(treeShapeOf(chunks[0]).type, Labels.identifier);
+			assert(chunks[1] instanceof BasicChunk);
+			assert(chunks[2] instanceof BasicChunk);
+			// The keys of the maps beyond their type's layout limit did not use up the field key ids.
+			assert.equal(treeShapeOf(chunks[3]).type, Item.identifier);
+			assertContent(chunks, content);
+		});
+
+		it("keeps subtrees with schema shapes too large for one uniform chunk out of shapes", () => {
+			function itemWithPair(label: string, a: number, b: number): JsonableTree {
+				return {
+					type: brand(Item.identifier),
+					fields: {
+						label: [{ type: stringType, value: label }],
+						pair: [
+							{
+								type: brand(Pair.identifier),
+								fields: {
+									a: [{ type: numberType, value: a }],
+									b: [{ type: numberType, value: b }],
+								},
+							},
+						],
+					},
+				};
+			}
+			const content = [itemWithPair("a", 1, 2), itemWithPair("b", 3, 4)];
+			// A pair has 3 nodes: more than a uniform chunk may hold.
+			const uniformChunkNodeCount = 2;
+			const chunks = chunkContent(makeChunker({ uniformChunkNodeCount }), content);
+			const uniformChunks: UniformChunk[] = [];
+			const visit = (chunk: TreeChunk): void => {
+				if (chunk instanceof UniformChunk) {
+					uniformChunks.push(chunk);
+				} else if (chunk instanceof BasicChunk) {
+					for (const field of chunk.fields.values()) {
+						for (const child of field) {
+							visit(child);
+						}
+					}
+				} else if (chunk instanceof SequenceChunk) {
+					for (const child of chunk.subChunks) {
+						visit(child);
+					}
+				}
+			};
+			for (const chunk of chunks) {
+				visit(chunk);
+			}
+			assert(uniformChunks.length > 0);
+			for (const chunk of uniformChunks) {
+				assert(
+					chunk.shape.treeShape.nodeCount * chunk.topLevelLength <= uniformChunkNodeCount,
+				);
+			}
+			const [first] = chunks;
+			assert(first instanceof BasicChunk);
+			assert(first.fields.get(brand("pair"))?.[0] instanceof BasicChunk);
+			assertContent(chunks, content);
+		});
+
+		it("does not copy the values of existing uniform chunks which can not be part of a shape", () => {
+			const labelShape = new TreeShape(stringType, true, [], true);
+			const itemShape = new TreeShape(brand(Item.identifier), false, [
+				[brand("label"), labelShape, 1],
+			]);
+			const values: TreeValue[] = ["a", "b"];
+			let iterations = 0;
+			const iterate = values[Symbol.iterator].bind(values);
+			values[Symbol.iterator] = () => {
+				iterations++;
+				return iterate();
+			};
+			const items = new UniformChunk(itemShape.withTopLevelLength(2), values);
+			const list = new BasicChunk(brand(ItemList.identifier), new Map([[EmptyKey, [items]]]));
+			const json = JSON.stringify(jsonableTreeFromFieldCursor(list.cursor()));
+
+			// The list's field holds two items: too many to be part of a shape.
+			const rechunked = rechunk(list, makeChunker({}));
+			assert.equal(iterations, 0);
+			assert.equal(rechunked, list);
+			assert.equal(list.fields.get(EmptyKey)?.[0], items);
+			assert.equal(JSON.stringify(jsonableTreeFromFieldCursor(rechunked.cursor())), json);
 		});
 
 		it("keeps fields which are encoded incrementally out of shapes", () => {

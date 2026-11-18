@@ -1412,16 +1412,24 @@ function walkNode(
 	schemaShape: ShapeInfo = walk.compressor.policy.shapeFromSchema(cursor.type),
 ): WalkResult {
 	const type = cursor.type;
-	if (schemaShape instanceof TreeShape) {
+	if (
+		schemaShape instanceof TreeShape &&
+		schemaShape.nodeCount <= walk.compressor.policy.uniformChunkNodeCount
+	) {
 		insertValues(cursor, schemaShape, walk.values, walk.compressor.idCompressor);
 		return schemaShape;
 	}
+	// Like chunkRange, a subtree with a schema shape too large for one uniform chunk is stored as a BasicChunk whose fields are chunked separately.
+	// A content-derived shape for it would have as many nodes, so it gets none.
 	const existingNode = tryGetChunk(cursor);
 	const value = cursor.value;
 	const valueStart = walk.values.length;
 	const runStart = walk.runItems.length;
 	const fieldStart = walk.fieldKeys.length;
-	let layout = value === undefined ? walk.cache.layoutForType(type) : undefined;
+	let layout =
+		value === undefined && !(schemaShape instanceof TreeShape)
+			? walk.cache.layoutForType(type)
+			: undefined;
 	for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
 		const key = cursor.getFieldKey();
 		const firstRunOfField = walk.runItems.length;
@@ -1437,8 +1445,13 @@ function walkNode(
 				if (existing !== undefined) {
 					const chunkLength = cursor.chunkLength;
 					if (chunkLength <= fieldLength - count && isReusable(existing, walk.compressor)) {
+						// Absorbing copies the chunk's values, so only do it when this node can still get a shape.
 						const absorbed =
-							existing instanceof UniformChunk ? walk.absorbableShape(existing) : undefined;
+							existing instanceof UniformChunk &&
+							layout !== undefined &&
+							walk.cache.allowsFieldLength(fieldLength)
+								? walk.absorbableShape(existing)
+								: undefined;
 						if (absorbed !== undefined && existing instanceof UniformChunk) {
 							walk.appendAbsorbed(absorbed, existing);
 							fieldShape = nextFieldShape(fieldShape, absorbed);
