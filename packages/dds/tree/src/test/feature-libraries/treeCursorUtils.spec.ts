@@ -332,47 +332,99 @@ describe("treeCursorUtils", () => {
 				},
 			};
 
-			it("preserves prefixes, forks, and return to ordinary fields", () => {
-				const delegatingAdapter: CursorAdapter<JsonableTree> = {
-					...adapter,
-					getFieldCursor: (node, key) => {
-						if (key !== delegated) {
-							return undefined;
-						}
-						assert.equal(node, tree);
-						return stackTreeFieldCursor(adapter, node, keyAsDetachedField(key));
-					},
-				};
-				const cursor = stackTreeNodeCursor(delegatingAdapter, tree);
-				assert(cursor.firstField());
-				assert.equal(cursor.getFieldKey(), delegated);
+			const subtreeDelegatingAdapter: CursorAdapter<JsonableTree> = {
+				...adapter,
+				getFieldCursor: (node, key) => {
+					if (key !== delegated) {
+						return undefined;
+					}
+					assert.equal(node, tree);
+					return stackTreeFieldCursor(adapter, node, keyAsDetachedField(key));
+				},
+			};
+
+			it("prefixes node and field paths inside a delegated subtree", () => {
+				const cursor = stackTreeNodeCursor(subtreeDelegatingAdapter, tree);
+				cursor.enterField(delegated);
 				cursor.enterNode(0);
 				cursor.enterField(innerField);
 				cursor.enterNode(1);
 				assert.equal(cursor.value, 12);
 
 				const prefix = {
-					parent: root,
+					parent: {
+						parent: undefined,
+						parentField: brand<FieldKey>("owner"),
+						parentIndex: 5,
+					},
 					rootFieldOverride: brand<FieldKey>("prefixed"),
 					indexOffset: 7,
 				};
-				const expected: UpPath = {
-					parent: { parent: root, parentField: prefix.rootFieldOverride, parentIndex: 7 },
+				const prefixedDelegatedParent: UpPath = {
+					parent: prefix.parent,
+					parentField: prefix.rootFieldOverride,
+					parentIndex: 7,
+				};
+				const prefixedInnerLeaf: UpPath = {
+					parent: prefixedDelegatedParent,
 					parentField: innerField,
 					parentIndex: 1,
 				};
-				expectEqualPaths(cursor.getPath(prefix), expected);
+				expectEqualPaths(cursor.getPath(prefix), prefixedInnerLeaf);
 				cursor.enterField(empty);
-				expectEqualFieldPaths(cursor.getFieldPath(prefix), { parent: expected, field: empty });
-				const fork = cursor.fork();
-				assert.equal(fork.getFieldLength(), 0);
+				expectEqualFieldPaths(cursor.getFieldPath(prefix), {
+					parent: prefixedInnerLeaf,
+					field: empty,
+				});
+			});
+
+			it("keeps a fork in the delegated subtree after the original cursor leaves it", () => {
+				const cursor = stackTreeNodeCursor(subtreeDelegatingAdapter, tree);
+				cursor.enterField(delegated);
+				cursor.enterNode(0);
+				cursor.enterField(innerField);
+				cursor.enterNode(1);
+				const forkedLeafPath = cursor.getPath();
+				cursor.enterField(empty);
+				const nestedEmptyFieldFork = cursor.fork();
+
+				// Return the original cursor to the outer root, releasing its delegate.
 				cursor.exitField();
 				cursor.exitNode();
 				cursor.exitField();
+				cursor.exitNode();
+				cursor.exitField();
+				assert.equal(cursor.getNode(), tree);
+
+				assert.equal(nestedEmptyFieldFork.getFieldLength(), 0);
+				nestedEmptyFieldFork.exitField();
+				assert.equal(nestedEmptyFieldFork.value, 12);
+				expectEqualPaths(nestedEmptyFieldFork.getPath(), forkedLeafPath);
+			});
+
+			it("returns to delegated siblings after leaving a nested field", () => {
+				const cursor = stackTreeNodeCursor(subtreeDelegatingAdapter, tree);
+				cursor.enterField(delegated);
+				cursor.enterNode(0);
+				cursor.enterField(innerField);
+				cursor.enterNode(1);
+				cursor.exitNode();
+				cursor.exitField();
+
 				assert(cursor.nextNode());
 				assert.equal(cursor.value, 20);
 				assert.equal(cursor.nextNode(), false);
 				assert.equal(cursor.getFieldKey(), delegated);
+			});
+
+			it("resumes ordinary field iteration after exhausting a delegated field", () => {
+				const cursor = stackTreeNodeCursor(subtreeDelegatingAdapter, tree);
+				assert(cursor.firstField());
+				assert.equal(cursor.getFieldKey(), delegated);
+				cursor.enterNode(1);
+				assert.equal(cursor.nextNode(), false);
+				assert.equal(cursor.getFieldKey(), delegated);
+
 				assert(cursor.nextField());
 				assert.equal(cursor.getFieldKey(), after);
 				assert(cursor.firstNode());
@@ -382,10 +434,6 @@ describe("treeCursorUtils", () => {
 				assert.equal(cursor.getNode(), tree);
 				assert(cursor.firstField());
 				assert.equal(cursor.getFieldKey(), delegated);
-
-				fork.exitField();
-				assert.equal(fork.value, 12);
-				expectEqualPaths(fork.getPath(prefix), expected);
 			});
 
 			it("supports null as the parent node of a delegated field", () => {

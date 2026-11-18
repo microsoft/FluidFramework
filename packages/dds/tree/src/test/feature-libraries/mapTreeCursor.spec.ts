@@ -3,13 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import type { MapTree } from "../../core/index.js";
+import { strict as assert } from "node:assert";
+
+import type { FieldKey, MapTree, TreeNodeSchemaIdentifier } from "../../core/index.js";
 import {
 	cursorForMapTreeField,
 	cursorForMapTreeNode,
 	mapTreeFromCursor,
 	type MinimalMapTreeNodeView,
 } from "../../feature-libraries/index.js";
+import { brand } from "../../util/index.js";
 import { testGeneralPurposeTreeCursor } from "../cursorTestSuite.js";
 
 testGeneralPurposeTreeCursor("mapTreeCursor", cursorForMapTreeNode, mapTreeFromCursor);
@@ -19,6 +22,40 @@ testGeneralPurposeTreeCursor(
 	(tree: MapTree) => cursorForMapTreeNode(withDelegatedFields(tree)),
 	mapTreeFromCursor,
 );
+
+describe("mapTreeCursor field delegation", () => {
+	const delegatedFieldKey: FieldKey = brand("delegated");
+	const leafType: TreeNodeSchemaIdentifier = brand("delegated-leaf");
+	const parentType: TreeNodeSchemaIdentifier = brand("delegating-parent");
+
+	for (const value of [0, false, null]) {
+		it(`preserves falsy values through field delegation (${String(value)})`, () => {
+			const nodes = Array.from({ length: 3 }, () => ({
+				type: leafType,
+				value,
+				fields: new Map(),
+			}));
+			const cursor = cursorForMapTreeNode(
+				withDelegatedFields({
+					type: parentType,
+					fields: new Map([[delegatedFieldKey, nodes]]),
+				}),
+			);
+			cursor.enterField(delegatedFieldKey);
+			assert(cursor.firstNode());
+			assert.equal(cursor.value, value);
+			assert.equal(cursor.fork().value, value);
+			assert(cursor.nextNode());
+			assert.equal(cursor.value, value);
+			cursor.enterField(delegatedFieldKey);
+			assert.equal(cursor.firstNode(), false);
+			cursor.exitField();
+			assert.equal(cursor.value, value);
+			cursor.exitNode();
+			assert.equal(cursor.getFieldLength(), 3);
+		});
+	}
+});
 
 /**
  * convert a MapTree into one which recursively "specializes" its fields' cursors with the generic mapTree cursor.
