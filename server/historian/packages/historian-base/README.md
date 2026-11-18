@@ -37,6 +37,15 @@ Storage-name retrievers can optionally implement `getForRequest(tenantId, docume
 to share the request's document read, and `getWithDocumentDetails(tenantId, document)` to resolve
 legacy storage from an already validated document. The original `get` contract remains
 supported, and its result is reused within the request.
+When no retriever is configured and neither routing nor the authoritative document names an
+account, recovery can use the provider's configured default route. The provider must validate
+that default route before writing metadata. An unresolved configured retriever or a mismatch
+between a named account and the default route is rejected.
+
+Missing or failed static container-type lookups remain unknown until authoritative validation
+succeeds; they are not cached as durable in this mode. This fallback does not run on local
+ephemeral lifecycle hits. Summary routes pass their effective `ignoreEphemeralFlag` setting to
+the service factory, including the route's default when the setting is omitted.
 
 The option also enables authenticated
 `POST /repos/:ignored?/:tenantId/internal/document-storage/initialize`.
@@ -53,9 +62,10 @@ the initial summary; the shared creation flow does not opt providers into this o
 That implementation must emit the structured missing-metadata error code and implement the
 conditional initialize/backfill hooks. No client transport or Historian source patch is needed.
 
-Without an independent access proof, durable summary reads in this mode bypass the summary
-cache and always reach GitRest, including reads by version SHA.
-This adds one GitRest request for each former durable cache hit, but does not add an Alfred
-ownership precheck or another request on a cache miss.
-Ephemeral summaries, default-off deployments, and requests authorized by an independent
-access proof retain their existing summary cache behavior.
+Without an independent access proof, durable content in this mode does not use Historian's
+content cache. Summaries (including version-SHA reads), blobs, commits, trees, headers, and full
+trees must reach GitRest. Cache writes and cache-only background prefetches are also disabled.
+A direct object read adds one GitRest request for a former cache hit; a composite header or
+full-tree read may require several object requests. No Alfred ownership precheck is added.
+Ephemeral content, default-off deployments, and requests authorized by an independent access
+proof retain their existing cache behavior.

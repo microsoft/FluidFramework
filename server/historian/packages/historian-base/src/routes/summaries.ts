@@ -184,6 +184,7 @@ export function create(
 					containerTypeHint: "ephemeral",
 					documentAccessAuthorizer,
 					summaryAccessContext: access,
+					ignoreEphemeralFlag: ignoreIsEphemeralFlag,
 				});
 			if (
 				documentAccessAuthorizer === undefined &&

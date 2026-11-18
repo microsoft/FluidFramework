@@ -26,13 +26,19 @@ import request from "supertest";
 
 import * as historianApp from "../app";
 import { createGitService } from "../routes/utils";
-import type { IDocumentAccessAuthorizer, ITrustedCreateContextResolver } from "../services";
+import type {
+	IDocumentAccessAuthorizer,
+	ITrustedCreateContextResolver,
+	RestGitService,
+} from "../services";
 import { TestCache, TestDocumentManager, TestTenantService } from "./utils";
 
 const tenantId = "tenant";
 const documentId = "document";
 const storageName = "document-storage";
 const summary = { id: "0123456789abcdef0123456789abcdef01234567", trees: [], blobs: [] };
+const objectSha = "a".repeat(40);
+const treeSha = "b".repeat(40);
 const activeDocument: IDocument = {
 	version: "1.0",
 	createTime: Date.now(),
@@ -72,6 +78,7 @@ describe("document storage recovery", () => {
 	let failureCode: unknown;
 	let backfillStatus: number;
 	let repairSucceeds: boolean;
+	let lastRoutingFlag: string | string[] | undefined;
 	let storageNameRetriever: {
 		get: sinon.SinonStub;
 		getForRequest?(
@@ -89,11 +96,13 @@ describe("document storage recovery", () => {
 		failureCode = "DocumentStorageMetadataMissing";
 		backfillStatus = 204;
 		repairSucceeds = true;
+		lastRoutingFlag = undefined;
 		documentManager = new TestDocumentManager();
 		readDocument = sandbox.stub(documentManager, "readDocument").resolves(activeDocument);
 		storageNameRetriever = { get: sandbox.stub().resolves(storageName) };
 		server = createServer((req, res) => {
 			operations.push(`${req.method} ${req.url}`);
+			lastRoutingFlag = req.headers["is-ephemeral-container"] ?? undefined;
 			res.setHeader("Content-Type", "application/json");
 			if (req.url?.endsWith("/internal/document-storage/backfill")) {
 				initialized = repairSucceeds && backfillStatus === 204;
@@ -115,7 +124,36 @@ describe("document storage recovery", () => {
 				const isSummary =
 					req.url?.includes("/git/summaries/") ||
 					(req.method === "POST" && req.url?.endsWith("/git/summaries"));
-				res.end(JSON.stringify(isSummary ? summary : []));
+				const value = isSummary
+					? summary
+					: req.url?.includes("/git/commits/") ||
+					  (req.method === "POST" && req.url?.endsWith("/git/commits"))
+					? {
+							sha: objectSha,
+							url: "http://gitrest/commit",
+							author: { name: "Test", email: "test@example.com", date: "2026-01-01" },
+							committer: {
+								name: "Test",
+								email: "test@example.com",
+								date: "2026-01-01",
+							},
+							message: "Test commit",
+							parents: [],
+							tree: { sha: treeSha, url: "http://gitrest/tree" },
+					  }
+					: req.url?.includes("/git/trees/")
+					? { sha: treeSha, url: "http://gitrest/tree", tree: [] }
+					: req.url?.includes("/git/blobs/") ||
+					  (req.method === "POST" && req.url?.endsWith("/git/blobs"))
+					? {
+							sha: objectSha,
+							url: "http://gitrest/blob",
+							content: "",
+							encoding: "base64",
+							size: 0,
+					  }
+					: [];
+				res.end(JSON.stringify(value));
 			}
 		});
 		await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -308,6 +346,207 @@ describe("document storage recovery", () => {
 			.expect(200, summary);
 		sinon.assert.calledOnce(readDocument);
 		assert.strictEqual(operations.length, 3);
+	});
+
+	for (const { name, read } of [
+		{
+			name: "blob",
+			read: (service: RestGitService) => service.getBlob(tenantId, objectSha, true),
+		},
+		{ name: "commit", read: (service: RestGitService) => service.getCommit(objectSha, true) },
+		{ name: "tree", read: (service: RestGitService) => service.getTree(treeSha, true, true) },
+		{ name: "header", read: (service: RestGitService) => service.getHeader(objectSha, true) },
+		{
+			name: "full tree",
+			read: (service: RestGitService) => service.getFullTree(objectSha, true),
+		},
+	]) {
+		for (const mode of ["validated durable", "default-off durable", "ephemeral"] as const) {
+			it(`applies ownership cache policy to a warm ${mode} ${name}`, async () => {
+				config.set("ignoreEphemeralFlag", false);
+				config.set("restGitService:gitrestOwnershipValidation", false);
+				initialized = true;
+				const cache = new TestCache();
+				const ephemeral = mode === "ephemeral";
+				const previous = await read(await createService(ephemeral, cache));
+				config.set(
+					"restGitService:gitrestOwnershipValidation",
+					mode !== "default-off durable",
+				);
+				initialized = false;
+				failureStatus = 403;
+				const requestsBefore = operations.length;
+				const reader = await createService(ephemeral, cache);
+				if (mode === "validated durable") {
+					await assert.rejects(
+						read(reader),
+						(error: unknown) => error instanceof NetworkError && error.code === 403,
+					);
+					assert.strictEqual(operations.length, requestsBefore + 1);
+				} else {
+					assert.deepStrictEqual(await read(reader), previous);
+					assert.strictEqual(operations.length, requestsBefore);
+				}
+			});
+		}
+	}
+
+	it("does not prefetch content solely for a disabled durable cache", async () => {
+		initialized = true;
+		const service = await createService();
+		const getBlob = sandbox.spy(service, "getBlob");
+		const getTree = sandbox.spy(service, "getTree");
+		const getHeader = sandbox.spy(service, "getHeader");
+		await service.createBlob({ content: "", encoding: "base64" });
+		await service.createCommit({
+			author: { name: "Test", email: "test@example.com", date: "2026-01-01" },
+			message: "Test commit",
+			tree: treeSha,
+			parents: [],
+		});
+		sinon.assert.notCalled(getBlob);
+		sinon.assert.notCalled(getTree);
+		sinon.assert.notCalled(getHeader);
+		assert.strictEqual(operations.length, 2);
+	});
+
+	it("keeps content caching with independently validated Alfred fallback proofs", async () => {
+		initialized = true;
+		const cache = new TestCache();
+		const authorize = sandbox.stub().resolves({
+			tenantId,
+			documentId,
+			storageAccountName: storageName,
+			containerType: "durable",
+			lifecycleVersion: "generation-1",
+			operation: "read",
+			state: "active",
+			source: "alfred-fallback",
+		});
+		for (let i = 0; i < 2; i++) {
+			const service = await createGitService({
+				config,
+				tenantId,
+				authorization,
+				tenantService: new TestTenantService(),
+				documentManager,
+				cache,
+				accessOperation: "read",
+				documentAccessAuthorizer: { authorize },
+			});
+			const blob = await service.getBlob(tenantId, objectSha, true);
+			assert.strictEqual(blob.sha, objectSha);
+			initialized = false;
+			failureStatus = 403;
+		}
+		sinon.assert.calledTwice(authorize);
+		assert.strictEqual(operations.length, 1);
+		sinon.assert.notCalled(readDocument);
+	});
+
+	for (const failure of ["missing", "error"] as const) {
+		it(`resolves an ephemeral document authoritatively after ${failure} static properties`, async function () {
+			this.timeout(20000);
+			config.set("ignoreEphemeralFlag", false);
+			config.set("alfredEnforcesServerGeneratedDocumentId", true);
+			initialized = true;
+			readDocument.resolves({ ...activeDocument, isEphemeralContainer: true });
+			const readStatic = sandbox.stub(documentManager, "readStaticProperties");
+			if (failure === "missing") {
+				readStatic.resolves(undefined);
+			} else {
+				readStatic.rejects(new NetworkError(404, "Static properties unavailable"));
+			}
+			const cache = new TestCache();
+			await request(createApp({ cache }))
+				.get(`/repos/${tenantId}/git/summaries/latest`)
+				.set("Authorization", authorization)
+				.expect(200, summary);
+			assert.strictEqual(lastRoutingFlag, "true");
+			assert.strictEqual(
+				await cache.get(`isEphemeralContainer:${tenantId}:${documentId}`),
+				true,
+			);
+			sinon.assert.notCalled(storageNameRetriever.get);
+			assert.strictEqual(operations.length, 1);
+		});
+	}
+
+	it("does not cache unknown routing as durable when authoritative lookup is denied", async () => {
+		config.set("ignoreEphemeralFlag", false);
+		sandbox.stub(documentManager, "readStaticProperties").resolves(undefined);
+		readDocument.rejects(new NetworkError(403, "Denied"));
+		initialized = true;
+		const cache = new TestCache();
+		await request(createApp({ cache }))
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(403);
+		assert.strictEqual(
+			await cache.get(`isEphemeralContainer:${tenantId}:${documentId}`),
+			undefined,
+		);
+		assert.deepStrictEqual(operations, []);
+	});
+
+	it("uses the summary route's default when ignoreEphemeralFlag is unset", async () => {
+		config = new nconf.Provider({}).use("memory").defaults({
+			storageUrl: config.get("storageUrl"),
+			restGitService: { gitrestOwnershipValidation: true },
+			logger: { morganFormat: "json" },
+		});
+		initialized = true;
+		readDocument.resolves({ ...activeDocument, isEphemeralContainer: true });
+		const readStatic = sandbox
+			.stub(documentManager, "readStaticProperties")
+			.resolves({ ...activeDocument, isEphemeralContainer: true });
+		await request(createApp())
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(200, summary);
+		assert.strictEqual(lastRoutingFlag, undefined);
+		sinon.assert.notCalled(readStatic);
+		sinon.assert.notCalled(readDocument);
+	});
+
+	for (const namedDocument of [false, true]) {
+		it(`${
+			namedDocument ? "rejects a named document on" : "recovers legacy metadata on"
+		} the provider default route`, async () => {
+			readDocument.resolves({
+				...activeDocument,
+				storageName: namedDocument ? storageName : undefined,
+			});
+			const service = await createGitService({
+				config,
+				tenantId,
+				authorization,
+				tenantService: new TestTenantService(),
+				documentManager,
+				cache: new TestCache(),
+			});
+			if (namedDocument) {
+				await assert.rejects(
+					service.getRefs(),
+					(error: unknown) => error instanceof NetworkError && error.code === 403,
+				);
+				assert.strictEqual(operations.length, 1);
+			} else {
+				assert.deepStrictEqual(await service.getRefs(), []);
+				assert.strictEqual(operations.length, 3);
+				sinon.assert.calledOnce(readDocument);
+			}
+		});
+	}
+
+	it("does not treat an unresolved configured retriever as a provider default route", async () => {
+		readDocument.resolves({ ...activeDocument, storageName: undefined });
+		storageNameRetriever.get.resolves(undefined);
+		await assert.rejects(
+			(await createService()).getRefs(),
+			(error: unknown) => error instanceof NetworkError && error.code === 403,
+		);
+		assert.strictEqual(operations.length, 1);
 	});
 
 	it("keeps local ephemeral cache hits free of Alfred and durable routing", async () => {

@@ -113,6 +113,8 @@ export interface ICreateGitServiceArgs {
 	storageName?: string;
 	allowDisabledTenant?: boolean;
 	isEphemeralContainer?: boolean;
+	/** Overrides the routing configuration with the caller's effective setting. */
+	ignoreEphemeralFlag?: boolean;
 	ephemeralDocumentTTLSec?: number; // 24 hours
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever;
 	postEphemeralContainerChecker?: IPostEphemeralContainerChecker;

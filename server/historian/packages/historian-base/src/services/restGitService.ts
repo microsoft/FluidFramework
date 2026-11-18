@@ -83,6 +83,14 @@ export class RestGitService {
 		private readonly accessProof?: IDocumentAccessProof,
 		private readonly recoverDocumentStorage?: () => Promise<void>,
 	) {
+		// GitRest must validate durable content when there is no independent access proof.
+		if (
+			isEphemeralContainer !== true &&
+			accessProof === undefined &&
+			recoverDocumentStorage !== undefined
+		) {
+			this.cache = undefined;
+		}
 		const defaultHeaders: RawAxiosRequestHeaders =
 			storageName !== undefined
 				? {
@@ -207,11 +215,16 @@ export class RestGitService {
 			blob,
 		);
 
-		// Fetch the full blob so we can have it in cache
-		this.getBlob(this.tenantId, createResults.sha, true).catch((error) => {
-			winston.error(`Error fetching blob ${createResults.sha}`);
-			Lumberjack.error(`Error fetching blob: ${createResults.sha}`, this.lumberProperties);
-		});
+		if (this.cache) {
+			// Fetch the full blob so we can have it in cache
+			this.getBlob(this.tenantId, createResults.sha, true).catch((error) => {
+				winston.error(`Error fetching blob ${createResults.sha}`);
+				Lumberjack.error(
+					`Error fetching blob: ${createResults.sha}`,
+					this.lumberProperties,
+				);
+			});
+		}
 
 		return createResults;
 	}
@@ -261,19 +274,21 @@ export class RestGitService {
 
 		this.setCache(commit.sha, commit);
 
-		// Also fetch the tree for the commit to have it in cache
-		this.getTree(commit.tree.sha, true, true).catch((error) => {
-			winston.error(`Error fetching commit tree ${commit.tree.sha}`);
-			Lumberjack.error(
-				`Error fetching commit tree: ${commit.tree.sha}`,
-				this.lumberProperties,
-			);
-		});
-		// ... as well as pull in the header for it
-		this.getHeader(commit.sha, true).catch((error) => {
-			winston.error(`Error fetching header ${commit.sha}`);
-			Lumberjack.error(`Error fetching header: ${commit.sha}`, this.lumberProperties);
-		});
+		if (this.cache) {
+			// Also fetch the tree for the commit to have it in cache
+			this.getTree(commit.tree.sha, true, true).catch((error) => {
+				winston.error(`Error fetching commit tree ${commit.tree.sha}`);
+				Lumberjack.error(
+					`Error fetching commit tree: ${commit.tree.sha}`,
+					this.lumberProperties,
+				);
+			});
+			// ... as well as pull in the header for it
+			this.getHeader(commit.sha, true).catch((error) => {
+				winston.error(`Error fetching header ${commit.sha}`);
+				Lumberjack.error(`Error fetching header: ${commit.sha}`, this.lumberProperties);
+			});
+		}
 
 		return commit;
 	}
@@ -363,15 +378,6 @@ export class RestGitService {
 			this.get<IWholeFlatSummary>(
 				`/repos/${this.getRepoPath()}/git/summaries/${encodeURIComponent(sha)}`,
 			);
-
-		// Without an independent access proof, GitRest must validate every durable read.
-		if (
-			this.isEphemeralContainer !== true &&
-			this.accessProof === undefined &&
-			this.recoverDocumentStorage !== undefined
-		) {
-			return summaryFetch();
-		}
 
 		// Currently, only "container" type summaries are retrieved from storage.
 		// In the future, we might want to also retrieve "channels". When that happens,
