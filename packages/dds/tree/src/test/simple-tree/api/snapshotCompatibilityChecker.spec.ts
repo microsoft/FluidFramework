@@ -54,6 +54,35 @@ const nodeFileSystem = {
 };
 
 describe("snapshotCompatibilityChecker", () => {
+	it("exposes upgrade diagnostics when neither viewing nor upgrading is possible", () => {
+		const sf = new SchemaFactoryAlpha("snapshotDiagnostics");
+		const status = checkCompatibility(
+			new TreeViewConfiguration({ schema: [sf.number, sf.string] }),
+			new TreeViewConfiguration({ schema: sf.number }),
+		);
+		assert.equal(status.canView, false);
+		assert.equal(status.canUpgrade, false);
+		assert(!status.view.isCompatible);
+		assert(!status.upgrade.isCompatible);
+		assert.deepEqual(status.upgrade.incompatibilities, [
+			{
+				mismatch: "viewIncompatibleAfterUpgrade",
+				reason:
+					"Cannot upgrade: the resulting stored schema would still prevent the view from reading or writing the document.",
+				incompatibilities: [
+					{
+						mismatch: "allowedTypes",
+						location: "root",
+						view: [],
+						stored: [sf.string.identifier],
+						reason:
+							'Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
+					},
+				],
+			},
+		]);
+	});
+
 	it("exports fresh snapshots without rediscovering a configured schema", () => {
 		const sf = new SchemaFactoryAlpha("snapshotReuse");
 		class Child extends sf.object("Child", { value: sf.stagedOptional(sf.number) }) {}
