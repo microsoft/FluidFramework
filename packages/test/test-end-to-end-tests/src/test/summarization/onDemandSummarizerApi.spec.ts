@@ -272,7 +272,9 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		);
 	});
 
-	it("on-demand summary succeeds after normal summary completes", async () => {
+	it("on-demand summary succeeds after normal summary completes", async function () {
+		// This scenario loads two summarizers and completes two sequential summaries.
+		this.timeout(this.timeout() * 2);
 		const enabledSummarizerConfig: ITestContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,
 		};

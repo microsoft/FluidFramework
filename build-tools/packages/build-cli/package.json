@@ -54,6 +54,7 @@
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm run test",
 		"test:mocha": "mocha --forbid-only",
+		"test:update-snapshots": "pnpm test:mocha --snapshot",
 		"tsc": "tsc"
 	},
 	"c8": {
