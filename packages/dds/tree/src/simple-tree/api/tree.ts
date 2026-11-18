@@ -15,6 +15,7 @@ import type {
 	RevertibleAlphaFactory,
 	RevertibleFactory,
 	RevertToOptionsAlpha,
+	SchemaVersions,
 } from "../../core/index.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
 import type { TreeStatus } from "../../feature-libraries/index.js";
@@ -129,6 +130,15 @@ export interface ITree extends ViewableTree, IFluidLoadable {}
  * @alpha
  */
 export interface ViewableTreeAlpha extends ViewableTree {
+	/**
+	 * Contains the application-defined versions in the document's stored schema.
+	 *
+	 * @remarks
+	 * This reads the document's current versions rather than the versions configured for a particular view.
+	 * These {@link SchemaVersions} can change when a {@link TreeViewAlpha} initializes or upgrades the stored schema.
+	 */
+	readonly storedSchemaVersion: SchemaVersions | undefined;
+
 	/**
 	 * Creates an independent branch from this tree's current state.
 	 *
@@ -1149,6 +1159,7 @@ export type SchemaUpgradeIncompatibility =
 	| SchemaUpgradeNodeKindIncompatibility
 	| SchemaUpgradeMissingNodeSchemaIncompatibility
 	| SchemaUpgradeUnsatisfiedNodeSchemaIncompatibility
+	| SchemaUpgradeVersionIncompatibility
 	| SchemaUpgradeViewIncompatibility;
 
 /* eslint-disable @typescript-eslint/consistent-type-definitions -- Object aliases preserve the original inline variants' index-signature assignability. */
@@ -1360,6 +1371,31 @@ export type SchemaUpgradeViewIncompatibility = {
 	readonly incompatibilities: readonly SchemaViewIncompatibility[];
 };
 
+/**
+ * The proposed schema decreases or removes an application-defined schema version.
+ *
+ * @remarks
+ * An upgrade must retain each stored library identifier and must not decrease its version.
+ * A version increase or a new identifier does not permit another version to decrease or disappear.
+ * An absent version map differs from an empty map: an upgrade cannot remove even an empty stored map.
+ * @sealed @beta
+ */
+export type SchemaUpgradeVersionIncompatibility = {
+	readonly mismatch: "schemaVersion";
+	/**
+	 * Explains why the proposed versions prevent the upgrade.
+	 */
+	readonly reason: SchemaIncompatibilityReason;
+	/**
+	 * All proposed library identifiers and versions, or undefined if the proposed schema has no version map.
+	 */
+	readonly proposed: Readonly<Record<string, number>> | undefined;
+	/**
+	 * All stored library identifiers and versions, or undefined if the stored schema has no version map.
+	 */
+	readonly stored: Readonly<Record<string, number>> | undefined;
+};
+
 /* eslint-enable @typescript-eslint/consistent-type-definitions -- End of shape-preserving incompatibility aliases. */
 
 /**
@@ -1511,6 +1547,27 @@ export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
 }
 
 /**
+ * The configured and stored application-defined schema versions available through a {@link TreeViewAlpha}.
+ *
+ * @remarks
+ * Comparing these maps helps identify differences between the application configuration and the document.
+ * The configured versions remain fixed for a view, while the stored versions follow changes to the document's schema.
+ * {@link SchemaVersions} describes the meaning of absent and empty maps and the rules for upgrading them.
+ *
+ * @sealed @alpha
+ */
+export interface TreeViewSchemaVersions {
+	/**
+	 * Versions from the view's configuration, used when initializing or upgrading the document.
+	 */
+	readonly view: SchemaVersions | undefined;
+	/**
+	 * Versions currently stored in the document.
+	 */
+	readonly stored: SchemaVersions | undefined;
+}
+
+/**
  * {@link TreeView} with proposed changes to the schema aware typing to allow use with `UnsafeUnknownSchema`.
  *
  * @see {@link TreeViewBeta} for beta APIs
@@ -1526,6 +1583,15 @@ export interface TreeViewAlpha<
 			"root" | "initialize" | "fork" | "runTransaction" | "runTransactionAsync" | "isView"
 		>,
 		UntypedTreeViewAlpha {
+	/**
+	 * Contains the configured and stored application-defined schema versions.
+	 *
+	 * @remarks
+	 * {@link TreeViewSchemaVersions} describes how these maps relate to the view and document.
+	 * The {@link TreeViewEvents.schemaChanged} event reports updates to the stored schema.
+	 */
+	readonly schemaVersion: TreeViewSchemaVersions;
+
 	get root(): ReadableField<TSchema>;
 
 	set root(newRoot: InsertableField<TSchema>);
