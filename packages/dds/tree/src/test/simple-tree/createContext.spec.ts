@@ -526,6 +526,54 @@ describe("createContext", () => {
 					),
 				);
 			});
+
+			it("don't keep the definitions of released roots alive", async () => {
+				const sf = new SchemaFactoryAlpha("releasedRoots");
+				class Leaf extends sf.object("Leaf", { value: sf.number }) {}
+				class Middle extends sf.object("Middle", { leaf: Leaf }) {}
+				const gc =
+					(globalThis as { gc?: () => void }).gc ?? assert.fail("Tests run with expose-gc");
+				// Builds the definitions of a root which includes Middle and a built-in leaf schema,
+				// optionally gets Middle's context while they are alive, and releases the root.
+				function useRoot(withContext: boolean): {
+					definitions: WeakRef<object>;
+					context: ReturnType<typeof getUnhydratedContext> | undefined;
+				} {
+					class Top extends sf.object(`Top${withContext}`, {
+						middle: Middle,
+						count: sf.number,
+					}) {}
+					const config = new TreeViewConfigurationAlpha({ schema: Top });
+					return {
+						definitions: new WeakRef(config.definitions),
+						context: withContext ? getUnhydratedContext(Middle) : undefined,
+					};
+				}
+				const collected = async (ref: WeakRef<object>): Promise<boolean> => {
+					// A WeakRef's target is kept alive until the job which created or dereferenced it ends.
+					await new Promise((resolve) => setTimeout(resolve, 0));
+					gc();
+					return ref.deref() === undefined;
+				};
+
+				assert(await collected(useRoot(false).definitions));
+				const { definitions, context } = useRoot(true);
+				assert(await collected(definitions));
+
+				// Lookups which used the released definitions still find exactly the schema reachable from Middle.
+				assert(context !== undefined);
+				assert.equal(context.schema.size, 3);
+				assert.strictEqual(context.schema.get(Leaf.identifier), Leaf);
+				assert.deepEqual(
+					new Map(context.schema),
+					new Map(SchemaComponent.fromSchema(Middle).definitions),
+				);
+				const imported = TreeAlpha.importVerbose(Middle, {
+					type: Middle.identifier,
+					fields: { leaf: { type: Leaf.identifier, fields: { value: 1 } } },
+				});
+				assert.equal(imported.leaf.value, 1);
+			});
 		});
 		describe("catalog contexts", () => {
 			for (const testCase of testSchema) {

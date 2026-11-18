@@ -178,7 +178,7 @@ export class SchemaComponent implements TransitiveSchemaInfo {
 	 */
 	public validateIdentifiers(): void {
 		// Identifiers reachable from a component were validated if they were when building definitions which include them.
-		if (!containingDefinitions.has(this)) {
+		if (!componentsWithValidatedIdentifiers.has(this)) {
 			assert(
 				this.definitions !== undefined,
 				0xd9f /* Expected a validated schema component */,
@@ -205,6 +205,7 @@ export class SchemaComponent implements TransitiveSchemaInfo {
 	 * @remarks
 	 * Unless {@link SchemaComponent.definitions} has been materialized, a component included in definitions built for another component or root
 	 * gets an exact view of those definitions, restricted to the schema reachable from it, rather than a map of its own.
+	 * The view does not keep those definitions alive (see {@link containingDefinitions}).
 	 * This avoids a map of every reachable schema for each component that content is created under, such as the roots content is imported under.
 	 * Iteration order is unspecified.
 	 * @throws A {@link UsageError} if distinct reachable schemas have the same identifier.
@@ -215,7 +216,7 @@ export class SchemaComponent implements TransitiveSchemaInfo {
 		}
 		const derived = (this.#derived ??= {});
 		if (derived.reachableDefinitions === undefined) {
-			const containing = containingDefinitions.get(this);
+			const containing = containingDefinitions.get(this)?.deref();
 			derived.reachableDefinitions =
 				containing === undefined ? this.definitions : reachableSubset(this, containing);
 		}
@@ -915,24 +916,37 @@ function materializeDefinitions(roots: Iterable<SchemaComponent>): TreeSchema["d
 		}
 	}
 	// Every component visited has all the components it reaches in `components`, whose identifiers are unique.
+	const reference = new WeakRef(definitions);
 	for (const component of components) {
-		if (!containingDefinitions.has(component)) {
-			containingDefinitions.set(component, definitions);
+		componentsWithValidatedIdentifiers.add(component);
+		if (containingDefinitions.get(component)?.deref() === undefined) {
+			containingDefinitions.set(component, reference);
 		}
 	}
 	return definitions;
 }
 
 /**
- * For each component whose reachable schemas are known to have unique identifiers, definitions which include them all.
+ * Components whose reachable schemas are known to have unique identifiers, because definitions including them all were built.
  * @remarks
  * {@link SchemaComponent.fromSchema} validates a component's reachable identifiers by building its definitions.
- * A component in this map does not need to, which avoids building a map of the reachable definitions
+ * A component in this set does not need to, which avoids building a map of the reachable definitions
  * for each node schema first used in a tree whose schema was validated as a whole.
- * {@link SchemaComponent.reachableDefinitions} looks schema up in these definitions for the same reason.
- * The first definitions built which include a component are kept.
  */
-const containingDefinitions = new WeakMap<SchemaComponent, TreeSchema["definitions"]>();
+const componentsWithValidatedIdentifiers = new WeakSet<SchemaComponent>();
+
+/**
+ * For each component, definitions which include every schema reachable from it, while they are alive.
+ * @remarks
+ * {@link SchemaComponent.reachableDefinitions} looks schema up in these definitions rather than building a map of its own.
+ * The references are weak: a component can outlive the roots whose definitions include it
+ * (built-in leaf schema and their components are never released), and must not keep those roots' schema alive.
+ * Once a component's definitions are released, the next definitions built which include it replace them.
+ */
+const containingDefinitions = new WeakMap<
+	SchemaComponent,
+	WeakRef<TreeSchema["definitions"]>
+>();
 
 /**
  * The node schema of some definitions, numbered, so that subsets of them can be held as bit sets.
@@ -944,6 +958,8 @@ interface DefinitionsIndex {
 
 /**
  * The {@link DefinitionsIndex} of each map in {@link containingDefinitions} used by {@link reachableSubset}.
+ * @remarks
+ * Each index lives as long as its definitions.
  */
 const definitionsIndexes = new WeakMap<TreeSchema["definitions"], DefinitionsIndex>();
 
@@ -982,17 +998,21 @@ function reachableSubset(
 			components.add(dependency);
 		}
 	}
-	return new ReachableDefinitions(index, members, size);
+	return new ReachableDefinitions(component, new WeakRef(index), members, size);
 }
 
 /**
  * A subset of the node schema of some definitions, held as a bit set over their {@link DefinitionsIndex}.
+ * @remarks
+ * Holds the index weakly, so that it does not keep the schema of other roots alive.
+ * Once the index is released, delegates to the component's own {@link SchemaComponent.definitions}, which have the same schema.
  */
 class ReachableDefinitions
 	implements ReadonlyMap<string, SimpleNodeSchema<SchemaType.View> & TreeNodeSchema>
 {
 	public constructor(
-		private readonly index: DefinitionsIndex,
+		private readonly component: SchemaComponent,
+		private readonly index: WeakRef<DefinitionsIndex>,
 		private readonly members: Uint32Array,
 		public readonly size: number,
 	) {}
@@ -1000,9 +1020,13 @@ class ReachableDefinitions
 	public get(
 		identifier: string,
 	): (SimpleNodeSchema<SchemaType.View> & TreeNodeSchema) | undefined {
-		const position = this.index.positions.get(identifier);
+		const index = this.index.deref();
+		if (index === undefined) {
+			return this.component.definitions.get(identifier);
+		}
+		const position = index.positions.get(identifier);
 		return position !== undefined && this.#includes(position)
-			? this.index.schemas[position]
+			? index.schemas[position]
 			: undefined;
 	}
 
@@ -1013,7 +1037,12 @@ class ReachableDefinitions
 	public *entries(): MapIterator<
 		[string, SimpleNodeSchema<SchemaType.View> & TreeNodeSchema]
 	> {
-		for (const [position, schema] of this.index.schemas.entries()) {
+		const index = this.index.deref();
+		if (index === undefined) {
+			yield* this.component.definitions.entries();
+			return;
+		}
+		for (const [position, schema] of index.schemas.entries()) {
 			if (this.#includes(position)) {
 				yield [schema.identifier, schema];
 			}
