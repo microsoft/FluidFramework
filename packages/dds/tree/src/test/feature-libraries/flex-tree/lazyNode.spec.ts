@@ -176,8 +176,6 @@ describe("LazyNode", () => {
 				assert.notEqual(replacement, node);
 				assert.notEqual(replacement.getBoxed(key), field);
 				assert.equal(view.root.value, 1);
-				view.dispose();
-				checkout.dispose();
 			});
 		}
 
@@ -208,8 +206,6 @@ describe("LazyNode", () => {
 			assert.throws(() => node.getBoxed(key));
 			assert.throws(() => field.length);
 			assert.throws(() => item.value);
-			source.dispose();
-			target.dispose();
 		});
 	}
 

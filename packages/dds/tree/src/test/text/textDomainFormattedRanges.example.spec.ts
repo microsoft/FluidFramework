@@ -52,6 +52,5 @@ describe("FormattedText with ranges example", () => {
 		assert.equal(text.getString(5, 10), "Hello");
 		text.ranges.removeTrackedRange("comment");
 		assert.equal([...text.ranges.keys()].length, 0);
-		view.dispose();
 	});
 });

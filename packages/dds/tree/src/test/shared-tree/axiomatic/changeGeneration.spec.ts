@@ -99,11 +99,7 @@ describe("SharedTree axiom infrastructure: change generation", () => {
 				apply: (child: TreeCheckout) => {
 					expectJsonTree(child, initialContent);
 					const chunk = chunkFromJsonTrees([value]);
-					try {
-						child.editor.optionalField(optionalField).set(chunk, true);
-					} finally {
-						chunk.referenceRemoved();
-					}
+					child.editor.optionalField(optionalField).set(chunk, true);
 				},
 			})),
 		)) {

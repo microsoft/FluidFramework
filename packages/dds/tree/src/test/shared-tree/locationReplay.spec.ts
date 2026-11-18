@@ -50,7 +50,6 @@ describe("LocationReplay", () => {
 		replay.apply({ fields: fieldDelta([{ count: 3, detach: { minor: 4 } }]) }, "root");
 		assert.equal(before.gap?.index, 0);
 		assert.equal(after.gap?.index, 0);
-		replay.dispose();
 	});
 
 	it("uses core anchors through detached-root rename chains", () => {
@@ -77,7 +76,6 @@ describe("LocationReplay", () => {
 			"root",
 		);
 		assert.deepEqual(replay.snapshot(node), array);
-		replay.dispose();
 	});
 
 	it("can seed repair roots that predate the replay and rename them before attaching", () => {
@@ -93,7 +91,6 @@ describe("LocationReplay", () => {
 			"root",
 		);
 		assert.equal(gap.gap?.index, 2);
-		replay.dispose();
 	});
 
 	it("follows a node moved across fields using the anchor visitor", () => {
@@ -127,7 +124,6 @@ describe("LocationReplay", () => {
 			parentField: right,
 			parentIndex: 0,
 		});
-		replay.dispose();
 	});
 
 	for (const intermediateExisted of [false, true]) {
@@ -159,7 +155,6 @@ describe("LocationReplay", () => {
 				"root",
 			);
 			assert.deepEqual(replay.snapshot(node), intermediateExisted ? undefined : array);
-			replay.dispose();
 		});
 	}
 });
@@ -241,23 +236,16 @@ describe("rewindDetachedRoots", () => {
 			for (const change of commit.change.changes) {
 				assert(change.type === "data");
 				const delta = intoDelta(tagChange(change.innerChange, commit.revision));
-				try {
-					applyDelta(
-						delta,
-						commit.revision,
-						{
-							acquireVisitor: () => createAnnouncedVisitor({}),
-						},
-						rewound,
-					);
-				} finally {
-					for (const { trees } of [...(delta.build ?? []), ...(delta.refreshers ?? [])]) {
-						trees.referenceRemoved();
-					}
-				}
+				applyDelta(
+					delta,
+					commit.revision,
+					{
+						acquireVisitor: () => createAnnouncedVisitor({}),
+					},
+					rewound,
+				);
 			}
 			assert.deepEqual(identities(rewound), after);
-			view.dispose();
 		});
 	}
 });

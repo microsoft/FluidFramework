@@ -532,7 +532,6 @@ describe("LazyField", () => {
 						const readsBefore = reads;
 						assert.equal(field.length, size);
 						assert.equal(reads, expectCaching ? 1 : readsBefore + 1);
-						view.dispose();
 					}
 
 					it("reuses the cached length across reads and descendant edits at the threshold", () => {
@@ -559,7 +558,6 @@ describe("LazyField", () => {
 						assert.equal(field.length, 0);
 						view.root.items.insertAtEnd({ value: -2 });
 						assert.equal(field.length, 1);
-						view.dispose();
 					});
 
 					it("invalidates during transactions and rollback", () => {
@@ -572,7 +570,6 @@ describe("LazyField", () => {
 						assert.equal(field.length, threshold + 2);
 						checkout.transaction.abort();
 						assert.equal(field.length, threshold);
-						view.dispose();
 					});
 
 					it("invalidates edits to a detached array before undo reattaches it", () => {
@@ -592,7 +589,6 @@ describe("LazyField", () => {
 						assert.equal(view.root.items, original);
 						assert.equal(field.length, threshold + 1);
 						unsubscribe();
-						view.dispose();
 					});
 
 					it("cleans up on context disposal and rejects reads after disposal", () => {

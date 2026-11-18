@@ -136,13 +136,8 @@ describe("identifier indexes", () => {
 			});
 		}
 		const identifiers = createIdentifierIndex(view);
-		try {
-			assert.equal(reads, 0);
-			assert.equal(identifiers.get("parent"), view.root);
-			assert.equal(identifiers.get("child"), view.root.child);
-		} finally {
-			identifiers.dispose();
-			view.dispose();
-		}
+		assert.equal(reads, 0);
+		assert.equal(identifiers.get("parent"), view.root);
+		assert.equal(identifiers.get("child"), view.root.child);
 	});
 });

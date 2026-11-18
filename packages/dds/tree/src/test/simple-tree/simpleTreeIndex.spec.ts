@@ -80,14 +80,9 @@ describe("simple tree indexes", () => {
 			(nodes) => nodes,
 			isStringKey,
 		);
-		try {
-			assert.equal(reads, 0);
-			assert.equal(index.get("parent")?.[0], view.root);
-			assert.equal(index.get("child")?.[0], view.root.child);
-		} finally {
-			index.dispose();
-			view.dispose();
-		}
+		assert.equal(reads, 0);
+		assert.equal(index.get("parent")?.[0], view.root);
+		assert.equal(index.get("child")?.[0], view.root.child);
 	});
 
 	it("preserves explicit schema order and deduplication", () => {
@@ -103,14 +98,9 @@ describe("simple tree indexes", () => {
 			isStringKey,
 			[IndexableChild, IndexableParent, IndexableChild],
 		);
-		try {
-			assert.deepEqual(seen, [IndexableChild, IndexableParent]);
-			assert.equal(index.get(parentId)?.[0], view.root);
-			assert.equal(index.get(childId)?.[0], view.root.child);
-		} finally {
-			index.dispose();
-			view.dispose();
-		}
+		assert.deepEqual(seen, [IndexableChild, IndexableParent]);
+		assert.equal(index.get(parentId)?.[0], view.root);
+		assert.equal(index.get(childId)?.[0], view.root.child);
 	});
 
 	function keyFieldSelector(schema: TreeNodeSchema) {

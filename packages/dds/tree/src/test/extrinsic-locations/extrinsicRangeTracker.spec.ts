@@ -389,7 +389,6 @@ describe("ExtrinsicRangeTracker", () => {
 		const stored = view.root.review.annotations.get("range");
 		assert(stored !== undefined);
 		assert.deepEqual([stored.start, stored.end], [1, 2]);
-		view.dispose();
 	});
 
 	for (const rollbackOuter of [false, true]) {
@@ -443,7 +442,6 @@ describe("ExtrinsicRangeTracker", () => {
 				});
 				tracker.transactOnContent((content) => content.removeAt(0));
 				assert.deepEqual([start.index, end.index], [expectedStart, expectedEnd]);
-				view.dispose();
 			});
 		}
 	}
@@ -473,7 +471,6 @@ describe("ExtrinsicRangeTracker", () => {
 		});
 		assert.equal(view.root.body.fullString(), "XABCY");
 		assert.deepEqual(rangeBounds(tracker, "range"), { start: 2, end: 5 });
-		view.dispose();
 	});
 
 	it("reuses an existing tracker after its tree is hydrated", () => {
@@ -550,8 +547,6 @@ describe("ExtrinsicRangeTracker", () => {
 			[[1, 3, "existing"]],
 		);
 		assert.equal(fork.root.title, "Updated");
-		fork.dispose();
-		view.dispose();
 	});
 
 	it("rebases data replacement over concurrent content and unrelated edits", () => {
@@ -620,7 +615,6 @@ describe("ExtrinsicRangeTracker", () => {
 		redo.revert();
 		assert.equal(JSON.stringify(view.root), edited);
 		unsubscribe();
-		view.dispose();
 	});
 
 	it("invalidates a removed handle and restores it when undo restores the range", () => {
@@ -646,6 +640,5 @@ describe("ExtrinsicRangeTracker", () => {
 		range.data = "restored";
 		assert.equal(range.data, "restored");
 		unsubscribe();
-		view.dispose();
 	});
 });
