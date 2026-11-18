@@ -8909,7 +8909,10 @@ snapshots:
       '@changesets/cli': 2.29.8(@types/node@22.19.17)
       '@changesets/types': 6.1.0
       changesets-format-with-issue-links: 0.3.0(@changesets/cli@2.29.8(@types/node@22.19.17))(supports-color@8.1.1)
+      remark: 15.0.1(supports-color@8.1.1)
+      remark-gfm: 4.0.1(supports-color@8.1.1)
       typescript: 6.0.3
+      unist-util-visit: 5.0.0
     transitivePeerDependencies:
       - '@types/node'
       - supports-color
