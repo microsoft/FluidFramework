@@ -15,7 +15,7 @@ import {
 } from "../../../feature-libraries/index.js";
 import { TreeBeta } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { getDiscrepanciesInAllowedContent } from "../../../simple-tree/api/discrepancies.js";
+import { getIncompatibilitiesInAllowedContent } from "../../../simple-tree/api/incompatibilities.js";
 import {
 	checkSchemaCompatibility,
 	type ImplicitFieldSchema,
@@ -197,12 +197,16 @@ describe("Schema Evolution Examples", () => {
 					location: "root",
 					view: ["test.Canvas"],
 					stored: [],
+					reason:
+						'Cannot view the root field: the view allows node types ["test.Canvas"] that the stored schema does not allow.',
 				},
 				{
 					mismatch: "fieldKind",
 					location: "root",
 					view: "Value",
 					stored: "Forbidden",
+					reason:
+						"Cannot view the root field: the view permits exactly one child, but the stored schema permits no children.",
 				},
 			]);
 			assert.deepEqual(compat.enabledUpgrades, new Map());
@@ -260,7 +264,7 @@ describe("Schema Evolution Examples", () => {
 			// They can recheck their compatibility:
 			const compatNew = checkSchemaCompatibility(viewSchema2, stored);
 			const report = [
-				...getDiscrepanciesInAllowedContent(
+				...getIncompatibilitiesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: tolerantRoot }),
 					stored,
 				),
@@ -303,6 +307,8 @@ describe("Schema Evolution Examples", () => {
 					},
 					view: ["test.Counter"],
 					stored: [],
+					reason:
+						'Cannot view field "content" of node type "test.PositionedCanvasItem": the view allows node types ["test.Counter"] that the stored schema does not allow.',
 				},
 			]);
 			assert.deepEqual(compat2.enabledUpgrades, new Map());
