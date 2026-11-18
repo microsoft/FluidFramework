@@ -274,51 +274,6 @@ describe("Tests for prefetching snapshot", () => {
 			);
 		});
 
-		it("prefetch uses the claims challenge policy that is set after the factory is created", async () => {
-			const hostPolicy = GetHostStoragePolicyInternal();
-			const factory = new OdspDocumentServiceFactory(
-				async () => "token",
-				async () => "token",
-				localCache,
-				hostPolicy,
-			);
-			// Document services read the policy when they're created, so prefetch should too.
-			hostPolicy.propagateClaimsChallenges = true;
-
-			let tokenFetchCount = 0;
-			const prefetched = await mockFetchSingle(
-				async () =>
-					prefetchLatestSnapshot(
-						resolved,
-						async () => {
-							tokenFetchCount++;
-							return "token";
-						},
-						localCache,
-						true,
-						mockLogger,
-						undefined,
-						false,
-						undefined,
-						undefined,
-						factory,
-					),
-				async () =>
-					createResponse(
-						{
-							"www-authenticate": createClaimsChallengeHeader(
-								'{"access_token":{"nbf":{"essential":true,"value":"1597959090"}}}',
-							),
-						},
-						undefined,
-						401,
-					),
-			);
-
-			assert.strictEqual(prefetched, false, "prefetch should report the failure");
-			assert.strictEqual(tokenFetchCount, 1, "the host should not be asked for a new token");
-		});
-
 		it("failed prefetch without a factory does not cause an unhandled rejection", async () => {
 			// Mocha doesn't fail a test on an unhandled rejection, so track them here.
 			const unhandledRejections: unknown[] = [];

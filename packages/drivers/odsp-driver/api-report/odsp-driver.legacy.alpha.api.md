@@ -215,7 +215,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory, 
     get IRelaySessionAwareDriverFactory(): this;
     // (undocumented)
     protected persistedCache: IPersistedCache;
-    get propagateClaimsChallenges(): boolean | undefined;
+    readonly propagateClaimsChallenges?: boolean;
     // (undocumented)
     readonly requestHeaders?: Readonly<Record<string, string>>;
     // (undocumented)
