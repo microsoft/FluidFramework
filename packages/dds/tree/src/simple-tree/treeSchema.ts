@@ -952,7 +952,13 @@ const containingDefinitions = new WeakMap<
  * The node schema of some definitions, numbered, so that subsets of them can be held as bit sets.
  */
 interface DefinitionsIndex {
+	/**
+	 * The node schema of the definitions, in their iteration order: the position of each is its number.
+	 */
 	readonly schemas: readonly (SimpleNodeSchema<SchemaType.View> & TreeNodeSchema)[];
+	/**
+	 * The position in {@link DefinitionsIndex.schemas} of the schema with each identifier.
+	 */
 	readonly positions: ReadonlyMap<string, number>;
 }
 
@@ -1011,9 +1017,25 @@ class ReachableDefinitions
 	implements ReadonlyMap<string, SimpleNodeSchema<SchemaType.View> & TreeNodeSchema>
 {
 	public constructor(
+		/**
+		 * The component whose reachable schema this holds.
+		 * @remarks
+		 * Its own {@link SchemaComponent.definitions} are used once {@link ReachableDefinitions.index} has been released.
+		 */
 		private readonly component: SchemaComponent,
+		/**
+		 * The index of definitions which include every schema reachable from {@link ReachableDefinitions.component}.
+		 * @remarks
+		 * Held weakly, since the definitions it indexes can belong to a root which is otherwise released.
+		 */
 		private readonly index: WeakRef<DefinitionsIndex>,
+		/**
+		 * A bit set with one bit per position in {@link ReachableDefinitions.index}, set for the schema reachable from {@link ReachableDefinitions.component}.
+		 */
 		private readonly members: Uint32Array,
+		/**
+		 * The number of schema reachable from {@link ReachableDefinitions.component}: the number of bits set in {@link ReachableDefinitions.members}.
+		 */
 		public readonly size: number,
 	) {}
 
