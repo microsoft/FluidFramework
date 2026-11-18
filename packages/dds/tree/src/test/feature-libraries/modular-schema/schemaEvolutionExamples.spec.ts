@@ -590,8 +590,6 @@ describe("Schema Evolution Examples", () => {
 						expectSchemaEqual(readerTree.kernel.checkout.storedSchema, storedBefore);
 						assert.deepEqual(TreeBeta.exportConcise(creator.root), contentBefore);
 					}
-					reader.dispose();
-					creator.dispose();
 					// #endregion Step 3
 				});
 			}
@@ -683,8 +681,6 @@ describe("Schema Evolution Examples", () => {
 					assert.equal(combinedView.compatibility.canView, true);
 					assert.equal(combinedView.root.foo, 43);
 					assert.equal(combinedView.root.bar, "Updated label");
-					combinedView.dispose();
-					viewV1.dispose();
 					// #endregion Step 3
 				});
 			}
@@ -731,8 +727,6 @@ describe("Schema Evolution Examples", () => {
 				creator: { view: upgraded, expectedFields: { foo: 43 } },
 				reader: { view: reader, expectedFields: { foo: 43 } },
 			});
-			reader.dispose();
-			upgraded.dispose();
 			// #endregion Step 2
 		});
 
@@ -848,8 +842,6 @@ describe("Schema Evolution Examples", () => {
 					});
 					expectSchemaEqual(documentTree.kernel.checkout.storedSchema, schemaBefore);
 					expectSchemaEqual(readerTree.kernel.checkout.storedSchema, schemaBefore);
-					reader.dispose();
-					creator.dispose();
 					// #endregion Step 4
 				});
 			}
@@ -951,8 +943,6 @@ describe("Schema Evolution Examples", () => {
 							creator: { view: observer, expectedFields: fields },
 							reader: { view: reader, expectedFields: fields },
 						});
-						observer.dispose();
-						reader.dispose();
 					} else {
 						// Both rejected rows use a V1 reader against schema widened to V3.
 						// A V3 observer is therefore valid even if the document was created with V2.
@@ -964,7 +954,6 @@ describe("Schema Evolution Examples", () => {
 						observer.root.foo = "Still allowed";
 						provider.synchronizeMessages();
 						verifyRejectedUpgrade(provider, reader);
-						observer.dispose();
 					}
 					// #endregion Step 2
 				});
@@ -1053,7 +1042,6 @@ describe("Schema Evolution Examples", () => {
 						new TreeViewConfiguration({ schema: schemas[viewedWith] }),
 					);
 					verifyRejectedUpgrade(provider, rejected);
-					owner.dispose();
 					// #endregion Step 3
 				});
 			}
@@ -1137,8 +1125,6 @@ describe("Schema Evolution Examples", () => {
 						new TreeViewConfiguration({ schema: TaskWithFooNode }),
 					);
 					assert.equal(observer.root.foo?.text, "Updated subtree");
-					observer.dispose();
-					restored.dispose();
 					// #endregion Step 3
 				});
 			}
@@ -1223,8 +1209,6 @@ describe("Schema Evolution Examples", () => {
 			assert.equal(viewV2.root.bar.text, "Edited Bar");
 			assert.equal(viewV1.root.title, "Edited by creator");
 			assert.equal(viewV2.root.title, "Edited by creator");
-			viewV1.dispose();
-			viewV2.dispose();
 		});
 
 		/**
@@ -1302,7 +1286,6 @@ describe("Schema Evolution Examples", () => {
 
 					// The rejected V3 attempt must leave the original application able to read its unchanged document.
 					assert.deepEqual(TreeBeta.exportConcise(creator.root), contentBefore);
-					creator.dispose();
 				});
 
 				it(`V3 document -> V2 upgrade -> V1 view (${populated ? "populated" : "empty"})`, () => {
@@ -1348,7 +1331,6 @@ describe("Schema Evolution Examples", () => {
 
 					// A failed rollback to V1 must not convert or erase the newer client's data.
 					assert.deepEqual(TreeBeta.exportConcise(creator.root), contentBefore);
-					creator.dispose();
 				});
 			}
 		});
@@ -1428,7 +1410,6 @@ describe("Schema Evolution Examples", () => {
 
 					// Rejecting the nested type conflict must not alter content still supported by V1.
 					assert.deepEqual(TreeBeta.exportConcise(creator.root), contentBefore);
-					creator.dispose();
 				});
 
 				it(`V3 document -> V2 upgrade -> V1 view (${populated ? "populated" : "empty"})`, () => {
@@ -1473,7 +1454,6 @@ describe("Schema Evolution Examples", () => {
 
 					// The failed older-client upgrade must leave the V3 document intact.
 					assert.deepEqual(TreeBeta.exportConcise(creator.root), contentBefore);
-					creator.dispose();
 				});
 			}
 		});
@@ -1569,9 +1549,6 @@ describe("Schema Evolution Examples", () => {
 
 			// V2 still exposes neither stored notes field, even after both have been edited.
 			assert.equal("notes" in reduced.root, false);
-			restored.dispose();
-			reduced.dispose();
-			original.dispose();
 		});
 
 		/**
@@ -1674,9 +1651,6 @@ describe("Schema Evolution Examples", () => {
 						},
 					},
 				});
-				restored.dispose();
-				reduced.dispose();
-				original.dispose();
 			});
 		}
 
@@ -1761,11 +1735,9 @@ describe("Schema Evolution Examples", () => {
 							verifyNoOpUpgrade(provider, original);
 							verifyNoOpUpgrade(provider, reduced);
 							assert.equal(original.root.tasks[2].notes, "Added by the original client");
-							reduced.dispose();
 						} else {
 							verifyRejectedUpgrade(provider, reduced);
 						}
-						original.dispose();
 					});
 				}
 			}
@@ -1871,9 +1843,6 @@ describe("Schema Evolution Examples", () => {
 			assert.equal(viewV2.root.title, "Edited by creator");
 			assert.equal(viewV2.root.estimate, 8);
 			assert.equal(viewV2.root.isApproved, true);
-			viewV3.dispose();
-			viewV2.dispose();
-			viewV1.dispose();
 		});
 
 		/**
@@ -1908,7 +1877,6 @@ describe("Schema Evolution Examples", () => {
 				title: initialTitle,
 				estimatedHours: 4,
 			});
-			creator.dispose();
 		});
 	});
 
@@ -1968,7 +1936,6 @@ describe("Schema Evolution Examples", () => {
 			assert.throws(() => {
 				fresh.root.priority = "urgent";
 			});
-			original.dispose();
 		});
 
 		/**
@@ -2022,8 +1989,6 @@ describe("Schema Evolution Examples", () => {
 			assert.throws(() => {
 				staged.root.priority = "urgent";
 			});
-			canceled.dispose();
-			original.dispose();
 		});
 
 		/**
@@ -2068,7 +2033,6 @@ describe("Schema Evolution Examples", () => {
 				const removed = readerTree.viewWith(new TreeViewConfiguration({ schema: TaskV2 }));
 				verifyRejectedUpgrade(provider, removed);
 				assert.equal(enabled.root.priority, priority);
-				enabled.dispose();
 			});
 		}
 
@@ -2153,8 +2117,6 @@ describe("Schema Evolution Examples", () => {
 			assert.throws(() => {
 				fresh.root.priority = "high";
 			});
-			patched.dispose();
-			rolledBack.dispose();
 		});
 
 		/**
@@ -2227,8 +2189,6 @@ describe("Schema Evolution Examples", () => {
 				// A client that never shipped string support cannot participate after either rollout history.
 				const original = originalTree.viewWith(new TreeViewConfiguration({ schema: TaskV1 }));
 				verifyRejectedUpgrade(provider, original);
-				migrated.dispose();
-				staged.dispose();
 			});
 		}
 	});
@@ -2301,8 +2261,6 @@ describe("Schema Evolution Examples", () => {
 				);
 			}
 			verifyNoOpUpgrade(provider, replacement);
-			enabled.dispose();
-			replacement.dispose();
 		});
 
 		/**
@@ -2349,7 +2307,6 @@ describe("Schema Evolution Examples", () => {
 			// V2 still cannot read strings; composing a larger stored type set cannot repair that missing view support.
 			verifyRejectedUpgrade(provider, replacement);
 			assert.equal(original.root.priority, "urgent");
-			original.dispose();
 		});
 
 		/**
@@ -2424,8 +2381,6 @@ describe("Schema Evolution Examples", () => {
 			}
 			verifyNoOpUpgrade(provider, observer);
 			verifyNoOpUpgrade(provider, upgrading);
-			upgrading.dispose();
-			observer.dispose();
 		});
 
 		describe("Removing a staged type at one location of a shared token", () => {
@@ -2498,7 +2453,6 @@ describe("Schema Evolution Examples", () => {
 				assert.throws(() => {
 					staged.root.fallbackPriority = "low";
 				});
-				reduced.dispose();
 			});
 
 			/**
@@ -2550,7 +2504,6 @@ describe("Schema Evolution Examples", () => {
 				verifyRejectedUpgrade(provider, reduced);
 				assert.equal(staged.root.primaryPriority, "urgent");
 				assert.equal(staged.root.fallbackPriority, 1);
-				staged.dispose();
 			});
 		});
 
@@ -2618,8 +2571,6 @@ describe("Schema Evolution Examples", () => {
 					);
 				}
 				verifyNoOpUpgrade(provider, revised);
-				enabled.dispose();
-				revised.dispose();
 			});
 
 			/**
@@ -2670,7 +2621,6 @@ describe("Schema Evolution Examples", () => {
 					);
 					verifyRejectedUpgrade(provider, revised);
 					assert.deepEqual(TreeBeta.exportConcise(enabled.root), before);
-					enabled.dispose();
 				});
 			}
 		});

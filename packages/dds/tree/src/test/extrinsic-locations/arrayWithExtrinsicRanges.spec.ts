@@ -473,7 +473,6 @@ describe("ExtrinsicLocations", () => {
 		assert.deepEqual([...destination.content], [3, 4]);
 		assert.deepEqual(endpoints(source, "sourceRange"), [2, 4]);
 		assert.deepEqual(endpoints(destination, "destinationRange"), [0, 2]);
-		view.dispose();
 	});
 
 	it("keeps partial unhydrated edits consistent after a thrown callback and releases the scope", () => {
@@ -783,7 +782,6 @@ describe("ExtrinsicLocations", () => {
 				fork.rebaseOnto(view);
 				assert.deepEqual([...fork.root.content], [2, 3, 4]);
 				assert.deepEqual(rangeSnapshot(fork.root), [["range", 0, 2, "range"]]);
-				fork.dispose();
 			});
 
 			it(`undoes and redoes ${action} atomically`, () => {
@@ -822,7 +820,6 @@ describe("ExtrinsicLocations", () => {
 			fork.rebaseOnto(view);
 			assert.deepEqual([...fork.root.tracked.content], [1]);
 			assert.equal(fork.root.unrelated, 1);
-			fork.dispose();
 		});
 
 		it("resolves simultaneous client edits without mixing content and endpoints", () => {

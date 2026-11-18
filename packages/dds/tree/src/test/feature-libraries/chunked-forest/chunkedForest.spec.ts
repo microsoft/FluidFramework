@@ -464,10 +464,6 @@ describe("ChunkedForest", () => {
 					if (shared) {
 						assert.equal(uniform.isShared(), false);
 						assert.deepEqual(valuesFromChunks([uniform]), values);
-						uniform.referenceRemoved();
-					}
-					for (const chunk of chunks) {
-						chunk.referenceRemoved();
 					}
 				});
 			}
@@ -487,9 +483,6 @@ describe("ChunkedForest", () => {
 			assert.equal(result.isShared(), false);
 			assert.equal(uniform.isUnreferenced(), true);
 			assert.deepEqual(valuesFromChunks(chunks), values);
-			for (const chunk of chunks) {
-				chunk.referenceRemoved();
-			}
 		});
 
 		it("normalizes a shared SequenceChunk without replacing a sibling", () => {

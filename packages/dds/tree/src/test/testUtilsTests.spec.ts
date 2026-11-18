@@ -139,8 +139,6 @@ describe("Test utils", () => {
 					() => validateViewConsistency(checkout, fork, difference),
 					new RegExp(`Inconsistent .*: ${difference}`),
 				);
-				fork.dispose();
-				view.dispose();
 			});
 		}
 		it("compares the detached content of both checkouts", () => {
@@ -159,8 +157,6 @@ describe("Test utils", () => {
 				() => validateViewConsistency(view.checkout, fork),
 				/Inconsistent removed trees json representation/,
 			);
-			fork.dispose();
-			view.dispose();
 		});
 	});
 });

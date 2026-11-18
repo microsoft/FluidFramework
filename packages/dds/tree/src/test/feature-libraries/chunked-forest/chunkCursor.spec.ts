@@ -72,7 +72,6 @@ describe("chunkCursor", () => {
 				field: EmptyKey,
 			});
 			assert.deepEqual(fork.getFieldPath(), { parent: undefined, field: key });
-			chunk.referenceRemoved();
 		});
 	});
 
@@ -144,7 +143,6 @@ describe("chunkCursor", () => {
 			cursor.exitField();
 			assert.equal(cursor.nextNode(), false);
 			assert.equal(cursor.getFieldLength(), 1);
-			root.referenceRemoved();
 		});
 
 		it("refreshes inline capabilities after reset and releases them on clear without changing forks", () => {
@@ -176,8 +174,6 @@ describe("chunkCursor", () => {
 			cursor.select(basic);
 			assert(cursor.firstNode());
 			assert.equal(cursor.value, 1);
-			basic.referenceRemoved();
-			uniform.referenceRemoved();
 		});
 
 		it("atRoot, not nested", () => {
@@ -290,7 +286,6 @@ describe("chunkCursor", () => {
 					assert.equal(cursor.seekNodes(-1), index > 0);
 				}
 				assert(fieldLookups < 10, `Expected bounded field lookups, observed ${fieldLookups}`);
-				root.referenceRemoved();
 			});
 
 			it("scans sibling chunks with linear length lookups in both directions", () => {
@@ -324,7 +319,6 @@ describe("chunkCursor", () => {
 					lengthReads < chunks.length * 20,
 					`Expected linear traversal, observed ${lengthReads} length reads`,
 				);
-				root.referenceRemoved();
 			});
 
 			it("skips empty sequence chunks across forward and backward boundaries", () => {
@@ -344,7 +338,6 @@ describe("chunkCursor", () => {
 				assert.equal(cursor.value, 1);
 				assert.equal(cursor.seekNodes(-1), false);
 				assert.equal(cursor.getFieldLength(), 2);
-				root.referenceRemoved();
 			});
 
 			for (const depth of [1, 4, 8, 64]) {
@@ -394,7 +387,6 @@ describe("chunkCursor", () => {
 					assert.equal(cursor.value, 40);
 					assert.equal(cursor.nextNode(), false);
 					assert.equal(cursor.getFieldLength(), 5);
-					root.referenceRemoved();
 				});
 			}
 			it("root", () => {

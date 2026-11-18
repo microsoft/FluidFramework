@@ -49,7 +49,6 @@ describe("independentView", () => {
 
 		const renamedView = createIndependentTreeViewAlpha(config);
 		assert(renamedView.compatibility.canInitialize);
-		renamedView.dispose();
 	});
 
 	describe("independentInitializedView", () => {
@@ -93,8 +92,6 @@ describe("independentView", () => {
 				filledSchema.root.simpleAllowedTypes,
 				new Map([[SchemaFactory.number.identifier, { isStaged: undefined }]]),
 			);
-
-			view.dispose();
 		});
 
 		it("uninitialized: staged schema upgrade", () => {
@@ -180,7 +177,6 @@ describe("independentView", () => {
 				const view = tree.viewWith(beforeConfig);
 				assert.equal(view.compatibility.canView, false);
 				assert.equal(view.compatibility.canUpgrade, false);
-				view.dispose();
 			}
 		});
 
@@ -296,7 +292,6 @@ describe("independentView", () => {
 		);
 		view.initialize(42);
 		assert.equal(view.root, 42);
-		view.dispose();
 	});
 
 	it("createIndependentTreeView", () => {
@@ -306,7 +301,6 @@ describe("independentView", () => {
 		assert(view.compatibility.canInitialize);
 		view.initialize(42);
 		assert.equal(view.root, 42);
-		view.dispose();
 	});
 
 	it("staged schema example", () => {
@@ -341,7 +335,6 @@ describe("independentView", () => {
 		{
 			const view = tree.viewWith(stagedConfig);
 			assert.equal(view.root, "A");
-			view.dispose();
 		}
 	});
 });

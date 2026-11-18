@@ -599,10 +599,6 @@ describe("chunkTree", () => {
 			for (const child of children) {
 				assert(!child.isShared());
 			}
-			for (const chunk of chunks) {
-				chunk.referenceRemoved();
-			}
-			input.referenceRemoved();
 		});
 
 		it("deep rechunking reaches uniform descendants of polymorphic parents", () => {
@@ -633,8 +629,6 @@ describe("chunkTree", () => {
 			assert.deepEqual(child.values, [42]);
 			assert(input.fields.get(key)?.[0] instanceof BasicChunk);
 			assert(!input.isShared());
-			output.referenceRemoved();
-			input.referenceRemoved();
 		});
 
 		it("deep rechunking reuses existing uniform chunks without traversing them", () => {
@@ -718,7 +712,6 @@ describe("chunkTree", () => {
 			});
 			assert(chunks[0] instanceof BasicChunk);
 			assertChunkCursorEquals(chunks[0], [{ type, value: 42 }]);
-			chunks[0].referenceRemoved();
 		});
 
 		it("initial chunking splits oversized shapes into smaller uniform descendants", () => {
@@ -745,7 +738,6 @@ describe("chunkTree", () => {
 			const child = output.fields.get(key)?.[0];
 			assert(child instanceof UniformChunk);
 			assert.deepEqual(child.values, [42]);
-			output.referenceRemoved();
 		});
 
 		it("deep rechunking preserves a basic root when explicitly requested", () => {
@@ -766,8 +758,6 @@ describe("chunkTree", () => {
 			});
 			assert.notEqual(output, input);
 			assert(output.fields.get(key)?.[0] instanceof UniformChunk);
-			output.referenceRemoved();
-			input.referenceRemoved();
 		});
 
 		it("chunks 10 points into UniformChunks of topLevelLength 4 and reads values via the cursor", () => {

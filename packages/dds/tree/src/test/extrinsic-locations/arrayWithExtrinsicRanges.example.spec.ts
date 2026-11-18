@@ -56,6 +56,5 @@ describe("ExtrinsicLocations example", () => {
 		]);
 		document.ranges.removeTrackedRange("comment");
 		assert.equal([...document.ranges.keys()].length, 0);
-		view.dispose();
 	});
 });

@@ -365,14 +365,10 @@ describe("chunkDecoding", () => {
 							assertChunkCursorEquals(decoded, decodedExpected);
 							assertRefCount(local, 1);
 							assertRefCount(decoded, 1);
-							local.referenceRemoved();
-							decoded.referenceRemoved();
 						} else {
 							assert.equal(merged, left);
 							assertRefCount(right, 0);
 						}
-						merged.referenceRemoved();
-						chunker.dispose();
 					});
 				}
 			}
@@ -418,8 +414,6 @@ describe("chunkDecoding", () => {
 			assert.equal(merged.idCompressor, testIdCompressor);
 			assertChunkCursorEquals(merged, expected);
 			assertRefCount(local, 0);
-			merged.referenceRemoved();
-			chunker.dispose();
 		});
 
 		it("decodes empty repetitions of a nonzero-width shape", () => {

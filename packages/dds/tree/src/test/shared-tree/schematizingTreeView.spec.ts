@@ -123,22 +123,17 @@ describe("SchematizingSimpleTreeView", () => {
 			}
 			const first = getView(viewConfig);
 			const second = getView(viewConfig);
-			try {
-				first.initialize(firstRoot);
-				second.initialize(secondRoot);
-				const firstContext = getKernel(first.root).context;
-				const secondContext = getKernel(second.root).context;
-				assert(firstContext.flexContext.isHydrated());
-				assert(secondContext.flexContext.isHydrated());
-				assert.notStrictEqual(firstContext, secondContext);
-				assert.strictEqual(firstContext.schema, viewConfig.definitions);
-				assert.strictEqual(secondContext.schema, viewConfig.definitions);
-				assert.strictEqual(getKernel(first.root.child).context, firstContext);
-				assert.equal(reads, 0);
-			} finally {
-				first.dispose();
-				second.dispose();
-			}
+			first.initialize(firstRoot);
+			second.initialize(secondRoot);
+			const firstContext = getKernel(first.root).context;
+			const secondContext = getKernel(second.root).context;
+			assert(firstContext.flexContext.isHydrated());
+			assert(secondContext.flexContext.isHydrated());
+			assert.notStrictEqual(firstContext, secondContext);
+			assert.strictEqual(firstContext.schema, viewConfig.definitions);
+			assert.strictEqual(secondContext.schema, viewConfig.definitions);
+			assert.strictEqual(getKernel(first.root.child).context, firstContext);
+			assert.equal(reads, 0);
 		});
 
 		describe("schema hash", () => {
@@ -154,7 +149,6 @@ describe("SchematizingSimpleTreeView", () => {
 				);
 
 				assert.equal(view.compatibility.canInitialize, true);
-				view.dispose();
 			});
 
 			it("rejects an incorrect hash when constructing the view", () => {
@@ -227,7 +221,6 @@ describe("SchematizingSimpleTreeView", () => {
 				value: computeSchemaHash(schema.number),
 				tag: TelemetryDataTag.SchemaArtifact,
 			});
-			view.dispose();
 		});
 
 		it("logs the upgrade target hash but not no-op upgrades", () => {
@@ -255,7 +248,6 @@ describe("SchematizingSimpleTreeView", () => {
 				value: computeSchemaHash(upgradedSchema),
 				tag: TelemetryDataTag.SchemaArtifact,
 			});
-			view.dispose();
 		});
 
 		/**
@@ -304,7 +296,6 @@ describe("SchematizingSimpleTreeView", () => {
 				value: targetHash,
 				tag: TelemetryDataTag.SchemaArtifact,
 			});
-			viewV2.dispose();
 		});
 
 		it("does not log hashes without schema identity", () => {
@@ -326,7 +317,6 @@ describe("SchematizingSimpleTreeView", () => {
 					).length,
 				0,
 			);
-			view.dispose();
 		});
 	});
 

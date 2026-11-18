@@ -176,7 +176,5 @@ describe("viewableTree", () => {
 			]),
 		};
 		assert.deepEqual(filledSchema, expected);
-
-		view.dispose();
 	});
 });
