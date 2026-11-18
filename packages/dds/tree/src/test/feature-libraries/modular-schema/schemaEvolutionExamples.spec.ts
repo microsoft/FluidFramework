@@ -15,7 +15,7 @@ import {
 } from "../../../feature-libraries/index.js";
 import { TreeBeta } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { getDiscrepanciesInAllowedContent } from "../../../simple-tree/api/discrepancies.js";
+import { getIncompatibilitiesInAllowedContent } from "../../../simple-tree/api/incompatibilities.js";
 import {
 	checkSchemaCompatibility,
 	type ImplicitFieldSchema,
@@ -264,7 +264,7 @@ describe("Schema Evolution Examples", () => {
 			// They can recheck their compatibility:
 			const compatNew = checkSchemaCompatibility(viewSchema2, stored);
 			const report = [
-				...getDiscrepanciesInAllowedContent(
+				...getIncompatibilitiesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: tolerantRoot }),
 					stored,
 				),
