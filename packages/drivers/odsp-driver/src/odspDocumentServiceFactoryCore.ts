@@ -154,11 +154,17 @@ export class OdspDocumentServiceFactoryCore
 	private readonly socketReferenceKeyPrefix?: string;
 	private readonly hostPolicy: HostStoragePolicy;
 	public readonly requestHeaders?: Readonly<Record<string, string>>;
+
 	/**
-	 * The value of {@link @fluidframework/odsp-driver-definitions#HostStoragePolicy.propagateClaimsChallenges}
-	 * that was given to this factory.
+	 * The current value of {@link @fluidframework/odsp-driver-definitions#HostStoragePolicy.propagateClaimsChallenges}
+	 * in this factory's host policy.
+	 *
+	 * @remarks
+	 * The document services, snapshot prefetch, and point-in-time loads of this factory all use this value.
 	 */
-	public readonly propagateClaimsChallenges?: boolean;
+	public get propagateClaimsChallenges(): boolean | undefined {
+		return this.hostPolicy.propagateClaimsChallenges;
+	}
 
 	public get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents> {
 		return this.nonPersistentCache.snapshotPrefetchResultCache;
@@ -332,7 +338,6 @@ export class OdspDocumentServiceFactoryCore
 			this.requestHeaders === undefined
 				? hostPolicy
 				: { ...hostPolicy, hostProvidedRequestHeaders: this.requestHeaders };
-		this.propagateClaimsChallenges = this.hostPolicy.propagateClaimsChallenges;
 		if (this.hostPolicy.isolateSocketCache === true || this.requestHeaders !== undefined) {
 			// create the key to separate the socket reuse cache
 			this.socketReferenceKeyPrefix = uuid();

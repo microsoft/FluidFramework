@@ -212,6 +212,8 @@ export interface HostStoragePolicy {
 	 * While the container is connected, the driver also refreshes its join session with the service in the background.
 	 * If a refresh gets the challenge, the driver ends the delta stream connection with the error, and the container reconnects.
 	 * The container then closes with the error, unless the token fetcher returns a token that satisfies the challenge.
+	 * If the container does not reconnect, for example because it was loaded with the `LoaderHeader.reconnect` request header set to `false`, it closes without an error.
+	 * The host then gets the challenge when it loads the container again.
 	 *
 	 * So check for a claims challenge in the error of the container's `closed` event as well as in load errors.
 	 *

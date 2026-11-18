@@ -572,8 +572,8 @@ async function fetchLatestSnapshotCore(
 					fluidEpoch,
 					version: persistedCacheValueVersion,
 				};
-				// eslint-disable-next-line @typescript-eslint/no-floating-promises
-				putInCache(valueWithEpoch);
+				// Callers log cache write failures. Don't let one fail the fetch or go unhandled.
+				putInCache(valueWithEpoch).catch(() => {});
 			}
 
 			event.end({
