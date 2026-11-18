@@ -13,9 +13,9 @@ import type {
 } from "../../core/index.js";
 
 /**
- * The location of a field discrepancy, using stored schema identifiers and keys.
+ * The location of a field incompatibility, using stored schema identifiers and keys.
  */
-export interface SchemaDiscrepancyLocation {
+export interface SchemaIncompatibilityLocation {
 	/** The containing node identifier, or undefined for the root field. */
 	readonly identifier: TreeNodeSchemaIdentifier | undefined;
 	/** The field key, or undefined for the root field or a map's implicit field. */
@@ -29,7 +29,7 @@ export interface SchemaDiscrepancyLocation {
  * Where an entry compares two definitions, `stored` describes the existing schema and `proposed` describes the candidate upgrade.
  * This comparison concerns stored-schema upgrade rules; whether a view can access the document is checked separately.
  */
-export type StoredSchemaUpgradeDiscrepancy =
+export type StoredSchemaUpgradeIncompatibility =
 	| AllowedTypesMismatch
 	| FieldKindMismatch
 	| ValueSchemaMismatch
@@ -43,7 +43,7 @@ export type StoredSchemaUpgradeDiscrepancy =
  * @remarks
  * This compares node type identifiers, not their definitions, because the failure concerns which node types the field allows.
  */
-export interface AllowedTypesMismatch extends SchemaDiscrepancyLocation {
+export interface AllowedTypesMismatch extends SchemaIncompatibilityLocation {
 	readonly mismatch: "allowedTypes";
 	/**
 	 * All node types allowed by the stored field, including types also allowed by the proposal.
@@ -62,7 +62,7 @@ export interface AllowedTypesMismatch extends SchemaDiscrepancyLocation {
  * Field kinds specify how many children a field permits, so changing the kind can exclude previously allowed content.
  * The policy also restricts some transitions to prevent clients from repeatedly upgrading back and forth.
  */
-export interface FieldKindMismatch extends SchemaDiscrepancyLocation {
+export interface FieldKindMismatch extends SchemaIncompatibilityLocation {
 	readonly mismatch: "fieldKind";
 	/**
 	 * The stored field kind.
