@@ -764,7 +764,7 @@ export function snapshotSchemaCompatibility(
 				if (!view.isCompatible) {
 					compatibilityErrors.push(
 						formatCompatibilityFailure(
-							`Historical version ${JSON.stringify(snapshotVersion)} cannot view documents from ${JSON.stringify(currentVersion)}: these versions are expected to be able to collaborate due to the selected \`minVersionForCollaboration\` ${JSON.stringify(minVersionForCollaboration)}.`,
+							`Historical version ${JSON.stringify(snapshotVersion)} cannot view documents from ${JSON.stringify(currentVersion)}: these versions are expected to be able to collaborate due to the selected minVersionForCollaboration ${JSON.stringify(minVersionForCollaboration)}.`,
 							view.incompatibilities,
 						),
 					);

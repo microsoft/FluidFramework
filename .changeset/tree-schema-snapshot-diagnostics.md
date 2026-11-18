@@ -19,8 +19,8 @@ With `minVersionForCollaboration: "1.0.0"`, the check fails because historical c
 
 ```text
 Schema compatibility check failed:
- - Historical version "1.0.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected `minVersionForCollaboration` "1.0.0".
-   - Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"], which the view does not allow.
+ - Historical version "1.0.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration "1.0.0".
+   - Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.
 Snapshots in: "/app/schema-snapshots"
 Snapshots exist for versions: [
 	"1.0.0",
@@ -38,7 +38,7 @@ The proposed upgrade preserves their allowed string values, but the current view
 Schema compatibility check failed:
  - Current version "2.0.0" cannot upgrade documents from "1.0.0".
    - Cannot upgrade: the resulting stored schema would still prevent the view from reading or writing the document.
-     - Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"], which the view does not allow.
+     - Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.
 Snapshots in: "/app/schema-snapshots"
 Snapshots exist for versions: [
 	"1.0.0",
