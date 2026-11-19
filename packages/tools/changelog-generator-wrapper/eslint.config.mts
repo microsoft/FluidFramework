@@ -16,6 +16,13 @@ const config: Linter.Config[] = [
 			"unicorn/prefer-module": "off",
 		},
 	},
+	{
+		files: ["src/**/*.js", "src/**/*.cjs"],
+		rules: {
+			// JavaScript type annotations use JSDoc syntax.
+			"tsdoc/syntax": "off",
+		},
+	},
 ];
 
 export default config;

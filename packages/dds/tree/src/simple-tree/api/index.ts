@@ -8,12 +8,22 @@ export type {
 	ITreeConfigurationOptions,
 	ITreeViewConfigurationAlpha,
 } from "./configuration.js";
+export type { SchemaVersionMap, SchemaVersions } from "../../core/index.js";
 export {
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 } from "./configuration.js";
-export { computeSchemaHash, identifySchemaAlpha } from "./schemaHash.js";
-export { type SchemaIdentity, SchemaIdentityInternal } from "./schemaIdentity.js";
+export {
+	computeSchemaHash,
+	identifySchemaWithHash,
+	type IdentifySchemaWithHashOptions,
+} from "./schemaHash.js";
+export {
+	identifySchema,
+	type IdentifySchemaOptions,
+	type SchemaIdentity,
+	SchemaIdentityInternal,
+} from "./schemaIdentity.js";
 export type {
 	CommitRevision,
 	ITree,
@@ -23,8 +33,26 @@ export type {
 	TreeViewEvents,
 	SchemaCompatibilityStatus,
 	SchemaCompatibilityStatusBeta,
+	CompatibilityResult,
+	SchemaViewIncompatibility,
+	SchemaUpgradeIncompatibility,
 	SchemaDiscrepancy,
+	SchemaDiscrepancyFieldLocation,
+	SchemaIncompatibilityReason,
+	SchemaAllowedTypesDiscrepancy,
+	SchemaFieldKindDiscrepancy,
+	SchemaValueSchemaDiscrepancy,
+	SchemaNodeKindDiscrepancy,
+	SchemaUpgradeAllowedTypesIncompatibility,
+	SchemaUpgradeFieldKindIncompatibility,
+	SchemaUpgradeValueSchemaIncompatibility,
+	SchemaUpgradeNodeKindIncompatibility,
+	SchemaUpgradeMissingNodeSchemaIncompatibility,
+	SchemaUpgradeUnsatisfiedNodeSchemaIncompatibility,
+	SchemaUpgradeVersionIncompatibility,
+	SchemaUpgradeViewIncompatibility,
 	TreeViewAlpha,
+	TreeViewSchemaVersions,
 	TreeViewBeta,
 	UntypedTreeView,
 	UntypedTreeViewAlpha,
@@ -125,7 +153,6 @@ export { getJsonSchema } from "./getJsonSchema.js";
 export { getSimpleSchema } from "./getSimpleSchema.js";
 export {
 	checkSchemaCompatibility,
-	getSchemaIncompatibilityDetails,
 	isSchemaUpgradeAllowed,
 } from "./schemaCompatibilityTester.js";
 export { type StagedUpgradeStatus } from "./schemaCompatibilityTester.js";
