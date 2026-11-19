@@ -95,7 +95,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.65.0",
 		"@fluidframework/eslint-config-fluid": "^9.0.0",
-		"@microsoft/api-extractor": "^7.58.1",
+		"@microsoft/api-extractor": "^7.60.1",
 		"@types/chai": "^5.2.1",
 		"@types/hast": "^3.0.4",
 		"@types/mdast": "^4.0.4",
