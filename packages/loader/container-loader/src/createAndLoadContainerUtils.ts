@@ -540,38 +540,29 @@ export interface ICaptureFullContainerStateProps {
  * format produced by a live container's pending-state serialization, and can
  * be handed to {@link loadExistingContainer} as `pendingLocalState`.
  *
- * By default, the output is a self-contained view of the container's referenced
- * graph: the latest snapshot, inlined contents of every blob reachable through
- * referenced subtrees, inlined contents of every referenced attachment blob
- * keyed by storage id, and all ops with sequence numbers after the base
- * snapshot's sequence number through the point observed when the delta stream
- * connects. The same DeltaManager catch-up path used by container loading
- * combines delta-storage and delta-stream ops, so recently sequenced ops do
- * not need to have reached durable delta storage before capture.
+ * By default, the output includes the latest snapshot and inlined contents of every structural blob in the snapshot, including subtrees flagged `unreferenced`.
+ * It also includes every attachment blob whose local ID is not tombstoned or deleted, including attachments marked unreferenced by garbage collection (GC), keyed by storage ID.
+ * Saved or future ops may reference these objects again.
+ * The output includes all ops with sequence numbers after the base snapshot's sequence number through the point observed when the delta stream connects.
+ * The same DeltaManager catch-up path used by container loading combines delta-storage and delta-stream ops, so recently sequenced ops do not need to have reached durable delta storage before capture.
  *
  * When `blobCaptureMode` is `"reference"`, the snapshot tree retains the blob
  * IDs needed to load the container, but structural and attachment payloads are
  * omitted. Reference-only state requires live storage during load and cannot be
  * used with the fully offline form of {@link loadFrozenContainerFromPendingState}.
  *
- * Reachability respects GC. Snapshot subtrees flagged `unreferenced: true`
- * are skipped (their contents are not inlined). Attachment blobs that GC has
- * marked unreferenced, tombstoned, or deleted are skipped. When the snapshot
- * has no GC tree (GC disabled or pre-GC document), no filtering is applied.
+ * Eligible storage-ID aliases can retain an attachment payload even when another local ID is tombstoned or deleted.
+ * When the snapshot has no GC tree (GC disabled or pre-GC document), attachment filtering is not applied.
  *
- * Blob reads on load hit the `ContainerStorageAdapter` cache populated from
- * the captured `snapshotBlobs` map, so a frozen loader can serve the full
- * referenced graph without a live storage service.
+ * Blob reads on load hit the `ContainerStorageAdapter` cache populated from the captured `snapshotBlobs` map, so a frozen loader can serve the captured snapshot and attachment contents without a live storage service.
  *
  * `pendingRuntimeState` is `undefined` — no runtime is instantiated — so the
  * output cannot carry DDS-level in-flight changes. It is intended for state
  * relay, inspection, and durable-state snapshot use cases.
  *
- * Containers that declare loading groups are not yet supported: the function
- * throws `UsageError` if any referenced subtree carries a `groupId`. Group
- * snapshots would need a separate prefetch + serialization path; until there
- * is a known consumer and end-to-end coverage, the capture refuses rather
- * than silently producing pending state that omits group data.
+ * Capture throws a `UsageError` if a referenced subtree declares a loading group (`groupId`); this check runs before any blob reads.
+ * On this release, loading groups declared only within subtrees flagged `unreferenced` are not validated, and inline capture reads their blobs on a best-effort basis without prefetching the group snapshot.
+ * If storage cannot serve one of those blob reads, capture throws.
  *
  * @privateRemarks
  * Note: if a new snapshot lands between the snapshot fetch and delta catch-up,
