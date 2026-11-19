@@ -1072,52 +1072,65 @@ describe("checkSchemaCompatibility", () => {
 			);
 		});
 
-		it("explains array and object field differences in both directions", () => {
-			class ArrayNode extends factory.array("diagnostics.ArrayObject", factory.number) {}
-			class ObjectNode extends factory.object("diagnostics.ArrayObject", {
-				x: factory.optional(factory.number),
-			}) {}
-			for (const [stored, view, fieldKey, arraySide] of [
-				[ArrayNode, ObjectNode, "", "stored"],
-				[ObjectNode, ArrayNode, "x", "proposed"],
-			] as const) {
-				const result = expectCompatibility(
-					{ view, stored: toUpgradeSchema(stored) },
-					{ canView: false, canUpgrade: false },
-				);
-				assert(!result.view.isCompatible);
-				assert(!result.upgrade.isCompatible);
-				const node = JSON.stringify(view.identifier);
-				const location =
-					fieldKey === ""
-						? `array elements of node type ${node} (stored key "")`
-						: `field "x" of node type ${node}`;
-				assertIncompatibilities(result.upgrade.incompatibilities, [
-					{
-						mismatch: "allowedTypes",
-						location: { nodeType: view.identifier, fieldKey },
-						proposed: [],
-						stored: [factory.number.identifier],
-					},
-					{
-						mismatch: "fieldKind",
-						location: { nodeType: view.identifier, fieldKey },
-						proposed: "Forbidden",
-						stored: fieldKey === "" ? "Sequence" : "Optional",
-					},
-				]);
-				assert.equal(
-					result.upgrade.incompatibilities[0]?.reason,
-					`Cannot upgrade ${location} (${arraySide} schema has array structure): the proposed schema removes allowed node types ["com.fluidframework.leaf.number"].`,
-				);
-				if (fieldKey === "") {
-					assert.equal(
-						result.view.incompatibilities[1]?.reason,
-						`Cannot view ${location}: the view permits no children, but the stored schema permits zero or more children.`,
+		class CustomElement extends factory.object("diagnostics.CustomElement", {}) {}
+		for (const [type, description] of [
+			[factory.number, "numbers"],
+			[factory.string, "strings"],
+			[factory.boolean, "booleans"],
+			[factory.null, "null"],
+			[factory.handle, "Fluid handles"],
+			[CustomElement, 'nodes of type ".diagnostics.CustomElement"'],
+		] as const) {
+			it(`explains array and object field differences in both directions for ${description}`, () => {
+				class ArrayNode extends factory.array("diagnostics.ArrayObject", type) {}
+				class ObjectNode extends factory.object("diagnostics.ArrayObject", {
+					x: factory.optional(type),
+				}) {}
+				const node = JSON.stringify(ArrayNode.identifier);
+				for (const [stored, view, fieldKey, reason] of [
+					[
+						ArrayNode,
+						ObjectNode,
+						"",
+						`Cannot upgrade node type ${node}: the stored array allows ${description} as elements, but the proposed object has no array elements.`,
+					],
+					[
+						ObjectNode,
+						ArrayNode,
+						"x",
+						`Cannot upgrade node type ${node}: the stored object allows ${description} in field "x", but the proposed array has no field "x".`,
+					],
+				] as const) {
+					const result = expectCompatibility(
+						{ view, stored: toUpgradeSchema(stored) },
+						{ canView: false, canUpgrade: false },
 					);
+					assert(!result.view.isCompatible);
+					assert(!result.upgrade.isCompatible);
+					assertIncompatibilities(result.upgrade.incompatibilities, [
+						{
+							mismatch: "allowedTypes",
+							location: { nodeType: view.identifier, fieldKey },
+							proposed: [],
+							stored: [type.identifier],
+						},
+						{
+							mismatch: "fieldKind",
+							location: { nodeType: view.identifier, fieldKey },
+							proposed: "Forbidden",
+							stored: fieldKey === "" ? "Sequence" : "Optional",
+						},
+					]);
+					assert.equal(result.upgrade.incompatibilities[0]?.reason, reason);
+					if (fieldKey === "") {
+						assert.equal(
+							result.view.incompatibilities[1]?.reason,
+							`Cannot view array elements of node type ${node} (stored key ""): the view permits no children, but the stored schema permits zero or more children.`,
+						);
+					}
 				}
-			}
-		});
+			});
+		}
 
 		it("explains array structure while preserving node-kind details", () => {
 			class ArrayNode extends factory.array("diagnostics.ArrayMap", factory.number) {}

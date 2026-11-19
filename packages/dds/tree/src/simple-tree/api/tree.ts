@@ -992,6 +992,7 @@ export type SchemaDiscrepancyFieldLocation =
  * Stored schemas represent arrays as objects with a single sequence field at the empty stored key.
  * The explanation identifies this array structure and describes that field as array elements.
  * Other stored object structures are not identified as arrays.
+ * If an upgrade between an array and an object would remove a field, the explanation describes what the proposed schema can no longer represent.
  *
  * @beta
  */

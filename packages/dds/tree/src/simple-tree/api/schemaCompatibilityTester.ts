@@ -25,6 +25,13 @@ import {
 	SchemaVersionComparison,
 	defaultSchemaPolicy,
 } from "../../feature-libraries/index.js";
+import {
+	booleanSchema,
+	handleSchema,
+	nullSchema,
+	numberSchema,
+	stringSchema,
+} from "../leafNodeSchema.js";
 import { resolveStoredSchemaGenerationOptions } from "../toStoredSchema.js";
 import { getSchemaUpgradeCandidate, toInitialSchema, type TreeSchema } from "../treeSchema.js";
 
@@ -196,7 +203,9 @@ function formatUpgradeIncompatibility(
 				location: formatIncompatibilityLocation(value),
 				proposed: [...value.proposed].filter((type) => !value.stored.has(type)).sort(),
 				stored,
-				reason: `Cannot upgrade ${describeFieldLocation(value, storedSchema, proposedSchema)}: the proposed schema removes allowed node types ${JSON.stringify(stored)}.`,
+				reason:
+					describeRemovedArrayOrObjectField(value, stored, storedSchema, proposedSchema) ??
+					`Cannot upgrade ${describeFieldLocation(value, storedSchema, proposedSchema)}: the proposed schema removes allowed node types ${JSON.stringify(stored)}.`,
 			};
 		}
 		case "fieldKind": {
@@ -335,6 +344,61 @@ function describeFieldLocation(
 	return proposedSchema !== undefined && storedIsArray !== proposedIsArray
 		? `${location} (${storedIsArray ? "stored" : "proposed"} schema has array structure)`
 		: location;
+}
+
+function describeRemovedArrayOrObjectField(
+	{ identifier, fieldKey }: SchemaIncompatibilityLocation,
+	removedTypes: readonly string[],
+	storedSchema: TreeStoredSchema,
+	proposedSchema: TreeStoredSchema,
+): string | undefined {
+	if (identifier === undefined || fieldKey === undefined) {
+		return undefined;
+	}
+	const stored = storedSchema.nodeSchema.get(identifier);
+	const proposed = proposedSchema.nodeSchema.get(identifier);
+	if (
+		!(stored instanceof ObjectNodeStoredSchema) ||
+		!(proposed instanceof ObjectNodeStoredSchema) ||
+		proposed.objectNodeFields.has(fieldKey)
+	) {
+		return undefined;
+	}
+	const storedIsArray = hasArrayStructure(stored);
+	const proposedIsArray = hasArrayStructure(proposed);
+	if (storedIsArray === proposedIsArray) {
+		return undefined;
+	}
+
+	const types = removedTypes.map(describeAllowedNodeType).join(", ");
+	const node = JSON.stringify(identifier);
+	const field = JSON.stringify(fieldKey);
+	return storedIsArray
+		? `Cannot upgrade node type ${node}: the stored array allows ${types} as elements, but the proposed object has no array elements.`
+		: `Cannot upgrade node type ${node}: the stored object allows ${types} in field ${field}, but the proposed array has no field ${field}.`;
+}
+
+function describeAllowedNodeType(type: string): string {
+	switch (type) {
+		case booleanSchema.identifier: {
+			return "booleans";
+		}
+		case handleSchema.identifier: {
+			return "Fluid handles";
+		}
+		case nullSchema.identifier: {
+			return "null";
+		}
+		case numberSchema.identifier: {
+			return "numbers";
+		}
+		case stringSchema.identifier: {
+			return "strings";
+		}
+		default: {
+			return `nodes of type ${JSON.stringify(type)}`;
+		}
+	}
 }
 
 function hasArrayStructure(schema: TreeNodeStoredSchema | undefined): boolean {
