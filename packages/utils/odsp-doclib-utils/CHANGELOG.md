@@ -1,5 +1,9 @@
 # @fluidframework/odsp-doclib-utils
 
+## 3.13.0
+
+Dependency updates only.
+
 ## 3.12.0
 
 Dependency updates only.
@@ -44,39 +48,39 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Removal of direct CommonJS support ([#28124](https://github.com/microsoft/FluidFramework/pull/28124)) [0f84e3b8878](https://github.com/microsoft/FluidFramework/commit/0f84e3b8878a5e75b2253976d98fd963bbd9db88)
+#### Removal of direct CommonJS support ([#28124](https://github.com/microsoft/FluidFramework/pull/28124)) [0f84e3b8878](https://github.com/microsoft/FluidFramework/commit/0f84e3b8878a5e75b2253976d98fd963bbd9db88)
 
-  Direct `require()` import is no longer directly supported.
-  Package is transpiled as ECMAScript Module.
+Direct `require()` import is no longer directly supported.
+Package is transpiled as ECMAScript Module.
 
-  See [Removal of direct CommonJS support in v3.0](https://github.com/microsoft/FluidFramework/issues/27444) for more information.
+See [Removal of direct CommonJS support in v3.0](https://github.com/microsoft/FluidFramework/issues/27444) for more information.
 
-- Require modern TypeScript module resolution ([#27970](https://github.com/microsoft/FluidFramework/pull/27970)) [325e2016ca9](https://github.com/microsoft/FluidFramework/commit/325e2016ca9978d4a1f7552c97ba34feac9df41f)
+#### Require modern TypeScript module resolution ([#27970](https://github.com/microsoft/FluidFramework/pull/27970)) [325e2016ca9](https://github.com/microsoft/FluidFramework/commit/325e2016ca9978d4a1f7552c97ba34feac9df41f)
 
-  Fluid Framework Client packages no longer include type declaration compatibility entrypoints for TypeScript's legacy Node10 resolution mode (`"moduleResolution": "node"` or `"node10"`).
-  Applications upgrading to Fluid Framework 3.0 must use one of the following supported configurations:
-  - `"module": "Node16"` with `"moduleResolution": "Node16"`
-  - `"module": "NodeNext"` with `"moduleResolution": "NodeNext"`
-  - `"module": "ESNext"` with `"moduleResolution": "Bundler"`
+Fluid Framework Client packages no longer include type declaration compatibility entrypoints for TypeScript's legacy Node10 resolution mode (`"moduleResolution": "node"` or `"node10"`).
+Applications upgrading to Fluid Framework 3.0 must use one of the following supported configurations:
+- `"module": "Node16"` with `"moduleResolution": "Node16"`
+- `"module": "NodeNext"` with `"moduleResolution": "NodeNext"`
+- `"module": "ESNext"` with `"moduleResolution": "Bundler"`
 
-  Existing public package entrypoints exposed through `package.json` exports, including `/alpha`, `/beta`, and `/legacy`, remain available under supported module resolution modes.
+Existing public package entrypoints exposed through `package.json` exports, including `/alpha`, `/beta`, and `/legacy`, remain available under supported module resolution modes.
 
-  See [Removal of Node10 resolutions in v3.0](https://github.com/microsoft/FluidFramework/issues/27457) for more information.
+See [Removal of Node10 resolutions in v3.0](https://github.com/microsoft/FluidFramework/issues/27457) for more information.
 
-- Client packages now target ES2022 ([#27846](https://github.com/microsoft/FluidFramework/pull/27846)) [91c78541bdd](https://github.com/microsoft/FluidFramework/commit/91c78541bddcbca5d6c5f357b023eeaee617d885)
+#### Client packages now target ES2022 ([#27846](https://github.com/microsoft/FluidFramework/pull/27846)) [91c78541bdd](https://github.com/microsoft/FluidFramework/commit/91c78541bddcbca5d6c5f357b023eeaee617d885)
 
-  The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
-  The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
-  All actively supported Node.js versions and evergreen browsers already meet this requirement.
+The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
+The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
+All actively supported Node.js versions and evergreen browsers already meet this requirement.
 
-  Note that Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the README for every client package.
+Note that Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the README for every client package.
 
-  It is possible this change could impact users of less up to date JavaScript runtimes.
-  Impacted users can use a tool like [babel](https://babeljs.io/) to transpile out unsupported language features.
+It is possible this change could impact users of less up to date JavaScript runtimes.
+Impacted users can use a tool like [babel](https://babeljs.io/) to transpile out unsupported language features.
 
-- Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
+#### Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
 
-  FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
+FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
 
 ## 2.116.0
 
@@ -122,9 +126,9 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+#### Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
 
-  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
 
 ## 2.93.0
 
@@ -298,9 +302,9 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+#### Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
 
-  Update package implementations to use TypeScript 5.4.5.
+Update package implementations to use TypeScript 5.4.5.
 
 ## 2.0.0-rc.4.0.0
 
@@ -310,35 +314,35 @@ Dependency updates only.
 
 ### Major Changes
 
-- Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+#### Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
 
-  Fluid Framework packages have been updated to use the [package.json "exports"
-  field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
-  TypeScript types and implementation code.
+Fluid Framework packages have been updated to use the [package.json "exports"
+field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
+TypeScript types and implementation code.
 
-  This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-  - `"moduleResolution": "Node16"` with `"module": "Node16"`
-  - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
+This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
+- `"moduleResolution": "Node16"` with `"module": "Node16"`
+- `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 
-  We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
-  for use with modern versions of Node.js _and_ Bundlers.
-  [See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
-  regarding the module and moduleResolution options.
+We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
+for use with modern versions of Node.js _and_ Bundlers.
+[See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
+regarding the module and moduleResolution options.
 
-  **Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
-  to distinguish stable APIs from those that are in development.**
+**Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
+to distinguish stable APIs from those that are in development.**
 
 ## 2.0.0-rc.2.0.0
 
 ### Minor Changes
 
-- Deprecated error-related enums have been removed ([#19067](https://github.com/microsoft/FluidFramework/issues/19067)) [59793302e5](https://github.com/microsoft/FluidFramework/commits/59793302e56784cfb6ace0e6469345f3565b3312)
+#### Deprecated error-related enums have been removed ([#19067](https://github.com/microsoft/FluidFramework/issues/19067)) [59793302e5](https://github.com/microsoft/FluidFramework/commits/59793302e56784cfb6ace0e6469345f3565b3312)
 
-  Error-related enums `ContainerErrorType`, `DriverErrorType`, `OdspErrorType` and `RouterliciousErrorType` were previously
-  deprecated and are now removed. There are replacement object-based enumerations of `ContainerErrorTypes`,
-  `DriverErrorTypes`, `OdspErrorTypes` and `RouterliciousErrorTypes`. Refer to the release notes of [Fluid Framework version
-  2.0.0-internal.7.0.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.0.0-internal.7.0.0) for details
-  on the replacements.
+Error-related enums `ContainerErrorType`, `DriverErrorType`, `OdspErrorType` and `RouterliciousErrorType` were previously
+deprecated and are now removed. There are replacement object-based enumerations of `ContainerErrorTypes`,
+`DriverErrorTypes`, `OdspErrorTypes` and `RouterliciousErrorTypes`. Refer to the release notes of [Fluid Framework version
+2.0.0-internal.7.0.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.0.0-internal.7.0.0) for details
+on the replacements.
 
 ## 2.0.0-rc.1.0.0
 
@@ -368,30 +372,30 @@ Dependency updates only.
 
 ### Major Changes
 
-- odsp-driver: Load container in readonly mode when driver throws DriverErrorType.outOfStorage [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+#### odsp-driver: Load container in readonly mode when driver throws DriverErrorType.outOfStorage [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
-  Handle DriverErrorType.outOfStorage error from driver and load the container in readonly mode. Currently there is no
-  handling and when the join session throws this error, the container will get closed. With this we use NoDeltaStream
-  object as connection and load the container in read mode, so that it loads properly. We also notify the that the
-  container is "readonly" through the event on delta manager so that apps can listen to this and show any UX etc. The app
-  can listen to the event like this:
+Handle DriverErrorType.outOfStorage error from driver and load the container in readonly mode. Currently there is no
+handling and when the join session throws this error, the container will get closed. With this we use NoDeltaStream
+object as connection and load the container in read mode, so that it loads properly. We also notify the that the
+container is "readonly" through the event on delta manager so that apps can listen to this and show any UX etc. The app
+can listen to the event like this:
 
-  ```ts
-  container.deltaManager.on(
-    "readonly",
-    (
-      readonly?: boolean,
-      readonlyConnectionReason?: { text: string; error?: IErrorBase },
-    ) => {
-      // error?.errorType will be equal to DriverErrorType.outOfStorage in this case
-      // App logic
-    },
-  );
-  ```
+```ts
+container.deltaManager.on(
+  "readonly",
+  (
+    readonly?: boolean,
+    readonlyConnectionReason?: { text: string; error?: IErrorBase },
+  ) => {
+    // error?.errorType will be equal to DriverErrorType.outOfStorage in this case
+    // App logic
+  },
+);
+```
 
-- Minimum TypeScript version now 5.1.6 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+#### Minimum TypeScript version now 5.1.6 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
-  The minimum supported TypeScript version for Fluid 2.0 clients is now 5.1.6.
+The minimum supported TypeScript version for Fluid 2.0 clients is now 5.1.6.
 
 ## 2.0.0-internal.6.4.0
 
@@ -405,31 +409,31 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Remove use of @fluidframework/common-definitions ([#16638](https://github.com/microsoft/FluidFramework/issues/16638)) [a8c81509c9](https://github.com/microsoft/FluidFramework/commits/a8c81509c9bf09cfb2092ebcf7265205f9eb6dbf)
+#### Remove use of @fluidframework/common-definitions ([#16638](https://github.com/microsoft/FluidFramework/issues/16638)) [a8c81509c9](https://github.com/microsoft/FluidFramework/commits/a8c81509c9bf09cfb2092ebcf7265205f9eb6dbf)
 
-  The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
-  imported from the **@fluidframework/core-interfaces** package:
-  - interface IDisposable
-  - interface IErrorEvent
-  - interface IErrorEvent
-  - interface IEvent
-  - interface IEventProvider
-  - interface ILoggingError
-  - interface ITaggedTelemetryPropertyType
-  - interface ITelemetryBaseEvent
-  - interface ITelemetryBaseLogger
-  - interface ITelemetryErrorEvent
-  - interface ITelemetryGenericEvent
-  - interface ITelemetryLogger
-  - interface ITelemetryPerformanceEvent
-  - interface ITelemetryProperties
-  - type ExtendEventProvider
-  - type IEventThisPlaceHolder
-  - type IEventTransformer
-  - type ReplaceIEventThisPlaceHolder
-  - type ReplaceIEventThisPlaceHolder
-  - type TelemetryEventCategory
-  - type TelemetryEventPropertyType
+The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
+imported from the **@fluidframework/core-interfaces** package:
+- interface IDisposable
+- interface IErrorEvent
+- interface IErrorEvent
+- interface IEvent
+- interface IEventProvider
+- interface ILoggingError
+- interface ITaggedTelemetryPropertyType
+- interface ITelemetryBaseEvent
+- interface ITelemetryBaseLogger
+- interface ITelemetryErrorEvent
+- interface ITelemetryGenericEvent
+- interface ITelemetryLogger
+- interface ITelemetryPerformanceEvent
+- interface ITelemetryProperties
+- type ExtendEventProvider
+- type IEventThisPlaceHolder
+- type IEventTransformer
+- type ReplaceIEventThisPlaceHolder
+- type ReplaceIEventThisPlaceHolder
+- type TelemetryEventCategory
+- type TelemetryEventPropertyType
 
 ## 2.0.0-internal.6.1.0
 
@@ -439,9 +443,9 @@ Dependency updates only.
 
 ### Major Changes
 
-- Upgraded typescript transpilation target to ES2020 [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+#### Upgraded typescript transpilation target to ES2020 [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
 
-  Upgraded typescript transpilation target to ES2020. This is done in order to decrease the bundle sizes of Fluid Framework packages. This has provided size improvements across the board for ex. Loader, Driver, Runtime etc. Reduced bundle sizes helps to load lesser code in apps and hence also helps to improve the perf.If any app wants to target any older versions of browsers with which this target version is not compatible, then they can use packages like babel to transpile to a older target.
+Upgraded typescript transpilation target to ES2020. This is done in order to decrease the bundle sizes of Fluid Framework packages. This has provided size improvements across the board for ex. Loader, Driver, Runtime etc. Reduced bundle sizes helps to load lesser code in apps and hence also helps to improve the perf.If any app wants to target any older versions of browsers with which this target version is not compatible, then they can use packages like babel to transpile to a older target.
 
 ## 2.0.0-internal.5.4.0
 
