@@ -15,6 +15,8 @@ The history contains the same `TreeBranchCommitMetadata` objects the history API
 Only `history.slice(0, eligibleCount)` is no longer needed for correctness; the rest remains available as context.
 The callback returns a plan: ranges of adjacent commits, each naming its `oldest` and `newest` commit by revision.
 Each combined range keeps the newest combined commit's revision.
+Revision replacement also updates the changeset's maximum local ID when resolving ID collisions between revisions.
+This prevents decoder-generated IDs from colliding with remapped IDs during summary encoding and loading.
 By default the combined commit keeps all of the range's metadata; give the range a `metadata` object to use that object as the combined commit's metadata instead.
 The call returns how many commits were removed.
 

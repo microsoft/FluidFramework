@@ -8,7 +8,8 @@ how it is tested, and what is still open.
 > Status: **experimental (`@alpha`)**.
 > The API shape is not final.
 > Compaction (manual and summary-time) and preserved revisions (pins, opt-in) are implemented and tested.
-> Data-integrity fixes and most of the proposed integrity telemetry ([Part IV](#part-iv-persisted-format-and-data-integrity)) are **not** implemented yet.
+> Repair-data and pin-rollback fixes, and most of the proposed integrity telemetry ([Part IV](#part-iv-persisted-format-and-data-integrity)), are **not** implemented yet.
+> The idle-peer fix and the revision-replacement `maxId` fix are implemented and tested.
 > The short, app-facing guide is [APP_GUIDE.md](./APP_GUIDE.md).
 
 ## How to read this guide
@@ -182,6 +183,57 @@ The summarizer therefore does not learn about those forks merely by processing t
 Normal summarizer use has no application-created private forks, so its fork bound can be less restrictive than an interactive client's.
 
 Code: `trunkBranches`, `registerBranch`, `trackBranch`, `untrackBranch`, `addSharedBranch`, and `getSummaryData` in [`editManager.ts`](../../src/shared-tree-core/editManager.ts).
+
+##### Undo handles can restrict `eligibleCount`
+
+Undo lets a user reverse an earlier edit, for example through Ctrl+Z.
+To implement this, an application can capture a SharedTree undo handle, called a **revertible**, from a branch change event.
+Keeping the handle means the application may still ask SharedTree to reverse that edit.
+Merely displaying an Undo button does not create this dependency; capturing and retaining revertibles does.
+
+When a revertible is captured, `treeCheckout.ts` creates an internal fork at the edit's commit with `this.#transaction.branch.fork(commit)`.
+EditManager tracks that fork through the same registration mechanism as other local forks.
+The application does not need to create a visible fork or pin the revision for this protection to apply.
+
+For example, assume A through E are retained, sequenced commits outside the collaboration window, with no other forks or pins:
+
+```text
+History:                       A -> B -> C -> D -> E
+No retained Undo handles:      eligibleCount = 5
+Retained Undo handle for B:    eligibleCount = 1
+                               A | B -> C -> D -> E
+                               ^   protected by B's internal fork
+                               eligible
+```
+
+The fork bound conservatively excludes B and all later commits, not just B.
+Only A is eligible, so there is no multi-commit range to combine.
+If the oldest retained Undo handle is for A, `eligibleCount` can remain zero even when all five commits are old.
+This is an expected dependency restriction, not by itself evidence that the count is incorrect.
+`eligibleCount` describes the oldest prefix currently eligible under the executing client's correctness bounds; it is not simply a count of old commits.
+Preserved revisions remain separate barriers within that prefix.
+
+When an Undo entry expires or is removed from the application's Undo/Redo stacks, dispose of its revertible if the application no longer needs it:
+
+```typescript
+undoHandleForB.dispose();
+```
+
+Removing the handle from an application array without calling `dispose()` does not release its internal fork.
+`disposeRevertible` disposes that fork and removes the checkout's references to the revertible.
+After disposal, the next compaction request can receive a larger eligible prefix, subject to all remaining revertibles, other forks, and the collaboration window.
+Disposal may trigger trimming; it does not automatically request compaction or recover history already trimmed.
+Do not dispose handles merely to force compaction while still promising those Undo actions to the user.
+
+The summarizer normally has no application Undo stack, so it can have a larger eligible prefix than the interactive client.
+**This is an important reason to compact during summarization, not rely only on interactive-client compaction.**
+A long-lived Undo stack can keep the interactive client's eligible prefix small or empty.
+The separate summarizer can compact its own eligible history without requiring the application to discard the user's Undo handles, and write that result into the summary for future loads.
+Local compaction remains useful for memory and UI updates when eligible history exists, but it neither guarantees progress while Undo handles are retained nor changes the separate summarizer's persisted history.
+Configure the summary-time planner as well when the goal includes reducing stored history.
+This does not make the active client's history match the summary or eliminate that client's Undo dependencies.
+These fork checks explain Undo-related eligibility restrictions; they do not resolve the separate Undo/revert and repair-data risks in [§17](#17-data-integrity-risks-and-fixes).
+Code: revertible capture, `revertibleCommitBranches`, and `disposeRevertible` in [`treeCheckout.ts`](../../src/shared-tree/treeCheckout.ts).
 
 #### 2.6 Same revisions do not imply the same retained history
 
@@ -458,9 +510,18 @@ The whole plan is validated **before** anything changes. A `UsageError` is throw
 - two ranges overlap;
 - `metadata` is not a JSON object.
 
+Ranges do not need to be returned in history order.
+SharedTree resolves their endpoints against the current history and sorts them by oldest commit before checking for overlap and processing them.
+Duplicate ranges overlap and therefore reject the whole plan.
+The EditManager also checks the internal ranges for ordering, nonoverlap, and eligibility before composing any commits.
+
 SharedTree checks only the top level of `metadata`.
 It does not deep-validate JSON compatibility or copy the object; a non-JSON value inside fails when the summary is encoded.
 The app must not mutate the object after returning it.
+
+SharedTree cannot verify that a structurally valid plan implements the application's intended retention policy.
+For example, it cannot determine whether a range accidentally removes a desired daily checkpoint or whether replacement metadata correctly describes the selected commits.
+The application must test those policy decisions and compute metadata from the exact selected range.
 
 A valid range is **skipped** (not an error) when:
 
@@ -503,6 +564,12 @@ A skipped range is not retried within the pass; the policy must include it in a 
 | Policy throws, or returns an invalid plan, on a manual `requestPlannedCompaction` | The same, and the error is rethrown to the caller. The tree is **not** broken: `runPlannedCompaction` is `@throwIfBroken` (it only checks the broken state), and the planning error is caught inside the planning callback and rethrown only after the engine call has returned. |
 | The engine fails while composing | The error propagates through `SharedTreeCore`'s breaker, so **the tree is marked broken**, because the history may have been partially rewritten. `failureSource: "engine"`. |
 | `setRevisionPreserved` usage errors | `UsageError`, tree not broken (`@throwIfBroken`, checks before any state change). |
+
+**Malformed JavaScript results are not fully shape-validated.**
+Although the TypeScript contract requires a `CompactionPlan`, a callback can return `null`, omit `ranges`, or supply a value without an array's `map` method at runtime.
+Such results can cause an ordinary runtime error instead of a descriptive `UsageError`.
+The error is still caught before composition: manual calls rethrow it, while summary-time calls log it and continue summarization without compaction.
+The current telemetry classifies these non-`UsageError` planning failures as `failureSource: "policy"`, not `"plan"`.
 
 #### 7.5 Examples
 
@@ -1152,7 +1219,8 @@ A mistake here does not stay local; it is written into the summary and inherited
 
 Severity: **High** = reproduces and can lose or misapply user data, or make clients diverge.
 **Medium** = divergence in a narrow scenario. **Watch** = no known bug, but no detection.
-**None of the fixes below is implemented.**
+**The repair-data and pin-rollback fixes below are not implemented.**
+Implemented fixes are marked **Fixed**.
 
 | # | Severity | Risk | Persisted? |
 | --- | --- | --- | --- |
@@ -1162,6 +1230,7 @@ Severity: **High** = reproduces and can lose or misapply user data, or make clie
 | [17.4](#174-watch-format-and-compatibility) | Watch | New formats not gated by `minVersionForCollab` | Yes |
 | [17.5](#175-watch-invariants-with-no-detection-today) | Watch | Silent trunk bookkeeping regressions | Yes |
 | [17.6](#176-fixed-idle-peer-double-apply) | Fixed | Idle peer's edit applied twice | Was persisted; fixed |
+| [17.8](#178-fixed-revision-replacement-leaves-a-stale-maximum-local-id) | Fixed | Decoder-generated IDs collide with remapped history IDs | Blocked summary encoding in the reproduction |
 
 #### 17.1 High: composition renumbers detach IDs, so repair data no longer matches
 
@@ -1179,10 +1248,18 @@ The summary then holds a compacted trunk next to a detached-field index with the
 3. Advance the MSN and sync; `requestPlannedCompaction` with one range over both removals returns 1.
 4. `revertTo()` on the initial revision fails with assert `0x8cd` ("detached node should exist"). Without compaction it restores `["a", "b", "c"]`.
 
+The `rewind Undo and restore integrity` regression group also reproduces this after summary encoding and reload.
+Rewinding a fork with `rewindTo()` fails with `0x92a` ("refresher data not found"); restoring through the shared view's `revertTo()` fails with `0x8cd`.
+Both operations pass against the same uncompacted edit sequence.
+Successful encoding after the §17.8 fix therefore does not imply that historical operations are safe.
+
 If renumbering swaps two IDs instead of creating a new one, the inverse can point at a **different** detached node,
 and `revertTo` revives the wrong node and sends that edit to every client.
 Also, a `revertTo` path captured before compaction is still accepted (the removed commits are never marked `wasTrimmed`);
 it contains the mutated newest commit, so the removed commits' changes would be inverted twice.
+The captured-callback regression uses inserts rather than deletions to isolate this stale-path problem.
+It expects a clean `UsageError` after compaction, but currently reaches `0xd31` ("Detach range must not exceed field length").
+The corresponding callback works when its path is not compacted.
 
 **Fixes:**
 
@@ -1206,6 +1283,8 @@ When the summarizer compacted, every loading client inherits the orphaned roots 
 **Fix:** when composing, re-tag roots last touched by a removed revision to the range's newest revision (`updateLatestRevision`), so they are freed when that commit is trimmed.
 Reporting the removed revisions through `ancestryTrimmed` would free data the composed commit still needs.
 Apply together with 17.1.
+The repair-data cleanup regression now checks this scenario directly, including an uncompacted control and an uncompacted peer.
+After both removal commits have left retained history, the compacting checkout still has one removed-root entry while the controls have zero.
 
 #### 17.3 Medium: rolling back a pin can diverge from other clients
 
@@ -1246,6 +1325,25 @@ Fixed by `rebasePeersOnto`, and covered by an EditManager unit test and an end-t
    Until then, keep compaction off for documents that use `revertTo`, or skip ranges that contain detaches.
 3. Gate the new formats on `minVersionForCollab` and add `FormatSelected`, before any production rollout.
 4. Add the summary-load hash check last; it changes summary contents.
+
+#### 17.8 Fixed: revision replacement leaves a stale maximum local ID
+
+`ModularChangeFamily.changeRevision` can collapse several revision namespaces into one.
+`DefaultRevisionReplacer` allocates new local IDs when the original revisions use the same local ID.
+Previously, `changeRevision` kept the input's `maxId`, even when the remapped IDs exceeded it.
+The history decoder starts allocating temporary node and detach IDs above the encoded `maxId`.
+With the stale maximum, those temporary IDs could collide with IDs already present in the compacted change.
+In the mixed-edit reproduction, this caused `0xdbd` (`New rename conflicts with existing rename`) during the encoder's decode round-trip.
+Strict structural validation of the composed and remapped changes did not detect the stale maximum.
+
+The fix tracks the IDs returned during revision replacement and raises the output `maxId` to cover each remapped range.
+It preserves the original maximum when no larger ID is needed.
+This keeps decoder allocation above the remapped IDs without changing the app-facing API or replacing whole-range composition with repeated pair composition.
+A focused modular-change test covers colliding IDs from two revisions, and the mixed-edit compaction tests cover encoding and reload ([§21.1](#211-unit-tests-packagesddstreesrctestshared-treehistorycompactionspects)).
+Both the incremental-pair and whole-range cases pass after this fix.
+
+This fixes the reproduced encoding failure, not the repair-data and revert issues in §17.1 and §17.2.
+The exact application workload and its separate cross-field-table assertion still need verification.
 
 ---
 
@@ -1448,6 +1546,8 @@ Calls to the `summarize` helper summarize the chosen tree directly.
 | Group | Tests | What it covers |
 | --- | --- | --- |
 | (top level) | preserves old and newly sequenced revisions while compacting surrounding history (default / replacement); default compaction preserves / replacement compaction discards nested metadata children | Staged pins ([§14.5](#145-staged-pinunpin-walkthrough)), metadata outcomes, reload |
+| rewind Undo and restore integrity | deleted-content rewind and restore locally / after summary reload, with uncompacted controls; live Undo/redo boundaries; another client's Undo after compaction and summary; repair-data cleanup; captured callbacks before / after compaction | Reproduces the remaining repair-data and stale-path failures ([§17.1](#171-high-composition-renumbers-detach-ids-so-repair-data-no-longer-matches), [§17.2](#172-high-repair-data-for-composed-away-revisions-is-never-freed)); passing protected-Undo cases |
+| composition summary round-trip | encodes and reloads 42 / 49 mixed edits using uncompacted history, incremental pairs, or a whole range | Encoding-failure reproduction; strict validation during compaction, summary encoding, and reload; exact retained revisions and document content |
 | persisted size | shrinks the summarized history (several shapes); matches a client that never retained the history | Summary size savings; content equivalence |
 | memory | (opt-in, `expose-gc`) | Heap savings |
 | planned ranges | combines each planned range into its newest commit, merging the metadata oldest first; replaces a range's metadata when the plan provides it; gives the plan every retained commit plus the eligible count; plans eligible ranges at a fork boundary with or without replacement metadata (manual and summary); skips preserved ranges independently of other eligible ranges; rejects a malformed plan without changing the history (including ranges crossing or outside eligibility); rethrows a policy error without changing the history; runs when summarizing and persists the compacted history; still summarizes when the summary-time plan is malformed; composes each range in a single call | Policy contract ([§7](#7-the-policy-contract)), errors, cost ([§13.4](#134-cost-of-composing-a-range)) |
@@ -1470,6 +1570,213 @@ Replacement metadata describes exactly the selected eligible range, and preserve
 Invalid plans, including a later ineligible range after an earlier valid range, are rejected before any composition.
 Public API tests cover full-history visibility, numeric eligibility, manual and summary-time planning at a fork boundary, summary reload, and subsequent fork rebase/merge.
 Diagnostic tracing tests check eligibility and actual merged lengths without clipping.
+
+The `composition summary round-trip` group covers the encoding failure fixed in [§17.8](#178-fixed-revision-replacement-leaves-a-stale-maximum-local-id), not all compaction safety requirements.
+It uses objects with nested fields and arrays, inserts, moves between two arrays, value updates, and removals.
+Two connected clients advance the collaboration window before compaction.
+The cases compare unchanged history, repeated two-commit range requests, and one whole-range request configured to run during summary generation.
+Repeated two-commit requests exercise the incremental compose-and-remap pattern; they do not run the separate Approach 1 branch.
+Strict validation is enabled after authoring the edits and remains enabled through compaction, summary encoding, and reload.
+The tests restore the previous validation level even on failure.
+
+Before the fix, both uncompacted controls encoded and reloaded successfully.
+Both compacting strategies, at both range lengths, passed the strict composition and revision-replacement checks but failed during the codec's encode/decode round-trip with `0xdbd` (`New rename conflicts with existing rename`).
+After the `maxId` fix, all six cases generate summaries and reload with the expected surviving revisions and unchanged document content.
+This reproduces and fixes one assertion from the application logs, not the exact application workload or its cross-field-table assertion.
+The failure was not specific to balanced composition; incremental composition was not a safe workaround.
+The focused `ModularChangeFamily changeRevision` test checks that collapsing two revisions with overlapping local IDs raises `maxId` without modifying the input.
+
+The `rewind Undo and restore integrity` group has 15 cases.
+For the deletion cases, the starting content is `["a", "b", "c"]`; two transactions remove `"a"` and `"b"`, then edits from both clients advance the collaboration window.
+Compaction combines the two deletion commits and removes exactly one history entry.
+`rewindTo` runs on a fork created after compaction, so the fork does not prevent the tested range from becoming eligible.
+Restore uses `revertTo` to author a new change on the shared view; it is not an application-specific snapshot restore.
+The tests also require successful edits after rewind or restore, and a summary reload after a successful restore.
+Reloaded shared views receive an initialized mock runtime so that restore and subsequent edits can submit and sequence operations.
+
+| Case | Last observed result before skipping known failures |
+| --- | --- |
+| Uncompacted rewind and restore, locally and after reload | Pass |
+| Compacted rewind, locally and after reload | Fail: `0x92a`, refresher data not found |
+| Compacted restore, locally and after reload | Fail: `0x8cd`, detached node should exist |
+| Live Undo and redo, with / without compaction of an independent eligible prefix | Pass; the two protected deletion revisions survive |
+| An existing client's Undo after another client compacts and writes a summary | Pass; both connected mock clients converge |
+| Cleanup after the removal commits leave retained history | Uncompacted passes; compacted fails with one retained repair-data entry instead of zero |
+| Captured `revertTo` callback | Unchanged path passes; compacted path fails with internal `0xd31` instead of the expected `UsageError` |
+
+These are nine passing cases and six skipped regressions for the known failures above.
+The compacted rewind/restore, compacted repair-data cleanup, and stale-callback cases use `it.skip` until the corresponding integrity fixes are implemented.
+The uncompacted controls and passing Undo/redo cases remain enabled.
+The cross-client Undo test loads the summary before Undo, but does not connect that loaded client to replay later operations.
+It does not replace coverage with a real, separate summarizer and a newly loaded client receiving subsequent Undo operations.
+Assertions remain enabled, and the tests require correct behavior rather than accepting the current internal assertions as expected outcomes.
+
+##### Setup, act, and verify examples
+
+The examples below explain the new tests, including their uncompacted controls.
+**Setup** creates the document and history, **Act** performs the operation being tested, and **Verify** describes the assertions.
+For skipped cases, Verify is the required behavior, not a claim that the implementation currently provides it.
+
+###### Rewind and restore examples
+
+These tests share this setup on two connected mock clients:
+
+```text
+Revision    Edit                          Document
+H0          Initialize                    [a, b, c]
+H1          Remove a                      [b, c]
+H2          Remove b                      [c]
+H3          Client 1 appends x             [c, x]
+H4          Client 2 appends y             [c, x, y]
+```
+
+**Setup:** Save H0 as the target.
+Synchronize after the removals and each subsequent append so both clients agree, and the two removal commits are outside the collaboration window.
+Do not retain Undo handles for these removals.
+In the compacted cases, combine H1 and H2 into H2*:
+
+```text
+Before: H0 -> H1 -> H2  -> H3 -> H4
+After:  H0 ------> H2* -> H3 -> H4
+Content in either case: [c, x, y]
+```
+
+Exactly one history entry must disappear.
+H0 remains available; the tests do not ask to restore the removed intermediate state H1.
+Each operation below is tested both locally and after writing and loading a summary.
+In the latter variant, the configured policy compacts during summary generation.
+The uncompacted controls make the same edits but leave H1 and H2 separate.
+
+| Test | Act | Verify | Current status |
+| --- | --- | --- | --- |
+| `rewinds deleted content ...` | Create a fork after compaction, then call `fork.rewindTo(H0)`. | The fork contains `[a, b, c]`; appending `"after rewind"` works; the shared view still contains `[c, x, y]`. | Both controls pass; both compacted variants are skipped after reproducing `0x92a`. |
+| `restores deleted content ...` | Call `view.revertTo(H0)` on the shared view. | The view contains `[a, b, c]`; append `"after restore"`; sequence the edits; a new summary reload contains `[a, b, c, "after restore"]`. The local variant also checks the connected peer. | Both controls pass; both compacted variants are skipped after reproducing `0x8cd`. |
+
+Rewind changes the private fork's state.
+Restore authors a new change on the shared branch; it does not remove the intervening shared commits.
+The fork is deliberately created after compaction: creating it earlier could protect the history and prevent the intended compaction.
+
+###### Live Undo and redo example
+
+**Setup:** Start with `[a, b, c]`.
+Append `"p"` and `"q"` in two commits tagged `"safe prefix"`.
+Then remove `"a"` and `"b"` in two more commits, retaining an Undo handle for each removal.
+Advance the collaboration window with `"x"` and `"y"`:
+
+```text
+History: initialize -> append p -> append q -> remove a -> remove b -> append x -> append y
+                       \-- safe prefix --/    \-- protected Undo --/
+Content: [c, p, q, x, y]
+```
+
+Dispose only the Undo handle for the window-advancing `"x"` append, so Undo targets the two removals.
+Keep both removal handles alive.
+
+**Act:** In the compacted variant, request compaction using `planSameGroup()`.
+Then Undo twice and redo twice, synchronizing after each operation.
+The control performs the same Undo/redo operations without compaction.
+
+**Verify:** Only the two safe-prefix commits combine, removing one history entry.
+Both protected deletion revisions remain in history.
+Both clients must observe:
+
+```text
+Start:          [c, p, q, x, y]
+Undo remove b:  [b, c, p, q, x, y]
+Undo remove a:  [a, b, c, p, q, x, y]
+After two redo: [c, p, q, x, y]
+```
+
+Both variants pass.
+This tests that compaction respects live Undo dependencies, not that it can compact the protected removal commits.
+
+###### Another client's Undo example
+
+**Setup:** Use the H0-H4 deletion example.
+Client 1 retains the two removal Undo handles; Client 2 does not have those handles.
+
+**Act:** Client 2 compacts H1-H2, writes a summary, and loads it to check the current content.
+Client 1 then uses its original handles to Undo each removal and appends `"after Undo"`.
+Synchronize the two original clients after each operation.
+
+**Verify:** The loaded summary initially contains `[c, x, y]`.
+Both connected clients then reach `[b, c, x, y]`, followed by `[a, b, c, x, y]`, and finally `[a, b, c, x, y, "after Undo"]`.
+This case passes.
+The loaded client is not connected to the operation stream, so the test does not verify its processing of those later Undo operations.
+
+###### Repair-data cleanup example
+
+**Setup:** Use the same two removals, but set `retainHistory: 6`.
+The detached `"a"` and `"b"` nodes are repair data, not visible document content.
+Only one client compacts H1-H2; its peer keeps the original history.
+The control leaves both clients uncompacted.
+
+**Act:** Make eight rounds of edits, with each client appending one item per round.
+Synchronize each round so the removal commits leave retained history.
+
+**Verify:** Visible content remains equal on both clients, and each checkout's `getRemovedRoots()` is empty.
+The uncompacted control passes.
+The compacted case is skipped: it left one obsolete repair-data entry on the compacting client while its peer had zero.
+This tests cleanup after history expires, not immediate deletion of repair data during compaction.
+
+###### Captured restore callback example
+
+**Setup:** Initialize an empty array, append two group-tagged items in separate commits, and advance the collaboration window.
+After all those edits, acquire `initialCommit.revertTo` and keep that callback.
+The target state is still the initial empty array.
+
+**Act:** In the compacted variant, combine the two group-tagged commits without adding a new edit, then call the previously captured callback.
+In the control, call it without compaction.
+
+**Verify:** The control restores `[]` and accepts a subsequent append.
+The compacted variant must reject the stale callback with `UsageError`, rather than using a history path whose commits have changed.
+That variant is skipped because it reached internal assertion `0xd31` instead.
+This does not require fresh restore requests to be rejected; it tests invalidation of an already captured path.
+
+###### Mixed-edit summary round-trip example
+
+**Setup:** Create two arrays of objects.
+For readability, letters below identify objects; each object actually contains a numeric `value` and a string-array `children` field.
+Start with `left = [A, B, C]` and `right = [D, E, F]`.
+The first five commits are:
+
+| Commit | Edit | Left afterward | Right afterward |
+| --- | --- | --- | --- |
+| 1 | Insert new object G, with value 10 and child `"child 10"`. | A, B, C, G | D, E, F |
+| 2 | Move the first left object to the end of the right array. | B, C, G | D, E, F, A |
+| 3 | Set D's value to 2 and append `"edit 2"` to its children. | B, C, G | D', E, F, A |
+| 4 | Move the first right object to the end of the left array. | B, C, G, D' | E, F, A |
+| 5 | Remove the first left object. | C, G, D' | E, F, A |
+
+The test repeats this operation pattern until there are 42 or 49 tagged commits.
+Commit 3 contains two operations inside one transaction, so it is still one commit.
+Additional edits from both clients advance the collaboration window; they are outside the selected range.
+Record the final nested content and revision list before compaction.
+
+**Act:** Compare three strategies for each range length:
+leave history uncompacted, repeatedly combine the oldest two selected commits, or combine the entire selected range during summary generation.
+Enable strict validation for compaction and serialization, write a summary, and reload it.
+
+**Verify:** Both live clients initially agree, compaction leaves the document content unchanged, and the reloaded document matches the recorded nested content.
+The uncompacted control keeps its complete revision list.
+Each compacted variant keeps only the newest selected revision, plus every revision outside the range: 41 or 48 selected entries disappear.
+All six cases pass after the `maxId` fix.
+These cases test serialization and current content, not historical rewind or Undo.
+
+###### Revision-replacement ID example
+
+The focused test is `ModularChangeFamily changeRevision raises maxId when collapsing revisions allocates new local IDs` in `src/test/feature-libraries/modular-schema/modularChangeFamily.spec.ts`.
+
+**Setup:** Create a changeset with two build entries, `(R1, 0)` and `(R2, 0)`, and `maxId = 0`.
+Freeze the input so mutation would fail.
+
+**Act:** Replace both revisions with R3.
+Because both original entries used local ID 0, the replacer must allocate a distinct local ID for one entry.
+
+**Verify:** The output entries are `(R3, 0)` and `(R3, 1)`, and the output has `maxId = 1`.
+The input still has `maxId = 0`.
+This case passes.
+It checks the bookkeeping directly; the mixed-edit round-trip cases separately check the encoder and decoder.
 
 #### 21.2 End-to-end tests: `packages/test/test-end-to-end-tests/src/test/treeHistoryCompaction.spec.ts`
 

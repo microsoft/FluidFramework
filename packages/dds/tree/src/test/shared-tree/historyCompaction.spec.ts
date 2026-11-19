@@ -15,6 +15,7 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { ISummaryTree, SummaryObject } from "@fluidframework/driver-definitions";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
+	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
@@ -28,9 +29,10 @@ import {
 
 import { asAlpha } from "../../api.js";
 import { FluidClientVersion } from "../../codec/index.js";
-import type { CustomMetadataTree } from "../../core/index.js";
+import { RebaseValidation, type CustomMetadataTree } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
+	SchemaFactory,
 	TreeViewConfiguration,
 	type CommitRevision,
 	type CompactionRange,
@@ -42,7 +44,7 @@ import {
 } from "../../simple-tree/index.js";
 import { configuredSharedTree, type ISharedTree } from "../../treeFactory.js";
 import type { JsonCompatibleReadOnlyObject } from "../../util/index.js";
-import { StringArray, TestTreeProviderLite } from "../utils.js";
+import { createTestUndoRedoStacks, StringArray, TestTreeProviderLite } from "../utils.js";
 
 const config = new TreeViewConfiguration({ schema: StringArray });
 
@@ -276,8 +278,14 @@ async function loadFromSummary(
 	retainHistory = true,
 	enableRevisionPreservation = false,
 	logger?: IMockLoggerExt,
+	runtimeFactory?: MockContainerRuntimeFactory,
 ): Promise<ISharedTree> {
 	const runtime = new MockFluidDataStoreRuntime({ idCompressor, logger });
+	if (runtimeFactory !== undefined) {
+		const containerRuntime = runtimeFactory.createContainerRuntime(runtime);
+		containerRuntime.deltaManager.lastSequenceNumber = runtimeFactory.sequenceNumber;
+		containerRuntime.deltaManager.minimumSequenceNumber = runtimeFactory.sequenceNumber;
+	}
 	const factory = makeFactory(retainHistory, undefined, enableRevisionPreservation);
 	return (await factory.load(
 		runtime,
@@ -615,6 +623,408 @@ function setupPreservationWalkthrough(metadataMode: "default" | "replacement") {
 }
 
 describe("History compaction", () => {
+	// Setup/act/verify examples: docs/history-compaction/DEV.md#rewind-and-restore-examples.
+	describe("rewind Undo and restore integrity", () => {
+		function deletionHistory(
+			summaryPolicy?: PlanCompaction,
+			retainHistory: boolean | number = true,
+			captureUndo = false,
+		) {
+			const provider = new TestTreeProviderLite(2, makeFactory(retainHistory, summaryPolicy));
+			const [tree, otherTree] = provider.trees;
+			const view = asAlpha(tree.viewWith(config));
+			view.initialize(["a", "b", "c"]);
+			provider.synchronizeMessages();
+			const otherView = asAlpha(otherTree.viewWith(config));
+			const target = view.branchHistory.getHead()?.revision;
+			assert(target !== undefined);
+			const undo = captureUndo ? createTestUndoRedoStacks(view.events) : undefined;
+			for (let index = 0; index < 2; index++) {
+				view.runTransaction(() => view.root.removeAt(0), {
+					customMetadata: { group: "deletions" },
+				});
+			}
+			provider.synchronizeMessages();
+			view.root.insertAtEnd("x");
+			provider.synchronizeMessages();
+			otherView.root.insertAtEnd("y");
+			provider.synchronizeMessages();
+			if (undo !== undefined) {
+				const advanceWindowUndo = undo.undoStack.pop();
+				assert(advanceWindowUndo !== undefined);
+				advanceWindowUndo.dispose();
+				assert.equal(undo.undoStack.length, 2);
+			}
+			assert.deepEqual([...view.root], ["c", "x", "y"]);
+			assert.deepEqual([...otherView.root], [...view.root]);
+			return { provider, tree, otherTree, view, otherView, target, undo };
+		}
+
+		for (const compact of [false, true]) {
+			const mode = compact ? "compacted" : "uncompacted";
+			// TODO: Enable compacted cases after the repair-data fixes in DEV.md sections 17.1-17.2.
+			const repairDataTest = compact ? it.skip : it;
+			for (const source of ["local", "summary reload"] as const) {
+				for (const action of ["rewind", "restore"] as const) {
+					repairDataTest(
+						`${action}s deleted content from ${mode} history after ${source}`,
+						async () => {
+							const policy = planSameGroup();
+							const { provider, tree, view, otherView, target } = deletionHistory(
+								compact && source === "summary reload" ? policy : undefined,
+							);
+							const before = countCommits(view.branchHistory);
+							if (compact && source === "local") {
+								assert.equal(
+									asAlpha(tree).historyCompaction.requestPlannedCompaction(policy),
+									1,
+								);
+							}
+							const loadedRuntimeFactory = new MockContainerRuntimeFactory();
+							loadedRuntimeFactory.sequenceNumber = provider.sequenceNumber;
+							const activeTree =
+								source === "summary reload"
+									? await loadFromSummary(
+											await summarize(tree),
+											provider.getCompressor(tree),
+											true,
+											false,
+											undefined,
+											loadedRuntimeFactory,
+										)
+									: tree;
+							const activeView =
+								source === "summary reload" ? asAlpha(activeTree.viewWith(config)) : view;
+							assert.equal(countCommits(activeView.branchHistory), before - (compact ? 1 : 0));
+							assert.deepEqual([...activeView.root], ["c", "x", "y"]);
+							if (action === "rewind") {
+								const fork = activeView.fork();
+								fork.rewindTo(target);
+								assert.deepEqual([...fork.root], ["a", "b", "c"]);
+								fork.root.insertAtEnd("after rewind");
+								assert.deepEqual([...fork.root], ["a", "b", "c", "after rewind"]);
+								assert.deepEqual([...activeView.root], ["c", "x", "y"]);
+								fork.dispose();
+							} else {
+								activeView.revertTo(target);
+								assert.deepEqual([...activeView.root], ["a", "b", "c"]);
+								activeView.root.insertAtEnd("after restore");
+								const expected = ["a", "b", "c", "after restore"];
+								assert.deepEqual([...activeView.root], expected);
+								if (source === "local") {
+									provider.synchronizeMessages();
+									assert.deepEqual([...otherView.root], expected);
+								} else {
+									loadedRuntimeFactory.processAllMessages();
+								}
+								const reloaded = await loadFromSummary(
+									await summarize(activeTree),
+									provider.getCompressor(tree),
+								);
+								assert.deepEqual([...reloaded.viewWith(config).root], expected);
+							}
+						},
+					);
+				}
+			}
+
+			it(`preserves live Undo and redo while ${mode} history respects their boundary`, () => {
+				const provider = new TestTreeProviderLite(2, makeFactory(true));
+				const [tree, otherTree] = provider.trees;
+				const view = asAlpha(tree.viewWith(config));
+				view.initialize(["a", "b", "c"]);
+				provider.synchronizeMessages();
+				const otherView = otherTree.viewWith(config);
+				for (const value of ["p", "q"]) {
+					view.runTransaction(() => view.root.insertAtEnd(value), {
+						customMetadata: { group: "safe prefix" },
+					});
+				}
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+				try {
+					for (let index = 0; index < 2; index++) {
+						view.runTransaction(() => view.root.removeAt(0), {
+							customMetadata: { group: "protected deletions" },
+						});
+					}
+					provider.synchronizeMessages();
+					view.root.insertAtEnd("x");
+					provider.synchronizeMessages();
+					otherView.root.insertAtEnd("y");
+					provider.synchronizeMessages();
+					const windowUndo = undoStack.pop();
+					assert(windowUndo !== undefined);
+					windowUndo.dispose();
+					assert.equal(undoStack.length, 2);
+					const deletions = listCommits(view.branchHistory)
+						.filter((commit) => commit.custom?.group === "protected deletions")
+						.map((commit) => commit.revision);
+					assert.equal(deletions.length, 2);
+					if (compact) {
+						assert.equal(
+							asAlpha(tree).historyCompaction.requestPlannedCompaction(planSameGroup()),
+							1,
+						);
+					}
+					assert.deepEqual(
+						listCommits(view.branchHistory)
+							.filter((commit) => commit.custom?.group === "protected deletions")
+							.map((commit) => commit.revision),
+						deletions,
+					);
+					for (const expected of [
+						["b", "c", "p", "q", "x", "y"],
+						["a", "b", "c", "p", "q", "x", "y"],
+					]) {
+						const undo = undoStack.pop();
+						assert(undo !== undefined);
+						undo.revert();
+						provider.synchronizeMessages();
+						assert.deepEqual([...view.root], expected);
+						assert.deepEqual([...otherView.root], expected);
+					}
+					for (let index = 0; index < 2; index++) {
+						const redo = redoStack.pop();
+						assert(redo !== undefined);
+						redo.revert();
+						provider.synchronizeMessages();
+					}
+					assert.deepEqual([...view.root], ["c", "p", "q", "x", "y"]);
+					assert.deepEqual([...otherView.root], [...view.root]);
+				} finally {
+					unsubscribe();
+				}
+			});
+
+			repairDataTest(`releases obsolete repair data after ${mode} history is trimmed`, () => {
+				const { provider, tree, otherTree, view, otherView } = deletionHistory(undefined, 6);
+				if (compact) {
+					assert.equal(
+						asAlpha(tree).historyCompaction.requestPlannedCompaction(planSameGroup()),
+						1,
+					);
+				}
+				for (let index = 0; index < 8; index++) {
+					view.root.insertAtEnd(`first ${index}`);
+					otherView.root.insertAtEnd(`second ${index}`);
+					provider.synchronizeMessages();
+				}
+				assert.deepEqual([...view.root], [...otherView.root]);
+				assert.equal(otherTree.kernel.checkout.getRemovedRoots().length, 0);
+				assert.equal(tree.kernel.checkout.getRemovedRoots().length, 0);
+			});
+		}
+
+		it("accepts an existing client's Undo after another client compacts and summarizes", async () => {
+			const { provider, otherTree, otherView, view, undo } = deletionHistory(
+				undefined,
+				true,
+				true,
+			);
+			assert(undo !== undefined);
+			try {
+				assert.equal(
+					asAlpha(otherTree).historyCompaction.requestPlannedCompaction(planSameGroup()),
+					1,
+				);
+				const loaded = await loadFromSummary(
+					await summarize(otherTree),
+					provider.getCompressor(otherTree),
+				);
+				assert.deepEqual([...loaded.viewWith(config).root], [...otherView.root]);
+				for (const expected of [
+					["b", "c", "x", "y"],
+					["a", "b", "c", "x", "y"],
+				]) {
+					const revertible = undo.undoStack.pop();
+					assert(revertible !== undefined);
+					revertible.revert();
+					provider.synchronizeMessages();
+					assert.deepEqual([...view.root], expected);
+					assert.deepEqual([...otherView.root], expected);
+				}
+				view.root.insertAtEnd("after Undo");
+				provider.synchronizeMessages();
+				assert.deepEqual([...otherView.root], ["a", "b", "c", "x", "y", "after Undo"]);
+			} finally {
+				undo.unsubscribe();
+			}
+		});
+
+		for (const compact of [false, true]) {
+			// TODO: Enable the stale-path case after compaction invalidates captured revertTo callbacks.
+			const capturedCallbackTest = compact ? it.skip : it;
+			capturedCallbackTest(
+				`${compact ? "rejects a stale" : "accepts a current"} captured revertTo callback`,
+				() => {
+					const { provider, view } = generateHistory("append", 1, 2);
+					const first = listCommits(view.branchHistory).find(
+						(commit) => commit.custom?.group === 0,
+					);
+					const target = first?.getParent();
+					assert(target !== undefined);
+					const revert = target.revertTo;
+					assert(revert !== undefined);
+					if (compact) {
+						assert.equal(
+							asAlpha(provider.trees[0]).historyCompaction.requestPlannedCompaction(
+								planSameGroup(),
+							),
+							1,
+						);
+						assert.throws(
+							() => revert(),
+							(error: unknown) => error instanceof UsageError,
+						);
+					} else {
+						revert();
+						provider.synchronizeMessages();
+						assert.deepEqual([...view.root], []);
+						view.root.insertAtEnd("after restore");
+						provider.synchronizeMessages();
+						assert.deepEqual([...view.root], ["after restore"]);
+					}
+				},
+			);
+		}
+	});
+
+	// Setup/act/verify examples: docs/history-compaction/DEV.md#mixed-edit-summary-round-trip-example.
+	describe("composition summary round-trip", () => {
+		const sf = new SchemaFactory("history-compaction-round-trip");
+		class Item extends sf.object("Item", {
+			value: sf.number,
+			children: sf.array(sf.string),
+		}) {}
+		class Document extends sf.object("Document", {
+			left: sf.array(Item),
+			right: sf.array(Item),
+		}) {}
+		const configuration = new TreeViewConfiguration({ schema: Document });
+		const readContent = (root: Document) => ({
+			left: root.left.map((item) => ({
+				value: item.value,
+				children: [...item.children],
+			})),
+			right: root.right.map((item) => ({
+				value: item.value,
+				children: [...item.children],
+			})),
+		});
+
+		for (const rangeLength of [42, 49]) {
+			for (const strategy of ["uncompacted", "incremental pairs", "whole range"] as const) {
+				it(`encodes and reloads ${rangeLength} mixed edits using ${strategy}`, async () => {
+					const previousLevel = RebaseValidation.currentLevel;
+					try {
+						const policy: PlanCompaction = (history, eligibleCount) => {
+							const candidates = history.filter((commit) => commit.custom?.roundTrip === true);
+							const range =
+								strategy === "incremental pairs" ? candidates.slice(0, 2) : candidates;
+							assert(range.length >= 2);
+							const oldest = range[0];
+							const newest = range.at(-1);
+							assert(oldest !== undefined && newest !== undefined);
+							assert(history.indexOf(newest) < eligibleCount, "The whole range is eligible");
+							return { ranges: [{ oldest: oldest.revision, newest: newest.revision }] };
+						};
+						const provider = new TestTreeProviderLite(
+							2,
+							makeFactory(true, strategy === "whole range" ? policy : undefined),
+						);
+						const [tree, otherTree] = provider.trees;
+						const view = asAlpha(tree.viewWith(configuration));
+						const item = (value: number) => ({ value, children: [`child ${value}`] });
+						view.initialize({
+							left: [item(0), item(1), item(2)],
+							right: [item(3), item(4), item(5)],
+						});
+						provider.synchronizeMessages();
+						const otherView = otherTree.viewWith(configuration);
+						for (let index = 0; index < rangeLength; index++) {
+							view.runTransaction(
+								() => {
+									switch (index % 5) {
+										case 0: {
+											view.root.left.insertAtEnd(item(index + 10));
+											break;
+										}
+										case 1: {
+											view.root.right.moveToEnd(0, view.root.left);
+											break;
+										}
+										case 2: {
+											view.root.right[0].value = index;
+											view.root.right[0].children.insertAtEnd(`edit ${index}`);
+											break;
+										}
+										case 3: {
+											view.root.left.moveToEnd(0, view.root.right);
+											break;
+										}
+										case 4: {
+											view.root.left.removeAt(0);
+											break;
+										}
+										default: {
+											assert.fail("Unexpected edit");
+										}
+									}
+								},
+								{ customMetadata: { roundTrip: true } },
+							);
+						}
+						provider.synchronizeMessages();
+						view.root.left.insertAtEnd(item(100));
+						otherView.root.right.insertAtEnd(item(101));
+						provider.synchronizeMessages();
+						const expectedContent = readContent(view.root);
+						assert.deepEqual(readContent(otherView.root), expectedContent);
+						const before = listCommits(view.branchHistory);
+						const selected = before.filter((commit) => commit.custom?.roundTrip === true);
+						assert.equal(selected.length, rangeLength);
+						const removedRevisions = new Set(
+							selected.slice(0, -1).map((commit) => commit.revision),
+						);
+						RebaseValidation.setLevel(RebaseValidation.Level.Strict);
+						if (strategy === "incremental pairs") {
+							for (let index = 1; index < rangeLength; index++) {
+								const removed =
+									asAlpha(tree).historyCompaction.requestPlannedCompaction(policy);
+								assert.equal(removed, 1);
+							}
+						}
+						const summary = await summarize(tree);
+						const expectedRevisions = before
+							.filter(
+								(commit) =>
+									strategy === "uncompacted" || !removedRevisions.has(commit.revision),
+							)
+							.map((commit) => commit.revision);
+						assert.deepEqual(
+							listCommits(view.branchHistory).map((commit) => commit.revision),
+							expectedRevisions,
+						);
+						assert.deepEqual(readContent(view.root), expectedContent);
+						const loaded = await loadFromSummary(summary, provider.getCompressor(tree));
+						assert.deepEqual(
+							listCommits(loaded.kernel.checkout.branchHistory).map(
+								(commit) => commit.revision,
+							),
+							expectedRevisions,
+						);
+						assert.deepEqual(
+							readContent(loaded.viewWith(configuration).root),
+							expectedContent,
+						);
+					} finally {
+						RebaseValidation.setLevel(previousLevel);
+					}
+				});
+			}
+		}
+	});
+
 	for (const mode of ["default", "replacement"] as const) {
 		it(`preserves old and newly sequenced revisions while compacting surrounding history (${mode} metadata)`, async () => {
 			const { author, setPreserved, assertWindow, advanceWindow, compactStage, checkSummary } =

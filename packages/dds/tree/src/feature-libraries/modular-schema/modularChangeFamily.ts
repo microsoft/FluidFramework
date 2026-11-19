@@ -1511,11 +1511,24 @@ export class ModularChangeFamily
 
 	public changeRevision(
 		change: ModularChangeset,
-		replacer: RevisionReplacer,
+		revisionReplacer: RevisionReplacer,
 	): ModularChangeset {
 		strictRebaseValidation("Malformed changeRevision input", () =>
 			isChangesetValid(change, this.fieldKinds),
 		);
+
+		let maxId = change.maxId;
+		const replacer: RevisionReplacer = {
+			updatedRevision: revisionReplacer.updatedRevision,
+			isObsolete: (revision) => revisionReplacer.isObsolete(revision),
+			getUpdatedAtomId: (id, count = 1) => {
+				const updatedId = revisionReplacer.getUpdatedAtomId(id, count);
+				if (updatedId.localId !== id.localId) {
+					maxId = brand(Math.max(maxId ?? -1, updatedId.localId + count - 1));
+				}
+				return updatedId;
+			},
+		};
 
 		const updatedFields = this.replaceFieldMapRevisions(change.fieldChanges, replacer);
 		const updatedNodes = replaceIdMapRevisions(change.nodeChanges, replacer, (nodeChangeset) =>
@@ -1560,6 +1573,11 @@ export class ModularChangeFamily
 		}
 
 		updated.revisions = [{ revision: replacer.updatedRevision }];
+		// Revision replacement can allocate IDs above the input maximum.
+		// Decoders must allocate their temporary IDs above those remapped IDs.
+		if (maxId !== undefined) {
+			updated.maxId = maxId;
+		}
 
 		strictRebaseValidation("Malformed changeRevision output", () =>
 			isChangesetValid(updated, this.fieldKinds),
