@@ -37,8 +37,10 @@ export interface EditableChunk extends MutableChunk {
 	 * Creates a {@link ChunkEditCursor} in the chunk's root field.
 	 * @remarks
 	 * Contained chunks require an editor obtained from their owning sequence.
-	 * If omitted, an external owning reference supplies the editing authority.
-	 * Release the returned cursor before releasing that authority.
+	 * If `edit` is omitted, an external owning reference supplies the editing authority.
+	 * The caller must call `release()` on the returned cursor when finished.
+	 * This also closes the chunk's edit scope, including a supplied `edit`.
+	 * Release the cursor before closing the owning sequence's editor or releasing the external owning reference.
 	 * The adapter can expose field editors through {@link ChunkEditCursor.getFieldEditor},
 	 * support format-specific splices through {@link ChunkEditCursor.trySplice}, or both.
 	 */

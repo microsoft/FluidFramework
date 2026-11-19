@@ -706,22 +706,21 @@ export function chunkRange(
 }
 
 /**
- * Walks the `chunks` array of a field and splits a chunk if needed so that `nodeIndex` sits on
- * a chunk boundary. After the call, inserting a chunk at the returned index would place its
- * first top-level node at index `nodeIndex` when treating `chunks` as a field.
+ * Splits chunks in `field` as needed so that `nodeIndex` sits on a chunk boundary.
+ * After the call, inserting a chunk at the returned chunk index places its first top-level node at `nodeIndex` within `field`.
  *
  * @remarks
  * When splitting chunks, large chunks are split evenly so that repeated calls to this method (or similar operations)
  * avoid poor worst-case behavior. See {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax} for details.
  *
- * @param chunks - The array of {@link TreeChunk}s for the field to split. Mutated in place.
+ * @param field - The owning editor or array of {@link TreeChunk}s to split. Modified in place.
  * @param nodeIndex - The index to split at, measured in top-level nodes within the field.
  * Must be in `[0, totalNodes]`, where `totalNodes` is the sum of {@link TreeChunk.topLevelLength}
- * across all chunks.
+ * across all chunks in `field`.
  * @param policy - The {@link ChunkCompressor} to use when splitting chunks and re-chunking each side
  * of the split via {@link chunkRange}.
  *
- * @returns The index in `chunks` (after modifications made by this function) where if a chunk were inserted at that index its first top level node would have index `nodeIndex` when treating `chunks` as a field.
+ * @returns The chunk index at which to insert content so that its first top-level node is at `nodeIndex` in `field`.
  */
 export function splitFieldAtIndex(
 	field: TreeChunk[] | ChunkSequenceEditor,
