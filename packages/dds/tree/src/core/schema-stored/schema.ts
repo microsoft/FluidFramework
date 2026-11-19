@@ -40,8 +40,47 @@ export const SchemaFormatVersion = strictEnum("SchemaFormatVersion", {
 	 * Adds persisted metadata to the node schema and field schema.
 	 */
 	v2: 2,
+	/**
+	 * Supports application-defined schema versions in an experimental format.
+	 */
+	v3Experimental: "schemaVersion",
 });
 export type SchemaFormatVersion = Values<typeof SchemaFormatVersion>;
+
+/**
+ * Input record mapping string library identifiers to application-defined schema versions.
+ *
+ * @remarks
+ * Each entry pairs a library identifier with a non-negative safe integer version.
+ * Because these entries are persisted as part of the document's stored schema,
+ * all clients must use the same identifier for a library and keep it stable across releases.
+ * A globally unique name, such as a package name or a domain-based name, avoids conflicts with other libraries.
+ * A node schema's `identifier`, such as `Note.identifier`, can be used directly as a version-map key.
+ *
+ * {@link SchemaVersions} describes the read-only maps exposed by schema APIs and how versions control upgrades.
+ *
+ * @alpha
+ */
+export type SchemaVersionMap = Readonly<Record<string, number>>;
+
+/**
+ * A read-only map of library identifiers to application-defined schema versions.
+ *
+ * @remarks
+ * Each entry associates a stable identifier with a non-negative safe integer.
+ * {@link SchemaVersionMap} describes how to choose identifiers when configuring these versions.
+ * Schema APIs use `undefined` when no versions were supplied, whereas an empty map explicitly records versioning with no identifiers.
+ * These states are distinct: adding or removing even an empty map changes version ordering.
+ *
+ * Once versions are stored in a document, schema upgrades must retain every identifier without decreasing its value.
+ * Within that constraint, monotonic schema changes do not require a version increase.
+ * Other content-preserving changes require both the stored and proposed schemas to have version maps,
+ * with at least one increased value or added identifier to prevent inverse upgrades.
+ * Adding the first version map alone does not permit these changes, and no version increase permits discarding previously allowed content.
+ *
+ * @alpha
+ */
+export type SchemaVersions = ReadonlyMap<string, number>;
 
 type FieldSchemaFormat = FieldSchemaFormatV1 | FieldSchemaFormatV2;
 
@@ -424,6 +463,13 @@ export interface TreeStoredSchema extends StoredSchemaCollection {
 	 * Schema for the root field which contains the whole tree.
 	 */
 	readonly rootFieldSchema: TreeFieldStoredSchema;
+
+	/**
+	 * Contains the application-defined versions for this schema.
+	 *
+	 * See {@link SchemaVersions} for the distinction between absent and empty maps and the upgrade rules.
+	 */
+	readonly schemaVersion?: SchemaVersions;
 }
 
 /**

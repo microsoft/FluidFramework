@@ -512,7 +512,7 @@ describe("treeSchema", () => {
 				});
 				assert.deepEqual(structuredClone(stored), storedSnapshot);
 
-				// Neither the cached conversion nor a candidate for another document may inherit these stored string permissions.
+				// The cached conversion and another document's candidate must still exclude the staged string type.
 				expectSchemaEqual(toInitialSchema(before, policy), toInitialSchema(expectedFresh));
 				expectUpgradeCandidate(
 					getSchemaUpgradeCandidate(createTreeSchema(before), fresh, policy),

@@ -11,23 +11,34 @@ import * as semver from "semver-ts";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { getRootSchemaDerivedData, toInitialSchema } from "../treeSchema.js";
 
-import { TreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
+import type { ITreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
+import { TreeViewConfigurationAlpha } from "./configuration.js";
+import { identifySchema } from "./schemaIdentity.js";
 import { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";
 import { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
 import {
 	decodeSchemaCompatibilitySnapshot,
 	encodeSchemaCompatibilitySnapshot,
 } from "./simpleSchemaCodec.js";
-import type { SchemaCompatibilityStatus } from "./tree.js";
+import type {
+	SchemaCompatibilityStatusBeta,
+	SchemaUpgradeIncompatibility,
+	SchemaViewIncompatibility,
+} from "./tree.js";
 
 /**
- * Reports the ability of a client's view configuration to view and/or upgrade a document's stored schema
- * (described by `documentViewConfiguration.schema`).
+ * Reports whether a client's view configuration can view or upgrade the stored schema represented by another configuration.
  *
  * @remarks
- * Schema metadata does not affect compatibility.
+ * The document configuration supplies the historical schema and application-defined versions,
+ * while the client configuration supplies the schema and versions the application now expects.
+ * The comparison uses those definitions rather than inspecting document content.
+ * Schema metadata does not affect content compatibility.
+ * Application-defined versions additionally constrain which upgrades are allowed.
  *
- * This function does not inspect document content.
+ * Both configurations are evaluated using the current version of this library.
+ * A result for a historical view does not establish that the version of this library deployed with that view supports the same upgrades.
+ * Use tests with the deployed runtime versions to verify that assumption before relying on upgrade-based collaboration.
  *
  * @example Checking the ability of the client's view schema to view or upgrade a document's stored schema.
  * In this case, the historical schema is a Point2D object with x and y fields, while the current schema is a Point3D object
@@ -39,12 +50,13 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * const documentViewConfiguration = importCompatibilitySchemaSnapshot(encodedDocumentSchema);
  *
  * // Build the current view schema
- * class Point3D extends factory.object("Point", {
- * 	x: factory.number,
- * 	y: factory.number,
+ * const schemaFactory = new SchemaFactory("test");
+ * class Point3D extends schemaFactory.object("Point", {
+ * 	x: schemaFactory.number,
+ * 	y: schemaFactory.number,
  *
  * 	// The current schema has a new optional field that was not present on Point2D
- * 	z: factory.optional(factory.number),
+ * 	z: schemaFactory.optional(schemaFactory.number),
  * }) {}
  * const clientViewConfiguration = new TreeViewConfiguration({ schema: Point3D });
  *
@@ -66,15 +78,16 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * assert.equal(forwardsCompatibilityStatus.canView, true);
  * ```
  *
- * @param documentViewConfiguration - Configuration whose `schema` was used to generate the stored schema persisted in the document.
+ * @param documentViewConfiguration - Configuration whose schema and application-defined versions represent the stored schema in the document.
  * This function assumes the stored schema was generated with the default restrictive staged upgrade policy.
  * @param clientViewConfiguration - Configuration with the view schema being used by the current client.
- * This function assumes the a stored schema derived from this view would be generated with the default restrictive staged upgrade policy.
+ * This function assumes a stored schema derived from this view would be generated with the default restrictive staged upgrade policy.
  *
- * @returns The ability of `clientViewConfiguration.schema` to view and/or upgrade a document's stored schema.
- *
- * This is the same {@link SchemaCompatibilityStatus} a {@link TreeView} would report for this combination of schemas,
- * without `canInitialize`.
+ * @returns The compatibility status that a {@link TreeView} using `clientViewConfiguration.schema` would report for the document's stored schema.
+ * As with {@link SchemaCompatibilityStatusBeta}, check `view` to determine whether the document is accessible
+ * and `upgrade` to determine whether a schema upgrade is permitted.
+ * Each failed result includes its own `incompatibilities` to explain what prevents that operation.
+ * The status omits `canInitialize` because this function compares schemas without opening a document.
  *
  * @privateRemarks
  * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
@@ -82,25 +95,33 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * @alpha
  */
 export function checkCompatibility(
-	documentViewConfiguration: TreeViewConfiguration,
-	clientViewConfiguration: TreeViewConfiguration,
-): Omit<SchemaCompatibilityStatus, "canInitialize"> {
+	documentViewConfiguration: ITreeViewConfigurationAlpha,
+	clientViewConfiguration: ITreeViewConfigurationAlpha,
+): Omit<SchemaCompatibilityStatusBeta, "canInitialize"> {
 	const viewAsAlpha = new TreeViewConfigurationAlpha({
 		schema: clientViewConfiguration.schema,
+		schemaIdentity: clientViewConfiguration.schemaIdentity,
 	});
-	const stored = toInitialSchema(documentViewConfiguration.schema);
+	const stored = toInitialSchema(
+		documentViewConfiguration.schema,
+		undefined,
+		documentViewConfiguration.schemaIdentity?.schemaVersion,
+	);
 	return checkSchemaCompatibility(viewAsAlpha, stored);
 }
 
 /**
- * Returns a JSON-compatible representation of the tree schema for snapshot compatibility checking.
+ * Captures a configuration's schema and application-defined versions for snapshot compatibility checking.
  *
  * @remarks
- * Snapshots can be loaded by the same or newer package versions, but not necessarily older versions.
+ * The returned JSON-compatible value can be saved to compare a later application configuration with this version of its schema.
+ * Snapshots preserve application-defined versions from `schemaIdentity`, but not runtime hash checks or telemetry.
+ * They can be loaded by the same or newer package versions, but not necessarily older versions.
  *
  * @see {@link importCompatibilitySchemaSnapshot} which loads these snapshots.
  *
- * @param config - The schema to snapshot. Only the schema field of the `TreeViewConfiguration` is used.
+ * @param config - The schema and application-defined versions to snapshot.
+ *
  * @returns The JSON representation of the schema.
  *
  * @example Create and persist a snapshot of a Point2D schema.
@@ -108,8 +129,8 @@ export function checkCompatibility(
  * ```ts
  * const schemaFactory = new SchemaFactory("test");
  * class Point2D extends schemaFactory.object("Point", {
- * 	x: factory.number,
- * 	y: factory.number,
+ * 	x: schemaFactory.number,
+ * 	y: schemaFactory.number,
  * }) {}
  * const viewSchema = new TreeViewConfiguration({ schema: Point2D });
  * const encodedSchema = JSON.stringify(exportCompatibilitySchemaSnapshot(viewSchema));
@@ -124,28 +145,39 @@ export function checkCompatibility(
  * @alpha
  */
 export function exportCompatibilitySchemaSnapshot(
-	config: Pick<TreeViewConfiguration, "schema">,
+	config: Pick<ITreeViewConfigurationAlpha, "schema" | "schemaIdentity">,
 ): JsonCompatibleReadOnly {
 	const { treeSchema } = getRootSchemaDerivedData(config.schema);
-	return encodeSchemaCompatibilitySnapshot(treeSchema);
+	return encodeSchemaCompatibilitySnapshot({
+		...treeSchema,
+		schemaVersion: config.schemaIdentity?.schemaVersion,
+	});
 }
 
 /**
- * Parse the format exported by {@link exportCompatibilitySchemaSnapshot} into a schema.
+ * Restores a schema configuration from a compatibility snapshot created by {@link exportCompatibilitySchemaSnapshot}.
  *
- * Can load snapshots created by the same or older package versions, but not necessarily newer versions.
+ * @remarks
+ * The returned configuration contains the snapshotted schema and any application-defined versions,
+ * so it can serve as the historical configuration in {@link checkCompatibility}.
+ * Hash checks and hash telemetry are not restored because they are not part of the snapshot.
+ * This function can load snapshots created by the same or older package versions, but not necessarily newer versions.
  *
  * @see {@link exportCompatibilitySchemaSnapshot} which creates these snapshots.
  *
  * @param config - The JSON representation of the schema.
- * @returns The schema. Only the schema field of the {@link TreeViewConfiguration} is populated.
+ *
+ * @returns The schema and application-defined versions in a {@link TreeViewConfigurationAlpha}.
+ *
  * @throws Will throw a usage error if the encoded schema is not in the expected format.
  *
  * @example Load and parse a snapshot of a Point2D schema.
  *
- * ```ts;
- * const oldViewSchema = importCompatibilitySchemaSnapshot(fs.readFileSync("PointSchema.json", "utf8"));
+ * ```ts
+ * const encodedSchema = JSON.parse(fs.readFileSync("PointSchema.json", "utf8"));
+ * const oldViewSchema = importCompatibilitySchemaSnapshot(encodedSchema);
  * ```
+ *
  * @privateRemarks
  * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
  *
@@ -153,13 +185,22 @@ export function exportCompatibilitySchemaSnapshot(
  */
 export function importCompatibilitySchemaSnapshot(
 	config: JsonCompatibleReadOnly,
-): TreeViewConfiguration {
+): TreeViewConfigurationAlpha {
 	const simpleSchema = decodeSchemaCompatibilitySnapshot(config);
 	const viewSchema = generateSchemaFromSimpleSchema(simpleSchema);
 
-	// We construct a TreeViewConfiguration here with the default parameters. The default set of validation parameters are fine for
+	// We construct a TreeViewConfigurationAlpha here with the default parameters. The default set of validation parameters are fine for
 	// a schema produced by `generateSchemaFromSimpleSchema`.
-	return new TreeViewConfiguration({ schema: viewSchema.root });
+	return new TreeViewConfigurationAlpha({
+		schema: viewSchema.root,
+		// Snapshots restore versions, not runtime hash checks or telemetry.
+		schemaIdentity:
+			simpleSchema.schemaVersion === undefined
+				? undefined
+				: identifySchema({
+						schemaVersion: Object.fromEntries(simpleSchema.schemaVersion),
+					}),
+	});
 }
 
 /**
@@ -236,11 +277,11 @@ export interface CombinedSchemaCompatibilityStatus {
 	/**
 	 * How a {@link TreeView} using the current schema would report its compatibility with the historical snapshot.
 	 */
-	readonly currentViewOfSnapshotDocument: Omit<SchemaCompatibilityStatus, "canInitialize">;
+	readonly currentViewOfSnapshotDocument: Omit<SchemaCompatibilityStatusBeta, "canInitialize">;
 	/**
 	 * How a {@link TreeView} using the snapshotted schema would report its compatibility with a document created with the current schema.
 	 */
-	readonly snapshotViewOfCurrentDocument: Omit<SchemaCompatibilityStatus, "canInitialize">;
+	readonly snapshotViewOfCurrentDocument: Omit<SchemaCompatibilityStatusBeta, "canInitialize">;
 
 	/**
 	 * Whether the view schemas produce identical compatibility snapshots.
@@ -348,11 +389,14 @@ export interface SnapshotSchemaCompatibilityOptions {
 	 * For each historical snapshot in that window, both its view and the current view must be able to use documents created by the other, either directly or after an upgrade.
 	 * Because an upgrade can be required, passing the snapshot check does not guarantee immediate viewing.
 	 * When {@link SchemaCompatibilityStatus.canView} is false but {@link SchemaCompatibilityStatus.canUpgrade} is true, the application must call {@link TreeView.upgradeSchema} before accessing the document.
+	 * Historical schemas are evaluated with the runtime executing the check, not the runtimes deployed with those clients.
+	 * Applications must verify that supported clients have both the runtime support and application code needed to perform any required upgrades.
 	 *
 	 * Typically applications will attempt to manage their deployment/update schedule such that all versions concurrently deployed can
 	 * collaborate to avoid users losing access to documents when other users upgrade the schema.
 	 * Such applications can set this to the oldest version currently deployed,
-	 * then rely on {@link snapshotSchemaCompatibility} to verify that no schema changes are made which would break collaboration with that (or newer) versions.
+	 * then use {@link snapshotSchemaCompatibility} to check schema compatibility with that (or newer) versions, alongside tests with their deployed runtime versions.
+	 * Setting this minimum does not update or prevent connections from older clients.
 	 *
 	 * This is the same approach used by {@link @fluidframework/runtime-definitions#OldestSupportedClientVersion}
 	 * except that type is specifically for use with the version of the Fluid Framework client packages,
@@ -438,10 +482,15 @@ export interface SnapshotSchemaCompatibilityOptions {
  * These checks allow compatibility through an upgrade, but do not perform that upgrade.
  * Applications must therefore inspect {@link TreeView.compatibility} and apply any required {@link TreeView.upgradeSchema | upgrade} before accessing the document.
  *
- * Proper use of this utility should do a good job at detecting schema compatibility issues,
- * however it currently does not do a good job of explaining exactly what change to the schema is causing the compatibility issues.
- * This is a known limitation that will be improved in future releases.
- * These improvements, as well as other changes, may change the exact messages produced by this function in the error cases: no stability of these messages should be assumed.
+ * All schema versions are evaluated using the current version of this library.
+ * Snapshots do not identify or execute the library versions deployed with historical clients.
+ * A historical view's ability to upgrade under the current version of this library therefore does not guarantee that a deployed older client can perform that upgrade.
+ * Before relying on upgrade-based collaboration, verify the required runtime support and application upgrade handling with tests using the supported clients' library versions.
+ *
+ * Compatibility errors identify the affected versions and separately explain why viewing and upgrading both failed.
+ * If an upgrade is blocked because its proposed stored schema would still prevent viewing, the error also includes the nested viewing reasons.
+ * These diagnostics describe schema constraints without inspecting document content.
+ * The exact wording of error messages may change and should not be used for programmatic handling.
  *
  * Unlike some other snapshot based testing tools, this stores more than just the current snapshot: historical snapshots are retained as well.
  * Retention of these additional historical snapshots, whose content can't be regenerated from the current schema, is necessary to properly test compatibility across versions.
@@ -735,10 +784,14 @@ export function snapshotSchemaCompatibility(
 	// Compare all snapshots against the current schema, using the compatibilityMap.
 	for (const [snapshotVersion, compatibility] of compatibilityMap) {
 		// The current version must be able to view or upgrade documents from every historical snapshot, regardless of the collaboration window.
-		const currentCompatibility = compatibility.currentViewOfSnapshotDocument;
-		if (!currentCompatibility.canView && !currentCompatibility.canUpgrade) {
+		const { view, upgrade } = compatibility.currentViewOfSnapshotDocument;
+		if (!view.isCompatible && !upgrade.isCompatible) {
 			compatibilityErrors.push(
-				`Current version ${JSON.stringify(currentVersion)} can neither view nor upgrade documents from ${JSON.stringify(snapshotVersion)}.`,
+				formatCompatibilityFailure(
+					`Current version ${JSON.stringify(currentVersion)} can neither view nor upgrade documents from ${JSON.stringify(snapshotVersion)}.`,
+					view.incompatibilities,
+					upgrade.incompatibilities,
+				),
 			);
 		}
 
@@ -759,10 +812,15 @@ export function snapshotSchemaCompatibility(
 			// Collaboration with this version is expected to work.
 			if (versionComparer(snapshotVersion, minVersionForCollaboration) >= 0) {
 				// A supported historical client must be able to view or upgrade a document created from the current schema.
-				const historicalCompatibility = compatibility.snapshotViewOfCurrentDocument;
-				if (!historicalCompatibility.canView && !historicalCompatibility.canUpgrade) {
+				const { view: historicalView, upgrade: historicalUpgrade } =
+					compatibility.snapshotViewOfCurrentDocument;
+				if (!historicalView.isCompatible && !historicalUpgrade.isCompatible) {
 					compatibilityErrors.push(
-						`Historical version ${JSON.stringify(snapshotVersion)} can neither view nor upgrade documents from ${JSON.stringify(currentVersion)}: these versions are expected to be able to collaborate due to the selected \`minVersionForCollaboration\` ${JSON.stringify(minVersionForCollaboration)}.`,
+						formatCompatibilityFailure(
+							`Historical version ${JSON.stringify(snapshotVersion)} can neither view nor upgrade documents from ${JSON.stringify(currentVersion)}: these versions are expected to be able to collaborate due to the selected \`minVersionForCollaboration\` ${JSON.stringify(minVersionForCollaboration)}.`,
+							historicalView.incompatibilities,
+							historicalUpgrade.incompatibilities,
+						),
 					);
 				}
 			} else {
@@ -779,6 +837,47 @@ export function snapshotSchemaCompatibility(
 	if (compatibilityErrors.length > 0) {
 		throw errorWithContext(compatibilityErrors.map((e) => ` - ${e}`).join("\n"));
 	}
+}
+
+/**
+ * Formats a version-level compatibility failure with separate viewing and upgrade diagnostics.
+ *
+ * @remarks
+ * Preserves diagnostic order and nests viewing reasons beneath the upgrade failure they explain.
+ * Multiline reasons have their continuation lines aligned with the bullet text.
+ * The summary is left unprefixed because the caller adds its first-level bullet.
+ *
+ * @param message - The summary identifying the failed operation and the versions involved.
+ * @param viewIncompatibilities - The diagnostics for the failed viewing operation.
+ * @param upgradeIncompatibilities - The diagnostics for the failed upgrade operation.
+ * @returns The summary followed by diagnostic bullets, ready for inclusion in the combined error message.
+ */
+function formatCompatibilityFailure(
+	message: string,
+	viewIncompatibilities: readonly SchemaViewIncompatibility[],
+	upgradeIncompatibilities: readonly SchemaUpgradeIncompatibility[],
+): string {
+	const lines = [message];
+
+	function appendReasons(
+		entries: readonly (SchemaViewIncompatibility | SchemaUpgradeIncompatibility)[],
+		indent: string,
+	): void {
+		for (const entry of entries) {
+			lines.push(`${indent}- ${entry.reason.split("\n").join(`\n${indent}  `)}`);
+			if (entry.mismatch === "viewIncompatibleAfterUpgrade") {
+				appendReasons(entry.incompatibilities, `${indent}  `);
+			}
+		}
+	}
+
+	// The caller prefixes the summary with " - ".
+	// Indent operation headings by three spaces to nest them beneath that summary.
+	lines.push("   - Viewing failed:");
+	appendReasons(viewIncompatibilities, "     ");
+	lines.push("   - Upgrade failed:");
+	appendReasons(upgradeIncompatibilities, "     ");
+	return lines.join("\n");
 }
 
 /**

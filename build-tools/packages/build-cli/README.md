@@ -72,6 +72,24 @@ in some way. Other commands could adopt this, but only the `release command` use
 The `release` command also provides a `state` flag that can be used to initialize the state machine to a specific state.
 This is intended for testing.
 
+#### Release-note snapshots
+
+The release-note generation tests compare full documents with [checked-in Markdown snapshots](./src/test/commands/generate/fixtures).
+After building this package and its workspace dependencies, run these commands to compile the tests and check the snapshots:
+
+```bash
+pnpm run build:test
+pnpm run test:mocha
+```
+
+To create or update snapshots after an intentional output change, run:
+
+```bash
+pnpm run test:update-snapshots
+```
+
+Snapshots are saved under `src/test/.../fixtures`.
+
 ### Manual Integration Testing and Debugging
 
 There are some VS Code launch targets like `flub generate typetests` that may work in some cases.
