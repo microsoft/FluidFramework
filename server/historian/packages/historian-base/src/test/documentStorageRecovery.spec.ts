@@ -26,12 +26,7 @@ import request from "supertest";
 
 import * as historianApp from "../app";
 import { createGitService } from "../routes/utils";
-import type {
-	IDocumentAccessAuthorizer,
-	ITrustedCreateContextResolver,
-	ITrustedCreateContext,
-	RestGitService,
-} from "../services";
+import type { IDocumentAccessAuthorizer, RestGitService } from "../services";
 import { TestCache, TestDocumentManager, TestTenantService } from "./utils";
 
 const tenantId = "tenant";
@@ -81,7 +76,6 @@ describe("document storage recovery", () => {
 	let repairSucceeds: boolean;
 	let currentSummary: typeof summary;
 	let lastRoutingFlag: string | string[] | undefined;
-	let lastStorageName: string | string[] | undefined;
 	let storageNameRetriever: {
 		get: sinon.SinonStub;
 		getForRequest?(
@@ -101,14 +95,12 @@ describe("document storage recovery", () => {
 		repairSucceeds = true;
 		currentSummary = summary;
 		lastRoutingFlag = undefined;
-		lastStorageName = undefined;
 		documentManager = new TestDocumentManager();
 		readDocument = sandbox.stub(documentManager, "readDocument").resolves(activeDocument);
 		storageNameRetriever = { get: sandbox.stub().resolves(storageName) };
 		server = createServer((req, res) => {
 			operations.push(`${req.method} ${req.url}`);
 			lastRoutingFlag = req.headers["is-ephemeral-container"] ?? undefined;
-			lastStorageName = req.headers["storage-name"];
 			res.setHeader("Content-Type", "application/json");
 			if (req.url?.endsWith("/internal/document-storage/backfill")) {
 				initialized = repairSucceeds && backfillStatus === 204;
@@ -127,14 +119,6 @@ describe("document storage recovery", () => {
 				initialized = false;
 				failureStatus = 404;
 				res.end("true");
-			} else if (req.method === "POST" && req.url?.endsWith("/git/refs")) {
-				res.end(
-					JSON.stringify({
-						ref: "refs/heads/document",
-						url: "http://gitrest/ref",
-						object: { sha: objectSha, type: "commit", url: "http://gitrest/commit" },
-					}),
-				);
 			} else {
 				const isSummary =
 					req.url?.includes("/git/summaries/") ||
@@ -158,8 +142,7 @@ describe("document storage recovery", () => {
 							parents: [],
 							tree: { sha: treeSha, url: "http://gitrest/tree" },
 					  }
-					: req.url?.includes("/git/trees/") ||
-					  (req.method === "POST" && req.url?.endsWith("/git/trees"))
+					: req.url?.includes("/git/trees/")
 					? { sha: treeSha, url: "http://gitrest/tree", tree: [] }
 					: req.url?.includes("/git/blobs/") ||
 					  (req.method === "POST" && req.url?.endsWith("/git/blobs"))
@@ -209,8 +192,7 @@ describe("document storage recovery", () => {
 			denyList?: IDenyList;
 			revokedTokenChecker?: IRevokedTokenChecker;
 			authorizer?: IDocumentAccessAuthorizer;
-			resolver?: ITrustedCreateContextResolver;
-			cache?: TestCache | false;
+			cache?: TestCache;
 			tenantThrottlers?: Map<string, IThrottler>;
 		} = {},
 	) {
@@ -222,7 +204,7 @@ describe("document storage recovery", () => {
 			new Map(),
 			documentManager,
 			new StartupCheck(),
-			options.cache === false ? undefined : options.cache ?? new TestCache(),
+			options.cache ?? new TestCache(),
 			options.revokedTokenChecker,
 			options.denyList,
 			undefined,
@@ -230,7 +212,6 @@ describe("document storage recovery", () => {
 			undefined,
 			undefined,
 			options.authorizer,
-			options.resolver,
 		);
 	}
 
@@ -257,15 +238,6 @@ describe("document storage recovery", () => {
 			sinon.assert.notCalled(storageNameRetriever.get);
 		});
 	}
-
-	it("does not expose a standalone storage initialization API in ownership mode", async () => {
-		await request(createApp())
-			.post(`/repos/${tenantId}/internal/document-storage/initialize`)
-			.set("Authorization", authorization)
-			.set("StorageName", storageName)
-			.expect(404);
-		assert.deepStrictEqual(operations, []);
-	});
 
 	it("rejects unresolved recovery routing even with a tenant default", async () => {
 		readDocument.resolves({ ...activeDocument, storageName: undefined });
@@ -335,162 +307,40 @@ describe("document storage recovery", () => {
 		});
 	}
 
-	for (const containerType of ["ephemeral", "durable"] as const) {
-		for (const withAuthorizer of [false, true]) {
-			for (const resource of ["blobs", "trees", "commits", "refs"] as const) {
-				it(`creates initial ${containerType} ${resource} with trusted context, authorizer=${withAuthorizer}`, async () => {
-					config.set("ignoreEphemeralFlag", false);
-					initialized = true;
-					const readStatic = sandbox
-						.stub(documentManager, "readStaticProperties")
-						.resolves(undefined);
-					readDocument.resolves(undefined);
-					const context: ITrustedCreateContext =
-						containerType === "ephemeral"
-							? {
-									tenantId,
-									documentId,
-									lifecycleVersion: "generation-1",
-									expiresAtMs: Date.now() + 60_000,
-									containerType,
-									ephemeralCreateTime: Date.now(),
-							  }
-							: {
-									tenantId,
-									documentId,
-									lifecycleVersion: "generation-1",
-									expiresAtMs: Date.now() + 60_000,
-									containerType,
-									storageAccountName: storageName,
-							  };
-					const resolve = sandbox.stub().resolves(context);
-					const authorize = sandbox.stub().callsFake(async (input) => {
-						if (
-							input.operation !== "create" ||
-							input.trustedCreateContext !== context
-						) {
-							throw new NetworkError(404, "Creation context required");
+	it("keeps object writes under ordinary write authorization", async () => {
+		initialized = true;
+		const response = await request(
+			createApp({
+				authorizer: {
+					authorize: async ({ operation }) => {
+						if (operation !== "write") {
+							throw new NetworkError(
+								403,
+								"Only existing-document writes are allowed.",
+							);
 						}
 						return {
-							...context,
-							source: "trusted-create",
-							operation: "create",
-							state: "pending",
+							tenantId,
+							documentId,
+							containerType: "durable",
+							storageAccountName: storageName,
+							lifecycleVersion: "generation-1",
+							source: "dc-v2-metadata",
+							operation,
+							state: "active",
 						};
-					});
-					const body =
-						resource === "blobs"
-							? { content: "", encoding: "base64" }
-							: resource === "trees"
-							? { tree: [] }
-							: resource === "commits"
-							? {
-									tree: treeSha,
-									parents: [],
-									message: "Initial",
-									author: {
-										name: "Test",
-										email: "test@example.com",
-										date: "2026-01-01",
-									},
-							  }
-							: { ref: "refs/heads/document", sha: objectSha };
-					const response = await request(
-						createApp({
-							cache: false,
-							resolver: { resolve },
-							authorizer: withAuthorizer ? { authorize } : undefined,
-						}),
-					)
-						.post(`/repos/${tenantId}/git/${resource}`)
-						.set("Authorization", authorization)
-						.set("Fluid-Create-Context", "trusted-initial-write")
-						.send(body)
-						.expect(resource === "blobs" ? 200 : 201);
-					sinon.assert.calledOnce(resolve);
-					sinon.assert.notCalled(readStatic);
-					sinon.assert.notCalled(readDocument);
-					sinon.assert.notCalled(storageNameRetriever.get);
-					assert.strictEqual(operations.length, 1);
-					assert.strictEqual(
-						resource === "refs" ? response.body.object.sha : response.body.sha,
-						resource === "trees" ? treeSha : objectSha,
-					);
-					assert.strictEqual(
-						lastStorageName,
-						containerType === "durable" ? storageName : undefined,
-					);
-					assert.strictEqual(
-						lastRoutingFlag,
-						containerType === "ephemeral" ? "true" : undefined,
-					);
-				});
-			}
-		}
-	}
-
-	it("reuses initial ephemeral tree content from the ordinary read cache", async () => {
-		config.set("ignoreEphemeralFlag", false);
-		initialized = true;
-		const cache = new TestCache();
-		await request(
-			createApp({
-				cache,
-				resolver: {
-					resolve: async () => ({
-						tenantId,
-						documentId,
-						containerType: "ephemeral",
-						ephemeralCreateTime: Date.now(),
-						lifecycleVersion: "initial-generation",
-						expiresAtMs: Date.now() + 60_000,
-					}),
+					},
 				},
 			}),
 		)
-			.post(`/repos/${tenantId}/git/trees`)
+			.post(`/repos/${tenantId}/git/blobs`)
 			.set("Authorization", authorization)
-			.set("Fluid-Create-Context", "trusted-initial-write")
-			.send({ tree: [] })
-			.expect(201);
-		const service = await createService(true, cache);
-		assert.strictEqual((await service.getTree(treeSha, false, true)).sha, treeSha);
-		assert.deepStrictEqual(operations, ["POST /repos/test/test/git/trees"]);
-		sinon.assert.notCalled(readDocument);
-		sinon.assert.notCalled(storageNameRetriever.get);
+			.set("Fluid-Create-Context", "unused-create-context")
+			.send({ content: "", encoding: "base64" })
+			.expect(200);
+		assert.strictEqual(response.body.sha, objectSha);
+		assert.deepStrictEqual(operations, ["POST /repos/test/test/git/blobs"]);
 	});
-
-	for (const invalidContext of ["expired", "different-document", "missing-resolver"] as const) {
-		it(`rejects ${invalidContext} context before initial object writes`, async () => {
-			config.set("ignoreEphemeralFlag", false);
-			initialized = true;
-			const readStatic = sandbox
-				.stub(documentManager, "readStaticProperties")
-				.resolves(undefined);
-			const resolve = sandbox.stub().resolves({
-				tenantId,
-				documentId:
-					invalidContext === "different-document" ? "another-document" : documentId,
-				containerType: "durable",
-				storageAccountName: storageName,
-				lifecycleVersion: "generation-1",
-				expiresAtMs: invalidContext === "expired" ? Date.now() - 1 : Date.now() + 60_000,
-			});
-			await request(
-				createApp({
-					resolver: invalidContext === "missing-resolver" ? undefined : { resolve },
-				}),
-			)
-				.post(`/repos/${tenantId}/git/blobs`)
-				.set("Authorization", authorization)
-				.set("Fluid-Create-Context", "rejected-create-context")
-				.send({ content: "", encoding: "base64" })
-				.expect(404);
-			assert.deepStrictEqual(operations, []);
-			sinon.assert.notCalled(readStatic);
-			sinon.assert.notCalled(readDocument);
-		});
-	}
 
 	it("recovers over the published client's real HTTP transport", async () => {
 		const service = await createService();

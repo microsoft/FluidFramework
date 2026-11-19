@@ -44,7 +44,7 @@ export function create(
 	ephemeralDocumentTTLSec?: number,
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 	documentAccessAuthorizer?: IDocumentAccessAuthorizer,
-	trustedCreateContextResolver?: ITrustedCreateContextResolver,
+	_trustedCreateContextResolver?: ITrustedCreateContextResolver,
 ): Router {
 	const { router, maxTokenLifetimeSec, tenantThrottleOptions, restTenantGeneralThrottler } =
 		utils.createRouteContext(config, restTenantThrottlers);
@@ -92,25 +92,20 @@ export function create(
 		tenantId: string,
 		authorization: string | undefined,
 		params: ICreateRefParamsExternal,
-		opaqueCreateContext?: string,
 	): Promise<git.IRef> {
-		const service = await utils.createGitServiceForWrite(
-			{
-				config,
-				tenantId,
-				authorization,
-				tenantService,
-				storageNameRetriever,
-				documentManager,
-				cache,
-				ephemeralDocumentTTLSec,
-				simplifiedCustomDataRetriever,
-				accessOperation: "write",
-				documentAccessAuthorizer,
-			},
-			opaqueCreateContext,
-			trustedCreateContextResolver,
-		);
+		const service = await utils.createGitService({
+			config,
+			tenantId,
+			authorization,
+			tenantService,
+			storageNameRetriever,
+			documentManager,
+			cache,
+			ephemeralDocumentTTLSec,
+			simplifiedCustomDataRetriever,
+			accessOperation: "write",
+			documentAccessAuthorizer,
+		});
 		return service.createRef(params);
 	}
 
@@ -198,7 +193,6 @@ export function create(
 				request.params.tenantId,
 				request.get("Authorization"),
 				request.body,
-				request.get("Fluid-Create-Context"),
 			);
 			utils.handleResponse(refP, response, false, undefined, 201);
 		},

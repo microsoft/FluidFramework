@@ -59,17 +59,6 @@ All service operations in this mode reject tenant/document IDs containing `:`.
 GitRest's private backfill endpoint also requires exactly two nonempty routing-header components.
 Deployments must restrict that endpoint to trusted services.
 
-Initial blob, tree, commit, and reference creation can carry `Fluid-Create-Context`.
-Hosts must provide the existing trusted creation-context resolver to validate that header.
-Historian authenticates the tenant first, then uses the validated context for container type and storage routing before a document record exists.
-A configured access authorizer must also authorize the pending creation.
-Without an authorizer, this mode derives the creation proof from the validated context.
-The service factory does not query the document manager or storage-name retriever for these creation proofs.
-Resolver and authorizer costs depend on the host implementation.
-Writes without the header and ordinary reads do not invoke this resolver.
-Ephemeral creation without an authorizer or physical-container override retains the ordinary
-ephemeral cache namespace, so subsequent reads can reuse its cached content.
-
 After publishing the server client, GitRest, and Historian packages from the integrated source,
 consumers should upgrade their packages and keep only their storage-provider implementation.
 Their GitRest repository factory must initialize new durable ownership as part of its existing

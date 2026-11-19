@@ -272,18 +272,34 @@ export function create(
 					outcome: "exempted",
 				});
 			} else {
-				trustedCreateContext = await utils.resolveTrustedCreateContext({
-					tenantId,
-					documentId,
-					resolver: trustedCreateContextResolver,
-					opaqueToken: opaqueCreateContext,
-					containerTypeHint:
-						isEphemeralContainer === undefined
-							? undefined
-							: isEphemeralContainer
-							? "ephemeral"
-							: "durable",
-				});
+				if (
+					trustedCreateContextResolver === undefined ||
+					opaqueCreateContext === undefined
+				) {
+					throw new NetworkError(404, "Document is deleted and cannot be accessed.");
+				}
+				try {
+					trustedCreateContext = await trustedCreateContextResolver.resolve({
+						tenantId,
+						documentId,
+						opaqueToken: opaqueCreateContext,
+						containerTypeHint:
+							isEphemeralContainer === undefined
+								? undefined
+								: isEphemeralContainer
+								? "ephemeral"
+								: "durable",
+					});
+				} catch {
+					throw new NetworkError(404, "Document is deleted and cannot be accessed.");
+				}
+				if (
+					trustedCreateContext.tenantId !== tenantId ||
+					trustedCreateContext.documentId !== documentId ||
+					trustedCreateContext.expiresAtMs <= Date.now()
+				) {
+					throw new NetworkError(404, "Document is deleted and cannot be accessed.");
+				}
 			}
 			service = await utils.createGitService({
 				config,

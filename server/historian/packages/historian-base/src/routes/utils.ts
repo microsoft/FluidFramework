@@ -39,8 +39,6 @@ import {
 	type ISimplifiedCustomDataRetriever,
 	type ICreateGitServiceArgs,
 	type IDocumentAccessProof,
-	type ITrustedCreateContext,
-	type ITrustedCreateContextResolver,
 } from "../services";
 import { Constants, parseToken } from "../utils";
 
@@ -521,43 +519,6 @@ export interface ICreateGitServiceResult {
 	isEphemeralContainer: boolean;
 }
 
-export async function resolveTrustedCreateContext({
-	tenantId,
-	documentId,
-	resolver,
-	opaqueToken,
-	containerTypeHint,
-}: {
-	tenantId: string;
-	documentId: string;
-	resolver: ITrustedCreateContextResolver | undefined;
-	opaqueToken: string | undefined;
-	containerTypeHint?: "ephemeral" | "durable";
-}): Promise<ITrustedCreateContext> {
-	if (resolver === undefined || opaqueToken === undefined) {
-		throw new NetworkError(404, "Document is deleted and cannot be accessed.");
-	}
-	let context: ITrustedCreateContext;
-	try {
-		context = await resolver.resolve({ tenantId, documentId, opaqueToken, containerTypeHint });
-	} catch (error) {
-		Lumberjack.warning(
-			"Trusted document creation context was rejected.",
-			getLumberBaseProperties(documentId, tenantId),
-			error,
-		);
-		throw new NetworkError(404, "Document is deleted and cannot be accessed.");
-	}
-	if (
-		context.tenantId !== tenantId ||
-		context.documentId !== documentId ||
-		context.expiresAtMs <= Date.now()
-	) {
-		throw new NetworkError(404, "Document is deleted and cannot be accessed.");
-	}
-	return context;
-}
-
 export async function createGitServiceWithAccess(
 	createArgs: ICreateGitServiceArgs,
 ): Promise<ICreateGitServiceResult> {
@@ -607,18 +568,9 @@ export async function createGitServiceWithAccess(
 	const containerTypeHint =
 		explicitContainerTypeHint ??
 		(isEphemeralHint === undefined ? undefined : isEphemeralHint ? "ephemeral" : "durable");
-	const accessProof: IDocumentAccessProof | undefined =
+	const accessProof =
 		accessOperation === undefined || documentAccessAuthorizer === undefined
-			? gitrestOwnershipValidation &&
-			  accessOperation === "create" &&
-			  trustedCreateContext !== undefined
-				? {
-						...trustedCreateContext,
-						source: "trusted-create",
-						operation: "create",
-						state: "pending",
-				  }
-				: undefined
+			? undefined
 			: await documentAccessAuthorizer.authorize({
 					tenantId,
 					documentId: tokenDocumentId,
@@ -628,7 +580,7 @@ export async function createGitServiceWithAccess(
 					existingProof: existingAccessProof,
 			  });
 	if (
-		(documentAccessAuthorizer !== undefined || accessProof !== undefined) &&
+		documentAccessAuthorizer !== undefined &&
 		(accessProof === undefined ||
 			accessProof.tenantId !== tenantId ||
 			accessProof.documentId !== tokenDocumentId ||
@@ -812,13 +764,6 @@ export async function createGitServiceWithAccess(
 					}
 			  }
 			: undefined;
-	// Without an authorizer or physical override, EC reads use the existing cache namespace.
-	const serviceAccessProof =
-		documentAccessAuthorizer === undefined &&
-		accessProof?.containerType === "ephemeral" &&
-		accessProof.physicalContainerName === undefined
-			? undefined
-			: accessProof;
 	const service: RestGitService = new RestGitService(
 		details.storage,
 		writeToExternalStorage,
@@ -830,7 +775,7 @@ export async function createGitServiceWithAccess(
 		postIsEphemeral,
 		maxCacheableSummarySize,
 		simplifiedCustomData,
-		serviceAccessProof,
+		accessProof,
 		recoverDocumentStorage,
 	);
 	return {
@@ -842,42 +787,6 @@ export async function createGitServiceWithAccess(
 
 export async function createGitService(createArgs: ICreateGitServiceArgs): Promise<RestGitService> {
 	return (await createGitServiceWithAccess(createArgs)).service;
-}
-
-export async function createGitServiceForWrite(
-	createArgs: ICreateGitServiceArgs,
-	opaqueToken: string | undefined,
-	resolver: ITrustedCreateContextResolver | undefined,
-): Promise<RestGitService> {
-	if (
-		opaqueToken === undefined ||
-		(createArgs.config.get("restGitService:gitrestOwnershipValidation") !== true &&
-			createArgs.documentAccessAuthorizer === undefined)
-	) {
-		return createGitService(createArgs);
-	}
-	const { accessToken, documentId } = getTokenDocumentIdentity(
-		createArgs.tenantId,
-		createArgs.authorization,
-	);
-	const authenticatedTenantDetails = await createArgs.tenantService.getTenant(
-		createArgs.tenantId,
-		accessToken,
-		false,
-	);
-	const trustedCreateContext = await resolveTrustedCreateContext({
-		tenantId: createArgs.tenantId,
-		documentId,
-		resolver,
-		opaqueToken,
-	});
-	return createGitService({
-		...createArgs,
-		authenticatedTenantDetails,
-		accessOperation: "create",
-		initialUpload: true,
-		trustedCreateContext,
-	});
 }
 
 /**
