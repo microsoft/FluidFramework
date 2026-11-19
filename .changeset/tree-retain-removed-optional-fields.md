@@ -38,6 +38,18 @@ if (view.compatibility.canUpgrade) {
 
 In the above example, the stored schema upgrade adds `isApproved` while preserving the existing `notes` field.
 
+> [!IMPORTANT]
+> A field's stored identifier (its stored key) is permanent in existing documents.
+> Removing the field from a view does not free that identifier for reuse with an incompatible definition.
+>
+> For example, suppose a later version of `Task` declares `notes: factory.optional(factory.array(factory.string))` using the same stored key as the original optional string field.
+> That view cannot load or safely upgrade documents whose stored schema still permits the original string-valued `notes` field.
+> This conflict exists even if the document contains no data under the old `notes` definition, because the stored schema still permits strings that another client could write later.
+>
+> Use a different stored key for a different, incompatible field.
+>
+> To detect such conflicts before releasing a schema change, keep historical schema snapshots and use <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">`snapshotSchemaCompatibility`</ApiLink> tests.
+
 Schema compatibility snapshot checks now accept either direct viewing or a safe upgrade in both directions, rather than only supporting upgrade in a forwards direction.
 For versions within `minVersionForCollaboration`, `snapshotSchemaCompatibility` requires `canView || canUpgrade` for each version viewing documents created with the other schema.
 The current version must also be able to view or upgrade documents from every historical snapshot outside that collaboration window.
