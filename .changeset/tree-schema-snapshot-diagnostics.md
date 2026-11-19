@@ -13,14 +13,15 @@ Compatibility requirements and snapshot update behavior are unchanged.
 The following examples assume snapshots for versions `1.0.0` and `2.0.0` already exist and the latest snapshot matches the current schema.
 The snapshot directory is illustrative.
 
-### Historical clients can neither view nor upgrade current documents
+#### The current schema can neither view nor upgrade historical documents
 
-Suppose version `1.0.0` allows only a number at the root, while version `2.0.0` allows a number or a string.
-With `minVersionForCollaboration: "1.0.0"`, the check fails because historical clients cannot handle the newly allowed strings:
+Now suppose version `1.0.0` allows a number or a string at the root, but version `2.0.0` removes string support.
+Even with `minVersionForCollaboration: "2.0.0"`, the current schema must still support historical documents.
+The proposed upgrade preserves their allowed string values, but the current view cannot handle them, so the error includes the nested viewing reason:
 
 ```text
 Schema compatibility check failed:
- - Historical version "1.0.0" can neither view nor upgrade documents from "2.0.0": these versions are expected to be able to collaborate due to the selected `minVersionForCollaboration` "1.0.0".
+ - Current version "2.0.0" can neither view nor upgrade documents from "1.0.0".
    - Viewing failed:
      - Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.
    - Upgrade failed:
@@ -33,15 +34,14 @@ Snapshots exist for versions: [
 ].
 ```
 
-### The current schema can neither view nor upgrade historical documents
+#### Historical clients can neither view nor upgrade current documents
 
-Now suppose version `1.0.0` allows a number or a string at the root, but version `2.0.0` removes string support.
-Even with `minVersionForCollaboration: "2.0.0"`, the current schema must still support historical documents.
-The proposed upgrade preserves their allowed string values, but the current view cannot handle them, so the error includes the nested viewing reason:
+Suppose version `1.0.0` allows only a number at the root, while version `2.0.0` allows a number or a string.
+With `minVersionForCollaboration: "1.0.0"`, the check fails because historical clients cannot handle the newly allowed strings:
 
 ```text
 Schema compatibility check failed:
- - Current version "2.0.0" can neither view nor upgrade documents from "1.0.0".
+ - Historical version "1.0.0" can neither view nor upgrade documents from "2.0.0": these versions are expected to be able to collaborate due to the selected `minVersionForCollaboration` "1.0.0".
    - Viewing failed:
      - Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.
    - Upgrade failed:
