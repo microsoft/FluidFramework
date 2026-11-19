@@ -84,6 +84,7 @@ import { stringKey } from "../../shared-tree-core/editManagerSummarizer.js";
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 import {
 	SchemaFactory,
+	identifySchema,
 	type TreeFieldFromImplicitField,
 	type TreeViewAlpha,
 	TreeViewConfiguration,
@@ -419,6 +420,21 @@ describe("SharedTree", () => {
 			]);
 			expectSchemaEqual(snapshot.schema, toInitialSchema(StringArray));
 		}
+	});
+
+	it("exposes stored schema versions", () => {
+		const libraryId = "test";
+		const tree = treeTestFactory();
+		const view = tree.viewWith(
+			new TreeViewConfigurationAlpha({
+				schema: numberSchema,
+				schemaIdentity: identifySchema({ schemaVersion: { [libraryId]: 1 } }),
+			}),
+		);
+
+		assert.equal(tree.storedSchemaVersion, undefined);
+		view.initialize(1);
+		assert.deepEqual(tree.storedSchemaVersion, new Map([["test", 1]]));
 	});
 
 	it("can be connected to another tree", async () => {
