@@ -847,7 +847,8 @@ function formatCompatibilityFailure(
 		}
 	}
 
-	// The final error assembly adds the first-level bullet only to the summary.
+	// The caller prefixes the summary with " - ".
+	// Indent diagnostic bullets by three spaces to nest them beneath that summary.
 	appendReasons(incompatibilities, "   ");
 	return lines.join("\n");
 }
