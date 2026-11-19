@@ -33,7 +33,24 @@ export type {
 	TreeViewEvents,
 	SchemaCompatibilityStatus,
 	SchemaCompatibilityStatusBeta,
+	CompatibilityResult,
+	SchemaViewIncompatibility,
+	SchemaUpgradeIncompatibility,
 	SchemaDiscrepancy,
+	SchemaDiscrepancyFieldLocation,
+	SchemaIncompatibilityReason,
+	SchemaAllowedTypesDiscrepancy,
+	SchemaFieldKindDiscrepancy,
+	SchemaValueSchemaDiscrepancy,
+	SchemaNodeKindDiscrepancy,
+	SchemaUpgradeAllowedTypesIncompatibility,
+	SchemaUpgradeFieldKindIncompatibility,
+	SchemaUpgradeValueSchemaIncompatibility,
+	SchemaUpgradeNodeKindIncompatibility,
+	SchemaUpgradeMissingNodeSchemaIncompatibility,
+	SchemaUpgradeUnsatisfiedNodeSchemaIncompatibility,
+	SchemaUpgradeVersionIncompatibility,
+	SchemaUpgradeViewIncompatibility,
 	TreeViewAlpha,
 	TreeViewSchemaVersions,
 	TreeViewBeta,
@@ -136,7 +153,6 @@ export { getJsonSchema } from "./getJsonSchema.js";
 export { getSimpleSchema } from "./getSimpleSchema.js";
 export {
 	checkSchemaCompatibility,
-	getSchemaIncompatibilityDetails,
 	isSchemaUpgradeAllowed,
 } from "./schemaCompatibilityTester.js";
 export { type StagedUpgradeStatus } from "./schemaCompatibilityTester.js";
