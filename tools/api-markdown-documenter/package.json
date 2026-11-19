@@ -30,7 +30,6 @@
 		"build:docs": "api-extractor run --local && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../_api-extractor-temp/",
 		"build:examples": "tsc -p examples/tsconfig.json",
 		"build:readme": "markdown-magic --files \"**/*.md\"",
-		"build:tsc": "npm run tsc",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"ci:build:docs": "api-extractor run && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../_api-extractor-temp/",
