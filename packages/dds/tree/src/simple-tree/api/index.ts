@@ -151,6 +151,7 @@ export {
 export type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
 export { getJsonSchema } from "./getJsonSchema.js";
 export { getSimpleSchema } from "./getSimpleSchema.js";
+export { exportSimpleSchema } from "./exportSimpleSchema.js";
 export {
 	checkSchemaCompatibility,
 	isSchemaUpgradeAllowed,

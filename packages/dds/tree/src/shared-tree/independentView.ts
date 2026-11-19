@@ -25,13 +25,14 @@ import {
 	schemaCodecBuilder,
 	combineChunks,
 } from "../feature-libraries/index.js";
-import type {
-	TreeViewConfiguration,
-	ImplicitFieldSchema,
-	TreeViewAlpha,
-	TreeViewBeta,
-	ViewableTree,
-	ViewableTreeAlpha,
+import {
+	exportSimpleSchema,
+	type TreeViewConfiguration,
+	type ImplicitFieldSchema,
+	type TreeViewAlpha,
+	type TreeViewBeta,
+	type ViewableTree,
+	type ViewableTreeAlpha,
 } from "../simple-tree/index.js";
 import {
 	type JsonCompatibleReadOnly,
@@ -43,11 +44,7 @@ import {
 import { initialize, initializerFromChunk } from "./schematizeTree.js";
 import { createViewableTreeAlpha } from "./viewableTree.js";
 import { buildConfiguredForest } from "./forestType.js";
-import {
-	defaultSharedTreeOptions,
-	exportSimpleSchema,
-	type ForestOptions,
-} from "./sharedTree.js";
+import { defaultSharedTreeOptions, type ForestOptions } from "./sharedTree.js";
 import { createTreeCheckout, type TreeCheckout } from "./treeCheckout.js";
 
 /**

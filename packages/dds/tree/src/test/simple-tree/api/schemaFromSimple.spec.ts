@@ -5,8 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
-import { exportSimpleSchema } from "../../../shared-tree/index.js";
 import {
+	exportSimpleSchema,
 	generateSchemaFromSimpleSchema,
 	getSimpleSchema,
 	SchemaFactory,

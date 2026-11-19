@@ -369,13 +369,6 @@
         ]
       },
       {
-        "name": "src/shared-tree/sharedTree.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
         "name": "src/shared-tree/treeCheckout.ts",
         "dependencyTypes": [
           "local",
@@ -493,13 +486,6 @@
       },
       {
         "name": "src/shared-tree/schematizingTreeView.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
-        "name": "src/shared-tree/sharedTree.ts",
         "dependencyTypes": [
           "local",
           "import"
@@ -637,13 +623,6 @@
       },
       {
         "name": "src/shared-tree/schematizingTreeView.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
-        "name": "src/shared-tree/sharedTree.ts",
         "dependencyTypes": [
           "local",
           "import"
@@ -795,43 +774,6 @@
       },
       {
         "name": "src/shared-tree/index.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      }
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/shared-tree/schematizingTreeView.ts",
-    "to": "src/shared-tree/sharedTree.ts",
-    "unresolvedTo": "./sharedTree.js",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "no-circular"
-    },
-    "cycle": [
-      {
-        "name": "src/shared-tree/sharedTree.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
-        "name": "src/shared-tree/treeCheckout.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
-        "name": "src/shared-tree/schematizingTreeView.ts",
         "dependencyTypes": [
           "local",
           "import"
@@ -1021,13 +963,6 @@
         ]
       },
       {
-        "name": "src/shared-tree/sharedTree.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
         "name": "src/shared-tree/treeCheckout.ts",
         "dependencyTypes": [
           "local",
@@ -1094,13 +1029,6 @@
       },
       {
         "name": "src/shared-tree/schematizingTreeView.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
-        "name": "src/shared-tree/sharedTree.ts",
         "dependencyTypes": [
           "local",
           "import"

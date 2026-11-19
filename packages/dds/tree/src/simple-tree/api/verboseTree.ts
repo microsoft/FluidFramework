@@ -50,6 +50,7 @@ import {
 	type TreeFieldFilter,
 	type TreeFieldFilterOptions,
 } from "./customTree.js";
+import { exportSimpleSchema } from "./exportSimpleSchema.js";
 
 /**
  * Verbose encoding of a {@link TreeNode} or {@link TreeLeafValue}.
@@ -288,14 +289,11 @@ function verboseTreeAdapter(options: SchemalessParseOptions): CursorAdapter<Verb
 
 /**
  * Used to read a node cursor as a VerboseTree.
- * @param simpleStoredSchema - The stored schema of each node type, given to {@link TreeFieldFilterOptions.filter}.
- * Must be provided if `options` has a filter.
  */
 export function verboseFromCursor(
 	reader: ITreeCursor,
 	context: Context,
 	options: TreeEncodingOptions & TreeFieldFilterOptions,
-	simpleStoredSchema?: ReadonlyMap<string, SimpleNodeSchema<SchemaType.Stored>>,
 ): VerboseTree {
 	const config: Required<TreeEncodingOptions> = {
 		keys: KeyEncodingOptions.usePropertyKeys,
@@ -304,6 +302,11 @@ export function verboseFromCursor(
 
 	const storedSchemaMap = context.flexContext.schema.nodeSchema;
 	const schemaMap = context.schema;
+	// The filter gets the stored schema of each node, so convert the stored schema one time for each export.
+	const simpleStoredSchema =
+		options.filter === undefined
+			? undefined
+			: exportSimpleSchema(context.flexContext.schema).definitions;
 
 	return verboseFromCursorInner(
 		reader,

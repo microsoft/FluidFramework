@@ -90,7 +90,6 @@ import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js"
 
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
-import { exportSimpleSchema } from "./sharedTree.js";
 import {
 	borrowCursorFromTreeNodeOrValue,
 	exportConcise,
@@ -924,18 +923,8 @@ export const TreeAlpha: TreeAlpha = {
 
 		const kernel = getKernel(node);
 		const innerNode = kernel.getInnerNode();
-		// The filter gets the stored schema of each node, so convert the stored schema one time for each export.
-		const simpleStoredSchema =
-			config.filter === undefined
-				? undefined
-				: exportSimpleSchema(kernel.context.flexContext.schema).definitions;
 		if (config.filter === undefined || !innerNode.isHydrated()) {
-			return verboseFromCursor(
-				innerNode.borrowCursor(),
-				kernel.context,
-				config,
-				simpleStoredSchema,
-			);
+			return verboseFromCursor(innerNode.borrowCursor(), kernel.context, config);
 		}
 		// For a hydrated node, the borrowed cursor is the cursor of the node.
 		// The filter can read the node, which moves that cursor, so use a separate cursor.
@@ -943,7 +932,7 @@ export const TreeAlpha: TreeAlpha = {
 		const filterCursor = forest.allocateCursor("TreeAlpha.exportVerbose filter");
 		forest.moveCursorToPath(innerNode.anchorNode, filterCursor);
 		try {
-			return verboseFromCursor(filterCursor, kernel.context, config, simpleStoredSchema);
+			return verboseFromCursor(filterCursor, kernel.context, config);
 		} finally {
 			filterCursor.free();
 		}
