@@ -35,6 +35,7 @@
 		"generate-api-documentation": "dotenv -- node ./infra/generate-api-documentation.mjs",
 		"generate-versions": "dotenv -- node ./infra/generate-versions.mjs",
 		"preinstall": "node ../scripts/only-pnpm.cjs",
+		"install-no-frozen": "node ../scripts/install-no-frozen.cjs",
 		"lint": "concurrently npm:eslint npm:prettier",
 		"lint:fix": "npm run eslint:fix && npm run prettier:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../.prettierignore",

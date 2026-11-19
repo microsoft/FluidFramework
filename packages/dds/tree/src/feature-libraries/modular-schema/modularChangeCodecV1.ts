@@ -785,7 +785,7 @@ function getFieldToRoots(
 		const detachId: ChangeAtomId = { revision, localId };
 		const fieldId = rootTable.detachLocations.getFirst(detachId, 1).value;
 		if (fieldId === undefined) {
-			fail("Untracked root change");
+			fail(0xdae /* Untracked root change */);
 		} else {
 			setInChangeAtomIdMap(
 				getOrAddInFieldRootMap(fieldToRoots, normalizeFieldId(fieldId, aliases)).nodeChanges,

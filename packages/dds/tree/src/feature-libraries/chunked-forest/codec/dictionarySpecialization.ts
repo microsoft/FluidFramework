@@ -524,7 +524,7 @@ function replaySignature(
 		reader.position += 1;
 		if (field.kind === "child") {
 			const type = token as TreeNodeSchemaIdentifier;
-			const childPathNode = field.types.get(type) ?? fail("child type was not read");
+			const childPathNode = field.types.get(type) ?? fail(0xddc /* child type was not read */);
 			const childTrieNode = getOrCreate(current.children, type, newTrieNode);
 			current = replaySignature(childPathNode, childTrieNode, trace, reader);
 		} else if (field.leaf.encoding === "pinToShape") {
@@ -642,7 +642,8 @@ class SharedEncoders {
 				}
 			} else {
 				const childBase = context.nodeEncoderFromSchema(cursor.type);
-				const childPath = field.types.get(cursor.type) ?? fail("child type was not read");
+				const childPath =
+					field.types.get(cursor.type) ?? fail(0xddd /* child type was not read */);
 				const child = this.specialize(cursor, childBase, childPath, context);
 				// Use the child encoder if it is specialized, or if the field is polymorphic.
 				// In a polymorphic field, the child encoder puts the child type in the shape, not in the data.
@@ -900,7 +901,7 @@ class SingleTypeSequenceEncoder implements FieldEncoder {
 		const buffer: BufferFormat = [];
 		let runStart = 0;
 		for (let index = 1; index <= itemEncoders.length; index++) {
-			const runEncoder = itemEncoders[runStart] ?? fail("missing item encoder");
+			const runEncoder = itemEncoders[runStart] ?? fail(0xdde /* missing item encoder */);
 			// A run ends at the end of the field, or before an item with a different encoder.
 			if (index === itemEncoders.length || itemEncoders[index] !== runEncoder) {
 				this.writeRun(buffer, runEncoder, runStart, index, context, encodeItem);

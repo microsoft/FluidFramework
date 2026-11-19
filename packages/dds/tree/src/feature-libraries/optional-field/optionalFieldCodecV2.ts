@@ -76,7 +76,7 @@ export function makeOptionalFieldCodec(
 						context.getOutputRootId(change.nodeDetach, 1).value ?? change.nodeDetach,
 						change.valueReplace?.src,
 					),
-				"Node-targeting detaches are not supported in this codec version, unless they are part of a pin",
+				0xdc2 /* Node-targeting detaches are not supported in this codec version, unless they are part of a pin */,
 			);
 
 			if (change.valueReplace !== undefined) {
@@ -129,7 +129,7 @@ export function makeOptionalFieldCodec(
 					// This rename will be inlined into the encoded replace.
 					continue;
 				}
-				assert(count === 1, "Unexpected range rename in optional field");
+				assert(count === 1, 0xdc3 /* Unexpected range rename in optional field */);
 				encodedMoves.push([
 					changeAtomIdCodec.encode(oldId, context.baseContext),
 					changeAtomIdCodec.encode(newId, context.baseContext),

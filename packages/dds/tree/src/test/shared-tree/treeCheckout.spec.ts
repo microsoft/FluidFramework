@@ -25,6 +25,7 @@ import {
 	type NormalizedFieldUpPath,
 	LeafNodeStoredSchema,
 	type TreeNodeSchemaIdentifier,
+	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	ValueSchema,
 } from "../../core/index.js";
@@ -2306,6 +2307,44 @@ describe("sharedTreeView", () => {
 				newRootAllowedTypeCount: oldSchema.rootFieldSchema.types.size,
 			});
 		});
+
+		it("does not classify a version-only schema change as initialization", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				SharedTreeTestFactory.build(() => {}, undefined, {
+					allowPossiblyIncompatibleWriteVersionOverrides: true,
+					writeVersionOverrides: new Map([["Schema", "schemaVersion"]]),
+				}),
+			);
+			const [tree] = provider.trees;
+			const view = tree.kernel.viewWith(
+				new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation }),
+			);
+			view.initialize([]);
+			const schema: TreeStoredSchema = {
+				rootFieldSchema: {
+					kind: FieldKinds.optional.identifier,
+					types: new Set(),
+					persistedMetadata: undefined,
+				},
+				nodeSchema: new Map(),
+			};
+			view.checkout.updateSchema(schema, true);
+			view.checkout.updateSchema({
+				rootFieldSchema: schema.rootFieldSchema,
+				nodeSchema: schema.nodeSchema,
+				schemaVersion: new Map([["com.fluidframework.test", 1]]),
+			});
+
+			const schemaChangeEvents = provider.logger
+				.events()
+				.filter((event) =>
+					event.eventName.endsWith(TreeCheckout.schemaChangeTelemetryEventName),
+				);
+			const versionChangeEvent = schemaChangeEvents.at(-1);
+			assert(versionChangeEvent !== undefined, "Expected schema change telemetry.");
+			assert.equal(parseCodeArtifactDetails(versionChangeEvent.details).changeKind, "upgrade");
+		});
 	});
 
 	describe("throws an error if it is in the middle of an edit when a user attempts to", () => {
@@ -2647,7 +2686,7 @@ describe("sharedTreeView", () => {
 			assert.equal(view1Revertibles.length, 1);
 			view1.runTransaction(() => {
 				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
-				// TODO AD#57584: Use such an operation here when one is available
+				// TODO: AB#57584: Use such an operation here when one is available
 				view1.root.insertAtEnd({ id: "B" });
 				view1.root.insertAtEnd({ id: "C" });
 			});
@@ -2684,7 +2723,7 @@ describe("sharedTreeView", () => {
 			assert.equal(view1Revertibles.length, 1);
 			view1.runTransaction(() => {
 				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
-				// TODO AD#57584: Use such an operation here when one is available
+				// TODO: AB#57584: Use such an operation here when one is available
 				view1.root.insertAtEnd({ id: "B" });
 				view1.root.insertAtEnd({ id: "C" });
 			});
@@ -2746,7 +2785,7 @@ describe("sharedTreeView", () => {
 			assert.equal(view1Revertibles.length, 1);
 			await view1.runTransactionAsync(async () => {
 				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
-				// TODO AD#57584: Use such an operation here when one is available
+				// TODO: AB#57584: Use such an operation here when one is available
 				view1.root.insertAtEnd({ id: "B" });
 				view1.root.insertAtEnd({ id: "C" });
 			});
@@ -2783,7 +2822,7 @@ describe("sharedTreeView", () => {
 			assert.equal(view1Revertibles.length, 1);
 			await view1.runTransactionAsync(async () => {
 				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
-				// TODO AD#57584: Use such an operation here when one is available
+				// TODO: AB#57584: Use such an operation here when one is available
 				view1.root.insertAtEnd({ id: "B" });
 				view1.root.insertAtEnd({ id: "C" });
 			});

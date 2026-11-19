@@ -1,5 +1,9 @@
 # @fluid-internal/functional-tests
 
+## 3.13.0
+
+Dependency updates only.
+
 ## 3.12.0
 
 Dependency updates only.
