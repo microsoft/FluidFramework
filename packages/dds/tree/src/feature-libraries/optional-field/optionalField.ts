@@ -14,6 +14,7 @@ import {
 	type RevisionReplacer,
 	type RevisionTag,
 	areEqualChangeAtomIdOpts,
+	cheapRebaseValidation,
 	forbiddenFieldKindIdentifier,
 	makeChangeAtomId,
 } from "../../core/index.js";
@@ -49,6 +50,12 @@ import {
 
 import type { OptionalChangeset, Replace } from "./optionalFieldChangeTypes.js";
 import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
+import {
+	getEffectiveDetachId,
+	areContextStatesConsistent,
+	getOutputContextState,
+	getInputContextState,
+} from "./optionalFieldUtils.js";
 
 export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose,
@@ -90,6 +97,12 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			inverted.childChange = change.childChange;
 		}
 
+		cheapRebaseValidation("Inconsistent intermediate contexts in optional field invert", () =>
+			areContextStatesConsistent(
+				getOutputContextState(change),
+				getInputContextState(inverted),
+			),
+		);
 		return inverted;
 	},
 
@@ -101,6 +114,13 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		nodeManager: RebaseNodeManager,
 		_metadata: RebaseRevisionMetadata,
 	): OptionalChangeset => {
+		cheapRebaseValidation("Inconsistent input contexts in optional field rebase", () =>
+			areContextStatesConsistent(
+				getInputContextState(newChange),
+				getInputContextState(overChange),
+			),
+		);
+
 		const rebased: Mutable<OptionalChangeset> = {};
 
 		const rebasedChild = rebaseChild(newChange.childChange, overChange.childChange);
@@ -157,6 +177,13 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				nodeManager.addDetach(rebasedDetachId, 1);
 			}
 		}
+
+		cheapRebaseValidation("Inconsistent intermediate contexts in optional field rebase", () =>
+			areContextStatesConsistent(
+				getOutputContextState(overChange),
+				getInputContextState(rebased),
+			),
+		);
 		return rebased;
 	},
 
@@ -207,6 +234,14 @@ function compose(
 	_genId: IdAllocator,
 	nodeManager: ComposeNodeManager,
 ): OptionalChangeset {
+	cheapRebaseValidation(
+		"Inconsistent intermediate contexts in optional field composition",
+		() =>
+			areContextStatesConsistent(
+				getOutputContextState(change1),
+				getInputContextState(change2),
+			),
+	);
 	const detachId2 = getEffectiveDetachId(change2);
 	if (change1.valueReplace?.src !== undefined && detachId2 !== undefined) {
 		nodeManager.composeAttachDetach(change1.valueReplace.src, detachId2, 1);
@@ -223,7 +258,21 @@ function compose(
 
 	sendNewChildChanges(change1, change2, nodeManager);
 
-	return makeChangeset(composedReplace, composedDetach, composedChildChange);
+	const composedChange = makeChangeset(composedReplace, composedDetach, composedChildChange);
+
+	cheapRebaseValidation("Inconsistent input contexts in optional field composition", () =>
+		areContextStatesConsistent(
+			getInputContextState(composedChange),
+			getInputContextState(change1),
+		),
+	);
+	cheapRebaseValidation("Inconsistent output contexts in optional field composition", () =>
+		areContextStatesConsistent(
+			getOutputContextState(composedChange),
+			getOutputContextState(change2),
+		),
+	);
+	return composedChange;
 }
 
 function composeNodeDetaches(
@@ -358,14 +407,6 @@ function replaceReplaceRevisions(
 	}
 
 	return updated;
-}
-
-function getEffectiveDetachId(change: OptionalChangeset): ChangeAtomId | undefined {
-	if (change.nodeDetach !== undefined) {
-		return change.nodeDetach;
-	}
-
-	return change.valueReplace?.isEmpty === false ? change.valueReplace.dst : undefined;
 }
 
 export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
