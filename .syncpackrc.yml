@@ -223,7 +223,7 @@ versionGroups:
       - "workspace-protocol"
     pinVersion: "workspace:~"
 
-  # This package is consumed through file: dependencies outside the client workspace,
+  # This package is consumed through `file:` dependencies outside the client workspace,
   # where catalog references cannot be resolved.
   - label: "Keep changelog wrapper TypeScript independent of client catalogs"
     dependencies:
