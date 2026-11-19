@@ -94,7 +94,9 @@ describe("combineVisitors", () => {
 			new LoggingVisitor("v", actual),
 			combineVisitors([new LoggingAnnouncedVisitor("av2", actual)]),
 		]);
-		combined.replace(fieldKey, { start: 2, end: 4 }, brand("outgoing"), { minor: 42 });
+		combined.replace(fieldKey, { start: 1, end: 3 }, { start: 2, end: 4 }, brand("outgoing"), {
+			minor: 42,
+		});
 		assert.deepEqual(actual, [
 			"av1: beforeReplace",
 			"av2: beforeReplace",
@@ -116,16 +118,17 @@ describe("combineVisitors", () => {
 			afterAttach: (...args) => calls.push(["afterAttach", ...args]),
 		});
 		const range = { start: 2, end: 4 };
+		const sourceRange = { start: 1, end: 3 };
 		const destination: FieldKey = brand("outgoing");
 		const id = { minor: 42 };
-		combineVisitors([visitor]).replace(fieldKey, range, destination, id);
+		combineVisitors([visitor]).replace(fieldKey, sourceRange, range, destination, id);
 		assert.deepEqual(calls, [
 			["beforeDetach", range, destination, true],
-			["beforeAttach", fieldKey, 2, 2],
+			["beforeAttach", fieldKey, sourceRange, 2],
 			["detach", range, destination, id, true],
-			["attach", fieldKey, 2, 2],
+			["attach", fieldKey, sourceRange, 2],
 			["afterDetach", 2, 2, destination, true],
-			["afterAttach", fieldKey, range],
+			["afterAttach", fieldKey, sourceRange, range],
 		]);
 	});
 	it("calls all visitors in order", () => {
@@ -147,7 +150,7 @@ describe("combineVisitors", () => {
 			new LoggingVisitor("v2", actual),
 			new LoggingAnnouncedVisitor("av2", actual),
 		]);
-		combined.destroy(fieldKey, 1);
+		combined.destroy(fieldKey, { start: 1, end: 2 });
 		const expected = [
 			"av1: beforeDestroy",
 			"av2: beforeDestroy",
@@ -186,7 +189,7 @@ describe("combineVisitors", () => {
 		]);
 		combined.detach({ start: 0, end: 1 }, fieldKey, { minor: 42 }, false);
 		actual.push("---");
-		combined.attach(fieldKey, 1, 42);
+		combined.attach(fieldKey, { start: 1, end: 2 }, 42);
 		const expected = [
 			"av1: beforeDetach",
 			"av2: beforeDetach",

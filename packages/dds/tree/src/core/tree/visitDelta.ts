@@ -120,7 +120,7 @@ export function visitDelta(
 			const offsetId = offsetDetachId(id, i);
 			const root = detachedFieldIndex.getEntry(offsetId);
 			const field = detachedFieldIndex.toFieldKey(root);
-			visitor.destroy(field, 1);
+			visitor.destroy(field, { start: 0, end: 1 });
 			detachedFieldIndex.deleteEntry(offsetId);
 		}
 	}
@@ -253,24 +253,27 @@ export interface DeltaVisitor {
 	 */
 	create(content: readonly ITreeCursorSynchronous[], destination: FieldKey): void;
 	/**
-	 * Recursively destroys the given detached field and all of the nodes within it.
-	 * @param detachedField - The key for the detached field to destroy.
-	 * @param count - The number of nodes being destroyed.
-	 * Expected to match the number of nodes in the detached field being destroyed.
+	 * Recursively destroys a range of nodes in a detached field.
+	 * Removes the field if it becomes empty.
+	 * @param detachedField - The key for the detached field containing the nodes to destroy.
+	 * @param range - The half-open range of node indices to destroy, within the detached field.
 	 */
-	destroy(detachedField: FieldKey, count: number): void;
+	destroy(detachedField: FieldKey, range: Range): void;
 	/**
-	 * Transfers all the nodes from a detached field to the current field.
+	 * Transfers a range of nodes from a detached field to the current field.
+	 * Remaining source nodes keep their order and shift to fill the gap.
+	 * Removes the source field if it becomes empty.
 	 * @param source - The detached field to transfer the nodes from.
-	 * @param count - The number of nodes being attached.
-	 * Expected to match the number of nodes in the source detached field.
+	 * Must differ from the current field.
+	 * @param sourceRange - The half-open range of node indices to transfer, within the source field.
 	 * @param destination - The index at which to attach the nodes.
 	 */
-	attach(source: FieldKey, count: number, destination: PlaceIndex): void;
+	attach(source: FieldKey, sourceRange: Range, destination: PlaceIndex): void;
 	/**
-	 * Replaces a range in the current field with all nodes from a detached field.
+	 * Replaces a range in the current field with a range of nodes from a detached field.
 	 * Transfers the replaced nodes to a new detached field.
 	 * @param source - The detached field containing the incoming nodes.
+	 * @param sourceRange - The half-open range of incoming node indices in `source`.
 	 * Its length must equal the length of `range`.
 	 * @param range - The range of existing nodes to replace.
 	 * @param destination - A new detached field for the outgoing nodes.
@@ -279,10 +282,13 @@ export interface DeltaVisitor {
 	 * @remarks
 	 * The source, destination, and current field must be distinct.
 	 * This operation has the final effect of detaching `range` to `destination`,
-	 * then attaching `source` at `range.start`, without an intervening visitor callback.
+	 * then attaching `sourceRange` from `source` at `range.start`, without an intervening visitor callback.
+	 * Remaining source nodes keep their order and shift to fill the gap.
+	 * Removes the source field if it becomes empty.
 	 */
 	replace(
 		source: FieldKey,
+		sourceRange: Range,
 		range: Range,
 		destination: FieldKey,
 		id: Delta.DetachedNodeId,
@@ -510,6 +516,7 @@ function tryReplace(
 		const destination = config.detachedFieldIndex.createEntry(detachId, config.latestRevision);
 		visitor.replace(
 			config.detachedFieldIndex.toFieldKey(source),
+			{ start: 0, end: 1 },
 			{ start: index + offset, end: index + offset + 1 },
 			config.detachedFieldIndex.toFieldKey(destination),
 			detachId,
@@ -631,7 +638,7 @@ function attachPass(
 				}
 				const sourceField = config.detachedFieldIndex.toFieldKey(sourceRoot);
 				const offsetIndex = index + i;
-				visitor.attach(sourceField, 1, offsetIndex);
+				visitor.attach(sourceField, { start: 0, end: 1 }, offsetIndex);
 				config.detachedFieldIndex.deleteEntry(offsetAttachId);
 				const fields = config.attachPassRoots.get(sourceRoot);
 				if (fields !== undefined) {

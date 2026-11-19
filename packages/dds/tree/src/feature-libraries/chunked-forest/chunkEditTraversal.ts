@@ -87,7 +87,7 @@ export function trySpliceField(
  * Contained replacements delegate through {@link trySpliceField}; the fallback uses {@link splitFieldAtIndex}
  * and {@link coalesceUniformChunks} to preserve neighboring storage where possible.
  */
-function spliceChunkField(
+export function spliceChunkField(
 	chunks: TreeChunk[],
 	range: Range,
 	content: readonly TreeChunk[],

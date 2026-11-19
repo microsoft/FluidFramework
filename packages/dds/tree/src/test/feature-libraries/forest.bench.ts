@@ -78,7 +78,7 @@ function populate(forest: IEditableForest, tree: MapTree): IEditableForest {
 	const source: FieldKey = brand("forest-benchmark-source");
 	visitor.create([cursorForMapTreeNode(tree)], source);
 	visitor.enterField(rootFieldKey);
-	visitor.attach(source, 1, 0);
+	visitor.attach(source, { start: 0, end: 1 }, 0);
 	visitor.exitField(rootFieldKey);
 	visitor.free();
 	return forest;
@@ -97,12 +97,12 @@ function growAndShrinkInMiddle(forest: IEditableForest, tree: MapTree, length: n
 	visitor.enterNode(0);
 	visitor.enterField(EmptyKey);
 	const middle = Math.floor(length / 2);
-	visitor.attach(source, 1, middle);
+	visitor.attach(source, { start: 0, end: 1 }, middle);
 	visitor.detach({ start: middle, end: middle + 1 }, removed, { minor: 0 }, false);
 	visitor.exitField(EmptyKey);
 	visitor.exitNode(0);
 	visitor.exitField(rootFieldKey);
-	visitor.destroy(removed, 1);
+	visitor.destroy(removed, { start: 0, end: 1 });
 	visitor.free();
 }
 

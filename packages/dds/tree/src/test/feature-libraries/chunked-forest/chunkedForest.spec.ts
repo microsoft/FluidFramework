@@ -334,7 +334,9 @@ describe("ChunkedForest", () => {
 				// Capture identities after navigation's copy-on-write, isolating whether replacement itself reallocates storage.
 				const values = current.values;
 				visitor.enterField(xKey);
-				visitor.replace(source, { start: 0, end: 1 }, destination, { minor: 0 });
+				visitor.replace(source, { start: 0, end: 1 }, { start: 0, end: 1 }, destination, {
+					minor: 0,
+				});
 				visitor.exitField(xKey);
 				exitInner(visitor);
 				assert.equal(edited.roots.fields.get(rootFieldKey)?.[0], current);
@@ -371,7 +373,9 @@ describe("ChunkedForest", () => {
 			visitor.enterField(childKey);
 			visitor.enterNode(0);
 			visitor.enterField(xKey);
-			visitor.replace(source, { start: 0, end: 1 }, destination, { minor: 0 });
+			visitor.replace(source, { start: 0, end: 1 }, { start: 0, end: 1 }, destination, {
+				minor: 0,
+			});
 			visitor.exitField(xKey);
 			visitor.exitNode(0);
 			visitor.exitField(childKey);
@@ -396,12 +400,16 @@ describe("ChunkedForest", () => {
 			create(visitor, "changed");
 			enterInner(visitor);
 			visitor.enterField(xKey);
-			visitor.replace(source, { start: 0, end: 1 }, destination, { minor: 0 });
+			visitor.replace(source, { start: 0, end: 1 }, { start: 0, end: 1 }, destination, {
+				minor: 0,
+			});
 			visitor.exitField(xKey);
 			// The type change replaced the active uniform cursor. A second edit tests the rebuilt traversal state, not just the first edit's result.
 			create(visitor, 100);
 			visitor.enterField(yKey);
-			visitor.replace(source, { start: 0, end: 1 }, brand("outgoingY"), { minor: 1 });
+			visitor.replace(source, { start: 0, end: 1 }, { start: 0, end: 1 }, brand("outgoingY"), {
+				minor: 1,
+			});
 			visitor.exitField(yKey);
 			exitInner(visitor);
 			const roots = forest.roots.fields.get(rootFieldKey);
@@ -435,12 +443,14 @@ describe("ChunkedForest", () => {
 			create(visitor, 99);
 			enterInner(visitor);
 			visitor.enterField(xKey);
-			visitor.replace(source, { start: 0, end: 1 }, destination, { minor: 0 });
+			visitor.replace(source, { start: 0, end: 1 }, { start: 0, end: 1 }, destination, {
+				minor: 0,
+			});
 			visitor.exitField(xKey);
 			// Adding absent z forces conversion after x was edited in place. Conversion must read current values, not the original snapshot.
 			create(visitor, 100);
 			visitor.enterField(zKey);
-			visitor.attach(source, 1, 0);
+			visitor.attach(source, { start: 0, end: 1 }, 0);
 			visitor.exitField(zKey);
 			exitInner(visitor);
 			const cursor = forest.allocateCursor();
@@ -471,7 +481,9 @@ describe("ChunkedForest", () => {
 				const visitor = forest.acquireVisitor();
 				create(visitor, compatible ? 99 : "changed");
 				visitor.enterField(rootFieldKey);
-				visitor.replace(source, { start: 2, end: 3 }, destination, { minor: 0 });
+				visitor.replace(source, { start: 0, end: 1 }, { start: 2, end: 3 }, destination, {
+					minor: 0,
+				});
 				visitor.exitField(rootFieldKey);
 				visitor.free();
 				assert.equal(snapshot.roots.fields.get(rootFieldKey)?.[0], uniform);
@@ -510,7 +522,9 @@ describe("ChunkedForest", () => {
 			const visitor = forest.acquireVisitor();
 			create(visitor, 99);
 			visitor.enterField(rootFieldKey);
-			visitor.replace(source, { start: 2, end: 3 }, destination, { minor: 0 });
+			visitor.replace(source, { start: 0, end: 1 }, { start: 2, end: 3 }, destination, {
+				minor: 0,
+			});
 			visitor.exitField(rootFieldKey);
 			visitor.free();
 			assert.deepEqual(forest.roots.fields.get(rootFieldKey), [uniform]);
@@ -552,7 +566,7 @@ describe("ChunkedForest", () => {
 				const edited = editClone ? clone : forest;
 				const remaining = editClone ? forest : clone;
 				const visitor = edited.acquireVisitor();
-				visitor.destroy(rootFieldKey, 1);
+				visitor.destroy(rootFieldKey, { start: 0, end: 1 });
 				visitor.free();
 
 				assert.notEqual(edited.roots, root);
@@ -641,6 +655,68 @@ describe("ChunkedForest", () => {
 		 */
 		function nodeCount(chunks: readonly TreeChunk[]): number {
 			return chunks.reduce((runningTotal, chunk) => runningTotal + chunk.topLevelLength, 0);
+		}
+
+		for (const shared of [false, true]) {
+			it(`preserves chunk storage and ownership through partial source edits (shared: ${shared})`, () => {
+				const original = setupForest();
+				const source = new UniformChunk(
+					numberShape.withTopLevelLength(6),
+					[100, 101, 102, 103, 104, 105],
+				);
+				original.roots.fields.set(detachedKey, [source]);
+				const forest = shared ? original.clone(original.schema) : original;
+				const outgoing: FieldKey = brand("outgoing");
+				const read = (field: FieldKey): unknown[] => {
+					const chunks = forest.roots.fields.get(field) ?? [];
+					assert(chunks.every((chunk) => chunk instanceof UniformChunk));
+					const values: unknown[] = [];
+					for (const chunk of chunks) {
+						const cursor = chunk.cursor();
+						for (let hasNode = cursor.firstNode(); hasNode; hasNode = cursor.nextNode()) {
+							values.push(cursor.value);
+						}
+					}
+					return values;
+				};
+				const visitor = forest.acquireVisitor();
+				visitor.enterField(rootFieldKey);
+				visitor.attach(detachedKey, { start: 1, end: 3 }, 1);
+				assert.deepEqual(read(rootFieldKey), [0, 101, 102, 1, 2, 3, 4]);
+				assert.deepEqual(read(detachedKey), [100, 103, 104, 105]);
+				visitor.destroy(detachedKey, { start: 1, end: 2 });
+				assert.deepEqual(read(detachedKey), [100, 104, 105]);
+				visitor.replace(
+					detachedKey,
+					{ start: 1, end: 3 },
+					{ start: 3, end: 5 },
+					outgoing,
+					detachedId,
+				);
+				assert.deepEqual(read(rootFieldKey), [0, 101, 102, 104, 105, 3, 4]);
+				assert.deepEqual(read(detachedKey), [100]);
+				assert.deepEqual(read(outgoing), [1, 2]);
+				visitor.attach(detachedKey, { start: 0, end: 1 }, 7);
+				assert.equal(forest.roots.fields.has(detachedKey), false);
+				assert.deepEqual(read(rootFieldKey), [0, 101, 102, 104, 105, 3, 4, 100]);
+				visitor.exitField(rootFieldKey);
+				const retained = [...forest.roots.fields.values()].flat();
+				visitor.destroy(rootFieldKey, { start: 0, end: 8 });
+				visitor.destroy(outgoing, { start: 0, end: 2 });
+				visitor.free();
+				assert(
+					retained.every((chunk) => chunk instanceof UniformChunk && chunk.isUnreferenced()),
+				);
+				assert.equal(forest.isEmpty, true);
+				assert.equal(source.isUnreferenced(), !shared);
+				if (shared) {
+					assert.deepEqual(original.roots.fields.get(detachedKey), [source]);
+					assert.deepEqual(source.values, [100, 101, 102, 103, 104, 105]);
+					const root = original.roots.fields.get(rootFieldKey)?.[0];
+					assert(root instanceof UniformChunk);
+					assert.deepEqual(root.values, [0, 1, 2, 3, 4]);
+				}
+			});
 		}
 
 		it("detaches a single node from the middle of a uniform chunk", () => {
@@ -753,7 +829,7 @@ describe("ChunkedForest", () => {
 
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
-			visitor.attach(detachedKey, 1, 2);
+			visitor.attach(detachedKey, { start: 0, end: 1 }, 2);
 			visitor.exitField(rootFieldKey);
 			visitor.free();
 
@@ -871,7 +947,7 @@ describe("ChunkedForest", () => {
 
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
-			visitor.attach(detachedKey, 1, 2);
+			visitor.attach(detachedKey, { start: 0, end: 1 }, 2);
 			visitor.exitField(rootFieldKey);
 			visitor.free();
 
@@ -888,7 +964,7 @@ describe("ChunkedForest", () => {
 			forest.roots.fields.set(detachedKey, [source]);
 
 			const visitor = forest.acquireVisitor();
-			visitor.destroy(detachedKey, 1);
+			visitor.destroy(detachedKey, { start: 0, end: 1 });
 			visitor.free();
 
 			assert.equal(forest.roots.fields.has(detachedKey), false);
