@@ -194,7 +194,7 @@ export type ChangeMetadataBeta = CommitMetadata & ({
 });
 
 // @alpha
-export function checkCompatibility(documentViewConfiguration: ITreeViewConfigurationAlpha, clientViewConfiguration: ITreeViewConfigurationAlpha): Omit<SchemaCompatibilityStatus, "canInitialize">;
+export function checkCompatibility(documentViewConfiguration: ITreeViewConfigurationAlpha, clientViewConfiguration: ITreeViewConfigurationAlpha): Omit<SchemaCompatibilityStatusBeta, "canInitialize">;
 
 // @alpha
 export function cloneWithReplacements(root: unknown, rootKey: string, replacer: (key: string, value: unknown) => {
@@ -243,7 +243,15 @@ export enum CommitOutcome {
 export type CommitRevision = string;
 
 // @alpha
-export function comparePersistedSchema(persisted: JsonCompatible, view: ImplicitFieldSchema, options: ICodecOptions): Omit<SchemaCompatibilityStatus, "canInitialize">;
+export function comparePersistedSchema(persisted: JsonCompatible, view: ImplicitFieldSchema, options: ICodecOptions): Omit<SchemaCompatibilityStatusBeta, "canInitialize">;
+
+// @beta @sealed
+export type CompatibilityResult<TIncompatibility> = {
+    readonly isCompatible: true;
+} | {
+    readonly isCompatible: false;
+    readonly incompatibilities: readonly TIncompatibility[];
+};
 
 // @alpha
 export namespace Component {
@@ -1413,6 +1421,16 @@ export namespace Sandboxing {
     }
 }
 
+// @beta @sealed
+export type SchemaAllowedTypesDiscrepancy = {
+    readonly mismatch: "allowedTypes";
+    readonly location: SchemaDiscrepancyFieldLocation;
+    readonly view: readonly string[];
+    readonly stagedView?: readonly string[];
+    readonly stored: readonly string[];
+    readonly viewIsStagedOptional?: true;
+};
+
 // @public @sealed
 export interface SchemaCompatibilityStatus {
     readonly canInitialize: boolean;
@@ -1425,38 +1443,17 @@ export interface SchemaCompatibilityStatus {
 // @beta @sealed
 export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus {
     readonly discrepancies: readonly SchemaDiscrepancy[] | undefined;
+    readonly upgrade: CompatibilityResult<SchemaUpgradeIncompatibility>;
+    readonly view: CompatibilityResult<SchemaViewIncompatibility>;
 }
 
 // @beta @sealed
-export type SchemaDiscrepancy = {
-    readonly mismatch: "allowedTypes";
-    readonly location: "root" | {
-        readonly nodeType: string;
-        readonly fieldKey: string | undefined;
-    };
-    readonly view: readonly string[];
-    readonly stagedView?: readonly string[];
-    readonly stored: readonly string[];
-    readonly viewIsStagedOptional?: true;
-} | {
-    readonly mismatch: "fieldKind";
-    readonly location: "root" | {
-        readonly nodeType: string;
-        readonly fieldKey: string | undefined;
-    };
-    readonly view: string;
-    readonly stored: string;
-    readonly viewIsStagedOptional?: true;
-} | {
-    readonly mismatch: "valueSchema";
+export type SchemaDiscrepancy = SchemaAllowedTypesDiscrepancy | SchemaFieldKindDiscrepancy | SchemaValueSchemaDiscrepancy | SchemaNodeKindDiscrepancy;
+
+// @beta @sealed
+export type SchemaDiscrepancyFieldLocation = "root" | {
     readonly nodeType: string;
-    readonly view: string | undefined;
-    readonly stored: string | undefined;
-} | {
-    readonly mismatch: "nodeKind";
-    readonly nodeType: string;
-    readonly view: string;
-    readonly stored: string;
+    readonly fieldKey: string | undefined;
 };
 
 // @public @sealed
@@ -1568,6 +1565,15 @@ export interface SchemaFactoryOptions {
     readonly objectOptions?: ObjectSchemaOptions;
 }
 
+// @beta @sealed
+export type SchemaFieldKindDiscrepancy = {
+    readonly mismatch: "fieldKind";
+    readonly location: SchemaDiscrepancyFieldLocation;
+    readonly view: string;
+    readonly stored: string;
+    readonly viewIsStagedOptional?: true;
+};
+
 // @public @system
 const schemaIdentifierBrand: unique symbol;
 
@@ -1575,6 +1581,17 @@ const schemaIdentifierBrand: unique symbol;
 export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.SchemaIdentity"> {
     readonly schemaVersion: SchemaVersions | undefined;
 }
+
+// @beta
+export type SchemaIncompatibilityReason = string;
+
+// @beta @sealed
+export type SchemaNodeKindDiscrepancy = {
+    readonly mismatch: "nodeKind";
+    readonly nodeType: string;
+    readonly view: string;
+    readonly stored: string;
+};
 
 // @public @sealed @system
 export interface SchemaStatics {
@@ -1628,11 +1645,92 @@ export class SchemaUpgrade {
     protected _typeCheck: MakeNominal;
 }
 
+// @beta @sealed
+export type SchemaUpgradeAllowedTypesIncompatibility = {
+    readonly mismatch: "allowedTypes";
+    readonly reason: SchemaIncompatibilityReason;
+    readonly location: SchemaDiscrepancyFieldLocation;
+    readonly proposed: readonly string[];
+    readonly stored: readonly string[];
+};
+
+// @beta @sealed
+export type SchemaUpgradeFieldKindIncompatibility = {
+    readonly mismatch: "fieldKind";
+    readonly reason: SchemaIncompatibilityReason;
+    readonly location: SchemaDiscrepancyFieldLocation;
+    readonly proposed: string;
+    readonly stored: string;
+};
+
+// @beta @sealed
+export type SchemaUpgradeIncompatibility = SchemaUpgradeAllowedTypesIncompatibility | SchemaUpgradeFieldKindIncompatibility | SchemaUpgradeValueSchemaIncompatibility | SchemaUpgradeNodeKindIncompatibility | SchemaUpgradeMissingNodeSchemaIncompatibility | SchemaUpgradeUnsatisfiedNodeSchemaIncompatibility | SchemaUpgradeVersionIncompatibility | SchemaUpgradeViewIncompatibility;
+
+// @beta @sealed
+export type SchemaUpgradeMissingNodeSchemaIncompatibility = {
+    readonly mismatch: "missingNodeSchema";
+    readonly reason: SchemaIncompatibilityReason;
+    readonly nodeType: string;
+};
+
+// @beta @sealed
+export type SchemaUpgradeNodeKindIncompatibility = {
+    readonly mismatch: "nodeKind";
+    readonly reason: SchemaIncompatibilityReason;
+    readonly nodeType: string;
+    readonly proposed: string;
+    readonly stored: string;
+};
+
+// @beta @sealed
+export type SchemaUpgradeUnsatisfiedNodeSchemaIncompatibility = {
+    readonly mismatch: "nodeSchemaCannotBeSatisfied";
+    readonly reason: SchemaIncompatibilityReason;
+    readonly nodeType: string;
+};
+
+// @beta @sealed
+export type SchemaUpgradeValueSchemaIncompatibility = {
+    readonly mismatch: "valueSchema";
+    readonly reason: SchemaIncompatibilityReason;
+    readonly nodeType: string;
+    readonly proposed: string | undefined;
+    readonly stored: string | undefined;
+};
+
+// @beta @sealed
+export type SchemaUpgradeVersionIncompatibility = {
+    readonly mismatch: "schemaVersion";
+    readonly reason: SchemaIncompatibilityReason;
+    readonly proposed: Readonly<Record<string, number>> | undefined;
+    readonly stored: Readonly<Record<string, number>> | undefined;
+};
+
+// @beta @sealed
+export type SchemaUpgradeViewIncompatibility = {
+    readonly mismatch: "viewIncompatibleAfterUpgrade";
+    readonly reason: SchemaIncompatibilityReason;
+    readonly incompatibilities: readonly SchemaViewIncompatibility[];
+};
+
+// @beta @sealed
+export type SchemaValueSchemaDiscrepancy = {
+    readonly mismatch: "valueSchema";
+    readonly nodeType: string;
+    readonly view: string | undefined;
+    readonly stored: string | undefined;
+};
+
 // @alpha
 export type SchemaVersionMap = Readonly<Record<string, number>>;
 
 // @alpha
 export type SchemaVersions = ReadonlyMap<string, number>;
+
+// @beta @sealed
+export type SchemaViewIncompatibility = SchemaDiscrepancy & {
+    readonly reason: SchemaIncompatibilityReason;
+};
 
 // @public @system
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
