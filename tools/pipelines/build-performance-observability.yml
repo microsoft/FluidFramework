@@ -80,6 +80,11 @@ extends:
       name: Small-eastus2
       os: linux
     sdl:
+      # Our runs of the build - client pipeline take ~1-2mins to run the SDLSources stage in PRs, and ~12mins in internal builds.
+      # Setting a timeout that accommodates the typical duration of the SDLSources stage while preventing runs that hang
+      # from being stuck for the default which seems to be around 50mins.
+      # This value is based on runs of build - client packages, our "heaviest" pipeline, and applied to all others.
+      sourceAnalysisTimeoutInMinutes: 20
       sourceAnalysisPool:
         name: Azure-Pipelines-1ESPT-ExDShared
         image: windows-2022
