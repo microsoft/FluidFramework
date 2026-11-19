@@ -16,6 +16,8 @@ how it is tested, and what is still open.
 | If you want to know… | Read |
 | --- | --- |
 | What compaction is, and which history and which clients it affects | [Part I: Concepts](#part-i-concepts) |
+| How EditManager tracks local forks, and what the summarizer persists | [§2.5](#25-editmanager-local-forks-and-summary-data) |
+| How local compaction updates an application's history UI | [§8.2](#82-manual-requestplannedcompaction) |
 | The exact API and its guarantees | [Part II: API specification](#part-ii-api-specification) |
 | How it is built, and why | [Part III: Design and implementation](#part-iii-design-and-implementation) |
 | How pins (preserved revisions) work | [§11](#11-preserved-revisions-design) |
@@ -94,9 +96,9 @@ An **interactive client** is an instance of the application that a user is worki
 It loads the document, shows it, and sends edits (ops).
 Every interactive client keeps its own copy of the SharedTree in memory, including its own copy of the edit history.
 
-Things that are only in one client's memory and never shared:
+State that belongs to the interactive client, rather than a shared history decision:
 
-- unsent or unacknowledged local edits,
+- pending local edits (the edits are shared when their ops are sequenced),
 - local branches (forks) and their base commits,
 - undo/redo stacks (revertibles) and the repair data they need,
 - the result of any compaction that client ran.
@@ -137,10 +139,79 @@ An interactive client has local history, and so does the summarizer.
 | Risk of compaction | Breaking undo, revert, or local branches ([§17](#17-data-integrity-risks-and-fixes)) | Low for itself, but **its mistakes are persisted** and inherited by every loading client |
 | Sends pin rejections | No (logs only) | Yes ([§11.4](#114-rule-4-the-summarizer-rejects-pins-it-cannot-keep)) |
 
-**Why local compaction on interactive clients matters little:**
-an interactive client's history disappears when the user closes the app, it is not shared,
-and its old commits are often still used by undo stacks or local branches.
-The summarizer's history is written to storage and loaded by every future client; that is where compaction pays off.
+**Local compaction and summary-time compaction serve different purposes.**
+Local compaction can reduce memory and simplify the history UI during a long application session.
+Summary-time compaction reduces persisted history for future loads.
+Neither path automatically changes the history of other active clients.
+Local compaction still has the undo/revert and repair-data limitations in [§17](#17-data-integrity-risks-and-fixes).
+
+#### 2.5 EditManager, local forks, and summary data
+
+Each SharedTree instance has its own `EditManager`, including the instance on the summarizer.
+It manages that instance's trunk, collaboration state, registered branches, and retained history.
+It also maintains peer collaboration branches to process remote edits.
+Those peer branches are not copies of other clients' application-created private forks.
+
+The `trunkBranches` map tracks where registered branches diverge from the main trunk:
+
+| Detail | Current behavior |
+| --- | --- |
+| Map key | The sequence ID of the registered branch's common ancestor with the main trunk. |
+| Map value | The set of registered branches with that ancestor. |
+| Registration | `addSharedBranch` observes forks transitively and calls `registerBranch`. Non-main experimental shared branches also register their local branch; private forks and shared branches are not the same feature. |
+| Rebase | `registerBranch` removes the old entry before a rebase and records the new ancestor afterward, then attempts trimming. |
+| Disposal | The branch is unregistered, its listeners are removed, and trimming is attempted. |
+| Main local branch | Not registered in this map; its collaboration requirements are handled separately. |
+| Persistence | The map and application-created private forks are not serialized into the shared summary. |
+
+This is live dependency tracking, not a set of persisted correctness checkpoints.
+You do not need to call the revision-preservation API to register a local fork.
+Fork tracking happens inside SharedTree.
+
+Both trimming and compaction consult the same local-fork and minimum-sequence-number bounds.
+For a fork whose common ancestor is B, the fork bound excludes B and everything after B from compaction on that instance.
+The minimum sequence number separately protects the collaboration window.
+Trimming also considers the retention policy; compaction combines eligible history that the retention policy kept.
+The planner receives the resulting eligible prefix as `eligibleCount` ([§13.1](#131-which-commits-are-eligible)).
+These checks do not resolve all the separate integrity risks in [§17](#17-data-integrity-risks-and-fixes).
+
+`EditManager.getSummaryData` serializes retained trunk commits, peer collaboration branches, experimental shared branches when present, and preserved revisions that remain in the summarized trunk.
+`loadSummaryData` reconstructs that shared state.
+It does not restore another interactive client's private forks, undo stack, or `trunkBranches` registrations.
+The summarizer therefore does not learn about those forks merely by processing the client's edits.
+Normal summarizer use has no application-created private forks, so its fork bound can be less restrictive than an interactive client's.
+
+Code: `trunkBranches`, `registerBranch`, `trackBranch`, `untrackBranch`, `addSharedBranch`, and `getSummaryData` in [`editManager.ts`](../../src/shared-tree-core/editManager.ts).
+
+#### 2.6 Same revisions do not imply the same retained history
+
+Consider this example, with B and C outside the collaboration window, enough history retained, and no pins:
+
+```text
+Starting trunk on both clients:       A -> B -> C -> D
+Interactive client has a fork at B:        \-> private edits
+
+Interactive client's plan for B..C:   rejected: outside its eligible prefix
+Summarizer's valid plan for B..C:      A -> (B+C, revision C) -> D
+```
+
+The summarizer can compact B..C because the interactive client's private fork is not registered in the summarizer's EditManager.
+The interactive client keeps its own required history; no compaction op tells it to remove B.
+New clients loading the resulting summary see the combined commit instead.
+A summary acknowledgement does not replace an active client's live SharedTree history with the summarizer's history.
+The clients can agree on the document's current content while exposing different historical commits.
+
+A revision ID identifies a commit; knowing the ID does not communicate a dependency on that commit or guarantee that every client still retains it.
+The current revision-preservation API is a separate, shared application request:
+it sends an op and persists a pin to protect a historical commit from compaction, subject to rejection and retention rules ([§9](#9-preserved-revisions-api)).
+A pin at B is not equivalent to a fork at B.
+The pin prevents combining B or combining across B, but permits compaction on either side.
+The fork bound conservatively protects B and all later commits needed for the local branch.
+
+For a local history UI, these differences do not require a replicated compaction protocol: display the history of the client's current instance.
+Making all active and newly loaded clients expose the same compacted commits is a different requirement.
+It needs agreement on compaction decisions and treatment of private dependencies; shared revision IDs and the existing local checks are not sufficient.
+The proposed, unimplemented alternatives are described in [§24.8](#248-how-active-and-newly-loaded-clients-could-converge-on-the-same-compacted-commits).
 
 ### 3. History model: trunk, MSN, and trimming vs. compaction
 
@@ -348,6 +419,27 @@ The count is computed by SharedTree, not by the app, and can be zero (including 
 It is local to the executing client: an open fork or collaboration state can give clients different eligible prefixes.
 Preserved revisions can occur within the prefix; eligibility does not override preservation.
 
+**Plan from the eligible commits; inspecting the rest is optional.**
+The app does not need to compute a plan before requesting compaction or scan all retained history to choose ranges.
+SharedTree computes the current eligible count and invokes the callback before changing history, both for manual requests and configured summary-time passes.
+Inside the callback, the app selects ranges from the eligible prefix and computes any replacement metadata from exactly the selected commits.
+Newer, ineligible history is available only as optional context; it must not appear in returned ranges.
+
+Illustrative caller code (`buildRanges` and `documentPolicy` belong to the app):
+
+```typescript
+const planCompaction: PlanCompaction = (history, eligibleCount) => {
+	const eligible = history.slice(0, eligibleCount);
+	return { ranges: buildRanges(eligible, documentPolicy) };
+};
+```
+
+Different documents or clients can supply different policies, such as grouping eligible edits by session or age.
+The client policy affects only that client's history; the policy configured on the summarizer determines persisted history.
+An age-based policy needs persisted edit timestamps and a defined reference time.
+Using a timestamp from the newer history as that reference is optional, not a requirement to analyze all history.
+Reading the current clock instead would make the policy time-dependent and would require revisiting the determinism contract in [§7.3](#73-guarantees).
+
 #### 7.2 Return value
 
 The policy returns a `CompactionPlan`: a list of `CompactionRange`s, each naming its oldest and newest commit (inclusive) by revision.
@@ -495,7 +587,43 @@ Things to know:
 On an interactive client it does **not** change stored history (verified end to end, [§22.1](#221-findings)).
 It does reduce that client's memory, but it exposes the undo/revert and repair-data risks of [§17](#17-data-integrity-risks-and-fixes).
 A throwing policy or invalid plan is rethrown to the caller, with the history unchanged and the tree still usable ([§7.4](#74-errors)).
-Prefer the configured option for storage; use manual calls only for deliberate maintenance.
+Use the configured option to reduce persisted history.
+Use a manual call when you deliberately want to compact the current client's history, including the history shown in its UI.
+
+**Updating a local history UI requires an application refresh, not a summary.**
+The call is synchronous and returns the number of commits removed.
+After it returns, obtain a fresh head from the main view's `branchHistory` and walk `getParent()` to rebuild the displayed list.
+Read the actual result: a preserved revision can cause a requested range to be skipped.
+
+```typescript
+function compactAndRefresh(): void {
+	const removedCount = asAlpha(tree).historyCompaction.requestPlannedCompaction(
+		(history, eligibleCount) => buildPlan(history.slice(0, eligibleCount)),
+	);
+
+	const entries = [];
+	for (
+		let commit = asAlpha(view).branchHistory.getHead();
+		commit !== undefined;
+		commit = commit.getParent()
+	) {
+		entries.push(commit); // Newest first.
+	}
+	renderHistory(entries, removedCount);
+}
+```
+
+Here, `view` is the current main-branch view; `buildPlan` and `renderHistory` are application-defined functions.
+Compute replacement metadata from the exact eligible commits you select.
+Rebuild from a fresh head rather than reusing cached metadata objects, parent links, or restore callbacks from before compaction.
+The metadata wrappers capture history snapshots; previously captured objects are not a live history list.
+Compaction changes historical representation, not the current document content.
+
+No additional Fluid code is needed for this explicit call-and-refresh flow in this prototype.
+There is no dedicated compaction/history-change event today; the compaction event API only reports revision-preservation rejection.
+Do not rely on ordinary document-change events to refresh the history after compaction.
+A general subscription for history changes, including changes initiated outside this application wrapper, would need an API and implementation change.
+This local flow does not synchronize other clients' UIs or persist the interactive client's result through the separate summarizer.
 
 #### 8.3 Different app versions
 
@@ -811,6 +939,18 @@ Code: `EditManager.compactHistoryByPlan` and `SharedBranch.composeTrunkRange` in
 and `runPlannedCompaction` / `planCompactionRanges` in [`sharedTree.ts`](../../src/shared-tree/sharedTree.ts).
 
 #### 13.1 Which commits are eligible
+
+**Compaction already uses EditManager's existing correctness checks.**
+Both `trimHistory` and `compactHistoryByPlan` use `getUpperTrimmingBoundForMinimumSequenceNumber` and `getUpperTrimmingBoundForLocalForks`.
+Compaction takes the smaller of those bounds; trimming additionally applies the history-retention bound.
+The retention bound is not a compaction limit: compaction is intended to combine commits that retention keeps after correctness no longer needs them.
+If a local fork depends on B, the fork bound excludes B and later commits from compaction on that client.
+The planner receives this restriction through `eligibleCount`, and SharedTree rejects a plan crossing it before changing history.
+
+These are local safety checks, not a replicated compaction decision.
+Another client's local fork is not registered in this EditManager, so the summarizer can have a different eligible prefix.
+Reusing these checks prevents unsafe removal on the executing client; it does not make active and newly loaded clients expose identical compacted commits.
+That separate synchronization question is discussed in [§24.7](#247-authoritative-results-logical-restore-points-and-live-reconciliation).
 
 ```text
 trunk:  base ── c1 ── c2 ── c3 ── c4 │ c5 ── c6     (│ = MSN; c5 and c6 are in the collaboration window)
@@ -1564,6 +1704,71 @@ If yes, logical convergence with deferred physical cleanup is a possible model.
 If no, those local dependencies must also delay the authoritative logical change, not just physical compaction.
 This would require a protocol for communicating and releasing those dependencies; the current local fork bound alone does not provide it.
 Also define how logical removal interacts with preserved revisions and retention-based trimming before adopting either model.
+
+#### 24.8 How active and newly loaded clients could converge on the same compacted commits
+
+**Proposed protocol, not implemented.**
+The goal is the same shared retained-history commits, revisions, and metadata once clients have processed the same ordered operations.
+It does not require identical local edits, Undo stacks, or private fork graphs, and it does not mean every client updates at the same instant.
+
+```text
+Shared history before:                       A → B → C → D
+Agreed decision:                             combine B–C; keep revision C; use metadata M
+Shared history after processing the decision: A → (B+C, revision C, metadata M) → D
+```
+
+Calling `requestPlannedCompaction` independently on every client cannot guarantee this result.
+Clients may have different eligible prefixes, policies, retained history, or previously combined metadata.
+They must agree on a transformation, not merely receive a request to run their own policy.
+
+One possible flow is:
+
+1. **Establish a common history generation and propose exact ranges.**
+   A designated coordinator, potentially the summarizer, plans against a known sequenced history frontier.
+   The proposal identifies the expected history generation, input revision ranges, surviving revisions, and replacement metadata or agreed default-metadata composition rules.
+   Independently compacted histories must first be reconciled or rejected as incompatible; naming endpoints alone does not establish equivalent inputs.
+2. **Resolve correctness and preservation barriers before committing the decision.**
+   Reuse EditManager's existing MSN and local-fork checks ([§13.1](#131-which-commits-are-eligible)).
+   For a design that waits for physical readiness, communicate the relevant client boundaries using sequence/revision positions, not local `eligibleCount` values.
+   A readiness response alone is insufficient: the protocol must prevent a new conflicting dependency from appearing before the decision is applied, or cancel and retry the proposal.
+   Define ordering with pins and the treatment of joining, disconnected, and offline clients before claiming this guarantee.
+3. **Sequence an agreed compaction operation.**
+   Submit the exact accepted transformation through Fluid's ordered op stream.
+   Active clients apply it at that stream position; they do not choose new ranges, clip them differently, or supply different replacement metadata.
+   If a client cannot apply it safely, independently skipping it would violate convergence.
+   The protocol must avoid that situation through readiness coordination or support the private-backing-history alternative below.
+4. **Update history and notify the app.**
+   Apply graph, metadata, revision bookkeeping, and repair-data changes consistently, then expose a history-change event with the decision generation.
+   Queryable generation state lets apps refresh caches and recover missed or duplicate notifications.
+5. **Persist the processed result in summaries.**
+   A summary taken after the compaction operation includes the resulting shared history and applied generation.
+   In this synchronized mode, summary generation must not independently compact additional shared commits without a replicated decision.
+   Define the same retention/trimming contract too; otherwise clients could agree on composition but expose different retained commit sets.
+6. **Bring newly loaded clients to the same result.**
+   A client loading a summary after the operation starts with the compacted history.
+   A client loading an older summary replays the compaction operation with the other subsequent ops.
+   Generation tracking prevents duplicate application and detects missing or incompatible input history.
+
+In this flow, sequencing establishes the shared decision; an acknowledged summary confirms a persisted checkpoint containing it.
+If the product exposes a result only after that checkpoint is accepted, keep the logical notification pending until the corresponding acknowledgement.
+A summary acknowledgement alone does not describe the changed commits or rewrite connected clients' histories.
+
+**Handling B when an active client's fork or Undo still needs it:**
+
+| Design option | How convergence would work | Additional work |
+| --- | --- | --- |
+| Wait for shared physical readiness | Delay the agreed transformation until relevant dependencies no longer block it. Active clients then apply the same physical compaction; later summaries contain it. | Coordinate boundaries and dependency reservations/releases. Define membership, disconnection, and offline recovery without invalidating pending edits or forks. Local EditManager checks already exist, but this coordination does not. |
+| Keep private backing history | Apply the same app-visible shared-history transformation everywhere, while a blocked client retains original commits and repair data privately. | Separate the canonical shared history from private dependency graphs, preserve correct fork rebase/merge and Undo behavior, and reclaim backing data when safe. Retaining nodes alone is not sufficient, and a fork based on B cannot simply be retargeted to C because they represent different states. |
+
+Neither option is implemented.
+The second provides identical app-visible compacted commits before identical physical cleanup; it does not satisfy a requirement for immediate physical compaction on every client.
+Both require the integrity fixes in [§17](#17-data-integrity-risks-and-fixes).
+
+**Existing Fluid mechanisms to reuse:** summary tracking observes acknowledgements, while garbage-collection sweep decisions are explicitly submitted and processed as ordered GC ops.
+See `packages/runtime/container-runtime/src/containerRuntime.ts` (`refreshLatestSummaryAck`) and
+`packages/runtime/container-runtime/src/gc/garbageCollection.ts` (`runSweepPhase`, `processMessages`).
+These provide precedents for notification and replication, not an existing SharedTree compaction protocol.
+Reloading live DDS state from another client's summary is not the normal summary-acknowledgement mechanism.
 
 ### 25. API review: findings and options
 
