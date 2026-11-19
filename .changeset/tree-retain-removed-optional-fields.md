@@ -46,4 +46,3 @@ Clients that can already view a document remain supported even when they cannot 
 > [!IMPORTANT]
 > Snapshot checks evaluate historical schemas using the currently installed Fluid Framework library versions, not the versions deployed with older clients.
 > Before relying on older clients to upgrade while retaining unknown optional fields, deploy a version of the application that uses Fluid Framework library version `3.14.0` or higher.
-> Verify that all supported clients in the collaboration window have that support using mixed-runtime tests before removing or replacing fields that require it.
