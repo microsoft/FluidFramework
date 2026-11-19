@@ -252,7 +252,7 @@ Removing the field from a view does not free that identifier for reuse with an i
 
 For example, suppose a later version of `Task` declares `notes: factory.optional(factory.array(factory.string))` using the same stored key as the original optional string field.
 That view cannot load or safely upgrade documents whose stored schema still permits the original string-valued `notes` field.
-This conflict exists even the document contains no data under the old `notes` definition, because the stored schema still permits strings that another client could write later.
+This conflict exists even if the document contains no data under the old `notes` definition, because the stored schema still permits strings that another client could write later.
 
 Use a different stored key for a different, incompatible field.
 
