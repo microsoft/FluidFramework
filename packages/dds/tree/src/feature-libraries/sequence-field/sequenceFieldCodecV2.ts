@@ -105,7 +105,7 @@ export function makeV2CodecHelpers(
 			context: ChangeDecodingContext,
 		): RevisionTag =>
 			encoded === undefined
-				? (context.revision ?? fail("Expected a default revision"))
+				? (context.revision ?? fail(0xdcd /* Expected a default revision */))
 				: revisionTagCodec.decode(encoded, context),
 
 		decodeMarkEffect: (
@@ -306,7 +306,7 @@ function makeMarkEffectDecoder(
 
 			assert(
 				encoded.detach.remove !== undefined,
-				"Attach and detach should always contains a remove",
+				0xdce /* Attach and detach should always contains a remove */,
 			);
 
 			const firstDetachId: ChangeAtomId = {
@@ -321,7 +321,7 @@ function makeMarkEffectDecoder(
 
 			const detachId = idOverride ?? firstDetachId;
 
-			assert(cellId !== undefined, "Attach and detach should target an empty cell");
+			assert(cellId !== undefined, 0xdcf /* Attach and detach should target an empty cell */);
 			if (encoded.attach.moveIn === undefined) {
 				context.decodeRootRename(cellId, detachId, count, firstDetachId, false);
 			} else {
@@ -461,7 +461,7 @@ function encodeRename(
 	>,
 	encodeRevision: (revision: RevisionTag | undefined) => EncodedRevisionTag | undefined,
 ): Encoded.MarkEffect {
-	assert(mark.cellId !== undefined, "Rename should target empty cell");
+	assert(mark.cellId !== undefined, 0xdd0 /* Rename should target empty cell */);
 
 	const renamedRootId = context.rootRenames.getFirst(mark.cellId, mark.count).value;
 
@@ -602,7 +602,7 @@ function getLengthToSplitMark(mark: Mark, context: FieldChangeEncodingContext): 
 				count = context.getFirstRenameId(inputRootIdEntry.value, count).length;
 			}
 
-			const cellId = mark.cellId ?? fail("Rename should have cell ID");
+			const cellId = mark.cellId ?? fail(0xdd1 /* Rename should have cell ID */);
 			const renameEntry = context.rootRenames.getFirst(cellId, count);
 			count = renameEntry.length;
 			count = context.isAttachId(renameEntry.value ?? cellId, count).length;
@@ -635,7 +635,7 @@ function encodeSplitMark(
 		encodedMark.effect = encodeMarkEffect(mark, context, encodeRevision, changeAtomIdCodec);
 	}
 	if (mark.cellId !== undefined) {
-		assert(mark.changes === undefined, "Empty cells should not have node changes");
+		assert(mark.changes === undefined, 0xdd2 /* Empty cells should not have node changes */);
 		encodedMark.cellId = changeAtomIdCodec.encode(mark.cellId, context.baseContext);
 		const nodeId = getFromChangeAtomIdMap(context.rootNodeChanges, mark.cellId);
 		if (nodeId !== undefined) {
@@ -689,7 +689,7 @@ function encodeMarkEffectV2(
 			if (mark.detachId !== undefined) {
 				assert(
 					mark.cellId === undefined,
-					"Marks with a detach ID should always represent a pin",
+					0xdd3 /* Marks with a detach ID should always represent a pin */,
 				);
 
 				return {

@@ -2263,7 +2263,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 					undefined,
 					this.table.newChange.rootNodes,
 					getBaseOutputLocation,
-					() => fail("Unexpected rename collision"),
+					() => fail(0xdb5 /* Unexpected rename collision */),
 				);
 			}
 		}
@@ -3372,7 +3372,7 @@ function composeRootNodeChanges(
 			// and so is detached in the base and composed changes' input context.
 			const attachField =
 				getFirstAttachField(change1.crossFieldKeys, baseAttachId, 1).value ??
-				fail("Expected attach field for base attach ID");
+				fail(0xdb6 /* Expected attach field for base attach ID */);
 
 			const detachLocation =
 				change1.rootNodes.detachLocations.getFirst(baseInputId, 1).value ?? attachField;
@@ -3504,7 +3504,7 @@ function applyAttachDetachRenames(
 			change1,
 			change2,
 			RenameSource.AttachDetach,
-			(collisionType: RenameCollisionType) => fail("Unexpected rename collision"),
+			(collisionType: RenameCollisionType) => fail(0xdb7 /* Unexpected rename collision */),
 		);
 	}
 }
@@ -3965,7 +3965,7 @@ function newDetachedEntryMap(): ChangeAtomIdRangeMap<DetachedNodeEntry> {
 function offsetDetachedNodeEntry(entry: DetachedNodeEntry, count: number): DetachedNodeEntry {
 	assert(
 		count <= 1 || entry.nodeChange === undefined,
-		"Cannot split an entry with a node change",
+		0xdb8 /* Cannot split an entry with a node change */,
 	);
 
 	return entry.detachId === undefined

@@ -406,7 +406,9 @@ export function isChangesetValid(
 	options: ValidationOptions = {},
 ): true | string {
 	for (const nodeIdKey of change.nodeChanges.keys()) {
-		assert(change.nodeToParent.has(nodeIdKey), "Every node should have a location entry");
+		if (!change.nodeToParent.has(nodeIdKey)) {
+			return `Missing nodeToParent entry for node change with key ${JSON.stringify(nodeIdKey)}`;
+		}
 	}
 
 	const unreachableNodes: ChangeAtomIdBTree<NodeLocation> = brand(change.nodeToParent.clone());
@@ -431,7 +433,7 @@ export function isChangesetValid(
 		}
 
 		const nodeId = normalizeNodeId({ revision, localId }, change.nodeAliases);
-		validateFieldChanges(
+		const fieldResult = validateFieldChanges(
 			fieldKinds,
 			change,
 			node.fieldChanges,
@@ -440,14 +442,22 @@ export function isChangesetValid(
 			unreachableCFKs,
 			options,
 		);
+		if (fieldResult !== true) {
+			return fieldResult;
+		}
 	}
 
 	for (const [detachIdKey, nodeId] of change.rootNodes.nodeChanges.entries()) {
 		const detachId: ChangeAtomId = { revision: detachIdKey[0], localId: detachIdKey[1] };
-		const location = getNodeParent(change, nodeId);
-		assert(areEqualChangeAtomIdOpts(location.root, detachId), "Inconsistent node location");
-
 		const normalizedNodeId = normalizeNodeId(nodeId, change.nodeAliases);
+		const location = getFromChangeAtomIdMap(change.nodeToParent, normalizedNodeId);
+		if (location === undefined) {
+			return `Missing nodeToParent entry for root node change with key ${JSON.stringify(normalizedNodeId)}`;
+		}
+		if (!areEqualChangeAtomIdOpts(location.root, detachId)) {
+			return "Inconsistent node location";
+		}
+
 		unreachableNodes.delete([normalizedNodeId.revision, normalizedNodeId.localId]);
 	}
 
@@ -457,7 +467,10 @@ export function isChangesetValid(
 				continue;
 			}
 
-			validateAttach(change, entry.start, entry.length);
+			const attachResult = validateAttach(change, entry.start, entry.length);
+			if (attachResult !== true) {
+				return attachResult;
+			}
 		}
 	}
 
@@ -488,34 +501,45 @@ function validateAttach(
 	changeset: ModularChangeset,
 	attachId: ChangeAtomId,
 	count: number,
-): void {
+): true | string {
 	let countProcessed = count;
-	const buildEntry = hasBuildForIdRange(changeset.builds, attachId, count);
+	// Note: Unlike builds, refreshers are not inspected as a potential source for two reasons:
+	// 1. Refreshers are not relevant:
+	//    We always expect a rename entry for the root being attached.
+	//    (This expectation does not apply to rollbacks, which makes the attaches impossible to validate on rollback changesets)
+	// 2. Refreshers are not guaranteed to be included:
+	//    The presence of a refresher is dependent on details that are extrinsic to the changeset like the collab window.
+	//    This means that any check based on their presence would be unreliable.
+	const buildEntry = hasBuildForIdRange(changeset.builds, attachId, countProcessed);
 	countProcessed = buildEntry.length;
 
 	const detachEntry = getDetachFieldForAttach(
 		changeset.crossFieldKeys,
 		changeset.rootNodes,
 		attachId,
-		count,
+		countProcessed,
 	);
 	countProcessed = detachEntry.length;
 
 	const renameEntry = changeset.rootNodes.newToOldId.getFirst(attachId, countProcessed);
 	countProcessed = renameEntry.length;
 
-	assert(
-		buildEntry.value || detachEntry.value !== undefined || renameEntry.value !== undefined,
-		"No build, detach, or rename found for attach",
-	);
+	if (
+		!buildEntry.value &&
+		detachEntry.value === undefined &&
+		renameEntry.value === undefined
+	) {
+		return "No build, refresher, detach, or rename found for attach";
+	}
 
 	if (countProcessed < count) {
-		validateAttach(
+		return validateAttach(
 			changeset,
 			offsetChangeAtomId(attachId, countProcessed),
 			count - countProcessed,
 		);
 	}
+	return true;
 }
 
 function hasBuildForIdRange(
@@ -569,7 +593,7 @@ function validateFieldChanges(
 		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
 		for (const { nodeId } of handler.getNestedChanges(fieldChange.change)) {
 			const normalizedNodeId = normalizeNodeId(nodeId, change.nodeAliases);
-			const parentLocation = getNodeParent(change, normalizedNodeId);
+			const parentLocation = getFromChangeAtomIdMap(change.nodeToParent, normalizedNodeId);
 			if (parentLocation === undefined) {
 				return `NodeId ${JSON.stringify(normalizedNodeId)} is missing from the nodeToParent table`;
 			}
@@ -586,7 +610,7 @@ function validateFieldChanges(
 			}
 
 			if (!unreachableNodes.has([normalizedNodeId.revision, normalizedNodeId.localId])) {
-				return `Node ${JSON.stringify(normalizedNodeId)} is either missing from the nodeToParent table or is reachable in multiple locations`;
+				return `Node ${JSON.stringify(normalizedNodeId)} is reachable in multiple locations`;
 			}
 			unreachableNodes.delete([normalizedNodeId.revision, normalizedNodeId.localId]);
 		}
@@ -740,7 +764,7 @@ export function addNodeRename(
 		assert(
 			entry.value === undefined ||
 				areEqualChangeAtomIds(entry.value, offsetChangeAtomId(newId, entry.offset)),
-			"New rename conflicts with existing rename",
+			0xdbc /* New rename conflicts with existing rename */,
 		);
 	}
 
@@ -748,7 +772,7 @@ export function addNodeRename(
 		assert(
 			entry.value === undefined ||
 				areEqualChangeAtomIds(entry.value, offsetChangeAtomId(oldId, entry.offset)),
-			"New rename conflicts with existing rename",
+			0xdbd /* New rename conflicts with existing rename */,
 		);
 	}
 
@@ -810,7 +834,7 @@ export function assignRootChange(
 ): void {
 	assert(
 		rebaseVersion >= 2 || detachLocation !== undefined,
-		"All root changes need a detach location to support compatibility with older client versions",
+		0xdbe /* All root changes need a detach location to support compatibility with older client versions */,
 	);
 
 	setInChangeAtomIdMap(table.nodeChanges, detachId, nodeId);
@@ -971,7 +995,7 @@ export function getOldRootIdFromNewRootId(
 export function getNodeParent(changeset: ModularChangeset, nodeId: NodeId): NodeLocation {
 	const normalizedNodeId = normalizeNodeId(nodeId, changeset.nodeAliases);
 	const location = getFromChangeAtomIdMap(changeset.nodeToParent, normalizedNodeId);
-	assert(location !== undefined, "Parent field should be defined");
+	assert(location !== undefined, 0xdbf /* Parent field should be defined */);
 
 	if (location.field !== undefined) {
 		return { field: normalizeFieldId(location.field, changeset.nodeAliases) };

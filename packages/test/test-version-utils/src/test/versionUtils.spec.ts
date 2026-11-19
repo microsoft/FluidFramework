@@ -59,6 +59,7 @@ describe("versionUtils", () => {
 			adjustPublicMajor,
 			expectedVersion,
 		): Mocha.Test {
+			// These integration tests include package-manager startup and a live registry request.
 			return it(`${baseVersion}, ${requested}, ${adjustPublicMajor}, ${expectedVersion}`, () => {
 				checkRequestedVersionSatisfies(
 					baseVersion,
@@ -66,7 +67,7 @@ describe("versionUtils", () => {
 					adjustPublicMajor,
 					expectedVersion,
 				);
-			});
+			}).timeout(30000);
 		}
 
 		describe("bumping public releases (adjustPublicMajor = false)", () => {

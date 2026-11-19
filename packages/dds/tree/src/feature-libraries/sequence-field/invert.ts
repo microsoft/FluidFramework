@@ -112,7 +112,7 @@ function invertMark(
 			assert(mark.revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);
 			const outputId = getOutputCellId(mark);
 			const inputId = getInputCellId(mark);
-			assert(inputId === undefined, "Unexpected detach of detached node");
+			assert(inputId === undefined, 0xdca /* Unexpected detach of detached node */);
 			const detachId = getDetachedRootId(mark);
 			const attachId = crossFieldManager.getInvertedMoveId(detachId);
 			crossFieldManager.invertDetach(detachId, mark.count, mark.changes);

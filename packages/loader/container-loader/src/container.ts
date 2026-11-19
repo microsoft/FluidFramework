@@ -1221,7 +1221,7 @@ export class Container
 		}
 		assert(
 			this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
-			"Attached container must have a resolved Fluid URL",
+			0xddf /* Attached container must have a resolved Fluid URL */,
 		);
 		return this.serializedStateManager.serialize(
 			this.clientId,

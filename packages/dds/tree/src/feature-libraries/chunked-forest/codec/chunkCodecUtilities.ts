@@ -111,7 +111,7 @@ export function getChecked<T>(data: readonly T[], index: number): T {
 	const value = data[index];
 	assert(
 		value !== undefined,
-		"missing array entry",
+		0xdd4 /* missing array entry */,
 		() => `index ${index} produced undefined in array of length ${data.length}.`,
 	);
 	return value;
@@ -131,7 +131,7 @@ export function getChecked<T>(data: readonly T[], index: number): T {
 export function getFullyChecked<T>(data: readonly T[], index: number): T {
 	assert(
 		Number.isInteger(index),
-		"invalid array index",
+		0xdd5 /* invalid array index */,
 		() => `index ${index} is not an integer.`,
 	);
 	return getChecked(data, index);

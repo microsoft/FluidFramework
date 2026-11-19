@@ -3,12 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
 import GithubSlugger from "github-slugger";
 import type { Heading, Html, Link, Root } from "mdast";
 import { headingRange } from "mdast-util-heading-range";
 import { toString } from "mdast-util-to-string";
 import type { Node, Parent } from "unist";
 import { SKIP, visit } from "unist-util-visit";
+
+/**
+ * The shallowest body heading level beneath a level-3 changeset title in release notes.
+ */
+const MINIMUM_BODY_HEADING_LEVEL = 4;
 
 /**
  * Using the same instance for all slug generation ensures that no duplicate IDs are generated.
@@ -99,6 +105,65 @@ export function stripSoftBreaks(): (tree: Node) => void {
 			});
 		});
 	};
+}
+
+/**
+ * Normalizes a changeset body's headings beneath its level-3 title in aggregate release notes.
+ *
+ * @remarks
+ * The shallowest body heading becomes level 4, and every heading receives the same offset to preserve relative nesting.
+ * Headings whose adjusted levels exceed 6 become bold labels, preserving their inline formatting.
+ * Apply this plugin to each changeset body before adding generated titles and metadata so those headings do not affect the offset.
+ */
+export function normalizeReleaseNoteHeadings(): (tree: Root) => void {
+	return (tree: Root): void => {
+		let shallowestDepth = 6;
+		visit(tree, "heading", (node) => {
+			shallowestDepth = Math.min(shallowestDepth, node.depth);
+		});
+		const offset = MINIMUM_BODY_HEADING_LEVEL - shallowestDepth;
+
+		visit(tree, "heading", (node, index, parent) => {
+			// Physical newlines in code spans or HTML would break normalized ATX headings.
+			visit(node, ["inlineCode", "html"], (inline) => {
+				if (inline.type === "html") {
+					inline.value = normalizeInlineHtml(inline.value);
+				} else if (inline.type === "inlineCode") {
+					inline.value = inline.value.replace(/\r\n?|\n/g, " ");
+				}
+			});
+			const depth = node.depth + offset;
+			if (depth === MINIMUM_BODY_HEADING_LEVEL || depth === 5 || depth === 6) {
+				node.depth = depth;
+				return;
+			}
+
+			assert(
+				parent !== undefined && index !== undefined,
+				"A changeset body heading must have a parent and index.",
+			);
+			parent.children[index] = {
+				type: "paragraph",
+
+				// An empty strong node would render as a thematic break rather than an empty label.
+				children:
+					node.children.length === 0 ? [] : [{ type: "strong", children: node.children }],
+			};
+			return SKIP;
+		});
+	};
+}
+
+/**
+ * Keeps inline HTML on one physical line without changing quoted attribute values.
+ *
+ * @remarks
+ * HTML normalizes literal line endings to line feeds; character references preserve those values inside quoted attributes.
+ */
+function normalizeInlineHtml(html: string): string {
+	return html.replace(/"[^"]*"|'[^']*'|\r\n?|\n/g, (part) =>
+		part.startsWith('"') || part.startsWith("'") ? part.replace(/\r\n?|\n/g, "&#10;") : " ",
+	);
 }
 
 /**

@@ -7,13 +7,48 @@ import assert from "node:assert";
 import type { Request } from "express";
 import {
 	Constants,
+	getFilesystemManagerFactory,
 	getRepoManagerParamsFromRequest,
 	getRepositoryRoot,
 	getRepoPath,
+	MemFsManagerFactory,
 	sizeof,
 } from "../utils";
 
 describe("helpers", () => {
+	describe("filesystem selection", () => {
+		const durable = new MemFsManagerFactory();
+		const ephemeral = new MemFsManagerFactory();
+
+		it("selects only the dedicated ephemeral filesystem for ephemeral requests", () => {
+			assert.strictEqual(
+				getFilesystemManagerFactory(
+					{
+						defaultFileSystemManagerFactory: durable,
+						ephemeralFileSystemManagerFactory: ephemeral,
+					},
+					true,
+				),
+				ephemeral,
+			);
+		});
+
+		it("preserves durable filesystem selection without an ephemeral factory", () => {
+			assert.strictEqual(
+				getFilesystemManagerFactory({ defaultFileSystemManagerFactory: durable }, false),
+				durable,
+			);
+		});
+
+		it("fails closed when the ephemeral filesystem is unavailable", () => {
+			assert.throws(
+				() =>
+					getFilesystemManagerFactory({ defaultFileSystemManagerFactory: durable }, true),
+				{ name: "NetworkError", code: 503, canRetry: false },
+			);
+		});
+	});
+
 	describe("getRepoPath", () => {
 		it("builds a path from valid components", () => {
 			assert.strictEqual(getRepoPath("tenant", "doc"), "tenant/doc");
