@@ -170,8 +170,6 @@ export class GitManager implements IGitManager {
     getSummary(sha: string): Promise<IWholeFlatSummary>;
     getTree(root: string, recursive?: boolean): Promise<resources.ITree>;
     // (undocumented)
-    initializeDocumentStorage(): Promise<void>;
-    // (undocumented)
     upsertRef(branch: string, commitSha: string): Promise<resources.IRef>;
     write(branch: string, inputTree: api.ITree, parents: string[], message: string): Promise<resources.ICommit>;
 }
@@ -255,8 +253,6 @@ export class Historian implements IHistorian {
     getTag(tag: string): Promise<resources.ITag>;
     // (undocumented)
     getTree(sha: string, recursive: boolean): Promise<resources.ITree>;
-    // (undocumented)
-    initializeDocumentStorage(): Promise<void>;
     // (undocumented)
     updateRef(ref: string, params: resources.IPatchRefParams): Promise<resources.IRef>;
 }
@@ -378,7 +374,6 @@ export interface IGitManager {
     getSummary(sha: string): Promise<IWholeFlatSummary>;
     // (undocumented)
     getTree(root: string, recursive: boolean): Promise<resources.ITree>;
-    initializeDocumentStorage?(): Promise<void>;
     // (undocumented)
     upsertRef(branch: string, commitSha: string): Promise<resources.IRef>;
     // (undocumented)
@@ -437,7 +432,6 @@ export interface IGitService {
     getTag(tag: string): Promise<resources.ITag>;
     // (undocumented)
     getTree(sha: string, recursive: boolean): Promise<resources.ITree>;
-    initializeDocumentStorage?(): Promise<void>;
     // (undocumented)
     updateRef(ref: string, params: resources.IPatchRefParams): Promise<resources.IRef>;
 }

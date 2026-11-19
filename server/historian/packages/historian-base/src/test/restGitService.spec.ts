@@ -456,7 +456,7 @@ describe("RestGitService Git object SHA validation", () => {
 		{ tenant: "tenant:alias", document: documentId },
 		{ tenant: tenantId, document: "document:alias" },
 	]) {
-		for (const operation of ["initializeDocumentStorage", "backfillDocumentStorage"] as const) {
+		for (const operation of ["backfillDocumentStorage"] as const) {
 			it(`rejects ambiguous metadata target ${identity.tenant}/${identity.document} for ${operation}`, async () => {
 				const service = new RestGitService(
 					storage,

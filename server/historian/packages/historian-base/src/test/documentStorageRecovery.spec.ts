@@ -20,15 +20,11 @@ import type {
 	IThrottler,
 } from "@fluidframework/server-services-core";
 import { StartupCheck } from "@fluidframework/server-services-shared";
-import { TestThrottler } from "@fluidframework/server-test-utils";
-import express from "express";
-import { decode, sign } from "jsonwebtoken";
 import * as nconf from "nconf";
 import * as sinon from "sinon";
 import request from "supertest";
 
 import * as historianApp from "../app";
-import { create as createRoutes } from "../routes";
 import { createGitService } from "../routes/utils";
 import type {
 	IDocumentAccessAuthorizer,
@@ -37,7 +33,6 @@ import type {
 	RestGitService,
 } from "../services";
 import { TestCache, TestDocumentManager, TestTenantService } from "./utils";
-import { Constants } from "../utils";
 
 const tenantId = "tenant";
 const documentId = "document";
@@ -83,7 +78,6 @@ describe("document storage recovery", () => {
 	let failureStatus: number;
 	let failureCode: unknown;
 	let backfillStatus: number;
-	let initializeStatus: number;
 	let repairSucceeds: boolean;
 	let currentSummary: typeof summary;
 	let lastRoutingFlag: string | string[] | undefined;
@@ -104,7 +98,6 @@ describe("document storage recovery", () => {
 		failureStatus = 409;
 		failureCode = "DocumentStorageMetadataMissing";
 		backfillStatus = 204;
-		initializeStatus = 204;
 		repairSucceeds = true;
 		currentSummary = summary;
 		lastRoutingFlag = undefined;
@@ -121,11 +114,6 @@ describe("document storage recovery", () => {
 				initialized = repairSucceeds && backfillStatus === 204;
 				res.statusCode = backfillStatus;
 				res.end(backfillStatus === 204 ? undefined : JSON.stringify({ message: "Denied" }));
-			} else if (req.url?.endsWith("/internal/document-storage/initialize")) {
-				res.statusCode = initializeStatus;
-				res.end(
-					initializeStatus === 204 ? undefined : JSON.stringify({ message: "Denied" }),
-				);
 			} else if (!initialized) {
 				res.statusCode = failureStatus;
 				res.end(
@@ -270,21 +258,14 @@ describe("document storage recovery", () => {
 		});
 	}
 
-	for (const status of [204, 503]) {
-		it(`keeps initialization hints out of shared routing cache after ${status}`, async () => {
-			config.set("ignoreEphemeralFlag", false);
-			initializeStatus = status;
-			const cache = new TestCache();
-			const key = `isEphemeralContainer:${tenantId}:${documentId}`;
-			await cache.set(key, true);
-			await request(createApp({ cache }))
-				.post(`/repos/${tenantId}/internal/document-storage/initialize`)
-				.set("Authorization", authorization)
-				.set("StorageName", storageName)
-				.expect(status);
-			assert.strictEqual(await cache.get(key), true);
-		});
-	}
+	it("does not expose a standalone storage initialization API in ownership mode", async () => {
+		await request(createApp())
+			.post(`/repos/${tenantId}/internal/document-storage/initialize`)
+			.set("Authorization", authorization)
+			.set("StorageName", storageName)
+			.expect(404);
+		assert.deepStrictEqual(operations, []);
+	});
 
 	it("rejects unresolved recovery routing even with a tenant default", async () => {
 		readDocument.resolves({ ...activeDocument, storageName: undefined });
@@ -1345,204 +1326,5 @@ describe("document storage recovery", () => {
 		);
 		assert.strictEqual(operations.length, 3);
 		sinon.assert.calledOnce(readDocument);
-	});
-
-	it("forwards authenticated private initialization without reading Alfred", async () => {
-		await request(createApp())
-			.post(`/repos/${tenantId}/internal/document-storage/initialize`)
-			.set("Authorization", authorization)
-			.set("StorageName", storageName)
-			.expect(204);
-		assert.strictEqual(operations.length, 1);
-		assert.match(operations[0] ?? "", /\/internal\/document-storage\/initialize$/);
-		sinon.assert.notCalled(readDocument);
-	});
-
-	it("exposes initialization through the shared route factory", async () => {
-		const app = express();
-		app.use(
-			createRoutes(
-				config,
-				new TestTenantService(),
-				storageNameRetriever,
-				new Map(),
-				new Map(),
-				documentManager,
-			).summaries,
-		);
-		await request(app)
-			.post(`/repos/${tenantId}/internal/document-storage/initialize`)
-			.set("Authorization", authorization)
-			.set("StorageName", storageName)
-			.expect(204);
-		assert.strictEqual(operations.length, 1);
-		sinon.assert.notCalled(readDocument);
-	});
-
-	it("throttles initialization before tenant lookup or storage writes", async () => {
-		const getTenant = sandbox.spy(TestTenantService.prototype, "getTenant");
-		const app = createApp({
-			tenantThrottlers: new Map([
-				[Constants.generalRestCallThrottleIdPrefix, new TestThrottler(1)],
-			]),
-		});
-		for (const status of [204, 429]) {
-			await request(app)
-				.post(`/repos/${tenantId}/internal/document-storage/initialize`)
-				.set("Authorization", authorization)
-				.set("StorageName", storageName)
-				.expect(status);
-		}
-		assert.strictEqual(operations.length, 1);
-		sinon.assert.calledOnce(getTenant);
-	});
-
-	it("rejects ephemeral initialization without poisoning its routing cache", async () => {
-		config.set("ignoreEphemeralFlag", false);
-		const cache = new TestCache();
-		const key = `isEphemeralContainer:${tenantId}:${documentId}`;
-		await cache.set(key, true);
-		await request(createApp({ cache }))
-			.post(`/repos/${tenantId}/internal/document-storage/initialize`)
-			.set("Authorization", authorization)
-			.set("Is-Ephemeral-Container", "true")
-			.set("StorageName", storageName)
-			.expect(400);
-		assert.strictEqual(await cache.get(key), true);
-		assert.deepStrictEqual(operations, []);
-		sinon.assert.notCalled(readDocument);
-	});
-
-	it("does not expose initialization when the feature is disabled", async () => {
-		config.set("restGitService:gitrestOwnershipValidation", false);
-		await request(createApp())
-			.post(`/repos/${tenantId}/internal/document-storage/initialize`)
-			.set("Authorization", authorization)
-			.expect(404);
-		assert.deepStrictEqual(operations, []);
-	});
-
-	it("rejects initialization without authentication", async () => {
-		await request(createApp())
-			.post(`/repos/${tenantId}/internal/document-storage/initialize`)
-			.expect(403);
-		assert.deepStrictEqual(operations, []);
-	});
-
-	it("rejects initialization without document write scope", async () => {
-		const readAuthorization = getAuthorizationTokenFromCredentials({
-			user: tenantId,
-			password: generateToken(tenantId, documentId, "tenant-key", [ScopeType.DocRead]),
-		});
-		await request(createApp())
-			.post(`/repos/${tenantId}/internal/document-storage/initialize`)
-			.set("Authorization", readAuthorization)
-			.expect(403);
-		assert.deepStrictEqual(operations, []);
-	});
-
-	it("rejects a revoked initialization token", async () => {
-		const claims = decode(
-			generateToken(tenantId, documentId, "tenant-key", [ScopeType.DocWrite]),
-		);
-		assert.ok(claims && typeof claims === "object");
-		const revokedAuthorization = getAuthorizationTokenFromCredentials({
-			user: tenantId,
-			password: sign({ ...claims, jti: "revoked-token" }, "tenant-key"),
-		});
-		const isTokenRevoked = sandbox.stub().resolves(true);
-		await request(createApp({ revokedTokenChecker: { isTokenRevoked } }))
-			.post(`/repos/${tenantId}/internal/document-storage/initialize`)
-			.set("Authorization", revokedAuthorization)
-			.expect(403);
-		sinon.assert.calledOnceWithExactly(isTokenRevoked, tenantId, documentId, "revoked-token");
-		assert.deepStrictEqual(operations, []);
-	});
-
-	it("does not bypass a denied document during initialization", async () => {
-		await request(
-			createApp({
-				denyList: {
-					isTenantDenied: () => false,
-					isDocumentDenied: (id) => id === documentId,
-				},
-			}),
-		)
-			.post(`/repos/${tenantId}/internal/document-storage/initialize`)
-			.set("Authorization", authorization)
-			.expect(500);
-		assert.deepStrictEqual(operations, []);
-	});
-
-	it("does not bypass the configured authorizer without trusted create context", async () => {
-		await request(
-			createApp({
-				authorizer: { authorize: sandbox.stub().rejects(new NetworkError(403, "Denied")) },
-			}),
-		)
-			.post(`/repos/${tenantId}/internal/document-storage/initialize`)
-			.set("Authorization", authorization)
-			.expect(404);
-		assert.deepStrictEqual(operations, []);
-	});
-
-	it("authenticates the tenant before resolving trusted create context", async () => {
-		sandbox
-			.stub(TestTenantService.prototype, "getTenant")
-			.rejects(new NetworkError(403, "Invalid tenant token"));
-		const resolve = sandbox.stub().rejects(new Error("Unexpected context resolution"));
-		await request(
-			createApp({
-				authorizer: { authorize: sandbox.stub() },
-				resolver: { resolve },
-			}),
-		)
-			.post(`/repos/${tenantId}/internal/document-storage/initialize`)
-			.set("Authorization", authorization)
-			.set("Fluid-Create-Context", "opaque-create-context")
-			.expect(403);
-		sinon.assert.notCalled(resolve);
-		assert.deepStrictEqual(operations, []);
-	});
-
-	it("authorizes trusted durable initialization before forwarding", async () => {
-		const context = {
-			tenantId,
-			documentId,
-			containerType: "durable" as const,
-			storageAccountName: storageName,
-			lifecycleVersion: "generation-1",
-			expiresAtMs: Date.now() + 60_000,
-		};
-		const authorize = sandbox.stub().resolves({
-			...context,
-			source: "trusted-create",
-			operation: "create",
-			state: "pending",
-		});
-		const resolve = sandbox.stub().resolves(context);
-		await request(
-			createApp({
-				authorizer: { authorize },
-				resolver: { resolve },
-			}),
-		)
-			.post(`/repos/${tenantId}/internal/document-storage/initialize`)
-			.set("Authorization", authorization)
-			.set("Fluid-Create-Context", "opaque-create-context")
-			.expect(204);
-		sinon.assert.calledOnceWithExactly(resolve, {
-			tenantId,
-			documentId,
-			opaqueToken: "opaque-create-context",
-			containerTypeHint: "durable",
-		});
-		sinon.assert.calledOnceWithMatch(authorize, {
-			tenantId,
-			documentId,
-			operation: "create",
-			trustedCreateContext: context,
-		});
-		assert.strictEqual(operations.length, 1);
 	});
 });

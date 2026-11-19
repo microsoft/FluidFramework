@@ -163,19 +163,11 @@ export class RestGitService {
 		);
 	}
 
-	public async initializeDocumentStorage(): Promise<void> {
-		await this.writeDocumentStorage("initialize");
-	}
-
 	public async backfillDocumentStorage(): Promise<void> {
-		await this.writeDocumentStorage("backfill");
-	}
-
-	private async writeDocumentStorage(operation: "initialize" | "backfill"): Promise<void> {
 		if (this.tenantId.includes(":") || this.documentId.includes(":")) {
 			throw new NetworkError(400, "Invalid document storage routing identity.");
 		}
-		const url = `/repos/${this.getRepoPath()}/internal/document-storage/${operation}`;
+		const url = `/repos/${this.getRepoPath()}/internal/document-storage/backfill`;
 		await this.restWrapper
 			.post(url, undefined)
 			.catch(getRequestErrorTranslator(url, "POST", this.lumberProperties));

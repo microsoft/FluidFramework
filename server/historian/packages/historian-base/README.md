@@ -55,18 +55,9 @@ succeeds; they are not cached as durable in this mode. This fallback does not ru
 ephemeral lifecycle hits. Summary routes pass their effective `ignoreEphemeralFlag` setting to
 the service factory, including the route's default when the setting is omitted.
 
-The option also enables authenticated
-`POST /repos/:ignored?/:tenantId/internal/document-storage/initialize`.
-It requires document-write scope and honors token revocation and tenant/document deny lists.
-It is exposed through the shared route factory's `summaries` router as well as the app,
-and uses the configured general per-tenant throttler before tenant lookup or storage writes.
-Requests marked ephemeral are rejected before changing their routing cache.
-Initialization keeps its durable type hint local, even if the storage operation fails.
 All service operations in this mode reject tenant/document IDs containing `:`.
-GitRest's private initialization and backfill endpoints also require exactly two nonempty routing-header components.
-When an access authorizer is configured, initialization also requires a validated
-`Fluid-Create-Context` and an authorized pending creation proof.
-Deployments must restrict these private initialization/backfill operations to trusted services.
+GitRest's private backfill endpoint also requires exactly two nonempty routing-header components.
+Deployments must restrict that endpoint to trusted services.
 
 Initial blob, tree, commit, and reference creation can carry `Fluid-Create-Context`.
 Hosts must provide the existing trusted creation-context resolver to validate that header.
@@ -81,10 +72,11 @@ ephemeral cache namespace, so subsequent reads can reuse its cached content.
 
 After publishing the server client, GitRest, and Historian packages from the integrated source,
 consumers should upgrade their packages and keep only their storage-provider implementation.
-Their durable-document creation flow must call `initializeDocumentStorage` before uploading
-the initial summary; the shared creation flow does not opt providers into this operation.
-That implementation must emit the structured missing-metadata error code and implement the
-conditional initialize/backfill hooks. No client transport or Historian source patch is needed.
+Their GitRest repository factory must initialize new durable ownership as part of its existing
+`create` operation, before writing content. No separate initialization API or client call is needed.
+Existing storage must still reject conflicting ownership and require authoritative backfill
+when legacy ownership is missing. The provider must emit the structured missing-metadata
+error code and implement conditional backfill. No client transport or Historian source patch is needed.
 
 Without an independent access proof, durable content in this mode does not use Historian's
 content cache. Summaries (including version-SHA reads), blobs, commits, trees, headers, and full

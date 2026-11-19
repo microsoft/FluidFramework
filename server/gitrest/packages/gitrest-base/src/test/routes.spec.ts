@@ -226,7 +226,7 @@ testModes.forEach((mode) => {
 			// Git data API tests
 			describe("Git", () => {
 				describe("Repos", () => {
-					for (const operation of ["initialize", "backfill"] as const) {
+					for (const operation of ["backfill"] as const) {
 						it(`rejects ambiguous routing before document storage ${operation}`, async () => {
 							const received: IRepoManagerParams[] = [];
 							const factory: IRepositoryManagerFactory = {

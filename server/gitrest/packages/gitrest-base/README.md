@@ -7,16 +7,19 @@ Noncanonical values are rejected with HTTP 400 by both the routes and the reposi
 
 ## Internal durable-storage operations
 
-Providers can implement the optional `IRepositoryManagerFactory.initializeDocumentStorage` and
-`backfillDocumentStorage` hooks.
-GitRest exposes these hooks at `POST /repos/:owner/:repo/internal/document-storage/initialize`
-and `POST /repos/:owner/:repo/internal/document-storage/backfill`.
-These routes require the repository-per-document model and reject ephemeral containers.
-An unconfigured hook returns HTTP 501.
-The hooks do not open a repository or run during ordinary document reads and writes.
+Providers initialize new durable ownership in their existing repository factory `create`
+operation before writing content. A missing repository (HTTP 400) or storage container
+(HTTP 404, durable storage only) on a per-document write enters this existing create path.
+No separate initialization endpoint or client round trip is required.
 
-These are trusted service-to-service operations, not public client APIs.
-Deployments must restrict access to the routes.
+Providers can implement the optional `IRepositoryManagerFactory.backfillDocumentStorage` hook.
+GitRest exposes it at `POST /repos/:owner/:repo/internal/document-storage/backfill`.
+This route requires the repository-per-document model and rejects ephemeral containers.
+An unconfigured hook returns HTTP 501.
+The backfill hook does not open a repository or run during ordinary document reads and writes.
+
+This is a trusted service-to-service operation, not a public client API.
+Deployments must restrict access to the route.
 Before calling backfill, the caller must validate the tenant, document, and storage account
 against the authoritative document record.
 The provider hook must validate its routing parameters and write ownership metadata conditionally,

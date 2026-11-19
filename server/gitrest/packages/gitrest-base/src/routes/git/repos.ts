@@ -23,40 +23,23 @@ export function create(
 	const router: Router = Router();
 	const repoPerDocEnabled: boolean = store.get("git:repoPerDocEnabled") ?? false;
 
-	for (const [operation, method] of [
-		["initialize", "initializeDocumentStorage"],
-		["backfill", "backfillDocumentStorage"],
-	] as const) {
-		router.post(
-			`/repos/:owner/:repo/internal/document-storage/${operation}`,
-			(request, response) => {
-				const params = getRepoManagerParamsFromRequest(request);
-				const result = (async () => {
-					const routing = request.get(Constants.StorageRoutingIdHeader)?.split(":");
-					if (routing?.length !== 2 || routing.some((part) => part.length === 0)) {
-						throw new NetworkError(
-							400,
-							"Invalid document storage routing identity.",
-							false,
-						);
-					}
-					if (!repoPerDocEnabled || params.isEphemeralContainer === true) {
-						throw new NetworkError(400, "Durable document storage is required.", false);
-					}
-					const execute = repoManagerFactory[method];
-					if (execute === undefined) {
-						throw new NetworkError(
-							501,
-							"Document storage initialization is not configured.",
-							false,
-						);
-					}
-					await execute.call(repoManagerFactory, params);
-				})().catch((error) => logAndThrowApiError(error, request, params));
-				handleResponse(result, response, undefined, undefined, 204);
-			},
-		);
-	}
+	router.post("/repos/:owner/:repo/internal/document-storage/backfill", (request, response) => {
+		const params = getRepoManagerParamsFromRequest(request);
+		const result = (async () => {
+			const routing = request.get(Constants.StorageRoutingIdHeader)?.split(":");
+			if (routing?.length !== 2 || routing.some((part) => part.length === 0)) {
+				throw new NetworkError(400, "Invalid document storage routing identity.", false);
+			}
+			if (!repoPerDocEnabled || params.isEphemeralContainer === true) {
+				throw new NetworkError(400, "Durable document storage is required.", false);
+			}
+			if (repoManagerFactory.backfillDocumentStorage === undefined) {
+				throw new NetworkError(501, "Document storage backfill is not configured.", false);
+			}
+			await repoManagerFactory.backfillDocumentStorage(params);
+		})().catch((error) => logAndThrowApiError(error, request, params));
+		handleResponse(result, response, undefined, undefined, 204);
+	});
 
 	/**
 	 * Creates a new git repository

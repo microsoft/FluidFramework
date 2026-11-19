@@ -32,13 +32,6 @@ export class GitManager implements IGitManager {
 
 	constructor(private readonly historian: IHistorian) {}
 
-	public async initializeDocumentStorage(): Promise<void> {
-		if (!this.historian.initializeDocumentStorage) {
-			throw new Error("Historian does not support document storage initialization.");
-		}
-		await this.historian.initializeDocumentStorage();
-	}
-
 	public async getHeader(id: string, sha: string): Promise<api.ISnapshotTree> {
 		const header = await this.historian.getHeader(sha);
 

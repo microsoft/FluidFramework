@@ -144,10 +144,6 @@ export interface IRepoManagerParams {
 
 export interface IRepositoryManagerFactory {
 	/**
-	 * Initializes trusted ownership metadata for new durable document storage.
-	 */
-	initializeDocumentStorage?(params: IRepoManagerParams): Promise<void>;
-	/**
 	 * Adds ownership metadata after the caller validates an existing durable document.
 	 */
 	backfillDocumentStorage?(params: IRepoManagerParams): Promise<void>;

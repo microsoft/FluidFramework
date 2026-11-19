@@ -11,8 +11,6 @@ import AxiosMockAdapter from "axios-mock-adapter";
 import { Historian, ICredentials, getAuthorizationTokenFromCredentials } from "../historian";
 import { BasicRestWrapper, RestWrapper } from "../restWrapper";
 import { IWholeSummaryPayload, IWriteSummaryResponse } from "../storageContracts";
-import { GitManager } from "../gitManager";
-import { NetworkError } from "../error";
 
 describe("Historian", () => {
 	const endpoint = "http://test:3000";
@@ -159,43 +157,6 @@ describe("Historian", () => {
 		);
 		historian = new Historian(endpoint, true, false, restWrapper);
 		axiosMock.reset();
-	});
-
-	it("initializes document storage through the internal Historian API", async () => {
-		axiosMock
-			.onPost(getUrlWithToken("/internal/document-storage/initialize", initialCredentials))
-			.reply(204);
-		await new GitManager(historian).initializeDocumentStorage();
-		assert.strictEqual(axiosMock.history.post?.length, 1);
-	});
-
-	it("does not initialize storage through the public Git API", async () => {
-		const publicHistorian = new Historian(endpoint, false, false, restWrapper);
-		await assert.rejects(
-			new GitManager(publicHistorian).initializeDocumentStorage(),
-			(error: unknown) => error instanceof NetworkError && error.code === 400,
-		);
-		assert.strictEqual(axiosMock.history.post?.length, 0);
-	});
-
-	it("propagates storage initialization failures without retrying", async () => {
-		axiosMock
-			.onPost(getUrlWithToken("/internal/document-storage/initialize", initialCredentials))
-			.reply(403, "Denied");
-		await assert.rejects(
-			new GitManager(historian).initializeDocumentStorage(),
-			(error: unknown) => error instanceof NetworkError && error.code === 403,
-		);
-		assert.strictEqual(axiosMock.history.post?.length, 1);
-	});
-
-	it("reports unsupported initialization on an older Historian implementation", async () => {
-		Object.defineProperty(historian, "initializeDocumentStorage", { value: undefined });
-		await assert.rejects(
-			new GitManager(historian).initializeDocumentStorage(),
-			/Historian does not support document storage initialization/,
-		);
-		assert.strictEqual(axiosMock.history.post?.length, 0);
 	});
 
 	describe("getHeader", () => {

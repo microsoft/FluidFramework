@@ -93,12 +93,6 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"Class_GitManager": {
-				"forwardCompat": false
-			},
-			"Class_Historian": {
-				"forwardCompat": false
-			},
 			"Class_NetworkError": {
 				"backCompat": false
 			},

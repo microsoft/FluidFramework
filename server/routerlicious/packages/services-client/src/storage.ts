@@ -68,10 +68,6 @@ export interface IGitCache {
  * @internal
  */
 export interface IGitService {
-	/**
-	 * Initializes durable document storage through an internal storage service.
-	 */
-	initializeDocumentStorage?(): Promise<void>;
 	getBlob(sha: string): Promise<git.IBlob>;
 	createBlob(blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse>;
 	getContent(path: string, ref: string): Promise<any>;
@@ -307,10 +303,6 @@ export const GitManagerConfigDecorators = {
  * @internal
  */
 export interface IGitManager {
-	/**
-	 * Initializes durable document storage when the Historian supports it.
-	 */
-	initializeDocumentStorage?(): Promise<void>;
 	getHeader(id: string, sha: string): Promise<api.ISnapshotTree>;
 	getFullTree(sha: string): Promise<any>;
 	getCommit(sha: string): Promise<git.ICommit>;
