@@ -853,12 +853,12 @@ export class AnchorSet implements AnchorLocator {
 					() => {},
 				);
 			},
-			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
+			attach(source: FieldKey, sourceRange: Range, destination: PlaceIndex): void {
 				this.notifyChildrenChanging();
-				this.attachEdit(source, count, destination);
+				this.attachEdit(source, sourceRange, destination);
 				this.notifyChildrenChanged();
 			},
-			attachEdit(source: FieldKey, count: number, destination: PlaceIndex): void {
+			attachEdit(source: FieldKey, sourceRange: Range, destination: PlaceIndex): void {
 				assert(
 					this.parentField !== undefined,
 					0x7a2 /* Must be in a field in order to attach */,
@@ -866,14 +866,18 @@ export class AnchorSet implements AnchorLocator {
 				const sourcePath = {
 					parent: this.anchorSet.root,
 					parentField: source,
-					parentIndex: 0,
+					parentIndex: sourceRange.start,
 				};
 				const destinationPath = {
 					parent: this.parent,
 					parentField: this.parentField,
 					parentIndex: destination,
 				};
-				this.anchorSet.moveChildren(sourcePath, destinationPath, count);
+				this.anchorSet.moveChildren(
+					sourcePath,
+					destinationPath,
+					sourceRange.end - sourceRange.start,
+				);
 				this.depthThresholdForSubtreeChanged = this.currentDepth;
 			},
 			detach(
@@ -910,23 +914,28 @@ export class AnchorSet implements AnchorLocator {
 			},
 			replace(
 				newContentSource: FieldKey,
+				sourceRange: Range,
 				range: Range,
 				oldContentDestination: FieldKey,
 				destinationDetachedNodeId: Delta.DetachedNodeId,
 			): void {
+				assert(
+					sourceRange.end - sourceRange.start === range.end - range.start,
+					"Replacement lengths must match",
+				);
 				this.notifyChildrenChanging();
 				this.detachEdit(range, oldContentDestination, destinationDetachedNodeId);
-				this.attachEdit(newContentSource, range.end - range.start, range.start);
+				this.attachEdit(newContentSource, sourceRange, range.start);
 				this.notifyChildrenChanged();
 			},
-			destroy(detachedField: FieldKey, count: number): void {
+			destroy(detachedField: FieldKey, range: Range): void {
 				this.anchorSet.removeChildren(
 					{
 						parent: undefined,
 						parentField: detachedField,
-						parentIndex: 0,
+						parentIndex: range.start,
 					},
-					count,
+					range.end - range.start,
 				);
 			},
 			create(content: ITreeCursorSynchronous[], destination: FieldKey): void {

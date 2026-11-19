@@ -104,7 +104,7 @@ describe("AnchorSet", () => {
 			v.enterField(fieldFoo);
 			v.detach({ start: 4, end: 5 }, detachedField, detachId, false);
 			v.exitField(fieldFoo);
-			v.destroy(detachedField, 1);
+			v.destroy(detachedField, { start: 0, end: 1 });
 		});
 
 		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 4]));
@@ -129,6 +129,43 @@ describe("AnchorSet", () => {
 		assert.throws(() => anchors.locate(anchor3));
 	});
 
+	it("preserves sparse anchors and detached node IDs across partial source ranges", () => {
+		const anchors = new AnchorSet();
+		const first = anchors.track(makePath([rootFieldKey, 0]));
+		const moved = anchors.track(makePath([rootFieldKey, 3]));
+		const destroyed = anchors.track(makePath([rootFieldKey, 7]));
+		const last = anchors.track(makePath([rootFieldKey, 9]));
+		withVisitor(anchors, (visitor) => {
+			visitor.enterField(rootFieldKey);
+			visitor.detach({ start: 0, end: 10 }, detachedField, detachId, false);
+			assert.deepEqual(anchors.locate(moved)?.detachedNodeId, { minor: detachId.minor + 3 });
+			visitor.attach(detachedField, { start: 2, end: 6 }, 0);
+			checkEquality(anchors.locate(moved), makePath([rootFieldKey, 1]));
+			assert.equal(anchors.locate(moved)?.detachedNodeId, undefined);
+			checkEquality(anchors.locate(last), makePath([detachedField, 5]));
+			assert.deepEqual(anchors.locate(last)?.detachedNodeId, { minor: detachId.minor + 9 });
+			visitor.exitField(rootFieldKey);
+			visitor.destroy(detachedField, { start: 1, end: 4 });
+			assert.equal(anchors.locate(destroyed), undefined);
+			checkEquality(anchors.locate(last), makePath([detachedField, 2]));
+			assert.deepEqual(anchors.locate(last)?.detachedNodeId, { minor: detachId.minor + 9 });
+			visitor.enterField(rootFieldKey);
+			visitor.replace(detachedField, { start: 1, end: 3 }, { start: 1, end: 3 }, fieldBar, {
+				minor: 100,
+			});
+			visitor.exitField(rootFieldKey);
+			checkEquality(anchors.locate(moved), makePath([fieldBar, 0]));
+			assert.deepEqual(anchors.locate(moved)?.detachedNodeId, { minor: 100 });
+			checkEquality(anchors.locate(last), makePath([rootFieldKey, 2]));
+			assert.equal(anchors.locate(last)?.detachedNodeId, undefined);
+			checkEquality(anchors.locate(first), makePath([detachedField, 0]));
+			assert.deepEqual(anchors.locate(first)?.detachedNodeId, detachId);
+		});
+		for (const anchor of [first, moved, destroyed, last]) {
+			anchors.forget(anchor);
+		}
+	});
+
 	it("can rebase over delete of parent node", () => {
 		const [anchors, anchor1, anchor2, anchor3, anchor4] = setup();
 
@@ -136,7 +173,7 @@ describe("AnchorSet", () => {
 			v.enterField(fieldFoo);
 			v.detach({ start: 5, end: 6 }, detachedField, detachId, false);
 			v.exitField(fieldFoo);
-			v.destroy(detachedField, 1);
+			v.destroy(detachedField, { start: 0, end: 1 });
 		});
 
 		assert.equal(anchors.locate(anchor4), undefined);
@@ -153,7 +190,7 @@ describe("AnchorSet", () => {
 			v.enterField(fieldFoo);
 			v.detach({ start: 3, end: 4 }, detachedField, detachId, false);
 			v.exitField(fieldFoo);
-			v.destroy(detachedField, 1);
+			v.destroy(detachedField, { start: 0, end: 1 });
 		});
 		checkEquality(anchors.locate(anchor2), undefined);
 		assert.doesNotThrow(() => anchors.forget(anchor2));
@@ -165,7 +202,7 @@ describe("AnchorSet", () => {
 			v.enterField(fieldFoo);
 			v.detach({ start: 3, end: 4 }, detachedField, detachId, false);
 			v.exitField(fieldFoo);
-			v.destroy(detachedField, 1);
+			v.destroy(detachedField, { start: 0, end: 1 });
 		});
 		checkEquality(anchors.locate(anchor3), undefined);
 		assert.doesNotThrow(() => anchors.forget(anchor3));
@@ -364,7 +401,7 @@ describe("AnchorSet", () => {
 		withVisitor(anchors, (v) => {
 			v.enterField(fieldFoo);
 			v.detach({ start: 0, end: 5 }, detachedField, detachId, false);
-			v.attach(detachedField, 3, 0);
+			v.attach(detachedField, { start: 0, end: 3 }, 0);
 			v.exitField(fieldFoo);
 		});
 
@@ -530,7 +567,7 @@ describe("AnchorSet", () => {
 			v.detach({ start: 0, end: 1 }, brand("fakeDetachDestination"), detachId, false);
 			v.exitField(fieldOne);
 			v.enterField(fieldTwo);
-			v.attach(brand("fakeAttachSource"), 1, 0);
+			v.attach(brand("fakeAttachSource"), { start: 0, end: 1 }, 0);
 			v.exitField(fieldTwo);
 			v.exitNode(0);
 			v.exitField(rootFieldKey);

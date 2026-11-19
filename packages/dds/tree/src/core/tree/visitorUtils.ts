@@ -111,17 +111,17 @@ export function combineVisitors(visitors: readonly CombinableVisitor[]): Combine
 				v.destroy(...args);
 			}
 		},
-		attach: (source: FieldKey, count: number, destination: PlaceIndex) => {
+		attach: (source: FieldKey, sourceRange: Range, destination: PlaceIndex) => {
 			for (const v of announcedVisitors) {
-				v.beforeAttach(source, count, destination);
+				v.beforeAttach(source, sourceRange, destination);
 			}
 			for (const v of allVisitors) {
-				v.attach(source, count, destination);
+				v.attach(source, sourceRange, destination);
 			}
 			for (const v of announcedVisitors) {
-				v.afterAttach(source, {
+				v.afterAttach(source, sourceRange, {
 					start: destination,
-					end: destination + count,
+					end: destination + sourceRange.end - sourceRange.start,
 				});
 			}
 		},
@@ -141,15 +141,15 @@ export function combineVisitors(visitors: readonly CombinableVisitor[]): Combine
 				v.afterDetach(source.start, source.end - source.start, destination, isReplaced);
 			}
 		},
-		replace: (source, range, destination, id) => {
+		replace: (source, sourceRange, range, destination, id) => {
 			for (const visitor of announcedVisitors) {
-				visitor.beforeReplace(source, range, destination);
+				visitor.beforeReplace(source, sourceRange, range, destination);
 			}
 			for (const visitor of allVisitors) {
-				visitor.replace(source, range, destination, id);
+				visitor.replace(source, sourceRange, range, destination, id);
 			}
 			for (const visitor of announcedVisitors) {
-				visitor.afterReplace(source, range, destination);
+				visitor.afterReplace(source, sourceRange, range, destination);
 			}
 		},
 		enterNode: (...args) => {
@@ -190,9 +190,12 @@ export interface AnnouncedVisitor extends DeltaVisitor {
 	 * A hook that is called after all nodes have been created.
 	 */
 	afterCreate(content: readonly ITreeCursorSynchronous[], destination: FieldKey): void;
-	beforeDestroy(field: FieldKey, count: number): void;
-	beforeAttach(source: FieldKey, count: number, destination: PlaceIndex): void;
-	afterAttach(source: FieldKey, destination: Range): void;
+	beforeDestroy(field: FieldKey, range: Range): void;
+	beforeAttach(source: FieldKey, sourceRange: Range, destination: PlaceIndex): void;
+	/**
+	 * Called after attachment, with pre-edit source indices and post-edit destination indices.
+	 */
+	afterAttach(source: FieldKey, sourceRange: Range, destination: Range): void;
 	beforeDetach(source: Range, destination: FieldKey, isReplaced: boolean): void;
 	afterDetach(
 		source: PlaceIndex,
@@ -204,12 +207,23 @@ export interface AnnouncedVisitor extends DeltaVisitor {
 	 * Called before any visitor applies a replacement, while the outgoing nodes are still in `range`.
 	 * Parameters have the same meaning as in {@link DeltaVisitor.replace}.
 	 */
-	beforeReplace(source: FieldKey, range: Range, destination: FieldKey): void;
+	beforeReplace(
+		source: FieldKey,
+		sourceRange: Range,
+		range: Range,
+		destination: FieldKey,
+	): void;
 	/**
 	 * Called after all visitors apply a replacement, with incoming nodes in `range` and outgoing nodes in `destination`.
 	 * Parameters have the same meaning as in {@link DeltaVisitor.replace}.
+	 * `sourceRange` describes the pre-edit source indices.
 	 */
-	afterReplace(source: FieldKey, range: Range, destination: FieldKey): void;
+	afterReplace(
+		source: FieldKey,
+		sourceRange: Range,
+		range: Range,
+		destination: FieldKey,
+	): void;
 }
 
 const noOp = (): void => {};
@@ -240,26 +254,26 @@ export function createAnnouncedVisitor(
 		afterDetach: visitorFunctions.afterDetach ?? noOp,
 		beforeReplace:
 			visitorFunctions.beforeReplace ??
-			((source, range, destination) => {
+			((source, sourceRange, range, destination) => {
 				visitorFunctions.beforeDetach?.(range, destination, true);
-				visitorFunctions.beforeAttach?.(source, range.end - range.start, range.start);
+				visitorFunctions.beforeAttach?.(source, sourceRange, range.start);
 			}),
 		replace:
 			visitorFunctions.replace ??
-			((source, range, destination, id) => {
+			((source, sourceRange, range, destination, id) => {
 				visitorFunctions.detach?.(range, destination, id, true);
-				visitorFunctions.attach?.(source, range.end - range.start, range.start);
+				visitorFunctions.attach?.(source, sourceRange, range.start);
 			}),
 		afterReplace:
 			visitorFunctions.afterReplace ??
-			((source, range, destination) => {
+			((source, sourceRange, range, destination) => {
 				visitorFunctions.afterDetach?.(
 					range.start,
 					range.end - range.start,
 					destination,
 					true,
 				);
-				visitorFunctions.afterAttach?.(source, range);
+				visitorFunctions.afterAttach?.(source, sourceRange, range);
 			}),
 		enterNode: visitorFunctions.enterNode ?? noOp,
 		exitNode: visitorFunctions.exitNode ?? noOp,

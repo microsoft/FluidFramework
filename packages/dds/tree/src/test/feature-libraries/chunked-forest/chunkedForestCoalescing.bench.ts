@@ -950,9 +950,15 @@ describe("chunked-forest coalescing benchmarks", () => {
 									visitor.enterField(rootFieldKey);
 									visitor.enterNode(500);
 									visitor.enterField(field);
-									visitor.replace(incomingField, { start: 0, end: 1 }, outgoingField, {
-										minor: 0,
-									});
+									visitor.replace(
+										incomingField,
+										{ start: 0, end: 1 },
+										{ start: 0, end: 1 },
+										outgoingField,
+										{
+											minor: 0,
+										},
+									);
 									visitor.exitField(field);
 									visitor.exitNode(500);
 									visitor.exitField(rootFieldKey);
