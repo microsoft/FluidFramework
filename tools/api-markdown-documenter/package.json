@@ -73,8 +73,8 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@microsoft/api-extractor-model": "~7.30.7",
-		"@microsoft/tsdoc": "^0.15.1",
+		"@microsoft/api-extractor-model": "~7.33.16",
+		"@microsoft/tsdoc": "^0.17.1",
 		"@rushstack/node-core-library": "^5.14.0",
 		"hast-util-format": "^1.1.0",
 		"hast-util-from-html": "^2.0.3",
