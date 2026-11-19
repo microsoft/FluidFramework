@@ -74,6 +74,7 @@ export type {
 	TreeLocationResolution,
 	TreeLocationResolver,
 } from "./locations.js";
+export { isTextLocationNode, textLocationArray } from "./locations.js";
 export { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
 export {
 	SchemaFactory,
