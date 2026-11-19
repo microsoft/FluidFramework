@@ -409,6 +409,29 @@ describe("RestGitService Git object SHA validation", () => {
 		}
 	});
 
+	for (const identity of [
+		{ tenant: "tenant:alias", document: documentId },
+		{ tenant: tenantId, document: "document:alias" },
+	]) {
+		for (const operation of ["initializeDocumentStorage", "backfillDocumentStorage"] as const) {
+			it(`rejects ambiguous metadata target ${identity.tenant}/${identity.document} for ${operation}`, async () => {
+				const service = new RestGitService(
+					storage,
+					false,
+					identity.tenant,
+					identity.document,
+				);
+				const downstream = sandbox.stub(BasicRestWrapper.prototype, "post").resolves();
+
+				await assert.rejects(
+					service[operation](),
+					(error: unknown) => error instanceof NetworkError && error.code === 400,
+				);
+				sinon.assert.notCalled(downstream);
+			});
+		}
+	}
+
 	it("sends the authorized physical root to GitRest", async () => {
 		let capturedHeaders: Record<string, string | string[] | undefined> = {};
 		const server = createServer((request, response) => {

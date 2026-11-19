@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ScopeType } from "@fluidframework/protocol-definitions";
 import {
 	DriverVersionHeaderName,
 	CallingServiceHeaderName,
-	NetworkError,
 } from "@fluidframework/server-services-client";
 import type {
 	IStorageNameRetriever,
@@ -17,12 +15,7 @@ import type {
 	IReadinessCheck,
 	IDenyList,
 } from "@fluidframework/server-services-core";
-import {
-	RestLessServer,
-	createHealthCheckEndpoints,
-	validateRequestParams,
-	handleResponse,
-} from "@fluidframework/server-services-shared";
+import { RestLessServer, createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 import {
 	BaseTelemetryProperties,
 	CommonProperties,
@@ -33,7 +26,6 @@ import {
 	bindAbortControllerContext,
 	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
-	denyListMiddleware,
 } from "@fluidframework/server-services-utils";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
@@ -42,12 +34,6 @@ import express from "express";
 import type * as nconf from "nconf";
 
 import * as routes from "./routes";
-import {
-	createGitService,
-	getTokenDocumentIdentity,
-	resolveTrustedCreateContext,
-	verifyToken,
-} from "./routes/utils";
 import type {
 	ICache,
 	ITenantService,
@@ -142,78 +128,6 @@ export function create(
 
 	app.use(compression());
 	app.use(cors());
-
-	if (config.get("restGitService:gitrestOwnershipValidation") === true) {
-		app.post(
-			"/repos/:ignored?/:tenantId/internal/document-storage/initialize",
-			validateRequestParams("tenantId"),
-			verifyToken(
-				revokedTokenChecker,
-				[ScopeType.DocWrite],
-				config.get("maxTokenLifetimeSec"),
-			),
-			(request, _response, next) => {
-				request.params.id = getTokenDocumentIdentity(
-					request.params.tenantId,
-					request.get("Authorization"),
-				).documentId;
-				next();
-			},
-			denyListMiddleware(denyList),
-			(request, response) => {
-				const result = (async () => {
-					if (request.get(Constants.IsEphemeralContainer) === "true") {
-						throw new NetworkError(
-							400,
-							"Ephemeral storage cannot be initialized here.",
-						);
-					}
-					const { accessToken } = getTokenDocumentIdentity(
-						request.params.tenantId,
-						request.get("Authorization"),
-					);
-					const authenticatedTenantDetails = await tenantService.getTenant(
-						request.params.tenantId,
-						accessToken,
-						false,
-					);
-					const trustedCreateContext =
-						documentAccessAuthorizer === undefined
-							? undefined
-							: await resolveTrustedCreateContext({
-									tenantId: request.params.tenantId,
-									documentId: request.params.id,
-									resolver: trustedCreateContextResolver,
-									opaqueToken: request.get("Fluid-Create-Context"),
-									containerTypeHint: "durable",
-							  });
-					const service = await createGitService({
-						config,
-						tenantId: request.params.tenantId,
-						authorization: request.get("Authorization"),
-						tenantService,
-						authenticatedTenantDetails,
-						storageNameRetriever,
-						documentManager,
-						cache,
-						initialUpload: true,
-						storageName: request.get("StorageName"),
-						isEphemeralContainer: false,
-						ephemeralDocumentTTLSec,
-						simplifiedCustomDataRetriever,
-						postEphemeralContainerChecker,
-						query: request.query,
-						accessOperation: "create",
-						containerTypeHint: "durable",
-						documentAccessAuthorizer,
-						trustedCreateContext,
-					});
-					await service.initializeDocumentStorage();
-				})();
-				handleResponse(result, response, false, undefined, 204);
-			},
-		);
-	}
 
 	const apiRoutes = routes.create(
 		config,

@@ -17,14 +17,18 @@ import type {
 	IDocument,
 	IDenyList,
 	IRevokedTokenChecker,
+	IThrottler,
 } from "@fluidframework/server-services-core";
 import { StartupCheck } from "@fluidframework/server-services-shared";
+import { TestThrottler } from "@fluidframework/server-test-utils";
+import express from "express";
 import { decode, sign } from "jsonwebtoken";
 import * as nconf from "nconf";
 import * as sinon from "sinon";
 import request from "supertest";
 
 import * as historianApp from "../app";
+import { create as createRoutes } from "../routes";
 import { createGitService } from "../routes/utils";
 import type {
 	IDocumentAccessAuthorizer,
@@ -32,6 +36,7 @@ import type {
 	RestGitService,
 } from "../services";
 import { TestCache, TestDocumentManager, TestTenantService } from "./utils";
+import { Constants } from "../utils";
 
 const tenantId = "tenant";
 const documentId = "document";
@@ -78,6 +83,7 @@ describe("document storage recovery", () => {
 	let failureCode: unknown;
 	let backfillStatus: number;
 	let repairSucceeds: boolean;
+	let currentSummary: typeof summary;
 	let lastRoutingFlag: string | string[] | undefined;
 	let storageNameRetriever: {
 		get: sinon.SinonStub;
@@ -96,6 +102,7 @@ describe("document storage recovery", () => {
 		failureCode = "DocumentStorageMetadataMissing";
 		backfillStatus = 204;
 		repairSucceeds = true;
+		currentSummary = summary;
 		lastRoutingFlag = undefined;
 		documentManager = new TestDocumentManager();
 		readDocument = sandbox.stub(documentManager, "readDocument").resolves(activeDocument);
@@ -120,12 +127,18 @@ describe("document storage recovery", () => {
 						internalErrorCode: failureCode,
 					}),
 				);
+			} else if (req.method === "DELETE" && req.url?.endsWith("/git/summaries")) {
+				initialized = false;
+				failureStatus = 404;
+				res.end("true");
 			} else {
 				const isSummary =
 					req.url?.includes("/git/summaries/") ||
 					(req.method === "POST" && req.url?.endsWith("/git/summaries"));
 				const value = isSummary
-					? summary
+					? req.method === "GET" && req.url?.endsWith(`/${summary.id}`)
+						? summary
+						: currentSummary
 					: req.url?.includes("/git/commits/") ||
 					  (req.method === "POST" && req.url?.endsWith("/git/commits"))
 					? {
@@ -193,13 +206,14 @@ describe("document storage recovery", () => {
 			authorizer?: IDocumentAccessAuthorizer;
 			resolver?: ITrustedCreateContextResolver;
 			cache?: TestCache;
+			tenantThrottlers?: Map<string, IThrottler>;
 		} = {},
 	) {
 		return historianApp.create(
 			config,
 			new TestTenantService(),
 			storageNameRetriever,
-			new Map(),
+			options.tenantThrottlers ?? new Map(),
 			new Map(),
 			documentManager,
 			new StartupCheck(),
@@ -246,6 +260,54 @@ describe("document storage recovery", () => {
 		);
 		sinon.assert.calledOnce(readDocument);
 	});
+
+	it("allows a later recovery attempt after a failed backfill", async () => {
+		backfillStatus = 503;
+		const service = await createService();
+		await assert.rejects(
+			service.getRefs(),
+			(error: unknown) => error instanceof NetworkError && error.code === 503,
+		);
+		backfillStatus = 204;
+
+		assert.deepStrictEqual(await Promise.all([service.getRefs(), service.getRefs()]), [[], []]);
+		assert.strictEqual(
+			operations.filter((operation) => operation.endsWith("/backfill")).length,
+			2,
+		);
+	});
+
+	for (const operation of ["write", "delete"] as const) {
+		it(`invalidates existing summary cache across mixed-mode ${operation}`, async () => {
+			config.set("restGitService:gitrestOwnershipValidation", false);
+			initialized = true;
+			const cache = new TestCache();
+			const reader = await createService(false, cache);
+			const payload = {
+				type: "container" as const,
+				entries: [],
+				sequenceNumber: 0,
+				message: "Summary",
+			};
+			await reader.createSummary(payload);
+			config.set("restGitService:gitrestOwnershipValidation", true);
+			const writer = await createService(false, cache);
+			if (operation === "write") {
+				currentSummary = { ...summary, id: "c".repeat(40) };
+				await writer.createSummary(payload);
+				assert.deepStrictEqual(await reader.getSummary("latest", true), currentSummary);
+				assert.deepStrictEqual(await reader.getSummary(summary.id, true), summary);
+			} else {
+				assert.strictEqual(await writer.deleteSummary(false), true);
+				for (const version of ["latest", summary.id]) {
+					await assert.rejects(
+						reader.getSummary(version, true),
+						(error: unknown) => error instanceof NetworkError && error.code === 404,
+					);
+				}
+			}
+		});
+	}
 
 	it("does not read Alfred for storage that already has metadata", async () => {
 		initialized = true;
@@ -926,6 +988,45 @@ describe("document storage recovery", () => {
 		assert.strictEqual(operations.length, 1);
 		assert.match(operations[0] ?? "", /\/internal\/document-storage\/initialize$/);
 		sinon.assert.notCalled(readDocument);
+	});
+
+	it("exposes initialization through the shared route factory", async () => {
+		const app = express();
+		app.use(
+			createRoutes(
+				config,
+				new TestTenantService(),
+				storageNameRetriever,
+				new Map(),
+				new Map(),
+				documentManager,
+			).summaries,
+		);
+		await request(app)
+			.post(`/repos/${tenantId}/internal/document-storage/initialize`)
+			.set("Authorization", authorization)
+			.set("StorageName", storageName)
+			.expect(204);
+		assert.strictEqual(operations.length, 1);
+		sinon.assert.notCalled(readDocument);
+	});
+
+	it("throttles initialization before tenant lookup or storage writes", async () => {
+		const getTenant = sandbox.spy(TestTenantService.prototype, "getTenant");
+		const app = createApp({
+			tenantThrottlers: new Map([
+				[Constants.generalRestCallThrottleIdPrefix, new TestThrottler(1)],
+			]),
+		});
+		for (const status of [204, 429]) {
+			await request(app)
+				.post(`/repos/${tenantId}/internal/document-storage/initialize`)
+				.set("Authorization", authorization)
+				.set("StorageName", storageName)
+				.expect(status);
+		}
+		assert.strictEqual(operations.length, 1);
+		sinon.assert.calledOnce(getTenant);
 	});
 
 	it("rejects ephemeral initialization without poisoning its routing cache", async () => {

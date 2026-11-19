@@ -67,6 +67,7 @@ function validateGitSha(sha: string): void {
 export class RestGitService {
 	private readonly restWrapper: RestWrapper;
 	private readonly lumberProperties: Record<string, any>;
+	private readonly invalidationCache?: ICache;
 	private documentStorageRecovery: Promise<void> | undefined;
 
 	constructor(
@@ -83,6 +84,7 @@ export class RestGitService {
 		private readonly accessProof?: IDocumentAccessProof,
 		private readonly recoverDocumentStorage?: () => Promise<void>,
 	) {
+		this.invalidationCache = cache;
 		// GitRest must validate durable content when there is no independent access proof.
 		if (
 			isEphemeralContainer !== true &&
@@ -170,6 +172,9 @@ export class RestGitService {
 	}
 
 	private async writeDocumentStorage(operation: "initialize" | "backfill"): Promise<void> {
+		if (this.tenantId.includes(":") || this.documentId.includes(":")) {
+			throw new NetworkError(400, "Invalid document storage routing identity.");
+		}
 		const url = `/repos/${this.getRepoPath()}/internal/document-storage/${operation}`;
 		await this.restWrapper
 			.post(url, undefined)
@@ -190,7 +195,10 @@ export class RestGitService {
 			if (internalErrorCode !== "DocumentStorageMetadataMissing") {
 				throw error;
 			}
-			this.documentStorageRecovery ??= recover();
+			this.documentStorageRecovery ??= recover().catch((recoveryError: unknown) => {
+				this.documentStorageRecovery = undefined;
+				throw recoveryError;
+			});
 			await this.documentStorageRecovery;
 			return request();
 		});
@@ -329,12 +337,12 @@ export class RestGitService {
 			initial !== undefined ? { initial } : undefined,
 		);
 		// JSON.stringify is not ideal for performance here, but it is better than crashing the cache service.
-		const summarySize = JSON.stringify(summaryResponse).length;
 		if (
+			this.cache !== undefined &&
 			summaryParams.type === "container" &&
 			(summaryResponse as IWholeFlatSummary).trees !== undefined &&
 			(this.maxCacheableSummarySize === undefined ||
-				summarySize <= this.maxCacheableSummarySize)
+				JSON.stringify(summaryResponse).length <= this.maxCacheableSummarySize)
 		) {
 			// Cache the written summary for future retrieval. If this fails, next summary retrieval
 			// will receive an older version, but that is OK. Client will catch up with ops.
@@ -350,7 +358,7 @@ export class RestGitService {
 			);
 		} else {
 			// Delete previous summary from cache so next summary retrieval is forced to go to the service.
-			this.deleteFromCache(this.getSummaryCacheKey(summaryParams.type));
+			this.invalidateSummaryCache(summaryParams.type);
 		}
 		return { id: summaryResponse.id };
 	}
@@ -360,8 +368,8 @@ export class RestGitService {
 
 		// First, delete any cached summary (including both types, "channel" and "container")
 		// from the Redis cache
-		this.deleteFromCache(this.getSummaryCacheKey("channel"));
-		this.deleteFromCache(this.getSummaryCacheKey("container"));
+		this.invalidateSummaryCache("channel");
+		this.invalidateSummaryCache("container");
 
 		// Finally, delete from storage.
 		return this.delete<boolean>(`/repos/${this.getRepoPath()}/git/summaries`, headers);
@@ -678,14 +686,22 @@ export class RestGitService {
 		return value;
 	}
 
+	private invalidateSummaryCache(type: IWholeSummaryPayloadType): void {
+		this.deleteFromCache(this.getSummaryCacheKey(type));
+		if (this.cache === undefined) {
+			// A bypassed writer cannot refresh the latest-SHA pointer with the summary.
+			this.deleteFromCache(this.getSummaryCacheKey(type, LatestSummaryShaKey));
+		}
+	}
+
 	/**
 	 * Deletes the given key from the cache. Will log any errors with the cache.
 	 */
 	private deleteFromCache(key: string): void {
-		if (this.cache) {
+		if (this.invalidationCache) {
 			const cacheKey = this.getNamespacedCacheKey(key);
 			// Attempt to delete the key from Redis - log any errors but don't fail
-			this.cache.delete(cacheKey).catch((error) => {
+			this.invalidationCache.delete(cacheKey).catch((error) => {
 				winston.error(`Error deleting key ${cacheKey} from Redis cache`, error);
 				Lumberjack.error(
 					`Error deleting key ${cacheKey} from Redis cache`,

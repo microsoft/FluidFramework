@@ -27,6 +27,8 @@ Before backfill, Historian validates the authoritative tenant, document, deletio
 durable container type, and storage account. It then calls GitRest's private backfill endpoint
 and retries the original operation once. Concurrent operations on the same service instance
 share recovery; a failed validation, backfill, or retry is propagated.
+Failed recovery is cleared so a later operation on that instance can try again;
+concurrent operations still share an in-flight recovery attempt.
 The configured customer-token reuse policy also applies to recovery validation.
 Active durable `alfred-fallback` proofs can recover missing metadata; metadata-backed
 and pending creation proofs do not enter recovery.
@@ -50,7 +52,11 @@ the service factory, including the route's default when the setting is omitted.
 The option also enables authenticated
 `POST /repos/:ignored?/:tenantId/internal/document-storage/initialize`.
 It requires document-write scope and honors token revocation and tenant/document deny lists.
+It is exposed through the shared route factory's `summaries` router as well as the app,
+and uses the configured general per-tenant throttler before tenant lookup or storage writes.
 Requests marked ephemeral are rejected before changing their routing cache.
+Initialization and backfill reject tenant/document IDs containing `:` rather than
+targeting a truncated identity through the existing colon-separated routing header.
 When an access authorizer is configured, initialization also requires a validated
 `Fluid-Create-Context` and an authorized pending creation proof.
 Deployments must restrict these private initialization/backfill operations to trusted services.
@@ -65,6 +71,9 @@ conditional initialize/backfill hooks. No client transport or Historian source p
 Without an independent access proof, durable content in this mode does not use Historian's
 content cache. Summaries (including version-SHA reads), blobs, commits, trees, headers, and full
 trees must reach GitRest. Cache writes and cache-only background prefetches are also disabled.
+Summary writes and deletes still invalidate existing cached summaries. Bypassed writers also
+remove the cached latest-SHA pointer, so instances with validation disabled cannot pair an old
+pointer with a newly cached summary during mixed-mode operation.
 A direct object read adds one GitRest request for a former cache hit; a composite header or
 full-tree read may require several object requests. No Alfred ownership precheck is added.
 Ephemeral content, default-off deployments, and requests authorized by an independent access
