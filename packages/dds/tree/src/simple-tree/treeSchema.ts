@@ -21,7 +21,6 @@ import { getOrCreate, oneFromIterable } from "../util/index.js";
 
 import {
 	Context,
-	NodeKind,
 	StagedSchemaUpgradePolicy,
 	UnhydratedContext,
 	getTreeNodeSchemaPrivateData,
@@ -37,7 +36,11 @@ import {
 	type ImplicitFieldSchema,
 	normalizeFieldSchema,
 } from "./fieldSchema.js";
-import type { ObjectNodeSchemaPrivate } from "./node-kinds/index.js";
+import {
+	isObjectNodeSchema,
+	type ObjectNodeSchemaPrivate,
+	// eslint-disable-next-line import-x/no-internal-modules -- Importing the node-kinds barrel makes a dependency cycle.
+} from "./node-kinds/object/objectNodeTypes.js";
 import type {
 	SchemaType,
 	SimpleFieldSchema,
@@ -54,16 +57,6 @@ import {
 	type toUnhydratedSchema,
 } from "./toStoredSchema.js";
 import { walkFieldSchema } from "./walkFieldSchema.js";
-
-/**
- * Returns true if `schema` is an object node schema.
- * @remarks
- * This is the same as the `isObjectNodeSchema` that `node-kinds` exports.
- * A runtime import from `node-kinds` makes a dependency cycle, because the node kinds import this module through `createContext.ts`.
- */
-function isObjectNodeSchema(schema: TreeNodeSchema): schema is ObjectNodeSchemaPrivate {
-	return schema.kind === NodeKind.Object;
-}
 
 /**
  * Uncached reference graph construction, retaining the visitor walk's postorder.
