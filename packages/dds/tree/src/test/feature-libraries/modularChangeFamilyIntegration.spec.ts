@@ -3028,53 +3028,6 @@ describe("ModularChangeFamily integration", () => {
 		const fieldAId = { nodeId: undefined, field: fieldA };
 		const revisions = [{ revision: tag1 }];
 
-		describe("Can encode node restoration", () => {
-			for (const version of family.codecs.getSupportedFormats()) {
-				const codecForVersion = family.codecs.resolve(version);
-				for (const renameOffset of [0, 1, 3]) {
-					it(`version ${version}, rename at offset ${renameOffset}`, () => {
-						const graveIDs: ChangeAtomId = { revision: tag2, localId: brand(1) };
-						const oldRootId = offsetChangeAtomId(graveIDs, renameOffset);
-						const newRootId: ChangeAtomId = { revision: tag1, localId: brand(1) };
-						const destinationCell: ChangeAtomId = { revision: tag3, localId: brand(1) };
-						const marks: Changeset = [
-							{ count: 4, cellId: graveIDs },
-							MarkMaker.attach(1, destinationCell, {
-								id: newRootId.localId,
-								revision: newRootId.revision,
-							}),
-						];
-						const change = Change.build(
-							{
-								family,
-								maxId: 4,
-								revisions,
-								renames: [
-									{
-										oldId: oldRootId,
-										newId: newRootId,
-										count: 1,
-										detachLocation: fieldAId,
-									},
-								],
-							},
-							Change.field(fieldA, sequenceIdentifier, marks),
-						);
-
-						// Act
-						const encoded = codecForVersion.encode(change, context);
-						const decoded = codecForVersion.decode(encoded, context);
-
-						// Verify
-						validateChangeset(decoded, family.fieldKinds);
-						const decodedDelta = intoDelta(makeAnonChange(decoded), family.fieldKinds);
-						const expectedDelta = intoDelta(makeAnonChange(change), family.fieldKinds);
-						assertDeltaEqual(decodedDelta, expectedDelta);
-					});
-				}
-			}
-		});
-
 		const revive = Change.build(
 			{
 				family,
@@ -3313,6 +3266,11 @@ describe("ModularChangeFamily integration", () => {
 			revisionMetadataSourceFromInfo([{ revision: tag0 }, { revision: tag1 }]),
 		);
 
+		const reviveAndReturn = tagChangeInline(
+			family.invert(makeAnonChange(moveAndRemove), false, tag2),
+			tag1,
+		).change;
+
 		const encodingTestData: EncodingTestData<
 			ModularChangeset,
 			EncodedModularChangesetV1,
@@ -3333,6 +3291,7 @@ describe("ModularChangeFamily integration", () => {
 				["edit detached (optional field)", editDetachedInOptional, context],
 				["rename in optional field", renameInOptional, context],
 				["rename in sequence field", renameInSequence, context],
+				["revive and return", reviveAndReturn, context],
 			],
 		};
 
