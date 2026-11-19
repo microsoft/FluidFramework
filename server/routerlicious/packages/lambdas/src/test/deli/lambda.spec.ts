@@ -4,16 +4,18 @@
  */
 
 import { MessageType } from "@fluidframework/protocol-definitions";
-import { defaultHash, getNextHash } from "@fluidframework/server-services-client";
+import { defaultHash, getNextHash, NetworkError } from "@fluidframework/server-services-client";
 import {
 	CheckpointService,
 	DefaultServiceConfiguration,
+	IDeliState,
 	IPartitionLambda,
 	IProducer,
 	ISequencedOperationMessage,
 	ITicketedSignalMessage,
 	LambdaCloseType,
 	MongoManager,
+	NackMessagesType,
 	NackOperationType,
 	SequencedOperationType,
 } from "@fluidframework/server-services-core";
@@ -66,6 +68,9 @@ describe("Routerlicious", () => {
 			let lambdaWithBatching: IPartitionLambda;
 
 			let messageFactory: MessageFactory;
+			let checkpointService: CheckpointService;
+			let mongoManager: MongoManager;
+			let documentRepository: TestNotImplementedDocumentRepository;
 			let kafkaMessageFactory: KafkaMessageFactory;
 
 			/**
@@ -119,10 +124,10 @@ describe("Routerlicious", () => {
 
 			beforeEach(async () => {
 				const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
-				const mongoManager = new MongoManager(dbFactory);
-				const documentRepository = new TestNotImplementedDocumentRepository();
+				mongoManager = new MongoManager(dbFactory);
+				documentRepository = new TestNotImplementedDocumentRepository();
 				const checkpointRepository = new TestNotImplementedCheckpointRepository();
-				const checkpointService = new CheckpointService(
+				checkpointService = new CheckpointService(
 					checkpointRepository,
 					documentRepository,
 					false,
@@ -783,6 +788,230 @@ describe("Routerlicious", () => {
 					assert.equal(lastMessage.type, SequencedOperationType);
 					assert.equal(lastMessage.operation.sequenceNumber, 4);
 					assert.equal(lastMessage.operation.clientSequenceNumber, 3);
+				});
+			});
+
+			describe("checkpointing after producer send failures", () => {
+				let contextErrors: unknown[];
+
+				beforeEach(() => {
+					contextErrors = [];
+					testContext.on("error", (error) => contextErrors.push(error));
+				});
+
+				async function flush(): Promise<void> {
+					await new Promise((resolve) => setImmediate(resolve));
+				}
+
+				it("Should not checkpoint when sequenced messages fail to send", async () => {
+					const sendError = new Error("send failed");
+					Sinon.stub(testForwardProducer, "send").rejects(sendError);
+
+					await lambda.handler(
+						kafkaMessageFactory.sequenceMessage(messageFactory.createJoin(), testId),
+					);
+					await lambda.handler(
+						kafkaMessageFactory.sequenceMessage(messageFactory.create(), testId),
+					);
+					await flush();
+
+					assert.deepEqual(contextErrors, [sendError, sendError]);
+					assert.equal(testContext.offset, -1);
+				});
+
+				it("Should not checkpoint when an earlier send fails after a later send succeeds", async () => {
+					const sendError = new Error("send failed");
+					let rejectFirstSend: (error: Error) => void = () => {};
+					const sendStub = Sinon.stub(testForwardProducer, "send").resolves();
+					sendStub.onFirstCall().returns(
+						new Promise((_resolve, reject) => {
+							rejectFirstSend = reject;
+						}),
+					);
+
+					await lambda.handler(
+						kafkaMessageFactory.sequenceMessage(messageFactory.createJoin(), testId),
+					);
+					await lambda.handler(
+						kafkaMessageFactory.sequenceMessage(messageFactory.create(), testId),
+					);
+					await lambda.handler(
+						kafkaMessageFactory.sequenceMessage(messageFactory.create(), testId),
+					);
+					await flush();
+					assert.equal(
+						testContext.offset,
+						-1,
+						"Should wait for every pending send before checkpointing",
+					);
+
+					rejectFirstSend(sendError);
+					await flush();
+
+					assert.deepEqual(contextErrors, [sendError]);
+					assert.equal(testContext.offset, -1);
+				});
+
+				it("Should checkpoint when all sends succeed", async () => {
+					await lambda.handler(
+						kafkaMessageFactory.sequenceMessage(messageFactory.createJoin(), testId),
+					);
+					await lambda.handler(
+						kafkaMessageFactory.sequenceMessage(messageFactory.create(), testId),
+					);
+					await quiesceWithClientsConnected();
+
+					assert.deepEqual(contextErrors, []);
+					assert.equal(testContext.offset, kafkaMessageFactory.getHeadOffset(testId) - 1);
+				});
+
+				it("Should still checkpoint state whose sends succeeded when a later send fails", async () => {
+					const sendError = new Error("send failed");
+					let resolveSecondSend: () => void = () => {};
+					const sendStub = Sinon.stub(testForwardProducer, "send").resolves();
+					sendStub.onSecondCall().returns(
+						new Promise<void>((resolve) => {
+							resolveSecondSend = resolve;
+						}),
+					);
+					sendStub.onThirdCall().rejects(sendError);
+
+					await lambdaWithBatching.handler(
+						kafkaMessageFactory.sequenceMessage(messageFactory.createJoin(), testId),
+					);
+					await lambdaWithBatching.handler(
+						kafkaMessageFactory.sequenceMessage(messageFactory.create(), testId),
+					);
+					const lastSuccessfulCheckpointOffset =
+						kafkaMessageFactory.getHeadOffset(testId) - 1;
+					await lambdaWithBatching.handler(
+						kafkaMessageFactory.sequenceMessage(messageFactory.create(), testId),
+					);
+					await flush();
+					assert.deepEqual(contextErrors, [sendError]);
+
+					resolveSecondSend();
+					await flush();
+
+					assert.equal(testContext.offset, lastSuccessfulCheckpointOffset);
+				});
+
+				it("Should keep checkpointing messages after one that is too large to send", async () => {
+					const tooLargeError = new NetworkError(413, "Message too large");
+					const sendStub = Sinon.stub(testForwardProducer, "send").resolves();
+					sendStub.onSecondCall().rejects(tooLargeError);
+
+					// Handle every message before the rejection is observed, as the document partition does.
+					const handlerResults = [
+						messageFactory.createJoin(),
+						messageFactory.create(),
+						messageFactory.create(),
+					].map((message) =>
+						lambdaWithBatching.handler(
+							kafkaMessageFactory.sequenceMessage(message, testId),
+						),
+					);
+					await Promise.all(handlerResults);
+					await flush();
+
+					assert.deepEqual(contextErrors, [tooLargeError]);
+					assert.equal(testContext.offset, kafkaMessageFactory.getHeadOffset(testId) - 1);
+				});
+
+				it("Should write checkpoints in order when NoClient sends settle out of order", async () => {
+					const resolveNoClientSends: (() => void)[] = [];
+					Sinon.stub(testReverseProducer, "send").callsFake(
+						async () =>
+							new Promise<void>((resolve) => {
+								resolveNoClientSends.push(resolve);
+							}),
+					);
+					const secondClientFactory = new MessageFactory(testId, "test2");
+
+					for (const message of [
+						messageFactory.createJoin(),
+						messageFactory.createLeave(),
+						secondClientFactory.createJoin(),
+						secondClientFactory.createLeave(),
+					]) {
+						await lambda.handler(kafkaMessageFactory.sequenceMessage(message, testId));
+					}
+					assert.equal(resolveNoClientSends.length, 2);
+
+					resolveNoClientSends[1]();
+					await flush();
+					resolveNoClientSends[0]();
+					await flush();
+
+					const writtenLogOffsets = (
+						checkpointService.writeCheckpoint as Sinon.SinonSpy
+					).args.map((args) => (args[3] as IDeliState).logOffset);
+					assert.deepEqual(
+						writtenLogOffsets,
+						[...writtenLogOffsets].sort((a, b) => a - b),
+					);
+					assert.equal(
+						writtenLogOffsets.at(-1),
+						kafkaMessageFactory.getHeadOffset(testId),
+					);
+					assert.deepEqual(contextErrors, []);
+				});
+
+				it("Should include summary nack state in the checkpoint of the message that crosses the limit", async () => {
+					const maxOps = 2;
+					const summaryNackFactory = new DeliLambdaFactory(
+						mongoManager,
+						documentRepository,
+						checkpointService,
+						testTenantManager,
+						undefined,
+						testForwardProducer,
+						undefined,
+						testReverseProducer,
+						{
+							...DefaultServiceConfiguration,
+							deli: {
+								...DefaultServiceConfiguration.deli,
+								summaryNackMessages: {
+									...DefaultServiceConfiguration.deli.summaryNackMessages,
+									enable: true,
+									maxOps,
+								},
+							},
+						},
+					);
+					const summaryNackLambda = await summaryNackFactory.create(
+						{ documentId: testId, tenantId: testTenantId },
+						testContext,
+					);
+
+					try {
+						await summaryNackLambda.handler(
+							kafkaMessageFactory.sequenceMessage(
+								messageFactory.createJoin(),
+								testId,
+							),
+						);
+						for (let i = 0; i < maxOps; i++) {
+							await summaryNackLambda.handler(
+								kafkaMessageFactory.sequenceMessage(
+									messageFactory.create(),
+									testId,
+								),
+							);
+						}
+						await quiesceWithClientsConnected();
+
+						const lastCheckpoint = (checkpointService.writeCheckpoint as Sinon.SinonSpy)
+							.lastCall.args[3] as IDeliState;
+						assert.equal(lastCheckpoint.sequenceNumber, maxOps + 1);
+						assert.deepEqual(lastCheckpoint.nackMessages?.map(([type]) => type), [
+							NackMessagesType.SummaryMaxOps,
+						]);
+					} finally {
+						summaryNackLambda.close(LambdaCloseType.Stop);
+						await summaryNackFactory.dispose();
+					}
 				});
 			});
 		});
