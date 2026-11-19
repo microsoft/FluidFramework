@@ -456,6 +456,120 @@ describe("snapshotCompatibilityChecker", () => {
 	});
 
 	/**
+	 * V1 declares optional notes; V2 removes that field from its view schema.
+	 * V2 can view and preserve notes in existing documents, while V1 must upgrade a fresh V2 document before viewing it.
+	 * Snapshot validation accepts both directions without copying document-specific retained fields into the snapshots.
+	 */
+	it("distinguishes removing an optional field from reopening a fresh document with the old schema", () => {
+		const factory = new SchemaFactory("taskRollback");
+		class TaskV1 extends factory.object("Task", {
+			title: factory.string,
+			notes: factory.optional(factory.string),
+		}) {}
+		class TaskV2 extends factory.object("Task", { title: factory.string }) {}
+		const historical = importCompatibilitySchemaSnapshot(
+			exportCompatibilitySchemaSnapshot(new TreeViewConfiguration({ schema: TaskV1 })),
+		);
+		const current = new TreeViewConfiguration({ schema: TaskV2 });
+		const result = getCompatibility(current, historical);
+		assert.equal(result.currentViewOfSnapshotDocument.canView, true);
+		assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
+
+		// New V2 documents have no notes field, so V1 must add its schema before using the view.
+		assert.equal(result.snapshotViewOfCurrentDocument.canView, false);
+		assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, true);
+		assert.equal(result.identicalCompatibility, false);
+
+		const [fileSystem, snapshots] = inMemorySnapshotFileSystem();
+		snapshotSchemaCompatibility({
+			schema: historical,
+			fileSystem,
+			version: "1.0.0",
+			minVersionForCollaboration: "1.0.0",
+			mode: "update",
+			snapshotDirectory: "taskRollback",
+		});
+		const historicalSnapshot = snapshots.get("1.0.0.json");
+		assert(historicalSnapshot !== undefined);
+
+		// An upgrade is sufficient for compatibility, but the validator does not apply it.
+		for (const mode of ["update", "assert"] as const) {
+			snapshotSchemaCompatibility({
+				schema: current,
+				fileSystem,
+				version: "2.0.0",
+				minVersionForCollaboration: "1.0.0",
+				mode,
+				snapshotDirectory: "taskRollback",
+			});
+
+			// Retained fields belong to a document, not to the view schema saved in a snapshot.
+			assert.equal(snapshots.get("1.0.0.json"), historicalSnapshot);
+			const currentSnapshot = snapshots.get("2.0.0.json");
+			assert(currentSnapshot !== undefined);
+			assert.deepEqual(
+				JSON.parse(currentSnapshot),
+				exportCompatibilitySchemaSnapshot(current),
+			);
+		}
+	});
+
+	/**
+	 * V1 declares optional Reminder nodes; V2 replaces them with optional Schedule nodes.
+	 * Each view needs an upgrade to add its own field while retaining the other's field and node definition.
+	 * Snapshot validation must accept this rollout with both versions still in the collaboration window.
+	 */
+	it("permits upgrades in both directions when versions declare different optional node-valued fields", () => {
+		const factory = new SchemaFactory("taskFeatureReplacement");
+		class Reminder extends factory.object("Reminder", { message: factory.string }) {}
+		class TaskV1 extends factory.object("Task", {
+			title: factory.string,
+			reminder: factory.optional(Reminder),
+		}) {}
+		class Schedule extends factory.object("Schedule", { durationMinutes: factory.number }) {}
+		class TaskV2 extends factory.object("Task", {
+			title: factory.string,
+			schedule: factory.optional(Schedule),
+		}) {}
+		const historical = importCompatibilitySchemaSnapshot(
+			structuredClone(
+				exportCompatibilitySchemaSnapshot(new TreeViewConfiguration({ schema: TaskV1 })),
+			),
+		);
+		const current = new TreeViewConfiguration({ schema: TaskV2 });
+		const result = getCompatibility(current, historical);
+
+		// Neither view can write its field before the upgrade; both proposed upgrades are safe.
+		for (const direction of [
+			result.currentViewOfSnapshotDocument,
+			result.snapshotViewOfCurrentDocument,
+		]) {
+			assert.equal(direction.canView, false);
+			assert.equal(direction.canUpgrade, true);
+		}
+		assert.equal(result.identicalCompatibility, false);
+		const [fileSystem] = inMemorySnapshotFileSystem();
+		snapshotSchemaCompatibility({
+			schema: historical,
+			fileSystem,
+			version: "1.0.0",
+			minVersionForCollaboration: "1.0.0",
+			mode: "update",
+			snapshotDirectory: "taskFeatureReplacement",
+		});
+		for (const mode of ["update", "assert"] as const) {
+			snapshotSchemaCompatibility({
+				schema: current,
+				fileSystem,
+				version: "2.0.0",
+				minVersionForCollaboration: "1.0.0",
+				mode,
+				snapshotDirectory: "taskFeatureReplacement",
+			});
+		}
+	});
+
+	/**
 	 * V1 stages strings at both `primaryPriority` and `fallbackPriority` using one shared token.
 	 * V2 fully enables strings only at `primaryPriority` and leaves `fallbackPriority` numeric (removing the staged string support).
 	 *
@@ -589,7 +703,7 @@ describe("snapshotCompatibilityChecker", () => {
 						mode: "update",
 						snapshotDirectory: "incompatibleTaskPriorityRollback",
 					}),
-				/Current version "2.0.0" cannot upgrade documents from "1.0.0"/,
+				/Current version "2.0.0" can neither view nor upgrade documents from "1.0.0"/,
 			);
 		}
 	});
@@ -666,7 +780,7 @@ describe("snapshotCompatibilityChecker", () => {
 					}),
 				validateError(`Schema compatibility check failed:
  - Snapshot for current version "2.0.0" is out of date: schema has changed since latest existing snapshot version "2.0.0". If this is expected, snapshotSchemaCompatibility can be rerun in "update" mode to update or create the snapshot.
- - Current version "2.0.0" cannot upgrade documents from "2.0.0".
+ - Current version "2.0.0" can neither view nor upgrade documents from "2.0.0".
 Snapshots in: "${testSrcPath}/schemaSnapshots/point"
 Snapshots exist for versions: [
 	"1.0.0",
@@ -686,9 +800,8 @@ Snapshots exist for versions: [
 					}),
 				validateError(`Schema compatibility check failed:
  - Snapshot for current version "2.0.0" is out of date: schema has changed since latest existing snapshot version "2.0.0". If this is expected, snapshotSchemaCompatibility can be rerun in "update" mode to update or create the snapshot.
- - Current version "2.0.0" cannot upgrade documents from "1.0.0".
- - Historical version "1.0.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration "1.0.0".
- - Current version "2.0.0" cannot upgrade documents from "2.0.0".
+ - Current version "2.0.0" can neither view nor upgrade documents from "1.0.0".
+ - Current version "2.0.0" can neither view nor upgrade documents from "2.0.0".
 Snapshots in: "${testSrcPath}/schemaSnapshots/point"
 Snapshots exist for versions: [
 	"1.0.0",
@@ -707,7 +820,7 @@ Snapshots exist for versions: [
 						snapshotDirectory,
 					}),
 				validateError(`Schema compatibility check failed:
- - Historical version "1.0.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration "1.0.0".
+ - Historical version "1.0.0" can neither view nor upgrade documents from "2.0.0": these versions are expected to be able to collaborate due to the selected \`minVersionForCollaboration\` "1.0.0".
 Snapshots in: "${testSrcPath}/schemaSnapshots/point"
 Snapshots exist for versions: [
 	"1.0.0",
@@ -860,7 +973,7 @@ Snapshots exist for versions: [
 						snapshotDirectory,
 					}),
 				validateError(`Schema compatibility check failed:
- - Historical version "1.0.0" cannot view documents from "3.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration "1.0.0".
+ - Historical version "1.0.0" can neither view nor upgrade documents from "3.0.0": these versions are expected to be able to collaborate due to the selected \`minVersionForCollaboration\` "1.0.0".
 Snapshots in: "dir"
 Snapshots exist for versions: [
 	"1.0.0",
@@ -1129,7 +1242,7 @@ Snapshots exist for versions: [
 				validateError(
 					`Schema compatibility check failed:
  - Snapshot for current version "3" is out of date: schema has changed since latest existing snapshot version "2". If this is expected, snapshotSchemaCompatibility can be rerun in "update" mode to update or create the snapshot.
- - Historical version "1" cannot view documents from "3": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration "1".
+ - Historical version "1" can neither view nor upgrade documents from "3": these versions are expected to be able to collaborate due to the selected \`minVersionForCollaboration\` "1".
 Snapshots in: "dir"
 Snapshots exist for versions: [
 	"1",
@@ -1296,12 +1409,12 @@ Snapshots exist for versions: [
 					}),
 				validateError(`Schema compatibility check failed:
  - Snapshot for current version "2.0.0" is out of date: schema has changed since latest existing snapshot version "1.0.0". If this is expected, snapshotSchemaCompatibility can be rerun in "update" mode to update or create the snapshot.
- - Historical version "1.5.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration "1.5.0".
+ - Historical version "1.5.0" can neither view nor upgrade documents from "2.0.0": these versions are expected to be able to collaborate due to the selected \`minVersionForCollaboration\` "1.5.0".
 Snapshots in: "dir"
 Snapshots exist for versions: [
 	"1.0.0"
 ].
-Due to snapshotUnchangedVersions being false and minVersionForCollaboration ("1.5.0") not having an exact snapshot, the last snapshot before that version (which is "1.0.0") is being also being checked as if it is version "1.5.0".`),
+Due to snapshotUnchangedVersions being false and \`minVersionForCollaboration\` ("1.5.0") not having an exact snapshot, the last snapshot before that version (which is "1.0.0") is being also being checked as if it is version "1.5.0".`),
 			);
 
 			snapshotSchemaCompatibility({
@@ -1324,13 +1437,13 @@ Due to snapshotUnchangedVersions being false and minVersionForCollaboration ("1.
 						snapshotDirectory,
 					}),
 				validateError(`Schema compatibility check failed:
- - Historical version "1.5.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration "1.5.0".
+ - Historical version "1.5.0" can neither view nor upgrade documents from "2.0.0": these versions are expected to be able to collaborate due to the selected \`minVersionForCollaboration\` "1.5.0".
 Snapshots in: "dir"
 Snapshots exist for versions: [
 	"1.0.0",
 	"2.0.0"
 ].
-Due to snapshotUnchangedVersions being false and minVersionForCollaboration ("1.5.0") not having an exact snapshot, the last snapshot before that version (which is "1.0.0") is being also being checked as if it is version "1.5.0".`),
+Due to snapshotUnchangedVersions being false and \`minVersionForCollaboration\` ("1.5.0") not having an exact snapshot, the last snapshot before that version (which is "1.0.0") is being also being checked as if it is version "1.5.0".`),
 			);
 		});
 
@@ -1515,8 +1628,9 @@ Snapshots exist for versions: [
 				assert.equal(result.currentViewOfSnapshotDocument.canView, false);
 				assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
 
-				// V1 can already read and edit V2 documents while treating `z` as an unknown optional field.
+				// V1 can read V2 documents and retain their unknown optional field during later upgrades.
 				assert.equal(result.snapshotViewOfCurrentDocument.canView, true);
+				assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, true);
 			}
 
 			{

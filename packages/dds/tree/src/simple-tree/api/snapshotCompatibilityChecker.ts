@@ -32,6 +32,10 @@ import type { SchemaCompatibilityStatusBeta } from "./tree.js";
  * Schema metadata does not affect content compatibility.
  * Application-defined versions additionally constrain which upgrades are allowed.
  *
+ * Both configurations are evaluated using the current version of this library.
+ * A result for a historical view does not establish that the version of this library deployed with that view supports the same upgrades.
+ * Use tests with the deployed runtime versions to verify that assumption before relying on upgrade-based collaboration.
+ *
  * @example Checking the ability of the client's view schema to view or upgrade a document's stored schema.
  * In this case, the historical schema is a Point2D object with x and y fields, while the current schema is a Point3D object
  * that adds an optional z field.
@@ -377,15 +381,18 @@ export interface SnapshotSchemaCompatibilityOptions {
 	 * @remarks
 	 * Can use any format supported by {@link SnapshotSchemaCompatibilityOptions.versionComparer}.
 	 *
-	 * This defines a range of versions whose schema must be forwards compatible with trees using the current schema:
-	 * Any schema from snapshots with a version greater than or equal to this must be able to view documents created with the current schema.
-	 * This means that if the current `schema` is used to create a {@link TreeView}, then {@link TreeView.upgradeSchema} is used, the older clients,
-	 * all the way back to this `minVersionForCollaboration` will be able to view and edit the tree using their schema and thus collaborate.
+	 * Versions at or above this minimum form the collaboration window.
+	 * For each historical snapshot in that window, both its view and the current view must be able to use documents created by the other, either directly or after an upgrade.
+	 * Because an upgrade can be required, passing the snapshot check does not guarantee immediate viewing.
+	 * When {@link SchemaCompatibilityStatus.canView} is false but {@link SchemaCompatibilityStatus.canUpgrade} is true, the application must call {@link TreeView.upgradeSchema} before accessing the document.
+	 * Historical schemas are evaluated with the runtime executing the check, not the runtimes deployed with those clients.
+	 * Applications must verify that supported clients have both the runtime support and application code needed to perform any required upgrades.
 	 *
 	 * Typically applications will attempt to manage their deployment/update schedule such that all versions concurrently deployed can
 	 * collaborate to avoid users losing access to documents when other users upgrade the schema.
 	 * Such applications can set this to the oldest version currently deployed,
-	 * then rely on {@link snapshotSchemaCompatibility} to verify that no schema changes are made which would break collaboration with that (or newer) versions.
+	 * then use {@link snapshotSchemaCompatibility} to check schema compatibility with that (or newer) versions, alongside tests with their deployed runtime versions.
+	 * Setting this minimum does not update or prevent connections from older clients.
 	 *
 	 * This is the same approach used by {@link @fluidframework/runtime-definitions#OldestSupportedClientVersion}
 	 * except that type is specifically for use with the version of the Fluid Framework client packages,
@@ -398,7 +405,7 @@ export interface SnapshotSchemaCompatibilityOptions {
 	 * @remarks
 	 * A comparison function like that provided to {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#comparefn | Array.sort}.
 	 * This is used to partition snapshots into those less than `minVersionForCollaboration` and those greater than or equal to it, as well as to sanity check `version` against the versions of the snapshots.
-	 * If not provided, the ordering is defined by {@link https://semver.org/#spec-item-11|semver}.
+	 * If not provided, the ordering is defined by {@link https://semver.org/#spec-item-11 | SemVer}.
 	 * @returns A negative number if `a` is less than `b`, zero if they are equal, or a positive number if `a` is greater than `b`.
 	 */
 	readonly versionComparer?: (a: string, b: string) => number;
@@ -459,11 +466,6 @@ export interface SnapshotSchemaCompatibilityOptions {
 /**
  * Check `currentViewSchema` for compatibility with a collection of historical schema snapshots stored in `snapshotDirectory`.
  *
- * @throws Throws errors if the input version strings (including those in snapshot file names) are not valid semver versions when using default semver version comparison.
- * @throws Throws errors if the input version strings (including those in snapshot file names) are not ordered as expected (current being the highest, and `minVersionForCollaboration` corresponding to the current version or a lower snapshotted version).
- * @throws In `test` mode, throws an error if there is not an up to date snapshot for the current version.
- * @throws Throws an error if any snapshotted schema cannot be upgraded to the current schema.
- * @throws Throws an error if any snapshotted schema with a version greater than or equal to `minVersionForCollaboration` cannot view documents created with the current schema.
  * @remarks
  * This is intended for use in snapshot-based schema compatibility tests.
  * Every SharedTree-based component or application with a schema is recommended to use this to verify schema compatibility across versions.
@@ -471,8 +473,15 @@ export interface SnapshotSchemaCompatibilityOptions {
  * Schema snapshots should be added to `snapshotDirectory` using this function in "update" mode whenever the schema changes in a compatibility impacting way
  * (or when `snapshotUnchangedVersions` is true and a new version about to be released is getting prepared for release (and thus `version` changed)).
  *
- * This will throw an exception if any snapshotted schema would result in documents that cannot be viewed (after using {@link TreeView.upgradeSchema}), or if any schema with a version greater than or equal to `minVersionForCollaboration` cannot view documents created with the `currentViewSchema`.
- * See {@link TreeView.compatibility} for more information.
+ * To keep existing documents usable, the current view must be able to read or upgrade documents from every historical snapshot.
+ * For versions within the collaboration window, the reverse must also hold: their views must be able to read or upgrade documents created by the current version.
+ * These checks allow compatibility through an upgrade, but do not perform that upgrade.
+ * Applications must therefore inspect {@link TreeView.compatibility} and apply any required {@link TreeView.upgradeSchema | upgrade} before accessing the document.
+ *
+ * All schema versions are evaluated using the current version of this library.
+ * Snapshots do not identify or execute the library versions deployed with historical clients.
+ * A historical view's ability to upgrade under the current version of this library therefore does not guarantee that a deployed older client can perform that upgrade.
+ * Before relying on upgrade-based collaboration, verify the required runtime support and application upgrade handling with tests using the supported clients' library versions.
  *
  * Proper use of this utility should do a good job at detecting schema compatibility issues,
  * however it currently does not do a good job of explaining exactly what change to the schema is causing the compatibility issues.
@@ -498,11 +507,21 @@ export interface SnapshotSchemaCompatibilityOptions {
  * Generally any historical schema should have been tested against the ones before them at the time they were current.
  * If for some reason a version of a schema made it into production that was not compatible with a previous version,
  * that can still be represented here (but may require manually generating a snapshot for that version)
- * and this will still allow testing that all historical version can be upgraded to the current one.
+ * and this will still allow testing that the current schema can view or upgrade documents from all historical versions.
  * If a sufficiently incompatible historical schema were used in production, it may be impossible to make a single schema which can accommodate all of them:
  * this utility can be used to confirm that is the case, as well as to avoid the problem in the first place by testing schema before each one is deployed.
  *
- * @example Mocha test which validates the current `config` can collaborate with all historical version back to 2.0.0, and load and update any versions older than that.
+ * @throws Throws errors if the input version strings (including those in snapshot file names) are not valid SemVer versions when using default SemVer version comparison.
+ * @throws Throws errors if the input version strings (including those in snapshot file names) are not ordered as expected (current being the highest, and `minVersionForCollaboration` corresponding to the current version or a lower snapshotted version).
+ * @throws In `test` mode, throws an error if there is not an up to date snapshot for the current version.
+ * @throws Throws an error if the current schema can neither view nor upgrade documents from any snapshotted schema.
+ * @throws Throws an error if any historical snapshotted schema with a version greater than or equal to `minVersionForCollaboration` can neither view nor upgrade documents created with the current schema.
+ *
+ * @example Mocha test which validates that the current `config` can collaborate with all historical versions back to 2.0.0
+ *
+ * Verifies that the current schema can either view or upgrade documents created from all historical snapshots.
+ * Also verifies that historical schemas from version 2.0.0 onward can view or upgrade documents created by this version of the schema.
+ *
  * ```typescript
  * it("schema compatibility", () => {
  * 	snapshotSchemaCompatibility({
@@ -750,7 +769,7 @@ export function snapshotSchemaCompatibility(
 					selectedMinVersionForCollaborationSnapshot[1],
 				);
 				contextNotes.push(
-					`Due to snapshotUnchangedVersions being false and minVersionForCollaboration (${JSON.stringify(minVersionForCollaboration)}) not having an exact snapshot, the last snapshot before that version (which is ${JSON.stringify(
+					`Due to snapshotUnchangedVersions being false and \`minVersionForCollaboration\` (${JSON.stringify(minVersionForCollaboration)}) not having an exact snapshot, the last snapshot before that version (which is ${JSON.stringify(
 						selectedMinVersionForCollaborationSnapshot[0],
 					)}) is being also being checked as if it is version ${JSON.stringify(minVersionForCollaboration)}.`,
 				);
@@ -760,10 +779,11 @@ export function snapshotSchemaCompatibility(
 
 	// Compare all snapshots against the current schema, using the compatibilityMap.
 	for (const [snapshotVersion, compatibility] of compatibilityMap) {
-		// Current should be able to view all versions.
-		if (!compatibility.currentViewOfSnapshotDocument.canUpgrade) {
+		// The current version must be able to view or upgrade documents from every historical snapshot, regardless of the collaboration window.
+		const currentCompatibility = compatibility.currentViewOfSnapshotDocument;
+		if (!currentCompatibility.canView && !currentCompatibility.canUpgrade) {
 			compatibilityErrors.push(
-				`Current version ${JSON.stringify(currentVersion)} cannot upgrade documents from ${JSON.stringify(snapshotVersion)}.`,
+				`Current version ${JSON.stringify(currentVersion)} can neither view nor upgrade documents from ${JSON.stringify(snapshotVersion)}.`,
 			);
 		}
 
@@ -771,7 +791,7 @@ export function snapshotSchemaCompatibility(
 		if (versionComparisonToCurrent === 0) {
 			if (currentVersion !== snapshotVersion) {
 				throw errorWithContext(
-					`Snapshot version ${JSON.stringify(snapshotVersion)} is semantically equal but not string equal to current version ${JSON.stringify(currentVersion)}: this is not supported.`,
+					`Snapshot version ${JSON.stringify(snapshotVersion)} is semantically equal but not string-equal to current version ${JSON.stringify(currentVersion)}: this is not supported.`,
 				);
 			}
 			if (compatibility.identicalCompatibility === false) {
@@ -783,15 +803,16 @@ export function snapshotSchemaCompatibility(
 		} else if (versionComparisonToCurrent < 0) {
 			// Collaboration with this version is expected to work.
 			if (versionComparer(snapshotVersion, minVersionForCollaboration) >= 0) {
-				// Check that the historical version can view documents from the current version, since collaboration with this one is expected to work.
-				if (!compatibility.snapshotViewOfCurrentDocument.canView) {
+				// A supported historical client must be able to view or upgrade a document created from the current schema.
+				const historicalCompatibility = compatibility.snapshotViewOfCurrentDocument;
+				if (!historicalCompatibility.canView && !historicalCompatibility.canUpgrade) {
 					compatibilityErrors.push(
-						`Historical version ${JSON.stringify(snapshotVersion)} cannot view documents from ${JSON.stringify(currentVersion)}: these versions are expected to be able to collaborate due to the selected minVersionForCollaboration ${JSON.stringify(minVersionForCollaboration)}.`,
+						`Historical version ${JSON.stringify(snapshotVersion)} can neither view nor upgrade documents from ${JSON.stringify(currentVersion)}: these versions are expected to be able to collaborate due to the selected \`minVersionForCollaboration\` ${JSON.stringify(minVersionForCollaboration)}.`,
 					);
 				}
 			} else {
 				// This is the case where the historical version is less than the minimum version for collaboration.
-				// No additional validation is needed here currently, since forwards document compat from these versions is already tested above (since it applies to all snapshots).
+				// Only the current version's ability to view or upgrade historical documents is required here; it was checked above.
 			}
 		} else {
 			compatibilityErrors.push(
