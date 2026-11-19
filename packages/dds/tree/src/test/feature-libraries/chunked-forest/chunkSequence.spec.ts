@@ -339,6 +339,69 @@ describe("ChunkSequence", () => {
 		parent.dispose();
 	});
 
+	for (const { name, create } of [
+		{
+			name: "basic chunks",
+			create: () => [numericBasicChunk(0), numericBasicChunk(1)],
+		},
+		{
+			name: "chunks with different shapes",
+			create: () => [
+				packed(0),
+				new UniformChunk(new TreeShape(brand("other"), true, []).withTopLevelLength(1), [1]),
+			],
+		},
+		{
+			name: "chunks over the merge size limit",
+			create: () => [packed(0, 1), packed(2)],
+		},
+	]) {
+		it(`does not recalculate offsets for ${name}`, () => {
+			const pair = create();
+			const sequence = new ChunkSequence([...pair, packed(3)]);
+			const ends = sequence.index;
+			assert(ends !== undefined);
+			Object.freeze(ends);
+			sequence.edit((editor) =>
+				coalesceUniformChunks(
+					editor,
+					{ ...defaultChunkPolicy, uniformChunkNodeCountDynamicTargetMax: 2 },
+					{ start: 0, end: 2 },
+				),
+			);
+			assert.equal(sequence.index, ends);
+			assert.equal(sequence.chunks[0], pair[0]);
+			assert.equal(sequence.chunks[1], pair[1]);
+			assert.equal(sequence.chunks.length, 3);
+			sequence.dispose();
+			assert(pair.every((chunk) => chunk.isUnreferenced()));
+		});
+	}
+
+	it("merges shared chunks without changing their neighbors", () => {
+		const left = packed(1);
+		left.referenceAdded();
+		const right = packed(2);
+		const outside = packed(3);
+		const sequence = new ChunkSequence([numericBasicChunk(0), left, right, outside]);
+		const ends = sequence.index;
+		assert(ends !== undefined);
+		// The first chunk does not change, so its offset must not be rewritten.
+		Object.defineProperty(ends, 0, { writable: false });
+		sequence.edit((editor) =>
+			coalesceUniformChunks(editor, defaultChunkPolicy, { start: 0, end: 3 }),
+		);
+		assert.deepEqual(ends, [1, 3, 4]);
+		assert.deepEqual(valuesOf(sequence.chunks), [0, 1, 2, 3]);
+		assert.notEqual(sequence.chunks[1], left);
+		assert.equal(sequence.chunks[2], outside);
+		assert.deepEqual(left.values, [1]);
+		assert.equal(left.isShared(), false);
+		assert(right.isUnreferenced());
+		left.referenceRemoved();
+		sequence.dispose();
+	});
+
 	it("preserves the accumulator buffer through long in-place coalescing", () => {
 		const chunks = Array.from({ length: 200 }, (_, index) => packed(index));
 		const accumulator = chunks[0];

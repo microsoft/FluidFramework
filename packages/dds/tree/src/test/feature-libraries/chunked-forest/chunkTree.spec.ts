@@ -186,6 +186,26 @@ describe("chunkTree", () => {
 	});
 
 	describe("uniformChunkFromCursor", () => {
+		it("keeps the values array it builds instead of copying it", () => {
+			const cursor = fieldJsonCursor([10, 20, 30]);
+			cursor.firstNode();
+			const numberShape = new TreeShape(brand(numberSchema.identifier), true, []);
+			const takeValues = UniformChunk.takeValues;
+			let collectedValues: TreeValue[] | undefined;
+			UniformChunk.takeValues = (shape, values, idCompressor) => {
+				collectedValues = values;
+				return takeValues(shape, values, idCompressor);
+			};
+			try {
+				const chunk = uniformChunkFromCursor(cursor, numberShape, 3, true);
+				assert.equal(chunk.values, collectedValues);
+				assert.deepEqual(chunk.values, [10, 20, 30]);
+				chunk.referenceRemoved();
+			} finally {
+				UniformChunk.takeValues = takeValues;
+			}
+		});
+
 		it("maxTopLevelLength and skipLastNavigation are respected", () => {
 			const uniformPolygon = polygonTree.dataFactory();
 			const polygonReference = cursorForJsonableTreeNode(polygonTree.reference);

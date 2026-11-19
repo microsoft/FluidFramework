@@ -811,7 +811,7 @@ export function splitFieldAtIndex(
 /**
  * Coalesce adjacent small same-shape {@link UniformChunk}s into larger {@link UniformChunk}s.
  *
- * @param chunks - The chunks array, modified in place.
+ * @param field - The owning editor or chunks array, modified in place.
  * @param policy - The {@link ChunkPolicy} supplying the per-chunk cap.
  * @param range - Half-open `[start, end)` sub-range of `chunks` (by chunk index) to consider for
  * merging. Defaults to the whole array. `end` must not exceed `chunks.length`.
@@ -842,10 +842,23 @@ export function coalesceUniformChunks(
 		return;
 	}
 	if (field instanceof ChunkSequenceEditor) {
-		field.transformRange(rangeStart, rangeEnd, (owned) => {
-			coalesceUniformChunks(owned, policy);
-			return owned;
-		});
+		// A transform refreshes offsets to the end of the sequence, even if nothing merges.
+		// Find a mergeable pair first so checking a small range does not trigger that full scan.
+		for (let index = rangeStart + 1; index < rangeEnd; index++) {
+			const left = chunks[index - 1] ?? oob();
+			const right = chunks[index] ?? oob();
+			if (
+				left instanceof UniformChunk &&
+				right instanceof UniformChunk &&
+				canCoalesceUniformChunks(left, right, policy)
+			) {
+				field.transformRange(index - 1, rangeEnd, (owned) => {
+					coalesceUniformChunks(owned, policy);
+					return owned;
+				});
+				break;
+			}
+		}
 		return;
 	}
 
@@ -869,6 +882,36 @@ export function coalesceUniformChunks(
 	if (mutated) {
 		replaceArrayRange(field, rangeStart, rangeEnd, result);
 	}
+}
+
+/** Checks whether two uniform chunks can merge without changing them. */
+function canCoalesceUniformChunks(
+	left: UniformChunk,
+	right: UniformChunk,
+	policy: ChunkPolicy,
+): boolean {
+	if (!left.shape.treeShape.equals(right.shape.treeShape)) {
+		return false;
+	}
+	// Documents the invariant that all chunks in a single ChunkedForest share its idCompressor.
+	// If this assertion ever fires it means a caller mixed chunks from different forests; merging
+	// them would silently decompress one side's compressed-id values to the wrong strings.
+	const leftCompressor = left.idCompressor;
+	const rightCompressor = right.idCompressor;
+	assert(
+		leftCompressor === undefined ||
+			rightCompressor === undefined ||
+			leftCompressor === rightCompressor,
+		0xd50 /* tryCoalesceUniformChunks: left and right carry different idCompressors */,
+	);
+	// Keep merged chunks within the limit used when splitting.
+	if (
+		left.topLevelLength + right.topLevelLength >
+		policy.uniformChunkNodeCountDynamicTargetMax
+	) {
+		return false;
+	}
+	return true;
 }
 
 /**
@@ -898,32 +941,17 @@ export function tryCoalesceUniformChunks(
 	right: TreeChunk,
 	policy: ChunkPolicy,
 ): UniformChunk | undefined {
-	if (!(left instanceof UniformChunk) || !(right instanceof UniformChunk)) {
+	if (
+		!(left instanceof UniformChunk) ||
+		!(right instanceof UniformChunk) ||
+		!canCoalesceUniformChunks(left, right, policy)
+	) {
 		return undefined;
 	}
 	const leftTreeShape = left.shape.treeShape;
-	const rightTreeShape = right.shape.treeShape;
-	if (!leftTreeShape.equals(rightTreeShape)) {
-		return undefined;
-	}
-	// Documents the invariant that all chunks in a single ChunkedForest share its idCompressor.
-	// If this assertion ever fires it means a caller mixed chunks from different forests; merging
-	// them would silently decompress one side's compressed-id values to the wrong strings.
 	const leftCompressor = left.idCompressor;
 	const rightCompressor = right.idCompressor;
-	assert(
-		leftCompressor === undefined ||
-			rightCompressor === undefined ||
-			leftCompressor === rightCompressor,
-		0xd50 /* tryCoalesceUniformChunks: left and right carry different idCompressors */,
-	);
 	const combinedTopLevel = left.topLevelLength + right.topLevelLength;
-	// Don't merge if the result would exceed the per-chunk node cap: this keeps chunks from
-	// growing unbounded and matches the threshold {@link splitFieldAtIndex} bisects at, so a
-	// merged chunk won't just be re-split on the next edit.
-	if (combinedTopLevel > policy.uniformChunkNodeCountDynamicTargetMax) {
-		return undefined;
-	}
 
 	left.assertExternalOwnership();
 	right.assertExternalOwnership();
@@ -1039,5 +1067,9 @@ export function uniformChunkFromCursor(
 		}
 		topLevelLength += 1;
 	}
-	return new UniformChunk(shape.withTopLevelLength(topLevelLength), values, idCompressor);
+	return UniformChunk.takeValues(
+		shape.withTopLevelLength(topLevelLength),
+		values,
+		idCompressor,
+	);
 }
