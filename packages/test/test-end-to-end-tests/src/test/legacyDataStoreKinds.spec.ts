@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { stub } from "sinon";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import {
@@ -24,6 +25,7 @@ import type {
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { defineDataStore } from "@fluidframework/shared-object-base/internal";
 import type {
+	IAttachMessage,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreFactoryInternal,
@@ -355,8 +357,22 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 	});
 
 	it("migrates the parent runtime while preserving legacy DDS operations and attachment", async () => {
-		const container = await provider.createContainer(new LegacyCreatingFactory());
+		const container = await provider.createDetachedContainer(new LegacyCreatingFactory());
 		const legacy = (await container.getEntryPoint()) as ISharedMap;
+		const runtime = runtimes.get(legacy);
+		assert(runtime !== undefined);
+		const getAttachSummary = runtime.getAttachSummary.bind(runtime);
+		// Older documents contained a search metadata tree alongside their DDS trees.
+		const snapshot = stub(runtime, "getAttachSummary").callsFake((...args) => {
+			const attachSummary = getAttachSummary(...args);
+			attachSummary.summary.tree._search = { type: SummaryType.Tree, tree: {} };
+			return attachSummary;
+		});
+		try {
+			await provider.attachDetachedContainer(container);
+		} finally {
+			snapshot.restore();
+		}
 		legacy.set("value", 1);
 		await provider.ensureSynchronized();
 		const alpha = await client.loadContainer(provider.documentId, modernKind);
@@ -365,11 +381,37 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		alpha.data.set("value", 2);
 		await provider.ensureSynchronized();
 		assert.equal(legacy.get("value"), 2);
-		const runtime = runtimes.get(legacy);
-		assert(runtime !== undefined);
 		const oldChild = SharedMap.create(runtime, "later-old-child");
 		oldChild.set("value", 42);
-		legacy.set("oldChild", oldChild.handle);
+		const context = contexts.get(legacy);
+		assert(context !== undefined);
+		const submit = context.submitMessage.bind(context);
+		// Older DDS attach ops identified the factory in the message, without an attributes blob.
+		const sender = stub(context, "submitMessage").callsFake((type, content, metadata) => {
+			if (type === "attach") {
+				const message = content as IAttachMessage;
+				submit(
+					type,
+					{
+						...message,
+						snapshot: {
+							...message.snapshot,
+							entries: message.snapshot.entries.filter(
+								(entry) => entry.path !== ".attributes",
+							),
+						},
+					},
+					metadata,
+				);
+				return;
+			}
+			submit(type, content, metadata);
+		});
+		try {
+			legacy.set("oldChild", oldChild.handle);
+		} finally {
+			sender.restore();
+		}
 		await provider.ensureSynchronized();
 		const oldHandle = alpha.data.get<IFluidHandle<ISharedMap>>("oldChild");
 		assert(oldHandle !== undefined);
@@ -379,6 +421,9 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		assert.equal(oldChild.get("value"), 43);
 		const collection = collections.get(alpha.data);
 		assert(collection !== undefined);
+		const summary = await collection.summarize(true, false);
+		assert.equal(summary.summary.tree._search, undefined);
+		assert(summary.summary.tree["application-selected-root"] !== undefined);
 		for (const url of [
 			"/later-old-child",
 			"/_channels/later-old-child",

@@ -66,6 +66,7 @@ export class NativeChannelCollection
 
 	private constructor(
 		private readonly context: FluidDataStoreContext,
+		snapshot: FluidDataStoreContext["baseSnapshot"],
 		registry: IFluidDataStoreRegistry | undefined,
 		aliases: Map<string, string>,
 		provideEntryPoint: (collection: IFluidDataStoreChannelCollection) => Promise<FluidObject>,
@@ -104,7 +105,7 @@ export class NativeChannelCollection
 			{ handleContext: routing, registry, leafChannelPackagePath: context.packagePath },
 		);
 		super(
-			context.baseSnapshot,
+			snapshot,
 			parent,
 			context.baseLogger,
 			// Usage and deletion are tracked at the containing top-level data store.
@@ -122,7 +123,13 @@ export class NativeChannelCollection
 		provideEntryPoint: (collection: IFluidDataStoreChannelCollection) => Promise<FluidObject>,
 	): Promise<NativeChannelCollection> {
 		// Gate persisted features, not use of this runtime: DDS-only snapshots remain valid at older targets.
-		const hasCompositeChildren = Object.values(context.baseSnapshot?.trees ?? {}).some(
+		let snapshot = context.baseSnapshot;
+		if (snapshot?.trees._search !== undefined) {
+			// Like FluidDataStoreRuntime, ignore legacy search metadata during child discovery.
+			const { _search, ...trees } = snapshot.trees;
+			snapshot = { ...snapshot, trees };
+		}
+		const hasCompositeChildren = Object.values(snapshot?.trees ?? {}).some(
 			(tree) =>
 				tree.blobs[".component"] !== undefined && tree.blobs[".attributes"] === undefined,
 		);
@@ -154,7 +161,13 @@ export class NativeChannelCollection
 				aliases.set(entry[0], entry[1]);
 			}
 		}
-		return new NativeChannelCollection(context, registry, aliases, provideEntryPoint);
+		return new NativeChannelCollection(
+			context,
+			snapshot,
+			registry,
+			aliases,
+			provideEntryPoint,
+		);
 	}
 
 	public async createDataStore(

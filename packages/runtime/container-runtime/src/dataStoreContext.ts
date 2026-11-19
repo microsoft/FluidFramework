@@ -156,6 +156,7 @@ export interface IFluidDataStoreContextPrivate extends FluidDataStoreContextInte
  * Properties necessary for creating a FluidDataStoreContext
  */
 export interface IFluidDataStoreContextProps {
+	readonly attachMessageType?: string;
 	readonly isSharedObjectChannel?: boolean;
 	readonly id: string;
 	readonly parentContext: IFluidParentContextPrivate;
@@ -437,6 +438,7 @@ export abstract class FluidDataStoreContext
 	 * Container-level leaves still use the data-store envelope.
 	 */
 	public isSharedObjectChannel: boolean;
+	private readonly attachMessageType: string | undefined;
 	private readonly _containerRuntime: IContainerRuntimeBase;
 	/**
 	 * Information for this data store from its parent.
@@ -476,6 +478,7 @@ export abstract class FluidDataStoreContext
 		this.minVersionForCollab = this.oldestSupportedClient;
 		this.id = props.id;
 		this.isSharedObjectChannel = props.isSharedObjectChannel ?? false;
+		this.attachMessageType = props.attachMessageType;
 		this.storage = props.storage;
 		this.scope = props.scope;
 		this.pkg = props.pkg;
@@ -1148,8 +1151,19 @@ export abstract class FluidDataStoreContext
 	): Promise<readonly string[] | undefined> {
 		const parentPath = this.parentContext.leafChannelPackagePath;
 		const attributesBlob: string | undefined = snapshot.blobs[".attributes"];
-		if (parentPath === undefined || attributesBlob === undefined) {
+		if (parentPath === undefined) {
 			return undefined;
+		}
+		if (attributesBlob === undefined) {
+			// Older DDS attach ops supply the type only in the message, not in the snapshot.
+			if (
+				this.attachMessageType === undefined ||
+				snapshot.blobs[dataStoreAttributesBlobName] !== undefined
+			) {
+				return undefined;
+			}
+			this.isSharedObjectChannel = true;
+			return [...parentPath, this.attachMessageType];
 		}
 		const attributes: unknown = await readAndParse(this.storage, attributesBlob);
 		if (

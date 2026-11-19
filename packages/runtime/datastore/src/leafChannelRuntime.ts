@@ -174,6 +174,9 @@ export class LeafChannelRuntime
 				new LegacyTypeAwareRegistry({
 					get: (type) => (type === factory.type ? factory : undefined),
 				}),
+				(context as FluidDataStoreContextInternal).isSharedObjectChannel === true
+					? context.packagePath.at(-1)
+					: undefined,
 			);
 			runtime.channel = await loadChannel(
 				runtime,

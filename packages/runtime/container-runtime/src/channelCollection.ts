@@ -578,6 +578,7 @@ export class ChannelCollection
 			const pkg = [attachMessage.type];
 			const remoteFluidDataStoreContext = new RemoteFluidDataStoreContext({
 				id: attachMessage.id,
+				attachMessageType: attachMessage.type,
 				snapshot,
 				parentContext: this.wrapContextForInnerChannel(attachMessage.id),
 				storage: new StorageServiceWithAttachBlobs(
@@ -947,6 +948,7 @@ export class ChannelCollection
 		// the role of creating client.
 		const dataStoreContext = new LocalFluidDataStoreContext({
 			id,
+			attachMessageType: message.type,
 			pkg: undefined,
 			parentContext: this.wrapContextForInnerChannel(id),
 			storage,

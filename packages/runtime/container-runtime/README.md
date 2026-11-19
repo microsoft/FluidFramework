@@ -59,6 +59,8 @@ Existing legacy child names remain loadable, but a legacy `.aliases` child preve
 Legacy `_channels` and `_custom` request prefixes still resolve unless a child or alias has that name.
 That blob is omitted when there are no aliases.
 Existing DDS slots have their original `.attributes` and payload, not a synthetic data-store envelope.
+For older DDS attach messages without `.attributes`, the message supplies the factory type.
+Legacy `_search` metadata is not a child channel.
 Collections can load those slots and later add native composites after the application's rollout and framework-version target permit them.
 Legacy DDS signals retain their broadcast behavior; nested composite signals use framework address paths without interpreting application payloads as routing data.
 

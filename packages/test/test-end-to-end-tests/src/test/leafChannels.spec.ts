@@ -258,6 +258,7 @@ describeCompat("Native leaf channels", "NoCompat", (getTestObjectProvider, apis)
 		await provider.ensureSynchronized();
 		assert.equal(child.handle.isAttached, true);
 		const remote = await provider.loadContainer(runtimeFactory);
+		await provider.ensureSynchronized();
 		const handle = (await getMap(remote)).get<IFluidHandle<ISharedMap>>("child");
 		assert(handle !== undefined);
 		assert.equal((await handle.get()).get("value"), 42);
