@@ -1097,17 +1097,21 @@ describe("custom commit metadata", () => {
 				["publish", "draft", "draft", "draft"],
 			);
 
-			const result = asAlpha(tree).historyCompaction.requestPlannedCompaction((history) => {
-				const drafts = history.filter((commit) => commit.custom?.step === "draft");
-				return {
-					ranges: [
-						{
-							oldest: drafts[0]?.revision ?? assert.fail(),
-							newest: drafts.at(-1)?.revision ?? assert.fail(),
-						},
-					],
-				};
-			});
+			const result = asAlpha(tree).historyCompaction.requestPlannedCompaction(
+				(history, eligibleCount) => {
+					const drafts = history
+						.slice(0, eligibleCount)
+						.filter((commit) => commit.custom?.step === "draft");
+					return {
+						ranges: [
+							{
+								oldest: drafts[0]?.revision ?? assert.fail(),
+								newest: drafts.at(-1)?.revision ?? assert.fail(),
+							},
+						],
+					};
+				},
+			);
 
 			assert.equal(result, 2);
 			assert.deepEqual([...view.root], contentBefore, "Compaction does not change content");
@@ -1133,7 +1137,7 @@ describe("custom commit metadata", () => {
 
 		it("never combines commits that are still inside the collaboration window", () => {
 			// Example: A(draft) -> B(draft) have been sequenced, but the minimum sequence number
-			// has not advanced past them. A plan that asks to combine them is skipped.
+			// has not advanced past them. The policy sees them, but excludes them from its plan.
 			const {
 				provider,
 				views: [view1],
@@ -1148,16 +1152,14 @@ describe("custom commit metadata", () => {
 			}
 			provider.synchronizeMessages();
 			const result = asAlpha(provider.trees[0]).historyCompaction.requestPlannedCompaction(
-				(history) => {
+				(history, eligibleCount) => {
 					const drafts = history.filter((commit) => commit.custom?.step === "draft");
 					assert.equal(drafts.length, 2);
+					assert(
+						history.slice(0, eligibleCount).every((commit) => commit.custom?.step !== "draft"),
+					);
 					return {
-						ranges: [
-							{
-								oldest: drafts[0]?.revision ?? assert.fail(),
-								newest: drafts[1]?.revision ?? assert.fail(),
-							},
-						],
+						ranges: [],
 					};
 				},
 			);

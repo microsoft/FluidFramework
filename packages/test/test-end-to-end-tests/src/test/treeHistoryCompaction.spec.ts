@@ -65,7 +65,8 @@ function planRuns(
 		commits: readonly TreeBranchCommitMetadata[],
 	) => JsonCompatibleReadOnlyObject,
 ): PlanCompaction {
-	return (history) => {
+	return (retainedHistory, eligibleCount) => {
+		const history = retainedHistory.slice(0, eligibleCount);
 		const ranges: CompactionRange[] = [];
 		let start = 0;
 		for (let index = 1; index <= history.length; index++) {

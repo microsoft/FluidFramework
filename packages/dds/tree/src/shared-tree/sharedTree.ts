@@ -546,13 +546,18 @@ export class SharedTreeKernel
 		});
 		try {
 			statistics.removedCount = this.compactHistoryByPlan(
-				(history) => {
+				(history, eligibleCount) => {
 					statistics.policyCallCount++;
 					statistics.historyCommitCount = history.length;
 					const policyStarted = performanceNow();
 					let ranges: HistoryCompactionRange[];
 					try {
-						ranges = planCompactionRanges(history, this.idCompressor, planCompaction);
+						ranges = planCompactionRanges(
+							history,
+							eligibleCount,
+							this.idCompressor,
+							planCompaction,
+						);
 					} catch (error: unknown) {
 						failureSource = error instanceof UsageError ? "plan" : "policy";
 						this.historyTrace?.record("CompactionPolicyFailed", {
@@ -1208,10 +1213,11 @@ function reportCompaction(
  * This is not a method of {@link SharedTreeKernel} because its methods are wrapped so that any error breaks the tree,
  * and errors from the application's policy must be catchable without breaking it.
  * @throws A `UsageError` if the plan names a revision that is not in `history`, has a reversed or overlapping range,
- * or provides metadata that is not a JSON object.
+ * extends beyond the eligible prefix, or provides metadata that is not a JSON object.
  */
 function planCompactionRanges(
 	history: readonly GraphCommit<SharedTreeChange>[],
+	eligibleCount: number,
 	idCompressor: IIdCompressor,
 	planCompaction: PlanCompaction,
 ): HistoryCompactionRange[] {
@@ -1219,6 +1225,7 @@ function planCompactionRanges(
 		history.map(
 			(commit) => new LazyTreeBranchCommitMetadata(commit, idCompressor, () => undefined),
 		),
+		eligibleCount,
 	);
 	const indexByRevision = new Map<RevisionTag, number>(
 		history.map((commit, index) => [commit.revision, index]),
@@ -1245,6 +1252,9 @@ function planCompactionRanges(
 			throw new UsageError(
 				"A compaction range's oldest commit must not be newer than its newest",
 			);
+		}
+		if (newestIndex >= eligibleCount) {
+			throw new UsageError("Compaction ranges must stay within the eligible history prefix");
 		}
 		if (range.metadata !== undefined && !isJsonObject(range.metadata)) {
 			throw new UsageError("A compaction range's metadata must be a JSON object");

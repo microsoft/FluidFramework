@@ -1563,21 +1563,17 @@ export function testCorrectness(): void {
 				assert.equal(removed, 0);
 			});
 
-			it("skips ranges inside the collaboration window", () => {
+			it("rejects ranges inside the collaboration window before changing history", () => {
 				const manager = setupRetainedHistory(3, 0);
-				const stats = createHistoryCompactionStats();
-				const removed = manager.compactHistoryByPlan(
-					(history, eligibleCount) => {
-						assert.equal(history.length, 3);
-						assert.equal(eligibleCount, 0);
-						return [{ oldestIndex: 0, newestIndex: 2 }];
-					},
-					testRevisionReplacer,
-					undefined,
-					stats,
+				assert.throws(
+					() =>
+						manager.compactHistoryByPlan((history, eligibleCount) => {
+							assert.equal(history.length, 3);
+							assert.equal(eligibleCount, 0);
+							return [{ oldestIndex: 0, newestIndex: 2 }];
+						}, testRevisionReplacer),
+					/must stay within the eligible history prefix/,
 				);
-				assert.equal(removed, 0);
-				assert.equal(stats.skippedRangeCount, 1);
 				assert.equal(manager.getTrunkCommits("main").length, 3);
 			});
 
@@ -1711,14 +1707,14 @@ export function testCorrectness(): void {
 				checkChangeList(manager, [1, 2, 3, 4]);
 			});
 
-			it("clips ranges to the eligible prefix and combines the rest in a later pass", () => {
+			it("plans ranges within the eligible prefix and extends them in a later pass", () => {
 				const manager = setupRetainedHistory(6, 3);
 				const original = manager.getTrunkCommits("main");
 				const protectedChanges = original.slice(3).map((commit) => commit.change);
 				const compacted: HistoryCompactionRange[] = [];
 				const stats = createHistoryCompactionStats();
 				const removed = manager.compactHistoryByPlan(
-					() => [{ oldestIndex: 0, newestIndex: 5 }],
+					planAllEligible,
 					testRevisionReplacer,
 					(range) => compacted.push(range),
 					stats,
@@ -1743,45 +1739,61 @@ export function testCorrectness(): void {
 				checkChangeList(manager, [1, 2, 3, 4, 5, 6]);
 			});
 
-			it("skips a range whose eligible prefix has only one commit", () => {
+			it("allows an empty plan when only one commit is eligible", () => {
 				const manager = setupRetainedHistory(4, 1);
-				assert.equal(
-					manager.compactHistoryByPlan(
-						() => [{ oldestIndex: 0, newestIndex: 3 }],
-						testRevisionReplacer,
-					),
-					0,
-				);
+				assert.equal(manager.compactHistoryByPlan(planAllEligible, testRevisionReplacer), 0);
 				assert.deepEqual(trunkIntentions(manager), [[1], [2], [3], [4]]);
 				checkChangeList(manager, [1, 2, 3, 4]);
 			});
 
-			it("waits for the whole range before applying replacement metadata", () => {
+			it("applies replacement metadata to exactly the planned eligible range", () => {
 				const manager = setupRetainedHistory(6, 3);
-				const metadata = { metadata: { end: 6 }, children: [] };
-				const plan = (): HistoryCompactionRange[] => [
-					{ oldestIndex: 0, newestIndex: 5, metadata },
+				let metadata = { metadata: { end: 3 }, children: [] };
+				const plan = (
+					_history: readonly unknown[],
+					eligibleCount: number,
+				): HistoryCompactionRange[] => [
+					{ oldestIndex: 0, newestIndex: eligibleCount - 1, metadata },
 				];
-				assert.equal(manager.compactHistoryByPlan(plan, testRevisionReplacer), 0);
-				assert.deepEqual(trunkIntentions(manager), [[1], [2], [3], [4], [5], [6]]);
+				assert.equal(manager.compactHistoryByPlan(plan, testRevisionReplacer), 2);
+				assert.deepEqual(trunkIntentions(manager), [[1, 2, 3], [4], [5], [6]]);
+				assert.deepEqual(manager.getTrunkCommits("main")[0].customMetadata, metadata);
 				manager.advanceMinimumSequenceNumber(brand(6));
-				assert.equal(manager.compactHistoryByPlan(plan, testRevisionReplacer), 5);
+				metadata = { metadata: { end: 6 }, children: [] };
+				assert.equal(manager.compactHistoryByPlan(plan, testRevisionReplacer), 3);
 				assert.deepEqual(manager.getTrunkHead("main").customMetadata, metadata);
 				checkChangeList(manager, [1, 2, 3, 4, 5, 6]);
 			});
 
-			for (const preservedIndex of [1, 4]) {
-				it(`does not clip a range containing a preserved commit at index ${preservedIndex}`, () => {
+			it("rejects a later ineligible range before composing an earlier valid range", () => {
+				const manager = setupRetainedHistory(6, 3);
+				const original = manager.getTrunkCommits("main");
+				const stats = createHistoryCompactionStats();
+				assert.throws(
+					() =>
+						manager.compactHistoryByPlan(
+							() => [
+								{ oldestIndex: 0, newestIndex: 1 },
+								{ oldestIndex: 2, newestIndex: 5 },
+							],
+							testRevisionReplacer,
+							undefined,
+							stats,
+						),
+					/must stay within the eligible history prefix/,
+				);
+				assert.equal(stats.composeCallCount, 0);
+				assert.deepEqual(manager.getTrunkCommits("main"), original);
+				assert.deepEqual(trunkIntentions(manager), [[1], [2], [3], [4], [5], [6]]);
+				checkChangeList(manager, [1, 2, 3, 4, 5, 6]);
+			});
+
+			for (const preservedIndex of [0, 1, 2]) {
+				it(`skips an eligible range containing a preserved commit at index ${preservedIndex}`, () => {
 					const manager = setupRetainedHistory(6, 3);
 					const original = manager.getTrunkCommits("main");
 					assert(manager.setRevisionPreserved(original[preservedIndex].revision, true));
-					assert.equal(
-						manager.compactHistoryByPlan(
-							() => [{ oldestIndex: 0, newestIndex: 5 }],
-							testRevisionReplacer,
-						),
-						0,
-					);
+					assert.equal(manager.compactHistoryByPlan(planAllEligible, testRevisionReplacer), 0);
 					assert.deepEqual(manager.getTrunkCommits("main"), original);
 					assert.deepEqual(trunkIntentions(manager), [[1], [2], [3], [4], [5], [6]]);
 					checkChangeList(manager, [1, 2, 3, 4, 5, 6]);
@@ -1796,10 +1808,7 @@ export function testCorrectness(): void {
 				manager.advanceMinimumSequenceNumber(brand(6));
 				const forkBase = fork.getHead();
 				const forkBaseChange = forkBase.change;
-				const removed = manager.compactHistoryByPlan(
-					() => [{ oldestIndex: 0, newestIndex: 5 }],
-					testRevisionReplacer,
-				);
+				const removed = manager.compactHistoryByPlan(planAllEligible, testRevisionReplacer);
 				// The fork's base commit must keep its original change, so only commits before it can be composed.
 				assert.equal(removed, 1);
 				assert.deepEqual(trunkIntentions(manager), [[1, 2], [3], [4], [5], [6]]);

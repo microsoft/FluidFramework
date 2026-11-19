@@ -239,7 +239,7 @@ SharedTree keeps a commit for one of two reasons:
 
 - **Needed for correctness:** something still depends on it.
   The policy may see these commits, but compaction never combines them.
-  A range without replacement metadata can still combine its eligible prefix.
+  The policy uses `eligibleCount` to exclude them from every returned range.
 - **Kept only for history:** `retainHistory` is the only reason it exists.
   These are the only commits the policy can merge away.
 
@@ -296,7 +296,10 @@ interface SummaryHistoryCompactionOptions {
 	readonly enableRevisionPreservation?: boolean; // turns on pins (new op and summary format)
 }
 
-type PlanCompaction = (history: readonly TreeBranchCommitMetadata[]) => CompactionPlan; // oldest first
+type PlanCompaction = (
+	history: readonly TreeBranchCommitMetadata[], // all retained commits, oldest first
+	eligibleCount: number, // only history.slice(0, eligibleCount) may appear in ranges
+) => CompactionPlan;
 
 interface CompactionPlan {
 	readonly ranges: readonly CompactionRange[]; // must not overlap; any order
@@ -338,6 +341,13 @@ so the policy can see where a run continues.
 It does not contain unsequenced local commits or commits that were already trimmed.
 The policy is called exactly once per pass, even when nothing is eligible.
 
+The second argument, **`eligibleCount`**, is the number of commits at the start of that same array that are no longer needed for correctness.
+Only commits in `history.slice(0, eligibleCount)` may appear in returned ranges.
+The app can still inspect the rest of the history for context, such as a newer timestamp or the continuation of a session.
+The count is computed by SharedTree, not by the app, and can be zero (including immediately after loading a summary).
+It is local to the executing client: an open fork or collaboration state can give clients different eligible prefixes.
+Preserved revisions can occur within the prefix; eligibility does not override preservation.
+
 #### 7.2 Return value
 
 The policy returns a `CompactionPlan`: a list of `CompactionRange`s, each naming its oldest and newest commit (inclusive) by revision.
@@ -345,13 +355,14 @@ The policy returns a `CompactionPlan`: a list of `CompactionRange`s, each naming
 | Range | Effect | Combined commit's metadata |
 | --- | --- | --- |
 | Not listed | Every point in time is kept. | Unchanged. |
-| A range without `metadata` | Combined into its newest eligible commit; only the eligible prefix is combined if correctness blocks the rest. | Default merge: the left fold of `composeCustomMetadata` over the combined commits, oldest first. For A, B, C: `{ metadata: undefined, children: [{ metadata: undefined, children: [A, B] }, C] }` (commits without metadata are left out). `custom` is flattened, newest wins on conflicting keys. |
+| A range without `metadata` | Combined in full into the range's newest commit. | Default merge: the left fold of `composeCustomMetadata` over the combined commits, oldest first. For A, B, C: `{ metadata: undefined, children: [{ metadata: undefined, children: [A, B] }, C] }` (commits without metadata are left out). `custom` is flattened, newest wins on conflicting keys. |
 | A range with `metadata` | Combined into the range's newest commit. | The object **replaces** the metadata of every commit in the range: `custom` is the object, `customTree` is `{ metadata: object, children: [] }`. |
 
 The whole plan is validated **before** anything changes. A `UsageError` is thrown (and handled as in [§7.4](#74-errors)) when:
 
 - a range names a revision that is not in `history`;
 - a range's `oldest` is newer than its `newest`;
+- a range includes any commit at index `eligibleCount` or later, even a single-commit range;
 - two ranges overlap;
 - `metadata` is not a JSON object.
 
@@ -364,21 +375,21 @@ A valid range is **skipped** (not an error) when:
 | Skip reason (`CompactionRangeSkipped.reason`) | Meaning |
 | --- | --- |
 | `singleCommit` | `oldest` and `newest` are the same commit; there is nothing to combine. |
-| `notEligible` | Fewer than two commits at the start of the range are eligible, or the range has replacement metadata and is not fully eligible. Correctness can block commits in the collaboration window, at or above an open local fork's base, or before eligibility is known after load. |
 | `preservedRevision` | The range contains a pinned commit ([§9](#9-preserved-revisions-api)). |
 
-Only correctness boundaries can shorten a range.
-If A–C are eligible but D–E are still needed for correctness, a plan for A–E without replacement metadata combines A–C into C and leaves D–E unchanged.
-A range with replacement metadata waits until the whole range is eligible, because that metadata may describe the full range.
-A preserved revision anywhere in the original requested range blocks the entire range, including when it lies beyond the eligible prefix.
-A skipped range or uncombined suffix is not retried within the pass; the policy must include it in a later plan.
+SharedTree never clips or partially combines a returned range.
+If A–C are eligible but D–E are still needed for correctness, the app may return A–C and compute replacement metadata from A–C.
+Returning A–E instead rejects the whole plan before any range is combined.
+This applies equally to default and replacement metadata: there is no special metadata-wait rule.
+A preserved revision anywhere in a requested range blocks that whole range.
+A skipped range is not retried within the pass; the policy must include it in a later plan after its preservation barrier is released.
 
 #### 7.3 Guarantees
 
 - Only history kept because of `retainHistory` is changed. With `retainHistory: false` (or `0`), `requestPlannedCompaction` returns `0`.
 - A commit needed for correctness is never removed ([§5](#5-commits-needed-for-correctness-vs-commits-kept-only-for-history)).
 - Each combined range is composed with **one** `compose` call over all of its commits.
-- The combined commit keeps the **newest combined** commit's revision, which may be the end of an eligible prefix.
+- The combined commit keeps the **requested newest** commit's revision.
   A preserved revision is never renamed.
 - A preserved commit is never combined with another commit, on any client, including the summarizer.
   A range containing it is skipped as a whole; to combine the commits on either side, plan ranges that end before and start after it.
@@ -387,7 +398,7 @@ A skipped range or uncombined suffix is not retried within the pass; the policy 
 - It does not change the current tree state, only the history leading to it.
 - **The policy reads the original commits.** Since the plan is made before anything changes, a rule like "within 5 minutes of the run's start" can read the run's first commit directly; it does not depend on how earlier commits were merged within the pass.
 - **Ranges are planned again on every pass**, over whatever history is retained then (including commits combined by earlier passes).
-  The policy should be deterministic and depend only on the history it is given
+  The policy should be deterministic and depend only on the history and eligible count it is given
   (not on the current time, call counts, or other outside state).
   Otherwise stored history depends on when summaries ran.
 - The policy must be fast. It runs on the summarize path, once per pass.
@@ -410,12 +421,12 @@ const tree = asAlpha(sharedTree); // created with retainHistory: true
 
 view.runTransaction(() => { /* edit */ }, { customMetadata: { session: sessionId } });
 
-const planSameSession: PlanCompaction = (history) => {
+const planSameSession: PlanCompaction = (history, eligibleCount) => {
 	const ranges: CompactionRange[] = [];
 	let start = 0;
-	for (let index = 1; index <= history.length; index++) {
+	for (let index = 1; index <= eligibleCount; index++) {
 		const session = history[start]?.custom?.session;
-		if (session !== undefined && history[index]?.custom?.session === session) {
+		if (index < eligibleCount && session !== undefined && history[index]?.custom?.session === session) {
 			continue; // the run continues
 		}
 		if (index - 1 > start) {
@@ -438,6 +449,9 @@ const startOf = (commit: TreeBranchCommitMetadata) => commit.custom?.start ?? co
 // Extend a run while `next.custom.time - startOf(run[0]) < 5 * 60_000`, and give each range
 // `metadata: { start: startOf(run[0]), time: run.at(-1).custom.time }`.
 ```
+
+The run must contain only commits from the eligible prefix, so its replacement metadata describes exactly the selected commits.
+The app can choose smaller eligible groups now or defer a group until a later pass; SharedTree does not make that policy decision.
 
 Keep a checkpoint chosen when the commit is made, without pins: end a run at any commit tagged `customMetadata: { keep: true }`.
 The plan decides which commits end a run, so `keep: true` protects exactly the tagged commit's point in time.
@@ -504,9 +518,10 @@ const SharedTree = configuredSharedTree({
 - **Trimming runs first and more often** (every MSN change), compaction only at the next summary.
   New raw commits fill the limit and can push older compacted points out before they are compacted.
   The limit holds about *N minus the commits made between two compactions* compacted points, plus the newer raw commits.
-- **Eligible prefixes can be combined before the whole run is eligible.**
-  Without replacement metadata, a plan like "one range per session" can combine its eligible prefix while newer commits remain in the collaboration window.
-  With replacement metadata, the whole range waits until it is eligible, so N must cover that run as raw commits too.
+- **The app can plan eligible portions of a longer run.**
+  Using `eligibleCount`, a plan like "one range per session" can select eligible session commits while newer edits remain in the collaboration window.
+  Both default and replacement metadata work for these exact ranges.
+  If the app chooses to wait for a whole session instead, N must cover that run as raw commits too.
 - **If more than N commits arrive between two summaries, compaction gains nothing for retention.**
   Pick N well above the expected commits per summary interval.
 
@@ -817,22 +832,19 @@ Unsequenced commits are never on the trunk.
 ```text
 history = retained trunk, oldest first; eligibleCount as above
 ranges  = planRanges(history, eligibleCount)      // called once, before anything changes
+validate every range: ordered, non-overlapping, entirely inside history[0..eligibleCount)
 for each range, oldest first:
-    newestCombined = min(newestIndex, eligibleCount - 1)
     if single commit:                         skip ("singleCommit")
-    else if newestCombined <= oldestIndex:    skip ("notEligible")
-    else if replacement metadata and clipped: skip ("notEligible")
     else if any requested commit is preserved: skip ("preservedRevision")
     else:
-        if clipped: record "CompactionRangeClipped"
         before the first combined range: rebase every peer branch onto the newest eligible commit
-        compose oldestIndex..newestCombined into newestCombined, in place, with one compose call
+        compose oldestIndex..newestIndex into newestIndex, in place, with one compose call
 ```
 
-In the kernel, `planRanges` is `planCompactionRanges`: it wraps the commits in `LazyTreeBranchCommitMetadata`, calls the app's `PlanCompaction` once,
-maps each revision to its index (throwing `UsageError` for unknown revisions, reversed ranges, or non-object metadata),
+In the kernel, `planRanges` is `planCompactionRanges`: it wraps the commits in `LazyTreeBranchCommitMetadata`, calls the app's `PlanCompaction` once with full history and the numeric eligible count,
+maps each revision to its index (throwing `UsageError` for unknown revisions, reversed ranges, ranges beyond the eligible prefix, or non-object metadata),
 sorts the ranges, and rejects overlaps.
-The engine also asserts that the ranges it receives are ordered, non-overlapping, and within the history.
+Before composing anything, the engine also asserts that all ranges are ordered, non-overlapping, and within the eligible prefix.
 
 Because nothing changes before the plan is complete, an error from the policy (or an invalid plan) leaves the history unchanged.
 `runPlannedCompaction` catches the planning error inside the planning callback, returns no ranges to the engine, and rethrows the error (manual passes only) after the engine call has returned.
@@ -937,7 +949,7 @@ An app that needs this must return replacement metadata with its own marker or c
 The tests "preserves old and newly sequenced revisions while compacting surrounding history" (default and replacement modes)
 author eleven nested-metadata commits in four sessions (A/B/C, D/E/F, G/H/I, J/K), pin and unpin in stages,
 plan one range per session on every pass, and check that pinned ranges are skipped.
-Correctness-window commits are never combined; ranges without replacement metadata can combine an eligible prefix.
+Correctness-window commits are never combined; the policy uses `eligibleCount` to exclude them from its returned ranges.
 
 | Pass | Pins and new edits | Still needed for correctness | Removed |
 | --- | --- | --- | --- |
@@ -1127,8 +1139,8 @@ It replaces the experimental `HistoryCompactionBeforeSummary` and `HistoryCompac
 | `historyCommitCount` | Retained trunk commits given to the policy. |
 | `eligibleCommitCount` | Trunk commits eligible this pass (below the window and every fork base). |
 | `plannedRangeCount` | Ranges in the plan. |
-| `combinedRangeCount` | Ranges combined in full or as an eligible prefix. |
-| `skippedRangeCount` | Ranges skipped (single commit, not eligible, or containing a pin). |
+| `combinedRangeCount` | Requested ranges combined in full. |
+| `skippedRangeCount` | Eligible ranges skipped (single commit or containing a pin). Ranges beyond eligibility are plan errors, not skips. |
 | `defaultMergeCount` | Combined ranges without metadata (default merge). |
 | `replacementMergeCount` | Combined ranges with replacement metadata. |
 | `replacementMetadataLength` | Total JSON length of the plan's metadata objects (a size proxy, not stored bytes). |
@@ -1221,12 +1233,11 @@ The trace covers:
   `TrimFailed` reports a failure without including error content.
 - Fork tracking/untracking, so a fork-base restriction can be distinguished from the collaboration window.
 - Compaction passes: `CompactionStarted`, `CompactionEligibility` (eligible and retained counts, MSN and correctness bound),
-  `CompactionPlanReceived` (planned range count), `CompactionRangeSkipped` (`rangeIndex`, `rangeLength`, and `reason`: `singleCommit`, `notEligible`, or `preservedRevision`),
-  `CompactionRangeClipped` (`rangeIndex`, `requestedRangeLength`, and eligible-prefix `rangeLength`, only when a prefix will be combined),
+  `CompactionPlanReceived` (planned range count), `CompactionRangeSkipped` (`rangeIndex`, `rangeLength`, and `reason`: `singleCommit` or `preservedRevision`),
   `CompactionPeersRebased` (peer count and duration), `CompactionRangeMerged` (`rangeIndex`, `rangeLength`, cumulative `removedCount`, `composeDurationMs`),
   `CompactionPolicyFailed` (`failureSource`), and `CompactionCompleted` (status, failure source, and every `HistoryCompaction` counter).
-  A planned or clipped range is **not** a completed merge; look for `CompactionRangeMerged`.
-  Merge counts, composition inputs, and merged `rangeLength` describe only commits actually combined, not a protected suffix.
+  A planned range is **not** a completed merge; look for `CompactionRangeMerged`.
+  `CompactionRangeClipped` is no longer emitted: ranges beyond the eligible prefix are rejected before mutation.
 - Preservation requests, queries, updates, operation submission/processing, ignored requests, and rejections.
 - Summary start/completion/failure and history encoding/loading start/completion/failure.
   `HistoryEncoded.serializedLength` is the JSON string length, not UTF-8 bytes or heap usage.
@@ -1274,7 +1285,7 @@ Revisions in proposed events must be logged only in a privacy-safe form (or omit
 | Cost | `durationMs`, `policyDurationMs`, `composeDurationMs` vs `historyCommitCount` | Bounded by retained commits | Growing with history: the policy re-reads all retained history each pass ([§25](#25-api-review-findings-and-options)) |
 | Policy effectiveness | `removedCount / eligibleCommitCount` | App-specific | Near 0: metadata missing (`minVersionForCollab < 2.117`?) |
 | Metadata growth | `replacementMetadataLength` | Stable per pass | Growing: replacement objects accumulating |
-| Ranges blocked | `skippedRangeCount` vs `plannedRangeCount`; `CompactionRangeSkipped.reason` in the diagnostic trace | Small | Large: pins or the collaboration window prevent compaction |
+| Ranges blocked | `skippedRangeCount` vs `plannedRangeCount`; `CompactionRangeSkipped.reason` in the diagnostic trace | Small | Large: pins or single-commit ranges prevent composition. The collaboration window limits `eligibleCommitCount`; returning ranges beyond it fails plan validation. |
 | Peer safety | `peerBranchCount` | Any | Combine with content-divergence reports |
 | Lost checkpoints | `PreserveRevisionIgnored` with `isSummarizer: true`; `PreserveRevisionRejected` with `wasPreserved: true` | Rare | Pinning too late; consider option 4 or metadata tags |
 | Rejection delivery | `rejectionSent: true` not followed by `PreserveRevisionRejected` | Always followed | Summarizer ops dropped or forbidden, or lost on handoff ([§11.7](#117-op-leaks-and-lost-rejections)) |
@@ -1299,7 +1310,7 @@ Calls to the `summarize` helper summarize the chosen tree directly.
 | (top level) | preserves old and newly sequenced revisions while compacting surrounding history (default / replacement); default compaction preserves / replacement compaction discards nested metadata children | Staged pins ([§14.5](#145-staged-pinunpin-walkthrough)), metadata outcomes, reload |
 | persisted size | shrinks the summarized history (several shapes); matches a client that never retained the history | Summary size savings; content equivalence |
 | memory | (opt-in, `expose-gc`) | Heap savings |
-| planned ranges | combines each planned range into its newest commit, merging the metadata oldest first; replaces a range's metadata when the plan provides it; gives the plan every retained commit, including commits that are not yet eligible; skips ranges that are not yet eligible or that contain a preserved commit; rejects a malformed plan without changing the history (several cases); rethrows a policy error without changing the history; runs when summarizing and persists the compacted history; still summarizes when the summary-time plan is malformed; composes each range in a single call | Policy contract ([§7](#7-the-policy-contract)), errors, cost ([§13.4](#134-cost-of-composing-a-range)) |
+| planned ranges | combines each planned range into its newest commit, merging the metadata oldest first; replaces a range's metadata when the plan provides it; gives the plan every retained commit plus the eligible count; plans eligible ranges at a fork boundary with or without replacement metadata (manual and summary); skips preserved ranges independently of other eligible ranges; rejects a malformed plan without changing the history (including ranges crossing or outside eligibility); rethrows a policy error without changing the history; runs when summarizing and persists the compacted history; still summarizes when the summary-time plan is malformed; composes each range in a single call | Policy contract ([§7](#7-the-policy-contract)), errors, cost ([§13.4](#134-cost-of-composing-a-range)) |
 | per-client history and direct summaries | only affects the history of the client that compacts; is persisted only by summaries from the client that compacted; has nothing to compact on a client loaded from a summary until it processes ops; has nothing to compact when history is not retained | Locality; MSN after load |
 | commit metadata given to the policy | cannot distinguish default-compacted metadata from a nested transaction; cannot revert, and each commit's parent is the previous commit in the history; combines a planned range once it leaves the collaboration window; keeps every original commit's metadata in customTree…; when a rule depends on the start of a run (can bound runs…; can record the start of a run in the range's metadata…) | Policy inputs, worked example, replacement metadata |
 | with a retention limit | only compacts the commits that the retention limit keeps; keeps more points in time within the same limit when compacting | [§8.4](#84-retention-limit-and-compaction-together) |
@@ -1314,10 +1325,11 @@ and "keeps an idle peer's branch consistent when its last commit is composed awa
 `customCommitMetadata.spec.ts` (metadata given to the plan),
 and pin round-trips in the message and EditManager codec tests.
 
-Eligible-prefix coverage includes collaboration-window clipping followed by a later full merge, prefixes with fewer than two eligible commits,
-replacement metadata waiting for full eligibility, and preserved revisions inside or beyond the eligible prefix.
-The public API tests exercise manual and summary-time clipping at a fork boundary, summary reload, and subsequent fork rebase/merge.
-Diagnostic tracing tests check requested versus combined lengths and counters for a clipped range.
+Eligible-prefix coverage includes plans limited to the collaboration window's correctness boundary, extension in a later pass, and an empty plan when fewer than two commits are eligible.
+Replacement metadata describes exactly the selected eligible range, and preserved revisions remain barriers inside that prefix.
+Invalid plans, including a later ineligible range after an earlier valid range, are rejected before any composition.
+Public API tests cover full-history visibility, numeric eligibility, manual and summary-time planning at a fork boundary, summary reload, and subsequent fork rebase/merge.
+Diagnostic tracing tests check eligibility and actual merged lengths without clipping.
 
 #### 21.2 End-to-end tests: `packages/test/test-end-to-end-tests/src/test/treeHistoryCompaction.spec.ts`
 
@@ -1463,27 +1475,95 @@ This is correct for deterministic policies, but its cost grows with retained his
 
 #### 24.6 Replacement metadata when only part of a range is eligible
 
-**Open question: how should range compaction handle replacement metadata when only part of a range is eligible?**
+**Design question: how should range compaction handle replacement metadata when only part of a range is eligible?**
 
 Suppose the app requests compaction of A–E, but only A–C are eligible.
 D–E are still needed for collaboration or a local branch.
-Without replacement metadata, SharedTree can combine A–C, preserving their metadata and leaving D–E unchanged.
-But replacement metadata for A–E, such as `{ startTime: A.time, endTime: E.time }`, may be inaccurate for the combined A–C commit.
+Replacement metadata for A–E, such as `{ startTime: A.time, endTime: E.time }`, would be inaccurate if SharedTree silently combined only A–C.
+An earlier prototype allowed clipping without replacement metadata and waited otherwise.
+The current prototype instead exposes eligibility to the app (option 4), which selects the exact ranges before returning metadata.
 
 | Option | Behavior | Tradeoff |
 | --- | --- | --- |
-| **1. Wait for the whole range (current prototype).** | Partially compact ranges only when they have no replacement metadata. A range with replacement metadata waits until it is fully eligible. | Keeps the metadata consistent with the requested range, but delays compaction and may keep skipping a range that extends through ongoing edits. |
+| **1. Wait for the whole range (previous prototype).** | Partially compact ranges only when they have no replacement metadata. A range with replacement metadata waits until it is fully eligible. | Keeps the metadata consistent with the requested range, but delays compaction and may keep skipping a range that extends through ongoing edits. No longer implemented. |
 | **2. Apply the supplied metadata to the eligible prefix.** | Allow partial compaction with replacement metadata too. Callers must provide metadata valid for any eligible prefix. | Allows earlier compaction without another callback, but places the burden on callers and cannot safely use metadata that describes only the full range. |
 | **3. Compute metadata for the actual range.** | After SharedTree determines eligibility, invoke an app callback with the commits that will be combined. | Lets callers describe the actual prefix, but adds API complexity and callback work to the compaction pass. Not implemented. |
+| **4. Expose `eligibleCount` to the planner (current prototype).** | Call `planCompaction(history, eligibleCount)`. The app selects ranges entirely within the eligible prefix and computes metadata for those exact commits. SharedTree validates the complete plan before mutation. | Keeps the existing single callback and full-history context. Callers must respect the boundary; a range outside it rejects the whole plan. |
 
-**Decision needed:** do we prefer delayed compaction, caller-managed prefix-safe metadata, or an additional metadata callback?
-Option 1 is implemented for this experiment; it is not an agreed final API requirement.
-Options 2 and 3 are alternatives, not supported behavior.
+**Current experiment decision: option 4.**
+`eligibleCount` is a numeric second argument, not an options object.
+The app already receives full history; only the eligibility boundary is new.
+For A–E with only A–C eligible, return A–C and metadata computed from A–C, or deliberately defer that group.
+Returning A–E fails validation, regardless of whether replacement metadata is supplied.
+This removes correctness-driven clipping and the special metadata-wait rule.
+Options 1–3 are historical alternatives, not current behavior; this alpha contract is still subject to review.
 
-Preserved revisions are a separate barrier in all three options.
-A requested range containing a preserved revision is skipped entirely, even if the preserved revision is outside the eligible prefix.
+Preserved revisions are a separate barrier in all four options.
+They can occur within the correctness-eligible prefix.
+A valid requested range containing a preserved revision is skipped entirely.
 It is not shortened or split around the pin; callers can return separate ranges ending before and starting after it.
 See [§7.2](#72-return-value) for the current contract and [§11.1](#111-rule-1-a-range-containing-a-pin-is-skipped) for pin handling.
+
+#### 24.7 Authoritative results, logical restore points, and live reconciliation
+
+**Open question: can Fluid expose authoritative compaction results to connected clients, notify apps when logical restore points change,
+and safely reconcile local history without reload, even when Undo or open forks delay physical compaction?**
+
+This is a possible design direction, not implemented behavior or an agreed API requirement.
+Today, compaction changes only the executing client's history; a summarizer's result is persisted in its summary.
+Telemetry describes local passes, not an authoritative result broadcast to connected clients.
+There is no general app-facing event for changes to logical restore points.
+The existing `revisionPreservationRejected` event reports pin rejection, not a complete history change.
+
+The proposed distinction is:
+
+| Layer | Meaning |
+| --- | --- |
+| Logical restore points | Which versions the app officially exposes as viewable or restorable. |
+| Physical history | The commits and repair data each client still needs for collaboration, Undo, or local forks. |
+
+```text
+Original history:                A → B → C → D → E
+Proposed authoritative timeline: A → C → E
+
+Client with active Undo:         retains the original commits and repair data internally
+Unblocked client:                may combine B–C into C and D–E into E
+```
+
+In this model, clients could show the same logical timeline without immediately having identical physical history.
+Any physical merge would still require the local correctness and preservation checks.
+Publishing a logical result must not force a rewrite of history that a live client still depends on.
+
+The design would need:
+
+1. **A durable, ordered compaction record.**
+   Identify the affected history frontier, actual combined ranges, surviving revisions, and resulting metadata.
+   Define who may publish the record and how publication is ordered with edits, pin requests, and other compaction records.
+   A policy proposal or telemetry event is not authoritative.
+   If authoritative means successfully persisted, tie publication to the acknowledged summary rather than summary generation.
+2. **An app-facing history-change event and queryable state.**
+   Report the logical changes and their generation so apps can refresh cached restore points and detect missed or duplicate notifications.
+   Persist the state so reconnecting clients can recover changes they did not observe.
+3. **Deferred local reconciliation.**
+   Each client would reconcile only when its own dependencies permit.
+   Undo and open forks may require the original graph and repair data to remain available.
+   Define how reconciliation resumes when dependencies are released, including after reconnect or summarizer replacement.
+4. **Safe restore handles and repair-data handling.**
+   Explicitly invalidate or rebind existing handles when their representation changes.
+   A removed intermediate revision cannot silently become an alias for a different document state.
+   Logical removal must not cause repair data still needed by Undo or forks to be freed.
+
+**Safety prerequisites:** [§17.1](#171-high-composition-renumbers-detach-ids-so-repair-data-no-longer-matches) and
+[§17.2](#172-high-repair-data-for-composed-away-revisions-is-never-freed) document unresolved repair-data remapping,
+stale `revertTo` handles, and cleanup issues.
+Open forks already restrict compaction, but equivalent comprehensive protection for Undo has not been established.
+These issues must be resolved before promising safe, reload-free reconciliation.
+
+**Product decision needed:** may a restore point disappear from the shared timeline while remaining privately usable by an existing Undo stack or fork?
+If yes, logical convergence with deferred physical cleanup is a possible model.
+If no, those local dependencies must also delay the authoritative logical change, not just physical compaction.
+This would require a protocol for communicating and releasing those dependencies; the current local fork bound alone does not provide it.
+Also define how logical removal interacts with preserved revisions and retention-based trimming before adopting either model.
 
 ### 25. API review: findings and options
 

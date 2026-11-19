@@ -1767,7 +1767,7 @@ export namespace PlainText {
 }
 
 // @alpha @input
-export type PlanCompaction = (history: readonly TreeBranchCommitMetadata[]) => CompactionPlan;
+export type PlanCompaction = (history: readonly TreeBranchCommitMetadata[], eligibleCount: number) => CompactionPlan;
 
 // @beta @system
 export type PopUnion<Union, AsOverloadedFunction = UnionToIntersection<Union extends unknown ? (f: Union) => void : never>> = AsOverloadedFunction extends (a: infer First) => void ? First : never;

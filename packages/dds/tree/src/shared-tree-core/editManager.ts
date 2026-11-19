@@ -554,14 +554,14 @@ export class EditManager<
 	 * Ranges must be ordered oldest first, must not overlap, and must have `oldestIndex <= newestIndex`.
 	 * The caller is responsible for validating application input; malformed ranges here are a bug.
 	 * @param createRevisionReplacer - Creates the replacer that re-tags each composed change with the revision of the newest combined commit.
-	 * @param onRangeCompacted - Called with the actual range after it is combined, which may be an eligible prefix of the planned range.
+	 * @param onRangeCompacted - Called after each planned range is combined.
 	 * @param stats - If provided, filled in with statistics about the pass, including those before a later failure.
 	 * @returns The number of commits removed from the history.
 	 * @remarks
 	 * Only commits that are retained by the {@link EditManager.setHistoryRetention | retention policy} are in `history`.
 	 * Commits that are still needed for collaboration (the collaboration window) or by registered branches (local forks) are not eligible,
-	 * and a range without replacement metadata that extends past the newest eligible commit is clipped to its eligible prefix.
-	 * A range with replacement metadata waits until the whole range is eligible.
+	 * and every planned range must be entirely within the eligible prefix.
+	 * The whole plan is checked before any history is changed.
 	 * The newest eligible commit can be the newest commit of a range, but is never removed, because later commits depend on its output state.
 	 * A range that contains a {@link EditManager.setRevisionPreserved | preserved} commit is skipped,
 	 * so a preserved commit's change and metadata remain unchanged by compaction.
@@ -619,33 +619,31 @@ export class EditManager<
 			historyCommitCount: history.length,
 		});
 
-		let removedCount = 0;
-		let peersRebased = false;
 		let previousNewest = -1;
-		for (const [rangeIndex, range] of ranges.entries()) {
-			const { oldestIndex } = range;
+		for (const { oldestIndex, newestIndex } of ranges) {
 			assert(
-				oldestIndex > previousNewest && range.newestIndex >= oldestIndex,
+				oldestIndex > previousNewest && newestIndex >= oldestIndex,
 				"Compaction ranges must be ordered and must not overlap",
 			);
 			assert(
-				range.newestIndex < history.length,
-				"Compaction range must be within the history",
+				newestIndex < eligibleCount,
+				"Compaction ranges must stay within the eligible history prefix",
 			);
-			previousNewest = range.newestIndex;
+			previousNewest = newestIndex;
+		}
 
-			const newestIndex = Math.min(range.newestIndex, eligibleCount - 1);
+		let removedCount = 0;
+		let peersRebased = false;
+		for (const [rangeIndex, range] of ranges.entries()) {
+			const { oldestIndex, newestIndex } = range;
 			const skipReason =
-				range.newestIndex === oldestIndex
+				newestIndex === oldestIndex
 					? "singleCommit"
-					: newestIndex <= oldestIndex ||
-							(range.metadata !== undefined && newestIndex !== range.newestIndex)
-						? "notEligible"
-						: history
-									.slice(oldestIndex, range.newestIndex + 1)
-									.some((commit) => this.preservedRevisions.has(commit.revision))
-							? "preservedRevision"
-							: undefined;
+					: history
+								.slice(oldestIndex, newestIndex + 1)
+								.some((commit) => this.preservedRevisions.has(commit.revision))
+						? "preservedRevision"
+						: undefined;
 			if (skipReason !== undefined) {
 				if (stats !== undefined) {
 					stats.skippedRangeCount++;
@@ -653,20 +651,12 @@ export class EditManager<
 				this.historyTrace?.record("CompactionRangeSkipped", {
 					operationId,
 					rangeIndex,
-					rangeLength: range.newestIndex - oldestIndex + 1,
+					rangeLength: newestIndex - oldestIndex + 1,
 					reason: skipReason,
 				});
 				continue;
 			}
 
-			if (newestIndex !== range.newestIndex) {
-				this.historyTrace?.record("CompactionRangeClipped", {
-					operationId,
-					rangeIndex,
-					requestedRangeLength: range.newestIndex - oldestIndex + 1,
-					rangeLength: newestIndex - oldestIndex + 1,
-				});
-			}
 			if (!peersRebased) {
 				assert(newestEligible !== undefined, "Expected an eligible commit");
 				this.rebasePeersForCompaction(newestEligible[1], stats, operationId);
@@ -690,9 +680,7 @@ export class EditManager<
 				removedCount,
 				composeDurationMs,
 			});
-			onRangeCompacted?.(
-				newestIndex === range.newestIndex ? range : { ...range, newestIndex },
-			);
+			onRangeCompacted?.(range);
 		}
 		return removedCount;
 	}

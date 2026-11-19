@@ -10,23 +10,29 @@ Add an alpha API for application-guided history compaction
 Use it to combine runs of adjacent retained history commits when your application decides that the restore points between them are no longer needed.
 It is exported from `@fluidframework/tree/alpha` and `fluid-framework/alpha`, along with the related types `TreeHistoryCompaction`, `TreeHistoryCompactionEvents`, `PlanCompaction`, `CompactionPlan`, `CompactionRange`, and `SummaryHistoryCompactionOptions`.
 
-`requestPlannedCompaction(planCompaction)` calls your `PlanCompaction` callback once with the retained history, oldest first, as the same `TreeBranchCommitMetadata` objects the history APIs return (`revertTo` is always `undefined` inside the callback).
+`requestPlannedCompaction(planCompaction)` calls your `PlanCompaction` callback once with the retained history, oldest first, and a numeric second argument, `eligibleCount`.
+The history contains the same `TreeBranchCommitMetadata` objects the history APIs return (`revertTo` is always `undefined` inside the callback).
+Only `history.slice(0, eligibleCount)` is no longer needed for correctness; the rest remains available as context.
 The callback returns a plan: ranges of adjacent commits, each naming its `oldest` and `newest` commit by revision.
 Each combined range keeps the newest combined commit's revision.
 By default the combined commit keeps all of the range's metadata; give the range a `metadata` object to use that object as the combined commit's metadata instead.
 The call returns how many commits were removed.
 
 Only history kept by the `retainHistory` option can be compacted.
-For ranges without replacement metadata, SharedTree combines the eligible prefix and leaves commits still needed for collaboration or local branches unchanged.
-A prefix must contain at least two commits to be combined.
-Ranges with replacement metadata wait until the whole range is eligible, because their metadata may describe the full range.
+Callers must select complete ranges entirely within the eligible prefix, excluding commits still needed for collaboration or local branches.
+SharedTree validates the whole plan before changing history and rejects any range that extends beyond that prefix.
+Ranges are never clipped, so replacement metadata always applies to exactly the selected commits.
 Ranges containing a preserved revision are always skipped as a whole, not shortened.
 If the callback throws or returns an invalid plan, the history is unchanged.
 
 ```typescript
-const removedCount = asAlpha(tree).historyCompaction.requestPlannedCompaction((history) => ({
-	ranges: [{ oldest: history[0].revision, newest: history[2].revision }],
-}));
+const removedCount = asAlpha(tree).historyCompaction.requestPlannedCompaction(
+	(history, eligibleCount) => ({
+		ranges: eligibleCount < 2
+			? []
+			: [{ oldest: history[0].revision, newest: history[eligibleCount - 1].revision }],
+	}),
+);
 ```
 
 To compact the history that gets stored, set the new `historyCompaction` option in `SharedTreeOptions` (from `@fluidframework/tree/alpha`).

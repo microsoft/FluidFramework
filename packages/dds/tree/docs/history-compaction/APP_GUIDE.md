@@ -17,12 +17,12 @@ import {
 } from "@fluidframework/tree/alpha";
 
 // Plan one range for each run of adjacent commits from the same session.
-const planSameSession: PlanCompaction = (history) => {
+const planSameSession: PlanCompaction = (history, eligibleCount) => {
 	const ranges: CompactionRange[] = [];
 	let start = 0;
-	for (let index = 1; index <= history.length; index++) {
+	for (let index = 1; index <= eligibleCount; index++) {
 		const session = history[start]?.custom?.session;
-		if (typeof session === "string" && history[index]?.custom?.session === session) {
+		if (index < eligibleCount && typeof session === "string" && history[index]?.custom?.session === session) {
 			continue;
 		}
 		const oldest = history[start];
@@ -63,26 +63,30 @@ view.runTransaction(
 );
 ```
 
-The policy receives the retained history of the main branch, oldest first, and returns a plan: ranges of adjacent commits to combine.
+The policy receives the retained history of the main branch, oldest first, and a numeric second argument, `eligibleCount`.
+Only `history.slice(0, eligibleCount)` is no longer needed for correctness and may appear in returned ranges.
+The full history remains available for context.
+The count can be zero and can differ between clients because of collaboration state or local forks.
+The policy returns a plan: ranges of adjacent commits to combine.
 Each range names its `oldest` and `newest` commit (both inclusive) by revision.
 
 | Plan | Result |
 | --- | --- |
 | A commit in no range | Kept. |
-| A range without `metadata` | Combined into one commit, keeping the newest combined commit's revision. If correctness blocks the end of the range, only its eligible prefix is combined. Metadata trees of the combined commits are kept in `customTree`; flattened `custom` prefers newer values. |
+| A range without `metadata` | Combined in full into one commit, keeping `newest`'s revision. Metadata trees of the combined commits are kept in `customTree`; flattened `custom` prefers newer values. |
 | A range with `metadata` (a JSON object) | Combined into one commit, keeping `newest`'s revision. The object replaces the metadata of every commit in the range, including their children. |
 
 The history includes commits that cannot be combined yet, so your plan can see where a run continues.
 SharedTree determines correctness eligibility; the app does not need to calculate it.
-If a range without replacement metadata reaches into the collaboration window or an open local branch's protected history, SharedTree combines only the eligible prefix, provided it has at least two commits.
-For example, if A–C are eligible but D–E are not, a plan for A–E combines A–C into C and leaves D–E unchanged.
-Ranges with replacement metadata wait until the whole range is eligible, because that metadata may describe the full range.
-Any range containing a pinned commit is skipped as a whole, even if the pin is outside the eligible prefix.
-A single-commit range, or a range with fewer than two eligible commits at its start, is also skipped without error.
-The policy can return skipped ranges or the remaining suffix in a later pass.
-Ranges must not overlap and must name revisions in the given history; otherwise the whole plan is rejected with a `UsageError` and nothing changes.
+For example, if A–C are eligible but D–E are not, return A–C and compute any replacement metadata from A–C.
+SharedTree never clips a returned range: asking for A–E rejects the whole plan, with or without replacement metadata.
+Preserved revisions can occur within the eligible prefix; any range containing one is skipped as a whole.
+An eligible single-commit range is also skipped without error.
+The policy can return skipped ranges or additional eligible history in a later pass.
+Ranges must not overlap, must name revisions in the given history, and must remain entirely within its eligible prefix.
+Otherwise the whole plan is rejected with a `UsageError` before anything changes.
 
-Keep the policy fast, deterministic from commit metadata, and free of side effects.
+Keep the policy fast, deterministic from the supplied commit metadata and eligible count, and free of side effects.
 Do not edit the tree, reenter compaction, or retain the policy's commit objects.
 The policy is called once per pass, on the whole retained history, including commits combined by earlier passes.
 SharedTree does not add an `isCompacted` marker; provide your own replacement metadata if you need one.
@@ -162,7 +166,7 @@ Successful passes use the generic telemetry category; failed passes use the erro
 | `removedCount` | Commits removed by combining. |
 | `policyCallCount`, `policyDurationMs` | The policy is called once per pass; how long it took (including plan validation). |
 | `historyCommitCount`, `eligibleCommitCount` | How much history your policy saw, and how much of it could be combined. Low eligibility means the collaboration window, open branches, or a recent load limited the pass. |
-| `plannedRangeCount`, `combinedRangeCount`, `skippedRangeCount` | Ranges in your plan, how many were combined in full or as an eligible prefix, and how many were skipped (single commit, not yet eligible, or containing a pin). |
+| `plannedRangeCount`, `combinedRangeCount`, `skippedRangeCount` | Ranges in your valid plan, how many were combined in full, and how many were skipped (single commit or containing a pin). Ineligible ranges fail plan validation instead. |
 | `defaultMergeCount`, `replacementMergeCount` | Combined ranges using the default merge versus replacement metadata. Their sum equals `combinedRangeCount`. |
 | `replacementMetadataLength` | Total JSON length of replacement metadata in your plan; a size proxy, not stored bytes. |
 | `composeCallCount`, `composedChangeCount`, `composeDurationMs` | Cost of combining: one compose call per combined range, over all of its commits. |
@@ -171,7 +175,7 @@ Successful passes use the generic telemetry category; failed passes use the erro
 Track pass latency, removal counts, and failure rates separately by `trigger`.
 A successful zero-removal pass with `eligibleCommitCount: 0` had nothing to combine; with eligible commits, compare `plannedRangeCount` and `skippedRangeCount` to see whether your plan asked for nothing or its ranges could not be combined yet.
 Telemetry does not identify why each range was skipped (the opt-in diagnostic trace in [DEV.md](./DEV.md) does) or measure byte or heap savings.
-The diagnostic trace also reports `CompactionRangeClipped`, with requested and eligible-prefix lengths; `CompactionRangeMerged` confirms the actual merge.
+The diagnostic trace reports eligibility and `CompactionRangeMerged` confirms the actual merge; ranges are not clipped.
 The compaction payload excludes raw commit metadata, document content, and application exception text.
 
 Two events report pins that could not be kept (match by suffix; they contain no revisions):

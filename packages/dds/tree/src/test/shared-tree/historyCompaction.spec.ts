@@ -81,7 +81,8 @@ function planRuns(
 		commits: readonly TreeBranchCommitMetadata[],
 	) => JsonCompatibleReadOnlyObject | undefined,
 ): PlanCompaction {
-	return (history) => {
+	return (retainedHistory, eligibleCount) => {
+		const history = retainedHistory.slice(0, eligibleCount);
 		const ranges: CompactionRange[] = [];
 		let start = 0;
 		for (let index = 1; index <= history.length; index++) {
@@ -573,7 +574,7 @@ function setupPreservationWalkthrough(metadataMode: "default" | "replacement") {
 	): void => {
 		log(`STAGE: ${label} (${metadataMode} metadata)`);
 		// SharedTree checks pins and correctness independently of the plan.
-		compact(expectedRemoved, (history) => {
+		compact(expectedRemoved, (history, eligibleCount) => {
 			for (const commit of commits.values()) {
 				if (preservedNames.has(commit.metadata.name)) {
 					assert(
@@ -582,7 +583,7 @@ function setupPreservationWalkthrough(metadataMode: "default" | "replacement") {
 					);
 				}
 			}
-			return policy(history);
+			return policy(history, eligibleCount);
 		});
 		assertHistory(runs);
 		for (const name of preservedNames) {
@@ -928,8 +929,9 @@ describe("History compaction", () => {
 		it("gives the plan every retained commit, including commits that are not yet eligible", () => {
 			const { provider, view } = generateHistory("append", 1, 3);
 			let seen: CommitRevision[] = [];
-			compactionOf(provider.trees[0]).requestPlannedCompaction((history) => {
+			compactionOf(provider.trees[0]).requestPlannedCompaction((history, eligibleCount) => {
 				seen = history.map((commit) => commit.revision);
+				assert(eligibleCount > 0 && eligibleCount < history.length);
 				assert(history.every((commit) => commit.revertTo === undefined));
 				return { ranges: [] };
 			});
@@ -941,15 +943,15 @@ describe("History compaction", () => {
 
 		for (const trigger of ["manual", "summary"] as const) {
 			for (const replaceMetadata of [false, true]) {
-				it(`${trigger}: ${replaceMetadata ? "waits for the whole range with replacement metadata" : "combines the eligible prefix"} at a fork boundary`, async () => {
-					const policy: PlanCompaction = (history) => ({
+				it(`${trigger}: plans eligible ranges ${replaceMetadata ? "with" : "without"} replacement metadata at a fork boundary`, async () => {
+					const policy: PlanCompaction = (history, eligibleCount) => ({
 						ranges: [
 							{
 								oldest:
 									history.find((commit) => commit.custom?.group === 0)?.revision ??
 									assert.fail(),
-								newest: history.at(-1)?.revision ?? assert.fail(),
-								...(replaceMetadata ? { metadata: { label: "whole range" } } : {}),
+								newest: history[eligibleCount - 1]?.revision ?? assert.fail(),
+								...(replaceMetadata ? { metadata: { count: eligibleCount } } : {}),
 							},
 						],
 					});
@@ -972,7 +974,7 @@ describe("History compaction", () => {
 					const oldestIndex = before.findIndex((commit) => commit.custom?.group === 0);
 					const forkIndex = before.findIndex((commit) => commit.revision === forkBase);
 					assert(forkIndex - oldestIndex >= 2);
-					const expectedRemoved = replaceMetadata ? 0 : forkIndex - oldestIndex - 1;
+					const expectedRemoved = forkIndex - oldestIndex - 1;
 					const content = [...view.root];
 					const start = provider.logger.events().length;
 					let summary: ISummaryTree | undefined;
@@ -986,16 +988,20 @@ describe("History compaction", () => {
 					}
 					const event = compactionEvent(provider, start);
 					assert.equal(event.removedCount, expectedRemoved);
-					assert.equal(event.composedChangeCount, replaceMetadata ? 0 : expectedRemoved + 1);
+					assert.equal(event.composedChangeCount, expectedRemoved + 1);
 					const after = listCommits(view.branchHistory);
 					assert.deepEqual(
 						after.map((commit) => commit.revision),
-						replaceMetadata
-							? before.map((commit) => commit.revision)
-							: [...before.slice(0, oldestIndex), ...before.slice(forkIndex - 1)].map(
-									(commit) => commit.revision,
-								),
+						[...before.slice(0, oldestIndex), ...before.slice(forkIndex - 1)].map(
+							(commit) => commit.revision,
+						),
 					);
+					if (replaceMetadata) {
+						assert.deepEqual(after[oldestIndex]?.customTree, {
+							metadata: { count: forkIndex },
+							children: [],
+						});
+					}
 					assert.deepEqual([...view.root], content);
 					if (summary !== undefined) {
 						const loaded = await loadFromSummary(
@@ -1023,7 +1029,7 @@ describe("History compaction", () => {
 			}
 		}
 
-		it("skips ranges that are not yet eligible or that contain a preserved commit", () => {
+		it("skips preserved ranges independently of other eligible ranges", () => {
 			const { provider, view } = generateHistory(
 				"append",
 				2,
@@ -1036,7 +1042,6 @@ describe("History compaction", () => {
 			const commits = listCommits(view.branchHistory);
 			const group0 = commits.filter((commit) => commit.custom?.group === 0);
 			const group1 = commits.filter((commit) => commit.custom?.group === 1);
-			const newest = commits.at(-1) ?? assert.fail();
 			compactionOf(provider.trees[0]).setRevisionPreserved(
 				group0[1]?.revision ?? assert.fail(),
 				true,
@@ -1053,15 +1058,13 @@ describe("History compaction", () => {
 						oldest: group1[0]?.revision ?? assert.fail(),
 						newest: group1[2]?.revision ?? assert.fail(),
 					},
-					// Includes the newest commits, which are still in the collaboration window.
-					{ oldest: (commits.at(-2) ?? assert.fail()).revision, newest: newest.revision },
 				],
 			}));
 			assert.equal(removed, 2, "Only the group without a preserved commit is combined");
 			const event = compactionEvent(provider, start);
-			assert.equal(event.plannedRangeCount, 3);
+			assert.equal(event.plannedRangeCount, 2);
 			assert.equal(event.combinedRangeCount, 1);
-			assert.equal(event.skippedRangeCount, 2);
+			assert.equal(event.skippedRangeCount, 1);
 		});
 
 		describe("rejects a malformed plan without changing the history", () => {
@@ -1091,6 +1094,26 @@ describe("History compaction", () => {
 					/must not be newer/,
 				],
 				[
+					"range crossing the eligibility boundary",
+					(commits) => [
+						{
+							oldest: commits[1]?.revision ?? assert.fail(),
+							newest: commits.at(-1)?.revision ?? assert.fail(),
+						},
+					],
+					/must stay within the eligible history prefix/,
+				],
+				[
+					"range entirely outside the eligible prefix",
+					(commits) => [
+						{
+							oldest: commits.at(-1)?.revision ?? assert.fail(),
+							newest: commits.at(-1)?.revision ?? assert.fail(),
+						},
+					],
+					/must stay within the eligible history prefix/,
+				],
+				[
 					"overlapping ranges",
 					(commits) => [
 						{
@@ -1107,7 +1130,7 @@ describe("History compaction", () => {
 			];
 			for (const [title, makeRanges, message] of cases) {
 				it(title, () => {
-					const { provider, view } = generateHistory("append", 1, 5);
+					const { provider, view, otherView } = generateHistory("append", 1, 8);
 					const before = countCommits(view.branchHistory);
 					const start = provider.logger.events().length;
 					assert.throws(
@@ -1128,6 +1151,9 @@ describe("History compaction", () => {
 					const event = compactionEvent(provider, start);
 					assert.equal(event.status, "failure");
 					assert.equal(event.failureSource, "plan");
+					view.root.insertAtEnd("after rejected plan");
+					provider.synchronizeMessages();
+					assert.deepEqual([...view.root], [...otherView.root]);
 				});
 			}
 		});
@@ -1171,6 +1197,44 @@ describe("History compaction", () => {
 			await summarize(provider.trees[0]);
 			assert.equal(countCommits(view.branchHistory), before);
 		});
+
+		for (const replaceMetadata of [false, true]) {
+			it(`rejects an ineligible summary-time range ${replaceMetadata ? "with" : "without"} replacement metadata before any merge`, async () => {
+				const policy: PlanCompaction = (history, eligibleCount) => {
+					assert(eligibleCount >= 3 && eligibleCount < history.length);
+					return {
+						ranges: [
+							{ oldest: history[0].revision, newest: history[1].revision },
+							{
+								oldest: history[eligibleCount - 1].revision,
+								newest: history.at(-1)?.revision ?? assert.fail(),
+								...(replaceMetadata ? { metadata: { label: "invalid range" } } : {}),
+							},
+						],
+					};
+				};
+				const { provider, view, otherView } = generateHistory("append", 1, 3, true, policy);
+				const before = listCommits(view.branchHistory).map((commit) => commit.revision);
+				const start = provider.logger.events().length;
+				const summary = await summarize(provider.trees[0]);
+				const event = compactionEvent(provider, start);
+				assert.equal(event.failureSource, "plan");
+				assert.equal(event.removedCount, 0);
+				assert.equal(event.composeCallCount, 0);
+				assert.deepEqual(
+					listCommits(view.branchHistory).map((commit) => commit.revision),
+					before,
+				);
+				const loaded = await loadFromSummary(
+					summary,
+					provider.getCompressor(provider.trees[0]),
+				);
+				assert.equal(countCommits(loaded.kernel.checkout.branchHistory), before.length);
+				view.root.insertAtEnd("after rejected summary plan");
+				provider.synchronizeMessages();
+				assert.deepEqual([...view.root], [...otherView.root]);
+			});
+		}
 
 		it("composes each range in a single call", () => {
 			const editsPerGroup = 10;
@@ -1381,13 +1445,13 @@ describe("History compaction", () => {
 			let calls = 0;
 			const removedCount = asAlpha(
 				provider.trees[0],
-			).historyCompaction.requestPlannedCompaction((history) => {
+			).historyCompaction.requestPlannedCompaction((history, eligibleCount) => {
 				calls++;
 				for (const [index, commit] of history.entries()) {
 					assert.equal(commit.revertTo, undefined);
 					assert.equal(commit.getParent()?.revision, history[index - 1]?.revision);
 				}
-				return planSameGroup()(history);
+				return planSameGroup()(history, eligibleCount);
 			});
 			assert.equal(calls, 1);
 			assert.equal(removedCount, 4);
@@ -1413,22 +1477,25 @@ describe("History compaction", () => {
 			};
 			let seen: TreeBranchCommitMetadata[] = [];
 			const pass = (): number =>
-				asAlpha(provider.trees[0]).historyCompaction.requestPlannedCompaction((history) => {
-					seen = [...history];
-					const c = history.find((commit) => name(commit) === "C");
-					const d = history.find((commit) => name(commit) === "D");
-					return {
-						ranges:
-							c === undefined || d === undefined
-								? []
-								: [{ oldest: c.revision, newest: d.revision }],
-					};
-				});
+				asAlpha(provider.trees[0]).historyCompaction.requestPlannedCompaction(
+					(history, eligibleCount) => {
+						seen = [...history];
+						const eligible = history.slice(0, eligibleCount);
+						const c = eligible.find((commit) => name(commit) === "C");
+						const d = eligible.find((commit) => name(commit) === "D");
+						return {
+							ranges:
+								c === undefined || d === undefined
+									? []
+									: [{ oldest: c.revision, newest: d.revision }],
+						};
+					},
+				);
 
 			for (const commitName of ["A", "B", "C", "D"]) {
 				edit(commitName);
 			}
-			// D is still in the collaboration window, so the range is skipped.
+			// D is still in the collaboration window, so the policy returns no range.
 			assert.equal(pass(), 0);
 			edit("E");
 			assert.equal(pass(), 0);
@@ -1880,14 +1947,13 @@ describe("History compaction", () => {
 			);
 			const loadedStart = loadedLogger.events().length;
 			assert.equal(
-				asAlpha(loaded).historyCompaction.requestPlannedCompaction((history) => ({
-					ranges: [
-						{
-							oldest: history[0]?.revision ?? assert.fail(),
-							newest: history.at(-1)?.revision ?? assert.fail(),
-						},
-					],
-				})),
+				asAlpha(loaded).historyCompaction.requestPlannedCompaction(
+					(history, eligibleCount) => {
+						assert(history.length > 0);
+						assert.equal(eligibleCount, 0);
+						return { ranges: [] };
+					},
+				),
 				0,
 				"Nothing is eligible immediately after load",
 			);
@@ -1901,7 +1967,7 @@ describe("History compaction", () => {
 			assert(
 				loadedPass.some(
 					(event) =>
-						event.activity === "CompactionRangeSkipped" && event.reason === "notEligible",
+						event.activity === "CompactionPlanReceived" && event.plannedRangeCount === 0,
 				),
 			);
 			assert(!loadedPass.some((event) => event.activity === "CompactionRangeMerged"));
@@ -1929,32 +1995,31 @@ describe("History compaction", () => {
 			assert(!events.some((event) => event.activity === "HistoryLoadCompleted"));
 		});
 
-		it("traces a clipped range and reports only the commits actually combined", () => {
+		it("traces a range planned within the eligible prefix without clipping", () => {
 			const logger = makeLogger();
 			const { provider, view } = generateHistory("append", 1, 3, true, undefined, logger);
 			const before = listCommits(view.branchHistory);
 			const oldestIndex = before.findIndex((commit) => commit.custom?.group === 0);
 			const removed = asAlpha(provider.trees[0]).historyCompaction.requestPlannedCompaction(
-				() => ({
+				(history, eligibleCount) => ({
 					ranges: [
 						{
 							oldest: before[oldestIndex].revision,
-							newest: before.at(-1)?.revision ?? assert.fail(),
+							newest: history[eligibleCount - 1]?.revision ?? assert.fail(),
 						},
 					],
 				}),
 			);
 			assert(removed > 0);
 			const events = traceEvents(logger);
-			const clipped = events.find((event) => event.activity === "CompactionRangeClipped");
-			assert(clipped !== undefined);
-			assert.equal(clipped.requestedRangeLength, before.length - oldestIndex);
-			assert.equal(clipped.rangeLength, removed + 1);
-			assert(Number(clipped.rangeLength) < Number(clipped.requestedRangeLength));
+			assert(!events.some((event) => event.activity === "CompactionRangeClipped"));
+			const eligibility = events.find((event) => event.activity === "CompactionEligibility");
+			assert(eligibility !== undefined);
+			assert.equal(removed + 1, Number(eligibility.eligibleCommitCount) - oldestIndex);
 			const merged = events.find((event) => event.activity === "CompactionRangeMerged");
-			assert.equal(merged?.operationId, clipped.operationId);
-			assert.equal(merged?.rangeIndex, clipped.rangeIndex);
-			assert.equal(merged?.rangeLength, clipped.rangeLength);
+			assert.equal(merged?.operationId, eligibility.operationId);
+			assert.equal(merged?.rangeIndex, 0);
+			assert.equal(merged?.rangeLength, removed + 1);
 			const completed = events.find((event) => event.activity === "CompactionCompleted");
 			assert.equal(completed?.combinedRangeCount, 1);
 			assert.equal(completed?.skippedRangeCount, 0);
@@ -2283,10 +2348,10 @@ describe("History compaction", () => {
 					ranges: [
 						// A single commit has nothing to combine.
 						{ oldest: history[1]?.revision ?? assert.fail(), newest: history[1].revision },
-						// The newest commits are still in the collaboration window.
+						// Another eligible single-commit range also has nothing to combine.
 						{
-							oldest: history.at(-2)?.revision ?? assert.fail(),
-							newest: history.at(-1)?.revision ?? assert.fail(),
+							oldest: history[2]?.revision ?? assert.fail(),
+							newest: history[2]?.revision ?? assert.fail(),
 						},
 					],
 				});
