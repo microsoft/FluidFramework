@@ -20,6 +20,7 @@ import {
 	cursorForMapTreeField,
 	cursorForMapTreeNode,
 	jsonableTreeFromCursor,
+	jsonableTreeFromFieldCursor,
 	type MinimalMapTreeNodeView,
 	type MapTreeFieldViewGeneric,
 	StringSequenceCursor,
@@ -27,8 +28,12 @@ import {
 import { brand, StringSequence, stringBufferSize } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { checkpointStride } from "../../util/stringStorage.js";
-import { testSpecializedFieldCursor } from "../cursorTestSuite.js";
-import { expectEqualFieldPaths, expectEqualPaths } from "../utils.js";
+import { checkFieldTraversal, testSpecializedFieldCursor } from "../cursorTestSuite.js";
+import {
+	expectEqualFieldPaths,
+	expectEqualPaths,
+	suitesWithAndWithoutProduction,
+} from "../utils.js";
 
 const stringLeafType: TreeNodeSchemaIdentifier = brand("leaf-sequence-string");
 const objectNodeType: TreeNodeSchemaIdentifier = brand("leaf-sequence-object");
@@ -51,19 +56,52 @@ describe("string sequence cursors", () => {
 			{ name: "mixed-width atoms", text: "a\u{1F600}b" },
 			// Unpaired surrogates must remain valid, separate atoms.
 			{ name: "lone surrogates", text: "\uD800x\uDC00" },
-			{ name: "long ASCII", text: "abc".repeat(checkpointStride) },
-			// Mixed-width atoms require offset lookup across multiple sparse checkpoints.
-			{ name: "multiple checkpoints", text: "ab\u{1F600}".repeat(checkpointStride) },
-			{
-				name: "multiple storage pieces",
-				text: `${"a".repeat(stringBufferSize - 1)}\u{1F600}b`,
-			},
 		].map(({ name, text }) => ({
 			name,
 			dataFactory: () => StringSequence.fromString(text),
 			reference: [...text].map((value) => ({ type: stringLeafType, value })),
 			path: { parent: undefined, field: dummyRoot },
 		})),
+	});
+
+	// The shared specialized suite creates separate Mocha tests for every atom.
+	// Batch long sequences instead: retain every-atom checks without keeping thousands of suites alive during memory benchmarks.
+	describe("long sequences", () => {
+		suitesWithAndWithoutProduction(() => {
+			for (const { name, text } of [
+				{ name: "long ASCII", text: "abc".repeat(checkpointStride) },
+				// Mixed-width atoms require offset lookup across multiple sparse checkpoints.
+				{ name: "multiple checkpoints", text: "ab\u{1F600}".repeat(checkpointStride) },
+				{
+					name: "multiple storage pieces",
+					text: `${"a".repeat(stringBufferSize - 1)}\u{1F600}b`,
+				},
+			]) {
+				describe(name, () => {
+					it("traverses every atom and checks field boundaries", () => {
+						const cursor = cursorForStringSequence(
+							stringLeafType,
+							StringSequence.fromString(text),
+						);
+						assert.equal(cursor.getFieldLength(), [...text].length);
+						checkFieldTraversal(cursor, { parent: undefined, field: dummyRoot });
+					});
+
+					it("returns the expected atoms as JSON-compatible leaves", () => {
+						const cursor = cursorForStringSequence(
+							stringLeafType,
+							StringSequence.fromString(text),
+						);
+						const actual = jsonableTreeFromFieldCursor(cursor);
+						assert.deepEqual(
+							actual,
+							[...text].map((value) => ({ type: stringLeafType, value })),
+						);
+						assert.deepEqual(JSON.parse(JSON.stringify(actual)), actual);
+					});
+				});
+			}
+		});
 	});
 
 	const sharedSuiteFixture = createTreeWithDelegatedText();
