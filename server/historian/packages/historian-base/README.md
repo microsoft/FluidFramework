@@ -29,8 +29,9 @@ and retries the original operation once. Concurrent operations on the same servi
 share recovery; a failed validation, backfill, or retry is propagated.
 Failed recovery is cleared so a later operation on that instance can try again;
 concurrent operations still share an in-flight recovery attempt.
-Failed attempts also clear memoized document and storage-name lookups, so later
-attempts validate fresh state. The first attempt still shares its routing lookups.
+Each recovery attempt releases its memoized document and storage-name lookups.
+If backfill succeeds but the retry fails, a later operation can validate fresh state and recover again.
+The first attempt still shares its routing lookups, and each operation retries at most once.
 The configured customer-token reuse policy also applies to recovery validation.
 Active durable `alfred-fallback` proofs can recover missing metadata; metadata-backed
 and pending creation proofs do not enter recovery.
@@ -45,6 +46,9 @@ When no retriever is configured and neither routing nor the authoritative docume
 account, recovery can use the provider's configured default route. The provider must validate
 that default route before writing metadata. An unresolved configured retriever or a mismatch
 between a named account and the default route is rejected.
+When validation is enabled, unresolved configured retrieval is rejected before the first GitRest request.
+A failed document-specific lookup cannot fall back to a previously cached account.
+An account that the retriever explicitly resolves to a tenant default remains supported.
 
 Missing or failed static container-type lookups remain unknown until authoritative validation
 succeeds; they are not cached as durable in this mode. This fallback does not run on local
@@ -57,11 +61,23 @@ It requires document-write scope and honors token revocation and tenant/document
 It is exposed through the shared route factory's `summaries` router as well as the app,
 and uses the configured general per-tenant throttler before tenant lookup or storage writes.
 Requests marked ephemeral are rejected before changing their routing cache.
-Initialization and backfill reject tenant/document IDs containing `:` rather than
-targeting a truncated identity through the existing colon-separated routing header.
+Initialization keeps its durable type hint local, even if the storage operation fails.
+All service operations in this mode reject tenant/document IDs containing `:`.
+GitRest's private initialization and backfill endpoints also require exactly two nonempty routing-header components.
 When an access authorizer is configured, initialization also requires a validated
 `Fluid-Create-Context` and an authorized pending creation proof.
 Deployments must restrict these private initialization/backfill operations to trusted services.
+
+Initial blob, tree, commit, and reference creation can carry `Fluid-Create-Context`.
+Hosts must provide the existing trusted creation-context resolver to validate that header.
+Historian authenticates the tenant first, then uses the validated context for container type and storage routing before a document record exists.
+A configured access authorizer must also authorize the pending creation.
+Without an authorizer, this mode derives the creation proof from the validated context.
+The service factory does not query the document manager or storage-name retriever for these creation proofs.
+Resolver and authorizer costs depend on the host implementation.
+Writes without the header and ordinary reads do not invoke this resolver.
+Ephemeral creation without an authorizer or physical-container override retains the ordinary
+ephemeral cache namespace, so subsequent reads can reuse its cached content.
 
 After publishing the server client, GitRest, and Historian packages from the integrated source,
 consumers should upgrade their packages and keep only their storage-provider implementation.

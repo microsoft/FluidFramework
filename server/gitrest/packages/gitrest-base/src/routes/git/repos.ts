@@ -10,6 +10,7 @@ import { Router } from "express";
 import type nconf from "nconf";
 
 import {
+	Constants,
 	getRepoManagerParamsFromRequest,
 	type IRepositoryManagerFactory,
 	logAndThrowApiError,
@@ -31,6 +32,14 @@ export function create(
 			(request, response) => {
 				const params = getRepoManagerParamsFromRequest(request);
 				const result = (async () => {
+					const routing = request.get(Constants.StorageRoutingIdHeader)?.split(":");
+					if (routing?.length !== 2 || routing.some((part) => part.length === 0)) {
+						throw new NetworkError(
+							400,
+							"Invalid document storage routing identity.",
+							false,
+						);
+					}
 					if (!repoPerDocEnabled || params.isEphemeralContainer === true) {
 						throw new NetworkError(400, "Durable document storage is required.", false);
 					}

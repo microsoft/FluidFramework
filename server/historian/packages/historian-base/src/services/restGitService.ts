@@ -195,12 +195,16 @@ export class RestGitService {
 			if (internalErrorCode !== "DocumentStorageMetadataMissing") {
 				throw error;
 			}
-			this.documentStorageRecovery ??= recover().catch((recoveryError: unknown) => {
-				this.documentStorageRecovery = undefined;
+			const recovery = (this.documentStorageRecovery ??= recover());
+			try {
+				await recovery;
+				return await request();
+			} catch (recoveryError: unknown) {
+				if (this.documentStorageRecovery === recovery) {
+					this.documentStorageRecovery = undefined;
+				}
 				throw recoveryError;
-			});
-			await this.documentStorageRecovery;
-			return request();
+			}
 		});
 	}
 

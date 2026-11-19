@@ -227,6 +227,45 @@ testModes.forEach((mode) => {
 			describe("Git", () => {
 				describe("Repos", () => {
 					for (const operation of ["initialize", "backfill"] as const) {
+						it(`rejects ambiguous routing before document storage ${operation}`, async () => {
+							const received: IRepoManagerParams[] = [];
+							const factory: IRepositoryManagerFactory = {
+								create: async () => {
+									throw new Error("Unexpected repository creation");
+								},
+								open: async () => {
+									throw new Error("Unexpected repository open");
+								},
+								[`${operation}DocumentStorage`]: async (
+									params: IRepoManagerParams,
+								) => {
+									received.push(params);
+								},
+							};
+							const api = request(
+								app.create(
+									testUtils.defaultProvider,
+									{ defaultFileSystemManagerFactory: fileSystemManagerFactory },
+									factory,
+									new StartupCheck(),
+								),
+							);
+							for (const header of [
+								"tenant:document:alias",
+								":document",
+								"tenant:",
+								"tenant",
+							]) {
+								await api
+									.post(
+										`/repos/${testOwnerName}/${testRepoName}/internal/document-storage/${operation}`,
+									)
+									.set(Constants.StorageRoutingIdHeader, header)
+									.expect(400);
+							}
+							assert.deepStrictEqual(received, []);
+						});
+
 						it(`rejects unsupported document storage ${operation}`, async () => {
 							await supertest
 								.post(

@@ -419,7 +419,6 @@ export function create(
 						authenticatedTenantDetails,
 						storageNameRetriever,
 						documentManager,
-						cache,
 						initialUpload: true,
 						storageName: request.get("StorageName"),
 						isEphemeralContainer: false,

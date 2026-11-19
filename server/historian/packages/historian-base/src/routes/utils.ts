@@ -588,6 +588,11 @@ export async function createGitServiceWithAccess(
 		tenantId,
 		authorization,
 	);
+	const gitrestOwnershipValidation =
+		config.get("restGitService:gitrestOwnershipValidation") === true;
+	if (gitrestOwnershipValidation && (tenantId.includes(":") || tokenDocumentId.includes(":"))) {
+		throw new NetworkError(400, "Invalid document storage routing identity.");
+	}
 	const details =
 		authenticatedTenantDetails ??
 		(await tenantService.getTenant(tenantId, accessToken, allowDisabledTenant ?? false));
@@ -602,9 +607,18 @@ export async function createGitServiceWithAccess(
 	const containerTypeHint =
 		explicitContainerTypeHint ??
 		(isEphemeralHint === undefined ? undefined : isEphemeralHint ? "ephemeral" : "durable");
-	const accessProof =
+	const accessProof: IDocumentAccessProof | undefined =
 		accessOperation === undefined || documentAccessAuthorizer === undefined
-			? undefined
+			? gitrestOwnershipValidation &&
+			  accessOperation === "create" &&
+			  trustedCreateContext !== undefined
+				? {
+						...trustedCreateContext,
+						source: "trusted-create",
+						operation: "create",
+						state: "pending",
+				  }
+				: undefined
 			: await documentAccessAuthorizer.authorize({
 					tenantId,
 					documentId: tokenDocumentId,
@@ -614,7 +628,7 @@ export async function createGitServiceWithAccess(
 					existingProof: existingAccessProof,
 			  });
 	if (
-		documentAccessAuthorizer !== undefined &&
+		(documentAccessAuthorizer !== undefined || accessProof !== undefined) &&
 		(accessProof === undefined ||
 			accessProof.tenantId !== tenantId ||
 			accessProof.documentId !== tokenDocumentId ||
@@ -643,8 +657,6 @@ export async function createGitServiceWithAccess(
 		throw new NetworkError(500, "Document access authorizer returned an invalid proof.");
 	}
 	const documentId = accessProof?.documentId ?? tokenDocumentId;
-	const gitrestOwnershipValidation =
-		config.get("restGitService:gitrestOwnershipValidation") === true;
 	let documentRequest: ReturnType<IDocumentManager["readDocument"]> | undefined;
 	const readDocument = () =>
 		(documentRequest ??= documentManager.readDocument(tenantId, documentId).catch((error) => {
@@ -736,6 +748,8 @@ export async function createGitServiceWithAccess(
 		calculatedStorageName = accessProof.storageAccountName;
 	} else if (accessProof?.containerType === "ephemeral") {
 		calculatedStorageName = undefined;
+	} else if (accessProof?.source === "trusted-create") {
+		calculatedStorageName = customData?.storageName;
 	} else if (initialUpload && storageName && documentAccessAuthorizer === undefined) {
 		calculatedStorageName = storageName;
 	} else if (
@@ -747,10 +761,15 @@ export async function createGitServiceWithAccess(
 		// reintroduce the Alfred/Riddler lookup that the summary access fast path avoids.
 		calculatedStorageName = undefined;
 	} else {
-		calculatedStorageName =
-			summaryAccessContext?.storageName ??
-			(await getStorageName()) ??
-			customData?.storageName;
+		const resolvedStorageName = summaryAccessContext?.storageName ?? (await getStorageName());
+		if (
+			gitrestOwnershipValidation &&
+			storageNameRetriever !== undefined &&
+			resolvedStorageName === undefined
+		) {
+			throw new NetworkError(403, "Document storage ownership does not match.", false);
+		}
+		calculatedStorageName = resolvedStorageName ?? customData?.storageName;
 	}
 	const recoverDocumentStorage =
 		gitrestOwnershipValidation &&
@@ -762,12 +781,15 @@ export async function createGitServiceWithAccess(
 						const document = await validateDocument();
 						const authoritativeStorageName =
 							document.storageName ??
-							(await requestStorageNameRetriever?.getWithDocumentDetails?.(
-								tenantId,
-								document,
-							)) ??
-							(await getStorageName()) ??
-							customData?.storageName;
+							(requestStorageNameRetriever?.getWithDocumentDetails !== undefined
+								? await requestStorageNameRetriever.getWithDocumentDetails(
+										tenantId,
+										document,
+								  )
+								: await getStorageName()) ??
+							(storageNameRetriever === undefined
+								? customData?.storageName
+								: undefined);
 						if (
 							document.isEphemeralContainer === true ||
 							(typeof authoritativeStorageName !== "string" &&
@@ -784,13 +806,19 @@ export async function createGitServiceWithAccess(
 							);
 						}
 						await service.backfillDocumentStorage();
-					} catch (error) {
+					} finally {
 						documentRequest = undefined;
 						storageNameRequest = undefined;
-						throw error;
 					}
 			  }
 			: undefined;
+	// Without an authorizer or physical override, EC reads use the existing cache namespace.
+	const serviceAccessProof =
+		documentAccessAuthorizer === undefined &&
+		accessProof?.containerType === "ephemeral" &&
+		accessProof.physicalContainerName === undefined
+			? undefined
+			: accessProof;
 	const service: RestGitService = new RestGitService(
 		details.storage,
 		writeToExternalStorage,
@@ -802,7 +830,7 @@ export async function createGitServiceWithAccess(
 		postIsEphemeral,
 		maxCacheableSummarySize,
 		simplifiedCustomData,
-		accessProof,
+		serviceAccessProof,
 		recoverDocumentStorage,
 	);
 	return {
@@ -814,6 +842,42 @@ export async function createGitServiceWithAccess(
 
 export async function createGitService(createArgs: ICreateGitServiceArgs): Promise<RestGitService> {
 	return (await createGitServiceWithAccess(createArgs)).service;
+}
+
+export async function createGitServiceForWrite(
+	createArgs: ICreateGitServiceArgs,
+	opaqueToken: string | undefined,
+	resolver: ITrustedCreateContextResolver | undefined,
+): Promise<RestGitService> {
+	if (
+		opaqueToken === undefined ||
+		(createArgs.config.get("restGitService:gitrestOwnershipValidation") !== true &&
+			createArgs.documentAccessAuthorizer === undefined)
+	) {
+		return createGitService(createArgs);
+	}
+	const { accessToken, documentId } = getTokenDocumentIdentity(
+		createArgs.tenantId,
+		createArgs.authorization,
+	);
+	const authenticatedTenantDetails = await createArgs.tenantService.getTenant(
+		createArgs.tenantId,
+		accessToken,
+		false,
+	);
+	const trustedCreateContext = await resolveTrustedCreateContext({
+		tenantId: createArgs.tenantId,
+		documentId,
+		resolver,
+		opaqueToken,
+	});
+	return createGitService({
+		...createArgs,
+		authenticatedTenantDetails,
+		accessOperation: "create",
+		initialUpload: true,
+		trustedCreateContext,
+	});
 }
 
 /**
