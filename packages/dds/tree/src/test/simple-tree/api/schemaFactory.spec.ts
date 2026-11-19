@@ -1964,6 +1964,45 @@ describe("schemaFactory", () => {
 		});
 	});
 
+	it("`deprecated` preserves allowed types, lazy references and custom metadata", () => {
+		const schemaFactory = new SchemaFactoryAlpha("notes");
+		const ref = () => schemaFactory.number;
+		const custom = { reason: "Use string colors" };
+
+		// Pass the static helper's result to the instance helper. Wrapping it again should keep
+		// the lazy function itself (not just the type it returns) and the caller's metadata.
+		const annotated = SchemaFactoryAlpha.deprecated({ type: ref, metadata: { custom } });
+		const wrapped = schemaFactory.deprecated(annotated);
+		assert.equal(wrapped.type, ref);
+		assert.equal(wrapped.metadata.custom, custom);
+
+		// A deprecated reference never exposes a token, even when it replaces a staged annotation.
+		assert.equal(annotated.metadata.stagedSchemaUpgrade, undefined);
+		assert.equal(wrapped.metadata.stagedSchemaUpgrade, undefined);
+		const formerlyStaged = schemaFactory.staged({ type: ref, metadata: { custom } });
+		const retired = schemaFactory.deprecated(formerlyStaged);
+		assert(formerlyStaged.metadata.stagedSchemaUpgrade !== undefined);
+		assert.equal(retired.metadata.stagedSchemaUpgrade, undefined);
+		assert.equal(retired.metadata.custom, custom);
+
+		// These compile-time checks cover both reads and inserts. Both still include number because
+		// historical documents can permit numeric colors; the stored schema determines which writes succeed at runtime.
+		const colors = schemaFactory.types([schemaFactory.string, wrapped]);
+		allowUnused<
+			requireTrue<
+				areSafelyAssignable<TreeFieldFromImplicitField<typeof colors>, string | number>
+			>
+		>();
+		allowUnused<
+			requireTrue<
+				areSafelyAssignable<
+					InsertableTreeFieldFromImplicitField<typeof colors>,
+					string | number
+				>
+			>
+		>();
+	});
+
 	describe("staged", () => {
 		const schemaFactory = new SchemaFactoryAlpha("staged tests");
 

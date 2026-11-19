@@ -130,6 +130,31 @@ class Note extends factory.object("Note", {
 To achieve [forwards compatibility](./index.mdx#forwards-compatibility), staged allowed types can be used to [roll out](./index.mdx#staged-rollouts) support for reading before writing, allowing older clients to read data created with new types.
 See [Rolling Out New Allowed Types](./allowed-types-rollout.mdx) for details.
 
+### Deprecating an Allowed Type
+
+Use <ApiLink package="fluid-framework" api="SchemaFactoryAlpha.deprecated">`deprecated()`</ApiLink> (alpha) when your application should stop producing a type but still needs to open documents that permit it.
+For example, to retire numeric colors, keep handling numbers in your code but use strings for new colors:
+
+```typescript
+import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
+
+const factory = new SchemaFactoryAlpha("notes");
+class Note extends factory.object("Note", {
+    color: factory.optional(factory.types([factory.string, factory.deprecated(factory.number)])),
+}) {}
+```
+
+New documents initialized with this view permit only strings in `color`.
+The same view can open an older document that permits numbers and can still read **and write** numeric colors there.
+Even after you replace every numeric value with a string, `upgradeSchema()` retains the numeric type in that document's stored schema.
+For recursive references, use `deprecatedRecursive()` inside `typesRecursive()`.
+
+:::note
+SharedTree does not yet support removing fields or allowed types from an existing document's stored schema.
+We plan to support these changes, including a way to migrate existing document content to the narrower schema.
+Until then, keep the deprecated entry in your view if you need to open documents whose stored schema still permits that type.
+:::
+
 ## Incompatible Changes
 
 These changes are not supported because they would otherwise make newer clients unable to open older documents and older clients unable to open newer documents.
@@ -191,6 +216,8 @@ An upgrade that retained both types would preserve existing content, but the old
 The upgrade must therefore be rejected rather than treating the larger type set as proof of compatibility.
 
 ### Removing Allowed Types
+
+If historical documents must continue to work, [deprecate the allowed type](#deprecating-an-allowed-type) rather than removing its declaration outright.
 
 ```typescript
 // Breaking: Removing allowed type
