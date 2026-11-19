@@ -50,6 +50,8 @@ In the above example, the stored schema upgrade adds `isApproved` while preservi
 >
 > To detect such conflicts before releasing a schema change, keep historical schema snapshots and use <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">`snapshotSchemaCompatibility`</ApiLink> tests.
 
+#### Schema Compatibility Snapshot Testing
+
 Schema compatibility snapshot checks now accept either direct viewing or a safe upgrade in both directions, rather than only supporting upgrade in a forwards direction.
 For versions within `minVersionForCollaboration`, `snapshotSchemaCompatibility` requires `canView || canUpgrade` for each version viewing documents created with the other schema.
 The current version must also be able to view or upgrade documents from every historical snapshot outside that collaboration window.
