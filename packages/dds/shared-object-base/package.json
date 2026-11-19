@@ -126,7 +126,7 @@
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@fluidframework/shared-object-base-previous": "npm:@fluidframework/shared-object-base@3.13.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@microsoft/api-extractor": "7.58.1",
+		"@microsoft/api-extractor": "7.60.1",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
 		"@types/sinon": "^17.0.3",
