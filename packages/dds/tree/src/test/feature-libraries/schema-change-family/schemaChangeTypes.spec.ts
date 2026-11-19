@@ -171,6 +171,81 @@ const schemaPolicies = [
 ] as const;
 
 describe("SchemaChangeset", () => {
+	describe("application-defined schema versions", () => {
+		const original: TreeStoredSchema = {
+			...number,
+			schemaVersion: new Map([["test", 1]]),
+		};
+		for (const [name, schemaVersion] of [
+			["removes the version map", undefined],
+			["removes an identifier", new Map<string, number>()],
+			["decreases a version", new Map([["test", 0]])],
+			["increases a version", new Map([["test", 2]])],
+			[
+				"adds an identifier",
+				new Map([
+					["test", 1],
+					["other", 0],
+				]),
+			],
+			["replaces an identifier", new Map([["other", 1]])],
+		] as const) {
+			it(`conflicts when a concurrent change ${name}`, () => {
+				const proposed: TreeStoredSchema = {
+					...number.wider,
+					schemaVersion: original.schemaVersion,
+				};
+				const change = new CompareAndSwapSchemaChangeset(original, proposed);
+				const concurrent = new CompareAndSwapSchemaChangeset(original, {
+					...original,
+					schemaVersion,
+				});
+				assert.equal(change.rebase(concurrent).isConflicted, true);
+			});
+		}
+
+		it("distinguishes an absent version map from an empty one", () => {
+			const change = new CompareAndSwapSchemaChangeset(number, number.wider);
+			const concurrent = new CompareAndSwapSchemaChangeset(number, {
+				...number,
+				schemaVersion: new Map(),
+			});
+			assert.equal(change.rebase(concurrent).isConflicted, true);
+		});
+
+		it("accepts equivalent version maps with different insertion orders", () => {
+			const expected: TreeStoredSchema = {
+				...number,
+				schemaVersion: new Map([
+					["test", 1],
+					["other", 2],
+				]),
+			};
+			const input: TreeStoredSchema = {
+				...number,
+				schemaVersion: new Map([
+					["other", 2],
+					["test", 1],
+				]),
+			};
+			const change = new CompareAndSwapSchemaChangeset(input, number.wider, expected);
+			assert.equal(change.isConflicted, false);
+		});
+
+		it("rolls back a version-only change", () => {
+			const proposed: TreeStoredSchema = {
+				...original,
+				schemaVersion: new Map([["test", 2]]),
+			};
+			const change = new CompareAndSwapSchemaChangeset(original, proposed);
+			assert.equal(change.isConflicted, false);
+			assert.equal(change.output, proposed);
+			const rollback = change.rollback();
+			assert.equal(rollback.isConflicted, false);
+			assert.equal(rollback.output, original);
+		});
+	});
+
 	describe("output", () => {
 		for (const { name, input, proposed, output } of schemaPolicies) {
 			describe(name, () => {

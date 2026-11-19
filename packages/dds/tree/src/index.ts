@@ -82,6 +82,9 @@ export {
 	TreeViewConfiguration,
 	type ITreeViewConfiguration,
 	type ITreeViewConfigurationAlpha,
+	type SchemaVersionMap,
+	type SchemaVersions,
+	type TreeViewSchemaVersions,
 	type ITreeConfigurationOptions,
 	type TreeView,
 	type TreeViewEvents,
@@ -134,6 +137,7 @@ export {
 	type SchemaUpgradeNodeKindIncompatibility,
 	type SchemaUpgradeMissingNodeSchemaIncompatibility,
 	type SchemaUpgradeUnsatisfiedNodeSchemaIncompatibility,
+	type SchemaUpgradeVersionIncompatibility,
 	type SchemaUpgradeViewIncompatibility,
 	type FieldProps,
 	type FieldPropsAlpha,
@@ -452,6 +456,9 @@ export type { TreeDataStoreOptions } from "./treeDataStore.js";
 
 export { Sandboxing } from "./sandboxing/index.js";
 export {
-	identifySchemaAlpha,
+	identifySchema,
+	identifySchemaWithHash,
+	type IdentifySchemaOptions,
+	type IdentifySchemaWithHashOptions,
 	type SchemaIdentity,
 } from "./simple-tree/index.js";
