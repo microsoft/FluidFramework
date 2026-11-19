@@ -758,31 +758,37 @@ export async function createGitServiceWithAccess(
 		(accessProof === undefined ||
 			(accessProof.source === "alfred-fallback" && accessProof.state === "active"))
 			? async () => {
-					const document = await validateDocument();
-					const authoritativeStorageName =
-						document.storageName ??
-						(await requestStorageNameRetriever?.getWithDocumentDetails?.(
-							tenantId,
-							document,
-						)) ??
-						(await getStorageName()) ??
-						customData?.storageName;
-					if (
-						document.isEphemeralContainer === true ||
-						(typeof authoritativeStorageName !== "string" &&
-							!(
-								authoritativeStorageName === undefined &&
-								storageNameRetriever === undefined
-							)) ||
-						authoritativeStorageName !== calculatedStorageName
-					) {
-						throw new NetworkError(
-							403,
-							"Document storage ownership does not match.",
-							false,
-						);
+					try {
+						const document = await validateDocument();
+						const authoritativeStorageName =
+							document.storageName ??
+							(await requestStorageNameRetriever?.getWithDocumentDetails?.(
+								tenantId,
+								document,
+							)) ??
+							(await getStorageName()) ??
+							customData?.storageName;
+						if (
+							document.isEphemeralContainer === true ||
+							(typeof authoritativeStorageName !== "string" &&
+								!(
+									authoritativeStorageName === undefined &&
+									storageNameRetriever === undefined
+								)) ||
+							authoritativeStorageName !== calculatedStorageName
+						) {
+							throw new NetworkError(
+								403,
+								"Document storage ownership does not match.",
+								false,
+							);
+						}
+						await service.backfillDocumentStorage();
+					} catch (error) {
+						documentRequest = undefined;
+						storageNameRequest = undefined;
+						throw error;
 					}
-					await service.backfillDocumentStorage();
 			  }
 			: undefined;
 	const service: RestGitService = new RestGitService(

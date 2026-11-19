@@ -390,8 +390,10 @@ describe("RestGitService Git object SHA validation", () => {
 					{ type: "container", message: "summary", sequenceNumber: 0, entries: [] },
 					true,
 				);
+				const cacheGet = sandbox.spy(cache, "get");
 				assert.strictEqual(await service.getSummary("latest", false), summary);
 				assert.strictEqual(await service.getSummary(canonicalSha, false), summary);
+				sinon.assert.callCount(cacheGet, 3);
 				sinon.assert.notCalled(downstream);
 				assert.strictEqual(await other.getSummary("latest", false), otherSummary);
 
@@ -405,6 +407,47 @@ describe("RestGitService Git object SHA validation", () => {
 					(error: unknown) => error === notFound,
 				);
 				sinon.assert.calledTwice(downstream);
+			});
+
+			it(`fetches the requested version when the cached summary ID mismatches for ephemeral=${ephemeral}`, async () => {
+				const cache = new TestCache();
+				const service = new RestGitService(
+					storage,
+					false,
+					tenantId,
+					documentId,
+					cache,
+					undefined,
+					undefined,
+					ephemeral,
+				);
+				const requestedSummary = { id: canonicalSha, trees: [], blobs: [] };
+				const newerSummary = { ...requestedSummary, id: "c".repeat(40) };
+				sandbox.stub(BasicRestWrapper.prototype, "post").resolves(requestedSummary);
+				const downstream = sandbox
+					.stub(BasicRestWrapper.prototype, "get")
+					.resolves(requestedSummary);
+				await service.createSummary({
+					type: "container",
+					message: "summary",
+					sequenceNumber: 0,
+					entries: [],
+				});
+				await cache.set(
+					`ownership-v2:tenant:document:${
+						ephemeral ? "ephemeral" : "durable"
+					}:::::tenant:document:summary:container`,
+					newerSummary,
+				);
+				assert.strictEqual(await service.getSummary("latest", false), newerSummary);
+				const cacheGet = sandbox.spy(cache, "get");
+
+				assert.strictEqual(await service.getSummary(canonicalSha, false), requestedSummary);
+				sinon.assert.callCount(cacheGet, 2);
+				sinon.assert.calledOnceWithExactly(
+					downstream,
+					`/repos/owner/repository/git/summaries/${canonicalSha}`,
+				);
 			});
 		}
 	});

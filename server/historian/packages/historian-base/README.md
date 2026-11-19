@@ -29,6 +29,8 @@ and retries the original operation once. Concurrent operations on the same servi
 share recovery; a failed validation, backfill, or retry is propagated.
 Failed recovery is cleared so a later operation on that instance can try again;
 concurrent operations still share an in-flight recovery attempt.
+Failed attempts also clear memoized document and storage-name lookups, so later
+attempts validate fresh state. The first attempt still shares its routing lookups.
 The configured customer-token reuse policy also applies to recovery validation.
 Active durable `alfred-fallback` proofs can recover missing metadata; metadata-backed
 and pending creation proofs do not enter recovery.
@@ -74,6 +76,8 @@ trees must reach GitRest. Cache writes and cache-only background prefetches are 
 Summary writes and deletes still invalidate existing cached summaries. Bypassed writers also
 remove the cached latest-SHA pointer, so instances with validation disabled cannot pair an old
 pointer with a newly cached summary during mixed-mode operation.
+Version-specific cache reads also check the cached summary's own ID before returning it;
+an inconsistent pointer/body pair falls back to fetching the requested version.
 A direct object read adds one GitRest request for a former cache hit; a composite header or
 full-tree read may require several object requests. No Alfred ownership precheck is added.
 Ephemeral content, default-off deployments, and requests authorized by an independent access

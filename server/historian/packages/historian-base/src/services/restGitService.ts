@@ -410,9 +410,8 @@ export class RestGitService {
 			// from cache.
 			const cachedLatestSummary =
 				await this.getCache<IWholeFlatSummary>(latestSummaryCacheKey);
-			// If latest summary sha is cached, but the summary itself does not exist in cache, retrieve the requested summary
-			// by specific version as normal and do not cache it.
-			if (cachedLatestSummary) {
+			// If the cached summary is missing or belongs to another version, fetch the requested version without caching.
+			if (cachedLatestSummary?.id === sha) {
 				return cachedLatestSummary;
 			}
 		}

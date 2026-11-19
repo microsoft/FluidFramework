@@ -275,6 +275,92 @@ describe("document storage recovery", () => {
 			operations.filter((operation) => operation.endsWith("/backfill")).length,
 			2,
 		);
+		sinon.assert.calledTwice(readDocument);
+	});
+
+	for (const change of ["deleted", "moved"] as const) {
+		it(`rejects a ${change} document on a later recovery attempt`, async () => {
+			storageNameRetriever.getForRequest = async (_tenant, _document, read) => {
+				const document = await read();
+				assert.ok(document);
+				return document.storageName ?? storageName;
+			};
+			backfillStatus = 503;
+			const service = await createService();
+			await assert.rejects(
+				service.getRefs(),
+				(error: unknown) => error instanceof NetworkError && error.code === 503,
+			);
+			readDocument.resolves({
+				...activeDocument,
+				...(change === "deleted"
+					? { scheduledDeletionTime: "2026-01-01" }
+					: { storageName: "moved-storage" }),
+			});
+			backfillStatus = 204;
+
+			await assert.rejects(
+				service.getRefs(),
+				(error: unknown) =>
+					error instanceof NetworkError &&
+					error.code === (change === "deleted" ? 404 : 403),
+			);
+			assert.strictEqual(
+				operations.filter((operation) => operation.endsWith("/backfill")).length,
+				1,
+			);
+			sinon.assert.calledTwice(readDocument);
+		});
+	}
+
+	it("refreshes a changed storage lookup on a later recovery attempt", async () => {
+		readDocument.resolves({ ...activeDocument, storageName: undefined });
+		backfillStatus = 503;
+		const service = await createService();
+		await assert.rejects(
+			service.getRefs(),
+			(error: unknown) => error instanceof NetworkError && error.code === 503,
+		);
+		storageNameRetriever.get.resolves("moved-storage");
+		backfillStatus = 204;
+
+		await assert.rejects(
+			service.getRefs(),
+			(error: unknown) => error instanceof NetworkError && error.code === 403,
+		);
+		assert.strictEqual(
+			operations.filter((operation) => operation.endsWith("/backfill")).length,
+			1,
+		);
+		sinon.assert.calledTwice(storageNameRetriever.get);
+	});
+
+	it("retries a failed storage lookup on a later recovery attempt", async () => {
+		readDocument.resolves({ ...activeDocument, storageName: undefined });
+		storageNameRetriever.get.onFirstCall().rejects(new NetworkError(503, "Unavailable"));
+		storageNameRetriever.get.onSecondCall().resolves(storageName);
+		const service = await createGitService({
+			config,
+			tenantId,
+			authorization,
+			tenantService: new TestTenantService(),
+			documentManager,
+			storageNameRetriever,
+			initialUpload: true,
+			storageName,
+		});
+		await assert.rejects(
+			service.getRefs(),
+			(error: unknown) => error instanceof NetworkError && error.code === 503,
+		);
+
+		assert.deepStrictEqual(await Promise.all([service.getRefs(), service.getRefs()]), [[], []]);
+		assert.strictEqual(
+			operations.filter((operation) => operation.endsWith("/backfill")).length,
+			1,
+		);
+		sinon.assert.calledTwice(readDocument);
+		sinon.assert.calledTwice(storageNameRetriever.get);
 	});
 
 	for (const operation of ["write", "delete"] as const) {
