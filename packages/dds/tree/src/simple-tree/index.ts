@@ -200,6 +200,8 @@ export {
 	type TreeBranchHistory,
 	type TreeLocation,
 	type TextLocationNode,
+	isTextLocationNode,
+	textLocationArray,
 	type CapturedTreeLocation,
 	type TreeGapCaptureOptions,
 	type ResolvedTreeLocation,
