@@ -31,6 +31,7 @@ import type {
 	IFluidDataStoreRegistry,
 	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { DataStoreKindImplementation } from "./serviceClientBase.js";
 
@@ -69,7 +70,14 @@ export function normalizeRegistry<T>(
 	input: DataStoreKind<T> | Registry<Promise<DataStoreKind<T>>>,
 ): Registry<Promise<DataStoreKind<T>>> {
 	if (DataStoreKindImplementation.guard(input)) {
-		return async () => input;
+		return async (type) => {
+			if (type !== input.type) {
+				throw new UsageError(
+					`Mismatched data store type. Expected: ${input.type}, got: ${type}`,
+				);
+			}
+			return input;
+		};
 	}
 	assert(typeof input === "function", 0xd17 /* Registry must be a function */);
 	return input;
