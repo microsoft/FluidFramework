@@ -24,12 +24,12 @@ import { compareSets } from "../../util/index.js";
 import type { FullSchemaPolicy } from "./fieldKind.js";
 import { isNeverField, isNeverTree } from "./isNeverTree.js";
 import type {
-	SchemaDiscrepancyLocation,
-	StoredSchemaUpgradeDiscrepancy,
-} from "./schemaDiscrepancy.js";
+	SchemaIncompatibilityLocation,
+	StoredSchemaUpgradeIncompatibility,
+} from "./schemaIncompatibility.js";
 
-interface ComparisonDiagnostics extends SchemaDiscrepancyLocation {
-	readonly discrepancies: StoredSchemaUpgradeDiscrepancy[];
+interface ComparisonDiagnostics extends SchemaIncompatibilityLocation {
+	readonly incompatibilities: StoredSchemaUpgradeIncompatibility[];
 }
 
 interface NodeComparisonDiagnostics extends ComparisonDiagnostics {
@@ -71,7 +71,7 @@ export enum SchemaComparisonMode {
  * `undefined` TreeNodeStoredSchema means the schema is not present (and thus treated as a NeverTree).
  *
  * @param comparisonMode - The content comparison rules. Defaults to {@link SchemaComparisonMode.Monotonic}.
- * @param diagnostics - If you supply this argument, the function adds failed upgrade requirements to `diagnostics.discrepancies`.
+ * @param diagnostics - If you supply this argument, the function adds failed upgrade requirements to `diagnostics.incompatibilities`.
  * It keeps existing entries and compares the other fields to find more failures.
  * If you omit this argument, the function does not collect failure details and can stop at the first failure.
  */
@@ -89,7 +89,7 @@ export function allowsTreeSuperset(
 	if (isNeverTree(policy, originalData, superset)) {
 		if (diagnostics !== undefined) {
 			if (superset === undefined) {
-				diagnostics.discrepancies.push({
+				diagnostics.incompatibilities.push({
 					mismatch: "missingNodeSchema",
 					identifier: diagnostics.identifier,
 				});
@@ -105,7 +105,7 @@ export function allowsTreeSuperset(
 		if (superset instanceof LeafNodeStoredSchema) {
 			const leafCompatible = allowsValueSuperset(original.leafValue, superset.leafValue);
 			if (!leafCompatible && diagnostics !== undefined) {
-				diagnostics.discrepancies.push({
+				diagnostics.incompatibilities.push({
 					mismatch: "valueSchema",
 					identifier: diagnostics.identifier,
 					stored: original.leafValue,
@@ -196,7 +196,7 @@ function reportUnsatisfiedNodeSchemaRequirement(
 	diagnostics: NodeComparisonDiagnostics,
 ): void {
 	if (proposed instanceof MapNodeStoredSchema) {
-		diagnostics.discrepancies.push({
+		diagnostics.incompatibilities.push({
 			mismatch: "nodeSchemaCannotBeSatisfied",
 			identifier: diagnostics.identifier,
 			requirement: { kind: "requiredMapEntries" },
@@ -209,7 +209,7 @@ function reportUnsatisfiedNodeSchemaRequirement(
 	);
 	for (const [fieldKey, field] of proposed.objectNodeFields) {
 		if (isNeverField(policy, originalData, field)) {
-			diagnostics.discrepancies.push({
+			diagnostics.incompatibilities.push({
 				mismatch: "nodeSchemaCannotBeSatisfied",
 				identifier: diagnostics.identifier,
 				requirement: {
@@ -229,7 +229,7 @@ function reportNodeKindMismatch(
 	proposed: TreeNodeStoredSchema,
 	diagnostics: NodeComparisonDiagnostics | undefined,
 ): false {
-	diagnostics?.discrepancies.push({
+	diagnostics?.incompatibilities.push({
 		mismatch: "nodeKind",
 		identifier: diagnostics.identifier,
 		stored: original,
@@ -257,7 +257,7 @@ export function allowsValueSuperset(
  *
  * @param comparisonMode - The content comparison rules. Defaults to {@link SchemaComparisonMode.Monotonic}.
  *
- * @param diagnostics - If you supply this argument, the function adds failed upgrade requirements to `diagnostics.discrepancies`.
+ * @param diagnostics - If you supply this argument, the function adds failed upgrade requirements to `diagnostics.incompatibilities`.
  * It keeps existing entries and checks both allowed types and field kinds so it can report a failure in each.
  * If you omit this argument, the function does not collect failure details and can stop at the first failure.
  *
@@ -287,7 +287,7 @@ export function allowsFieldSuperset(
 		if (diagnostics === undefined) {
 			return false;
 		}
-		diagnostics.discrepancies.push({
+		diagnostics.incompatibilities.push({
 			mismatch: "allowedTypes",
 			identifier: diagnostics.identifier,
 			fieldKey: diagnostics.fieldKey,
@@ -311,7 +311,7 @@ export function allowsFieldSuperset(
 					supersetKind.multiplicity,
 				);
 	if (!kindCompatible && diagnostics !== undefined) {
-		diagnostics.discrepancies.push({
+		diagnostics.incompatibilities.push({
 			mismatch: "fieldKind",
 			identifier: diagnostics.identifier,
 			fieldKey: diagnostics.fieldKey,
@@ -349,14 +349,14 @@ export function allowsTreeSchemaIdentifierSuperset(
  * it would have to compare everything anyway.
  *
  * @param comparisonMode - The content comparison rules. Defaults to {@link SchemaComparisonMode.Monotonic}.
- * @param discrepancies - When provided, collect failed upgrade requirements instead of stopping at the first one.
+ * @param incompatibilities - When provided, collect failed upgrade requirements instead of stopping at the first one.
  */
 export function allowsRepoSuperset(
 	policy: FullSchemaPolicy,
 	original: TreeStoredSchema,
 	superset: TreeStoredSchema,
 	comparisonMode: SchemaComparisonMode = SchemaComparisonMode.Monotonic,
-	discrepancies?: StoredSchemaUpgradeDiscrepancy[],
+	incompatibilities?: StoredSchemaUpgradeIncompatibility[],
 ): boolean {
 	if (original === superset) {
 		return true;
@@ -368,11 +368,11 @@ export function allowsRepoSuperset(
 		original.rootFieldSchema,
 		superset.rootFieldSchema,
 		comparisonMode,
-		discrepancies === undefined
+		incompatibilities === undefined
 			? undefined
-			: { discrepancies, identifier: undefined, fieldKey: undefined },
+			: { incompatibilities, identifier: undefined, fieldKey: undefined },
 	);
-	if (!compatible && discrepancies === undefined) {
+	if (!compatible && incompatibilities === undefined) {
 		return false;
 	}
 	// Check if all schemas in original are included in superset, and permit a superset of the node content.
@@ -386,12 +386,12 @@ export function allowsRepoSuperset(
 				schema,
 				superset.nodeSchema.get(key),
 				comparisonMode,
-				discrepancies === undefined
+				incompatibilities === undefined
 					? undefined
-					: { discrepancies, identifier: key, fieldKey: undefined },
+					: { incompatibilities, identifier: key, fieldKey: undefined },
 			)
 		) {
-			if (discrepancies === undefined) {
+			if (incompatibilities === undefined) {
 				return false;
 			}
 			compatible = false;

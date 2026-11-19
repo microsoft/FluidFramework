@@ -456,6 +456,120 @@ describe("snapshotCompatibilityChecker", () => {
 	});
 
 	/**
+	 * V1 declares optional notes; V2 removes that field from its view schema.
+	 * V2 can view and preserve notes in existing documents, while V1 must upgrade a fresh V2 document before viewing it.
+	 * Snapshot validation accepts both directions without copying document-specific retained fields into the snapshots.
+	 */
+	it("distinguishes removing an optional field from reopening a fresh document with the old schema", () => {
+		const factory = new SchemaFactory("taskRollback");
+		class TaskV1 extends factory.object("Task", {
+			title: factory.string,
+			notes: factory.optional(factory.string),
+		}) {}
+		class TaskV2 extends factory.object("Task", { title: factory.string }) {}
+		const historical = importCompatibilitySchemaSnapshot(
+			exportCompatibilitySchemaSnapshot(new TreeViewConfiguration({ schema: TaskV1 })),
+		);
+		const current = new TreeViewConfiguration({ schema: TaskV2 });
+		const result = getCompatibility(current, historical);
+		assert.equal(result.currentViewOfSnapshotDocument.canView, true);
+		assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
+
+		// New V2 documents have no notes field, so V1 must add its schema before using the view.
+		assert.equal(result.snapshotViewOfCurrentDocument.canView, false);
+		assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, true);
+		assert.equal(result.identicalCompatibility, false);
+
+		const [fileSystem, snapshots] = inMemorySnapshotFileSystem();
+		snapshotSchemaCompatibility({
+			schema: historical,
+			fileSystem,
+			version: "1.0.0",
+			minVersionForCollaboration: "1.0.0",
+			mode: "update",
+			snapshotDirectory: "taskRollback",
+		});
+		const historicalSnapshot = snapshots.get("1.0.0.json");
+		assert(historicalSnapshot !== undefined);
+
+		// An upgrade is sufficient for compatibility, but the validator does not apply it.
+		for (const mode of ["update", "assert"] as const) {
+			snapshotSchemaCompatibility({
+				schema: current,
+				fileSystem,
+				version: "2.0.0",
+				minVersionForCollaboration: "1.0.0",
+				mode,
+				snapshotDirectory: "taskRollback",
+			});
+
+			// Retained fields belong to a document, not to the view schema saved in a snapshot.
+			assert.equal(snapshots.get("1.0.0.json"), historicalSnapshot);
+			const currentSnapshot = snapshots.get("2.0.0.json");
+			assert(currentSnapshot !== undefined);
+			assert.deepEqual(
+				JSON.parse(currentSnapshot),
+				exportCompatibilitySchemaSnapshot(current),
+			);
+		}
+	});
+
+	/**
+	 * V1 declares optional Reminder nodes; V2 replaces them with optional Schedule nodes.
+	 * Each view needs an upgrade to add its own field while retaining the other's field and node definition.
+	 * Snapshot validation must accept this rollout with both versions still in the collaboration window.
+	 */
+	it("permits upgrades in both directions when versions declare different optional node-valued fields", () => {
+		const factory = new SchemaFactory("taskFeatureReplacement");
+		class Reminder extends factory.object("Reminder", { message: factory.string }) {}
+		class TaskV1 extends factory.object("Task", {
+			title: factory.string,
+			reminder: factory.optional(Reminder),
+		}) {}
+		class Schedule extends factory.object("Schedule", { durationMinutes: factory.number }) {}
+		class TaskV2 extends factory.object("Task", {
+			title: factory.string,
+			schedule: factory.optional(Schedule),
+		}) {}
+		const historical = importCompatibilitySchemaSnapshot(
+			structuredClone(
+				exportCompatibilitySchemaSnapshot(new TreeViewConfiguration({ schema: TaskV1 })),
+			),
+		);
+		const current = new TreeViewConfiguration({ schema: TaskV2 });
+		const result = getCompatibility(current, historical);
+
+		// Neither view can write its field before the upgrade; both proposed upgrades are safe.
+		for (const direction of [
+			result.currentViewOfSnapshotDocument,
+			result.snapshotViewOfCurrentDocument,
+		]) {
+			assert.equal(direction.canView, false);
+			assert.equal(direction.canUpgrade, true);
+		}
+		assert.equal(result.identicalCompatibility, false);
+		const [fileSystem] = inMemorySnapshotFileSystem();
+		snapshotSchemaCompatibility({
+			schema: historical,
+			fileSystem,
+			version: "1.0.0",
+			minVersionForCollaboration: "1.0.0",
+			mode: "update",
+			snapshotDirectory: "taskFeatureReplacement",
+		});
+		for (const mode of ["update", "assert"] as const) {
+			snapshotSchemaCompatibility({
+				schema: current,
+				fileSystem,
+				version: "2.0.0",
+				minVersionForCollaboration: "1.0.0",
+				mode,
+				snapshotDirectory: "taskFeatureReplacement",
+			});
+		}
+	});
+
+	/**
 	 * V1 stages strings at both `primaryPriority` and `fallbackPriority` using one shared token.
 	 * V2 fully enables strings only at `primaryPriority` and leaves `fallbackPriority` numeric (removing the staged string support).
 	 *
@@ -589,7 +703,7 @@ describe("snapshotCompatibilityChecker", () => {
 						mode: "update",
 						snapshotDirectory: "incompatibleTaskPriorityRollback",
 					}),
-				/Current version "2.0.0" cannot upgrade documents from "1.0.0"/,
+				/Current version "2.0.0" can neither view nor upgrade documents from "1.0.0"/,
 			);
 		}
 	});
@@ -616,45 +730,82 @@ describe("snapshotCompatibilityChecker", () => {
 				estimate: [factory.number, factory.string],
 			}) {}
 
-			const bothDirectionalFailures = ` - Current version "2.0.0" cannot upgrade documents from "1.0.0".
-   - Cannot upgrade: the resulting stored schema would still prevent the view from reading or writing the document.
+			const currentFailure = ` - Current version "2.0.0" can neither view nor upgrade documents from "1.0.0".
+   - Viewing failed:
      - Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.
- - Historical version "1.0.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration "1.0.0".
-   - Cannot view the root field: the view allows node types ["com.fluidframework.leaf.string"] that the stored schema does not allow.`;
+   - Upgrade failed:
+     - Cannot upgrade: the resulting stored schema would still prevent the view from reading or writing the document.
+       - Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.`;
 
 			const cases = [
 				{
-					name: "historical viewing failure",
+					name: "historical viewing and upgrade failure",
 					historical: number,
 					current: numberOrString,
 					minVersionForCollaboration: "1.0.0",
-					failures: ` - Historical version "1.0.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration "1.0.0".
-   - Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.`,
+					failures: ` - Historical version "1.0.0" can neither view nor upgrade documents from "2.0.0": these versions are expected to be able to collaborate due to the selected \`minVersionForCollaboration\` "1.0.0".
+   - Viewing failed:
+     - Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.
+   - Upgrade failed:
+     - Cannot upgrade: the resulting stored schema would still prevent the view from reading or writing the document.
+       - Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.`,
 				},
 				{
 					name: "nested post-upgrade viewing failure",
 					historical: numberOrString,
 					current: number,
 					minVersionForCollaboration: "2.0.0",
-					failures: ` - Current version "2.0.0" cannot upgrade documents from "1.0.0".
-   - Cannot upgrade: the resulting stored schema would still prevent the view from reading or writing the document.
-     - Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.`,
+					failures: currentFailure,
 				},
 				{
 					name: "both directional failures",
-					historical: numberOrString,
+					historical: new TreeViewConfiguration({ schema: factory.string }),
 					current: number,
 					minVersionForCollaboration: "1.0.0",
-					failures: bothDirectionalFailures,
+					failures: ` - Current version "2.0.0" can neither view nor upgrade documents from "1.0.0".
+   - Viewing failed:
+     - Cannot view the root field: the view allows node types ["com.fluidframework.leaf.number"] that the stored schema does not allow; the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.
+   - Upgrade failed:
+     - Cannot upgrade: the resulting stored schema would still prevent the view from reading or writing the document.
+       - Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.
+ - Historical version "1.0.0" can neither view nor upgrade documents from "2.0.0": these versions are expected to be able to collaborate due to the selected \`minVersionForCollaboration\` "1.0.0".
+   - Viewing failed:
+     - Cannot view the root field: the view allows node types ["com.fluidframework.leaf.string"] that the stored schema does not allow; the stored schema allows node types ["com.fluidframework.leaf.number"] that the view does not allow.
+   - Upgrade failed:
+     - Cannot upgrade: the resulting stored schema would still prevent the view from reading or writing the document.
+       - Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.number"] that the view does not allow.`,
+				},
+				{
+					name: "distinct viewing and application-version upgrade blockers",
+					historical: new TreeViewConfigurationAlpha({
+						schema: [factory.number, factory.string],
+						schemaIdentity: identifySchema({ schemaVersion: { app: 1 } }),
+					}),
+					current: new TreeViewConfigurationAlpha({
+						schema: factory.number,
+						schemaIdentity: identifySchema({ schemaVersion: { app: 2 } }),
+					}),
+					minVersionForCollaboration: "1.0.0",
+					failures: `${currentFailure}
+ - Historical version "1.0.0" can neither view nor upgrade documents from "2.0.0": these versions are expected to be able to collaborate due to the selected \`minVersionForCollaboration\` "1.0.0".
+   - Viewing failed:
+     - Cannot view the root field: the view allows node types ["com.fluidframework.leaf.string"] that the stored schema does not allow.
+   - Upgrade failed:
+     - Cannot upgrade: application-defined schema versions must not decrease or be removed (stored: {"app":2}; proposed: {"app":1}).`,
 				},
 				{
 					name: "multiple viewing blockers",
 					historical: new TreeViewConfiguration({ schema: HistoricalFields }),
 					current: new TreeViewConfiguration({ schema: CurrentFields }),
 					minVersionForCollaboration: "1.0.0",
-					failures: ` - Historical version "1.0.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration "1.0.0".
-   - Cannot view field "priority" of node type "example.Fields": the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.
-   - Cannot view field "estimate" of node type "example.Fields": the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.`,
+					failures: ` - Historical version "1.0.0" can neither view nor upgrade documents from "2.0.0": these versions are expected to be able to collaborate due to the selected \`minVersionForCollaboration\` "1.0.0".
+   - Viewing failed:
+     - Cannot view field "priority" of node type "example.Fields": the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.
+     - Cannot view field "estimate" of node type "example.Fields": the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.
+   - Upgrade failed:
+     - Cannot upgrade: the resulting stored schema would still prevent the view from reading or writing the document.
+       - Cannot view field "priority" of node type "example.Fields": the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.
+       - Cannot view field "estimate" of node type "example.Fields": the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.`,
 				},
 			];
 
@@ -700,7 +851,7 @@ Snapshots exist for versions: [
 				});
 			}
 
-			it("writes the current snapshot before reporting both directional failures", () => {
+			it("writes the current snapshot before reporting only the direction that cannot view or upgrade", () => {
 				const compatibility = getCompatibility(number, numberOrString);
 				assert.equal(compatibility.snapshotViewOfCurrentDocument.view.isCompatible, false);
 				assert.equal(compatibility.snapshotViewOfCurrentDocument.upgrade.isCompatible, true);
@@ -719,7 +870,7 @@ Snapshots exist for versions: [
 							mode: "update",
 						}),
 					validateError(`Schema compatibility check failed:
-${bothDirectionalFailures}
+${currentFailure}
 Snapshots in: "dir"
 Snapshots exist for versions: [
 	"1.0.0"
@@ -736,6 +887,45 @@ Snapshots exist for versions: [
 					]),
 				);
 			});
+
+			for (const [historicalVersion, currentVersion] of [
+				[1, 2],
+				[2, 1],
+			]) {
+				it(`accepts viewable schemas despite blocked upgrades (${historicalVersion} to ${currentVersion})`, () => {
+					const historical = new TreeViewConfigurationAlpha({
+						schema: factory.number,
+						schemaIdentity: identifySchema({ schemaVersion: historicalVersion }),
+					});
+					const current = new TreeViewConfigurationAlpha({
+						schema: factory.number,
+						schemaIdentity: identifySchema({ schemaVersion: currentVersion }),
+					});
+					const result = getCompatibility(current, historical);
+					const blocked =
+						historicalVersion > currentVersion
+							? result.currentViewOfSnapshotDocument
+							: result.snapshotViewOfCurrentDocument;
+					assert.equal(blocked.view.isCompatible, true);
+					assert.equal(blocked.upgrade.isCompatible, false);
+					const [fileSystem, snapshots] = inMemorySnapshotFileSystem();
+					const historicalSnapshot = JSON.stringify(
+						exportCompatibilitySchemaSnapshot(historical),
+					);
+					snapshots.set("1.0.0.json", historicalSnapshot);
+					for (const mode of ["update", "assert"] as const) {
+						snapshotSchemaCompatibility({
+							schema: current,
+							fileSystem,
+							snapshotDirectory: "dir",
+							version: "2.0.0",
+							minVersionForCollaboration: "1.0.0",
+							mode,
+						});
+						assert.equal(snapshots.get("1.0.0.json"), historicalSnapshot);
+					}
+				});
+			}
 		});
 
 		describe("example from docs", () => {
@@ -804,9 +994,12 @@ Snapshots exist for versions: [
 					}),
 				validateError(`Schema compatibility check failed:
  - Snapshot for current version "2.0.0" is out of date: schema has changed since latest existing snapshot version "2.0.0". If this is expected, snapshotSchemaCompatibility can be rerun in "update" mode to update or create the snapshot.
- - Current version "2.0.0" cannot upgrade documents from "2.0.0".
-   - Cannot upgrade field "z" of node type "test.Point": the proposed schema removes allowed node types ["com.fluidframework.leaf.number"].
-   - Cannot upgrade field "z" of node type "test.Point": changing from zero or one child to no children is not permitted by the schema upgrade rules.
+ - Current version "2.0.0" can neither view nor upgrade documents from "2.0.0".
+   - Viewing failed:
+     - Cannot view field "z" of node type "test.Point": the view permits no children, but the stored schema permits zero or one child.
+   - Upgrade failed:
+     - Cannot upgrade field "z" of node type "test.Point": the proposed schema removes allowed node types ["com.fluidframework.leaf.number"].
+     - Cannot upgrade field "z" of node type "test.Point": changing from zero or one child to no children is not permitted by the schema upgrade rules.
 Snapshots in: "${testSrcPath}/schemaSnapshots/point"
 Snapshots exist for versions: [
 	"1.0.0",
@@ -826,14 +1019,18 @@ Snapshots exist for versions: [
 					}),
 				validateError(`Schema compatibility check failed:
  - Snapshot for current version "2.0.0" is out of date: schema has changed since latest existing snapshot version "2.0.0". If this is expected, snapshotSchemaCompatibility can be rerun in "update" mode to update or create the snapshot.
- - Current version "2.0.0" cannot upgrade documents from "1.0.0".
-   - Cannot upgrade: the resulting stored schema would still prevent the view from reading or writing the document.
+ - Current version "2.0.0" can neither view nor upgrade documents from "1.0.0".
+   - Viewing failed:
      - Cannot view the root field: the stored schema allows node types ["test.Point"] that the view does not allow.
- - Historical version "1.0.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration "1.0.0".
-   - Cannot view the root field: the view allows node types ["test.Point"] that the stored schema does not allow.
- - Current version "2.0.0" cannot upgrade documents from "2.0.0".
-   - Cannot upgrade: the resulting stored schema would still prevent the view from reading or writing the document.
+   - Upgrade failed:
+     - Cannot upgrade: the resulting stored schema would still prevent the view from reading or writing the document.
+       - Cannot view the root field: the stored schema allows node types ["test.Point"] that the view does not allow.
+ - Current version "2.0.0" can neither view nor upgrade documents from "2.0.0".
+   - Viewing failed:
      - Cannot view the root field: the stored schema allows node types ["test.Point"] that the view does not allow.
+   - Upgrade failed:
+     - Cannot upgrade: the resulting stored schema would still prevent the view from reading or writing the document.
+       - Cannot view the root field: the stored schema allows node types ["test.Point"] that the view does not allow.
 Snapshots in: "${testSrcPath}/schemaSnapshots/point"
 Snapshots exist for versions: [
 	"1.0.0",
@@ -852,8 +1049,12 @@ Snapshots exist for versions: [
 						snapshotDirectory,
 					}),
 				validateError(`Schema compatibility check failed:
- - Historical version "1.0.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration "1.0.0".
-   - Cannot view field "z" of node type "test.Point": the view permits no children, but the stored schema permits zero or one child.
+ - Historical version "1.0.0" can neither view nor upgrade documents from "2.0.0": these versions are expected to be able to collaborate due to the selected \`minVersionForCollaboration\` "1.0.0".
+   - Viewing failed:
+     - Cannot view field "z" of node type "test.Point": the view permits no children, but the stored schema permits zero or one child.
+   - Upgrade failed:
+     - Cannot upgrade field "z" of node type "test.Point": the proposed schema removes allowed node types ["com.fluidframework.leaf.number"].
+     - Cannot upgrade field "z" of node type "test.Point": changing from zero or one child to no children is not permitted by the schema upgrade rules.
 Snapshots in: "${testSrcPath}/schemaSnapshots/point"
 Snapshots exist for versions: [
 	"1.0.0",
@@ -1006,8 +1207,12 @@ Snapshots exist for versions: [
 						snapshotDirectory,
 					}),
 				validateError(`Schema compatibility check failed:
- - Historical version "1.0.0" cannot view documents from "3.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration "1.0.0".
-   - Cannot view field "z" of node type "assert.Point": the view permits no children, but the stored schema permits zero or one child.
+ - Historical version "1.0.0" can neither view nor upgrade documents from "3.0.0": these versions are expected to be able to collaborate due to the selected \`minVersionForCollaboration\` "1.0.0".
+   - Viewing failed:
+     - Cannot view field "z" of node type "assert.Point": the view permits no children, but the stored schema permits zero or one child.
+   - Upgrade failed:
+     - Cannot upgrade field "z" of node type "assert.Point": the proposed schema removes allowed node types ["com.fluidframework.leaf.number"].
+     - Cannot upgrade field "z" of node type "assert.Point": changing from zero or one child to no children is not permitted by the schema upgrade rules.
 Snapshots in: "dir"
 Snapshots exist for versions: [
 	"1.0.0",
@@ -1276,8 +1481,12 @@ Snapshots exist for versions: [
 				validateError(
 					`Schema compatibility check failed:
  - Snapshot for current version "3" is out of date: schema has changed since latest existing snapshot version "2". If this is expected, snapshotSchemaCompatibility can be rerun in "update" mode to update or create the snapshot.
- - Historical version "1" cannot view documents from "3": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration "1".
-   - Cannot view field "z" of node type "assert.Point": the view permits no children, but the stored schema permits zero or one child.
+ - Historical version "1" can neither view nor upgrade documents from "3": these versions are expected to be able to collaborate due to the selected \`minVersionForCollaboration\` "1".
+   - Viewing failed:
+     - Cannot view field "z" of node type "assert.Point": the view permits no children, but the stored schema permits zero or one child.
+   - Upgrade failed:
+     - Cannot upgrade field "z" of node type "assert.Point": the proposed schema removes allowed node types ["com.fluidframework.leaf.number"].
+     - Cannot upgrade field "z" of node type "assert.Point": changing from zero or one child to no children is not permitted by the schema upgrade rules.
 Snapshots in: "dir"
 Snapshots exist for versions: [
 	"1",
@@ -1444,13 +1653,17 @@ Snapshots exist for versions: [
 					}),
 				validateError(`Schema compatibility check failed:
  - Snapshot for current version "2.0.0" is out of date: schema has changed since latest existing snapshot version "1.0.0". If this is expected, snapshotSchemaCompatibility can be rerun in "update" mode to update or create the snapshot.
- - Historical version "1.5.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration "1.5.0".
-   - Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.number"] that the view does not allow.
+ - Historical version "1.5.0" can neither view nor upgrade documents from "2.0.0": these versions are expected to be able to collaborate due to the selected \`minVersionForCollaboration\` "1.5.0".
+   - Viewing failed:
+     - Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.number"] that the view does not allow.
+   - Upgrade failed:
+     - Cannot upgrade: the resulting stored schema would still prevent the view from reading or writing the document.
+       - Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.number"] that the view does not allow.
 Snapshots in: "dir"
 Snapshots exist for versions: [
 	"1.0.0"
 ].
-Due to snapshotUnchangedVersions being false and minVersionForCollaboration ("1.5.0") not having an exact snapshot, the last snapshot before that version (which is "1.0.0") is being also being checked as if it is version "1.5.0".`),
+Due to snapshotUnchangedVersions being false and \`minVersionForCollaboration\` ("1.5.0") not having an exact snapshot, the last snapshot before that version (which is "1.0.0") is being also being checked as if it is version "1.5.0".`),
 			);
 
 			snapshotSchemaCompatibility({
@@ -1473,14 +1686,18 @@ Due to snapshotUnchangedVersions being false and minVersionForCollaboration ("1.
 						snapshotDirectory,
 					}),
 				validateError(`Schema compatibility check failed:
- - Historical version "1.5.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration "1.5.0".
-   - Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.number"] that the view does not allow.
+ - Historical version "1.5.0" can neither view nor upgrade documents from "2.0.0": these versions are expected to be able to collaborate due to the selected \`minVersionForCollaboration\` "1.5.0".
+   - Viewing failed:
+     - Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.number"] that the view does not allow.
+   - Upgrade failed:
+     - Cannot upgrade: the resulting stored schema would still prevent the view from reading or writing the document.
+       - Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.number"] that the view does not allow.
 Snapshots in: "dir"
 Snapshots exist for versions: [
 	"1.0.0",
 	"2.0.0"
 ].
-Due to snapshotUnchangedVersions being false and minVersionForCollaboration ("1.5.0") not having an exact snapshot, the last snapshot before that version (which is "1.0.0") is being also being checked as if it is version "1.5.0".`),
+Due to snapshotUnchangedVersions being false and \`minVersionForCollaboration\` ("1.5.0") not having an exact snapshot, the last snapshot before that version (which is "1.0.0") is being also being checked as if it is version "1.5.0".`),
 			);
 		});
 
@@ -1665,8 +1882,9 @@ Snapshots exist for versions: [
 				assert.equal(result.currentViewOfSnapshotDocument.canView, false);
 				assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
 
-				// V1 can already read and edit V2 documents while treating `z` as an unknown optional field.
+				// V1 can read V2 documents and retain their unknown optional field during later upgrades.
 				assert.equal(result.snapshotViewOfCurrentDocument.canView, true);
+				assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, true);
 			}
 
 			{
