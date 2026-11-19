@@ -43,8 +43,9 @@ import {
 	type TreeArrayNode,
 	type TreeLocationResolver,
 	type TreeLocationResolution,
+	isTextLocationNode,
+	textLocationArray,
 } from "../simple-tree/index.js";
-import { isTextLocationNode, textLocationArray } from "../text/index.js";
 import { brand, isReadonlyArray } from "../util/index.js";
 
 import {
