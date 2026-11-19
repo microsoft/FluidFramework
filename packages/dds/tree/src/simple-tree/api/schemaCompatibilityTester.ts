@@ -17,9 +17,12 @@ import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js"
 import { NodeKind } from "../core/index.js";
 import {
 	allowsRepoSuperset,
-	defaultSchemaPolicy,
 	type SchemaDiscrepancyLocation,
 	type StoredSchemaUpgradeDiscrepancy,
+	SchemaComparisonMode,
+	compareSchemaVersions,
+	SchemaVersionComparison,
+	defaultSchemaPolicy,
 } from "../../feature-libraries/index.js";
 import { resolveStoredSchemaGenerationOptions } from "../toStoredSchema.js";
 import { getSchemaUpgradeCandidate, toInitialSchema, type TreeSchema } from "../treeSchema.js";
@@ -34,6 +37,7 @@ import type {
 	CompatibilityResult,
 	SchemaViewIncompatibility,
 	SchemaUpgradeIncompatibility,
+	SchemaUpgradeVersionIncompatibility,
 	SchemaDiscrepancyFieldLocation,
 } from "./tree.js";
 
@@ -50,11 +54,55 @@ export function isSchemaUpgradeAllowed(
 	storedSchema: TreeStoredSchema,
 	candidate: TreeStoredSchema,
 ): boolean {
+	const comparisonMode = getSchemaUpgradeComparisonMode(storedSchema, candidate);
 	return (
-		allowsRepoSuperset(defaultSchemaPolicy, storedSchema, candidate) &&
+		comparisonMode !== undefined &&
+		allowsRepoSuperset(defaultSchemaPolicy, storedSchema, candidate, comparisonMode) &&
 		getDiscrepanciesInAllowedContent(viewSchema, candidate)[Symbol.iterator]().next().done ===
 			true
 	);
+}
+
+function getSchemaUpgradeComparisonMode(
+	storedSchema: TreeStoredSchema,
+	candidate: TreeStoredSchema,
+): SchemaComparisonMode | undefined {
+	const comparison = compareSchemaVersions(
+		storedSchema.schemaVersion,
+		candidate.schemaVersion,
+	);
+	if (
+		comparison === SchemaVersionComparison.Decrease ||
+		comparison === SchemaVersionComparison.Incompatible
+	) {
+		return undefined;
+	}
+
+	return comparison === SchemaVersionComparison.Increase &&
+		storedSchema.schemaVersion !== undefined &&
+		candidate.schemaVersion !== undefined
+		? SchemaComparisonMode.ContentOnly
+		: SchemaComparisonMode.Monotonic;
+}
+
+function formatSchemaVersionIncompatibility(
+	storedSchema: TreeStoredSchema,
+	candidate: TreeStoredSchema,
+): SchemaUpgradeVersionIncompatibility {
+	const stored =
+		storedSchema.schemaVersion === undefined
+			? undefined
+			: Object.fromEntries(storedSchema.schemaVersion);
+	const proposed =
+		candidate.schemaVersion === undefined
+			? undefined
+			: Object.fromEntries(candidate.schemaVersion);
+	return {
+		mismatch: "schemaVersion",
+		stored,
+		proposed,
+		reason: `Cannot upgrade: application-defined schema versions must not decrease or be removed (stored: ${JSON.stringify(stored)}; proposed: ${JSON.stringify(proposed)}).`,
+	};
 }
 
 function formatViewIncompatibility(value: Discrepancy): SchemaViewIncompatibility {
@@ -204,8 +252,14 @@ function getSchemaUpgradeIncompatibilityDetails(
 	stored: TreeStoredSchema,
 	proposed: TreeStoredSchema,
 ): readonly SchemaUpgradeIncompatibility[] | undefined {
+	const comparisonMode = getSchemaUpgradeComparisonMode(stored, proposed);
+	if (comparisonMode === undefined) {
+		return [formatSchemaVersionIncompatibility(stored, proposed)];
+	}
 	const discrepancies: StoredSchemaUpgradeDiscrepancy[] = [];
-	if (!allowsRepoSuperset(defaultSchemaPolicy, stored, proposed, discrepancies)) {
+	if (
+		!allowsRepoSuperset(defaultSchemaPolicy, stored, proposed, comparisonMode, discrepancies)
+	) {
 		return discrepancies.map((discrepancy) => formatUpgradeIncompatibility(discrepancy));
 	}
 	return getPostUpgradeViewIncompatibilities(viewSchema, proposed);
@@ -371,13 +425,11 @@ export function checkSchemaCompatibility(
 	const upgradeDiscrepancies: StoredSchemaUpgradeDiscrepancy[] | undefined = canView
 		? undefined
 		: [];
+	const comparisonMode = getSchemaUpgradeComparisonMode(stored, wouldUpgradeTo);
 	// The upgrade must continue to allow all content permitted by the stored schema and let this view read and edit the resulting schema.
-	const canUpgradeStored = allowsRepoSuperset(
-		policy,
-		stored,
-		wouldUpgradeTo,
-		upgradeDiscrepancies,
-	);
+	const canUpgradeStored =
+		comparisonMode !== undefined &&
+		allowsRepoSuperset(policy, stored, wouldUpgradeTo, comparisonMode, upgradeDiscrepancies);
 	const postUpgradeViewIncompatibilities =
 		canUpgradeStored && !canView
 			? getPostUpgradeViewIncompatibilities(viewSchema, wouldUpgradeTo)
@@ -390,11 +442,17 @@ export function checkSchemaCompatibility(
 			: postUpgradeViewIncompatibilities === undefined);
 
 	// `isEquivalent` (deprecated) compares the view's generated schema, independently of upgrades already enabled in this document.
-	const viewStoredSchema = toInitialSchema(viewSchema.root, configuredPolicy);
+	const viewStoredSchema = toInitialSchema(
+		viewSchema.root,
+		configuredPolicy,
+		viewSchema.schemaVersion,
+	);
 	const isEquivalent =
 		canView &&
 		allowsRepoSuperset(policy, stored, viewStoredSchema) &&
-		allowsRepoSuperset(policy, viewStoredSchema, stored);
+		allowsRepoSuperset(policy, viewStoredSchema, stored) &&
+		compareSchemaVersions(stored.schemaVersion, viewStoredSchema.schemaVersion) ===
+			SchemaVersionComparison.Equal;
 
 	const view: CompatibilityResult<SchemaViewIncompatibility> = canView
 		? { isCompatible: true }
@@ -424,9 +482,14 @@ export function checkSchemaCompatibility(
 			},
 		};
 	} else {
-		const incompatibilities = canUpgradeStored
-			? postUpgradeViewIncompatibilities
-			: upgradeDiscrepancies.map((discrepancy) => formatUpgradeIncompatibility(discrepancy));
+		const incompatibilities =
+			comparisonMode === undefined
+				? [formatSchemaVersionIncompatibility(stored, wouldUpgradeTo)]
+				: canUpgradeStored
+					? postUpgradeViewIncompatibilities
+					: upgradeDiscrepancies.map((discrepancy) =>
+							formatUpgradeIncompatibility(discrepancy),
+						);
 		assert(
 			incompatibilities !== undefined && incompatibilities.length > 0,
 			"A blocked upgrade must have incompatibilities.",

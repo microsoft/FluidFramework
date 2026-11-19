@@ -8,12 +8,22 @@ export type {
 	ITreeConfigurationOptions,
 	ITreeViewConfigurationAlpha,
 } from "./configuration.js";
+export type { SchemaVersionMap, SchemaVersions } from "../../core/index.js";
 export {
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 } from "./configuration.js";
-export { computeSchemaHash, identifySchemaAlpha } from "./schemaHash.js";
-export { type SchemaIdentity, SchemaIdentityInternal } from "./schemaIdentity.js";
+export {
+	computeSchemaHash,
+	identifySchemaWithHash,
+	type IdentifySchemaWithHashOptions,
+} from "./schemaHash.js";
+export {
+	identifySchema,
+	type IdentifySchemaOptions,
+	type SchemaIdentity,
+	SchemaIdentityInternal,
+} from "./schemaIdentity.js";
 export type {
 	CommitRevision,
 	ITree,
@@ -39,8 +49,10 @@ export type {
 	SchemaUpgradeNodeKindIncompatibility,
 	SchemaUpgradeMissingNodeSchemaIncompatibility,
 	SchemaUpgradeUnsatisfiedNodeSchemaIncompatibility,
+	SchemaUpgradeVersionIncompatibility,
 	SchemaUpgradeViewIncompatibility,
 	TreeViewAlpha,
+	TreeViewSchemaVersions,
 	TreeViewBeta,
 	UntypedTreeView,
 	UntypedTreeViewAlpha,
