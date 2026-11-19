@@ -20,7 +20,11 @@ import {
 	decodeSchemaCompatibilitySnapshot,
 	encodeSchemaCompatibilitySnapshot,
 } from "./simpleSchemaCodec.js";
-import type { SchemaCompatibilityStatusBeta } from "./tree.js";
+import type {
+	SchemaCompatibilityStatusBeta,
+	SchemaUpgradeIncompatibility,
+	SchemaViewIncompatibility,
+} from "./tree.js";
 
 /**
  * Reports whether a client's view configuration can view or upgrade the stored schema represented by another configuration.
@@ -483,10 +487,10 @@ export interface SnapshotSchemaCompatibilityOptions {
  * A historical view's ability to upgrade under the current version of this library therefore does not guarantee that a deployed older client can perform that upgrade.
  * Before relying on upgrade-based collaboration, verify the required runtime support and application upgrade handling with tests using the supported clients' library versions.
  *
- * Proper use of this utility should do a good job at detecting schema compatibility issues,
- * however it currently does not do a good job of explaining exactly what change to the schema is causing the compatibility issues.
- * This is a known limitation that will be improved in future releases.
- * These improvements, as well as other changes, may change the exact messages produced by this function in the error cases: no stability of these messages should be assumed.
+ * Compatibility errors identify the affected versions and separately explain why viewing and upgrading both failed.
+ * If an upgrade is blocked because its proposed stored schema would still prevent viewing, the error also includes the nested viewing reasons.
+ * These diagnostics describe schema constraints without inspecting document content.
+ * The exact wording of error messages may change and should not be used for programmatic handling.
  *
  * Unlike some other snapshot based testing tools, this stores more than just the current snapshot: historical snapshots are retained as well.
  * Retention of these additional historical snapshots, whose content can't be regenerated from the current schema, is necessary to properly test compatibility across versions.
@@ -780,10 +784,14 @@ export function snapshotSchemaCompatibility(
 	// Compare all snapshots against the current schema, using the compatibilityMap.
 	for (const [snapshotVersion, compatibility] of compatibilityMap) {
 		// The current version must be able to view or upgrade documents from every historical snapshot, regardless of the collaboration window.
-		const currentCompatibility = compatibility.currentViewOfSnapshotDocument;
-		if (!currentCompatibility.canView && !currentCompatibility.canUpgrade) {
+		const { view, upgrade } = compatibility.currentViewOfSnapshotDocument;
+		if (!view.isCompatible && !upgrade.isCompatible) {
 			compatibilityErrors.push(
-				`Current version ${JSON.stringify(currentVersion)} can neither view nor upgrade documents from ${JSON.stringify(snapshotVersion)}.`,
+				formatCompatibilityFailure(
+					`Current version ${JSON.stringify(currentVersion)} can neither view nor upgrade documents from ${JSON.stringify(snapshotVersion)}.`,
+					view.incompatibilities,
+					upgrade.incompatibilities,
+				),
 			);
 		}
 
@@ -804,10 +812,15 @@ export function snapshotSchemaCompatibility(
 			// Collaboration with this version is expected to work.
 			if (versionComparer(snapshotVersion, minVersionForCollaboration) >= 0) {
 				// A supported historical client must be able to view or upgrade a document created from the current schema.
-				const historicalCompatibility = compatibility.snapshotViewOfCurrentDocument;
-				if (!historicalCompatibility.canView && !historicalCompatibility.canUpgrade) {
+				const { view: historicalView, upgrade: historicalUpgrade } =
+					compatibility.snapshotViewOfCurrentDocument;
+				if (!historicalView.isCompatible && !historicalUpgrade.isCompatible) {
 					compatibilityErrors.push(
-						`Historical version ${JSON.stringify(snapshotVersion)} can neither view nor upgrade documents from ${JSON.stringify(currentVersion)}: these versions are expected to be able to collaborate due to the selected \`minVersionForCollaboration\` ${JSON.stringify(minVersionForCollaboration)}.`,
+						formatCompatibilityFailure(
+							`Historical version ${JSON.stringify(snapshotVersion)} can neither view nor upgrade documents from ${JSON.stringify(currentVersion)}: these versions are expected to be able to collaborate due to the selected \`minVersionForCollaboration\` ${JSON.stringify(minVersionForCollaboration)}.`,
+							historicalView.incompatibilities,
+							historicalUpgrade.incompatibilities,
+						),
 					);
 				}
 			} else {
@@ -824,6 +837,47 @@ export function snapshotSchemaCompatibility(
 	if (compatibilityErrors.length > 0) {
 		throw errorWithContext(compatibilityErrors.map((e) => ` - ${e}`).join("\n"));
 	}
+}
+
+/**
+ * Formats a version-level compatibility failure with separate viewing and upgrade diagnostics.
+ *
+ * @remarks
+ * Preserves diagnostic order and nests viewing reasons beneath the upgrade failure they explain.
+ * Multiline reasons have their continuation lines aligned with the bullet text.
+ * The summary is left unprefixed because the caller adds its first-level bullet.
+ *
+ * @param message - The summary identifying the failed operation and the versions involved.
+ * @param viewIncompatibilities - The diagnostics for the failed viewing operation.
+ * @param upgradeIncompatibilities - The diagnostics for the failed upgrade operation.
+ * @returns The summary followed by diagnostic bullets, ready for inclusion in the combined error message.
+ */
+function formatCompatibilityFailure(
+	message: string,
+	viewIncompatibilities: readonly SchemaViewIncompatibility[],
+	upgradeIncompatibilities: readonly SchemaUpgradeIncompatibility[],
+): string {
+	const lines = [message];
+
+	function appendReasons(
+		entries: readonly (SchemaViewIncompatibility | SchemaUpgradeIncompatibility)[],
+		indent: string,
+	): void {
+		for (const entry of entries) {
+			lines.push(`${indent}- ${entry.reason.split("\n").join(`\n${indent}  `)}`);
+			if (entry.mismatch === "viewIncompatibleAfterUpgrade") {
+				appendReasons(entry.incompatibilities, `${indent}  `);
+			}
+		}
+	}
+
+	// The caller prefixes the summary with " - ".
+	// Indent operation headings by three spaces to nest them beneath that summary.
+	lines.push("   - Viewing failed:");
+	appendReasons(viewIncompatibilities, "     ");
+	lines.push("   - Upgrade failed:");
+	appendReasons(upgradeIncompatibilities, "     ");
+	return lines.join("\n");
 }
 
 /**
