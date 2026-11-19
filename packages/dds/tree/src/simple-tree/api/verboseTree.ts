@@ -36,6 +36,7 @@ import {
 	stringSchema,
 } from "../leafNodeSchema.js";
 import { isObjectNodeSchema } from "../node-kinds/index.js";
+import type { SchemaType, SimpleNodeSchema } from "../simpleSchema.js";
 
 import {
 	customFromCursor,
@@ -46,6 +47,8 @@ import {
 	type HandleConverter,
 	type SchemalessParseOptions,
 	type TreeEncodingOptions,
+	type TreeFieldFilter,
+	type TreeFieldFilterOptions,
 } from "./customTree.js";
 
 /**
@@ -285,11 +288,14 @@ function verboseTreeAdapter(options: SchemalessParseOptions): CursorAdapter<Verb
 
 /**
  * Used to read a node cursor as a VerboseTree.
+ * @param simpleStoredSchema - The stored schema of each node type, given to {@link TreeFieldFilterOptions.filter}.
+ * Must be provided if `options` has a filter.
  */
 export function verboseFromCursor(
 	reader: ITreeCursor,
 	context: Context,
-	options: TreeEncodingOptions,
+	options: TreeEncodingOptions & TreeFieldFilterOptions,
+	simpleStoredSchema?: ReadonlyMap<string, SimpleNodeSchema<SchemaType.Stored>>,
 ): VerboseTree {
 	const config: Required<TreeEncodingOptions> = {
 		keys: KeyEncodingOptions.usePropertyKeys,
@@ -299,7 +305,14 @@ export function verboseFromCursor(
 	const storedSchemaMap = context.flexContext.schema.nodeSchema;
 	const schemaMap = context.schema;
 
-	return verboseFromCursorInner(reader, config, storedSchemaMap, schemaMap);
+	return verboseFromCursorInner(
+		reader,
+		config,
+		storedSchemaMap,
+		schemaMap,
+		options.filter,
+		simpleStoredSchema,
+	);
 }
 
 function verboseFromCursorInner(
@@ -307,6 +320,8 @@ function verboseFromCursorInner(
 	options: Required<TreeEncodingOptions>,
 	storedSchema: ReadonlyMap<string, TreeNodeStoredSchema>,
 	schema: ReadonlyMap<string, TreeNodeSchema>,
+	filter?: TreeFieldFilter,
+	simpleStoredSchema?: ReadonlyMap<string, SimpleNodeSchema<SchemaType.Stored>>,
 ): VerboseTree {
 	const fields = customFromCursor(
 		reader,
@@ -314,6 +329,8 @@ function verboseFromCursorInner(
 		storedSchema,
 		schema,
 		verboseFromCursorInner,
+		filter,
+		simpleStoredSchema,
 	);
 	const nodeSchema =
 		storedSchema.get(reader.type) ?? fail(0xb3c /* missing schema for type in cursor */);

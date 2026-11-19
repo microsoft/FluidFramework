@@ -166,6 +166,8 @@ export {
 	type HandleConverter,
 	KeyEncodingOptions,
 	type TreeParsingOptions,
+	type TreeFieldFilter,
+	type TreeFieldFilterOptions,
 } from "./customTree.js";
 
 export {

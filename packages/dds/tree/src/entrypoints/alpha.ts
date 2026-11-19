@@ -311,6 +311,8 @@ export {
 	TreeCompressionStrategy, 
 	TreeContextAlpha, 
 	TreeDataStoreOptions, 
+	TreeFieldFilter, 
+	TreeFieldFilterOptions, 
 	TreeGapCaptureOptions, 
 	TreeIdentifierUtils, 
 	TreeLocation, 

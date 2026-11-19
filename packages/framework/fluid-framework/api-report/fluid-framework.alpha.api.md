@@ -2684,7 +2684,7 @@ export interface TreeAlpha {
     } & Pick<CodecWriteOptions, "minVersionForCollab">): JsonCompatible<IFluidHandle>;
     exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
     exportConcise(node: TreeNode | TreeLeafValue | undefined, options?: TreeEncodingOptions): ConciseTree | undefined;
-    exportVerbose(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): VerboseTree;
+    exportVerbose(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions & TreeFieldFilterOptions): VerboseTree;
     hasUnknownChildren(node: TreeNode): boolean;
     readonly identifier: TreeIdentifierUtils;
     importCompressed<const TSchema extends ImplicitFieldSchema>(schema: TSchema, compressedData: JsonCompatible<IFluidHandle>, options: {
@@ -2845,6 +2845,14 @@ export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> exten
 // @beta @input
 export interface TreeEncodingOptions<TKeyOptions = KeyEncodingOptions> {
     readonly keys?: TKeyOptions;
+}
+
+// @alpha
+export type TreeFieldFilter = (parentSchema: SimpleNodeSchema<SchemaType.Stored>, storedKey: string, parentIdentifier: string) => TreeFieldFilter | boolean;
+
+// @alpha @input
+export interface TreeFieldFilterOptions {
+    readonly filter?: TreeFieldFilter;
 }
 
 // @public
