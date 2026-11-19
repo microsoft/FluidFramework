@@ -460,6 +460,28 @@ class InvertNodeManagerI implements InvertNodeManager {
 			this.table.genId,
 		);
 	}
+
+	public getInvertedRenameForRoot(
+		rootId: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<ChangeAtomId | undefined> {
+		let countProcessed = count;
+		const inputRootIdEntry = firstDetachIdFromAttachId(
+			this.table.change.rootNodes,
+			rootId,
+			count,
+		);
+		const inputRootId = inputRootIdEntry.value;
+		countProcessed = inputRootIdEntry.length;
+
+		const detachEntry = getFirstFieldForDetach(this.table.change, inputRootId, count);
+		if (detachEntry.value === undefined) {
+			return { value: undefined, length: detachEntry.length };
+		}
+
+		const attachId = this.getInvertedMoveId(inputRootId);
+		return { value: attachId, length: detachEntry.length };
+	}
 }
 
 function getInvertedMoveId(

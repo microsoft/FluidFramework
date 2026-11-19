@@ -2919,6 +2919,42 @@ describe("ModularChangeFamily integration", () => {
 
 			assertEqual(inverse, expected);
 		});
+
+		it("Move and remove", () => {
+			const fieldAId = { nodeId: undefined, field: fieldA };
+			const moveId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+			const removeId: ChangeAtomId = { revision: tag1, localId: brand(1) };
+			const moveAndRemove = Change.build(
+				{
+					family,
+					maxId: 2,
+					renames: [{ oldId: moveId, newId: removeId, count: 1, detachLocation: undefined }],
+					revisions: [{ revision: tag1 }],
+				},
+				Change.field(fieldA, sequenceIdentifier, [
+					MarkMaker.detach(1, moveId),
+					MarkMaker.rename(1, { revision: tag1, localId: brand(2) }, removeId),
+				]),
+			);
+
+			const inverse = family.invert(tagChange(moveAndRemove, tag1), false, tag2);
+
+			const reviveId: ChangeAtomId = { revision: tag2, localId: brand(0) };
+			const expected = Change.build(
+				{
+					family,
+					maxId: 2,
+					renames: [{ oldId: removeId, newId: reviveId, count: 1, detachLocation: fieldAId }],
+					revisions: [{ revision: tag2 }],
+				},
+				Change.field(fieldA, sequenceIdentifier, [
+					MarkMaker.attach(1, reviveId, { cellId: moveId }),
+					MarkMaker.rename(1, removeId, reviveId),
+				]),
+			);
+
+			assertEqual(inverse, expected);
+		});
 	});
 
 	describe("toDelta", () => {
