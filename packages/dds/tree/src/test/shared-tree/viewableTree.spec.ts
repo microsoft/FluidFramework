@@ -12,11 +12,10 @@ import {
 	createIndependentTreeCheckout,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/independentView.js";
-import { ForestTypeExpensiveDebug } from "../../shared-tree/index.js";
+import { exportSimpleSchema, ForestTypeExpensiveDebug } from "../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- Allow importing the module being tested
 import { createViewableTreeAlpha } from "../../shared-tree/viewableTree.js";
 import {
-	exportSimpleSchema,
 	FieldKind,
 	NodeKind,
 	SchemaFactory,

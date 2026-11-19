@@ -14,6 +14,7 @@ export {
 	defaultSharedTreeOptions,
 	type ForestOptions,
 	type ITreeInternal,
+	exportSimpleSchema,
 	type SharedTreeKernelView,
 	persistedToSimpleSchema,
 	getCodecTreeForSharedTreeFormat,

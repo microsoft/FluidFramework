@@ -32,6 +32,7 @@ import {
 	isFieldInSchema,
 	mapTreeFieldFromCursor,
 } from "../../feature-libraries/index.js";
+import { exportSimpleSchema } from "../../shared-tree/index.js";
 import {
 	ExpectStored,
 	StagedSchemaUpgradePolicy,
@@ -39,7 +40,6 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
 import {
-	exportSimpleSchema,
 	generateSchemaFromSimpleSchema,
 	isObjectNodeSchema,
 	SchemaFactory,

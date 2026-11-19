@@ -35,13 +35,10 @@ import {
 	type TreeLocationResolution,
 	type ResolvedTreeLocation,
 	type TreeViewAlpha,
-} from "../../../simple-tree/index.js";
-import {
-	PlainText,
-	FormattedText,
 	isTextLocationNode,
 	textLocationArray,
-} from "../../../text/index.js";
+} from "../../../simple-tree/index.js";
+import { PlainText, FormattedText } from "../../../text/index.js";
 import { configuredSharedTree } from "../../../treeFactory.js";
 import { isReadonlyArray, type requireFalse } from "../../../util/index.js";
 import { getView, TestTreeProviderLite } from "../../utils.js";
