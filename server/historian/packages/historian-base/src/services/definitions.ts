@@ -136,6 +136,8 @@ export interface ICreateGitServiceArgs {
 	trustedCreateContext?: ITrustedCreateContext;
 	documentAccessAuthorizer?: IDocumentAccessAuthorizer;
 	summaryAccessContext?: ISummaryAccessContext;
+	/** Validate durable summary access using this request's shared document lookup. */
+	validateDurableSummaryAccess?: boolean;
 }
 
 export interface ITenantService {

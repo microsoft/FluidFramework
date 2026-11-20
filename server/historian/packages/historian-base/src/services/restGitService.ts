@@ -191,11 +191,10 @@ export class RestGitService {
 			try {
 				await recovery;
 				return await request();
-			} catch (recoveryError: unknown) {
+			} finally {
 				if (this.documentStorageRecovery === recovery) {
 					this.documentStorageRecovery = undefined;
 				}
-				throw recoveryError;
 			}
 		});
 	}
@@ -340,6 +339,7 @@ export class RestGitService {
 			(this.maxCacheableSummarySize === undefined ||
 				JSON.stringify(summaryResponse).length <= this.maxCacheableSummarySize)
 		) {
+			this.invalidateProoflessSummaryCache(summaryParams.type);
 			// Cache the written summary for future retrieval. If this fails, next summary retrieval
 			// will receive an older version, but that is OK. Client will catch up with ops.
 			this.setCache<IWholeFlatSummary>(
@@ -681,8 +681,16 @@ export class RestGitService {
 		return value;
 	}
 
+	private invalidateProoflessSummaryCache(type: IWholeSummaryPayloadType): void {
+		if (this.isEphemeralContainer !== true && this.accessProof?.source === "alfred-fallback") {
+			this.deleteFromCache(this.getSummaryCacheKey(type), false);
+			this.deleteFromCache(this.getSummaryCacheKey(type, LatestSummaryShaKey), false);
+		}
+	}
+
 	private invalidateSummaryCache(type: IWholeSummaryPayloadType): void {
 		this.deleteFromCache(this.getSummaryCacheKey(type));
+		this.invalidateProoflessSummaryCache(type);
 		if (this.cache === undefined) {
 			// A bypassed writer cannot refresh the latest-SHA pointer with the summary.
 			this.deleteFromCache(this.getSummaryCacheKey(type, LatestSummaryShaKey));
@@ -692,9 +700,9 @@ export class RestGitService {
 	/**
 	 * Deletes the given key from the cache. Will log any errors with the cache.
 	 */
-	private deleteFromCache(key: string): void {
+	private deleteFromCache(key: string, includeAccessProof = true): void {
 		if (this.invalidationCache) {
-			const cacheKey = this.getNamespacedCacheKey(key);
+			const cacheKey = this.getNamespacedCacheKey(key, includeAccessProof);
 			// Attempt to delete the key from Redis - log any errors but don't fail
 			this.invalidationCache.delete(cacheKey).catch((error) => {
 				winston.error(`Error deleting key ${cacheKey} from Redis cache`, error);
@@ -725,17 +733,18 @@ export class RestGitService {
 		return fetch();
 	}
 
-	private getNamespacedCacheKey(key: string): string {
+	private getNamespacedCacheKey(key: string, includeAccessProof = true): string {
 		const storageName = this.isEphemeralContainer === true ? undefined : this.storageName;
+		const accessProof = includeAccessProof ? this.accessProof : undefined;
 		return [
 			"ownership-v2",
 			encodeURIComponent(this.tenantId),
 			encodeURIComponent(this.documentId),
 			this.isEphemeralContainer === true ? "ephemeral" : "durable",
 			encodeURIComponent(storageName ?? ""),
-			encodeURIComponent(this.accessProof?.physicalContainerName ?? ""),
-			encodeURIComponent(this.accessProof?.layoutVersion ?? ""),
-			encodeURIComponent(this.accessProof?.lifecycleVersion ?? ""),
+			encodeURIComponent(accessProof?.physicalContainerName ?? ""),
+			encodeURIComponent(accessProof?.layoutVersion ?? ""),
+			encodeURIComponent(accessProof?.lifecycleVersion ?? ""),
 			key,
 		].join(":");
 	}

@@ -355,6 +355,61 @@ describe("RestGitService Git object SHA validation", () => {
 			sinon.assert.notCalled(downstream);
 		});
 
+		for (const operation of ["write", "delete"] as const) {
+			it(`invalidates proofless durable summaries after a validated ${operation}`, async () => {
+				const cache = new TestCache();
+				const legacy = new RestGitService(storage, false, tenantId, documentId, cache);
+				const validated = new RestGitService(
+					storage,
+					false,
+					tenantId,
+					documentId,
+					cache,
+					undefined,
+					undefined,
+					false,
+					undefined,
+					undefined,
+					{
+						tenantId,
+						documentId,
+						operation: operation === "write" ? "write" : "delete",
+						containerType: "durable",
+						source: "alfred-fallback",
+						state: "active",
+						lifecycleVersion: "creation",
+					},
+				);
+				const payload = {
+					type: "container" as const,
+					message: "summary",
+					sequenceNumber: 0,
+					entries: [],
+				};
+				const initial = { id: canonicalSha, trees: [], blobs: [] };
+				const updated = { ...initial, id: "c".repeat(40) };
+				const post = sandbox.stub(BasicRestWrapper.prototype, "post").resolves(initial);
+				const get = sandbox.stub(BasicRestWrapper.prototype, "get").resolves(updated);
+				await legacy.createSummary(payload);
+				assert.strictEqual(await legacy.getSummary("latest", false), initial);
+				if (operation === "write") {
+					post.resolves(updated);
+					await validated.createSummary(payload);
+					assert.strictEqual(await legacy.getSummary("latest", false), updated);
+				} else {
+					sandbox.stub(BasicRestWrapper.prototype, "delete").resolves(true);
+					await validated.deleteSummary(false);
+					const notFound = new NetworkError(404, "Summary not found.", false);
+					get.rejects(notFound);
+					await assert.rejects(
+						legacy.getSummary("latest", false),
+						(error) => error === notFound,
+					);
+				}
+				sinon.assert.calledOnce(get);
+			});
+		}
+
 		for (const ephemeral of [false, true]) {
 			it(`keeps summary body, latest SHA and invalidation scoped for ephemeral=${ephemeral}`, async () => {
 				const cache = new TestCache();

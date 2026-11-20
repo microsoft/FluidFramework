@@ -12,7 +12,9 @@ provider enforce ownership on every storage operation. The option is off by defa
 Historian does not access the filesystem or database in this mode. GitRest validates existing
 metadata, and Historian consults the document manager for authoritative recovery when legacy
 durable storage has no metadata. Container-type and storage-account routing may also use the
-document manager. Durable summary routes do not perform a redundant ownership precheck.
+document manager. Durable summary routes also validate active document state and the storage
+route before using cached content. This validation shares the request's routing lookup when
+the provider supports it; it does not perform another storage ownership read.
 Ephemeral summaries retain local expiry/deletion checks and the existing Alfred fallback
 when local authorization is unavailable.
 
@@ -27,7 +29,7 @@ Before backfill, Historian validates the authoritative tenant, document, deletio
 durable container type, and storage account. It then calls GitRest's private backfill endpoint
 and retries the original operation once. Concurrent operations on the same service instance
 share recovery; a failed validation, backfill, or retry is propagated.
-Failed recovery is cleared so a later operation on that instance can try again;
+Completed recovery is cleared, whether it succeeds or fails, so a later operation can try again;
 concurrent operations still share an in-flight recovery attempt.
 Each recovery attempt releases its memoized document and storage-name lookups.
 If backfill succeeds but the retry fails, a later operation can validate fresh state and recover again.
@@ -67,9 +69,15 @@ Existing storage must still reject conflicting ownership and require authoritati
 when legacy ownership is missing. The provider must emit the structured missing-metadata
 error code and implement conditional backfill. No client transport or Historian source patch is needed.
 
-Without an independent access proof, durable content in this mode does not use Historian's
-content cache. Summaries (including version-SHA reads), blobs, commits, trees, headers, and full
-trees must reach GitRest. Cache writes and cache-only background prefetches are also disabled.
+Protected durable summary routes use an active `alfred-fallback` access proof from the current
+request's document validation. This enables summary caching, including version-SHA reads,
+without accepting old entries that lack the validated document's creation time.
+Cache misses still reach GitRest for ownership and soft-deletion checks.
+Validated durable writes and deletes also invalidate proofless summary entries and their
+latest-version pointer, so validation-disabled instances cannot keep serving old summaries.
+Other durable requests without an independent access proof do not use Historian's content
+cache. Blobs, commits, trees, headers, and full trees must reach GitRest; cache writes and
+cache-only background prefetches are also disabled for those requests.
 Summary writes and deletes still invalidate existing cached summaries. Bypassed writers also
 remove the cached latest-SHA pointer, so instances with validation disabled cannot pair an old
 pointer with a newly cached summary during mixed-mode operation.

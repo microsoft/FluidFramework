@@ -568,7 +568,7 @@ export async function createGitServiceWithAccess(
 	const containerTypeHint =
 		explicitContainerTypeHint ??
 		(isEphemeralHint === undefined ? undefined : isEphemeralHint ? "ephemeral" : "durable");
-	const accessProof =
+	let accessProof =
 		accessOperation === undefined || documentAccessAuthorizer === undefined
 			? undefined
 			: await documentAccessAuthorizer.authorize({
@@ -635,6 +635,7 @@ export async function createGitServiceWithAccess(
 			operation: "get",
 			routeType: "notApplicable",
 			ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
+			ignoreEphemeralFlag,
 			reuseCustomerAccessToken:
 				config.get("restGitService:reuseCustomerAccessTokenForSummaryOwnership") ?? false,
 		});
@@ -723,6 +724,44 @@ export async function createGitServiceWithAccess(
 		}
 		calculatedStorageName = resolvedStorageName ?? customData?.storageName;
 	}
+	const validateDocumentStorage = async (allowEphemeral = false) => {
+		const document = await validateDocument();
+		const authoritativeStorageName =
+			document.storageName ??
+			(requestStorageNameRetriever?.getWithDocumentDetails !== undefined
+				? await requestStorageNameRetriever.getWithDocumentDetails(tenantId, document)
+				: await getStorageName()) ??
+			(storageNameRetriever === undefined ? customData?.storageName : undefined);
+		if (
+			(!allowEphemeral && document.isEphemeralContainer === true) ||
+			(typeof authoritativeStorageName !== "string" &&
+				!(authoritativeStorageName === undefined && storageNameRetriever === undefined)) ||
+			authoritativeStorageName !== calculatedStorageName
+		) {
+			throw new NetworkError(403, "Document storage ownership does not match.", false);
+		}
+		return document;
+	};
+	if (
+		gitrestOwnershipValidation &&
+		createArgs.validateDurableSummaryAccess &&
+		!postIsEphemeral &&
+		accessProof === undefined &&
+		accessOperation !== undefined &&
+		accessOperation !== "create"
+	) {
+		const document = await validateDocumentStorage(ignoreEphemeralFlag);
+		accessProof = {
+			tenantId,
+			documentId,
+			operation: accessOperation,
+			containerType: "durable",
+			source: "alfred-fallback",
+			state: "active",
+			lifecycleVersion: String(document.createTime),
+			storageAccountName: calculatedStorageName,
+		};
+	}
 	const recoverDocumentStorage =
 		gitrestOwnershipValidation &&
 		!postIsEphemeral &&
@@ -730,33 +769,7 @@ export async function createGitServiceWithAccess(
 			(accessProof.source === "alfred-fallback" && accessProof.state === "active"))
 			? async () => {
 					try {
-						const document = await validateDocument();
-						const authoritativeStorageName =
-							document.storageName ??
-							(requestStorageNameRetriever?.getWithDocumentDetails !== undefined
-								? await requestStorageNameRetriever.getWithDocumentDetails(
-										tenantId,
-										document,
-								  )
-								: await getStorageName()) ??
-							(storageNameRetriever === undefined
-								? customData?.storageName
-								: undefined);
-						if (
-							document.isEphemeralContainer === true ||
-							(typeof authoritativeStorageName !== "string" &&
-								!(
-									authoritativeStorageName === undefined &&
-									storageNameRetriever === undefined
-								)) ||
-							authoritativeStorageName !== calculatedStorageName
-						) {
-							throw new NetworkError(
-								403,
-								"Document storage ownership does not match.",
-								false,
-							);
-						}
+						await validateDocumentStorage();
 						await service.backfillDocumentStorage();
 					} finally {
 						documentRequest = undefined;

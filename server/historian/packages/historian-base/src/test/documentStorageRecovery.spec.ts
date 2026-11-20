@@ -391,6 +391,33 @@ describe("document storage recovery", () => {
 		sinon.assert.calledTwice(readDocument);
 	});
 
+	for (const deleted of [false, true]) {
+		it(`refreshes a completed recovery${
+			deleted ? " before rejecting deletion" : ""
+		}`, async () => {
+			const service = await createService();
+			assert.deepStrictEqual(await service.getRefs(), []);
+			initialized = false;
+			if (deleted) {
+				readDocument.resolves({ ...activeDocument, scheduledDeletionTime: "2026-01-01" });
+				await assert.rejects(
+					service.getRefs(),
+					(error: unknown) => error instanceof NetworkError && error.code === 404,
+				);
+			} else {
+				assert.deepStrictEqual(await Promise.all([service.getRefs(), service.getRefs()]), [
+					[],
+					[],
+				]);
+			}
+			assert.strictEqual(
+				operations.filter((operation) => operation.endsWith("/backfill")).length,
+				deleted ? 1 : 2,
+			);
+			sinon.assert.calledTwice(readDocument);
+		});
+	}
+
 	for (const change of ["deleted", "moved"] as const) {
 		it(`rejects a ${change} document on a later recovery attempt`, async () => {
 			storageNameRetriever.getForRequest = async (_tenant, _document, read) => {
@@ -515,15 +542,59 @@ describe("document storage recovery", () => {
 		sinon.assert.notCalled(readDocument);
 	});
 
-	it("does not prevalidate summaries when GitRest enforces ownership", async () => {
+	it("validates durable lifecycle before reading from GitRest", async () => {
 		initialized = true;
 		await request(createApp())
 			.get(`/repos/${tenantId}/git/summaries/${summary.id}`)
 			.set("Authorization", authorization)
 			.expect(200, summary);
-		sinon.assert.notCalled(readDocument);
+		sinon.assert.calledOnce(readDocument);
 		assert.strictEqual(operations.length, 1);
 	});
+
+	it("reuses a durable summary after sharing one lifecycle lookup with routing", async () => {
+		initialized = true;
+		storageNameRetriever.getForRequest = async (_tenant, _document, read) => {
+			const document = await read();
+			assert.ok(document);
+			return document.storageName ?? storageName;
+		};
+		const app = createApp({ cache: new TestCache() });
+		await request(app)
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(200, summary);
+		initialized = false;
+		failureStatus = 503;
+		await request(app)
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(200, summary);
+		sinon.assert.calledTwice(readDocument);
+		assert.strictEqual(operations.length, 1);
+	});
+
+	for (const { changes, status } of [
+		{ changes: { scheduledDeletionTime: "2026-01-01" }, status: 404 },
+		{ changes: { tenantId: "another-tenant" }, status: 404 },
+		{ changes: { documentId: "another-document" }, status: 404 },
+		{ changes: { storageName: "another-storage" }, status: 403 },
+	]) {
+		it(`rejects cached durable content after ${Object.keys(changes)[0]} changes`, async () => {
+			initialized = true;
+			const app = createApp({ cache: new TestCache() });
+			await request(app)
+				.get(`/repos/${tenantId}/git/summaries/latest`)
+				.set("Authorization", authorization)
+				.expect(200, summary);
+			readDocument.resolves({ ...activeDocument, ...changes });
+			await request(app)
+				.get(`/repos/${tenantId}/git/summaries/latest`)
+				.set("Authorization", authorization)
+				.expect(status);
+			assert.strictEqual(operations.length, 1);
+		});
+	}
 
 	for (const version of ["latest", summary.id]) {
 		for (const enabled of [false, true]) {
@@ -554,26 +625,25 @@ describe("document storage recovery", () => {
 					assert.deepStrictEqual(response.body, summary);
 				}
 				assert.strictEqual(operations.length, enabled ? 2 : 1);
-				assert.strictEqual(readDocument.callCount, enabled ? 0 : 1);
+				sinon.assert.calledOnce(readDocument);
 			});
 		}
 	}
 
-	it("validates every durable summary read without an independent access proof", async () => {
+	it("does not serve a cached summary after the authoritative document disappears", async () => {
 		initialized = true;
 		const app = createApp({ cache: new TestCache() });
 		await request(app)
 			.get(`/repos/${tenantId}/git/summaries/latest`)
 			.set("Authorization", authorization)
 			.expect(200, summary);
-		initialized = false;
-		failureStatus = 403;
+		readDocument.resolves(null);
 		await request(app)
 			.get(`/repos/${tenantId}/git/summaries/latest`)
 			.set("Authorization", authorization)
-			.expect(403);
-		assert.strictEqual(operations.length, 2);
-		sinon.assert.notCalled(readDocument);
+			.expect(404);
+		assert.strictEqual(operations.length, 1);
+		sinon.assert.calledTwice(readDocument);
 	});
 
 	it("preserves durable summary caching with fresh independent authorization", async () => {
@@ -767,7 +837,7 @@ describe("document storage recovery", () => {
 			.expect(200, summary);
 		assert.strictEqual(lastRoutingFlag, undefined);
 		sinon.assert.notCalled(readStatic);
-		sinon.assert.notCalled(readDocument);
+		sinon.assert.calledOnce(readDocument);
 	});
 
 	for (const namedDocument of [false, true]) {

@@ -185,6 +185,7 @@ export function create(
 					documentAccessAuthorizer,
 					summaryAccessContext: access,
 					ignoreEphemeralFlag: ignoreIsEphemeralFlag,
+					validateDurableSummaryAccess: true,
 				});
 			if (
 				documentAccessAuthorizer === undefined &&
