@@ -63,7 +63,25 @@ export function Uint8ArrayToString(arr: Uint8Array, encoding?: IsoBufferEncoding
  * @internal
  */
 export const stringToBuffer = (input: string, encoding: IsoBufferEncoding): ArrayBuffer =>
-	IsoBuffer.from(input, encoding).buffer;
+	encodeString(input, encoding).buffer;
+
+function encodeString(str: string, encoding?: IsoBufferEncoding): Uint8Array<ArrayBuffer> {
+	switch (encoding) {
+		case "base64": {
+			// base64-js returns a fresh Uint8Array backed by an ArrayBuffer.
+			return base64js.toByteArray(sanitizeBase64(str)) as Uint8Array<ArrayBuffer>;
+		}
+		case "utf8":
+		// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged
+		case "utf-8":
+		case undefined: {
+			return new TextEncoder().encode(str);
+		}
+		default: {
+			throw new Error("invalid/unsupported encoding");
+		}
+	}
+}
 
 /**
  * Convert binary blob to string format
@@ -195,52 +213,31 @@ export const IsoBuffer: IsoBufferConstructor = class IsoBuffer<
 		str: string,
 		encoding?: IsoBufferEncoding,
 	): IsoBufferInterface<ArrayBuffer> {
-		switch (encoding) {
-			case "base64": {
-				const sanitizedString = this.sanitizeBase64(str);
-				// base64-js will always return a Uint8Array<ArrayBuffer>, but typing has not
-				// been updated to reflect that yet.  Cast to the correct type here.
-				const encoded = base64js.toByteArray(sanitizedString) as Uint8Array<ArrayBuffer>;
-				return new IsoBuffer(encoded.buffer, encoded.byteOffset, encoded.byteLength);
-			}
-			case "utf8":
-			// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged
-			case "utf-8":
-			case undefined: {
-				const encoded = new TextEncoder().encode(str);
-				return new IsoBuffer(encoded.buffer, encoded.byteOffset, encoded.byteLength);
-			}
-			default: {
-				throw new Error("invalid/unsupported encoding");
-			}
-		}
+		const encoded = encodeString(str, encoding);
+		return new IsoBuffer(encoded.buffer, encoded.byteOffset, encoded.byteLength);
 	}
 
 	public static isBuffer(obj: unknown): obj is IsoBuffer {
 		return obj instanceof IsoBuffer;
 	}
-
-	/**
-	 * Sanitize a base64 string to provide to base64-js library.
-	 * {@link https://www.npmjs.com/package/base64-js} is not as tolerant of the same malformed base64 as Node'
-	 * Buffer is.
-	 */
-	private static sanitizeBase64(str: string): string {
-		let sanitizedStr = str;
-		// Remove everything after padding - Node buffer ignores everything
-		// after any padding whereas base64-js does not
-		sanitizedStr = sanitizedStr.split("=")[0];
-
-		// Remove invalid characters - Node buffer strips invalid characters
-		// whereas base64-js replaces them with "A"
-		sanitizedStr = sanitizedStr.replace(/[^\w+-/]/g, "");
-
-		// Check for missing padding - Node buffer tolerates missing padding
-		// whereas base64-js does not
-		if (sanitizedStr.length % 4 !== 0) {
-			const paddingArray = ["", "===", "==", "="];
-			sanitizedStr += paddingArray[sanitizedStr.length % 4];
-		}
-		return sanitizedStr;
-	}
 } satisfies IsoBufferConstructor;
+
+/** Match Node's tolerance for malformed base64 before decoding with base64-js. */
+function sanitizeBase64(str: string): string {
+	let sanitizedStr = str;
+	// Remove everything after padding - Node buffer ignores everything
+	// after any padding whereas base64-js does not
+	sanitizedStr = sanitizedStr.split("=")[0];
+
+	// Remove invalid characters - Node buffer strips invalid characters
+	// whereas base64-js replaces them with "A"
+	sanitizedStr = sanitizedStr.replace(/[^\w+-/]/g, "");
+
+	// Check for missing padding - Node buffer tolerates missing padding
+	// whereas base64-js does not
+	if (sanitizedStr.length % 4 !== 0) {
+		const paddingArray = ["", "===", "==", "="];
+		sanitizedStr += paddingArray[sanitizedStr.length % 4];
+	}
+	return sanitizedStr;
+}

@@ -147,6 +147,7 @@ import {
 	jsonableTreeFromCursor,
 	cursorForMapTreeNode,
 	type FullSchemaPolicy,
+	checkForestSchema,
 	type IncrementalEncodingPolicy,
 	defaultIncrementalEncodingPolicy,
 	FieldBatchDecodingContext,
@@ -1015,7 +1016,7 @@ export function buildTestForest(options: {
 		options.breaker ?? new Breakable("buildTestForest"),
 		options.schema,
 		undefined,
-		options.additionalAsserts,
+		options.additionalAsserts ? checkForestSchema : undefined,
 		options.roots,
 	);
 }

@@ -86,6 +86,8 @@ describe("SharedTree forest provider bundles", () => {
 			"/packages/dds/tree/lib/feature-libraries/chunked-forest/chunkedForest.js";
 		const comparisonForest =
 			"/packages/dds/tree/lib/feature-libraries/comparison-forest/comparisonForest.js";
+		const forestValidation =
+			"/packages/dds/tree/lib/feature-libraries/object-forest/checkForestSchema.js";
 
 		const defaultModules = getEntrypointModules(stats, "sharedTreeDefault");
 		assertUsesEmittedTreeArtifacts(defaultModules);
@@ -95,6 +97,7 @@ describe("SharedTree forest provider bundles", () => {
 		assertIncludesModule(defaultModules, objectForest);
 		assertExcludesModule(defaultModules, chunkedForest);
 		assertExcludesModule(defaultModules, comparisonForest);
+		assertExcludesModule(defaultModules, forestValidation);
 
 		const referenceModules = getEntrypointModules(stats, "sharedTreeReferenceForest");
 		assertUsesEmittedTreeArtifacts(referenceModules);
@@ -124,5 +127,6 @@ describe("SharedTree forest provider bundles", () => {
 		assertIncludesModule(debugModules, objectForest);
 		assertIncludesModule(debugModules, chunkedForest);
 		assertIncludesModule(debugModules, comparisonForest);
+		assertIncludesModule(debugModules, forestValidation);
 	});
 });

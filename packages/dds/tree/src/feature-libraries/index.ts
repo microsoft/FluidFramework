@@ -26,7 +26,7 @@ export {
 	type MapTreeNodeViewGeneric,
 	type MinimalFieldMap,
 } from "./mapTreeCursor.js";
-export { buildForest } from "./object-forest/index.js";
+export { buildForest, checkForestSchema } from "./object-forest/index.js";
 export { ComparisonForest } from "./comparison-forest/index.js";
 export {
 	SchemaSummarizer,
