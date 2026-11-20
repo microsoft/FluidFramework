@@ -475,6 +475,7 @@ export interface INormalizedWholeSummary {
 // @internal
 export enum InternalErrorCode {
     ClusterDraining = "ClusterDraining",
+    DocumentStorageMetadataMissing = "DocumentStorageMetadataMissing",
     TokenRevoked = "TokenRevoked"
 }
 

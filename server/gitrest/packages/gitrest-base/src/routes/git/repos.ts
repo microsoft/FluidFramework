@@ -4,11 +4,13 @@
  */
 
 import type { ICreateRepoParams } from "@fluidframework/gitresources";
+import { NetworkError } from "@fluidframework/server-services-client";
 import { handleResponse } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import type nconf from "nconf";
 
 import {
+	Constants,
 	getRepoManagerParamsFromRequest,
 	type IRepositoryManagerFactory,
 	logAndThrowApiError,
@@ -20,6 +22,24 @@ export function create(
 ): Router {
 	const router: Router = Router();
 	const repoPerDocEnabled: boolean = store.get("git:repoPerDocEnabled") ?? false;
+
+	router.post("/repos/:owner/:repo/internal/document-storage/backfill", (request, response) => {
+		const params = getRepoManagerParamsFromRequest(request);
+		const result = (async () => {
+			const routing = request.get(Constants.StorageRoutingIdHeader)?.split(":");
+			if (routing?.length !== 2 || routing.some((part) => part.length === 0)) {
+				throw new NetworkError(400, "Invalid document storage routing identity.", false);
+			}
+			if (!repoPerDocEnabled || params.isEphemeralContainer === true) {
+				throw new NetworkError(400, "Durable document storage is required.", false);
+			}
+			if (repoManagerFactory.backfillDocumentStorage === undefined) {
+				throw new NetworkError(501, "Document storage backfill is not configured.", false);
+			}
+			await repoManagerFactory.backfillDocumentStorage(params);
+		})().catch((error) => logAndThrowApiError(error, request, params));
+		handleResponse(result, response, undefined, undefined, 204);
+	});
 
 	/**
 	 * Creates a new git repository

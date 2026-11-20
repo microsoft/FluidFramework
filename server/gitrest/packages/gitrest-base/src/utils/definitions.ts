@@ -144,6 +144,10 @@ export interface IRepoManagerParams {
 
 export interface IRepositoryManagerFactory {
 	/**
+	 * Adds ownership metadata after the caller validates an existing durable document.
+	 */
+	backfillDocumentStorage?(params: IRepoManagerParams): Promise<void>;
+	/**
 	 * Tries to create a new repository and return its manager instance.
 	 * If the repository already exists, then it is returned.
 	 */

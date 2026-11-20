@@ -28,6 +28,8 @@ import {
 	IsomorphicGitManagerFactory,
 	IsomorphicGitRepositoryManager,
 	NodeFsManagerFactory,
+	IRepoManagerParams,
+	IRepositoryManagerFactory,
 } from "../utils";
 import * as testUtils from "./utils";
 import { StartupCheck } from "@fluidframework/server-services-shared";
@@ -224,6 +226,112 @@ testModes.forEach((mode) => {
 			// Git data API tests
 			describe("Git", () => {
 				describe("Repos", () => {
+					for (const operation of ["backfill"] as const) {
+						it(`rejects ambiguous routing before document storage ${operation}`, async () => {
+							const received: IRepoManagerParams[] = [];
+							const factory: IRepositoryManagerFactory = {
+								create: async () => {
+									throw new Error("Unexpected repository creation");
+								},
+								open: async () => {
+									throw new Error("Unexpected repository open");
+								},
+								[`${operation}DocumentStorage`]: async (
+									params: IRepoManagerParams,
+								) => {
+									received.push(params);
+								},
+							};
+							const api = request(
+								app.create(
+									testUtils.defaultProvider,
+									{ defaultFileSystemManagerFactory: fileSystemManagerFactory },
+									factory,
+									new StartupCheck(),
+								),
+							);
+							for (const header of [
+								"tenant:document:alias",
+								":document",
+								"tenant:",
+								"tenant",
+							]) {
+								await api
+									.post(
+										`/repos/${testOwnerName}/${testRepoName}/internal/document-storage/${operation}`,
+									)
+									.set(Constants.StorageRoutingIdHeader, header)
+									.expect(400);
+							}
+							assert.deepStrictEqual(received, []);
+						});
+
+						it(`rejects unsupported document storage ${operation}`, async () => {
+							await supertest
+								.post(
+									`/repos/${testOwnerName}/${testRepoName}/internal/document-storage/${operation}`,
+								)
+								.set(
+									Constants.StorageRoutingIdHeader,
+									getStorageRoutingHeaderValue(testRepoName, testDocId),
+								)
+								.expect(mode.repoPerDocEnabled ? 501 : 400);
+						});
+
+						it(`routes durable document storage ${operation} without opening a repository`, async () => {
+							const received: IRepoManagerParams[] = [];
+							const factory: IRepositoryManagerFactory = {
+								create: async () => {
+									throw new Error("Unexpected repository creation");
+								},
+								open: async () => {
+									throw new Error("Unexpected repository open");
+								},
+								[`${operation}DocumentStorage`]: async (
+									params: IRepoManagerParams,
+								) => {
+									received.push(params);
+								},
+							};
+							const api = request(
+								app.create(
+									testUtils.defaultProvider,
+									{ defaultFileSystemManagerFactory: fileSystemManagerFactory },
+									factory,
+									new StartupCheck(),
+								),
+							);
+							await api
+								.post(
+									`/repos/${testOwnerName}/${testRepoName}/internal/document-storage/${operation}`,
+								)
+								.set(
+									Constants.StorageRoutingIdHeader,
+									getStorageRoutingHeaderValue(testRepoName, testDocId),
+								)
+								.expect(mode.repoPerDocEnabled ? 204 : 400);
+							assert.strictEqual(received.length, mode.repoPerDocEnabled ? 1 : 0);
+							if (mode.repoPerDocEnabled) {
+								assert.deepStrictEqual(received[0].storageRoutingId, {
+									tenantId: testRepoName,
+									documentId: testDocId,
+								});
+							}
+							received.length = 0;
+							await api
+								.post(
+									`/repos/${testOwnerName}/${testRepoName}/internal/document-storage/${operation}`,
+								)
+								.set(
+									Constants.StorageRoutingIdHeader,
+									getStorageRoutingHeaderValue(testRepoName, testDocId),
+								)
+								.set(Constants.IsEphemeralContainer, "true")
+								.expect(400);
+							assert.strictEqual(received.length, 0);
+						});
+					}
+
 					it("Can create and get a new repo", async () => {
 						await createRepo(supertest, testOwnerName, testRepoName);
 						return supertest.get(`/repos/${testOwnerName}/${testRepoName}`).expect(200);

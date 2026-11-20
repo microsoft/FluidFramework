@@ -92,7 +92,20 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_NetworkError": {
+				"backCompat": false
+			},
+			"ClassStatics_NetworkError": {
+				"backCompat": false
+			},
+			"Enum_InternalErrorCode": {
+				"backCompat": false
+			},
+			"Interface_INetworkErrorDetails": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "public"
 	}
 }

@@ -67,6 +67,8 @@ function validateGitSha(sha: string): void {
 export class RestGitService {
 	private readonly restWrapper: RestWrapper;
 	private readonly lumberProperties: Record<string, any>;
+	private readonly invalidationCache?: ICache;
+	private documentStorageRecovery: Promise<void> | undefined;
 
 	constructor(
 		private readonly storage: ITenantStorage,
@@ -80,7 +82,17 @@ export class RestGitService {
 		private readonly maxCacheableSummarySize?: number,
 		private readonly simplifiedCustomData?: string,
 		private readonly accessProof?: IDocumentAccessProof,
+		private readonly recoverDocumentStorage?: () => Promise<void>,
 	) {
+		this.invalidationCache = cache;
+		// GitRest must validate durable content when there is no independent access proof.
+		if (
+			isEphemeralContainer !== true &&
+			accessProof === undefined &&
+			recoverDocumentStorage !== undefined
+		) {
+			this.cache = undefined;
+		}
 		const defaultHeaders: RawAxiosRequestHeaders =
 			storageName !== undefined
 				? {
@@ -151,6 +163,42 @@ export class RestGitService {
 		);
 	}
 
+	public async backfillDocumentStorage(): Promise<void> {
+		if (this.tenantId.includes(":") || this.documentId.includes(":")) {
+			throw new NetworkError(400, "Invalid document storage routing identity.");
+		}
+		const url = `/repos/${this.getRepoPath()}/internal/document-storage/backfill`;
+		await this.restWrapper
+			.post(url, undefined)
+			.catch(getRequestErrorTranslator(url, "POST", this.lumberProperties));
+	}
+
+	private withDocumentStorageRecovery<T>(request: () => Promise<T>): Promise<T> {
+		const recover = this.recoverDocumentStorage;
+		if (this.isEphemeralContainer === true || recover === undefined) {
+			return request();
+		}
+		return request().catch(async (error: unknown) => {
+			if (!(error instanceof NetworkError) || error.code !== 409) {
+				throw error;
+			}
+			// Older clients preserve this wire field but replace the remote error source.
+			const internalErrorCode: string | undefined = error.internalErrorCode;
+			if (internalErrorCode !== "DocumentStorageMetadataMissing") {
+				throw error;
+			}
+			const recovery = (this.documentStorageRecovery ??= recover());
+			try {
+				await recovery;
+				return await request();
+			} finally {
+				if (this.documentStorageRecovery === recovery) {
+					this.documentStorageRecovery = undefined;
+				}
+			}
+		});
+	}
+
 	public async getBlob(tenantId: string, sha: string, useCache: boolean): Promise<git.IBlob> {
 		validateGitSha(sha);
 		const cacheKey = `${tenantId}:${sha}`;
@@ -170,11 +218,16 @@ export class RestGitService {
 			blob,
 		);
 
-		// Fetch the full blob so we can have it in cache
-		this.getBlob(this.tenantId, createResults.sha, true).catch((error) => {
-			winston.error(`Error fetching blob ${createResults.sha}`);
-			Lumberjack.error(`Error fetching blob: ${createResults.sha}`, this.lumberProperties);
-		});
+		if (this.cache) {
+			// Fetch the full blob so we can have it in cache
+			this.getBlob(this.tenantId, createResults.sha, true).catch((error) => {
+				winston.error(`Error fetching blob ${createResults.sha}`);
+				Lumberjack.error(
+					`Error fetching blob: ${createResults.sha}`,
+					this.lumberProperties,
+				);
+			});
+		}
 
 		return createResults;
 	}
@@ -224,19 +277,21 @@ export class RestGitService {
 
 		this.setCache(commit.sha, commit);
 
-		// Also fetch the tree for the commit to have it in cache
-		this.getTree(commit.tree.sha, true, true).catch((error) => {
-			winston.error(`Error fetching commit tree ${commit.tree.sha}`);
-			Lumberjack.error(
-				`Error fetching commit tree: ${commit.tree.sha}`,
-				this.lumberProperties,
-			);
-		});
-		// ... as well as pull in the header for it
-		this.getHeader(commit.sha, true).catch((error) => {
-			winston.error(`Error fetching header ${commit.sha}`);
-			Lumberjack.error(`Error fetching header: ${commit.sha}`, this.lumberProperties);
-		});
+		if (this.cache) {
+			// Also fetch the tree for the commit to have it in cache
+			this.getTree(commit.tree.sha, true, true).catch((error) => {
+				winston.error(`Error fetching commit tree ${commit.tree.sha}`);
+				Lumberjack.error(
+					`Error fetching commit tree: ${commit.tree.sha}`,
+					this.lumberProperties,
+				);
+			});
+			// ... as well as pull in the header for it
+			this.getHeader(commit.sha, true).catch((error) => {
+				winston.error(`Error fetching header ${commit.sha}`);
+				Lumberjack.error(`Error fetching header: ${commit.sha}`, this.lumberProperties);
+			});
+		}
 
 		return commit;
 	}
@@ -277,13 +332,14 @@ export class RestGitService {
 			initial !== undefined ? { initial } : undefined,
 		);
 		// JSON.stringify is not ideal for performance here, but it is better than crashing the cache service.
-		const summarySize = JSON.stringify(summaryResponse).length;
 		if (
+			this.cache !== undefined &&
 			summaryParams.type === "container" &&
 			(summaryResponse as IWholeFlatSummary).trees !== undefined &&
 			(this.maxCacheableSummarySize === undefined ||
-				summarySize <= this.maxCacheableSummarySize)
+				JSON.stringify(summaryResponse).length <= this.maxCacheableSummarySize)
 		) {
+			this.invalidateProoflessSummaryCache(summaryParams.type);
 			// Cache the written summary for future retrieval. If this fails, next summary retrieval
 			// will receive an older version, but that is OK. Client will catch up with ops.
 			this.setCache<IWholeFlatSummary>(
@@ -298,7 +354,7 @@ export class RestGitService {
 			);
 		} else {
 			// Delete previous summary from cache so next summary retrieval is forced to go to the service.
-			this.deleteFromCache(this.getSummaryCacheKey(summaryParams.type));
+			this.invalidateSummaryCache(summaryParams.type);
 		}
 		return { id: summaryResponse.id };
 	}
@@ -308,8 +364,8 @@ export class RestGitService {
 
 		// First, delete any cached summary (including both types, "channel" and "container")
 		// from the Redis cache
-		this.deleteFromCache(this.getSummaryCacheKey("channel"));
-		this.deleteFromCache(this.getSummaryCacheKey("container"));
+		this.invalidateSummaryCache("channel");
+		this.invalidateSummaryCache("container");
 
 		// Finally, delete from storage.
 		return this.delete<boolean>(`/repos/${this.getRepoPath()}/git/summaries`, headers);
@@ -350,9 +406,8 @@ export class RestGitService {
 			// from cache.
 			const cachedLatestSummary =
 				await this.getCache<IWholeFlatSummary>(latestSummaryCacheKey);
-			// If latest summary sha is cached, but the summary itself does not exist in cache, retrieve the requested summary
-			// by specific version as normal and do not cache it.
-			if (cachedLatestSummary) {
+			// If the cached summary is missing or belongs to another version, fetch the requested version without caching.
+			if (cachedLatestSummary?.id === sha) {
 				return cachedLatestSummary;
 			}
 		}
@@ -524,9 +579,11 @@ export class RestGitService {
 	}
 
 	private async get<T>(url: string): Promise<T> {
-		return this.restWrapper
-			.get<T>(url)
-			.catch(getRequestErrorTranslator(url, "GET", this.lumberProperties));
+		return this.withDocumentStorageRecovery(() =>
+			this.restWrapper
+				.get<T>(url)
+				.catch(getRequestErrorTranslator(url, "GET", this.lumberProperties)),
+		);
 	}
 
 	private async post<T>(
@@ -534,25 +591,31 @@ export class RestGitService {
 		requestBody: any,
 		query?: Record<string, string | number | boolean>,
 	): Promise<T> {
-		return this.restWrapper
-			.post<T>(url, requestBody, query, {
-				"Content-Type": "application/json",
-			})
-			.catch(getRequestErrorTranslator(url, "POST", this.lumberProperties));
+		return this.withDocumentStorageRecovery(() =>
+			this.restWrapper
+				.post<T>(url, requestBody, query, {
+					"Content-Type": "application/json",
+				})
+				.catch(getRequestErrorTranslator(url, "POST", this.lumberProperties)),
+		);
 	}
 
 	private async delete<T>(url: string, headers?: any): Promise<T> {
-		return this.restWrapper
-			.delete<T>(url, undefined, headers)
-			.catch(getRequestErrorTranslator(url, "DELETE", this.lumberProperties));
+		return this.withDocumentStorageRecovery(() =>
+			this.restWrapper
+				.delete<T>(url, undefined, headers)
+				.catch(getRequestErrorTranslator(url, "DELETE", this.lumberProperties)),
+		);
 	}
 
 	private async patch<T>(url: string, requestBody: any): Promise<T> {
-		return this.restWrapper
-			.patch<T>(url, requestBody, undefined, {
-				"Content-Type": "application/json",
-			})
-			.catch(getRequestErrorTranslator(url, "PATCH", this.lumberProperties));
+		return this.withDocumentStorageRecovery(() =>
+			this.restWrapper
+				.patch<T>(url, requestBody, undefined, {
+					"Content-Type": "application/json",
+				})
+				.catch(getRequestErrorTranslator(url, "PATCH", this.lumberProperties)),
+		);
 	}
 
 	/**
@@ -618,14 +681,30 @@ export class RestGitService {
 		return value;
 	}
 
+	private invalidateProoflessSummaryCache(type: IWholeSummaryPayloadType): void {
+		if (this.isEphemeralContainer !== true && this.accessProof?.source === "alfred-fallback") {
+			this.deleteFromCache(this.getSummaryCacheKey(type), false);
+			this.deleteFromCache(this.getSummaryCacheKey(type, LatestSummaryShaKey), false);
+		}
+	}
+
+	private invalidateSummaryCache(type: IWholeSummaryPayloadType): void {
+		this.deleteFromCache(this.getSummaryCacheKey(type));
+		this.invalidateProoflessSummaryCache(type);
+		if (this.cache === undefined) {
+			// A bypassed writer cannot refresh the latest-SHA pointer with the summary.
+			this.deleteFromCache(this.getSummaryCacheKey(type, LatestSummaryShaKey));
+		}
+	}
+
 	/**
 	 * Deletes the given key from the cache. Will log any errors with the cache.
 	 */
-	private deleteFromCache(key: string): void {
-		if (this.cache) {
-			const cacheKey = this.getNamespacedCacheKey(key);
+	private deleteFromCache(key: string, includeAccessProof = true): void {
+		if (this.invalidationCache) {
+			const cacheKey = this.getNamespacedCacheKey(key, includeAccessProof);
 			// Attempt to delete the key from Redis - log any errors but don't fail
-			this.cache.delete(cacheKey).catch((error) => {
+			this.invalidationCache.delete(cacheKey).catch((error) => {
 				winston.error(`Error deleting key ${cacheKey} from Redis cache`, error);
 				Lumberjack.error(
 					`Error deleting key ${cacheKey} from Redis cache`,
@@ -654,16 +733,18 @@ export class RestGitService {
 		return fetch();
 	}
 
-	private getNamespacedCacheKey(key: string): string {
+	private getNamespacedCacheKey(key: string, includeAccessProof = true): string {
+		const storageName = this.isEphemeralContainer === true ? undefined : this.storageName;
+		const accessProof = includeAccessProof ? this.accessProof : undefined;
 		return [
 			"ownership-v2",
 			encodeURIComponent(this.tenantId),
 			encodeURIComponent(this.documentId),
 			this.isEphemeralContainer === true ? "ephemeral" : "durable",
-			encodeURIComponent(this.storageName ?? ""),
-			encodeURIComponent(this.accessProof?.physicalContainerName ?? ""),
-			encodeURIComponent(this.accessProof?.layoutVersion ?? ""),
-			encodeURIComponent(this.accessProof?.lifecycleVersion ?? ""),
+			encodeURIComponent(storageName ?? ""),
+			encodeURIComponent(accessProof?.physicalContainerName ?? ""),
+			encodeURIComponent(accessProof?.layoutVersion ?? ""),
+			encodeURIComponent(accessProof?.lifecycleVersion ?? ""),
 			key,
 		].join(":");
 	}
