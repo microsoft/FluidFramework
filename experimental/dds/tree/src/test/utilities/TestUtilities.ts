@@ -185,6 +185,7 @@ export function setUpTestSharedTree(
 		factory = SharedTree.getFactory(writeFormat ?? WriteFormat.v0_1_1, options);
 	}
 	const tree = factory.create(componentRuntime, id ?? 'testSharedTree');
+	assert(tree instanceof SharedTree, 'The test factory must create the internal SharedTree implementation');
 
 	if (options.allowInvalid === undefined || !options.allowInvalid) {
 		tree.on(SharedTreeDiagnosticEvent.DroppedInvalidEdit, () => fail('unexpected invalid edit'));
