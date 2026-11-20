@@ -428,6 +428,25 @@ export abstract class SharedObjectCore<
 		}
 	}
 
+	/**
+	 * Submits a message by the local client whose content contains no Fluid handles.
+	 * @remarks
+	 * Unlike {@link SharedObjectCore.submitLocalMessage}, this does not search the content for handles to bind or
+	 * encode, which for a large message is a walk of every object in it. A message that does contain a handle must be
+	 * submitted with {@link SharedObjectCore.submitLocalMessage}, or the handle is neither bound nor encoded.
+	 * @param content - Content of the message, which must not contain any Fluid handle.
+	 * @param localOpMetadata - See {@link SharedObjectCore.submitLocalMessage}.
+	 */
+	protected submitLocalMessageWithoutHandles(
+		content: unknown,
+		localOpMetadata: unknown = undefined,
+	): void {
+		this.verifyNotClosed();
+		if (this.isAttached()) {
+			this.#submitMessage(content, localOpMetadata);
+		}
+	}
+
 	#prepareMessage(content: unknown): unknown {
 		// NOTE: We may also be encoding in the ContainerRuntime layer.
 		// Once the layer-compat window passes we can remove the encoding codepath here altogether

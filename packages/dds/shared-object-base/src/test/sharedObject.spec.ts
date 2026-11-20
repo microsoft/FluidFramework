@@ -83,6 +83,14 @@ class MySharedObjectCore extends SharedObjectCore {
 		super.submitLocalMessage(content, localOpMetadata);
 	}
 
+	// Make submitLocalMessageWithoutHandles public for testing
+	public submitLocalMessageWithoutHandles(
+		content: unknown,
+		localOpMetadata: unknown = undefined,
+	): void {
+		super.submitLocalMessageWithoutHandles(content, localOpMetadata);
+	}
+
 	public stubSubmitFn(submitFn: sinon.SinonSpy): void {
 		// See call site in SharedObjectCore.submitLocalMessage
 		Object.assign(this, { services: { deltaConnection: { submit: submitFn } } });
@@ -240,6 +248,42 @@ describe("SharedObjectCore", () => {
 				),
 				"Submit should be called with message content including a serialized handle string (default case)",
 			);
+		});
+	});
+
+	describe("submitLocalMessageWithoutHandles", () => {
+		it("submits the content and metadata as given, without searching them for handles", () => {
+			const submitSpy = sinon.fake();
+			const sharedObject = new MySharedObjectCore({
+				id: "testId",
+				attached: true,
+				submitFnOverride: submitSpy,
+			});
+			// A handle is never put in such content: it is used here only to show that the content is not searched,
+			// since submitLocalMessage would encode it.
+			const handle = new MockHandle("some data");
+			const content = { type: "opWithoutHandle", nested: { handle } };
+			const localOpMetadata = { kept: "locally" };
+
+			sharedObject.submitLocalMessageWithoutHandles(content, localOpMetadata);
+
+			assert(submitSpy.calledOnce, "Submit should be called once");
+			assert.equal(submitSpy.firstCall.args[0], content);
+			assert.equal(content.nested.handle, handle);
+			assert.equal(submitSpy.firstCall.args[1], localOpMetadata);
+		});
+
+		it("does not submit when detached", () => {
+			const submitSpy = sinon.fake();
+			const sharedObject = new MySharedObjectCore({
+				id: "testId",
+				attached: false,
+				submitFnOverride: submitSpy,
+			});
+
+			sharedObject.submitLocalMessageWithoutHandles({ type: "op" });
+
+			assert(submitSpy.notCalled, "Submit should not be called when detached");
 		});
 	});
 
