@@ -45,6 +45,7 @@ import {
 	RetryableError,
 } from "@fluidframework/driver-utils/internal";
 import { DataCorruptionError } from "@fluidframework/telemetry-utils/internal";
+import { wrapObjectAndOverride } from "@fluidframework/test-runtime-utils/internal";
 import {
 	ITestObjectProvider,
 	LoaderContainerTracker,
@@ -58,8 +59,6 @@ import {
 } from "@fluidframework/test-utils/internal";
 import { useFakeTimers } from "sinon";
 import { v4 as uuid } from "uuid";
-
-import { wrapObjectAndOverride } from "../mocking.js";
 
 const id = "https://localhost/containerTest";
 const testRequest: IRequest = { url: id };

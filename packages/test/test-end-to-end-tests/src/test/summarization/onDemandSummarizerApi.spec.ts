@@ -20,6 +20,7 @@ import {
 import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { wrapObjectAndOverride } from "@fluidframework/test-runtime-utils/internal";
 import {
 	createLoaderProps,
 	ITestContainerConfig,
@@ -29,8 +30,6 @@ import {
 	createSummarizer,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-
-import { wrapObjectAndOverride } from "../../mocking.js";
 
 describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, apis) => {
 	let logger: MockLogger;

@@ -9,12 +9,11 @@ import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator"
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { LazyPromise } from "@fluidframework/core-utils/internal";
 import type { ConnectionMode } from "@fluidframework/driver-definitions/internal";
+import { wrapObjectAndOverride } from "@fluidframework/test-runtime-utils/internal";
 import {
 	createTestConfigProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-
-import { wrapObjectAndOverride } from "../mocking.js";
 
 describeCompat("Driver can control connection mode", "NoCompat", (getTestObjectProvider) => {
 	for (const config of generatePairwiseOptions({
