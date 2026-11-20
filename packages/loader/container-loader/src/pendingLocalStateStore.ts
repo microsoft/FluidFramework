@@ -7,6 +7,7 @@ import type { FluidIterableIterator } from "@fluidframework/core-interfaces";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+import type { ISerializableBlobContents } from "./containerStorageAdapter.js";
 import type {
 	IPendingContainerState,
 	SerializedSnapshotInfo,
@@ -45,7 +46,10 @@ export class PendingLocalStateStore<TKey> {
 	#firstUrl: string | undefined;
 	readonly #pendingStates = new Map<TKey, IPendingContainerState>();
 	readonly #savedOps: Record<number, ISequencedDocumentMessage> = {};
-	readonly #blobs: Record<string, string> = {};
+	readonly #blobsByEncoding = new Map<
+		IPendingContainerState["blobContentsEncoding"],
+		ISerializableBlobContents
+	>();
 	readonly #attachmentBlobs: Record<string, string> = {};
 	readonly #loadingGroups: Record<string, SerializedSnapshotInfo> = {};
 
@@ -108,8 +112,13 @@ export class PendingLocalStateStore<TKey> {
 		for (let i = 0; i < savedOps.length; i++) {
 			savedOps[i] = this.#savedOps[savedOps[i].sequenceNumber] ??= savedOps[i];
 		}
+		let blobs = this.#blobsByEncoding.get(state.blobContentsEncoding);
+		if (blobs === undefined) {
+			blobs = {};
+			this.#blobsByEncoding.set(state.blobContentsEncoding, blobs);
+		}
 		for (const [id, blob] of Object.entries(snapshotBlobs)) {
-			snapshotBlobs[id] = this.#blobs[id] ??= blob;
+			snapshotBlobs[id] = blobs[id] ??= blob;
 		}
 		if (attachmentBlobContents !== undefined) {
 			for (const [id, blob] of Object.entries(attachmentBlobContents)) {

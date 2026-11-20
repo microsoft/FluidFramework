@@ -6,7 +6,10 @@
 import { strict as assert } from "assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type {
+	IContainer,
+	IRuntimeFactory,
+} from "@fluidframework/container-definitions/internal";
 import {
 	captureFullContainerState,
 	createDetachedContainer,
@@ -17,6 +20,7 @@ import {
 	waitContainerToCatchUp,
 } from "@fluidframework/container-loader/internal";
 import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentService,
 	IDocumentServiceFactory,
@@ -41,9 +45,10 @@ import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-ut
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
 	createTestConfigProvider,
+	getRequiredPendingLocalState,
 	timeoutPromise,
 	type ITestFluidObject,
-	type LocalCodeLoader,
+	LocalCodeLoader,
 	type TestFluidObject,
 } from "@fluidframework/test-utils/internal";
 
@@ -56,14 +61,11 @@ const toComparableArray = (map: ISharedMap): [string, unknown][] =>
 	]);
 
 /**
- * Wraps a document service factory so that any `readBlob` call on the
- * resulting storage throws. Frozen-load delegates `readBlob` to the inner
- * storage when one is provided, which masks the case where the artifact
- * itself is not self-contained. Routing through this wrapper turns "blob
- * fell through to live storage" into a hard failure that the test can catch.
+ * Wraps explicit blob reads without intercepting the driver's own snapshot prefetch.
  */
-function makeFactoryWithFailingReadBlob(
+function makeFactoryWithReadBlob(
 	inner: IDocumentServiceFactory,
+	readBlob: (storage: IDocumentStorageService, id: string) => Promise<ArrayBufferLike>,
 ): IDocumentServiceFactory {
 	const wrapService = (svc: IDocumentService): IDocumentService =>
 		new Proxy(svc, {
@@ -74,13 +76,18 @@ function makeFactoryWithFailingReadBlob(
 						return new Proxy(innerStorage, {
 							get: (storageTarget, storageProp, storageReceiver) => {
 								if (storageProp === "readBlob") {
-									return async (_id: string): Promise<ArrayBufferLike> => {
-										throw new Error(
-											"readBlob hit live storage — captured artifact was not self-contained",
-										);
-									};
+									return async (id: string): Promise<ArrayBufferLike> =>
+										readBlob(storageTarget, id);
 								}
-								return Reflect.get(storageTarget, storageProp, storageReceiver) as unknown;
+								if (storageProp === "getSnapshot" && storageTarget.getSnapshot !== undefined) {
+									return storageTarget.getSnapshot.bind(storageTarget);
+								}
+								const value: unknown = Reflect.get(
+									storageTarget,
+									storageProp,
+									storageReceiver,
+								);
+								return value;
 							},
 						});
 					};
@@ -94,6 +101,17 @@ function makeFactoryWithFailingReadBlob(
 		createDocumentService: async (...args) =>
 			wrapService(await inner.createDocumentService(...args)),
 	};
+}
+
+/**
+ * Makes live blob-read fallbacks fail so storage cannot mask incomplete captured state.
+ */
+function makeFactoryWithFailingReadBlob(
+	inner: IDocumentServiceFactory,
+): IDocumentServiceFactory {
+	return makeFactoryWithReadBlob(inner, async () => {
+		throw new Error("readBlob hit live storage — captured artifact was not self-contained");
+	});
 }
 
 /**
@@ -237,160 +255,266 @@ const initialize = async (): Promise<{
 };
 
 describe("captureFullContainerState", () => {
-	it("revives an unreferenced data store through saved ops without live storage reads", async () => {
-		const {
-			container,
-			testFluidObject,
-			urlResolver,
-			codeLoader,
-			documentServiceFactory,
-			deltaConnectionServer,
-		} = await initialize();
-		let frozenContainer: IContainer | undefined;
-		let documentService: IDocumentService | undefined;
-		try {
-			const dataStore =
-				await testFluidObject.context.containerRuntime.createDataStore("default");
-			const entryPoint: FluidObject<ITestFluidObject> = await dataStore.entryPoint.get();
-			assert(entryPoint.ITestFluidObject !== undefined, "Expected a test data store");
-			const unreferencedDataStore = entryPoint.ITestFluidObject;
-			const nestedMap = SharedMap.create(unreferencedDataStore.runtime);
-			nestedMap.set("fromSnapshot", "retained DDS contents");
-			unreferencedDataStore.root.set("nestedMap", nestedMap.handle);
-			testFluidObject.root.set("revivedStore", unreferencedDataStore.handle);
-
-			await container.attach(urlResolver.createCreateNewRequest("revive-unreferenced"));
-			if (container.isDirty) {
-				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
-			}
-			const attachmentBytes = stringToBuffer("attachment owned by the data store", "utf8");
-			const attachmentHandle = await unreferencedDataStore.runtime.uploadBlob(attachmentBytes);
-			nestedMap.set("attachment", attachmentHandle);
-			if (container.isDirty) {
-				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
-			}
-			testFluidObject.root.delete("revivedStore");
-			if (container.isDirty) {
-				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
-			}
-
-			const url = await container.getAbsoluteUrl("");
-			assert(url !== undefined, "Expected an absolute URL");
-			const summary = await loadAndSummarize({
-				codeLoader,
-				urlResolver,
-				documentServiceFactory,
-				request: { url },
-				configProvider: createTestConfigProvider({
-					"Fluid.Summarizer.FullTree.OnDemand": true,
-				}),
-			});
-			assert(container.resolvedUrl !== undefined, "Expected a resolved URL");
-			documentService = await documentServiceFactory.createDocumentService(
-				container.resolvedUrl,
-			);
-			const storage = await documentService.connectToStorage();
-			assert(storage.getSnapshot !== undefined, "Expected snapshot support");
-			const snapshot = await storage.getSnapshot({ versionId: summary.version });
-			assert.equal(snapshot.sequenceNumber, summary.referenceSequenceNumber);
-
-			const gcTree: ISnapshotTree | undefined = snapshot.snapshotTree.trees[gcTreeKey];
-			assert(gcTree !== undefined, "Expected GC state in the summary");
-			const unreferencedPaths = new Set<string>();
-			for (const [name, blobId] of Object.entries(gcTree.blobs)) {
-				if (!name.startsWith(gcBlobPrefix)) {
-					continue;
+	function assertLegacyBlobEncoding(serializedState: string): void {
+		let foundSnapshotBlobs = false;
+		JSON.parse(serializedState, (key: string, value: unknown): unknown => {
+			assert.notStrictEqual(key, "blobContentsEncoding");
+			if (key === "snapshotBlobs") {
+				assert(typeof value === "object" && value !== null);
+				for (const contents of Object.values(value)) {
+					assert(typeof contents === "string");
+					stringToBuffer(contents, "utf8");
 				}
-				const contents = snapshot.blobContents.get(blobId);
-				assert(contents !== undefined, "Expected captured GC blob contents");
-				const gcState: {
-					gcNodes: Record<string, { unreferencedTimestampMs?: number }>;
-				} = JSON.parse(bufferToString(contents, "utf8"));
-				for (const [path, node] of Object.entries(gcState.gcNodes)) {
-					if (node.unreferencedTimestampMs !== undefined) {
-						unreferencedPaths.add(path);
+				foundSnapshotBlobs = true;
+			}
+			return value;
+		});
+		assert(foundSnapshotBlobs, "Expected snapshot blobs for legacy-reader coverage");
+	}
+
+	const blobCaptureModes: ("inline" | "reference")[] = ["inline", "reference"];
+	for (const blobCaptureMode of blobCaptureModes) {
+		it(`preserves binary summary bytes through ${blobCaptureMode} capture, online/offline load, and reserialization`, async () => {
+			const deltaConnectionServer = LocalDeltaConnectionServer.create();
+			const { urlResolver, documentServiceFactory, codeDetails, runtimeFactory } =
+				createLoader({ deltaConnectionServer });
+			const binaryContents = new Uint8Array([0xff, 0xfe, 0x00, 0x80, 0xc0]);
+			let binaryLoads = 0;
+			const binaryRuntimeFactory: IRuntimeFactory = {
+				get IRuntimeFactory() {
+					return this;
+				},
+				instantiateRuntime: async (context, existing) => {
+					if (existing) {
+						const blobId = context.baseSnapshot?.blobs.binary;
+						assert(blobId !== undefined, "Expected binary summary blob");
+						const contents = await context.storage.readBlob(blobId);
+						assert.deepStrictEqual(new Uint8Array(contents), binaryContents);
+						binaryLoads++;
+					}
+					const runtime = await runtimeFactory.instantiateRuntime(context, existing);
+					const createSummary = runtime.createSummary.bind(runtime);
+					runtime.createSummary = (...args) => {
+						const summary = createSummary(...args);
+						summary.tree.binary = { type: SummaryType.Blob, content: binaryContents };
+						return summary;
+					};
+					return runtime;
+				},
+			};
+			const codeLoader = new LocalCodeLoader([[codeDetails, binaryRuntimeFactory]]);
+			const containers: IContainer[] = [];
+			try {
+				const container = await createDetachedContainer({
+					codeDetails,
+					codeLoader,
+					documentServiceFactory,
+					urlResolver,
+				});
+				containers.push(container);
+				assertLegacyBlobEncoding(container.serialize());
+				await container.attach(urlResolver.createCreateNewRequest("binary-summary"));
+				assertLegacyBlobEncoding(await getRequiredPendingLocalState(container));
+				const url = await container.getAbsoluteUrl("");
+				assert(url !== undefined);
+				const pendingLocalState = await captureFullContainerState({
+					urlResolver,
+					documentServiceFactory,
+					request: { url },
+					blobCaptureMode,
+				});
+				const online = await loadFrozenContainerFromPendingState({
+					codeLoader,
+					pendingLocalState,
+					urlResolver,
+					documentServiceFactory: makeFactoryWithFailingReadBlob(documentServiceFactory),
+					request: { url },
+				});
+				containers.push(online);
+				const offline = await loadFrozenContainerFromPendingState({
+					codeLoader,
+					pendingLocalState,
+				});
+				containers.push(offline);
+				const reserialized = await getRequiredPendingLocalState(offline);
+				const restored = await loadFrozenContainerFromPendingState({
+					codeLoader,
+					pendingLocalState: reserialized,
+				});
+				containers.push(restored);
+				assert.strictEqual(binaryLoads, 3);
+			} finally {
+				for (const container of containers) {
+					container.close();
+				}
+				await deltaConnectionServer.close();
+			}
+		});
+	}
+
+	for (const blobCaptureMode of blobCaptureModes) {
+		it(`revives an unreferenced data store through ${blobCaptureMode} capture and saved ops without live storage reads`, async () => {
+			const {
+				container,
+				testFluidObject,
+				urlResolver,
+				codeLoader,
+				documentServiceFactory,
+				deltaConnectionServer,
+			} = await initialize();
+			let frozenContainer: IContainer | undefined;
+			let documentService: IDocumentService | undefined;
+			try {
+				const dataStore =
+					await testFluidObject.context.containerRuntime.createDataStore("default");
+				const entryPoint: FluidObject<ITestFluidObject> = await dataStore.entryPoint.get();
+				assert(entryPoint.ITestFluidObject !== undefined, "Expected a test data store");
+				const unreferencedDataStore = entryPoint.ITestFluidObject;
+				const nestedMap = SharedMap.create(unreferencedDataStore.runtime);
+				nestedMap.set("fromSnapshot", "retained DDS contents");
+				unreferencedDataStore.root.set("nestedMap", nestedMap.handle);
+				testFluidObject.root.set("revivedStore", unreferencedDataStore.handle);
+
+				await container.attach(urlResolver.createCreateNewRequest("revive-unreferenced"));
+				if (container.isDirty) {
+					await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+				}
+				const attachmentBytes = stringToBuffer("attachment owned by the data store", "utf8");
+				const attachmentHandle =
+					await unreferencedDataStore.runtime.uploadBlob(attachmentBytes);
+				nestedMap.set("attachment", attachmentHandle);
+				if (container.isDirty) {
+					await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+				}
+				testFluidObject.root.delete("revivedStore");
+				if (container.isDirty) {
+					await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+				}
+
+				const url = await container.getAbsoluteUrl("");
+				assert(url !== undefined, "Expected an absolute URL");
+				const summary = await loadAndSummarize({
+					codeLoader,
+					urlResolver,
+					documentServiceFactory,
+					request: { url },
+					configProvider: createTestConfigProvider({
+						"Fluid.Summarizer.FullTree.OnDemand": true,
+					}),
+				});
+				assert(container.resolvedUrl !== undefined, "Expected a resolved URL");
+				documentService = await documentServiceFactory.createDocumentService(
+					container.resolvedUrl,
+				);
+				const storage = await documentService.connectToStorage();
+				assert(storage.getSnapshot !== undefined, "Expected snapshot support");
+				const snapshot = await storage.getSnapshot({ versionId: summary.version });
+				assert.equal(snapshot.sequenceNumber, summary.referenceSequenceNumber);
+
+				const gcTree: ISnapshotTree | undefined = snapshot.snapshotTree.trees[gcTreeKey];
+				assert(gcTree !== undefined, "Expected GC state in the summary");
+				const unreferencedPaths = new Set<string>();
+				for (const [name, blobId] of Object.entries(gcTree.blobs)) {
+					if (!name.startsWith(gcBlobPrefix)) {
+						continue;
+					}
+					const contents = snapshot.blobContents.get(blobId);
+					assert(contents !== undefined, "Expected captured GC blob contents");
+					const gcState: {
+						gcNodes: Record<string, { unreferencedTimestampMs?: number }>;
+					} = JSON.parse(bufferToString(contents, "utf8"));
+					for (const [path, node] of Object.entries(gcState.gcNodes)) {
+						if (node.unreferencedTimestampMs !== undefined) {
+							unreferencedPaths.add(path);
+						}
 					}
 				}
-			}
-			assert(
-				unreferencedPaths.has(`/${unreferencedDataStore.context.id}`),
-				"GC must mark the data store unreferenced in the snapshot",
-			);
-			assert(
-				unreferencedPaths.has(toFluidHandleInternal(attachmentHandle).absolutePath),
-				"GC must mark its attachment unreferenced in the snapshot",
-			);
-			const dataStoreTree: ISnapshotTree | undefined =
-				snapshot.snapshotTree.trees[channelsTreeName]?.trees[unreferencedDataStore.context.id];
-			assert(dataStoreTree !== undefined, "Expected the unswept data store in the snapshot");
-			// The local driver drops this metadata. Restore the GC-verified marker that ODSP returns.
-			dataStoreTree.unreferenced = true;
-
-			testFluidObject.root.set("revivedStore", unreferencedDataStore.handle);
-			nestedMap.set("fromSavedOp", "replayed DDS edit");
-			if (container.isDirty) {
-				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
-			}
-			const revivalSequenceNumber = container.deltaManager.lastSequenceNumber;
-			const pendingLocalState = await captureFullContainerState({
-				urlResolver,
-				documentServiceFactory: makeFactoryWithSnapshot(documentServiceFactory, snapshot),
-				request: { url },
-			});
-			const captured: {
-				baseSnapshot: ISnapshotTree;
-				savedOps: ISequencedDocumentMessage[];
-			} = JSON.parse(pendingLocalState);
-			assert.equal(
-				captured.baseSnapshot.trees[channelsTreeName]?.trees[unreferencedDataStore.context.id]
-					?.unreferenced,
-				true,
-				"The captured base snapshot must retain the unreferenced data store",
-			);
-			assert(
-				captured.savedOps.some(
-					(operation) => operation.sequenceNumber === revivalSequenceNumber,
-				),
-				"Saved ops must include the post-summary revival and DDS edit",
-			);
-			assert.equal(
-				captured.savedOps.flatMap((operation) => extractBlobAttachReferences(operation))
-					.length,
-				0,
-				"Revival must not rely on a new BlobAttach operation",
-			);
-
-			frozenContainer = await loadFrozenContainerFromPendingState({
-				codeLoader,
-				urlResolver,
-				documentServiceFactory: makeFactoryWithFailingReadBlob(documentServiceFactory),
-				request: { url },
-				pendingLocalState,
-			});
-			const frozenEntryPoint: FluidObject<ITestFluidObject> =
-				await frozenContainer.getEntryPoint();
-			assert(frozenEntryPoint.ITestFluidObject !== undefined, "Expected a test root");
-			const revivedHandle =
-				frozenEntryPoint.ITestFluidObject.root.get<IFluidHandle<ITestFluidObject>>(
-					"revivedStore",
+				assert(
+					unreferencedPaths.has(`/${unreferencedDataStore.context.id}`),
+					"GC must mark the data store unreferenced in the snapshot",
 				);
-			assert(revivedHandle !== undefined, "Saved ops must restore the data store reference");
-			const revivedDataStore = await revivedHandle.get();
-			const nestedHandle = revivedDataStore.root.get<IFluidHandle<ISharedMap>>("nestedMap");
-			assert(nestedHandle !== undefined, "Expected the snapshotted DDS handle");
-			const revivedMap = await nestedHandle.get();
-			assert.equal(revivedMap.get("fromSnapshot"), "retained DDS contents");
-			assert.equal(revivedMap.get("fromSavedOp"), "replayed DDS edit");
-			const revivedAttachment = revivedMap.get<IFluidHandle<ArrayBufferLike>>("attachment");
-			assert(revivedAttachment !== undefined, "Expected the original attachment handle");
-			assert.deepStrictEqual(await revivedAttachment.get(), attachmentBytes);
-		} finally {
-			frozenContainer?.close();
-			documentService?.dispose();
-			container.close();
-			await deltaConnectionServer.close();
-		}
-	});
+				assert(
+					unreferencedPaths.has(toFluidHandleInternal(attachmentHandle).absolutePath),
+					"GC must mark its attachment unreferenced in the snapshot",
+				);
+				const dataStoreTree: ISnapshotTree | undefined =
+					snapshot.snapshotTree.trees[channelsTreeName]?.trees[
+						unreferencedDataStore.context.id
+					];
+				assert(dataStoreTree !== undefined, "Expected the unswept data store in the snapshot");
+				// The local driver drops this metadata. Restore the GC-verified marker that ODSP returns.
+				dataStoreTree.unreferenced = true;
+
+				testFluidObject.root.set("revivedStore", unreferencedDataStore.handle);
+				nestedMap.set("fromSavedOp", "replayed DDS edit");
+				if (container.isDirty) {
+					await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+				}
+				const revivalSequenceNumber = container.deltaManager.lastSequenceNumber;
+				const pendingLocalState = await captureFullContainerState({
+					urlResolver,
+					documentServiceFactory: makeFactoryWithSnapshot(documentServiceFactory, snapshot),
+					request: { url },
+					blobCaptureMode,
+				});
+				const captured: {
+					baseSnapshot: ISnapshotTree;
+					savedOps: ISequencedDocumentMessage[];
+				} = JSON.parse(pendingLocalState);
+				assert.equal(
+					captured.baseSnapshot.trees[channelsTreeName]?.trees[
+						unreferencedDataStore.context.id
+					]?.unreferenced,
+					true,
+					"The captured base snapshot must retain the unreferenced data store",
+				);
+				assert(
+					captured.savedOps.some(
+						(operation) => operation.sequenceNumber === revivalSequenceNumber,
+					),
+					"Saved ops must include the post-summary revival and DDS edit",
+				);
+				assert.equal(
+					captured.savedOps.flatMap((operation) => extractBlobAttachReferences(operation))
+						.length,
+					0,
+					"Revival must not rely on a new BlobAttach operation",
+				);
+
+				frozenContainer = await loadFrozenContainerFromPendingState({
+					codeLoader,
+					urlResolver,
+					documentServiceFactory: makeFactoryWithFailingReadBlob(documentServiceFactory),
+					request: { url },
+					pendingLocalState,
+				});
+				const frozenEntryPoint: FluidObject<ITestFluidObject> =
+					await frozenContainer.getEntryPoint();
+				assert(frozenEntryPoint.ITestFluidObject !== undefined, "Expected a test root");
+				const revivedHandle =
+					frozenEntryPoint.ITestFluidObject.root.get<IFluidHandle<ITestFluidObject>>(
+						"revivedStore",
+					);
+				assert(revivedHandle !== undefined, "Saved ops must restore the data store reference");
+				const revivedDataStore = await revivedHandle.get();
+				const nestedHandle = revivedDataStore.root.get<IFluidHandle<ISharedMap>>("nestedMap");
+				assert(nestedHandle !== undefined, "Expected the snapshotted DDS handle");
+				const revivedMap = await nestedHandle.get();
+				assert.equal(revivedMap.get("fromSnapshot"), "retained DDS contents");
+				assert.equal(revivedMap.get("fromSavedOp"), "replayed DDS edit");
+				const revivedAttachment = revivedMap.get<IFluidHandle<ArrayBufferLike>>("attachment");
+				assert(revivedAttachment !== undefined, "Expected the original attachment handle");
+				if (blobCaptureMode === "inline") {
+					assert.deepStrictEqual(await revivedAttachment.get(), attachmentBytes);
+				}
+			} finally {
+				frozenContainer?.close();
+				documentService?.dispose();
+				container.close();
+				await deltaConnectionServer.close();
+			}
+		});
+	}
 
 	it("captures state that can rehydrate a frozen container with matching data", async () => {
 		const { container, testFluidObject, urlResolver, codeLoader, documentServiceFactory } =
@@ -846,145 +970,392 @@ describe("captureFullContainerState", () => {
 		assert.strictEqual(bufferToString(retrievedBlob, "utf8"), blobPayload);
 	});
 
-	it("captures references that can seed multiple independent online containers", async () => {
-		const { container, testFluidObject, urlResolver, codeLoader, documentServiceFactory } =
-			await initialize();
+	it("captures structural state in reference mode without snapshot or post-snapshot attachment payloads", async () => {
+		const {
+			container,
+			testFluidObject,
+			urlResolver,
+			codeLoader,
+			documentServiceFactory,
+			deltaConnectionServer,
+		} = await initialize();
+		const containers = [container];
+		try {
+			const snapshotPayload = "snapshot-attachment";
+			const snapshotHandle = await testFluidObject.runtime.uploadBlob(
+				stringToBuffer(snapshotPayload, "utf8"),
+			);
+			testFluidObject.root.set("snapshotBlob", snapshotHandle);
+			testFluidObject.root.set("snapshotValue", "before attach");
+			await container.attach(urlResolver.createCreateNewRequest("test"));
 
-		const blobPayload = "reference-only-attachment";
-		const blobHandle = await testFluidObject.runtime.uploadBlob(
-			stringToBuffer(blobPayload, "utf8"),
-		);
-		testFluidObject.root.set("blobHandle", blobHandle);
-		testFluidObject.root.set("baseline", "captured");
-		await container.attach(urlResolver.createCreateNewRequest("test"));
-		if (container.isDirty) {
-			await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			const postSnapshotPayload = "post-snapshot-attachment";
+			const postSnapshotHandle = await testFluidObject.runtime.uploadBlob(
+				stringToBuffer(postSnapshotPayload, "utf8"),
+			);
+			testFluidObject.root.set("postSnapshotBlob", postSnapshotHandle);
+			testFluidObject.root.set("postSnapshotValue", "after attach");
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined);
+			const captureReads: string[] = [];
+			const recordingFactory = makeFactoryWithReadBlob(
+				documentServiceFactory,
+				async (storage, id) => {
+					captureReads.push(id);
+					return storage.readBlob(id);
+				},
+			);
+			const pendingLocalState = await captureFullContainerState({
+				urlResolver,
+				documentServiceFactory: recordingFactory,
+				request: { url },
+				blobCaptureMode: "reference",
+			});
+			const capturedState: {
+				baseSnapshot: ISnapshotTree;
+				snapshotBlobs: Record<string, string>;
+				attachmentBlobContents?: Record<string, string>;
+				blobContentsMode?: "reference" | "attachmentsOmitted";
+				savedOps: ISequencedDocumentMessage[];
+			} = JSON.parse(pendingLocalState);
+			assert(Object.keys(capturedState.snapshotBlobs).length > 0);
+			assert.strictEqual(capturedState.attachmentBlobContents, undefined);
+			assert.strictEqual(capturedState.blobContentsMode, "attachmentsOmitted");
+
+			const blobsTree: ISnapshotTree | undefined = capturedState.baseSnapshot.trees[".blobs"];
+			assert(blobsTree !== undefined, "Expected snapshot attachment references");
+			const snapshotAttachmentIds = Object.entries(blobsTree.blobs)
+				.filter(([name]) => name !== ".redirectTable")
+				.map(([, storageId]) => storageId);
+			assert(snapshotAttachmentIds.length > 0, "Snapshot must contain an attachment");
+			const postSnapshotReferences = capturedState.savedOps.flatMap((op) =>
+				extractBlobAttachReferences(op),
+			);
+			assert(postSnapshotReferences.length > 0, "Saved ops must contain a BlobAttach");
+			const attachmentIds = new Set([
+				...snapshotAttachmentIds,
+				...postSnapshotReferences.map((reference) => reference.storageId),
+			]);
+			assert(
+				captureReads.every((id) => !attachmentIds.has(id)),
+				"Capture must not explicitly read omitted attachment payloads via readBlob",
+			);
+
+			const replayReads: string[] = [];
+			const attachmentOnlyFactory = makeFactoryWithReadBlob(
+				documentServiceFactory,
+				async (storage, id) => {
+					assert(attachmentIds.has(id), `Structural blob ${id} fell through to storage`);
+					replayReads.push(id);
+					return storage.readBlob(id);
+				},
+			);
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				documentServiceFactory: attachmentOnlyFactory,
+				urlResolver,
+				request: { url },
+				pendingLocalState,
+			});
+			containers.push(frozenContainer);
+			const entryPoint: FluidObject<TestFluidObject> = await frozenContainer.getEntryPoint();
+			assert(entryPoint.ITestFluidObject !== undefined);
+			const root = entryPoint.ITestFluidObject.root;
+			assert.strictEqual(root.get("snapshotValue"), "before attach");
+			assert.strictEqual(root.get("postSnapshotValue"), "after attach");
+			assert.deepStrictEqual(replayReads, []);
+			for (const [key, payload] of [
+				["snapshotBlob", snapshotPayload],
+				["postSnapshotBlob", postSnapshotPayload],
+			]) {
+				const handle: unknown = root.get(key);
+				assert(isFluidHandle(handle));
+				assert.deepStrictEqual(await handle.get(), stringToBuffer(payload, "utf8"));
+			}
+			assert.deepStrictEqual(new Set(replayReads), attachmentIds);
+
+			for (const omissionMarker of ["attachmentsOmitted", undefined]) {
+				const offlineContainer = await loadFrozenContainerFromPendingState({
+					codeLoader,
+					pendingLocalState: JSON.stringify({
+						...capturedState,
+						blobContentsMode: omissionMarker,
+					}),
+				});
+				containers.push(offlineContainer);
+				const reserializedOfflineContainer = await loadFrozenContainerFromPendingState({
+					codeLoader,
+					pendingLocalState: await getRequiredPendingLocalState(offlineContainer),
+				});
+				containers.push(reserializedOfflineContainer);
+				const offlineEntryPoint: FluidObject<TestFluidObject> =
+					await reserializedOfflineContainer.getEntryPoint();
+				assert(offlineEntryPoint.ITestFluidObject !== undefined);
+				const offlineRoot = offlineEntryPoint.ITestFluidObject.root;
+				assert.strictEqual(offlineRoot.get("snapshotValue"), "before attach");
+				assert.strictEqual(offlineRoot.get("postSnapshotValue"), "after attach");
+				for (const key of ["snapshotBlob", "postSnapshotBlob"]) {
+					const handle: unknown = offlineRoot.get(key);
+					assert(isFluidHandle(handle));
+					await assert.rejects(
+						async () => handle.get(),
+						(error: Error) => {
+							// Handle resolution wraps the storage UsageError in a response exception.
+							assert.match(error.message, /blob payload was not captured/);
+							assert.match(error.message, /online form/);
+							if (omissionMarker === "attachmentsOmitted") {
+								assert.match(error.message, /blobCaptureMode: "reference"/);
+								assert.match(error.message, /omits attachment payloads/);
+							} else {
+								assert.match(error.message, /"reference" omits attachment payloads/);
+							}
+							return true;
+						},
+					);
+				}
+			}
+		} finally {
+			for (const loadedContainer of containers) {
+				loadedContainer.close();
+			}
+			await deltaConnectionServer.close();
 		}
+	});
 
-		const url = await container.getAbsoluteUrl("");
-		assert(url !== undefined, "Expected container to provide a valid absolute URL");
-
-		const inlineState = await captureFullContainerState({
+	it("captures references that can seed multiple independent online containers", async () => {
+		const {
+			container,
+			testFluidObject,
 			urlResolver,
+			codeLoader,
 			documentServiceFactory,
-			request: { url },
-		});
-		const referenceState = await captureFullContainerState({
-			urlResolver,
-			documentServiceFactory,
-			request: { url },
-			blobCaptureMode: "reference",
-		});
-		const parsedReferenceState = JSON.parse(referenceState) as {
-			snapshotBlobs: Record<string, string>;
-			blobContentsMode?: "reference";
-			attachmentBlobContents?: Record<string, string>;
-		};
-		assert.deepStrictEqual(
-			parsedReferenceState.snapshotBlobs,
-			{},
-			"Reference-only state should omit structural blob payloads",
-		);
-		assert.strictEqual(
-			parsedReferenceState.blobContentsMode,
-			"reference",
-			"Reference-only state should identify its live-storage dependency",
-		);
-		assert.strictEqual(
-			parsedReferenceState.attachmentBlobContents,
-			undefined,
-			"Reference-only state should omit attachment payloads",
-		);
-		assert(
-			referenceState.length < inlineState.length,
-			"Reference-only state should be smaller than the default inline state",
-		);
+			deltaConnectionServer,
+		} = await initialize();
+		const containers = [container];
+		try {
+			const blobPayload = "reference-mode-attachment";
+			const blobHandle = await testFluidObject.runtime.uploadBlob(
+				stringToBuffer(blobPayload, "utf8"),
+			);
+			testFluidObject.root.set("blobHandle", blobHandle);
+			testFluidObject.root.set("baseline", "captured");
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
 
-		await assert.rejects(
-			async () =>
-				loadFrozenContainerFromPendingState({
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined, "Expected container to provide a valid absolute URL");
+
+			const inlineState = await captureFullContainerState({
+				urlResolver,
+				documentServiceFactory,
+				request: { url },
+			});
+			const referenceState = await captureFullContainerState({
+				urlResolver,
+				documentServiceFactory,
+				request: { url },
+				blobCaptureMode: "reference",
+			});
+			const parsedReferenceState: {
+				snapshotBlobs: Record<string, string>;
+				blobContentsMode?: "attachmentsOmitted";
+				attachmentBlobContents?: Record<string, string>;
+			} = JSON.parse(referenceState);
+			const parsedInlineState: { snapshotBlobs: Record<string, string> } =
+				JSON.parse(inlineState);
+			assert.deepStrictEqual(
+				parsedReferenceState.snapshotBlobs,
+				parsedInlineState.snapshotBlobs,
+				"Reference mode should capture the same structural blob payloads as inline mode",
+			);
+			assert.strictEqual(
+				parsedReferenceState.blobContentsMode,
+				"attachmentsOmitted",
+				"Reference mode should identify attachment omission without requiring live structural reads",
+			);
+			assert.strictEqual(
+				parsedReferenceState.attachmentBlobContents,
+				undefined,
+				"Reference mode should omit attachment payloads",
+			);
+			assert(
+				referenceState.length < inlineState.length,
+				"Reference mode should be smaller than the default inline state",
+			);
+
+			const legacyReferenceState = JSON.stringify({
+				...JSON.parse(referenceState),
+				snapshotBlobs: {},
+				blobContentsMode: "reference",
+			});
+			await assert.rejects(
+				async () =>
+					loadFrozenContainerFromPendingState({
+						codeLoader,
+						pendingLocalState: legacyReferenceState,
+					}),
+				/Legacy reference-only state.*requires online driver wiring.*Recapture with a loader that includes structural contents in reference mode/,
+				"Fully offline loading should clearly reject legacy reference-only state",
+			);
+
+			const unmarkedEmptyState = JSON.stringify({
+				...JSON.parse(legacyReferenceState),
+				blobContentsMode: undefined,
+			});
+			await assert.rejects(
+				async () =>
+					loadFrozenContainerFromPendingState({
+						codeLoader,
+						pendingLocalState: unmarkedEmptyState,
+					}),
+				/Attempted to read a blob from a frozen-loaded container/,
+				"An unmarked empty blob map should not be misclassified as reference-only state",
+			);
+
+			const loadFromBaseline = async (
+				pendingLocalState = referenceState,
+			): Promise<{
+				container: IContainer;
+				root: ISharedMap;
+			}> => {
+				const loadedContainer = await loadExistingContainer({
 					codeLoader,
-					pendingLocalState: referenceState,
-				}),
-			/Reference-only state.*requires online driver wiring/,
-			"Fully offline loading should clearly reject reference-only state",
-		);
+					documentServiceFactory,
+					urlResolver,
+					request: { url },
+					pendingLocalState,
+				});
+				containers.push(loadedContainer);
+				await waitContainerToCatchUp(loadedContainer);
+				const entryPoint: FluidObject<TestFluidObject> = await loadedContainer.getEntryPoint();
+				assert(
+					entryPoint.ITestFluidObject !== undefined,
+					"Expected loaded container entrypoint to be a valid TestFluidObject",
+				);
+				return { container: loadedContainer, root: entryPoint.ITestFluidObject.root };
+			};
 
-		const unmarkedEmptyState = JSON.stringify({
-			...JSON.parse(referenceState),
-			blobContentsMode: undefined,
-		});
-		await assert.rejects(
-			async () =>
-				loadFrozenContainerFromPendingState({
-					codeLoader,
-					pendingLocalState: unmarkedEmptyState,
-				}),
-			/Attempted to read a blob from a frozen-loaded container/,
-			"An unmarked empty blob map should not be misclassified as reference-only state",
-		);
+			const [first, second] = await Promise.all([loadFromBaseline(), loadFromBaseline()]);
+			const legacy = await loadFromBaseline(legacyReferenceState);
+			assert.strictEqual(legacy.root.get("baseline"), "captured");
+			const legacyBlob = await legacy.root.get("blobHandle").get();
+			assert.strictEqual(bufferToString(legacyBlob, "utf8"), blobPayload);
+			legacy.container.close();
+			assert.strictEqual(first.root.get("baseline"), "captured");
+			assert.strictEqual(second.root.get("baseline"), "captured");
+			const retrievedBlob = await first.root.get("blobHandle").get();
+			assert.strictEqual(
+				bufferToString(retrievedBlob, "utf8"),
+				blobPayload,
+				"Reference-mode loads should fetch omitted attachment contents from live storage",
+			);
 
-		const loadFromBaseline = async (): Promise<{
-			container: IContainer;
-			root: ISharedMap;
-		}> => {
-			const loadedContainer = await loadExistingContainer({
+			first.root.set("firstEdit", "first");
+			second.root.set("secondEdit", "second");
+			await Promise.all(
+				[first.container, second.container].map(async (loadedContainer) => {
+					if (loadedContainer.isDirty) {
+						await timeoutPromise((resolve) => loadedContainer.once("saved", () => resolve()));
+					}
+				}),
+			);
+
+			const finalContainer = await loadExistingContainer({
 				codeLoader,
 				documentServiceFactory,
 				urlResolver,
 				request: { url },
-				pendingLocalState: referenceState,
 			});
-			await waitContainerToCatchUp(loadedContainer);
-			const entryPoint: FluidObject<TestFluidObject> = await loadedContainer.getEntryPoint();
-			assert(
-				entryPoint.ITestFluidObject !== undefined,
-				"Expected loaded container entrypoint to be a valid TestFluidObject",
-			);
-			return { container: loadedContainer, root: entryPoint.ITestFluidObject.root };
-		};
-
-		const [first, second] = await Promise.all([loadFromBaseline(), loadFromBaseline()]);
-		assert.strictEqual(first.root.get("baseline"), "captured");
-		assert.strictEqual(second.root.get("baseline"), "captured");
-		const retrievedBlob = await first.root.get("blobHandle").get();
-		assert.strictEqual(
-			bufferToString(retrievedBlob, "utf8"),
-			blobPayload,
-			"Reference-only loads should fetch omitted attachment contents from live storage",
-		);
-
-		first.root.set("firstEdit", "first");
-		second.root.set("secondEdit", "second");
-		await Promise.all(
-			[first.container, second.container].map(async (loadedContainer) => {
-				if (loadedContainer.isDirty) {
-					await timeoutPromise((resolve) => loadedContainer.once("saved", () => resolve()));
-				}
-			}),
-		);
-
-		const finalContainer = await loadExistingContainer({
-			codeLoader,
-			documentServiceFactory,
-			urlResolver,
-			request: { url },
-		});
-		await waitContainerToCatchUp(finalContainer);
-		const finalEntryPoint: FluidObject<TestFluidObject> = await finalContainer.getEntryPoint();
-		assert(finalEntryPoint.ITestFluidObject !== undefined);
-		assert.strictEqual(finalEntryPoint.ITestFluidObject.root.get("firstEdit"), "first");
-		assert.strictEqual(finalEntryPoint.ITestFluidObject.root.get("secondEdit"), "second");
+			containers.push(finalContainer);
+			await waitContainerToCatchUp(finalContainer);
+			const finalEntryPoint: FluidObject<TestFluidObject> =
+				await finalContainer.getEntryPoint();
+			assert(finalEntryPoint.ITestFluidObject !== undefined);
+			assert.strictEqual(finalEntryPoint.ITestFluidObject.root.get("firstEdit"), "first");
+			assert.strictEqual(finalEntryPoint.ITestFluidObject.root.get("secondEdit"), "second");
+		} finally {
+			for (const loadedContainer of containers) {
+				loadedContainer.close();
+			}
+			await deltaConnectionServer.close();
+		}
 	});
 
-	it("rejects at capture time when the resolver emits a non-conforming URL shape", async () => {
-		const { documentServiceFactory } = await initialize();
+	it("captures reference state with a driver-specific URL and rejects offline loading", async () => {
+		const {
+			container,
+			testFluidObject,
+			urlResolver,
+			codeLoader,
+			documentServiceFactory,
+			deltaConnectionServer,
+		} = await initialize();
+		try {
+			testFluidObject.root.set("baseline", "captured");
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			testFluidObject.root.set("afterSnapshot", "saved");
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined);
+			const resolvedUrl = await urlResolver.resolve({ url });
+			assert(resolvedUrl !== undefined);
+			const driverSpecificResolvedUrl: IResolvedUrl = {
+				...resolvedUrl,
+				url: "fluid://example.com/single-segment",
+			};
+			const driverSpecificResolver: IUrlResolver = {
+				resolve: async () => driverSpecificResolvedUrl,
+				getAbsoluteUrl: async () => url,
+			};
+			const driverSpecificFactory: IDocumentServiceFactory = {
+				createContainer: async (...args) => documentServiceFactory.createContainer(...args),
+				createDocumentService: async (requestedResolvedUrl, ...args) => {
+					assert.strictEqual(requestedResolvedUrl.url, driverSpecificResolvedUrl.url);
+					// The local driver needs its own URL shape to locate the test document.
+					return documentServiceFactory.createDocumentService(
+						{ ...requestedResolvedUrl, url: resolvedUrl.url },
+						...args,
+					);
+				},
+			};
+			const pendingLocalState = await captureFullContainerState({
+				urlResolver: driverSpecificResolver,
+				documentServiceFactory: driverSpecificFactory,
+				request: { url },
+				blobCaptureMode: "reference",
+			});
+			const parsed: {
+				url: string;
+				snapshotBlobs: Record<string, string>;
+				savedOps: ISequencedDocumentMessage[];
+			} = JSON.parse(pendingLocalState);
+			assert.strictEqual(parsed.url, driverSpecificResolvedUrl.url);
+			assert(Object.keys(parsed.snapshotBlobs).length > 0);
+			assert(parsed.savedOps.length > 0);
+			await assert.rejects(
+				loadFrozenContainerFromPendingState({ codeLoader, pendingLocalState }),
+				/pending state URL is not in a parseable form/,
+			);
+		} finally {
+			container.close();
+			await deltaConnectionServer.close();
+		}
+	});
+
+	it("rejects inline capture when the resolver emits a non-conforming URL shape", async () => {
+		const { container, documentServiceFactory, deltaConnectionServer } = await initialize();
 
 		// A resolver whose IResolvedUrl.url violates tryParseCompatibleResolvedUrl's
 		// required shape (`protocol://<string>/<tenantId>/<docId>(?...)`). The captured
-		// artifact would not be rehydratable via the offline form of
-		// loadFrozenContainerFromPendingState, so captureFullContainerState must fail
-		// fast at capture time rather than silently produce a poisoned artifact.
+		// inline artifact would not be rehydratable via the offline form of
+		// loadFrozenContainerFromPendingState, so preserve its capture-time rejection.
 		const malformedResolver: IUrlResolver = {
 			resolve: async (): Promise<IResolvedUrl> => ({
 				type: "fluid",
@@ -997,15 +1368,18 @@ describe("captureFullContainerState", () => {
 			getAbsoluteUrl: async (): Promise<string> => "",
 		};
 
-		await assert.rejects(
-			async () =>
+		try {
+			await assert.rejects(
 				captureFullContainerState({
 					urlResolver: malformedResolver,
 					documentServiceFactory,
 					request: { url: "https://example.com/anything" },
 				}),
-			/resolved URL is not in the shape required by tryParseCompatibleResolvedUrl/,
-			"Expected captureFullContainerState to reject a resolver emitting a non-conforming URL shape",
-		);
+				/resolved URL is not in the shape required by tryParseCompatibleResolvedUrl/,
+			);
+		} finally {
+			container.close();
+			await deltaConnectionServer.close();
+		}
 	});
 });

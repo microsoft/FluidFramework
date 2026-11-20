@@ -33,6 +33,7 @@ import {
 	type ISerializedStateManagerDocumentStorageService,
 	type SnapshotWithBlobs,
 } from "../serializedStateManager.js";
+import { deserializeBlobContents } from "../utils.js";
 
 import { failSometimeProxy } from "./failProxy.js";
 
@@ -90,7 +91,7 @@ class MockStorageAdapter implements ISerializedStateManagerDocumentStorageServic
 	constructor(pls: SnapshotWithBlobs = pendingLocalState) {
 		this.snapshot = pls.baseSnapshot;
 		for (const [id, blob] of Object.entries(pls.snapshotBlobs)) {
-			this.blobs.set(id, stringToBuffer(blob, "utf8"));
+			this.blobs.set(id, deserializeBlobContents(blob));
 		}
 	}
 	public cacheSnapshotBlobs(snapshotBlobs: Map<string, ArrayBuffer>): void {
@@ -100,9 +101,7 @@ class MockStorageAdapter implements ISerializedStateManagerDocumentStorageServic
 	}
 
 	public async updateGroupIdSnapshots(): Promise<void> {}
-	public get loadedGroupIdSnapshots(): Record<string, ISnapshot> {
-		return {};
-	}
+	public readonly loadedGroupIdSnapshots: Record<string, ISnapshot> = {};
 
 	public async getSnapshot(
 		_snapshotFetchOptions?: ISnapshotFetchOptions | undefined,
@@ -180,6 +179,7 @@ const getAttributesFromPendingState = (
 	}
 	const attributesId = pendingState.baseSnapshot.trees[".protocol"].blobs.attributes;
 	const attributes = pendingState.snapshotBlobs[attributesId];
+	assert(typeof attributes === "string", "Protocol attributes should retain text encoding");
 	return JSON.parse(attributes) as IDocumentAttributes;
 };
 
@@ -207,12 +207,14 @@ describe("serializedStateManager", () => {
 	});
 
 	describe("serialize", () => {
-		function createTestState(offlineLoadEnabled: boolean = true): {
+		function createTestState({
+			offlineLoadEnabled = true,
+			storage = new MockStorageAdapter(),
+		} = {}): {
 			manager: SerializedStateManager;
 			storage: MockStorageAdapter;
 			runtime: MockRuntime;
 		} {
-			const storage = new MockStorageAdapter();
 			const manager = new SerializedStateManager(
 				logger,
 				storage,
@@ -225,7 +227,7 @@ describe("serializedStateManager", () => {
 		}
 
 		it("requires offline loading for reusable state", async () => {
-			const { manager, runtime } = createTestState(false);
+			const { manager, runtime } = createTestState({ offlineLoadEnabled: false });
 			await assert.rejects(
 				manager.serialize("clientId", runtime, resolvedUrl, {
 					includePendingLocalState: false,
@@ -233,6 +235,135 @@ describe("serializedStateManager", () => {
 				/Can't get pending local state unless offline load is enabled/,
 			);
 			manager.dispose();
+		});
+
+		function createBinarySnapshot(): ISnapshot {
+			return {
+				...initialSnapshot,
+				snapshotTree: { ...snapshotTree, blobs: { binary: "binaryId" } },
+				blobContents: new Map([
+					...initialSnapshot.blobContents,
+					["binaryId", new Uint8Array([0xff, 0x00, 0x80]).buffer],
+				]),
+			};
+		}
+
+		for (const includesBlobContents of [false, true]) {
+			it(`keeps ordinary pending and loading-group state readable by legacy decoders, includesBlobContents: ${includesBlobContents}`, async () => {
+				const snapshot = createBinarySnapshot();
+				const storage = new MockStorageAdapter({
+					baseSnapshot: snapshot.snapshotTree,
+					snapshotBlobs: pendingLocalState.snapshotBlobs,
+				});
+				for (const [id, contents] of snapshot.blobContents) {
+					storage.blobs.set(id, contents);
+				}
+				storage.loadedGroupIdSnapshots.group = snapshot;
+				const { manager, runtime } = createTestState({ storage });
+				try {
+					if (includesBlobContents) {
+						manager.setInitialSnapshot(snapshot);
+					} else {
+						await manager.fetchSnapshot(undefined, undefined);
+					}
+					const serialized = await manager.getPendingLocalState(
+						"clientId",
+						runtime,
+						resolvedUrl,
+					);
+					let decodedSnapshots = 0;
+					JSON.parse(serialized, (key: string, value: unknown): unknown => {
+						assert.notStrictEqual(key, "blobContentsEncoding");
+						if (key === "snapshotBlobs") {
+							assert(typeof value === "object" && value !== null);
+							const decoded = new Map<string, ArrayBuffer>();
+							for (const [id, contents] of Object.entries(value)) {
+								assert(typeof contents === "string");
+								decoded.set(id, stringToBuffer(contents, "utf8"));
+							}
+							assert.deepStrictEqual(
+								decoded.get("binaryId"),
+								stringToBuffer("\uFFFD\u0000\uFFFD", "utf8"),
+							);
+							decodedSnapshots++;
+						}
+						return value;
+					});
+					assert.strictEqual(decodedSnapshots, 2);
+				} finally {
+					manager.dispose();
+				}
+			});
+		}
+
+		const captureModes: IPendingContainerState["blobContentsMode"][] = [
+			"attachmentsOmitted",
+			"reference",
+			undefined,
+		];
+		for (const blobContentsMode of captureModes) {
+			it(`preserves only attachment omission metadata when reserializing mode: ${blobContentsMode}`, async () => {
+				const { manager, runtime } = createTestState();
+				try {
+					await manager.fetchSnapshot(undefined, {
+						...pendingLocalState,
+						...(blobContentsMode === undefined ? {} : { blobContentsMode }),
+					});
+					for (const includePendingLocalState of [false, true]) {
+						const state: unknown = JSON.parse(
+							await manager.serialize("clientId", runtime, resolvedUrl, {
+								includePendingLocalState,
+							}),
+						);
+						assert(typeof state === "object" && state !== null);
+						if (blobContentsMode === "attachmentsOmitted") {
+							assert("blobContentsMode" in state);
+							assert.strictEqual(state.blobContentsMode, "attachmentsOmitted");
+						} else {
+							assert(!("blobContentsMode" in state));
+						}
+					}
+				} finally {
+					manager.dispose();
+				}
+			});
+		}
+
+		it("retains capture encoding for reserialized base and loading-group snapshots", async () => {
+			const snapshot = createBinarySnapshot();
+			const snapshotBlobs: IPendingContainerState["snapshotBlobs"] = {
+				...pendingLocalState.snapshotBlobs,
+				binaryId: { encoding: "base64", contents: "/wCA" },
+			};
+			const pending: IPendingContainerState = {
+				...pendingLocalState,
+				baseSnapshot: snapshot.snapshotTree,
+				blobContentsEncoding: "utf8OrBase64",
+				snapshotBlobs,
+			};
+			const { manager, storage, runtime } = createTestState();
+			storage.loadedGroupIdSnapshots.group = snapshot;
+			try {
+				await manager.fetchSnapshot(undefined, pending);
+				const state: unknown = JSON.parse(
+					await manager.getPendingLocalState("clientId", runtime, resolvedUrl),
+				);
+				assert(typeof state === "object" && state !== null);
+				assert("blobContentsEncoding" in state);
+				assert.strictEqual(state.blobContentsEncoding, "utf8OrBase64");
+				assert("snapshotBlobs" in state);
+				assert.deepStrictEqual(state.snapshotBlobs, snapshotBlobs);
+				assert("loadedGroupIdSnapshots" in state);
+				assert.deepStrictEqual(state.loadedGroupIdSnapshots, {
+					group: {
+						baseSnapshot: snapshot.snapshotTree,
+						snapshotBlobs,
+						snapshotSequenceNumber: snapshot.sequenceNumber,
+					},
+				});
+			} finally {
+				manager.dispose();
+			}
 		});
 
 		it("omits local runtime state and client identity without calling the runtime", async () => {
