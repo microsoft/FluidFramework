@@ -29,6 +29,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ChannelDeltaConnection } from "./channelDeltaConnection.js";
+import { isConfiguredChannelAttributes } from "./channelConfiguration.js";
 import { ChannelStorageService } from "./channelStorageService.js";
 import type { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
@@ -180,9 +181,19 @@ export async function loadChannelFactoryAndAttributes(
 			}),
 		);
 	}
-	// This is a backward compatibility case where the attach message doesn't include attributes. Get the attributes
-	// from the factory.
-	attributes = attributes ?? factory.attributes;
+	// This is a backward compatibility case where the attach message doesn't include attributes.
+	// (note that such attach messages can be persisted as data at rest in the form of trailing ops).
+	// Get the attributes from the factory in this case.
+	if (attributes === undefined) {
+		attributes = factory.attributes;
+		// If the factory includes configuration in its attributes, that configuration only necessarily applies to newly created instances.
+		// It must already support transitioning from an unconfigured channel to a configured one,
+		// so omitting configuration from load here reduces the problem to that case.
+		if ("configuration" in attributes) {
+			const { configuration: _configuration, ...legacyAttributes } = attributes;
+			attributes = legacyAttributes;
+		}
+	}
 	return { factory, attributes };
 }
 
@@ -194,6 +205,15 @@ export async function loadChannel(
 	logger: TelemetryLoggerExt,
 	channelId: string,
 ): Promise<IChannel> {
+	if ("configuration" in attributes && !isConfiguredChannelAttributes(attributes)) {
+		throw new DataCorruptionError(
+			"Invalid persisted channel configuration",
+			tagCodeArtifacts({
+				channelId,
+				channelType: attributes.type,
+			}),
+		);
+	}
 	// Compare snapshot version to collaborative object version
 	if (
 		attributes.snapshotFormatVersion !== undefined &&
