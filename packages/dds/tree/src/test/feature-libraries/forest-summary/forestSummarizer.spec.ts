@@ -18,9 +18,14 @@ import type {
 import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
+import { EmptyKey, rootFieldKey } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
+import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { UniformChunk } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { FormatCommon } from "../../../feature-libraries/forest-summary/formatCommon.js";
 import {
@@ -508,6 +513,66 @@ describe("ForestSummarizer", () => {
 				});
 			});
 		}
+	});
+
+	describe("content-derived chunk shapes", () => {
+		const loadFactory = new SchemaFactory("forestSummarizerContentShapes");
+		class Point extends loadFactory.object("Point", {
+			x: loadFactory.number,
+			y: loadFactory.number,
+		}) {}
+		class Item extends loadFactory.object("Item", {
+			label: loadFactory.optional(loadFactory.string),
+			point: loadFactory.optional(Point),
+		}) {}
+		class Items extends loadFactory.array("Items", Item) {}
+		const schema = toStoredSchema(Items, StagedSchemaUpgradePolicy.permissive);
+		const content = [
+			{ label: "a", point: { x: 1, y: 2 } },
+			{ label: "b", point: { x: 3, y: 4 } },
+			{ label: "c" },
+			{ point: { x: 5, y: 6 } },
+		];
+
+		function summarize(forestType: ForestType): ISummaryTree {
+			const { forestSummarizer } = createForestSummarizer({
+				initialContent: { schema, initialTree: fieldCursorFromInsertable(Items, content) },
+				encodeType: TreeCompressionStrategy.Compressed,
+				forestType,
+			});
+			return forestSummarizer.summarize({ stringify: JSON.stringify }).summary;
+		}
+
+		it("do not change the summary", () => {
+			assert.deepEqual(summarize(ForestTypeOptimized), summarize(ForestTypeReference));
+		});
+
+		it("store loaded content compactly without changing its summary", async () => {
+			const summary = summarize(ForestTypeOptimized);
+			const { forestSummarizer, checkout } = createForestSummarizer({
+				initialContent: { schema, initialTree: fieldJsonCursor([]) },
+				encodeType: TreeCompressionStrategy.Compressed,
+				forestType: ForestTypeOptimized,
+			});
+			await forestSummarizer.load(MockStorage.createFromSummary(summary), JSON.parse);
+
+			// The loaded items are chunked again with shapes derived from their content:
+			// the first two items have the same layout and share one uniform chunk.
+			const forest = checkout.forest;
+			assert(forest instanceof ChunkedForest);
+			const root = forest.roots.fields.get(rootFieldKey)?.[0];
+			assert(root instanceof BasicChunk);
+			const items = root.fields.get(EmptyKey) ?? assert.fail();
+			assert.deepEqual(
+				items.map((chunk) => (chunk instanceof UniformChunk ? chunk.topLevelLength : 0)),
+				[2, 1, 1],
+			);
+
+			assert.deepEqual(
+				forestSummarizer.summarize({ stringify: JSON.stringify }).summary,
+				summary,
+			);
+		});
 	});
 
 	describe("Incremental summarization", () => {
