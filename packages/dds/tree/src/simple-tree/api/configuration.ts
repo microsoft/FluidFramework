@@ -384,8 +384,9 @@ export function checkUnion(
 			case NodeKind.Object: {
 				assert(isObjectNodeSchema(schema), 0xbde /* Expected object schema. */);
 				objects.push(schema);
-				for (const key of schema.fields.keys()) {
-					getOrCreate(allObjectKeys, key, () => new Set()).add(schema);
+				// The property keys, read without creating the schema's field schema objects (see ObjectNodeSchema.fields).
+				for (const key of schema.flexKeyMap.keys()) {
+					getOrCreate(allObjectKeys, key as string, () => new Set()).add(schema);
 				}
 				break;
 			}

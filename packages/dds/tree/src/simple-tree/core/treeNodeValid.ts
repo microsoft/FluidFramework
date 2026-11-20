@@ -260,14 +260,27 @@ export function createTreeNodeSchemaPrivateData(
 	childAllowedTypes: readonly AllowedTypesFull[],
 ): TreeNodeSchemaPrivateData {
 	const schemaValid = schemaAsTreeNodeValid(schema);
-	// Since this closes over the schema, ensure this schema is marked as most derived
+	// Since this refers to the schema, ensure this schema is marked as most derived
 	// so if some other subclass is used later, it will error instead of giving inconsistent results.
 	schemaValid.markMostDerived();
 
-	return {
-		idempotentInitialize: () => schemaValid.oneTimeInitialize().oneTimeInitialized,
-		childAllowedTypes,
-	};
+	return new ClassSchemaPrivateData(schemaValid, childAllowedTypes);
+}
+
+/**
+ * {@link TreeNodeSchemaPrivateData} for a class based schema.
+ * @remarks
+ * A class rather than an object with a closure, since large schemas have many schema classes.
+ */
+class ClassSchemaPrivateData implements TreeNodeSchemaPrivateData {
+	public constructor(
+		private readonly schema: typeof TreeNodeValid & TreeNodeSchema,
+		public readonly childAllowedTypes: readonly AllowedTypesFull[],
+	) {}
+
+	public idempotentInitialize(): TreeNodeSchemaInitializedData {
+		return this.schema.oneTimeInitialize().oneTimeInitialized;
+	}
 }
 
 // #region NodeJS custom inspect for TreeNodes.

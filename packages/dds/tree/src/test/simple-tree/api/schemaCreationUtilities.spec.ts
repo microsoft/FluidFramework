@@ -9,6 +9,7 @@ import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { unsafeArrayToTuple } from "../../../index.js";
+import { Tree } from "../../../shared-tree/index.js";
 import {
 	adaptEnum,
 	enumEntries,
@@ -23,6 +24,11 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 	type TreeNodeFromImplicitAllowedTypes,
 	SchemaFactoryBeta,
+	NodeKind,
+	type ObjectNodeSchemaPrivate,
+	type ObjectNodeSchema,
+	type TreeNode,
+	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
 import type {
 	areSafelyAssignable,
@@ -212,6 +218,98 @@ describe("schemaCreationUtilities", () => {
 		assert.equal(parent.required.value, "A");
 		assert.equal(parent.optional?.value, "B");
 		assert.equal(parent.array[0].value, "A");
+	});
+
+	it("enumFromStrings - schema and node behavior", () => {
+		const schemaFactory = new SchemaFactoryBeta("com.myApp");
+		const Mode = enumFromStrings(schemaFactory.scopedFactory("Mode"), ["A", "B"]);
+
+		assert.notEqual(Mode.A, Mode.B);
+		assert.equal(Mode.A.identifier, "com.myApp.Mode.A");
+		assert.equal(Mode.A.kind, NodeKind.Object);
+		assert.equal(Mode.A.implicitlyConstructable, true);
+		assert.deepEqual(Mode.A.info, {});
+		assert.deepEqual(Mode.A.metadata, {});
+		assert.equal((Mode.A as unknown as ObjectNodeSchema).persistedMetadata, undefined);
+		assert.equal(Mode.A.childTypes.size, 0);
+		assert.equal(String(Mode.A), "SingletonSchema(A)");
+		assert.equal(Object.prototype.toString.call(Mode.B), "[object SingletonSchema(B)]");
+
+		class Parent extends schemaFactory.object("Parent", { mode: Mode.schema }) {}
+		const view = getView(new TreeViewConfiguration({ schema: Parent }));
+		view.initialize(new Parent({ mode: Mode("A") }));
+
+		const unhydrated = new Mode.B();
+		assert.equal(unhydrated.value, "B");
+		assert(unhydrated instanceof Mode.B);
+		assert(!(unhydrated instanceof Mode.A));
+		assert.equal(Tree.schema(unhydrated), Mode.B);
+		assert.deepEqual(Object.keys(unhydrated), []);
+
+		const hydrated = view.root.mode;
+		assert.equal(hydrated.value, "A");
+		assert(Tree.is(hydrated, Mode.A));
+		assert(!Tree.is(hydrated, Mode.B));
+		assert.equal(Tree.schema(hydrated), Mode.A);
+
+		view.root.mode = unhydrated;
+		assert.equal(view.root.mode.value, "B");
+		assert(Tree.is(view.root.mode, Mode.B));
+	});
+
+	it("schema without fields share frozen field data", () => {
+		const schemaFactory = new SchemaFactoryBeta("com.myApp");
+		const Mode = enumFromStrings(schemaFactory.scopedFactory("Mode"), ["A", "B"]);
+		const Empty = schemaFactory.object("Empty", {});
+		const Mode2 = adaptEnum(schemaFactory.scopedFactory("Mode2"), { X: "x" });
+		const empties = [Mode.A, Mode.B, Empty, Mode2.X] as const;
+		const fields = (s: TreeNodeSchema): ObjectNodeSchemaPrivate =>
+			s as unknown as ObjectNodeSchemaPrivate;
+
+		for (const s of empties) {
+			assert.equal(fields(s).fields, fields(Mode.A).fields);
+			assert.equal(fields(s).storedKeyToPropertyKey, fields(Mode.A).storedKeyToPropertyKey);
+			assert.equal(fields(s).flexKeyMap, fields(Mode.A).flexKeyMap);
+			assert.equal(s.childTypes, Mode.A.childTypes);
+		}
+
+		const shared = fields(Mode.A);
+		assert.throws(() => (shared.fields as Map<string, unknown>).set("x", undefined));
+		assert.throws(() =>
+			(shared.storedKeyToPropertyKey as unknown as Map<string, string>).set("x", "x"),
+		);
+		assert.throws(() => (shared.flexKeyMap as Map<string, unknown>).clear());
+		assert.throws(() => (Mode.A.childTypes as Set<unknown>).add(Mode.B));
+		assert.equal(shared.fields.size, 0);
+		assert.equal(shared.storedKeyToPropertyKey.size, 0);
+		assert.equal(Mode.A.childTypes.size, 0);
+
+		// Schema with fields get their own data.
+		const NonEmpty = schemaFactory.object("NonEmpty", { a: schemaFactory.number });
+		assert.notEqual(fields(NonEmpty).fields, shared.fields);
+		assert.equal(fields(NonEmpty).fields.size, 1);
+	});
+
+	it("enumFromStrings - subclassing a member", () => {
+		const schemaFactory = new SchemaFactoryBeta("com.myApp");
+		const Mode = enumFromStrings(schemaFactory.scopedFactory("Mode"), ["A", "B"]);
+		// The schema types of enum members do not allow subclassing, but JavaScript code can do it.
+		const ModeA = Mode.A as unknown as new () => { readonly value: string };
+		class CustomA extends ModeA {
+			public get extra(): string {
+				return `${this.value}!`;
+			}
+		}
+		const node = new CustomA();
+		assert.equal(node.value, "A");
+		assert.equal(node.extra, "A!");
+		assert(node instanceof Mode.A);
+		assert.equal(Tree.schema(node as unknown as TreeNode), CustomA);
+		assert.throws(() => new Mode.A(), validateUsageError(/Two schema classes were used/));
+		// A static field compiled with `useDefineForClassFields: false` is assigned rather than defined.
+		(CustomA as unknown as Record<symbol, unknown>)[Symbol.toStringTag] = "CustomA";
+		assert.equal(Object.prototype.toString.call(CustomA), "[object CustomA]");
+		assert.equal(Object.prototype.toString.call(Mode.B), "[object SingletonSchema(B)]");
 	});
 
 	it("adaptEnum example from docs", () => {

@@ -770,8 +770,9 @@ function getOrCreateSchemaComponent(root: TreeNodeSchema): SchemaComponent {
 
 					// Optional-field staging
 					if (isObjectNodeSchema(schema)) {
-						for (const field of schema.fields.values()) {
-							hasStagedSchema ||= field.isStagedOptional !== false;
+						// Read from the normalized field schema (which ObjectNodeSchema.fields entries copy), so that `fields` is not created here.
+						for (const { schema: field } of schema.flexKeyMap.values()) {
+							hasStagedSchema ||= (field as FieldSchemaAlpha).isStagedOptional !== false;
 						}
 					}
 				}
