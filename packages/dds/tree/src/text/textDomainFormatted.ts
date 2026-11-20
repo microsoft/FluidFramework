@@ -40,6 +40,7 @@ import {
 	isRecordNodeSchema,
 	eraseSchemaDetailsSubclassable,
 	NodeKind,
+	textLocationArray,
 } from "../simple-tree/index.js";
 import type {
 	ArrayPlaceAnchor,
@@ -72,7 +73,6 @@ import {
 	processCharactersChangedDelta,
 	type PlainText,
 } from "./textDomain.js";
-import { textLocationArray } from "./textLocationAdapter.js";
 
 /**
  * Sets up scope for formatted text schema built-in types.
