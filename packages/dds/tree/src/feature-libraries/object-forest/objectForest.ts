@@ -37,6 +37,7 @@ import {
 	type Value,
 	aboveRootPlaceholder,
 	combineVisitors,
+	createSourceValidationVisitor,
 	deepCopyMapTree,
 	makeBreakingVisitor,
 	rootFieldKey,
@@ -367,6 +368,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 			announcedVisitors.push(getVisitor());
 		}
 		const visitor = combineVisitors([
+			createSourceValidationVisitor(),
 			makeBreakingVisitor(forestVisitor, this.breaker),
 			...announcedVisitors,
 		]);

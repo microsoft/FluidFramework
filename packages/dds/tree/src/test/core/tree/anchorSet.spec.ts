@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	type Anchor,
 	AnchorSet,
@@ -128,6 +130,59 @@ describe("AnchorSet", () => {
 		assert.doesNotThrow(() => anchors.forget(anchor3));
 		assert.throws(() => anchors.locate(anchor3));
 	});
+
+	for (const [name, edit] of [
+		[
+			"attach",
+			(visitor: DeltaVisitor) => visitor.attach(detachedField, { start: 0, end: 1 }, 0),
+		],
+		[
+			"replace",
+			(visitor: DeltaVisitor) =>
+				visitor.replace(
+					detachedField,
+					{ start: 0, end: 1 },
+					{ start: 0, end: 1 },
+					brand("outgoing"),
+					detachId,
+				),
+		],
+		[
+			"destroy",
+			(visitor: DeltaVisitor) => visitor.destroy(detachedField, { start: 0, end: 1 }),
+		],
+	] as const) {
+		it(`rejects ancestor-source ${name} with sparse anchors`, () => {
+			const anchors = new AnchorSet();
+			const path = makePath([detachedField, 0]);
+			const anchor = anchors.track(path);
+			const anchorNode = anchors.locate(anchor) ?? assert.fail();
+			let destroyed = false;
+			anchorNode.events.on("afterDestroy", () => {
+				destroyed = true;
+			});
+			withVisitor(anchors, (visitor) => {
+				// The active node and its child are unanchored, and outside the consumed range.
+				visitor.enterField(detachedField);
+				visitor.enterNode(1);
+				visitor.enterField(fieldFoo);
+				assert.throws(
+					() => edit(visitor),
+					validateAssertionError(
+						"Cannot consume roots from the detached field containing an entered node",
+					),
+				);
+				checkEquality(anchors.locate(anchor), path);
+				assert.equal(destroyed, false);
+				visitor.exitField(fieldFoo);
+				visitor.exitNode(1);
+				visitor.destroy(detachedField, { start: 0, end: 1 });
+				visitor.exitField(detachedField);
+			});
+			assert.equal(destroyed, true);
+			assert.equal(anchors.locate(anchor), undefined);
+		});
+	}
 
 	it("preserves sparse anchors and detached node IDs across partial source ranges", () => {
 		const anchors = new AnchorSet();

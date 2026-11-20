@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { type Breakable, type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
 import type { RevisionTag } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
@@ -280,4 +282,41 @@ export function createAnnouncedVisitor(
 		enterField: visitorFunctions.enterField ?? noOp,
 		exitField: visitorFunctions.exitField ?? noOp,
 	};
+}
+
+/**
+ * Creates a visitor that validates that consumed detached fields (i.e. `source` values in other visitor APIs)
+ * do not contain any entered nodes.
+ *
+ * This enforces invariants related to source fields documented on {@link DeltaVisitor}.
+ * Those invariants help keep the `DeltaVisitor` contract manageable to implement correctly.
+ * @remarks
+ * Place this visitor first in {@link combineVisitors} so validation precedes other announcements and edits.
+ * Validation runs in the before callbacks for attach, replace, and destroy.
+ */
+export function createSourceValidationVisitor(): AnnouncedVisitor {
+	let detachedField: FieldKey | undefined;
+	let nodeDepth = 0;
+	const assertNotAncestorSource = (source: FieldKey): void => {
+		assert(
+			nodeDepth === 0 || source !== detachedField,
+			"Cannot consume roots from the detached field containing an entered node",
+		);
+	};
+	return createAnnouncedVisitor({
+		beforeAttach: assertNotAncestorSource,
+		beforeReplace: assertNotAncestorSource,
+		beforeDestroy: assertNotAncestorSource,
+		enterNode: () => {
+			nodeDepth++;
+		},
+		exitNode: () => {
+			nodeDepth--;
+		},
+		enterField: (key) => {
+			if (nodeDepth === 0) {
+				detachedField = key;
+			}
+		},
+	});
 }

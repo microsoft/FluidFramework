@@ -49,6 +49,7 @@ export {
 	keyAsDetachedField,
 	visitDelta,
 	createAnnouncedVisitor,
+	createSourceValidationVisitor,
 	combineVisitors,
 	makeBreakingVisitor,
 	applyDelta,

@@ -28,6 +28,7 @@ import {
 	type UpPath,
 	aboveRootPlaceholder,
 	combineVisitors,
+	createSourceValidationVisitor,
 	detachedFieldAsKey,
 	makeBreakingVisitor,
 	rootFieldKey,
@@ -308,6 +309,7 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 			announcedVisitors.push(getVisitor());
 		}
 		const visitor = combineVisitors([
+			createSourceValidationVisitor(),
 			makeBreakingVisitor(forestVisitor, this.breaker),
 			...announcedVisitors,
 		]);
