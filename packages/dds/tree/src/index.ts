@@ -336,6 +336,8 @@ export {
 	type TreeRecordNode,
 	KeyEncodingOptions,
 	type TreeParsingOptions,
+	type TreeFieldFilter,
+	type TreeFieldFilterOptions,
 	type SchemaFactory_base,
 	type NumberKeys,
 	type SimpleAllowedTypeAttributes,

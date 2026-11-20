@@ -256,6 +256,8 @@ export {
 	type NodeSchemaOptionsAlpha,
 	KeyEncodingOptions,
 	type TreeParsingOptions,
+	type TreeFieldFilter,
+	type TreeFieldFilterOptions,
 	incrementalSummaryHint,
 	incrementalEncodingPolicyForAllowedTypes,
 	type SchemaFactory_base,
