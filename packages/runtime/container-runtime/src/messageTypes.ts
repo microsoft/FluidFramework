@@ -6,6 +6,7 @@
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IdCreationRange } from "@fluidframework/id-compressor/internal";
 import type {
+	ContainerExtensionId,
 	FluidDataStoreMessage,
 	IAttachMessage,
 	IEnvelope,
@@ -59,6 +60,40 @@ export enum ContainerMessageType {
 	 * state across all clients.
 	 */
 	GC = "GC",
+
+	/**
+	 * An op submitted and processed on behalf of a registered {@link @fluidframework/container-runtime-definitions#ContainerExtension}
+	 * (see {@link @fluidframework/container-runtime-definitions#ContainerExtensionStore.acquireExtension}).
+	 * Routed to the extension identified by {@link ExtensionOpContents.extensionId}, the same way
+	 * extension signals are addressed. Unlike a signal, this op is persisted and sequenced: every
+	 * client, including ones that join later, processes it in the same order.
+	 */
+	ExtensionOp = "extensionOp",
+}
+
+/**
+ * Contents of a {@link ContainerRuntimeExtensionOpMessage}.
+ *
+ * @remarks
+ * Extension-specific `contents` are opaque to the container runtime; it only routes by
+ * {@link ExtensionOpContents.extensionId}.
+ *
+ * @internal
+ */
+export interface ExtensionOpContents {
+	/**
+	 * Identifies which registered extension should submit/process/resubmit this op.
+	 * Matches the id used with {@link @fluidframework/container-runtime-definitions#ContainerExtensionStore.acquireExtension}.
+	 */
+	readonly extensionId: ContainerExtensionId;
+	/**
+	 * Address chain within the extension, mirroring the addressing used for extension signals.
+	 */
+	readonly addressChain: string[];
+	/**
+	 * Extension-defined op contents. Opaque to the container runtime.
+	 */
+	readonly contents: unknown;
 }
 
 /**
@@ -137,6 +172,14 @@ export type OutboundContainerRuntimeDocumentSchemaMessage = TypedContainerRuntim
 	ContainerMessageType.DocumentSchemaChange,
 	IDocumentSchemaChangeMessageOutgoing
 >;
+/**
+ * Op submitted/processed on behalf of a registered {@link @fluidframework/container-runtime-definitions#ContainerExtension}.
+ * @internal
+ */
+export type ContainerRuntimeExtensionOpMessage = TypedContainerRuntimeMessage<
+	ContainerMessageType.ExtensionOp,
+	ExtensionOpContents
+>;
 
 /**
  * Represents an unrecognized TypedContainerRuntimeMessage, e.g. a message from a future version of the container runtime.
@@ -169,6 +212,7 @@ export type InboundContainerRuntimeMessage =
 	| ContainerRuntimeIdAllocationMessage
 	| ContainerRuntimeGCMessage
 	| InboundContainerRuntimeDocumentSchemaMessage
+	| ContainerRuntimeExtensionOpMessage
 	// Inbound messages may include unknown types from other clients, so we include that as a special case here
 	| UnknownContainerRuntimeMessage;
 
@@ -185,6 +229,7 @@ export type LocalContainerRuntimeMessage =
 	| ContainerRuntimeIdAllocationMessage
 	| ContainerRuntimeGCMessage
 	| OutboundContainerRuntimeDocumentSchemaMessage
+	| ContainerRuntimeExtensionOpMessage
 	// In rare cases (e.g. related to stashed ops) we could have a local message of an unknown type
 	| UnknownContainerRuntimeMessage;
 
