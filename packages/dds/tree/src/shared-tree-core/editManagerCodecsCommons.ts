@@ -20,6 +20,8 @@ import {
 	type IdentifierHealingConfig,
 	type JsonCompatibleReadOnly,
 	type Mutable,
+	type HistoryTraceSink,
+	recordHistoryTrace,
 } from "../util/index.js";
 
 import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
@@ -34,6 +36,10 @@ import type {
 } from "./editManagerFormatCommons.js";
 
 export interface EditManagerEncodingContext<TChangeset> {
+	/**
+	 * Optional diagnostics shared with the individual change codecs.
+	 */
+	readonly historyTrace?: ChangeEncodingContext["historyTrace"];
 	idCompressor: IIdCompressor;
 	readonly schema?: SchemaAndPolicy;
 	/**
@@ -49,12 +55,45 @@ export interface EditManagerEncodingContext<TChangeset> {
 }
 
 /**
+ * Adds content-free commit coordinates without exposing revision or application identifiers.
+ */
+function commitHistoryTrace(
+	trace: HistoryTraceSink | undefined,
+	commit: object,
+): HistoryTraceSink | undefined {
+	if (trace === undefined) {
+		return undefined;
+	}
+	const sequenceNumber =
+		"sequenceNumber" in commit && typeof commit.sequenceNumber === "number"
+			? commit.sequenceNumber
+			: undefined;
+	const indexInBatch =
+		"indexInBatch" in commit && typeof commit.indexInBatch === "number"
+			? commit.indexInBatch
+			: 0;
+	return {
+		record: (activity, details) =>
+			recordHistoryTrace(trace, activity, {
+				...details,
+				historySection: sequenceNumber === undefined ? "peer" : "trunk",
+				sequenceNumber,
+				indexInBatch: sequenceNumber === undefined ? undefined : indexInBatch,
+			}),
+	};
+}
+
+/**
  * Context required for decoding the {@link EditManager}'s {@link SummaryData}.
  * @remarks
  * Unlike {@link EditManagerEncodingContext}, this carries {@link IdentifierHealingConfig} (used only
  * on decode) and omits `schema` and `hasSchemaChange` (only consulted when encoding).
  */
 export interface EditManagerDecodingContext {
+	/**
+	 * Optional diagnostics shared with the individual change codecs.
+	 */
+	readonly historyTrace?: ChangeDecodingContext["historyTrace"];
 	readonly idCompressor: IIdCompressor;
 	readonly isSummary: boolean;
 	/** See {@link IdentifierHealingConfig}. */
@@ -79,7 +118,11 @@ function encodeCommit<TChangeset, T extends Commit<TChangeset>>(
 	includeCustomMetadata: boolean,
 ): Mutable<EncodedCommit<JsonCompatibleReadOnly>> {
 	const encoded: Mutable<EncodedCommit<JsonCompatibleReadOnly>> = {
-		change: changeCodec.encode(commit.change, { ...context, revision: commit.revision }),
+		change: changeCodec.encode(commit.change, {
+			...context,
+			revision: commit.revision,
+			historyTrace: commitHistoryTrace(context.historyTrace, commit),
+		}),
 		revision: revisionTagCodec.encode(commit.revision, {
 			originatorId: commit.sessionId,
 			idCompressor: context.idCompressor,
@@ -121,7 +164,11 @@ function decodeCommit<TChangeset, T extends EncodedCommit<JsonCompatibleReadOnly
 	return {
 		sessionId: commit.sessionId,
 		revision,
-		change: changeCodec.decode(commit.change, { ...context, revision }),
+		change: changeCodec.decode(commit.change, {
+			...context,
+			revision,
+			historyTrace: commitHistoryTrace(context.historyTrace, commit),
+		}),
 		customMetadata: decodeCustomMetadataTree(commit.customMetadata),
 	};
 }
@@ -156,6 +203,7 @@ export function encodeSharedBranch<TChangeset>(
 					schema: context.schema,
 					revision: undefined,
 					isSummary: context.isSummary,
+					historyTrace: context.historyTrace,
 				},
 				includeCustomMetadata,
 			);
@@ -190,6 +238,7 @@ export function encodeSharedBranch<TChangeset>(
 								schema,
 								revision: undefined,
 								isSummary: context.isSummary,
+								historyTrace: context.historyTrace,
 							},
 							includeCustomMetadata,
 						),
@@ -251,6 +300,7 @@ export function decodeSharedBranch<TChangeset>(
 				revision: undefined,
 				isSummary: context.isSummary,
 				healing: context.healing,
+				historyTrace: context.historyTrace,
 			});
 			copyProperty(commit, "sequenceNumber", decoded);
 			copyProperty(commit, "indexInBatch", decoded);
@@ -277,6 +327,7 @@ export function decodeSharedBranch<TChangeset>(
 								revision: undefined,
 								isSummary: context.isSummary,
 								healing: context.healing,
+								historyTrace: context.historyTrace,
 							},
 						),
 					),

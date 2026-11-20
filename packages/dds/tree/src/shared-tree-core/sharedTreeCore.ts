@@ -59,7 +59,6 @@ import {
 	EditManager,
 	minimumPossibleSequenceNumber,
 	type HistoryCompactionStats,
-	type RevisionReplacerFactory,
 } from "./editManager.js";
 import { makeEditManagerCodecBuilder } from "./editManagerCodecs.js";
 import type { EditManagerFormatVersion, SeqNumber } from "./editManagerFormatCommons.js";
@@ -220,6 +219,8 @@ export class SharedTreeCore<
 			(branchId) => this.registerSharedBranch(branchId),
 			rebaseLogger,
 			this.historyTrace,
+			sharedObject.id,
+			getIsSummarizerClient,
 		);
 		this.editManager.setHistoryRetention(coreOptions.retainHistory ?? false);
 
@@ -631,18 +632,11 @@ export class SharedTreeCore<
 			current: GraphCommit<TChange>,
 			target: GraphCommit<TChange>,
 		) => boolean | CustomMetadataTree,
-		createRevisionReplacer: RevisionReplacerFactory,
 		onCommitCompacted?: () => void,
 		stats?: HistoryCompactionStats,
 		operationId?: number,
 	): number {
-		return this.editManager.compactHistory(
-			canCompact,
-			createRevisionReplacer,
-			onCommitCompacted,
-			stats,
-			operationId,
-		);
+		return this.editManager.compactHistory(canCompact, onCommitCompacted, stats, operationId);
 	}
 
 	/**

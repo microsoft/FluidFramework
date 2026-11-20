@@ -5,7 +5,13 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { type NestedMap, setInNestedMap, tryGetFromNestedMap } from "../../util/index.js";
+import {
+	type NestedMap,
+	type HistoryTraceSink,
+	recordHistoryTrace,
+	setInNestedMap,
+	tryGetFromNestedMap,
+} from "../../util/index.js";
 import type { RevisionTag } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
@@ -54,12 +60,14 @@ import type { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
  * @param visitor - The object to notify of the changes encountered.
  * @param detachedFieldIndex - Index responsible for keeping track of the existing detached fields.
  * @param latestRevision - The latest revision tag associated with this delta.
+ * @param historyTrace - Optional diagnostics for missing repair identities.
  */
 export function visitDelta(
 	delta: Delta.Root,
 	visitor: DeltaVisitor,
 	detachedFieldIndex: DetachedFieldIndex,
 	latestRevision: RevisionTag | undefined,
+	historyTrace?: HistoryTraceSink,
 ): void {
 	const detachPassRoots: Map<ForestRootId, Delta.FieldMap> = new Map();
 	const attachPassRoots: Map<ForestRootId, Delta.FieldMap> = new Map();
@@ -87,6 +95,7 @@ export function visitDelta(
 		rootTransfers,
 		rootDestructions,
 		replacedMarks,
+		historyTrace,
 	};
 	processBuilds(delta.build, detachConfig, visitor);
 	processGlobal(delta.global, detachConfig, visitor);
@@ -111,6 +120,7 @@ export function visitDelta(
 		rootTransfers,
 		rootDestructions,
 		replacedMarks,
+		historyTrace,
 	};
 	visitFieldMarks(delta.fields, visitor, attachConfig);
 	fixedPointVisitOfRoots(visitor, attachPassRoots, attachConfig);
@@ -359,6 +369,7 @@ export interface DeltaVisitor {
 
 interface PassConfig {
 	readonly func: Pass;
+	readonly historyTrace?: HistoryTraceSink;
 
 	/**
 	 * The latest revision tag associated with the given delta. This is used to keep track
@@ -564,6 +575,14 @@ function processGlobal(
 			let root = config.detachedFieldIndex.tryGetEntry(id);
 			if (root === undefined) {
 				const tree = tryGetFromNestedMap(config.refreshers, id.major, id.minor);
+				if (tree === undefined) {
+					recordHistoryTrace(config.historyTrace, "HistoryMissingRepairData", {
+						stage: "global",
+						failureCode: "0x928",
+						detachedRevisionTag: id.major,
+						detachedLocalId: id.minor,
+					});
+				}
 				assert(tree !== undefined, 0x928 /* refresher data not found */);
 				buildTrees(id, [tree], config.detachedFieldIndex, config.latestRevision, visitor);
 				root = config.detachedFieldIndex.getEntry(id);
@@ -619,6 +638,14 @@ function attachPass(
 						offsetAttachId.major,
 						offsetAttachId.minor,
 					);
+					if (tree === undefined) {
+						recordHistoryTrace(config.historyTrace, "HistoryMissingRepairData", {
+							stage: "attach",
+							failureCode: "0x92a",
+							detachedRevisionTag: offsetAttachId.major,
+							detachedLocalId: offsetAttachId.minor,
+						});
+					}
 					assert(tree !== undefined, 0x92a /* refresher data not found */);
 					buildTrees(
 						offsetAttachId,

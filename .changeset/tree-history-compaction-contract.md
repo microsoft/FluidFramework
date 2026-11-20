@@ -36,6 +36,12 @@ It reports the trigger, duration, status, policy calls and rejections, and compl
 Failures report their source and any completed merges without logging commit metadata or raw application errors.
 This event replaces the experimental `HistoryCompactionBeforeSummary` and `HistoryCompactionBeforeSummaryFailed` events.
 It reports local compaction, not summary upload or acknowledgement.
+Normal pass events also explain whether local forks, collaboration, or tied bounds limit eligibility, with sequenced and unsequenced counts, before/after history counts, and zero-removal reasons.
+Content-free fork lifecycle events share identifiers with the optional history trace; branch ownership remains unknown rather than being inferred.
+Compaction preserves original atom and detached-node identities so retained history can still be read and restored, including after summary reload.
+It transfers repair-data cleanup ownership to the surviving revision and invalidates cached inverses when a commit absorbs older changes.
+Previously captured `revertTo` callbacks reject safely if compaction changed their history path; reacquire the callback before restoring.
+Revision replacement also tracks the maximum allocated local ID when callers remap IDs, preventing summary decoder IDs from colliding with remapped IDs.
 
 ```typescript
 const factory = configuredSharedTree({

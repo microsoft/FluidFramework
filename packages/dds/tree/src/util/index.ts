@@ -4,6 +4,12 @@
  */
 
 export {
+	recordHistoryTrace,
+	type HistoryTraceSink,
+	type HistoryTraceProperties,
+} from "./historyTrace.js";
+
+export {
 	collectContiguousRanges,
 	type IndexRange,
 	replaceArrayRange,

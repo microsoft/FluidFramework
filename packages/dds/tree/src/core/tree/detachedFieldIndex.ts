@@ -278,6 +278,23 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 		});
 	}
 
+	/**
+	 * Transfers cleanup ownership without changing the identities used to find the detached roots.
+	 * @param previous - The revision whose roots should be transferred.
+	 * @param next - The surviving revision that keeps those roots alive.
+	 */
+	public updateLatestRevisionForRoots(previous: RevisionTag, next: RevisionTag): void {
+		if (previous === next) {
+			return;
+		}
+		const roots = this.latestRelevantRevisionToFields.get(previous);
+		if (roots !== undefined) {
+			for (const id of roots.values()) {
+				this.updateLatestRevision(id, next);
+			}
+		}
+	}
+
 	public getSummaryData(): DetachedFieldSummaryData {
 		return {
 			data: this.detachedNodeToField,

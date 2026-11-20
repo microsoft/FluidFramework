@@ -22,7 +22,7 @@ import {
 	visitDelta,
 } from "../../../core/index.js";
 import { mapTreeFromCursor } from "../../../feature-libraries/index.js";
-import { brand } from "../../../util/index.js";
+import { brand, type HistoryTraceProperties } from "../../../util/index.js";
 import {
 	chunkFromJsonTrees,
 	chunkToMapTreeField,
@@ -1151,6 +1151,46 @@ describe("visitDelta", () => {
 	});
 
 	describe("refreshers", () => {
+		for (const stage of ["global", "attach"] as const) {
+			for (const throwingTrace of [false, true]) {
+				it(`traces missing ${stage} repair identities without masking the assertion (throwing sink: ${throwingTrace})`, () => {
+					const id = { major: mintRevisionTag(), minor: 42 };
+					const delta: DeltaRoot =
+						stage === "global"
+							? { global: [{ id, fields: new Map([[fooKey, { marks: [] }]]) }] }
+							: { fields: new Map([[rootKey, { marks: [{ count: 1, attach: id }] }]]) };
+					const visitor = Object.fromEntries(
+						visitorMethods.map((method) => [method, () => {}]),
+					) as unknown as DeltaVisitor;
+					const events: { activity: string; properties?: HistoryTraceProperties }[] = [];
+					const failureCode = stage === "global" ? "0x928" : "0x92a";
+					assert.throws(
+						() =>
+							visitDelta(delta, visitor, makeDetachedFieldIndex(""), undefined, {
+								record: (activity, properties) => {
+									events.push({ activity, properties });
+									if (throwingTrace) {
+										throw new Error("diagnostic sink failure");
+									}
+								},
+							}),
+						new RegExp(failureCode),
+					);
+					assert.deepEqual(events, [
+						{
+							activity: "HistoryMissingRepairData",
+							properties: {
+								stage,
+								failureCode,
+								detachedRevisionTag: id.major,
+								detachedLocalId: id.minor,
+							},
+						},
+					]);
+				});
+			}
+		}
+
 		it("for restores at the root", () => {
 			const index = makeDetachedFieldIndex("");
 			const node = { minor: 42 };

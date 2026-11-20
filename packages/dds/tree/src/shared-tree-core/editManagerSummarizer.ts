@@ -113,13 +113,17 @@ export class EditManagerSummarizer<TChangeset, TChangeProcessingContext>
 		builder: SummaryTreeBuilder;
 	}): void {
 		const { stringify, builder } = props;
+		const operationId = this.historyTrace?.nextOperationId();
 		const context: EditManagerEncodingContext<TChangeset> = {
 			idCompressor: this.idCompressor,
 			schema: this.schemaAndPolicy,
 			hasSchemaChange: (change) => this.editManager.changeFamily.hasSchemaChange(change),
 			isSummary: true,
+			historyTrace: this.historyTrace?.scoped({
+				operationId,
+				historyEncodeOperationId: operationId,
+			}),
 		};
-		const operationId = this.historyTrace?.nextOperationId();
 		this.historyTrace?.record("HistoryEncodeStarted", { operationId });
 		try {
 			const data = this.editManager.getSummaryData();
@@ -159,6 +163,10 @@ export class EditManagerSummarizer<TChangeset, TChangeProcessingContext>
 				idCompressor: this.idCompressor,
 				isSummary: true,
 				healing: this.healing,
+				historyTrace: this.historyTrace?.scoped({
+					operationId,
+					historyLoadOperationId: operationId,
+				}),
 			});
 			this.editManager.loadSummaryData(data);
 			this.historyTrace?.record("HistoryLoadCompleted", {

@@ -22,15 +22,25 @@ import {
 	createMockLoggerExt,
 	createMultiSinkLogger,
 	mixinMonitoringContext,
+	UsageError,
 	type IMockLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { asAlpha } from "../../api.js";
 import { FluidClientVersion } from "../../codec/index.js";
-import type { CustomMetadataTree } from "../../core/index.js";
+import type {
+	ChangeRebaser,
+	CustomMetadataTree,
+	RevertibleAlpha,
+	RevisionTag,
+} from "../../core/index.js";
+import { RebaseValidation } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
+import { DefaultRevisionReplacer } from "../../feature-libraries/index.js";
+import type { SharedTreeChange } from "../../shared-tree/index.js";
 import {
 	TreeViewConfiguration,
+	SchemaFactory,
 	type CanCompactCommit,
 	type ITree,
 	type TreeBranchHistory,
@@ -523,6 +533,453 @@ function setupPreservationWalkthrough(metadataMode: "default" | "replacement") {
 }
 
 describe("History compaction", () => {
+	describe("retained-state integrity", () => {
+		for (const compact of [false, true]) {
+			it(`${compact ? "rejects a stale" : "accepts a current"} captured revertTo callback`, () => {
+				const { provider, view, otherView } = generateHistory("append", 1, 2);
+				let first = view.branchHistory.getHead();
+				while (first !== undefined && first.custom?.group !== 0) {
+					first = first.getParent();
+				}
+				assert(first !== undefined);
+				while (first.getParent()?.custom?.group === 0) {
+					first = first.getParent() ?? assert.fail();
+				}
+				const target = first.getParent() ?? assert.fail();
+				const revert = target.revertTo ?? assert.fail();
+				if (compact) {
+					assert.equal(
+						asAlpha(provider.trees[0]).historyCompaction.requestCompaction(sameGroup),
+						1,
+					);
+					const content = [...view.root];
+					assert.throws(
+						() => revert(),
+						(error: unknown) => error instanceof UsageError,
+					);
+					assert.deepEqual([...view.root], content);
+					const freshRevert = target.revertTo ?? assert.fail();
+					freshRevert();
+				} else {
+					revert();
+				}
+				provider.synchronizeMessages();
+				assert.deepEqual([...view.root], []);
+				assert.deepEqual([...otherView.root], []);
+				view.root.insertAtEnd("after restore");
+				provider.synchronizeMessages();
+				assert.deepEqual([...otherView.root], ["after restore"]);
+			});
+		}
+
+		for (const mode of ["manual", "summary"] as const) {
+			it(`preserves rewind, restore and existing Undo after ${mode} compaction and reload`, async () => {
+				const provider = new TestTreeProviderLite(
+					2,
+					makeFactory(true, mode === "summary" ? sameGroup : undefined),
+				);
+				const [tree, peer] = provider.trees;
+				const view = asAlpha(tree.viewWith(config));
+				view.initialize(["a", "b", "c"]);
+				provider.synchronizeMessages();
+				const other = peer.viewWith(config);
+				const initialRevision = view.branchHistory.getHead()?.revision ?? assert.fail();
+				for (let index = 0; index < 2; index++) {
+					view.runTransaction(() => view.root.removeAt(0), {
+						customMetadata: { group: "deletions" },
+					});
+				}
+				const survivorRevision = view.branchHistory.getHead()?.revision ?? assert.fail();
+				view.root.insertAtEnd("x");
+				const preview = view.fork();
+				let undo: RevertibleAlpha | undefined;
+				const offUndo = view.events.on("changed", (_data, getRevertible) => {
+					undo = getRevertible?.();
+				});
+				view.root.removeAt(0);
+				offUndo();
+				assert(undo !== undefined);
+				view.root.insertAtEnd("y");
+				provider.synchronizeMessages();
+				view.root.insertAtEnd("author barrier");
+				other.root.insertAtEnd("peer barrier");
+				provider.synchronizeMessages();
+				const content = [...view.root];
+				const historyBefore = countCommits(view.branchHistory);
+				const rootsBefore = (tree as ISharedTree).kernel.checkout.getRemovedRoots();
+				if (mode === "manual") {
+					assert.equal(asAlpha(tree).historyCompaction.requestCompaction(sameGroup), 1);
+				}
+				const summary = await summarize(tree);
+				assert.equal(countCommits(view.branchHistory), historyBefore - 1);
+				assert.deepEqual([...view.root], content);
+				assert.deepEqual((tree as ISharedTree).kernel.checkout.getRemovedRoots(), rootsBefore);
+				const loaded = await loadFromSummary(summary, provider.getCompressor(tree));
+				const loadedView = asAlpha(loaded.viewWith(config));
+				for (const target of [view, loadedView]) {
+					for (const [revision, expected] of [
+						[initialRevision, ["a", "b", "c"]],
+						[survivorRevision, ["c"]],
+					] as const) {
+						const reader = target.fork();
+						reader.rewindTo(revision);
+						assert.deepEqual([...reader.root], expected);
+						reader.dispose();
+					}
+					const restored = target.fork();
+					restored.revertTo(initialRevision);
+					assert.deepEqual([...restored.root], ["a", "b", "c"]);
+					restored.dispose();
+				}
+				assert.deepEqual([...preview.root], ["c", "x"]);
+				preview.rewindTo(initialRevision);
+				assert.deepEqual([...preview.root], ["a", "b", "c"]);
+				preview.dispose();
+				let redo: RevertibleAlpha | undefined;
+				const offRedo = view.events.on("changed", (_data, getRevertible) => {
+					redo = getRevertible?.();
+				});
+				undo.revert();
+				offRedo();
+				provider.synchronizeMessages();
+				assert.deepEqual([...view.root], ["c", ...content]);
+				assert.deepEqual([...other.root], [...view.root]);
+				assert(redo !== undefined);
+				redo.revert();
+				provider.synchronizeMessages();
+				assert.deepEqual([...view.root], content);
+				assert.deepEqual([...other.root], content);
+				view.revertTo(initialRevision);
+				provider.synchronizeMessages();
+				assert.deepEqual([...view.root], ["a", "b", "c"]);
+				assert.deepEqual([...other.root], ["a", "b", "c"]);
+			});
+		}
+
+		it("releases repair roots from composed-away revisions when the surviving history is trimmed", () => {
+			const provider = new TestTreeProviderLite(2, makeFactory(6));
+			const [tree, peer] = provider.trees;
+			const view = asAlpha(tree.viewWith(config));
+			view.initialize(["a", "b", "c"]);
+			provider.synchronizeMessages();
+			const other = peer.viewWith(config);
+			for (let index = 0; index < 2; index++) {
+				view.runTransaction(() => view.root.removeAt(0), {
+					customMetadata: { group: "deletions" },
+				});
+			}
+			provider.synchronizeMessages();
+			view.root.insertAtEnd("author barrier");
+			other.root.insertAtEnd("peer barrier");
+			provider.synchronizeMessages();
+			assert.equal(asAlpha(tree).historyCompaction.requestCompaction(sameGroup), 1);
+			assert.equal((tree as ISharedTree).kernel.checkout.getRemovedRoots().length, 2);
+			for (let index = 0; index < 10; index++) {
+				view.root.insertAtEnd(`author ${index}`);
+				provider.synchronizeMessages();
+				other.root.insertAtEnd(`peer ${index}`);
+				provider.synchronizeMessages();
+			}
+			assert.deepEqual((tree as ISharedTree).kernel.checkout.getRemovedRoots(), []);
+			assert.deepEqual((peer as ISharedTree).kernel.checkout.getRemovedRoots(), []);
+		});
+	});
+
+	// Setup/act/verify: DEV.md §17.8, remapped-ID summary round-trip.
+	describe("mixed-edit summary round-trip", () => {
+		const sf = new SchemaFactory("history-compaction-rename-round-trip");
+		class Item extends sf.object("Item", {
+			value: sf.number,
+			children: sf.array(sf.string),
+		}) {}
+		class Document extends sf.object("Document", {
+			left: sf.array(Item),
+			right: sf.array(Item),
+		}) {}
+		const configuration = new TreeViewConfiguration({ schema: Document });
+		const readContent = (root: Document) => ({
+			left: root.left.map((item) => ({ value: item.value, children: [...item.children] })),
+			right: root.right.map((item) => ({ value: item.value, children: [...item.children] })),
+		});
+		const revisions = (history: TreeBranchHistory): string[] => {
+			const result: string[] = [];
+			for (let commit = history.getHead(); commit !== undefined; commit = commit.getParent()) {
+				result.unshift(commit.revision);
+			}
+			return result;
+		};
+
+		for (const count of [42, 49]) {
+			for (const mode of ["uncompacted", "manual", "summary", "stale maximum"] as const) {
+				if (mode === "stale maximum" && count !== 42) {
+					continue;
+				}
+				it(`encodes and reloads ${count} mixed edits using ${mode} compaction`, async () => {
+					const previousLevel = RebaseValidation.currentLevel;
+					try {
+						const logger = mixinMonitoringContext(createMockLoggerExt(LogLevel.verbose), {
+							getRawConfig: (name) =>
+								name === "Fluid.SharedTree.HistoryDebugTrace" ? true : undefined,
+						}).logger;
+						const policy: CanCompactCommit = ({ current, target }) =>
+							current.custom?.mixedEdits === true && target.custom?.mixedEdits === true;
+						const provider = new TestTreeProviderLite(
+							2,
+							makeFactory(true, mode === "summary" ? policy : undefined),
+							true,
+							undefined,
+							logger,
+						);
+						const [tree, otherTree] = provider.trees;
+						const view = asAlpha(tree.viewWith(configuration));
+						const item = (value: number) => ({ value, children: [`child ${value}`] });
+						view.initialize({
+							left: [item(0), item(1), item(2)],
+							right: [item(3), item(4), item(5)],
+						});
+						provider.synchronizeMessages();
+						const initialRevision = view.branchHistory.getHead()?.revision ?? assert.fail();
+						const initialContent = readContent(view.root);
+						const other = otherTree.viewWith(configuration);
+						for (let index = 0; index < count; index++) {
+							view.runTransaction(
+								() => {
+									switch (index % 5) {
+										case 0: {
+											view.root.left.insertAtEnd(item(index + 10));
+											break;
+										}
+										case 1: {
+											view.root.right.moveToEnd(0, view.root.left);
+											break;
+										}
+										case 2: {
+											view.root.right[0].value = index;
+											view.root.right[0].children.insertAtEnd(`edit ${index}`);
+											break;
+										}
+										case 3: {
+											view.root.left.moveToEnd(0, view.root.right);
+											break;
+										}
+										case 4: {
+											view.root.left.removeAt(0);
+											break;
+										}
+										default: {
+											assert.fail("Unexpected edit");
+										}
+									}
+								},
+								{ customMetadata: { mixedEdits: true } },
+							);
+						}
+						provider.synchronizeMessages();
+						view.root.left.insertAtEnd(item(100));
+						other.root.right.insertAtEnd(item(101));
+						provider.synchronizeMessages();
+						const expectedContent = readContent(view.root);
+						assert.deepEqual(readContent(other.root), expectedContent);
+						const before = revisions(view.branchHistory);
+						const selected: string[] = [];
+						for (
+							let commit = view.branchHistory.getHead();
+							commit !== undefined;
+							commit = commit.getParent()
+						) {
+							if (commit.custom?.mixedEdits === true) {
+								selected.unshift(commit.revision);
+							}
+						}
+						assert.equal(selected.length, count);
+						const removed = new Set(selected.slice(0, -1));
+						const expectedRevisions = before.filter(
+							(revision) => mode === "uncompacted" || !removed.has(revision),
+						);
+						const originalRevisions = new Set<RevisionTag>();
+						if (mode === "stale maximum") {
+							for (
+								let commit = (tree as ISharedTree).kernel.checkout.getLocationHead();
+								commit.parent !== undefined;
+								commit = commit.parent
+							) {
+								originalRevisions.add(commit.revision);
+							}
+						}
+						RebaseValidation.setLevel(RebaseValidation.Level.Strict);
+						if (mode === "manual" || mode === "stale maximum") {
+							assert.equal(
+								asAlpha(tree).historyCompaction.requestCompaction(policy),
+								count - 1,
+							);
+						}
+						if (mode === "stale maximum") {
+							// Reintroduce the old encoded maximum only in this failure-diagnostics fixture.
+							const staleMaxId = 20;
+							const rebaser = (
+								tree as unknown as {
+									kernel: { changeFamily: { rebaser: ChangeRebaser<SharedTreeChange> } };
+								}
+							).kernel.changeFamily.rebaser;
+							let corrupted = false;
+							for (
+								let commit = (tree as ISharedTree).kernel.checkout.getLocationHead();
+								commit.parent !== undefined;
+								commit = commit.parent
+							) {
+								// Real compaction preserves IDs; deliberately recreate the former remapping path here.
+								const remapped = rebaser.changeRevision(
+									commit.change,
+									new DefaultRevisionReplacer(commit.revision, originalRevisions),
+								);
+								Object.assign(commit, { change: remapped });
+								for (const change of commit.change.changes) {
+									if (
+										change.type === "data" &&
+										Number(change.innerChange.maxId) > staleMaxId
+									) {
+										Object.assign(change.innerChange, { maxId: staleMaxId });
+										corrupted = true;
+									}
+								}
+							}
+							assert(corrupted);
+							await assert.rejects(
+								async () => summarize(tree),
+								/0xdbd|New rename conflicts with existing rename/,
+							);
+							const failureEvents = logger
+								.events()
+								.filter((event) => event.eventName.endsWith("HistoryTrace"));
+							const conflict = failureEvents.find(
+								(event) => event.activity === "HistoryRenameConflict",
+							);
+							assert(
+								conflict !== undefined,
+								"The original rename assertion must have a diagnostic event",
+							);
+							assert.equal(conflict.direction, "newToOld");
+							assert.equal(conflict.codec, "modularV2");
+							assert.notDeepEqual(
+								[conflict.existingDestinationRevisionTag, conflict.existingDestinationLocalId],
+								[
+									conflict.attemptedDestinationRevisionTag,
+									conflict.attemptedDestinationLocalId,
+								],
+							);
+							assert.equal(typeof conflict.sourceRevisionTag, "number");
+							assert.equal(typeof conflict.rangeLength, "number");
+							assert.equal(conflict.encodedMaxId, staleMaxId);
+							assert.equal(conflict.temporaryIdStart, staleMaxId + 1);
+							assert.equal(typeof conflict.historyEncodeOperationId, "number");
+							assert.equal(typeof conflict.summaryOperationId, "number");
+							assert(
+								failureEvents.some(
+									(event) =>
+										event.activity === "HistoryChangeEncodeFailed" &&
+										event.stage === "validationDecode",
+								),
+							);
+							assert(
+								failureEvents.some(
+									(event) =>
+										event.activity === "HistoryEncodeFailed" &&
+										event.operationId === conflict.historyEncodeOperationId,
+								),
+							);
+							assert(!JSON.stringify(failureEvents).includes("child "));
+							return;
+						}
+						const summary = await summarize(tree);
+						assert.deepEqual(revisions(view.branchHistory), expectedRevisions);
+						assert.deepEqual(readContent(view.root), expectedContent);
+						const loaded = await loadFromSummary(
+							summary,
+							provider.getCompressor(tree),
+							true,
+							false,
+							logger,
+						);
+						assert.deepEqual(
+							revisions(loaded.kernel.checkout.branchHistory),
+							expectedRevisions,
+						);
+						const loadedView = asAlpha(loaded.viewWith(configuration));
+						assert.deepEqual(readContent(loadedView.root), expectedContent);
+						for (const target of [view, loadedView]) {
+							const reader = target.fork();
+							reader.rewindTo(initialRevision);
+							assert.deepEqual(readContent(reader.root), initialContent);
+							reader.dispose();
+							const restored = target.fork();
+							restored.revertTo(initialRevision);
+							assert.deepEqual(readContent(restored.root), initialContent);
+							restored.dispose();
+						}
+						const events = logger
+							.events()
+							.filter((event) => event.eventName.endsWith("HistoryTrace"));
+						const reads = events.filter((event) => event.activity === "HistoryRewindStarted");
+						assert(reads.some((event) => event.targetRevision === initialRevision));
+						assert(
+							reads.every((event) =>
+								events.some(
+									(completed) =>
+										completed.activity === "HistoryRewindCompleted" &&
+										completed.historyReadId === event.historyReadId &&
+										completed.sessionId === event.sessionId,
+								),
+							),
+						);
+						const validation = events.filter(
+							(event) => event.activity === "HistoryValidationDecodeStarted",
+						);
+						assert(validation.length > 0);
+						assert(
+							validation.every(
+								(event) =>
+									typeof event.historyEncodeOperationId === "number" &&
+									typeof event.summaryOperationId === "number",
+							),
+						);
+						assert(
+							events.some(
+								(event) =>
+									event.activity === "HistoryDecodeAllocationStarted" &&
+									typeof event.temporaryIdStart === "number",
+							),
+						);
+						assert(
+							events.some(
+								(event) =>
+									event.activity === "HistoryDecodeAllocationStarted" &&
+									typeof event.historyLoadOperationId === "number" &&
+									event.treeId === "loaded",
+							),
+						);
+						if (mode !== "uncompacted") {
+							const remaps = events.filter(
+								(event) => event.activity === "RevisionReplacementIds",
+							);
+							assert(remaps.length > 0);
+							assert(
+								remaps.every(
+									(event) =>
+										event.remappedRangeCount === 0 &&
+										event.outputMaxId === event.inputMaxId &&
+										typeof event.operationId === "number" &&
+										typeof event.pairIndex === "number",
+								),
+							);
+						}
+					} finally {
+						RebaseValidation.setLevel(previousLevel);
+					}
+				});
+			}
+		}
+	});
+
 	for (const mode of ["default", "replacement"] as const) {
 		it(`preserves old and newly sequenced revisions while compacting surrounding history (${mode} metadata)`, async () => {
 			const { author, setPreserved, assertWindow, advanceWindow, compactStage, checkSummary } =
@@ -1285,6 +1742,16 @@ describe("History compaction", () => {
 			}
 			assert.equal(events.at(-1)?.activity, "CompactionCompleted");
 			assert.equal(events.at(-1)?.removedCount, removed);
+			const aggregate = logger
+				.events()
+				.slice(start)
+				.find((event) => event.eventName.endsWith("HistoryCompaction"));
+			assert.equal(aggregate?.operationId, operationId);
+			assert.equal(
+				aggregate?.eligibleCommitCount,
+				events.find((event) => event.activity === "CompactionEligibility")
+					?.eligibleCommitCount,
+			);
 			for (let index = 1; index < events.length; index++) {
 				assert.equal(
 					Number(events[index].eventSequence),
@@ -1328,6 +1795,12 @@ describe("History compaction", () => {
 			);
 			const start = logger.events().length;
 			const fork = view.fork();
+			const created = logger
+				.events()
+				.slice(start)
+				.find((event) => event.eventName.endsWith("HistoryForkCreated"));
+			assert.equal(created?.purpose, "unknown");
+			assert.equal(typeof created?.forkId, "number");
 			for (let index = 0; index < 5; index++) {
 				view.root.insertAtEnd("advance");
 				otherView.root.insertAtEnd("advance");
@@ -1343,6 +1816,22 @@ describe("History compaction", () => {
 				),
 			);
 			fork.dispose();
+			const disposed = logger
+				.events()
+				.slice(start)
+				.find(
+					(event) =>
+						event.eventName.endsWith("HistoryForkDisposed") &&
+						event.forkId === created?.forkId,
+				);
+			assert.equal(disposed?.treeId, created?.treeId);
+			assert.equal(disposed?.sessionId, created?.sessionId);
+			assert(typeof disposed?.lifetimeMs === "number" && disposed.lifetimeMs >= 0);
+			assert(
+				traceEvents(logger, start).some(
+					(event) => event.activity === "ForkTracked" && event.forkId === created?.forkId,
+				),
+			);
 			assert(
 				traceEvents(logger, start).some(
 					(event) =>
@@ -1647,6 +2136,118 @@ describe("History compaction", () => {
 	});
 
 	describe("telemetry", () => {
+		it("reports registered-fork retention and disposal without enabling verbose tracing", () => {
+			const { provider, view, otherView } = generateHistory("append", 1, 3);
+			const tree = provider.trees[0];
+			const start = provider.logger.events().length;
+			const fork = view.fork();
+			for (let index = 0; index < 3; index++) {
+				view.root.insertAtEnd("advance");
+				otherView.root.insertAtEnd("advance");
+				provider.synchronizeMessages();
+			}
+			asAlpha(tree).historyCompaction.requestCompaction(() => false);
+			const first = provider.logger
+				.events()
+				.slice(start)
+				.find((event) => event.eventName.endsWith("HistoryCompaction"));
+			const created = provider.logger
+				.events()
+				.slice(start)
+				.find((event) => event.eventName.endsWith("HistoryForkCreated"));
+			assert.equal(first?.limitingBoundary, "localFork");
+			assert.equal(first?.activeForkCount, 1);
+			assert.equal(first?.oldestBlockingForkId, created?.forkId);
+			assert.equal(first?.treeId, created?.treeId);
+			assert.equal(first?.sessionId, created?.sessionId);
+			assert(
+				typeof first?.oldestBlockingForkAgeMs === "number" &&
+					first.oldestBlockingForkAgeMs >= 0,
+			);
+			fork.dispose();
+			const afterDisposal = provider.logger.events().length;
+			asAlpha(tree).historyCompaction.requestCompaction(() => false);
+			const second = provider.logger
+				.events()
+				.slice(afterDisposal)
+				.find((event) => event.eventName.endsWith("HistoryCompaction"));
+			assert.equal(second?.activeForkCount, 0);
+			assert.equal(second?.oldestBlockingForkId, undefined);
+			assert.notEqual(second?.operationId, first?.operationId);
+			const disposed = provider.logger
+				.events()
+				.slice(start)
+				.find(
+					(event) =>
+						event.eventName.endsWith("HistoryForkDisposed") &&
+						event.forkId === created?.forkId,
+				);
+			assert(typeof disposed?.lifetimeMs === "number" && disposed.lifetimeMs >= 0);
+			assert.equal(disposed?.purpose, "unknown");
+			assert.equal(disposed?.isSummarizer, first?.isSummarizer);
+			assert(
+				!provider.logger.events().some((event) => event.eventName.endsWith("HistoryTrace")),
+			);
+		});
+
+		it("counts pending local commits separately from the sequenced eligible prefix", () => {
+			const { provider, view } = generateHistory("append", 1, 3);
+			view.root.insertAtEnd("pending");
+			const start = provider.logger.events().length;
+			asAlpha(provider.trees[0]).historyCompaction.requestCompaction(() => false);
+			const event = provider.logger
+				.events()
+				.slice(start)
+				.find((entry) => entry.eventName.endsWith("HistoryCompaction"));
+			assert.equal(event?.unsequencedCommitCount, 1);
+			assert.equal(Number(event?.sequencedCommitCount) + 1, event?.retainedCommitCount);
+			assert.equal(event?.historyCountBefore, event?.historyCountAfter);
+			provider.synchronizeMessages();
+		});
+
+		for (const pinAll of [true, false]) {
+			it(`attributes zero removals to ${pinAll ? "preserved revisions" : "mixed preservation and policy rejection"}`, () => {
+				const { provider, view } = generateHistory(
+					"append",
+					1,
+					3,
+					true,
+					undefined,
+					undefined,
+					true,
+				);
+				const tree = provider.trees[0];
+				const revisions: string[] = [];
+				for (
+					let commit = view.branchHistory.getHead();
+					commit !== undefined;
+					commit = commit.getParent()
+				) {
+					revisions.push(commit.revision);
+				}
+				for (const revision of pinAll ? revisions : revisions.slice(-1)) {
+					asAlpha(tree).historyCompaction.setRevisionPreserved(revision, true);
+				}
+				provider.synchronizeMessages();
+				const start = provider.logger.events().length;
+				asAlpha(tree).historyCompaction.requestCompaction(() => false);
+				const event = provider.logger
+					.events()
+					.slice(start)
+					.find((entry) => entry.eventName.endsWith("HistoryCompaction"));
+				assert.equal(event?.removedCount, 0);
+				assert(Number(event?.preservedPairCount) > 0);
+				assert.equal(
+					event?.zeroRemovalReason,
+					pinAll ? "revisionPreserved" : "mixedPairDisposition",
+				);
+				assert.equal(
+					Number(event?.preservedPairCount) + Number(event?.rejectedPairCount),
+					event?.eligiblePairCount,
+				);
+			});
+		}
+
 		function expectRun(
 			provider: TestTreeProviderLite,
 			start: number,
@@ -1665,12 +2266,26 @@ describe("History compaction", () => {
 			}
 			assert(typeof event.durationMs === "number");
 			assert(Number.isFinite(event.durationMs) && event.durationMs >= 0);
+			assert.equal(typeof event.operationId, "number");
+			assert.equal(typeof event.treeId, "string");
+			assert.equal(typeof event.sessionId, "string");
+			assert.equal(typeof event.isSummarizer, "boolean");
+			assert.equal(
+				Number(event.historyCountBefore) - Number(event.historyCountAfter),
+				event.removedCount,
+			);
+			assert.equal(
+				Number(event.sequencedCommitCount) + Number(event.unsequencedCommitCount),
+				event.retainedCommitCount,
+			);
 			for (const field of [
 				"eligibleCommitCount",
 				"eligiblePairCount",
 				"preservedPairCount",
 				"peerBranchCount",
 				"replacementMetadataLength",
+				"activeForkCount",
+				"collaborationBoundLag",
 			]) {
 				assert(typeof event[field] === "number", field);
 			}
@@ -1788,6 +2403,7 @@ describe("History compaction", () => {
 					removedCount: 0,
 					policyCallCount: 3,
 					rejectedPairCount: 3,
+					zeroRemovalReason: "appPolicyRejected",
 					defaultMergeCount: 0,
 					replacementMergeCount: 0,
 				});
@@ -1838,6 +2454,7 @@ describe("History compaction", () => {
 					status: "failure",
 					category: "error",
 					failureSource: "policy",
+					failureStage: "policy",
 					removedCount: 1,
 					policyCallCount: 3,
 					rejectedPairCount: 1,

@@ -18,6 +18,7 @@ import {
 	strictRebaseValidation,
 } from "../../core/index.js";
 import type { FieldBatchCodec } from "../chunked-forest/index.js";
+import { recordHistoryTrace } from "../../util/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
 import type { FieldKindConfiguration } from "./fieldKindConfiguration.js";
@@ -58,46 +59,88 @@ export function makeModularChangeCodecV2(
 
 	const modularChangeCodec: ModularChangeCodec = {
 		encode: (change, context) => {
-			strictRebaseValidation("Malformed V2 encode input", () =>
-				isChangesetValid(change, fieldKindsFromConfiguration(fieldKinds)),
-			);
-			const encoded = encodeChange(
-				change,
-				context,
-				fieldKinds,
-				fieldChangesetCodecs,
-				revisionTagCodec,
-				fieldsCodec,
-				chunkCompressionStrategy,
-			) as EncodedModularChangesetV2;
-			encoded.noChangeConstraint = change.noChangeConstraint;
-			cheapRebaseValidation("V2 encode output", (): true | string => {
-				const decoded = modularChangeCodec.decode(encoded, context);
-				return (
-					areDeltaEquivalent(change, decoded, fieldKindsFromConfiguration(fieldKinds)) ||
-					"does not match decode output"
-				);
+			let stage = "encodeInputValidation";
+			recordHistoryTrace(context.historyTrace, "HistoryChangeEncodeStarted", {
+				inputMaxId: change.maxId,
+				codec: "modularV2",
 			});
-			return encoded;
+			try {
+				strictRebaseValidation("Malformed V2 encode input", () =>
+					isChangesetValid(change, fieldKindsFromConfiguration(fieldKinds)),
+				);
+				stage = "encode";
+				const encoded = encodeChange(
+					change,
+					context,
+					fieldKinds,
+					fieldChangesetCodecs,
+					revisionTagCodec,
+					fieldsCodec,
+					chunkCompressionStrategy,
+				) as EncodedModularChangesetV2;
+				encoded.noChangeConstraint = change.noChangeConstraint;
+				cheapRebaseValidation("V2 encode output", (): true | string => {
+					stage = "validationDecode";
+					recordHistoryTrace(context.historyTrace, "HistoryValidationDecodeStarted", {
+						encodedMaxId: encoded.maxId,
+						codec: "modularV2",
+					});
+					const decoded = modularChangeCodec.decode(encoded, context);
+					stage = "deltaComparison";
+					recordHistoryTrace(context.historyTrace, "HistoryValidationDecodeCompleted", {
+						encodedMaxId: encoded.maxId,
+						decodedMaxId: decoded.maxId,
+						codec: "modularV2",
+					});
+					return (
+						areDeltaEquivalent(change, decoded, fieldKindsFromConfiguration(fieldKinds)) ||
+						"does not match decode output"
+					);
+				});
+				recordHistoryTrace(context.historyTrace, "HistoryChangeEncoded", {
+					encodedMaxId: encoded.maxId,
+					codec: "modularV2",
+				});
+				return encoded;
+			} catch (error: unknown) {
+				recordHistoryTrace(context.historyTrace, "HistoryChangeEncodeFailed", {
+					stage,
+					inputMaxId: change.maxId,
+					codec: "modularV2",
+				});
+				throw error;
+			}
 		},
 
 		decode: (encodedChange: EncodedModularChangesetV2, context) => {
-			const decoded = decodeChange(
-				encodedChange,
-				context,
-				fieldKinds,
-				fieldChangesetCodecs,
-				revisionTagCodec,
-				fieldsCodec,
-				chunkCompressionStrategy,
-			);
-			if (encodedChange.noChangeConstraint !== undefined) {
-				decoded.noChangeConstraint = encodedChange.noChangeConstraint;
+			let stage = "decode";
+			try {
+				const decoded = decodeChange(
+					encodedChange,
+					context,
+					fieldKinds,
+					fieldChangesetCodecs,
+					revisionTagCodec,
+					fieldsCodec,
+					chunkCompressionStrategy,
+					"modularV2",
+				);
+				if (encodedChange.noChangeConstraint !== undefined) {
+					decoded.noChangeConstraint = encodedChange.noChangeConstraint;
+				}
+				stage = "decodeOutputValidation";
+				cheapRebaseValidation("Malformed V2 decode output", () =>
+					isChangesetValid(decoded, fieldKindsFromConfiguration(fieldKinds)),
+				);
+				return decoded;
+			} catch (error: unknown) {
+				recordHistoryTrace(context.historyTrace, "HistoryChangeDecodeFailed", {
+					stage,
+					encodedMaxId: encodedChange.maxId,
+					codec: "modularV2",
+				});
+				throw error;
 			}
-			cheapRebaseValidation("Malformed V2 decode output", () =>
-				isChangesetValid(decoded, fieldKindsFromConfiguration(fieldKinds)),
-			);
-			return decoded;
 		},
 	};
 

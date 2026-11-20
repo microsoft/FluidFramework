@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { Invariant } from "../../util/index.js";
+import type { Invariant, HistoryTraceSink } from "../../util/index.js";
 
 import type { ChangeAtomId, RevisionTag } from "./types.js";
 
@@ -115,9 +115,14 @@ export interface ChangeRebaser<TChangeset> {
 	 * Produces a changeset that is equivalent to the given `change`, but with all references to its own revisions replaced according to the given `replacer`.
 	 * @param change - The change to update. Not modified.
 	 * @param replacer - The replacer to use.
+	 * @param historyTrace - Optional content-free diagnostics for revision replacement.
 	 * @returns A changeset equivalent to `change`, but with all references to its own revision replaced according to `replacer`.
 	 */
-	changeRevision(change: TChangeset, replacer: RevisionReplacer): TChangeset;
+	changeRevision(
+		change: TChangeset,
+		replacer: RevisionReplacer,
+		historyTrace?: HistoryTraceSink,
+	): TChangeset;
 }
 
 /**

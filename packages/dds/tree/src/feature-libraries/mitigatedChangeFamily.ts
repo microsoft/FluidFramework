@@ -9,7 +9,6 @@ import type {
 	ChangeRebaser,
 	ProcessChangeFn,
 	RevisionMetadataSource,
-	RevisionReplacer,
 	RevisionTag,
 	TaggedChange,
 } from "../core/index.js";
@@ -108,8 +107,8 @@ export function makeMitigatedRebaser<TChange>(
 				return new Set();
 			}
 		},
-		changeRevision: (change: TChange, replacer: RevisionReplacer): TChange =>
-			withFallback(() => unmitigatedRebaser.changeRevision(change, replacer)),
+		changeRevision: (change, replacer, historyTrace): TChange =>
+			withFallback(() => unmitigatedRebaser.changeRevision(change, replacer, historyTrace)),
 		ensureCompatibility: (change: TChange): TChange =>
 			withFallback(() => unmitigatedRebaser.ensureCompatibility(change)),
 	};

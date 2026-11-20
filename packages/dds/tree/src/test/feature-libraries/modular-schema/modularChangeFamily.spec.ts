@@ -461,6 +461,56 @@ const node1Chunk = chunkFromJsonTrees([1]);
 const nodesChunk = treeChunkFromCursor(fieldJsonCursor([{}, {}]));
 
 describe("ModularChangeFamily", () => {
+	describe("changeRevision", () => {
+		it("raises maxId when collapsing revisions allocates new local IDs", () => {
+			const change: ModularChangeset = {
+				...Change.empty(),
+				maxId: brand(0),
+				revisions: [{ revision: tag1 }, { revision: tag2 }],
+				builds: newChangeAtomIdBTree([
+					[[tag1 as RevisionTag | undefined, brand(0)], node1Chunk],
+					[[tag2, brand(0)], node1Chunk],
+				]),
+			};
+			deepFreeze(change);
+			const events: {
+				activity: string;
+				outputMaxId?: unknown;
+				highestRemappedId?: unknown;
+			}[] = [];
+			const updated = family.changeRevision(
+				change,
+				new DefaultRevisionReplacer(tag3, new Set([tag1, tag2])),
+				{ record: (activity, properties) => events.push({ activity, ...properties }) },
+			);
+			assert.equal(updated.maxId, 1);
+			assert.deepEqual(
+				[...(updated.builds ?? assert.fail()).keys()],
+				[
+					[tag3, 0],
+					[tag3, 1],
+				],
+			);
+			assert.equal(change.maxId, 0);
+			assert.deepEqual(
+				events.map((event) => [event.activity, event.outputMaxId, event.highestRemappedId]),
+				[["RevisionReplacementIds", 1, 1]],
+			);
+			assert.deepEqual(
+				family.changeRevision(
+					change,
+					new DefaultRevisionReplacer(tag3, new Set([tag1, tag2])),
+					{
+						record: () => {
+							throw new Error("diagnostic sink failure");
+						},
+					},
+				),
+				updated,
+			);
+		});
+	});
+
 	describe("compose", () => {
 		const composedValues: ValueChangeset = { old: 0, new: 2 };
 

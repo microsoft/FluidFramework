@@ -677,6 +677,19 @@ export function replaceChange<TChange>(
 	return output;
 }
 
+/**
+ * Replaces a surviving commit's change without retaining a rollback computed for its previous change.
+ * @param commit - The commit to update in place.
+ * @param change - The replacement change.
+ */
+export function replaceChangeInPlace<TChange>(
+	commit: Mutable<GraphCommit<TChange>>,
+	change: TChange,
+): void {
+	commit.change = change;
+	Rollback.set(commit, undefined);
+}
+
 /** Associates rollback data with commits */
 namespace Rollback {
 	const map = new WeakMap<GraphCommit<unknown>, TaggedChange<unknown, RevisionTag>>();

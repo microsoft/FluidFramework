@@ -124,6 +124,10 @@ export function invertModularChange(
 		for (const { revision } of oldRevInfos) {
 			genId.reserve(revision, change.change.maxId);
 		}
+		// Compaction preserves move identities whose original revisions are no longer authored revisions.
+		for (const { start } of change.change.crossFieldKeys.entries()) {
+			genId.reserve(start.revision, change.change.maxId);
+		}
 	}
 
 	const invertedNodeToParent: ChangeAtomIdBTree<NodeLocation> = brand(

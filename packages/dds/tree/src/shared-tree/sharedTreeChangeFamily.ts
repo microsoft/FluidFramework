@@ -252,9 +252,10 @@ export class SharedTreeChangeFamily
 	public changeRevision(
 		change: SharedTreeChange,
 		replacer: RevisionReplacer,
+		historyTrace?: ChangeEncodingContext["historyTrace"],
 	): SharedTreeChange {
 		return mapDataChanges(change, (inner) =>
-			this.modularChangeFamily.rebaser.changeRevision(inner, replacer),
+			this.modularChangeFamily.rebaser.changeRevision(inner, replacer, historyTrace),
 		);
 	}
 

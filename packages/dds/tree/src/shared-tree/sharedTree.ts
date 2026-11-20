@@ -51,7 +51,6 @@ import {
 	moveToDetachedField,
 } from "../core/index.js";
 import {
-	DefaultRevisionReplacer,
 	DetachedFieldIndexSummarizer,
 	FieldBatchDecodingContext,
 	FieldKinds,
@@ -227,6 +226,7 @@ export class SharedTreeKernel
 	private readonly supportsRevisionPreservation: boolean;
 
 	private readonly historyCompactionEvents = createEmitter<TreeHistoryCompactionEvents>();
+	private compactionOperationId = 0;
 
 	/**
 	 * The app-facing API for SharedTree implemented by this Kernel.
@@ -376,6 +376,7 @@ export class SharedTreeKernel
 			chunkCompressionStrategy: options.treeEncodeType,
 			codecOptions: options,
 			getFinalizedCommit: () => this.getTrunkHead(),
+			historyTrace: this.historyTrace,
 		});
 
 		this.registerSharedBranchForEditing("main", this.checkout);
@@ -473,22 +474,27 @@ export class SharedTreeKernel
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 		fullTree?: boolean,
 	): ISummaryTreeWithStats {
-		const operationId = this.historyTrace?.nextOperationId();
-		this.historyTrace?.record("SummaryStarted", { operationId });
-		try {
-			this.compactHistoryForSummary(operationId);
-			const summary = super.summarizeCore(
-				serializer,
-				telemetryContext,
-				incrementalSummaryContext,
-				fullTree,
-			);
-			this.historyTrace?.record("SummaryCompleted", { operationId });
-			return summary;
-		} catch (error: unknown) {
-			this.historyTrace?.record("SummaryFailed", { operationId });
-			throw error;
-		}
+		const operationId = this.historyTrace?.nextOperationId() ?? ++this.compactionOperationId;
+		const run = (): ISummaryTreeWithStats => {
+			this.historyTrace?.record("SummaryStarted", { operationId });
+			try {
+				this.compactHistoryForSummary(operationId);
+				const summary = super.summarizeCore(
+					serializer,
+					telemetryContext,
+					incrementalSummaryContext,
+					fullTree,
+				);
+				this.historyTrace?.record("SummaryCompleted", { operationId });
+				return summary;
+			} catch (error: unknown) {
+				this.historyTrace?.record("SummaryFailed", { operationId });
+				throw error;
+			}
+		};
+		return this.historyTrace === undefined
+			? run()
+			: this.historyTrace.runWithContext({ summaryOperationId: operationId }, run);
 	}
 
 	/**
@@ -534,7 +540,7 @@ export class SharedTreeKernel
 		let replacesMetadata = false;
 		let failureSource: "policy" | "engine" | undefined;
 		let engineError: unknown;
-		const operationId = this.historyTrace?.nextOperationId();
+		const operationId = this.historyTrace?.nextOperationId() ?? ++this.compactionOperationId;
 		this.historyTrace?.record("CompactionStarted", {
 			operationId,
 			summaryOperationId,
@@ -577,7 +583,6 @@ export class SharedTreeKernel
 						return false;
 					}
 				},
-				(updated, obsolete) => new DefaultRevisionReplacer(updated, obsolete),
 				() => {
 					statistics.removedCount++;
 					if (replacesMetadata) {
@@ -596,29 +601,51 @@ export class SharedTreeKernel
 			}
 			throw error;
 		} finally {
-			this.historyTrace?.record("CompactionCompleted", {
-				operationId,
-				trigger,
-				status: failureSource === undefined ? "success" : "failure",
-				failureSource,
-				...statistics,
-				...passStats,
-			});
 			const event = {
-				eventName: "HistoryCompaction",
+				operationId,
+				summaryOperationId,
+				treeId: this.sharedObject.id,
+				sessionId: this.idCompressor.localSessionId,
+				isSummarizer: this.getIsSummarizerClient(),
 				trigger,
 				status: failureSource === undefined ? "success" : "failure",
 				failureSource,
 				durationMs: performanceNow() - started,
 				...statistics,
 				...passStats,
+				failureStage:
+					failureSource === undefined
+						? undefined
+						: failureSource === "policy"
+							? "policy"
+							: passStats.failureStage,
+				historyCountBefore: passStats.retainedCommitCount,
+				historyCountAfter: passStats.retainedCommitCount - statistics.removedCount,
+				zeroRemovalReason:
+					statistics.removedCount === 0
+						? failureSource === undefined
+							? passStats.eligiblePairCount === 0
+								? passStats.limitingBoundary === "none"
+									? "insufficientRetainedHistory"
+									: passStats.limitingBoundary
+								: passStats.preservedPairCount === passStats.eligiblePairCount
+									? "revisionPreserved"
+									: statistics.rejectedPairCount === passStats.eligiblePairCount
+										? "appPolicyRejected"
+										: "mixedPairDisposition"
+							: "failure"
+						: undefined,
 			};
+			this.historyTrace?.record("CompactionCompleted", event);
 			if (failureSource === undefined) {
-				this.breaker.logger?.sendTelemetryEvent(event);
+				this.breaker.logger?.sendTelemetryEvent({ eventName: "HistoryCompaction", ...event });
 			} else {
 				// Policy errors can contain application data, so only report the failure category.
 				// Engine errors come from Fluid itself, so they are attached to help diagnose them.
-				this.breaker.logger?.sendErrorEvent(event, engineError);
+				this.breaker.logger?.sendErrorEvent(
+					{ eventName: "HistoryCompaction", ...event },
+					engineError,
+				);
 			}
 		}
 	}

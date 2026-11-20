@@ -107,13 +107,13 @@ export interface SharedTreeBranchEvents<
 }
 
 /**
- * Events related to branch trimming.
+ * Events related to branch trimming and history compaction.
  *
  * @remarks
- * Trimming is a very specific kind of mutation which is the only allowed mutations to branches.
+ * Trimming removes old ancestry, while compaction combines eligible commits without changing the branch's state.
  * References to commits from other commits are removed so that the commit objects can be GC'd by the JS engine.
  * This happens by changing a commit's parent property to undefined, which drops all commits that are in its "ancestry".
- * It is done as a performance optimization when it is determined that commits are no longer needed for future computation.
+ * Compaction preserves repair-data identities and transfers their cleanup ownership to the surviving revision.
  */
 export interface BranchTrimmingEvents {
 	/**
@@ -121,6 +121,12 @@ export interface BranchTrimmingEvents {
 	 * This happens by deleting the parent pointer to the last commit in that range. This event can be fired at any time.
 	 */
 	ancestryTrimmed(trimmedRevisions: RevisionTag[]): void;
+
+	/**
+	 * Fired after an older commit is composed into a surviving commit.
+	 * Repair data owned by the removed revision must remain available until the surviving revision is trimmed.
+	 */
+	ancestryCompacted(removedRevision: RevisionTag, survivingRevision: RevisionTag): void;
 }
 
 /**
@@ -213,9 +219,16 @@ export class SharedTreeBranch<
 
 		this.unsubscribeBranchTrimmer?.();
 		this.branchTrimmer = branchTrimmer;
-		this.unsubscribeBranchTrimmer = branchTrimmer?.on("ancestryTrimmed", (commit) => {
+		const offTrimmed = branchTrimmer?.on("ancestryTrimmed", (commit) => {
 			this.#events.emit("ancestryTrimmed", commit);
 		});
+		const offCompacted = branchTrimmer?.on("ancestryCompacted", (removed, surviving) => {
+			this.#events.emit("ancestryCompacted", removed, surviving);
+		});
+		this.unsubscribeBranchTrimmer = () => {
+			offTrimmed?.();
+			offCompacted?.();
+		};
 	}
 
 	/**

@@ -7,7 +7,11 @@ import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 
 import type { ICodecFamily, IJsonCodec } from "../../codec/index.js";
 import type { SchemaAndPolicy } from "../../core/index.js";
-import type { IdentifierHealingConfig, JsonCompatibleReadOnly } from "../../util/index.js";
+import type {
+	IdentifierHealingConfig,
+	JsonCompatibleReadOnly,
+	HistoryTraceSink,
+} from "../../util/index.js";
 import type { ChangeRebaser, RevisionTag, TaggedChange } from "../rebase/index.js";
 
 export type ProcessChangeFn<TChange, TChangeProcessingContext> =
@@ -51,6 +55,10 @@ export interface ChangeFamily<
 }
 
 export interface ChangeEncodingContext {
+	/**
+	 * Optional content-free diagnostics, never serialized or required for codec behavior.
+	 */
+	readonly historyTrace?: HistoryTraceSink;
 	readonly originatorId: SessionId;
 	readonly revision: RevisionTag | undefined;
 	readonly idCompressor: IIdCompressor;

@@ -440,6 +440,36 @@ describe("DetachedFieldIndex methods", () => {
 		assert.doesNotThrow(() => detachedIndex.deleteRootsLastTouchedByRevision(revisionTag1));
 	});
 
+	it("transfers cleanup ownership for all roots without changing their identities", () => {
+		const index = makeDetachedFieldIndex();
+		const removed = mintRevisionTag();
+		const surviving = mintRevisionTag();
+		const other = mintRevisionTag();
+		const first = makeDetachedNodeId(removed, 0);
+		const second = makeDetachedNodeId(surviving, 0);
+		const unrelated = makeDetachedNodeId(other, 0);
+		const firstRoot = index.createEntry(first, removed, 2);
+		const secondRoot = index.createEntry(second, surviving);
+		const unrelatedRoot = index.createEntry(unrelated, other);
+		index.updateLatestRevisionForRoots(removed, surviving);
+		index.updateLatestRevisionForRoots(surviving, surviving);
+		assert.equal(index.getEntry(first), firstRoot);
+		assert.equal(index.getEntry(makeDetachedNodeId(removed, 1)), firstRoot + 1);
+		assert.equal(index.getEntry(second), secondRoot);
+		assert.deepEqual([...index.getRootsLastTouchedByRevision(removed)], []);
+		assert.deepEqual(
+			new Set(index.getRootsLastTouchedByRevision(surviving)),
+			new Set([firstRoot, firstRoot + 1, secondRoot]),
+		);
+		index.deleteRootsLastTouchedByRevision(removed);
+		assert.equal(index.getEntry(first), firstRoot);
+		index.deleteRootsLastTouchedByRevision(surviving);
+		assert.deepEqual(
+			[...index.entries()],
+			[{ id: unrelated, root: unrelatedRoot, latestRelevantRevision: other }],
+		);
+	});
+
 	it("deleteEntry removes single entry, and throws if entry does not exist", () => {
 		const detachedIndex = makeDetachedFieldIndex();
 

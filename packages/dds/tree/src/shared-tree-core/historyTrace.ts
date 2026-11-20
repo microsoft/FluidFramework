@@ -9,7 +9,11 @@ import {
 	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-type TraceProperties = Readonly<Record<string, string | number | boolean | undefined>>;
+import { pkgVersion } from "../packageVersion.js";
+import type {
+	HistoryTraceProperties as TraceProperties,
+	HistoryTraceSink,
+} from "../util/index.js";
 
 /**
  * Opt-in, content-free diagnostics for local history debugging.
@@ -20,6 +24,7 @@ type TraceProperties = Readonly<Record<string, string | number | boolean | undef
 export class HistoryTrace {
 	private operationId = 0;
 	private eventSequence = 0;
+	private context: TraceProperties = {};
 
 	private constructor(
 		private readonly logger: TelemetryLoggerExt,
@@ -49,16 +54,41 @@ export class HistoryTrace {
 		return ++this.operationId;
 	}
 
+	/**
+	 * Binds child diagnostics to the enclosing history operation.
+	 */
+	public scoped(properties: TraceProperties): HistoryTraceSink {
+		return {
+			record: (activity, details) => this.record(activity, { ...properties, ...details }),
+		};
+	}
+
+	/**
+	 * Carries correlation through synchronous summary generation and restores it on every exit.
+	 */
+	public runWithContext<T>(properties: TraceProperties, action: () => T): T {
+		const previous = this.context;
+		this.context = { ...previous, ...properties };
+		try {
+			return action();
+		} finally {
+			this.context = previous;
+		}
+	}
+
 	public record(activity: string, properties?: TraceProperties): void {
 		try {
 			this.logger.sendTelemetryEvent(
 				{
 					eventName: "HistoryTrace",
+					...this.context,
 					...properties,
 					activity,
 					treeId: this.treeId,
 					sessionId: this.sessionId,
 					isSummarizer: this.isSummarizer(),
+					treePackageVersion: pkgVersion,
+					revisionRemapMaxIdTracking: true,
 					eventSequence: ++this.eventSequence,
 				},
 				undefined,

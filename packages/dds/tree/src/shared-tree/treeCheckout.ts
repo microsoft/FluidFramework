@@ -125,6 +125,8 @@ import {
 	getOrCreate,
 	hasSome,
 	throwIfBroken,
+	recordHistoryTrace,
+	type HistoryTraceSink,
 	type JsonCompatibleReadOnly,
 	type JsonCompatibleReadOnlyObject,
 	type WithBreakable,
@@ -396,6 +398,7 @@ export function createTreeCheckout(
 		 * Providing a newer finalized ancestor can enable optimizations that depend on finalized history.
 		 */
 		getFinalizedCommit?: () => GraphCommit<SharedTreeChange>;
+		historyTrace?: HistoryTraceSink;
 	},
 ): TreeCheckout {
 	const schema = args?.schema ?? new TreeStoredSchemaRepository();
@@ -444,6 +447,7 @@ export function createTreeCheckout(
 		removedRoots: args?.removedRoots,
 		disposeForksAfterTransaction: true,
 		getFinalizedCommit: args?.getFinalizedCommit,
+		historyTrace: args?.historyTrace,
 	});
 }
 
@@ -551,6 +555,10 @@ export function assertValidConstraint(
  */
 export interface TreeCheckoutOptions {
 	/**
+	 * Optional content-free diagnostics shared with the owning tree and its forks.
+	 */
+	readonly historyTrace?: HistoryTraceSink;
+	/**
 	 * The branch whose changes are applied to the checkout's stored schema and forest.
 	 */
 	readonly branch: SharedTreeBranch<
@@ -632,6 +640,8 @@ export interface TreeCheckoutOptions {
  * and whether disposing a view also disposes its checkout.
  */
 export abstract class CheckoutBase implements ITreeCheckout {
+	private static nextHistoryReadId = 0;
+	private readonly historyTrace: HistoryTraceSink | undefined;
 	public disposed = false;
 
 	/**
@@ -795,6 +805,7 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		removedRoots = makeDetachedFieldIndex("repair"),
 		disposeForksAfterTransaction = true,
 		getFinalizedCommit,
+		historyTrace,
 	}: TreeCheckoutOptions) {
 		this.branch = branch;
 		this.isSharedBranch = isSharedBranch;
@@ -808,6 +819,7 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		this._removedRoots = removedRoots;
 		this.disposeForksAfterTransaction = disposeForksAfterTransaction;
 		this.getFinalizedCommitOverride = getFinalizedCommit;
+		this.historyTrace = historyTrace;
 		this.serializedChangeCodec = makeSerializedChangeCodec(
 			this.changeFamily,
 			this.jsonValidator,
@@ -842,6 +854,7 @@ export abstract class CheckoutBase implements ITreeCheckout {
 						return undefined;
 					}
 					const path = pathResult.commitsToUndo;
+					const pathChanges = path.map((commit) => commit.change);
 					let wasUsed = false;
 					return (options) => {
 						if (wasUsed) {
@@ -854,7 +867,10 @@ export abstract class CheckoutBase implements ITreeCheckout {
 						if (
 							!canRevert() ||
 							this.#transaction.branch.getHead() !== head ||
-							path.some((commit) => commit.wasTrimmed)
+							path.some(
+								(commit, index) =>
+									commit.wasTrimmed === true || commit.change !== pathChanges[index],
+							)
 						) {
 							throw new UsageError(
 								"The target branch has changed since `revertTo` was requested. Avoid retaining references directly to the `revertTo` property.",
@@ -1030,6 +1046,7 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		this.#transaction.branch.events.on("commitSequenced", this.onCommitSequenced);
 		this.#transaction.activeBranchEvents.on("afterChange", this.onAfterChange);
 		this.#transaction.activeBranchEvents.on("ancestryTrimmed", this.onAncestryTrimmed);
+		this.#transaction.activeBranchEvents.on("ancestryCompacted", this.onAncestryCompacted);
 	}
 
 	private unregisterFromBranchEvents(): void {
@@ -1037,6 +1054,7 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		this.#transaction.branch.events.off("commitSequenced", this.onCommitSequenced);
 		this.#transaction.activeBranchEvents.off("afterChange", this.onAfterChange);
 		this.#transaction.activeBranchEvents.off("ancestryTrimmed", this.onAncestryTrimmed);
+		this.#transaction.activeBranchEvents.off("ancestryCompacted", this.onAncestryCompacted);
 	}
 
 	private createTransactionStack(
@@ -1449,13 +1467,17 @@ export abstract class CheckoutBase implements ITreeCheckout {
 	// #endregion UntypedTreeViewAlpha
 
 	// Revision is the revision of the commit, if any, which caused this change.
-	private applyInternalChange(change: SharedTreeChange, revision?: RevisionTag): void {
+	private applyInternalChange(
+		change: SharedTreeChange,
+		revision?: RevisionTag,
+		historyTrace?: HistoryTraceSink,
+	): void {
 		// Conflicts due to schema will be empty and thus are not applied.
 		for (const innerChange of change.changes) {
 			if (innerChange.type === "data") {
 				const delta = intoDelta(tagChange(innerChange.innerChange, revision));
 				this.withCombinedVisitor((visitor) => {
-					visitDelta(delta, visitor, this._removedRoots, revision);
+					visitDelta(delta, visitor, this._removedRoots, revision, historyTrace);
 				});
 			} else if (innerChange.type === "schema") {
 				// Schema changes from a current to a new schema are expected to be backwards compatible.
@@ -1494,6 +1516,13 @@ export abstract class CheckoutBase implements ITreeCheckout {
 			}
 		}
 	}
+
+	private readonly onAncestryCompacted = (
+		removed: RevisionTag,
+		surviving: RevisionTag,
+	): void => {
+		this._removedRoots.updateLatestRevisionForRoots(removed, surviving);
+	};
 
 	private readonly onAncestryTrimmed = (revisions: RevisionTag[]): void => {
 		// When the branch is trimmed, we can garbage collect any repair data whose latest relevant revision is one of the
@@ -1771,6 +1800,7 @@ export abstract class CheckoutBase implements ITreeCheckout {
 			idCompressor: this.idCompressor,
 			jsonValidator: this.jsonValidator,
 			removedRoots: this._removedRoots.clone(),
+			historyTrace: this.historyTrace,
 		});
 		this.#events.emit("fork", checkout);
 		return checkout;
@@ -1797,26 +1827,57 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		>,
 	): void {
 		this.checkCanSwitchBranch();
-		const diff = diffHistories(
-			this.changeFamily.rebaser,
-			this.#transaction.branch.getHead(),
-			branch.getHead(),
-			this.mintRevisionTag,
-		);
+		const sourceRevision = this.#transaction.branch.getHead().revision;
+		const targetRevision = branch.getHead().revision;
+		const historyReadId =
+			this.historyTrace === undefined ? undefined : ++CheckoutBase.nextHistoryReadId;
+		const historyTrace: HistoryTraceSink | undefined =
+			this.historyTrace === undefined
+				? undefined
+				: {
+						record: (activity, properties) =>
+							recordHistoryTrace(this.historyTrace, activity, {
+								...properties,
+								historyReadId,
+								sourceRevisionTag: sourceRevision,
+								targetRevisionTag: targetRevision,
+								targetRevision:
+									targetRevision === "root"
+										? "root"
+										: this.idCompressor.decompress(targetRevision),
+							}),
+					};
+		let stage = "diffHistories";
+		recordHistoryTrace(historyTrace, "HistoryRewindStarted");
+		try {
+			const diff = diffHistories(
+				this.changeFamily.rebaser,
+				this.#transaction.branch.getHead(),
+				branch.getHead(),
+				this.mintRevisionTag,
+			);
 
-		this.unregisterFromBranchEvents();
+			stage = "switchBranch";
+			this.unregisterFromBranchEvents();
 
-		this.#transaction = this.createTransactionStack(branch);
-		this.branch = branch;
-		this._branchHistory = undefined;
-		this.disposeLocations();
-		this.locationRevisionSource = undefined;
-		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
-		this.registerForBranchEvents();
+			this.#transaction = this.createTransactionStack(branch);
+			this.branch = branch;
+			this._branchHistory = undefined;
+			this.disposeLocations();
+			this.locationRevisionSource = undefined;
+			this.editLock = new EditLock(this.#transaction.activeBranchEditor);
+			this.registerForBranchEvents();
 
-		// TODO: Rework eventing
-		this.applyInternalChange(diff);
-		this.#events.emit("afterBatch");
+			// TODO: Rework eventing
+			stage = "applyInternalChange";
+			this.applyInternalChange(diff, undefined, historyTrace);
+			stage = "afterBatch";
+			this.#events.emit("afterBatch");
+			recordHistoryTrace(historyTrace, "HistoryRewindCompleted");
+		} catch (error: unknown) {
+			recordHistoryTrace(historyTrace, "HistoryRewindFailed", { stage });
+			throw error;
+		}
 	}
 
 	protected rewindToInternal(

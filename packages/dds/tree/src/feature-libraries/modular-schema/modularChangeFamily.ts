@@ -61,6 +61,8 @@ import {
 	balancedReduce,
 	type RangeMapEntry,
 	type RangeQueryResult,
+	recordHistoryTrace,
+	type HistoryTraceSink,
 } from "../../util/index.js";
 import {
 	getFromChangeAtomIdMap,
@@ -1511,11 +1513,29 @@ export class ModularChangeFamily
 
 	public changeRevision(
 		change: ModularChangeset,
-		replacer: RevisionReplacer,
+		revisionReplacer: RevisionReplacer,
+		historyTrace?: HistoryTraceSink,
 	): ModularChangeset {
 		strictRebaseValidation("Malformed changeRevision input", () =>
 			isChangesetValid(change, this.fieldKinds),
 		);
+
+		let maxId = change.maxId;
+		let remappedRangeCount = 0;
+		let highestRemappedId: number | undefined;
+		const replacer: RevisionReplacer = {
+			updatedRevision: revisionReplacer.updatedRevision,
+			isObsolete: (revision) => revisionReplacer.isObsolete(revision),
+			getUpdatedAtomId: (id, count = 1) => {
+				const updatedId = revisionReplacer.getUpdatedAtomId(id, count);
+				if (updatedId.localId !== id.localId) {
+					remappedRangeCount++;
+					highestRemappedId = Math.max(highestRemappedId ?? -1, updatedId.localId + count - 1);
+					maxId = brand(Math.max(maxId ?? -1, updatedId.localId + count - 1));
+				}
+				return updatedId;
+			},
+		};
 
 		const updatedFields = this.replaceFieldMapRevisions(change.fieldChanges, replacer);
 		const updatedNodes = replaceIdMapRevisions(change.nodeChanges, replacer, (nodeChangeset) =>
@@ -1560,6 +1580,17 @@ export class ModularChangeFamily
 		}
 
 		updated.revisions = [{ revision: replacer.updatedRevision }];
+		// Decoders must allocate temporary IDs above any IDs allocated by revision replacement.
+		if (maxId !== undefined) {
+			updated.maxId = maxId;
+		}
+		recordHistoryTrace(historyTrace, "RevisionReplacementIds", {
+			inputMaxId: change.maxId,
+			outputMaxId: updated.maxId,
+			highestRemappedId,
+			remappedRangeCount,
+			stage: "revisionReplacement",
+		});
 
 		strictRebaseValidation("Malformed changeRevision output", () =>
 			isChangesetValid(updated, this.fieldKinds),

@@ -100,6 +100,7 @@ import {
 	normalizeFieldId,
 } from "./modularChangeUtils.js";
 import { areDeltaEquivalent } from "./modularChangeDelta.js";
+import { recordHistoryTrace, type HistoryTraceProperties } from "../../util/index.js";
 
 type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,
@@ -257,13 +258,50 @@ function decodeFieldChangesFromJson(
 				firstIntermediateRename,
 				doesChangeDetachRoot,
 			): void => {
-				addNodeRename(
-					decodedRootTable,
-					oldId,
-					newId,
-					count,
-					doesChangeDetachRoot ? undefined : fieldId,
-				);
+				try {
+					addNodeRename(
+						decodedRootTable,
+						oldId,
+						newId,
+						count,
+						doesChangeDetachRoot ? undefined : fieldId,
+					);
+				} catch (error: unknown) {
+					if (context.historyTrace !== undefined && !areEqualChangeAtomIds(oldId, newId)) {
+						for (const [direction, source, destination, table] of [
+							["oldToNew", oldId, newId, decodedRootTable.oldToNewId],
+							["newToOld", newId, oldId, decodedRootTable.newToOldId],
+						] as const) {
+							const conflict = table
+								.getAll(source, count)
+								.find(
+									(entry) =>
+										entry.value !== undefined &&
+										!areEqualChangeAtomIds(
+											entry.value,
+											offsetChangeAtomId(destination, entry.offset),
+										),
+								);
+							if (conflict !== undefined) {
+								recordHistoryTrace(context.historyTrace, "HistoryRenameConflict", {
+									stage: "decodeRootRename",
+									direction,
+									rangeLength: count,
+									conflictOffset: conflict.offset,
+									sourceLocalId: source.localId,
+									sourceRevisionTag: source.revision,
+									attemptedDestinationLocalId: destination.localId + conflict.offset,
+									attemptedDestinationRevisionTag: destination.revision,
+									existingDestinationLocalId: conflict.value?.localId,
+									existingDestinationRevisionTag: conflict.value?.revision,
+									destinationRevisionMatches:
+										conflict.value?.revision === destination.revision,
+								});
+							}
+						}
+					}
+					throw error;
+				}
 
 				if (
 					firstIntermediateRename !== undefined &&
@@ -831,7 +869,7 @@ function getOrAddInFieldRootMap(map: FieldRootMap, fieldId: FieldId): FieldRootC
 
 export function decodeChange(
 	encodedChange: EncodedModularChangesetV1,
-	context: ChangeDecodingContext,
+	decodingContext: ChangeDecodingContext,
 	fieldKinds: FieldKindConfiguration,
 	fieldChangesetCodecs: Map<
 		FieldKindIdentifier,
@@ -847,8 +885,29 @@ export function decodeChange(
 	>,
 	fieldsCodec: FieldBatchCodec,
 	chunkCompressionStrategy: TreeCompressionStrategy,
+	codec: "modularV1" | "modularV2" = "modularV1",
 ): Mutable<ModularChangeset> {
+	const context =
+		decodingContext.historyTrace === undefined
+			? decodingContext
+			: {
+					...decodingContext,
+					historyTrace: {
+						record: (activity: string, properties?: HistoryTraceProperties) =>
+							recordHistoryTrace(decodingContext.historyTrace, activity, {
+								...properties,
+								encodedMaxId: encodedChange.maxId,
+								temporaryIdStart: (encodedChange.maxId ?? -1) + 1,
+								codec,
+							}),
+					},
+				};
 	const idAllocator = idAllocatorFromMaxId(encodedChange.maxId);
+	recordHistoryTrace(context.historyTrace, "HistoryDecodeAllocationStarted", {
+		encodedMaxId: encodedChange.maxId,
+		temporaryIdStart: (encodedChange.maxId ?? -1) + 1,
+		isSummary: context.isSummary,
+	});
 	const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newChangeAtomIdBTree();
 	const nodeToParent: ChangeAtomIdBTree<NodeLocation> = newChangeAtomIdBTree();
 	const crossFieldKeys: CrossFieldKeyTable = newCrossFieldRangeTable();
@@ -937,6 +996,11 @@ export function decodeChange(
 	}
 
 	const maxId = idAllocator.getMaxId();
+	recordHistoryTrace(context.historyTrace, "HistoryDecodeAllocationCompleted", {
+		encodedMaxId: encodedChange.maxId,
+		decodedMaxId: maxId,
+		temporaryIdCount: maxId - (encodedChange.maxId ?? -1),
+	});
 	if (maxId >= 0) {
 		decoded.maxId = brand(maxId);
 	}

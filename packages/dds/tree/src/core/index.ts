@@ -229,6 +229,7 @@ export {
 	StableIdSchema,
 	subtractChangeAtomIds,
 	replaceChange,
+	replaceChangeInPlace,
 	type RebaseStats,
 	type RebaseStatsWithDuration,
 	isAncestor,

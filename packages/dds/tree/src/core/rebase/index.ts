@@ -70,6 +70,7 @@ export {
 	type RebaseStats,
 	type RebaseStatsWithDuration,
 	replaceChange,
+	replaceChangeInPlace,
 	isAncestor,
 	diffHistories,
 } from "./utils.js";

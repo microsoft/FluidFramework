@@ -210,6 +210,7 @@ function makeSharedTreeChangeCodec(
 								idCompressor: context.idCompressor,
 								revision: context.revision,
 								isSummary: context.isSummary,
+								historyTrace: context.historyTrace,
 							}),
 						});
 					} else if (decodedChange.type === "schema") {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { createEmitter } from "@fluid-internal/client-utils";
+import { createEmitter, performanceNow } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
@@ -19,16 +19,23 @@ import {
 	type ChangeFamilyEditor,
 	CommitKind,
 	type CustomMetadataTree,
-	type RevisionReplacer,
 	type GraphCommit,
 	type RevisionTag,
 	findAncestor,
 	findCommonAncestor,
 	mintCommit,
+	replaceChangeInPlace,
 	type RebaseStatsWithDuration,
 	tagChange,
 } from "../core/index.js";
-import { type Mutable, brand, getOrCreate, mapIterable } from "../util/index.js";
+import {
+	type Mutable,
+	brand,
+	getOrCreate,
+	mapIterable,
+	recordHistoryTrace,
+	type HistoryTraceSink,
+} from "../util/index.js";
 
 import {
 	SharedTreeBranch,
@@ -124,6 +131,12 @@ export class EditManager<
 	 */
 	private historyRetention: boolean | number = false;
 
+	private nextRetainedForkId = 0;
+	private readonly retainedForks = new Map<
+		SharedTreeBranch<TEditor, TChangeset, TChangeProcessingContext>,
+		{ forkId: number; createdAt: number }
+	>();
+
 	/**
 	 * A special commit that is a "base" (tail) of the trunk, though not part of the trunk itself.
 	 * This makes it possible to model the trunk in the same way as any other branch (it branches off of a base commit)
@@ -141,14 +154,18 @@ export class EditManager<
 	 * @param localSessionId - the id of the local session that will be used for local commits
 	 * @param mintRevisionTag - a function which generates globally unique revision tags
 	 * @param onSharedBranchCreated - called when a new shared branch is created. This is not called for the main branch.
+	 * @param treeId - Tree identifier used to correlate content-free fork lifecycle events.
+	 * @param getIsSummarizerClient - Supplies the current client role for fork lifecycle telemetry.
 	 */
 	public constructor(
 		public readonly changeFamily: ChangeFamily<TEditor, TChangeset, TChangeProcessingContext>,
 		public readonly localSessionId: SessionId,
 		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly onSharedBranchCreated?: (branchId: BranchId) => void,
-		logger?: TelemetryLoggerExt,
+		private readonly logger?: TelemetryLoggerExt,
 		private readonly historyTrace?: HistoryTrace,
+		private readonly treeId?: string,
+		private readonly getIsSummarizerClient: () => boolean = () => false,
 	) {
 		this.trunkBase = {
 			revision: rootRevision,
@@ -297,6 +314,10 @@ export class EditManager<
 	private registerBranch(
 		branch: SharedTreeBranch<TEditor, TChangeset, TChangeProcessingContext>,
 	): void {
+		const fork = { forkId: ++this.nextRetainedForkId, createdAt: performanceNow() };
+		this.retainedForks.set(branch, fork);
+		this.recordForkLifecycle("HistoryForkCreated", fork.forkId);
+		this.historyTrace?.record("ForkCreated", { forkId: fork.forkId, purpose: "unknown" });
 		this.trackBranch(branch);
 		// Whenever the branch is rebased, update our record of its base trunk commit
 		const offBeforeRebase = branch.events.on("beforeChange", (args) => {
@@ -313,11 +334,42 @@ export class EditManager<
 		// When the branch is disposed, update our branch set and trim the trunk
 		const offDispose = branch.events.on("dispose", () => {
 			this.untrackBranch(branch);
+			this.retainedForks.delete(branch);
+			this.recordForkLifecycle(
+				"HistoryForkDisposed",
+				fork.forkId,
+				performanceNow() - fork.createdAt,
+			);
+			this.historyTrace?.record("ForkDisposed", {
+				forkId: fork.forkId,
+				purpose: "unknown",
+				lifetimeMs: performanceNow() - fork.createdAt,
+			});
 			this.trimHistory("forkDisposed");
 			offBeforeRebase();
 			offAfterRebase();
 			offDispose();
 		});
+	}
+
+	/**
+	 * Reports registration and disposal without allowing diagnostic failures to interrupt branch lifecycle.
+	 */
+	private recordForkLifecycle(eventName: string, forkId: number, lifetimeMs?: number): void {
+		try {
+			this.logger?.sendTelemetryEvent({
+				eventName,
+				treeId: this.treeId,
+				sessionId: this.localSessionId,
+				isSummarizer: this.getIsSummarizerClient(),
+				forkId,
+				purpose: "unknown",
+				activeForkCount: this.retainedForks.size,
+				lifetimeMs,
+			});
+		} catch {
+			// Diagnostic sinks must not prevent fork registration or disposal.
+		}
 	}
 
 	private trackBranch(
@@ -333,6 +385,7 @@ export class EditManager<
 		assert(!branches.has(b), 0x670 /* Branch was registered more than once */);
 		branches.add(b);
 		this.historyTrace?.record("ForkTracked", {
+			forkId: this.retainedForks.get(b)?.forkId,
 			baseSequenceNumber: sequenceId.sequenceNumber,
 			baseIndexInBatch: sequenceId.indexInBatch,
 		});
@@ -354,6 +407,7 @@ export class EditManager<
 			this.trunkBranches.delete(sequenceId);
 		}
 		this.historyTrace?.record("ForkUntracked", {
+			forkId: this.retainedForks.get(b)?.forkId,
 			baseSequenceNumber: sequenceId.sequenceNumber,
 			baseIndexInBatch: sequenceId.indexInBatch,
 		});
@@ -553,7 +607,6 @@ export class EditManager<
 	 * When it returns `true` or a metadata tree, `target` is updated in place to contain the composition of both changes and `current` is removed from the history.
 	 * A returned metadata tree replaces the metadata of both commits; `true` keeps the metadata of both (see {@link SharedBranch.composeTrunkCommits}).
 	 * The next pair considered is then the composed `target` and its child, which lets a run of approvals compose more than two commits.
-	 * @param createRevisionReplacer - Creates the replacer used to give each composed change the single revision of `target`.
 	 * @param onCommitCompacted - Called after each completed composition, including those before a later failure.
 	 * @param stats - If provided, filled in with statistics about the pass, including those before a later failure.
 	 * @returns The number of commits removed from the history.
@@ -576,28 +629,86 @@ export class EditManager<
 			current: GraphCommit<TChangeset>,
 			target: GraphCommit<TChangeset>,
 		) => boolean | CustomMetadataTree,
-		createRevisionReplacer: RevisionReplacerFactory,
 		onCommitCompacted?: () => void,
 		stats?: HistoryCompactionStats,
 		operationId?: number,
 	): number {
+		if (stats !== undefined) {
+			stats.failureStage = "eligibility";
+		}
 		const mainBranch = this.getSharedBranch("main");
-		const correctnessBound = minSequenceId(
-			this.getUpperTrimmingBoundForMinimumSequenceNumber(),
-			this.getUpperTrimmingBoundForLocalForks(),
-		);
+		const collaborationBound = this.getUpperTrimmingBoundForMinimumSequenceNumber();
+		const localForkBound = this.getUpperTrimmingBoundForLocalForks();
+		const correctnessBound = minSequenceId(collaborationBound, localForkBound);
+		const sequencedCommitCount = mainBranch.sequenceIdToCommit.size - 1;
+		const forkBase = this.trunkBranches.minKey();
+		const head = mainBranch.sequenceIdToCommit.maxKey() ?? minimumPossibleSequenceId;
+		const comparison = sequenceIdComparator(localForkBound, collaborationBound);
+		const limitingBoundary =
+			sequencedCommitCount === 0
+				? "noRetainedHistory"
+				: sequenceIdComparator(correctnessBound, head) >= 0
+					? "none"
+					: forkBase === undefined || comparison > 0
+						? "collaboration"
+						: comparison < 0
+							? "localFork"
+							: "both";
+		if (stats !== undefined) {
+			stats.sequencedCommitCount = sequencedCommitCount;
+			stats.unsequencedCommitCount = this.getLocalCommits("main").length;
+			stats.retainedCommitCount = sequencedCommitCount + stats.unsequencedCommitCount;
+			stats.limitingBoundary = limitingBoundary;
+			stats.collaborationBoundSequenceNumber = collaborationBound.sequenceNumber;
+			stats.collaborationBoundIndexInBatch = "endOfBatch";
+			stats.localForkBoundSequenceNumber = localForkBound.sequenceNumber;
+			stats.localForkBoundIndexInBatch =
+				localForkBound.indexInBatch === Number.POSITIVE_INFINITY
+					? "endOfBatch"
+					: (localForkBound.indexInBatch ?? 0);
+			stats.activeForkCount = this.retainedForks.size;
+			stats.oldestForkBaseSequenceNumber = forkBase?.sequenceNumber;
+			stats.oldestForkBaseIndexInBatch =
+				forkBase?.indexInBatch ?? (forkBase === undefined ? undefined : 0);
+			let oldestBlockingFork: { forkId: number; createdAt: number } | undefined;
+			for (const branch of forkBase === undefined
+				? []
+				: (this.trunkBranches.get(forkBase) ?? [])) {
+				const fork = this.retainedForks.get(branch);
+				if (
+					fork !== undefined &&
+					(oldestBlockingFork === undefined || fork.createdAt < oldestBlockingFork.createdAt)
+				) {
+					oldestBlockingFork = fork;
+				}
+			}
+			stats.oldestBlockingForkId = oldestBlockingFork?.forkId;
+			stats.oldestBlockingForkAgeMs =
+				oldestBlockingFork === undefined
+					? undefined
+					: performanceNow() - oldestBlockingFork.createdAt;
+			stats.collaborationBoundLag = Math.max(
+				0,
+				head.sequenceNumber - collaborationBound.sequenceNumber,
+			);
+		}
 		const newestEligible = mainBranch.sequenceIdToCommit.getPairOrNextLower(correctnessBound);
 		if (newestEligible === undefined) {
 			this.historyTrace?.record("CompactionEligibility", {
 				operationId,
 				eligibleCommitCount: 0,
 				minimumSequenceNumber: this.minimumSequenceNumber,
-				reason: "noEligibleHistory",
+				...stats,
+				limitingBoundary,
 			});
 			return 0;
 		}
 
 		const eligible = getPathFromBase(newestEligible[1], this.trunkBase);
+		if (stats !== undefined) {
+			stats.eligibleCommitCount = eligible.length;
+			stats.eligiblePairCount = Math.max(0, eligible.length - 1);
+		}
 		this.historyTrace?.record("CompactionEligibility", {
 			operationId,
 			eligibleCommitCount: eligible.length,
@@ -605,11 +716,9 @@ export class EditManager<
 			upperSequenceNumber: correctnessBound.sequenceNumber,
 			upperIndexInBatch: correctnessBound.indexInBatch,
 			forkBaseSequenceNumber: this.trunkBranches.minKey()?.sequenceNumber,
+			...stats,
+			limitingBoundary,
 		});
-		if (stats !== undefined) {
-			stats.eligibleCommitCount = eligible.length;
-			stats.eligiblePairCount = Math.max(0, eligible.length - 1);
-		}
 		let removedCount = 0;
 		let peersRebased = false;
 		for (let index = 1; index < eligible.length; index++) {
@@ -643,6 +752,9 @@ export class EditManager<
 				});
 				continue;
 			}
+			if (stats !== undefined) {
+				stats.failureStage = "policy";
+			}
 			const decision = canCompact(current, target);
 			this.historyTrace?.record("CompactionPairDecision", {
 				operationId,
@@ -652,6 +764,9 @@ export class EditManager<
 			});
 			if (decision !== false) {
 				if (!peersRebased) {
+					if (stats !== undefined) {
+						stats.failureStage = "peerRebase";
+					}
 					// A peer branch may be based on (or contain) a commit that is about to be composed away.
 					// Every peer has seen the newest eligible commit (it is within the minimum sequence number bound),
 					// so rebasing peers onto it removes their references to the commits that compaction removes.
@@ -665,12 +780,16 @@ export class EditManager<
 						stats.peerBranchCount = mainBranch.getPeerBranchCount();
 					}
 				}
+				if (stats !== undefined) {
+					stats.failureStage = "composition";
+				}
 				mainBranch.composeTrunkCommits(
 					current,
 					target,
-					createRevisionReplacer,
 					decision === true ? undefined : decision,
+					this.historyTrace?.scoped({ operationId, pairIndex: index }),
 				);
+				this.trimmer.emit("ancestryCompacted", current.revision, target.revision);
 				removedCount++;
 				this.historyTrace?.record("CompactionPairMerged", {
 					operationId,
@@ -1063,6 +1182,54 @@ export class EditManager<
  */
 export interface HistoryCompactionStats {
 	/**
+	 * Available main-branch commits, excluding the trimmed base, when the pass starts.
+	 */
+	retainedCommitCount: number;
+	/**
+	 * Sequenced main-branch commits, including those protected by correctness bounds.
+	 */
+	sequencedCommitCount: number;
+	/**
+	 * Local main-branch commits not yet sequenced.
+	 */
+	unsequencedCommitCount: number;
+	/**
+	 * The bound that excludes available sequenced history, or why no bound is needed.
+	 */
+	limitingBoundary: "localFork" | "collaboration" | "both" | "noRetainedHistory" | "none";
+	/**
+	 * Inclusive collaboration upper bound, in sequence-number and batch coordinates.
+	 */
+	collaborationBoundSequenceNumber?: number;
+	collaborationBoundIndexInBatch?: number | "endOfBatch";
+	/**
+	 * Inclusive registered-fork upper bound, in sequence-number and batch coordinates.
+	 */
+	localForkBoundSequenceNumber?: number;
+	localForkBoundIndexInBatch?: number | "endOfBatch";
+	/**
+	 * Registered branches, excluding the main local branch and remote peer branches.
+	 */
+	activeForkCount: number;
+	/**
+	 * Oldest registered fork base, in sequence-number and batch coordinates.
+	 */
+	oldestForkBaseSequenceNumber?: number;
+	oldestForkBaseIndexInBatch?: number;
+	/**
+	 * Trace identifier and age of the longest-lived fork at the oldest base.
+	 */
+	oldestBlockingForkId?: number;
+	oldestBlockingForkAgeMs?: number;
+	/**
+	 * Sequence-number distance from the latest trunk commit to the collaboration bound.
+	 */
+	collaborationBoundLag: number;
+	/**
+	 * Last engine stage entered; only emitted as a failure stage if the pass fails.
+	 */
+	failureStage?: "eligibility" | "policy" | "peerRebase" | "composition";
+	/**
 	 * The number of trunk commits eligible for compaction when the pass started.
 	 */
 	eligibleCommitCount: number;
@@ -1085,6 +1252,12 @@ export interface HistoryCompactionStats {
  */
 export function createHistoryCompactionStats(): HistoryCompactionStats {
 	return {
+		retainedCommitCount: 0,
+		sequencedCommitCount: 0,
+		unsequencedCommitCount: 0,
+		limitingBoundary: "noRetainedHistory",
+		activeForkCount: 0,
+		collaborationBoundLag: 0,
 		eligibleCommitCount: 0,
 		eligiblePairCount: 0,
 		preservedPairCount: 0,
@@ -1383,15 +1556,15 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 	 * Composes `current` into its child `target`, removing `current` from this branch's trunk.
 	 * @remarks
 	 * `target` is mutated in place, so that commits which have `target` as their parent remain linked to it.
-	 * It keeps its revision and sequence ID, and its change refers only to that revision.
+	 * It keeps its revision and sequence ID. The composed change preserves its original revision-scoped identities.
 	 * Its metadata becomes `mergedMetadata` if provided.
 	 * Otherwise it becomes the metadata of both commits as siblings, so that flattening the metadata lets `target`'s metadata win where both commits use the same property.
 	 */
 	public composeTrunkCommits(
 		current: GraphCommit<TChangeset>,
 		target: GraphCommit<TChangeset>,
-		createRevisionReplacer: RevisionReplacerFactory,
 		mergedMetadata?: CustomMetadataTree,
+		historyTrace?: HistoryTraceSink,
 	): void {
 		assert(target.parent === current, "Only adjacent commits can be composed");
 		assert(current.parent !== undefined, "The trunk base cannot be composed away");
@@ -1400,15 +1573,34 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 
 		const composed = target as Mutable<GraphCommit<TChangeset>>;
 		const { rebaser } = this.changeFamily;
-		const composedChange = rebaser.compose([
-			tagChange(current.change, current.revision),
-			tagChange(target.change, target.revision),
-		]);
-		// A persisted commit's change may only refer to the commit's own revision, so the composed change is re-tagged with `target`'s revision.
-		composed.change = rebaser.changeRevision(
-			composedChange,
-			createRevisionReplacer(target.revision, new Set([current.revision, target.revision])),
-		);
+		let stage = "composition";
+		recordHistoryTrace(historyTrace, "CompactionCompositionStarted");
+		try {
+			const composedChange = rebaser.compose([
+				tagChange(current.change, current.revision),
+				tagChange(target.change, target.revision),
+			]);
+			recordHistoryTrace(historyTrace, "CompactionCompositionCompleted");
+			stage = "revisionReplacement";
+			recordHistoryTrace(historyTrace, "CompactionRevisionReplacementStarted");
+			// Collapse revision metadata, but keep durable IDs shared with repair data and other branches.
+			replaceChangeInPlace(
+				composed,
+				rebaser.changeRevision(
+					composedChange,
+					{
+						updatedRevision: target.revision,
+						isObsolete: () => false,
+						getUpdatedAtomId: (id) => id,
+					},
+					historyTrace,
+				),
+			);
+			recordHistoryTrace(historyTrace, "CompactionRevisionReplacementCompleted");
+		} catch (error: unknown) {
+			recordHistoryTrace(historyTrace, "CompactionChangeFailed", { stage });
+			throw error;
+		}
 		composed.customMetadata =
 			mergedMetadata ?? composeCustomMetadata(current.customMetadata, target.customMetadata);
 		composed.parent = current.parent;
@@ -1715,14 +1907,6 @@ type OnSequenceCommit<TChangeset> = (
 	sequenceId: SequenceId,
 	prevSequenceId: SequenceId,
 ) => void;
-
-/**
- * Creates a {@link RevisionReplacer} that replaces the `obsolete` revisions with `updated`.
- */
-export type RevisionReplacerFactory = (
-	updated: RevisionTag,
-	obsolete: Set<RevisionTag | undefined>,
-) => RevisionReplacer;
 
 /**
  * Combines the metadata of two composed commits by making them siblings in a new metadata tree.

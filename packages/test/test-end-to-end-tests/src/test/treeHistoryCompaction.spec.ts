@@ -11,10 +11,10 @@ import type {
 	ContainerRuntime,
 	ISummarizer,
 } from "@fluidframework/container-runtime/internal";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { LogLevel, type IFluidHandle } from "@fluidframework/core-interfaces";
 import { delay } from "@fluidframework/core-utils/internal";
 import { SummaryType, type SummaryObject } from "@fluidframework/driver-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { MockLogger, createMockLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
 	DataObjectFactoryType,
 	createSummarizer,
@@ -32,7 +32,11 @@ import {
 	type ITreeAlpha,
 	type TreeBranchCommitMetadata,
 	type TreeBranchHistory,
+	type RevertibleAlpha,
 } from "@fluidframework/tree/alpha";
+
+// eslint-disable-next-line import-x/no-internal-modules -- Reuse the GC summary decoder to verify GC ran.
+import { getGCStateFromSummary } from "./gc/gcTestSummaryUtils.js";
 
 /**
  * End-to-end tests for SharedTree history compaction (`ITreeAlpha.historyCompaction`).
@@ -110,6 +114,85 @@ function makeTestSetup(
  * Derived from its return type because the schema class is defined inside that function.
  */
 type StringArrayView = ReturnType<ReturnType<typeof makeTestSetup>["viewTree"]>;
+
+/**
+ * Test-only inspection of repair identities and refresher keys; not an application API.
+ */
+function inspectRepairData(
+	tree: ITree,
+	selected: ReadonlySet<string>,
+): {
+	removedRootKeys: readonly (readonly unknown[])[];
+	changes: {
+		revision: string;
+		maxId?: number;
+		refresherKeys: readonly (readonly unknown[])[];
+	}[];
+} {
+	interface Commit {
+		revision: number | string;
+		parent?: Commit;
+		change: {
+			changes: readonly {
+				type: string;
+				innerChange: {
+					maxId?: number;
+					refreshers?: { keys(): Iterable<readonly [number | string | undefined, number]> };
+				};
+			}[];
+		};
+	}
+	const { checkout, idCompressor } = (
+		tree as unknown as {
+			kernel: {
+				checkout: {
+					getRemovedRoots(): readonly (readonly unknown[])[];
+					getLocationHead(): Commit;
+				};
+				idCompressor: { decompress(id: number): string };
+			};
+		}
+	).kernel;
+	const changes: {
+		revision: string;
+		maxId?: number;
+		refresherKeys: readonly (readonly unknown[])[];
+	}[] = [];
+	for (
+		let commit: Commit | undefined = checkout.getLocationHead();
+		commit !== undefined;
+		commit = commit.parent
+	) {
+		const revision =
+			typeof commit.revision === "number"
+				? idCompressor.decompress(commit.revision)
+				: commit.revision;
+		if (!selected.has(revision)) {
+			continue;
+		}
+		for (const { type, innerChange } of commit.change.changes) {
+			if (type === "data") {
+				changes.push({
+					revision,
+					maxId: innerChange.maxId,
+					refresherKeys: [...(innerChange.refreshers?.keys() ?? [])].map(([major, minor]) => [
+						typeof major === "number" ? idCompressor.decompress(major) : major,
+						minor,
+					]),
+				});
+			}
+		}
+	}
+	return {
+		removedRootKeys: checkout
+			.getRemovedRoots()
+			.map(([major, minor]) => [
+				typeof major === "number" ? idCompressor.decompress(major) : major,
+				minor,
+			]),
+		changes,
+	};
+}
 
 function historyOf(history: TreeBranchHistory): TreeBranchCommitMetadata[] {
 	const commits: TreeBranchCommitMetadata[] = [];
@@ -239,6 +322,683 @@ describeCompat("SharedTree history compaction", "NoCompat", (getTestObjectProvid
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		// Moving the collaboration window can take many round trips.
 		this.timeout(Math.max(this.timeout(), 30_000));
+	});
+
+	describe("controlled lifecycle matrix", () => {
+		interface LifecycleFailure {
+			stage: string;
+			branch?: string;
+			revision?: string;
+			forkId?: number;
+			treeId?: string;
+			sessionId?: string;
+			error: string;
+		}
+		for (const mode of [
+			"disabled",
+			"summary-only",
+			"manual",
+			"manual with readers",
+		] as const) {
+			it(`compares ${mode} with acknowledged summaries, retained reads and Undo/Redo`, async function () {
+				if (provider.driver.type !== "local") {
+					this.skip();
+				}
+				this.timeout(60_000);
+				const logger = createMockLoggerExt(LogLevel.verbose);
+				let lifecycleStage = "setup";
+				let diagnosticWritten = false;
+				let firstFailure: LifecycleFailure | undefined;
+				try {
+					const policy: CanCompactCommit = ({ current, target }) =>
+						current.custom?.group === "deletions" && target.custom?.group === "deletions";
+					const setup = makeTestSetup(apis, mode === "summary-only" ? policy : undefined);
+					const config: ITestContainerConfig = {
+						...setup.testContainerConfig,
+						loaderProps: {
+							logger,
+							configProvider: {
+								getRawConfig: (name) =>
+									name === "Fluid.SharedTree.HistoryDebugTrace" ? true : undefined,
+							},
+						},
+					};
+					const summarizerConfig = {
+						...config,
+						runtimeOptions: setup.summarizerContainerConfig.runtimeOptions,
+					};
+					const container = await provider.makeTestContainer(config);
+					const tree = await getTree(container);
+					const view = setup.viewTree(tree);
+					view.initialize(["a", "b", "c"]);
+					await provider.ensureSynchronized();
+					const initialRevision = view.branchHistory.getHead()?.revision ?? assert.fail();
+					const { summarizer } = await createSummarizer(
+						provider,
+						container,
+						summarizerConfig,
+						undefined,
+						logger,
+					);
+					const summarizerTree = await getSummarizerTree(summarizer);
+					const summarizerView = setup.viewTree(summarizerTree);
+
+					lifecycleStage = "workload";
+					view.runTransaction(() => view.root.removeAt(0), {
+						customMetadata: { group: "deletions" },
+					});
+					const removedRevision = view.branchHistory.getHead()?.revision ?? assert.fail();
+					view.runTransaction(() => view.root.removeAt(0), {
+						customMetadata: { group: "deletions" },
+					});
+					const survivorRevision = view.branchHistory.getHead()?.revision ?? assert.fail();
+					view.root.insertAtEnd("x");
+					const preview = mode === "manual with readers" ? view.fork() : undefined;
+					let retainedUndo: RevertibleAlpha | undefined;
+					const offRetainedUndo = view.events.on("changed", (_data, getRevertible) => {
+						if (mode === "manual with readers" && retainedUndo === undefined) {
+							retainedUndo = getRevertible?.();
+						}
+					});
+					view.root.removeAt(0);
+					offRetainedUndo();
+					if (mode === "manual with readers") {
+						assert(
+							retainedUndo !== undefined,
+							"The protected case must hold the original Undo",
+						);
+					}
+					view.root.insertAtEnd("y");
+					await provider.ensureSynchronized();
+					const targetSequence = container.deltaManager.lastSequenceNumber;
+					// Fixed barriers exceed the local driver's 50-op noop cadence: every mode gets the same history.
+					for (let index = 0; index < 52; index++) {
+						view.root.insertAtEnd("advance");
+						await provider.ensureSynchronized();
+					}
+					assert(container.deltaManager.minimumSequenceNumber >= targetSequence);
+					const content = [...view.root];
+					const source = mode === "summary-only" ? summarizerView : view;
+					const sourceTree = mode === "summary-only" ? summarizerTree : tree;
+					const sourceRole = mode === "summary-only" ? "summarizer" : "author";
+					const historyBefore = historyOf(source.branchHistory).map(
+						(commit) => commit.revision,
+					);
+					assert.equal(
+						historyBefore.length,
+						58,
+						"All four cases must start with identical retained history",
+					);
+					const removedRoots = (target: ITree): readonly unknown[] =>
+						(
+							target as unknown as {
+								kernel: { checkout: { getRemovedRoots(): readonly unknown[] } };
+							}
+						).kernel.checkout.getRemovedRoots();
+					const repairBefore = removedRoots(sourceTree);
+					const selectedRevisions = new Set([removedRevision, survivorRevision]);
+					const repairDiagnosticsBefore = inspectRepairData(sourceTree, selectedRevisions);
+					const failures: LifecycleFailure[] = [];
+					const readRevision = (
+						stage: string,
+						branch: string,
+						targetView: StringArrayView,
+						revision: string,
+						expected: readonly string[],
+					): void => {
+						const eventOffset = logger.events().length;
+						const reader = targetView.fork();
+						const forkEvent = logger
+							.events()
+							.slice(eventOffset)
+							.find((event) => event.eventName.endsWith("HistoryForkCreated"));
+						try {
+							reader.rewindTo(revision);
+							assert.deepEqual([...reader.root], expected);
+							reader.dispose();
+						} catch (error: unknown) {
+							// Disposing a broken rewind checkout can mask its original assertion.
+							const failure = {
+								stage,
+								branch,
+								revision,
+								forkId: typeof forkEvent?.forkId === "number" ? forkEvent.forkId : undefined,
+								treeId: typeof forkEvent?.treeId === "string" ? forkEvent.treeId : undefined,
+								sessionId:
+									typeof forkEvent?.sessionId === "string" ? forkEvent.sessionId : undefined,
+								error: String(error),
+							};
+							failures.push(failure);
+							firstFailure ??= failure;
+						}
+					};
+					readRevision("beforeCompactionRead", sourceRole, source, initialRevision, [
+						"a",
+						"b",
+						"c",
+					]);
+					assert.deepEqual(
+						failures,
+						[],
+						"The retained-state control must work before compaction",
+					);
+					let manualCalls = 0;
+					let removed = 0;
+					lifecycleStage = "manualCompaction";
+					if (mode === "manual" || mode === "manual with readers") {
+						manualCalls++;
+						removed = tree.historyCompaction.requestCompaction(policy);
+						assert.equal(removed, 1, "The manual case must compose the two deletion commits");
+						readRevision(
+							"afterCompactionBeforeSerializationRead",
+							sourceRole,
+							source,
+							initialRevision,
+							["a", "b", "c"],
+						);
+					}
+					assert.deepEqual([...view.root], content);
+					assert.deepEqual([...summarizerView.root], content);
+					if (preview !== undefined) {
+						assert.deepEqual(
+							[...preview.root],
+							["c", "x"],
+							"The open preview retains its original content",
+						);
+					}
+
+					// summarizeNow waits for broadcast and acknowledgement, not just local encoding.
+					lifecycleStage = "summaryAcknowledgement";
+					await provider.ensureSynchronized();
+					const { summaryVersion } = await summarizeNow(summarizer);
+					assert.equal(
+						manualCalls,
+						mode === "manual" || mode === "manual with readers" ? 1 : 0,
+					);
+					const historyAfter = historyOf(source.branchHistory).map(
+						(commit) => commit.revision,
+					);
+					if (mode !== "disabled") {
+						removed = historyBefore.length - historyAfter.length;
+						assert.equal(removed, 1, "A zero-merge summary-only run is not a valid control");
+					} else {
+						assert.deepEqual(historyAfter, historyBefore);
+					}
+					assert(
+						historyAfter.includes(initialRevision),
+						"The initial state remains a retained revision",
+					);
+					assert(
+						historyAfter.includes(survivorRevision),
+						"The newest deletion revision survives composition",
+					);
+					const repairAfter = removedRoots(sourceTree);
+					const repairDiagnosticsAfter = inspectRepairData(sourceTree, selectedRevisions);
+					lifecycleStage = "freshClientReload";
+					const loadedContainer = await provider.loadTestContainer(config, {
+						[LoaderHeader.version]: summaryVersion,
+					});
+					const loadedTree = await getTree(loadedContainer);
+					const loadedView = setup.viewTree(loadedTree);
+					await provider.ensureSynchronized();
+					const persistedRepairDiagnostics = inspectRepairData(loadedTree, selectedRevisions);
+					assert.deepEqual([...loadedView.root], content);
+					assert.deepEqual(
+						historyOf(loadedView.branchHistory).map((commit) => commit.revision),
+						historyOf(summarizerView.branchHistory).map((commit) => commit.revision),
+						"Reload must preserve the history actually written by the summarizer",
+					);
+					assert.deepEqual(
+						removedRoots(loadedTree),
+						removedRoots(summarizerTree),
+						"Detached-root identities and content must round-trip",
+					);
+					if (mode === "manual" || mode === "manual with readers") {
+						assert.equal(
+							historyOf(loadedView.branchHistory).length,
+							historyAfter.length + 1,
+							"Manual-only compaction is local: the separate summarizer persists uncompacted history",
+						);
+					}
+
+					// Read before further edits so fresh-client failures cannot be attributed to Undo/Redo.
+					lifecycleStage = "retainedRevisionRead";
+					for (const [branch, targetView] of [
+						[sourceRole, source],
+						["reloaded", loadedView],
+					] as const) {
+						for (const [revision, expected] of [
+							[initialRevision, ["a", "b", "c"]],
+							[survivorRevision, ["c"]],
+						] as const) {
+							readRevision(
+								"afterReloadBeforeUndoRead",
+								branch,
+								targetView,
+								revision,
+								expected,
+							);
+						}
+					}
+
+					// Exercise original Undo ownership across compaction, then replicated Undo/Redo with a fresh peer.
+					lifecycleStage = "undoRedo";
+					const roundTripUndo = async (
+						retained: RevertibleAlpha,
+						expected: readonly string[],
+					): Promise<void> => {
+						let retainedRedo: RevertibleAlpha | undefined;
+						const off = view.events.on("changed", (_data, getRevertible) => {
+							retainedRedo = getRevertible?.();
+						});
+						retained.revert();
+						off();
+						await provider.ensureSynchronized();
+						assert.deepEqual([...view.root], expected);
+						assert.deepEqual([...loadedView.root], expected);
+						assert(retainedRedo !== undefined);
+						retainedRedo.revert();
+						await provider.ensureSynchronized();
+						assert.deepEqual([...view.root], content);
+						assert.deepEqual([...loadedView.root], content);
+					};
+					if (retainedUndo !== undefined) {
+						await roundTripUndo(retainedUndo, ["c", ...content]);
+					}
+					let undo: RevertibleAlpha | undefined;
+					const offUndo = view.events.on("changed", (_data, getRevertible) => {
+						undo = getRevertible?.();
+					});
+					view.root.removeAt(0);
+					offUndo();
+					await provider.ensureSynchronized();
+					assert(undo !== undefined);
+					const deletedContent = content.slice(1);
+					let redo: RevertibleAlpha | undefined;
+					const offRedo = view.events.on("changed", (_data, getRevertible) => {
+						redo = getRevertible?.();
+					});
+					undo.revert();
+					offRedo();
+					await provider.ensureSynchronized();
+					assert.deepEqual([...view.root], content);
+					assert.deepEqual([...loadedView.root], content);
+					assert(redo !== undefined);
+					redo.revert();
+					await provider.ensureSynchronized();
+					assert.deepEqual([...view.root], deletedContent);
+					assert.deepEqual([...loadedView.root], deletedContent);
+					preview?.dispose();
+
+					const trace = logger
+						.events()
+						.filter((event) => event.eventName.endsWith("HistoryTrace"));
+					const encodeFailures = trace.filter(
+						(event) =>
+							event.activity === "HistoryEncodeFailed" ||
+							event.activity === "HistoryRenameConflict",
+					);
+					const passes = logger
+						.events()
+						.filter(
+							(event) =>
+								event.eventName.endsWith("HistoryCompaction") && event.removedCount === 1,
+						);
+					assert.equal(passes.length, mode === "disabled" ? 0 : 1);
+					assert.equal(
+						encodeFailures.length,
+						0,
+						"Rename/serialization failures are tracked separately from reader failures",
+					);
+					if (process.env.FLUID_HISTORY_COMPACTION_LIFECYCLE === "1" || failures.length > 0) {
+						process.stdout.write(
+							`[history-lifecycle] ${JSON.stringify({
+								mode,
+								manualCalls,
+								removed,
+								summaryVersion,
+								sourceRole,
+								retainedCountBefore: historyBefore.length,
+								historyEncodeCompleted: trace.some(
+									(event) =>
+										event.activity === "HistoryEncoded" && event.isSummarizer === true,
+								),
+								undoRedoWithReloadedPeer: "passed",
+								protectedUndoAcrossCompaction:
+									mode === "manual with readers" ? "passed" : "not acquired",
+								repairRootCountBefore: repairBefore.length,
+								repairRootCountAfter: repairAfter.length,
+								repairDiagnosticsBefore,
+								repairDiagnosticsAfter,
+								persistedRepairDiagnostics,
+								firstFailure,
+								failures,
+								passes: passes.map((event) => ({
+									operationId: event.operationId,
+									summaryOperationId: event.summaryOperationId,
+									treeId: event.treeId,
+									sessionId: event.sessionId,
+									isSummarizer: event.isSummarizer,
+									trigger: event.trigger,
+									removedCount: event.removedCount,
+									limitingBoundary: event.limitingBoundary,
+									activeForkCount: event.activeForkCount,
+								})),
+							})}\n`,
+						);
+					}
+					diagnosticWritten = true;
+					assert.deepEqual(
+						failures,
+						[],
+						"Retained-revision reads must work, not merely compaction and summary encoding",
+					);
+				} catch (error: unknown) {
+					if (!diagnosticWritten) {
+						process.stdout.write(
+							`[history-lifecycle] ${JSON.stringify({
+								mode,
+								firstFailure: firstFailure ?? { stage: lifecycleStage, error: String(error) },
+								fatalFailureStage: lifecycleStage,
+								events: logger
+									.events()
+									.filter(
+										(event) =>
+											event.eventName.endsWith("HistoryCompaction") ||
+											(typeof event.activity === "string" &&
+												/Failed$|Conflict$/.test(event.activity)),
+									)
+									.map((event) => ({
+										activity: event.activity,
+										operationId: event.operationId,
+										summaryOperationId: event.summaryOperationId,
+										treeId: event.treeId,
+										sessionId: event.sessionId,
+										isSummarizer: event.isSummarizer,
+										failureStage: event.failureStage,
+									})),
+							})}\n`,
+						);
+					}
+					throw error;
+				}
+			});
+		}
+	});
+
+	describe("retained navigation and persisted replacements", () => {
+		const { SchemaFactory, TreeViewConfiguration, configuredSharedTree } =
+			apis.dataRuntime.packages.tree;
+		const sf = new SchemaFactory("history-compaction-detached-replacements");
+		class Item extends sf.object("Item", {
+			value: sf.number,
+			children: sf.array(sf.string),
+		}) {}
+		class Document extends sf.object("Document", {
+			section: sf.optional(Item),
+			items: sf.array(Item),
+			barriers: sf.array(sf.string),
+		}) {}
+		const viewConfig = new TreeViewConfiguration({ schema: Document });
+		const content = (root: Document) => ({
+			section:
+				root.section === undefined
+					? undefined
+					: { value: root.section.value, children: [...root.section.children] },
+			items: root.items.map((entry) => ({
+				value: entry.value,
+				children: [...entry.children],
+			})),
+			barriers: [...root.barriers],
+		});
+		const item = (value: number) => ({ value, children: [`child ${value}`] });
+		const viewReplacementTree = (tree: ITree) => asAlpha(tree.viewWith(viewConfig));
+
+		for (const mode of ["disabled", "summary-only", "manual"] as const) {
+			it(`preserves every retained state through ${mode} compaction, lazy realization and GC`, async function () {
+				if (provider.driver.type !== "local") {
+					this.skip();
+				}
+				this.timeout(60_000);
+				const logger = createMockLoggerExt(LogLevel.verbose);
+				const config: ITestContainerConfig = {
+					...testContainerConfig,
+					registry: [
+						[
+							treeId,
+							configuredSharedTree({
+								retainHistory: true,
+								minVersionForCollab: FluidClientVersion.v2_117,
+								historyCompaction:
+									mode === "summary-only" ? { canCompactCommit: sameGroup } : undefined,
+							}).getFactory(),
+						],
+					],
+					loaderProps: {
+						logger,
+						configProvider: {
+							getRawConfig: (name) =>
+								name === "Fluid.SharedTree.HistoryDebugTrace" ? true : undefined,
+						},
+					},
+				};
+				const summarizerConfig = {
+					...config,
+					runtimeOptions: {
+						...config.runtimeOptions,
+						summaryOptions: undefined,
+					},
+				};
+				let stage = "setup";
+				let targetRevision: string | undefined;
+				try {
+					const container = await provider.makeTestContainer(config);
+					const tree = await getTree(container);
+					const view = viewReplacementTree(tree);
+					view.initialize({
+						section: item(0),
+						items: [item(1), item(2)],
+						barriers: [],
+					});
+					await provider.ensureSynchronized();
+					const snapshots = new Map<string, ReturnType<typeof content>>();
+					const record = (): void => {
+						snapshots.set(
+							view.branchHistory.getHead()?.revision ?? assert.fail(),
+							content(view.root),
+						);
+					};
+					record();
+					const first = await createSummarizer(
+						provider,
+						container,
+						summarizerConfig,
+						undefined,
+						logger,
+					);
+					const summarizerTree = await getSummarizerTree(first.summarizer);
+					const summarizerView = viewReplacementTree(summarizerTree);
+					stage = "workload";
+					for (let group = 0; group < 9; group++) {
+						view.runTransaction(
+							() => {
+								if (view.root.section === undefined) {
+									view.root.section = new Item(item(group));
+								} else {
+									view.root.section.value = group;
+									view.root.section.children.insertAtEnd(`edited ${group}`);
+								}
+								view.root.items[0].value = group;
+								view.root.items[0].children.insertAtEnd(`nested ${group}`);
+							},
+							{ customMetadata: { group } },
+						);
+						record();
+						view.runTransaction(
+							() => {
+								if (group % 3 === 0) {
+									view.root.section = new Item(item(100 + group));
+								} else if (group % 3 === 1) {
+									view.root.section = undefined;
+								} else {
+									assert(view.root.section !== undefined);
+									view.root.section.children.removeAt(0);
+									view.root.section.children.insertAtEnd(`replacement ${group}`);
+									view.root.items.moveToEnd(0);
+								}
+								view.root.items.removeAt(0);
+								view.root.items.insertAtStart(item(200 + group));
+							},
+							{ customMetadata: { group } },
+						);
+						record();
+					}
+					await provider.ensureSynchronized();
+					const targetSequence = container.deltaManager.lastSequenceNumber;
+					for (let index = 0; index < 52; index++) {
+						view.root.barriers.insertAtEnd("advance");
+						record();
+						await provider.ensureSynchronized();
+					}
+					assert(container.deltaManager.minimumSequenceNumber >= targetSequence);
+					const expectedContent = content(view.root);
+					const before = historyOf(view.branchHistory).map((commit) => commit.revision);
+					assert.equal(before.length, 71);
+					const checkNavigation = (target: ReturnType<typeof viewReplacementTree>): void => {
+						const retained = historyOf(target.branchHistory);
+						for (const commit of retained) {
+							targetRevision = commit.revision;
+							const reader = target.fork();
+							reader.rewindTo(commit.revision);
+							assert.deepEqual(content(reader.root), snapshots.get(commit.revision));
+							reader.dispose();
+						}
+						for (let pass = 0; pass < 2; pass++) {
+							const reader = target.fork();
+							for (const commit of [...retained].reverse()) {
+								targetRevision = commit.revision;
+								reader.rewindTo(commit.revision);
+								assert.deepEqual(content(reader.root), snapshots.get(commit.revision));
+							}
+							reader.dispose();
+						}
+						assert.deepEqual(content(target.root), expectedContent);
+					};
+					stage = "beforeCompactionRead";
+					checkNavigation(view);
+					if (mode === "manual") {
+						stage = "manualCompaction";
+						assert.equal(tree.historyCompaction.requestCompaction(sameGroup), 9);
+						checkNavigation(view);
+						// Serialize manually compacted history too, not the summarizer's uncompacted control.
+						assert.equal(summarizerTree.historyCompaction.requestCompaction(sameGroup), 9);
+					}
+					stage = "firstSummary";
+					const firstSummary = await summarizeNow(first.summarizer, {
+						reason: "persist replacement history",
+						fullTree: true,
+					});
+					assert(getGCStateFromSummary(firstSummary.summaryTree) !== undefined);
+					assert.equal(
+						summarizerView.branchHistory.length,
+						before.length - (mode === "disabled" ? 0 : 9),
+					);
+					stage = "afterCompactionRead";
+					checkNavigation(summarizerView);
+					const persistedRevisions = historyOf(summarizerView.branchHistory).map(
+						(commit) => commit.revision,
+					);
+					if (mode === "disabled" || mode === "summary-only") {
+						assert.deepEqual(
+							historyOf(view.branchHistory).map((commit) => commit.revision),
+							before,
+							"Summary compaction must not rewrite the author's history",
+						);
+					}
+					first.container.close();
+					// Do not fetch the new summarizer's tree before GC/summary realizes it.
+					stage = "lazySummarizerLoad";
+					const coldLoadOffset = logger.events().length;
+					const second = await createSummarizer(
+						provider,
+						container,
+						summarizerConfig,
+						firstSummary.summaryVersion,
+						logger,
+					);
+					assert(
+						!logger
+							.events()
+							.slice(coldLoadOffset)
+							.some((event) => event.activity === "HistoryLoadCompleted"),
+						"The replacement summarizer must not eagerly realize the tree",
+					);
+					stage = "lazyGcSummary";
+					const secondSummary = await summarizeNow(second.summarizer, {
+						reason: "realize and collect persisted replacement history",
+						fullTree: true,
+					});
+					assert(getGCStateFromSummary(secondSummary.summaryTree) !== undefined);
+					assert(
+						logger
+							.events()
+							.slice(coldLoadOffset)
+							.some((event) => event.activity === "HistoryLoadCompleted"),
+						"GC/summary must realize and decode the persisted history",
+					);
+					stage = "afterLazySummaryRead";
+					const secondView = viewReplacementTree(await getSummarizerTree(second.summarizer));
+					checkNavigation(secondView);
+					assert.deepEqual(
+						historyOf(secondView.branchHistory).map((commit) => commit.revision),
+						persistedRevisions,
+					);
+					stage = "freshClientReload";
+					const loaded = await provider.loadTestContainer(config, {
+						[LoaderHeader.version]: secondSummary.summaryVersion,
+					});
+					const loadedView = viewReplacementTree(await getTree(loaded));
+					checkNavigation(loadedView);
+					const events = logger.events();
+					const passes = events.filter(
+						(event) =>
+							event.eventName.endsWith("HistoryCompaction") && event.removedCount === 9,
+					);
+					assert.equal(passes.length, mode === "disabled" ? 0 : mode === "manual" ? 2 : 1);
+					assert(
+						events.some(
+							(event) =>
+								event.activity === "HistoryValidationDecodeStarted" &&
+								event.codec === "modularV2",
+						),
+					);
+					assert(
+						!events.some(
+							(event) =>
+								typeof event.activity === "string" && /Failed$|Conflict$/.test(event.activity),
+						),
+					);
+				} catch (error: unknown) {
+					process.stdout.write(
+						`[history-replacements] ${JSON.stringify({
+							mode,
+							stage,
+							targetRevision,
+							error: String(error),
+							events: logger
+								.events()
+								.filter(
+									(event) =>
+										event.eventName.endsWith("HistoryCompaction") ||
+										(typeof event.activity === "string" &&
+											/Failed$|Conflict$|MissingRepairData$/.test(event.activity)),
+								),
+						})}\n`,
+					);
+					throw error;
+				}
+			});
+		}
 	});
 
 	async function createDocument(): Promise<{
