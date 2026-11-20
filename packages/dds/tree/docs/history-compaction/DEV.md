@@ -1681,6 +1681,7 @@ The persisted optional-replacement and lazy-GC checks cover candidates from that
 ### 23. How to run things
 
 The fixes and expanded app-pattern coverage were verified with source and test ESM builds, scoped ESLint and Biome checks, and `build:docs`.
+These behavioral results were recorded before merging upstream/main at `b6d3d5fa9bd`; they are not a post-merge test run.
 The following regression commands passed:
 
 | Package | Command | Result |
@@ -1749,6 +1750,37 @@ Notes:
 - The test setup silences `console`; measurement output goes to stdout with a `[history-compaction]` prefix.
 - End-to-end tests reach the summarizer's tree through its runtime's `getAliasedDataStoreEntryPoint("default")`.
 - If `lib/entrypoints` is stale after a rebuild, delete `packages/dds/tree/tsconfig.tsbuildinfo` and rebuild.
+
+#### 23.1 API-report failures after an upstream merge
+
+The current and legacy API Extractor jobs compare generated reports with the committed snapshots.
+An API-signature warning can therefore mean that generated files are stale, not that TypeScript compilation failed or compaction changed a public contract.
+The upstream tool update requires API Extractor 7.60.1; an existing installation can still run 7.58.1 until you restore dependencies.
+
+If report differences include unrelated union ordering or indentation, follow the [tree API-check guidance](../../../../../.github/skills/ci-readiness-check/tree-api-checks.md).
+Restore the locked dependencies, then run a full clean build from the repository root.
+Cleaning only the tree package is not reliable because stale dependency declarations also affect the reports.
+
+```bash
+pnpm install --frozen-lockfile
+pnpm clean
+pnpm build
+
+pnpm --dir packages/dds/tree run ci:build:api-reports
+pnpm --dir packages/framework/fluid-framework run ci:build:api-reports
+```
+
+The build regenerates the tree reports and the downstream `fluid-framework` reports.
+Review and commit the generated snapshots together if they change; never hand-edit them or suppress the comparison warnings.
+For this repair, the six changed snapshots contain only union-member ordering and indentation differences.
+Both packages' current and legacy CI API-report commands pass with API Extractor 7.60.1 after regeneration; there is no API-contract change.
+This build repair does not replace the historical-read and compaction lifecycle regressions above.
+
+If the root build runs out of heap or stalls while checking incremental status, the build tool supports forcing every task and limiting concurrency:
+
+```bash
+NODE_OPTIONS=--max-old-space-size=8192 pnpm run build --force --concurrency 4
+```
 
 ---
 
