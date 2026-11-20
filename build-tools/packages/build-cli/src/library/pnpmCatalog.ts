@@ -3,10 +3,73 @@
  * Licensed under the MIT License.
  */
 
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import YAML from "yaml";
+
+/**
+ * Collects updates to one named pnpm catalog and saves them without replacing other workspace settings or comments.
+ */
+export class PnpmCatalogEditor {
+	/**
+	 * The package aliases and version constraints to write to the catalog.
+	 */
+	public readonly updates = new Map<string, string>();
+
+	private readonly yamlPath: string;
+	private readonly document: YAML.Document;
+	private readonly newline: string;
+
+	public constructor(
+		workspaceRoot: string,
+		private readonly catalogName: string,
+	) {
+		this.yamlPath = path.join(workspaceRoot, "pnpm-workspace.yaml");
+		const content = readFileSync(this.yamlPath, "utf-8");
+		this.newline = content.includes("\r\n") ? "\r\n" : "\n";
+		this.document = YAML.parseDocument(content);
+		if (this.document.errors.length > 0) {
+			throw new Error(
+				`Unable to parse pnpm workspace '${this.yamlPath}': ${this.document.errors.map((error) => error.message).join("; ")}`,
+			);
+		}
+
+		if (this.document.contents !== null && !YAML.isMap(this.document.contents)) {
+			throw new Error(`Expected a mapping in pnpm workspace '${this.yamlPath}'`);
+		}
+		for (const keys of [["catalogs"], ["catalogs", catalogName]]) {
+			const node = this.document.getIn(keys, true);
+			if (node !== undefined && !YAML.isMap(node)) {
+				throw new Error(
+					`Expected a mapping at '${keys.join(".")}' in pnpm workspace '${this.yamlPath}'`,
+				);
+			}
+		}
+	}
+
+	/**
+	 * Writes the collected updates once, in package-name order.
+	 * Does not write the file if the catalog already contains the requested versions.
+	 */
+	public save(): void {
+		let changed = false;
+		for (const [name, version] of [...this.updates].sort(([a], [b]) => a.localeCompare(b))) {
+			const keys = ["catalogs", this.catalogName, name];
+			if (this.document.getIn(keys) !== version) {
+				this.document.setIn(keys, version);
+				changed = true;
+			}
+		}
+		if (changed) {
+			writeFileSync(
+				this.yamlPath,
+				this.document.toString().replace(/\n/g, this.newline),
+				"utf-8",
+			);
+		}
+	}
+}
 
 /**
  * Map of catalogName → { packageName → versionRange }.

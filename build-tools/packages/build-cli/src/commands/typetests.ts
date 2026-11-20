@@ -3,28 +3,44 @@
  * Licensed under the MIT License.
  */
 
+import { realpathSync } from "node:fs";
 import { updatePackageJsonFile } from "@fluid-tools/build-infrastructure";
 import type { Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
-import { PackageCommand } from "../BasePackageCommand.js";
+import { PackageCommand, type PackageProcessingError } from "../BasePackageCommand.js";
+import type { PackageWithKind } from "../filter.js";
 import type { PackageSelectionDefault } from "../flags.js";
+import { PnpmCatalogEditor } from "../library/pnpmCatalog.js";
 import {
 	defaultTypeValidationConfig,
 	type ITypeValidationConfig,
 	type PackageWithTypeTestSettings,
 } from "../typeValidator/typeValidatorConfig.js";
 
+const previousCatalogName = "typeTest-previous";
+
+/**
+ * Prepares type-test settings and baseline dependencies for the selected packages.
+ */
 export default class PrepareTypeTestsCommand extends PackageCommand<
 	typeof PrepareTypeTestsCommand
 > {
 	static readonly description =
-		`Updates configuration for type tests in package.json files. If the previous version changes after running preparation, then npm install must be run before building.
+		`Updates configuration for type tests in package.json files and pnpm catalogs. If the previous version changes after running preparation, then install dependencies before building.
+
+    In pnpm workspaces, baseline versions are stored in the named "typeTest-previous" catalog by default. Use --no-catalog to write inline npm aliases instead.
 
     Optionally, any type tests that are marked "broken" in package.json can be reset using the --reset flag during configuration. This is useful when resetting the type tests to a clean state, such as after a release.
 
     To learn more about how to configure type tests, see the detailed documentation at <https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/typetestDetails.md>.`;
 
 	static readonly flags = {
+		catalog: Flags.boolean({
+			description:
+				"Store previous-version dependencies in the typeTest-previous pnpm catalog. Non-pnpm packages use inline npm aliases.",
+			default: true,
+			allowNo: true,
+		}),
 		reset: Flags.boolean({
 			description: "Resets the broken type test settings in package.json.",
 		}),
@@ -84,7 +100,49 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 
 	protected defaultSelection = "dir" as PackageSelectionDefault;
 
+	private readonly packageCatalogs = new Map<string, PnpmCatalogEditor>();
+
+	protected async processPackages(
+		packages: PackageWithKind[],
+	): Promise<PackageProcessingError[]> {
+		const workspaceCatalogs = new Map<string, PnpmCatalogEditor>();
+		this.packageCatalogs.clear();
+		if (this.flags.catalog && (this.flags.previous || this.flags.exact !== undefined)) {
+			const context = await this.getContext();
+			for (const pkg of packages) {
+				// Directory selection loads packages without their monorepo metadata.
+				const configuredPackage = context.fullPackageMap.get(pkg.name);
+				const workspacePackage =
+					configuredPackage !== undefined &&
+					realpathSync.native(configuredPackage.directory) ===
+						realpathSync.native(pkg.directory)
+						? configuredPackage
+						: pkg;
+				if (workspacePackage.packageManager !== "pnpm") {
+					continue;
+				}
+				const workspaceRoot = realpathSync.native(
+					workspacePackage.monoRepo?.repoPath ?? workspacePackage.directory,
+				);
+				let catalog = workspaceCatalogs.get(workspaceRoot);
+				if (catalog === undefined) {
+					catalog = new PnpmCatalogEditor(workspaceRoot, previousCatalogName);
+					workspaceCatalogs.set(workspaceRoot, catalog);
+				}
+				this.packageCatalogs.set(pkg.directory, catalog);
+			}
+		}
+
+		const errors = await super.processPackages(packages);
+		for (const catalog of workspaceCatalogs.values()) {
+			catalog.save();
+		}
+		return errors;
+	}
+
 	protected async processPackage(pkg: Package): Promise<void> {
+		const catalog = this.packageCatalogs.get(pkg.directory);
+		const catalogUpdates = catalog === undefined ? undefined : new Map<string, string>();
 		const version =
 			this.flags.exact ??
 			(this.flags.remove
@@ -102,7 +160,7 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 			}
 			// This uses the "disabled" state, so that is set above before this is run.
 			if (version !== undefined) {
-				updateTypeTestDependency(json, version);
+				updateTypeTestDependency(json, version, catalogUpdates);
 			}
 
 			if (this.flags.reset) {
@@ -114,6 +172,9 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 				normalizeTypeTestScript(json);
 			}
 		});
+		for (const [name, alias] of catalogUpdates ?? []) {
+			catalog?.updates.set(name, alias);
+		}
 	}
 }
 
@@ -173,6 +234,9 @@ export function normalizeTypeTestScript(pkgJson: PackageWithTypeTestSettings): v
 	}
 }
 
+/**
+ * Operations on the previous-version dependency used by type tests.
+ */
 export enum VersionOptions {
 	Clear,
 	Previous,
@@ -208,13 +272,18 @@ export function previousVersion(version: string): string {
 }
 
 /**
- * Adds or removes the devDependency on a previous version of a package thatis used for type testing. This function only
- * affects the `devDependencies` nodes in package.json.
+ * Adds or removes the devDependency on a previous version of a package used for type testing.
+ *
+ * @param pkgJson - The package.json to update.
+ * @param versionOptions - The baseline constraint or dependency operation.
+ * @param catalogUpdates - If provided, collects aliases for the typeTest-previous catalog instead of writing inline aliases.
+ * Removing a dependency leaves catalog entries intact because other packages can reference them.
  *
  */
 export function updateTypeTestDependency(
 	pkgJson: PackageWithTypeTestSettings,
 	versionOptions: string | VersionOptions,
+	catalogUpdates?: Map<string, string>,
 ): void {
 	const oldDepName = `${pkgJson.name}-previous`;
 
@@ -235,7 +304,13 @@ export function updateTypeTestDependency(
 				? previousVersion(pkgJson.version)
 				: versionOptions;
 		pkgJson.devDependencies ??= {};
-		pkgJson.devDependencies[oldDepName] = `npm:${pkgJson.name}@${newVersion}`;
+		const alias = `npm:${pkgJson.name}@${newVersion}`;
+		if (catalogUpdates === undefined) {
+			pkgJson.devDependencies[oldDepName] = alias;
+		} else {
+			catalogUpdates.set(oldDepName, alias);
+			pkgJson.devDependencies[oldDepName] = `catalog:${previousCatalogName}`;
+		}
 	}
 }
 
