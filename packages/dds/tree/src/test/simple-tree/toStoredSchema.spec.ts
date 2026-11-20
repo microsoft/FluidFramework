@@ -214,11 +214,11 @@ describe("toStoredSchema", () => {
 			let reads = 0;
 			for (const node of [Root, Left, Right, Leaf]) {
 				assert(isObjectNodeSchema(node));
-				const fields = node.fields;
-				Object.defineProperty(node, "fields", {
+				const flexKeyMap = node.flexKeyMap;
+				Object.defineProperty(node, "flexKeyMap", {
 					get() {
 						reads++;
-						return fields;
+						return flexKeyMap;
 					},
 				});
 			}
@@ -375,6 +375,40 @@ describe("toStoredSchema", () => {
 			assert.strictEqual(toStoredSchema(Node, StagedSchemaUpgradePolicy.permissive), stored);
 			assert.deepEqual(stored, reference(Node, StagedSchemaUpgradePolicy.permissive));
 		});
+		it("converts schema classes without creating their fields", () => {
+			const sf = new SchemaFactoryAlpha("conversionWithoutFields");
+			class Leaf extends sf.object("Leaf", {
+				value: sf.required(sf.number, {
+					key: "v",
+					metadata: { description: "value" },
+					persistedMetadata: { kept: true },
+				}),
+				label: sf.optional(sf.string),
+			}) {}
+			class Node extends sf.object("Node", {
+				leaf: Leaf,
+				other: sf.optional([Leaf, sf.null]),
+			}) {}
+			for (const node of [Node, Leaf]) {
+				Object.defineProperty(node, "fields", {
+					get: () => assert.fail("Conversion must not create fields"),
+					configurable: true,
+				});
+			}
+			const permissive = toStoredSchema(Node, StagedSchemaUpgradePolicy.permissive);
+			const converted = new Map(permissive.nodeSchema);
+			for (const node of [Node, Leaf]) {
+				Reflect.deleteProperty(node, "fields");
+			}
+			assert.deepEqual(
+				converted,
+				reference(Node, StagedSchemaUpgradePolicy.permissive).nodeSchema,
+			);
+			assert.deepEqual(
+				[...getObjectNodeSchema(permissive, Leaf.identifier).objectNodeFields.keys()].sort(),
+				["label", "v"],
+			);
+		});
 		it("preserves root field kind and metadata in separate root caches", () => {
 			const sf = new SchemaFactoryAlpha("rootCaches");
 			class A extends sf.objectRecursive("A", {
@@ -386,11 +420,12 @@ describe("toStoredSchema", () => {
 			getRootSchemaDerivedData(A);
 			let reads = 0;
 			for (const node of [A, B]) {
-				const fields = node.fields;
-				Object.defineProperty(node, "fields", {
+				assert(isObjectNodeSchema(node));
+				const flexKeyMap = node.flexKeyMap;
+				Object.defineProperty(node, "flexKeyMap", {
 					get() {
 						reads++;
-						return fields;
+						return flexKeyMap;
 					},
 				});
 			}

@@ -11,6 +11,7 @@ export {
 	type ObjectFromSchemaRecord,
 	objectSchema,
 	setField,
+	singletonObjectSchema,
 	type TreeObjectNode,
 	type SimpleKeyMap,
 } from "./objectNode.js";

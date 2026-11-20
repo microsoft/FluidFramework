@@ -95,7 +95,7 @@
 		"@fluidframework/build-tools": "^0.65.0",
 		"@fluidframework/common-utils-previous": "npm:@fluidframework/common-utils@3.1.0",
 		"@fluidframework/eslint-config-fluid": "^10.0.0",
-		"@microsoft/api-extractor": "7.58.1",
+		"@microsoft/api-extractor": "7.60.1",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "2.2.0",
 		"@types/mocha": "^10.0.10",

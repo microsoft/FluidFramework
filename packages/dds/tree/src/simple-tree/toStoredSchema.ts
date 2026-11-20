@@ -54,6 +54,7 @@ import type {
 	SimpleLeafNodeSchema,
 	SimpleMapNodeSchema,
 	SimpleNodeSchema,
+	SimpleObjectFieldSchema,
 	SimpleObjectNodeSchema,
 	SimpleRecordNodeSchema,
 	SimpleTreeSchema,
@@ -340,13 +341,14 @@ export function transformSimpleNodeSchema(
 			} satisfies SimpleMapNodeSchema | SimpleRecordNodeSchema | SimpleArrayNodeSchema;
 		}
 		case NodeKind.Object: {
+			const fields = new Map<string, SimpleObjectFieldSchema>();
+			for (const [key, field, storedKey] of objectFieldsForConversion(schema)) {
+				fields.set(key, { ...filterFieldAllowedTypes(field, options), storedKey });
+			}
 			return {
 				kind,
 				...metadata,
-				fields: transformMapValues(schema.fields, (f) => ({
-					...filterFieldAllowedTypes(f, options),
-					storedKey: f.storedKey,
-				})),
+				fields,
 				allowUnknownOptionalFields: filterViewData(options, schema.allowUnknownOptionalFields),
 			} satisfies SimpleObjectNodeSchema;
 		}
@@ -354,6 +356,33 @@ export function transformSimpleNodeSchema(
 			unreachableCase(kind);
 		}
 	}
+}
+
+/**
+ * The fields of an object node schema: property key, field schema and stored key.
+ * @remarks
+ * For a schema class, these are the field schema it was defined with, so that converting it does not create
+ * {@link SimpleObjectNodeSchema.fields}, which a schema class keeps once created.
+ * Those are copies of the same field schema, with the stored key added, so the conversion is the same.
+ */
+function objectFieldsForConversion(
+	schema: SimpleObjectNodeSchema,
+): Iterable<[string, SimpleFieldSchema, string]> {
+	const flexKeyMap = (
+		schema as {
+			readonly flexKeyMap?: ReadonlyMap<
+				string,
+				{ readonly storedKey: FieldKey; readonly schema: unknown }
+			>;
+		}
+	).flexKeyMap;
+	return flexKeyMap === undefined
+		? mapIterable(schema.fields, ([key, field]) => [key, field, field.storedKey])
+		: mapIterable(flexKeyMap, ([key, { storedKey, schema: field }]) => [
+				key,
+				field as SimpleFieldSchema,
+				storedKey,
+			]);
 }
 
 function arrayNodeStoredSchema(
