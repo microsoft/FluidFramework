@@ -73,6 +73,7 @@ describe("API model transformation end-to-end tests", () => {
 						const config: ApiItemTransformationOptions = {
 							...inputConfig,
 							apiModel,
+							includeInheritedMembers: true,
 						};
 
 						const documents = transformApiModel(config);

@@ -109,6 +109,7 @@ describe("Markdown end-to-end tests", () => {
 					const options: MarkdownRenderer.RenderApiModelOptions = {
 						...inputConfig,
 						apiModel,
+						includeInheritedMembers: true,
 						outputDirectoryPath: temporaryOutputPath,
 					};
 
@@ -132,6 +133,7 @@ describe("Markdown end-to-end tests", () => {
 
 			await MarkdownRenderer.renderApiModel({
 				apiModel,
+				includeInheritedMembers: true,
 				uriRoot: "",
 				outputDirectoryPath: temporaryOutputPath,
 			});

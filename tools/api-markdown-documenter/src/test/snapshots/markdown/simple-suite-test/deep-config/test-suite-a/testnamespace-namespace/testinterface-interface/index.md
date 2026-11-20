@@ -16,9 +16,10 @@ interface TestInterface extends TestInterfaceWithTypeParameter<TestEnum>
 
 ## Properties
 
-| Property | Alerts | Type | Description |
-| - | - | - | - |
-| [testInterfaceProperty](/test-suite-a/testnamespace-namespace/testinterface-interface/testinterfaceproperty-propertysignature) | `Alpha` | boolean | Test interface property |
+| Property | Inherited From | Alerts | Type | Description |
+| - | - | - | - | - |
+| [testInterfaceProperty](/test-suite-a/testnamespace-namespace/testinterface-interface/testinterfaceproperty-propertysignature) | | `Alpha` | boolean | Test interface property |
+| [testProperty](/test-suite-a/testinterfacewithtypeparameter-interface/testproperty-propertysignature) | [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface/) | | [TestEnum](/test-suite-a/testnamespace-namespace/testenum-enum/) | A test interface property using generic type parameter |
 
 ## Methods
 
