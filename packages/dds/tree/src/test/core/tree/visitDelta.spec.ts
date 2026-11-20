@@ -134,6 +134,7 @@ const field0: FieldKey = brand("-0");
 const field1: FieldKey = brand("-1");
 const field2: FieldKey = brand("-2");
 const field3: FieldKey = brand("-3");
+const field4: FieldKey = brand("-4");
 
 describe("visitDelta", () => {
 	it("empty delta", () => {
@@ -256,11 +257,8 @@ describe("visitDelta", () => {
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
+			// The attach pass has nothing to attach under the node, so it does not visit it.
 			["enterField", rootKey],
-			["enterNode", 0],
-			["enterField", fooKey],
-			["exitField", fooKey],
-			["exitNode", 0],
 			["exitField", rootKey],
 		];
 		testTreeVisit({ marks: [mark] }, expected, { detachedFieldIndex: index });
@@ -646,8 +644,6 @@ describe("visitDelta", () => {
 			["replace", field0, { start: 0, end: 1 }, field2, { minor: 2 }],
 			["replace", field1, { start: 1, end: 2 }, field3, { minor: 3 }],
 			["exitField", rootKey],
-			["enterField", rootKey],
-			["exitField", rootKey],
 		];
 
 		const index = makeDetachedFieldIndex("");
@@ -660,7 +656,7 @@ describe("visitDelta", () => {
 			],
 		);
 	});
-	it("keeps indexes aligned around replacements in both passes", () => {
+	it("skips completed replacement fields while visiting pending sibling fields", () => {
 		const delta: DeltaRoot = {
 			build: [{ id: { minor: 0 }, trees: chunkXY }],
 			fields: new Map([
@@ -668,10 +664,22 @@ describe("visitDelta", () => {
 					rootKey,
 					{
 						marks: [
-							{ count: 1, attach: { minor: 1 } },
-							{ count: 1, detach: { minor: 2 }, attach: { minor: 0 } },
-							{ count: 1, detach: { minor: 3 } },
-							{ count: 1, fields: new Map([[fooKey, { marks: [] }]]) },
+							{
+								count: 1,
+								fields: new Map([
+									[
+										fooKey,
+										{
+											marks: [
+												{ count: 2 },
+												{ count: 1, detach: { minor: 2 }, attach: { minor: 0 } },
+												{ count: 1, detach: { minor: 3 } },
+											],
+										},
+									],
+									[barKey, { marks: [{ count: 1, attach: { minor: 1 } }] }],
+								]),
+							},
 						],
 					},
 				],
@@ -681,8 +689,173 @@ describe("visitDelta", () => {
 			["create", mapTreeX, field0],
 			["create", mapTreeY, field1],
 			["enterField", rootKey],
-			["replace", field0, { start: 0, end: 1 }, field2, { minor: 2 }],
-			["detach", { start: 1, end: 2 }, field3, { minor: 3 }, false],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["replace", field0, { start: 2, end: 3 }, field2, { minor: 2 }],
+			["detach", { start: 3, end: 4 }, field3, { minor: 3 }, false],
+			["exitField", fooKey],
+			["enterField", barKey],
+			["exitField", barKey],
+			["exitNode", 0],
+			["exitField", rootKey],
+			["enterField", rootKey],
+			["enterNode", 0],
+			["enterField", barKey],
+			["attach", field1, 1, 0],
+			["exitField", barKey],
+			["exitNode", 0],
+			["exitField", rootKey],
+		]);
+	});
+
+	it("makes replacement output available to an earlier attach", () => {
+		const delta: DeltaRoot = {
+			build: [{ id: { minor: 0 }, trees: chunkX }],
+			fields: new Map([
+				[
+					rootKey,
+					{
+						marks: [
+							{ count: 1, attach: { minor: 1 } },
+							{ count: 1, detach: { minor: 1 }, attach: { minor: 0 } },
+						],
+					},
+				],
+			]),
+		};
+		const index = makeDetachedFieldIndex("");
+		testDeltaVisit(
+			delta,
+			[
+				["create", mapTreeX, field0],
+				["enterField", rootKey],
+				["replace", field0, { start: 0, end: 1 }, field1, { minor: 1 }],
+				["exitField", rootKey],
+				["enterField", rootKey],
+				["attach", field1, 1, 0],
+				["exitField", rootKey],
+			],
+			index,
+		);
+		assert.deepEqual([...index.entries()], []);
+	});
+
+	it("visits only nodes with something to attach under them in the attach pass", () => {
+		const replace1: DeltaMark = { count: 1, detach: { minor: 2 }, attach: { minor: 0 } };
+		const insert: DeltaMark = { count: 1, attach: { minor: 1 } };
+		const replace2: DeltaMark = { count: 1, detach: { minor: 4 }, attach: { minor: 3 } };
+		const delta: DeltaRoot = {
+			build: [
+				{ id: { minor: 0 }, trees: chunkX },
+				{ id: { minor: 1 }, trees: chunkY },
+				{ id: { minor: 3 }, trees: chunkX },
+			],
+			fields: new Map([
+				[
+					rootKey,
+					{
+						marks: [
+							{
+								count: 1,
+								fields: new Map([[fooKey, { marks: [{ count: 1 }, replace1] }]]),
+							},
+							{ count: 1, fields: new Map([[fooKey, { marks: [insert, replace2] }]]) },
+						],
+					},
+				],
+			]),
+		};
+		const expected: VisitScript = [
+			["create", mapTreeX, field0],
+			["create", mapTreeY, field1],
+			["create", mapTreeX, field2],
+			["enterField", rootKey],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["replace", field0, { start: 1, end: 2 }, field3, { minor: 2 }],
+			["exitField", fooKey],
+			["exitNode", 0],
+			["enterNode", 1],
+			["enterField", fooKey],
+			["replace", field2, { start: 0, end: 1 }, field4, { minor: 4 }],
+			["exitField", fooKey],
+			["exitNode", 1],
+			["exitField", rootKey],
+			// Only the node with an insert under it is visited by the attach pass.
+			["enterField", rootKey],
+			["enterNode", 1],
+			["enterField", fooKey],
+			["attach", field1, 1, 0],
+			["exitField", fooKey],
+			["exitNode", 1],
+			["exitField", rootKey],
+		];
+
+		const index = makeDetachedFieldIndex("");
+		testDeltaVisit(delta, expected, index);
+		assert.deepEqual(
+			[...index.entries()].map(({ id }) => id.minor),
+			[2, 4],
+		);
+	});
+	it("does not visit a moved node in the attach pass when nothing is attached under it", () => {
+		const index = makeDetachedFieldIndex("");
+		const moveId = { minor: 1 };
+		const removeId = { minor: 2 };
+		const moveOut: DeltaMark = {
+			count: 1,
+			detach: moveId,
+			fields: new Map([[fooKey, { marks: [{ count: 1, detach: removeId }] }]]),
+		};
+		const moveIn: DeltaMark = { count: 1, attach: moveId };
+		const expected: VisitScript = [
+			["enterField", rootKey],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["detach", { start: 0, end: 1 }, field0, removeId, false],
+			["exitField", fooKey],
+			["exitNode", 0],
+			["detach", { start: 0, end: 1 }, field1, moveId, false],
+			["exitField", rootKey],
+			["enterField", rootKey],
+			["attach", field1, 1, 1],
+			["exitField", rootKey],
+		];
+		testTreeVisit({ marks: [moveOut, { count: 1 }, moveIn] }, expected, {
+			detachedFieldIndex: index,
+		});
+		assert.deepEqual([...index.entries()], [{ id: removeId, root: 0 }]);
+	});
+	it("keeps indexes aligned around replacements in both passes", () => {
+		const delta: DeltaRoot = {
+			build: [
+				{ id: { minor: 0 }, trees: chunkXY },
+				{ id: { minor: 4 }, trees: chunkX },
+			],
+			fields: new Map([
+				[
+					rootKey,
+					{
+						marks: [
+							{ count: 1, attach: { minor: 1 } },
+							{ count: 1, detach: { minor: 2 }, attach: { minor: 0 } },
+							{ count: 1, detach: { minor: 3 } },
+							{
+								count: 1,
+								fields: new Map([[fooKey, { marks: [{ count: 1, attach: { minor: 4 } }] }]]),
+							},
+						],
+					},
+				],
+			]),
+		};
+		testDeltaVisit(delta, [
+			["create", mapTreeX, field0],
+			["create", mapTreeY, field1],
+			["create", mapTreeX, field2],
+			["enterField", rootKey],
+			["replace", field0, { start: 0, end: 1 }, field3, { minor: 2 }],
+			["detach", { start: 1, end: 2 }, field4, { minor: 3 }, false],
 			["enterNode", 1],
 			["enterField", fooKey],
 			["exitField", fooKey],
@@ -692,6 +865,7 @@ describe("visitDelta", () => {
 			["attach", field1, 1, 0],
 			["enterNode", 2],
 			["enterField", fooKey],
+			["attach", field2, 1, 0],
 			["exitField", fooKey],
 			["exitNode", 2],
 			["exitField", rootKey],
@@ -747,10 +921,7 @@ describe("visitDelta", () => {
 			["exitField", field0],
 			["enterField", rootKey],
 			["attach", field0, 1, 0],
-			["enterNode", 0],
-			["enterField", fooKey],
-			["exitField", fooKey],
-			["exitNode", 0],
+			// The global changes have nothing to attach, so the attach pass does not visit the node.
 			["exitField", rootKey],
 		]);
 	});
@@ -796,8 +967,6 @@ describe("visitDelta", () => {
 				["create", mapTreeX, field0],
 				["enterField", rootKey],
 				["replace", field0, { start: 0, end: 1 }, field1, { minor: 1 }],
-				["exitField", rootKey],
-				["enterField", rootKey],
 				["exitField", rootKey],
 				["destroy", field1, 1],
 			],
@@ -1375,8 +1544,6 @@ describe("visitDelta", () => {
 				["enterField", rootKey],
 				["replace", field0, { start: 0, end: 1 }, field2, { minor: 2 }],
 				["replace", field1, { start: 1, end: 2 }, field3, { minor: 3 }],
-				["exitField", rootKey],
-				["enterField", rootKey],
 				["exitField", rootKey],
 			];
 
