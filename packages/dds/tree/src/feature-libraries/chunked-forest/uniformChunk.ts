@@ -86,7 +86,7 @@ export class UniformChunk extends ReferenceCountedBase implements EditableChunk 
 	}
 
 	public getEditCursor(): ChunkEditCursor {
-		assert(!this.isShared(), "Editing requires exclusive chunk ownership");
+		assert(!this.isShared(), 0xe13 /* Editing requires exclusive chunk ownership */);
 		return this.cursor();
 	}
 
@@ -560,7 +560,7 @@ class Cursor
 	 * An owning parent's generic splice can use this to replace top-level leaves without splitting the {@link UniformChunk}.
 	 */
 	public trySplice(range: Range, content: readonly TreeChunk[]): TreeChunk[] | undefined {
-		assert(!this.chunk.isShared(), "Editing requires exclusive chunk ownership");
+		assert(!this.chunk.isShared(), 0xe14 /* Editing requires exclusive chunk ownership */);
 		validateChunkEditRange(range, this.getFieldLength());
 		const count = range.end - range.start;
 		if (getFieldLength(content) !== count) {
@@ -603,7 +603,10 @@ class Cursor
 			for (let offset = 0; offset < count; offset++) {
 				const oldValue = this.chunk.values[valueOffset + offset];
 				const newValue = incoming.values[offset];
-				assert(oldValue !== undefined && newValue !== undefined, "Missing leaf value");
+				assert(
+					oldValue !== undefined && newValue !== undefined,
+					0xe15 /* Missing leaf value */,
+				);
 				this.chunk.values[valueOffset + offset] = newValue;
 				incoming.values[offset] = oldValue;
 			}
@@ -620,7 +623,7 @@ class Cursor
 					return undefined;
 				}
 				const value = cursor.value;
-				assert(value !== undefined, "Leaf replacement must have a value");
+				assert(value !== undefined, 0xe16 /* Leaf replacement must have a value */);
 				values.push(value);
 				cursor.exitNode();
 			}
@@ -633,7 +636,7 @@ class Cursor
 		);
 		for (let offset = 0; offset < count; offset++) {
 			const value = values[offset];
-			assert(value !== undefined, "Missing replacement value");
+			assert(value !== undefined, 0xe17 /* Missing replacement value */);
 			this.chunk.values[valueOffset + offset] = value;
 		}
 		for (const chunk of content) {

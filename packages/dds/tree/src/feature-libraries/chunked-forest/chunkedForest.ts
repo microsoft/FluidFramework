@@ -207,21 +207,21 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 				);
 				assert(
 					!editor.isRootField(source),
-					"Replacement source must differ from current field",
+					0xdff /* Replacement source must differ from current field */,
 				);
 				assert(
 					!editor.isRootField(destination),
-					"Replacement destination must differ from current field",
+					0xe00 /* Replacement destination must differ from current field */,
 				);
 				assert(
 					!this.forest.roots.fields.has(destination),
-					"Replacement destination must be new",
+					0xe01 /* Replacement destination must be new */,
 				);
 				const content = this.forest.roots.fields.get(source);
-				assert(content !== undefined, "Replacement source must exist");
+				assert(content !== undefined, 0xe02 /* Replacement source must exist */);
 				assert(
 					sourceRange.end - sourceRange.start === range.end - range.start,
-					"Replacement lengths must match",
+					0xe03 /* Replacement lengths must match */,
 				);
 				validateChunkEditRange(range, editor.getFieldLength());
 				const incoming = takeDetachedRange(source, content, sourceRange);

@@ -170,7 +170,7 @@ export class SharedTreeChangeFamily
 				}
 				case "schema": {
 					// Reverting schema changes may be supported in the future
-					assert(isRollback, "Reverting schema changes is not supported");
+					assert(isRollback, 0xde1 /* Reverting schema changes is not supported */);
 					return {
 						type: "schema",
 						innerChange: innerChange.innerChange.rollback(),

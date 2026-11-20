@@ -192,7 +192,7 @@ describe("chunkEditTraversal", () => {
 			root.referenceAdded();
 			assert.throws(
 				() => new ChunkEditTraversal(root, basicOnlyChunkCompressor),
-				/exclusive chunk ownership/,
+				validateAssertionError("Editing requires exclusive chunk ownership"),
 			);
 			root.referenceRemoved();
 			const editor = new ChunkEditTraversal(root, basicOnlyChunkCompressor);
@@ -200,7 +200,10 @@ describe("chunkEditTraversal", () => {
 			assert.equal("fork" in editor, false);
 			editor.free();
 			assert.equal(root.isUnreferenced(), false);
-			assert.throws(() => editor.enterField(EmptyKey), /freed/);
+			assert.throws(
+				() => editor.enterField(EmptyKey),
+				validateAssertionError("Cursor has been freed"),
+			);
 			root.referenceRemoved();
 		});
 
@@ -535,11 +538,14 @@ describe("chunkEditTraversal", () => {
 			assert.equal(parent.isUnreferenced(), false);
 			assert.throws(
 				() => trySpliceField(cursor, { start: 0, end: 2 }, [], basicOnlyChunkCompressor),
-				/field length/,
+				validateAssertionError("Edit range must not exceed field length"),
 			);
 			cursor.enterNode(0);
 			cursor.enterField(EmptyKey);
-			assert.throws(() => cursor.enterNode(0), /Only the root node is stored inline/);
+			assert.throws(
+				() => cursor.enterNode(0),
+				validateAssertionError("Only the root node is stored inline"),
+			);
 			assert.deepEqual(child.values, [1]);
 			incoming.referenceRemoved();
 			parent.referenceRemoved();

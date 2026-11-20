@@ -36,7 +36,11 @@ import {
 	type ImplicitFieldSchema,
 	normalizeFieldSchema,
 } from "./fieldSchema.js";
-import { isObjectNodeSchema, type ObjectNodeSchemaPrivate } from "./node-kinds/index.js";
+import {
+	isObjectNodeSchema,
+	type ObjectNodeSchemaPrivate,
+	// eslint-disable-next-line import-x/no-internal-modules -- Importing the node-kinds barrel makes a dependency cycle.
+} from "./node-kinds/object/objectNodeTypes.js";
 import type {
 	SchemaType,
 	SimpleFieldSchema,
