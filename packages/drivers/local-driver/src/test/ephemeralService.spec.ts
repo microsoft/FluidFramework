@@ -93,6 +93,16 @@ describe("EphemeralService", () => {
 			assert.strictEqual(container2.id, container1.id);
 		});
 
+		it("loadContainer rejects a different root kind even when its layout matches", async () => {
+			const client = newService().newClient(options);
+			const container = await client.createAttachedContainer(stubFactory);
+			const otherKind = makeStubDataStoreKind("other-stub");
+			await assert.rejects(client.loadContainer(container.id, otherKind), {
+				errorType: "usageError",
+				message: `Mismatched data store type. Expected: ${otherKind.type}, got: ${stubFactory.type}`,
+			});
+		});
+
 		it("attach throws UsageError when container is already attached", async () => {
 			const client = newService().newClient(options);
 			const detached = await client.createContainer(stubFactory);
