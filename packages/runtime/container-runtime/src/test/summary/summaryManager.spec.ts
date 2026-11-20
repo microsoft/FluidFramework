@@ -561,6 +561,120 @@ describe("Summary Manager", () => {
 			);
 		});
 
+		it("Should stop and close a late-created summarizer after parent closure when bypassing initial delay", async () => {
+			createSummaryManager({
+				opsToBypassInitialDelay: 0,
+				connected: true,
+			});
+			clientElection.electClient(thisClientId);
+			await flushPromises();
+			assertRequests(1, "Should have a pending summarizer request");
+
+			// Model a connected clone: run completes only once it receives a stop signal.
+			const run = sinon.stub(summarizer, "run").callsFake(async () => {
+				await summarizer.stopDeferred.promise;
+				return "summarizerClientDisconnected";
+			});
+			const close = sinon.spy(summarizer, "close");
+			try {
+				connectedState.disconnect();
+				assertState(SummaryManagerState.Stopping, "Should record the pending stop");
+
+				completeSummarizerRequest();
+				await flushPromises();
+				sinon.assert.calledOnce(run);
+
+				// Advancing past the manager's stop timeout must not leave the clone orphaned.
+				clock.tick(2 * 60 * 1000);
+				await flushPromises();
+				assert.strictEqual(summarizer.testStopReason, "parentNotConnected");
+				sinon.assert.calledOnce(close);
+				assertState(SummaryManagerState.Off, "Should clean up the late-created summarizer");
+			} finally {
+				// Release the simulated clone even when the regression assertion fails.
+				summarizer.stopDeferred.resolve("parentNotConnected");
+				await flushPromises();
+				run.restore();
+				close.restore();
+			}
+		});
+
+		it("Should stop and close a late-created summarizer after parent closure then disposal when bypassing initial delay", async () => {
+			createSummaryManager({
+				opsToBypassInitialDelay: 0,
+				connected: true,
+			});
+			clientElection.electClient(thisClientId);
+			await flushPromises();
+			assertRequests(1, "Should have a pending summarizer request");
+
+			// Model a connected clone: run completes only once it receives a stop signal.
+			const run = sinon.stub(summarizer, "run").callsFake(async () => {
+				await summarizer.stopDeferred.promise;
+				return "summarizerClientDisconnected";
+			});
+			const close = sinon.spy(summarizer, "close");
+			try {
+				connectedState.disconnect();
+				assertState(SummaryManagerState.Stopping, "Should record the pending stop");
+				summaryManager.dispose();
+
+				completeSummarizerRequest();
+				await flushPromises();
+				sinon.assert.calledOnce(run);
+
+				// Advancing past the manager's stop timeout must not leave the clone orphaned.
+				clock.tick(2 * 60 * 1000);
+				await flushPromises();
+				assert.strictEqual(summarizer.testStopReason, "parentNotConnected");
+				sinon.assert.calledOnce(close);
+				assertState(SummaryManagerState.Off, "Should clean up the late-created summarizer");
+			} finally {
+				// Release the simulated clone even when the regression assertion fails.
+				summarizer.stopDeferred.resolve("parentNotConnected");
+				await flushPromises();
+				run.restore();
+				close.restore();
+			}
+		});
+
+		it("Should stop and close a late-created summarizer after parent disposal when bypassing initial delay", async () => {
+			createSummaryManager({
+				opsToBypassInitialDelay: 0,
+				connected: true,
+			});
+			clientElection.electClient(thisClientId);
+			await flushPromises();
+			assertRequests(1, "Should have a pending summarizer request");
+
+			// Model a connected clone: run completes only once it receives a stop signal.
+			const run = sinon.stub(summarizer, "run").callsFake(async () => {
+				await summarizer.stopDeferred.promise;
+				return "summarizerClientDisconnected";
+			});
+			const close = sinon.spy(summarizer, "close");
+			try {
+				summaryManager.dispose();
+
+				completeSummarizerRequest();
+				await flushPromises();
+				sinon.assert.calledOnce(run);
+
+				// Advancing past the manager's stop timeout must not leave the clone orphaned.
+				clock.tick(2 * 60 * 1000);
+				await flushPromises();
+				assert.strictEqual(summarizer.testStopReason, "parentNotConnected");
+				sinon.assert.calledOnce(close);
+				assertState(SummaryManagerState.Off, "Should clean up the late-created summarizer");
+			} finally {
+				// Release the simulated clone even when the regression assertion fails.
+				summarizer.stopDeferred.resolve("parentNotConnected");
+				await flushPromises();
+				run.restore();
+				close.restore();
+			}
+		});
+
 		it("Should wait for throttler delay before starting summarizer", async () => {
 			throttler.delayMs = 100;
 			createSummaryManager({

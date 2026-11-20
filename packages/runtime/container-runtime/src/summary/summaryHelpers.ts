@@ -78,14 +78,24 @@ export function formCreateSummarizerFn(loader: ILoader): () => Promise<ISummariz
 		};
 
 		const resolvedContainer = await loader.resolve(request);
-		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
-		const fluidObject: FluidObject<ISummarizer> | undefined =
-			await resolvedContainer.getEntryPoint();
-
-		if (fluidObject?.ISummarizer === undefined) {
-			throw new UsageError("Fluid object does not implement ISummarizer");
+		try {
+			// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
+			const entryPoint: FluidObject<ISummarizer> | undefined =
+				await resolvedContainer.getEntryPoint();
+			const summarizer = entryPoint?.ISummarizer;
+			if (summarizer === undefined) {
+				throw new UsageError("Fluid object does not implement ISummarizer");
+			}
+			return summarizer;
+		} catch (error) {
+			// Until acquisition succeeds, the factory owns cleanup of the summarizer container.
+			try {
+				resolvedContainer.close();
+			} catch {
+				// Cleanup must not replace the entry-point or validation error.
+			}
+			throw error;
 		}
-		return fluidObject.ISummarizer;
 	};
 }
 
