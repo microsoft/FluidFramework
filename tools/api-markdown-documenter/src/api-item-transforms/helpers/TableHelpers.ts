@@ -8,6 +8,7 @@ import {
 	type ApiItem,
 	ApiItemKind,
 	type ApiPackage,
+	ApiParameterListMixin,
 	type ApiPropertyItem,
 	ApiReturnTypeMixin,
 	type Excerpt,
@@ -28,10 +29,10 @@ import {
 } from "../../utilities/index.js";
 import { transformTsdoc } from "../TsdocNodeTransforms.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
-import { getLinkForApiItem, mdastToHtml } from "../utilities/index.js";
+import { getLinkForApiItem, mdastToHtml, type MemberType } from "../utilities/index.js";
 
 import { createExcerptSpanWithHyperlinks } from "./Helpers.js";
-import { createTableFromItems } from "./TableCreation.js";
+import { type ColumnOptions, createTableFromItems } from "./TableCreation.js";
 
 /**
  * Input properties for creating a table of API members
@@ -62,6 +63,16 @@ export interface MemberTableProperties {
  * Content / formatting options for table creation.
  */
 export interface TableCreationOptions {
+	/**
+	 * The type whose instance members are being summarized, including inherited declarations.
+	 */
+	summaryOwner?: ApiItem;
+
+	/**
+	 * Property and return types as seen from the type whose table is being rendered.
+	 */
+	inheritedTypes?: ReadonlyMap<ApiItem, MemberType> | undefined;
+
 	/**
 	 * A list of modifiers to omit from table creation.
 	 *
@@ -375,7 +386,11 @@ export function createFunctionLikeSummaryTable(
 
 	function createReturnTypeCell(apiItem: ApiFunctionLike): TableCell | undefined {
 		return ApiReturnTypeMixin.isBaseClassOf(apiItem)
-			? createTypeExcerptCell(apiItem.returnTypeExcerpt, config)
+			? createTypeExcerptCell(
+					apiItem.returnTypeExcerpt,
+					config,
+					options?.inheritedTypes?.get(apiItem),
+				)
 			: undefined;
 	}
 
@@ -384,8 +399,9 @@ export function createFunctionLikeSummaryTable(
 			{
 				title: { type: "text", value: nameColumnLabel },
 				columnKind: "required",
-				createCellContent: (item) => createNameCell(item, config),
+				createCellContent: (item) => createNameCell(item, config, options?.summaryOwner),
 			},
+			createInheritanceColumn(options?.summaryOwner, config),
 			{
 				title: { type: "text", value: "Alerts" },
 				columnKind: "optional",
@@ -399,7 +415,7 @@ export function createFunctionLikeSummaryTable(
 			{
 				title: { type: "text", value: "Return Type" },
 				columnKind: "optional",
-				createCellContent: (item) => createReturnTypeCell(item),
+				createCellContent: createReturnTypeCell,
 			},
 			{
 				title: { type: "text", value: "Description" },
@@ -441,6 +457,7 @@ export function createPropertiesTable(
 				columnKind: "required",
 				createCellContent: (item) => createNameCell(item, config),
 			},
+			createInheritanceColumn(options?.summaryOwner, config),
 			{
 				title: { type: "text", value: "Alerts" },
 				columnKind: "optional",
@@ -459,7 +476,12 @@ export function createPropertiesTable(
 			{
 				title: { type: "text", value: "Type" },
 				columnKind: "required",
-				createCellContent: (item) => createTypeExcerptCell(item.propertyTypeExcerpt, config),
+				createCellContent: (item) =>
+					createTypeExcerptCell(
+						item.propertyTypeExcerpt,
+						config,
+						options?.inheritedTypes?.get(item),
+					),
 			},
 			{
 				title: { type: "text", value: "Description" },
@@ -582,18 +604,55 @@ function createDescriptionCell(
  *
  * @remarks This content will be generated as a link to the section content describing the API item.
  *
- * @param apiItem - The API item whose name will be displayed in the cell, and to whose content the generate link
- * will point.
+ * @param apiItem - The declaration to name and link to.
  * @param config - See {@link ApiItemTransformationConfiguration}.
+ * @param summaryOwner - The type whose instance members appear in this table.
+ * When provided, inherited overloads are distinguished by number. If omitted, the configured link text is used as-is.
  */
 function createNameCell(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
+	summaryOwner?: ApiItem,
 ): TableCell {
-	const link = getLinkForApiItem(apiItem, config);
+	const text =
+		summaryOwner !== undefined &&
+		apiItem.parent !== summaryOwner &&
+		ApiParameterListMixin.isBaseClassOf(apiItem) &&
+		apiItem
+			.getMergedSiblings()
+			.some(
+				(sibling) =>
+					ApiParameterListMixin.isBaseClassOf(sibling) &&
+					sibling.overloadIndex !== apiItem.overloadIndex,
+			)
+			? `${config.getLinkTextForItem(apiItem)} - overload ${apiItem.overloadIndex}`
+			: undefined;
 	return {
 		type: "tableCell",
-		children: [link],
+		children: [getLinkForApiItem(apiItem, config, text)],
+	};
+}
+
+/**
+ * Links to the type that declares a member, even when it is inherited through several bases.
+ * Local declarations leave the cell empty, so a table with no inherited members omits the column.
+ */
+function createInheritanceColumn(
+	summaryOwner: ApiItem | undefined,
+	config: ApiItemTransformationConfiguration,
+): ColumnOptions<ApiItem> {
+	return {
+		title: {
+			type: "text",
+			value: summaryOwner?.kind === ApiItemKind.TypeAlias ? "Declared By" : "Inherited From",
+		},
+		columnKind: "optional",
+		createCellContent: (member) => {
+			const owner = member.parent;
+			return summaryOwner === undefined || owner === undefined || owner === summaryOwner
+				? undefined
+				: { type: "tableCell", children: [getLinkForApiItem(owner, config)] };
+		},
 	};
 }
 
@@ -713,12 +772,21 @@ function createTypeParameterSummaryCell(
  *
  * @param typeExcerpt - An excerpt describing the type to be displayed in the cell.
  * @param config - See {@link ApiItemTransformationConfiguration}.
+ * @param inheritedType - The type in the derived scope, or a labeled fallback if substitution is ambiguous.
+ * If omitted, the cell displays the supplied excerpt without a label.
  */
 function createTypeExcerptCell(
 	typeExcerpt: Excerpt,
 	config: ApiItemTransformationConfiguration,
+	inheritedType?: MemberType,
 ): TableCell | undefined {
-	const excerptSpan = createExcerptSpanWithHyperlinks(typeExcerpt, config);
+	const excerptSpan = createExcerptSpanWithHyperlinks(
+		inheritedType?.excerpt ?? typeExcerpt,
+		config,
+	);
+	if (excerptSpan.length > 0 && inheritedType?.asDeclared === true) {
+		excerptSpan.push({ type: "text", value: " (as declared)" });
+	}
 	return excerptSpan.length === 0
 		? undefined
 		: {
