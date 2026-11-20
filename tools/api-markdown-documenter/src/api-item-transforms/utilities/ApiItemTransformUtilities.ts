@@ -429,7 +429,6 @@ const memberNameOrder = new Intl.Collator("en", { numeric: true });
  * The members to summarize for a type and the declarations whose details it owns.
  */
 export interface FilteredMembers {
-
 	/**
 	 * Visible members for the summary tables.
 	 *
