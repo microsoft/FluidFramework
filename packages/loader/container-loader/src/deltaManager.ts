@@ -583,6 +583,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	 * loaded state. It defaults to `snapshotSequenceNumber`. Offline loads may provide a later
 	 * sequence number so the DeltaManager skips downloading and processing ops already included in
 	 * that state.
+	 * @returns The sequence number of the last op queued when the fetch requested by `prefetchType` completed.
+	 * For `"cached"`, this excludes ops that the background storage fetch queues later.
 	 */
 	public async attachOpHandler(
 		minSequenceNumber: number,
@@ -590,7 +592,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		handler: IDeltaHandlerStrategy,
 		prefetchType: "cached" | "all" | "none" = "none",
 		lastProcessedSequenceNumber: number = snapshotSequenceNumber,
-	): Promise<void> {
+	): Promise<number> {
 		this.initSequenceNumber = snapshotSequenceNumber;
 		this.lastProcessedSequenceNumber = lastProcessedSequenceNumber;
 		this.minSequenceNumber = minSequenceNumber;
@@ -617,7 +619,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		);
 
 		if (this._closed) {
-			return;
+			return this.lastQueuedSequenceNumber;
 		}
 
 		this._inbound.resume();
@@ -626,15 +628,17 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		if (prefetchType !== "none") {
 			const cacheOnly = prefetchType === "cached";
 			await this.fetchMissingDeltasCore(`DocumentOpen_${prefetchType}`, cacheOnly);
+		}
+		// Capture this before the background fetch below can queue more ops.
+		const lastFetchedSequenceNumber = this.lastQueuedSequenceNumber;
 
-			// Keep going with fetching ops from storage once we have all cached ops in.
-			// But do not block load and make this request async / not blocking this api.
-			// Ops processing will start once cached ops are in and and will stop when queue is empty
-			// (which in most cases will happen when we are done processing cached ops)
-			if (cacheOnly) {
-				// fire and forget
-				this.fetchMissingDeltas("PostDocumentOpen");
-			}
+		// Keep going with fetching ops from storage once we have all cached ops in.
+		// But do not block load and make this request async / not blocking this api.
+		// Ops processing will start once cached ops are in and and will stop when queue is empty
+		// (which in most cases will happen when we are done processing cached ops)
+		if (prefetchType === "cached") {
+			// fire and forget
+			this.fetchMissingDeltas("PostDocumentOpen");
 		}
 
 		// Ensure there is no need to call this.processPendingOps() at the end of boot sequence
@@ -642,6 +646,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			this.fetchReason !== undefined || this.pending.length === 0,
 			0x269 /* "pending ops are not dropped" */,
 		);
+
+		return lastFetchedSequenceNumber;
 	}
 
 	public connect(args: IConnectionArgs): void {
