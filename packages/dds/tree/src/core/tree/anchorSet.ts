@@ -402,10 +402,27 @@ export class AnchorSet implements AnchorLocator {
 			return NeverAnchor;
 		}
 
-		const foundPath = this.trackInner(path);
+		return this.anchorFor(this.trackInner(path));
+	}
+
+	/**
+	 * A new anchor to `pathNode`, which must already hold a reference for it.
+	 */
+	private anchorFor(pathNode: PathNode): Anchor {
 		const anchor: Anchor = brand(this.anchorCounter++);
-		this.anchorToPath.set(anchor, foundPath);
+		this.anchorToPath.set(anchor, pathNode);
 		return anchor;
+	}
+
+	/**
+	 * A new anchor to the child of `parent` at `index` in its field `key`, and the child's {@link AnchorNode}.
+	 * @remarks
+	 * The same as tracking the child's path, but finds or creates the child under `parent` directly.
+	 */
+	public trackChild(parent: PathNode, key: FieldKey, index: number): [Anchor, AnchorNode] {
+		assert(parent.anchorSet === this, "The parent must be from this anchor set");
+		const child = parent.getOrCreateChild(key, index);
+		return [this.anchorFor(child), child];
 	}
 
 	/**
@@ -1140,11 +1157,7 @@ class PathNode extends ReferenceCountedBase implements AnchorNode {
 	}
 
 	public getOrCreateChildRef(key: FieldKey, index: number): [Anchor, AnchorNode] {
-		const anchor = this.anchorSet.track(this.child(key, index));
-		const node =
-			this.anchorSet.locate(anchor) ??
-			fail(0xaec /* cannot reference child that does not exist */);
-		return [anchor, node];
+		return this.anchorSet.trackChild(this, key, index);
 	}
 
 	/**
