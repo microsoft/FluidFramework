@@ -15,17 +15,26 @@ import {
 	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
 
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+
 import { FluidClientVersion } from "../../codec/index.js";
+import { CommitKind, type RevertibleAlpha, RevertibleStatus } from "../../core/index.js";
 import {
 	independentInitializedView,
 	createIndependentTreeAlpha,
 	createIndependentTreeBeta,
+	createIndependentTreeCheckout,
 	createIndependentTreeView,
 	createIndependentTreeViewAlpha,
 	independentView,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/independentView.js";
-import { ForestTypeExpensiveDebug, TreeAlpha } from "../../shared-tree/index.js";
+import {
+	ForestTypeExpensiveDebug,
+	type SchematizingSimpleTreeView,
+	TreeAlpha,
+	type TreeCheckout,
+} from "../../shared-tree/index.js";
 import {
 	extractPersistedSchema,
 	FieldKind,
@@ -41,7 +50,7 @@ import {
 	importCompatibilitySchemaSnapshot,
 } from "../../simple-tree/index.js";
 import { ajvValidator } from "../codec/index.js";
-import { testIdCompressor } from "../utils.js";
+import { createTestUndoRedoStacks, testIdCompressor } from "../utils.js";
 
 describe("independentView", () => {
 	it("createIndependentTreeViewAlpha", () => {
@@ -602,5 +611,216 @@ describe("independentView", () => {
 			assert.equal(view.root, "A");
 			view.dispose();
 		}
+	});
+
+	describe("maxRevertibles", () => {
+		const sf = new SchemaFactory("maxRevertibles");
+		class Strings extends sf.array("Strings", sf.string) {}
+		const config = new TreeViewConfiguration({ schema: Strings });
+
+		function createView(
+			maxRevertibles: number | undefined,
+			initialContent: readonly string[] = [],
+		): {
+			checkout: TreeCheckout;
+			view: SchematizingSimpleTreeView<typeof Strings>;
+		} {
+			const checkout = createIndependentTreeCheckout({ maxRevertibles });
+			const view = checkout.viewWith(config);
+			view.initialize(new Strings(initialContent));
+			return { checkout, view };
+		}
+
+		/**
+		 * Collects a revertible for each commit except those made by transactions labeled `"load"`.
+		 */
+		function collectRevertibles(view: SchematizingSimpleTreeView<typeof Strings>): {
+			revertibles: RevertibleAlpha[];
+			disposed: RevertibleAlpha[];
+		} {
+			const revertibles: RevertibleAlpha[] = [];
+			const disposed: RevertibleAlpha[] = [];
+			view.events.on("changed", (data, getRevertible) => {
+				if (getRevertible !== undefined && !data.labels.has("load")) {
+					revertibles.push(getRevertible((revertible) => disposed.push(revertible)));
+				}
+			});
+			return { revertibles, disposed };
+		}
+
+		function load(view: SchematizingSimpleTreeView<typeof Strings>, value: string): void {
+			view.runTransaction(() => view.root.insertAtEnd(value), { label: "load" });
+		}
+
+		for (const invalid of [0, -1, 1.5, Number.NaN]) {
+			it(`rejects ${invalid}`, () => {
+				assert.throws(
+					() => createIndependentTreeAlpha({ maxRevertibles: invalid }),
+					validateUsageError(/"maxRevertibles" must be a positive integer/),
+				);
+			});
+		}
+
+		it("disposes the oldest revertible beyond the limit", () => {
+			const { view } = createView(2);
+			const { revertibles, disposed } = collectRevertibles(view);
+			view.root.insertAtEnd("A");
+			view.root.insertAtEnd("B");
+			assert.deepEqual(disposed, []);
+			view.root.insertAtEnd("C");
+			assert.deepEqual(disposed, [revertibles[0]]);
+			assert.equal(revertibles[0].status, RevertibleStatus.Disposed);
+			assert.equal(revertibles[1].status, RevertibleStatus.Valid);
+			assert.equal(revertibles[2].status, RevertibleStatus.Valid);
+			assert.throws(
+				() => revertibles[0].revert(),
+				validateUsageError(/disposed because more than 2 revertibles were valid/),
+			);
+			revertibles[2].revert();
+			revertibles[1].revert();
+			assert.deepEqual([...view.root], ["A"]);
+		});
+
+		it("does not count a revertible being reverted toward the limit", () => {
+			const { view } = createView(2);
+			const { undoStack, redoStack } = createTestUndoRedoStacks(view.events);
+			view.root.insertAtEnd("A");
+			view.root.insertAtEnd("B");
+			undoStack.pop()?.revert();
+			undoStack.pop()?.revert();
+			assert.deepEqual([...view.root], []);
+			assert.equal(undoStack.length, 0);
+			assert.equal(redoStack.length, 2);
+			redoStack.pop()?.revert();
+			redoStack.pop()?.revert();
+			assert.deepEqual([...view.root], ["A", "B"]);
+			assert.equal(undoStack.length, 2);
+			assert.equal(redoStack.length, 0);
+			undoStack.pop()?.revert();
+			assert.deepEqual([...view.root], ["A"]);
+		});
+
+		it("does not limit revertibles or trim history by default", () => {
+			const { checkout, view } = createView(undefined, ["a", "b", "c", "d"]);
+			const { revertibles } = collectRevertibles(view);
+			const commitsBefore = checkout.mainBranch.getCommitCount();
+			for (let i = 0; i < 4; i++) {
+				view.root.removeAt(0);
+			}
+			assert.equal(checkout.mainBranch.getCommitCount(), commitsBefore + 4);
+			assert.equal(checkout.getRemovedRoots().length, 4);
+			assert(revertibles.every((r) => r.status === RevertibleStatus.Valid));
+		});
+
+		it("retains only the latest commit when there are no revertibles", () => {
+			const { checkout, view } = createView(3, ["a", "b", "c", "d"]);
+			assert.equal(checkout.mainBranch.getCommitCount(), 1);
+			for (let i = 0; i < 4; i++) {
+				view.root.removeAt(0);
+				assert.equal(checkout.mainBranch.getCommitCount(), 1);
+				// Only the content removed by the latest commit is retained.
+				assert.equal(checkout.getRemovedRoots().length, 1);
+			}
+			assert.deepEqual([...view.root], []);
+		});
+
+		it("retains the commits needed by valid revertibles", () => {
+			const { checkout, view } = createView(2, ["a", "b", "c", "d", "e"]);
+			const history = checkout.branchHistory;
+			const { revertibles } = collectRevertibles(view);
+			for (let i = 0; i < 4; i++) {
+				view.root.removeAt(0);
+				const expectedCommits = Math.min(i + 1, 2);
+				assert.equal(checkout.mainBranch.getCommitCount(), expectedCommits);
+				assert.equal(history.length, expectedCommits);
+				assert.equal(checkout.getRemovedRoots().length, expectedCommits);
+			}
+			assert.equal(revertibles.length, 4);
+			revertibles[3].revert();
+			assert.deepEqual([...view.root], ["d", "e"]);
+			revertibles[2].revert();
+			assert.deepEqual([...view.root], ["c", "d", "e"]);
+		});
+
+		it("discards history once revertibles are disposed", () => {
+			const { checkout, view } = createView(5);
+			const { revertibles } = collectRevertibles(view);
+			view.root.insertAtEnd("A");
+			view.root.insertAtEnd("B");
+			assert.equal(checkout.mainBranch.getCommitCount(), 2);
+			for (const revertible of revertibles) {
+				revertible.dispose();
+			}
+			// History is trimmed when the next commit is applied.
+			assert.equal(checkout.mainBranch.getCommitCount(), 2);
+			view.runTransaction(() => {
+				view.root.insertAtEnd("C");
+				view.root.insertAtEnd("D");
+				assert.equal(checkout.mainBranch.getCommitCount(), 2);
+			});
+			assert.equal(revertibles.length, 3);
+			assert.equal(checkout.mainBranch.getCommitCount(), 1);
+			revertibles[2].revert();
+			assert.deepEqual([...view.root], ["A", "B"]);
+		});
+
+		it("does not trim history while the view has forks", () => {
+			const { checkout, view } = createView(1);
+			view.root.insertAtEnd("A");
+			assert.equal(checkout.mainBranch.getCommitCount(), 1);
+			const fork = view.fork();
+			view.root.insertAtEnd("B");
+			view.root.insertAtEnd("C");
+			assert.equal(checkout.mainBranch.getCommitCount(), 3);
+			fork.root.insertAtEnd("F");
+			view.merge(fork);
+			assert.deepEqual([...view.root], ["A", "F", "B", "C"]);
+			view.root.insertAtEnd("D");
+			assert.equal(checkout.mainBranch.getCommitCount(), 1);
+			assert.deepEqual([...view.root], ["A", "F", "B", "C", "D"]);
+		});
+
+		it("undo and redo produce the same trees as without trimming", () => {
+			function run(maxRevertibles: number | undefined): string[][] {
+				const { view } = createView(maxRevertibles);
+				const undoStack: RevertibleAlpha[] = [];
+				const redoStack: RevertibleAlpha[] = [];
+				view.events.on("changed", (data, getRevertible) => {
+					if (getRevertible !== undefined && !data.labels.has("load")) {
+						const stack = data.kind === CommitKind.Undo ? redoStack : undoStack;
+						stack.push(getRevertible());
+					}
+				});
+				const snapshots: string[][] = [];
+				const snapshot = (): void => {
+					snapshots.push([...view.root]);
+				};
+				view.root.insertAtEnd("e1");
+				load(view, "l1");
+				view.root.insertAtEnd("e2");
+				load(view, "l2");
+				view.root.removeAt(0);
+				load(view, "l3");
+				view.root.insertAtEnd("e3");
+				snapshot();
+				for (let i = 0; i < 3; i++) {
+					undoStack.pop()?.revert();
+					snapshot();
+				}
+				redoStack.pop()?.revert();
+				snapshot();
+				load(view, "l4");
+				redoStack.pop()?.revert();
+				snapshot();
+				undoStack.pop()?.revert();
+				snapshot();
+				return snapshots;
+			}
+
+			const expected = run(undefined);
+			assert.deepEqual(expected.at(-1), ["e1", "l1", "e2", "l2", "l3", "l4"]);
+			assert.deepEqual(run(3), expected);
+			assert.deepEqual(run(Number.POSITIVE_INFINITY), expected);
+		});
 	});
 });
