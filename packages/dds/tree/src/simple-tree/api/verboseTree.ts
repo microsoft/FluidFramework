@@ -199,7 +199,12 @@ export function fieldCursorFromVerbose(
 	);
 }
 
-function verboseTreeAdapter(options: SchemalessParseOptions): CursorAdapter<VerboseTree> {
+/**
+ * The {@link CursorAdapter} reading {@link VerboseTree} data.
+ */
+export function verboseTreeAdapter(
+	options: SchemalessParseOptions,
+): CursorAdapter<VerboseTree> {
 	return {
 		value: (node: VerboseTree) => {
 			return isTreeValue(node) ? node : undefined;

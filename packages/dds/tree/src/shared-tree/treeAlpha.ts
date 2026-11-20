@@ -84,6 +84,8 @@ import {
 	type TreeNodeSchema,
 	toStoredSchema,
 	toUnhydratedSchema,
+	insertVerbose,
+	setVerbose,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 
@@ -586,6 +588,56 @@ export interface TreeAlpha {
 		schema: TSchema,
 		content: TContent,
 	): TContent;
+
+	/**
+	 * Inserts content in the {@link VerboseTree} format into an array node of a tree, building it directly in the tree.
+	 *
+	 * @param array - The array node to insert into. It must be in the document of a tree.
+	 * @param index - The index at which to insert, as for {@link (TreeArrayNode:interface).insertAt}.
+	 * @param content - The items to insert. Object nodes in them must use stored keys:
+	 * this is the format {@link (TreeAlpha:interface).(exportVerbose:1)} produces with {@link KeyEncodingOptions.allStoredKeys}.
+	 *
+	 * @remarks
+	 * Inserting content built with {@link (TreeAlpha:interface).importVerbose} checks it against the schema twice:
+	 * against its view schema (allowing {@link SchemaStaticsBeta.staged | staged} types, since unhydrated nodes do not belong to a document),
+	 * then against the stored schema of the tree it is inserted into.
+	 * It also creates a {@link TreeNode} for every node of the content, which inserting it hydrates.
+	 * This function checks the content once, against the stored schema of the tree `array` is in,
+	 * and builds it directly into the tree's storage, without creating any {@link TreeNode}s: reading the inserted content creates them as needed.
+	 *
+	 * The edit, its events, and its behavior in transactions and when reverted, are those of {@link (TreeArrayNode:interface).insertAt} inserting the same content.
+	 *
+	 * The content is checked against the stored schema only.
+	 * Checks made by node construction from the view schema are not made:
+	 * for example, the invariants checked by the constructors of tables made by `TableSchema` are not enforced.
+	 * Since keys are stored keys, the content can include {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields} the stored schema has.
+	 * An identifier field without content gets a new identifier, as when constructing a node.
+	 * The content is not modified.
+	 *
+	 * @throws A `UsageError` if `array` is not an array node in the document of a tree, if `index` is out of bounds, or if `content` is out of schema.
+	 * Nothing is inserted in that case.
+	 */
+	insertVerbose(array: TreeNode, index: number, content: readonly VerboseTree[]): void;
+
+	/**
+	 * Sets a property of an object node, or an entry of a map or record node, to content in the {@link VerboseTree} format, building it directly in the tree.
+	 *
+	 * @param parent - The object, map or record node. It must be in the document of a tree.
+	 * @param key - The property key (for object nodes) or key (for map and record nodes) to set.
+	 * @param content - The new content, using stored keys (see {@link (TreeAlpha:interface).insertVerbose}).
+	 * `undefined` empties an optional field, map entry, or record entry.
+	 *
+	 * @remarks
+	 * The content is checked and built as {@link (TreeAlpha:interface).insertVerbose} describes.
+	 *
+	 * The edit, its events, and its behavior in transactions and when reverted, are those of assigning the property or setting the entry to the same content.
+	 * Emptying a field that is already empty does nothing.
+	 *
+	 * @throws A `UsageError` if `parent` is not an object, map or record node in the document of a tree, if `key` is not a property of an object node,
+	 * if the property is an identifier, or if `content` is out of schema.
+	 * Nothing is changed in that case.
+	 */
+	setVerbose(parent: TreeNode, key: string, content: VerboseTree | undefined): void;
 }
 
 /**
@@ -1154,6 +1206,14 @@ export const TreeAlpha: TreeAlpha = {
 			});
 		}
 		return node;
+	},
+
+	insertVerbose(array: TreeNode, index: number, content: readonly VerboseTree[]): void {
+		insertVerbose(array, index, content);
+	},
+
+	setVerbose(parent: TreeNode, key: string, content: VerboseTree | undefined): void {
+		setVerbose(parent, key, content);
 	},
 };
 
