@@ -38,6 +38,13 @@ Read the build status, source revision, branch, parameters, and tested FF artifa
 Record the failing stage, job, task, attempt, and exact test or operation with its error and relevant stack.
 Keep separate failure signatures separate, including non-test failures.
 
+Focus the investigation on stages whose actual result is **Failed**.
+A stage marked as a warning or **Succeeded with issues** is not a blocker.
+Do not treat error log lines, a nonzero script exit code, or a size threshold breach as a stage failure without checking the resulting status and any `continueOnError` configuration.
+For example, the Office-baseline bundle comparison can report regressions but remain non-blocking because it uses `continueOnError: true`; check the separate FF-to-FF comparison independently.
+Briefly review and call out relevant warnings, but keep failed stages as the investigation priority.
+Investigate warning-only stages in depth only when they help explain a failed stage or the user explicitly asks about them.
+
 Use the build timeline and structured test results when accessible.
 The Issues panel aggregates error log lines; it does not prove a task failed.
 If timeline access is unavailable, inspect task completion and exit status in the relevant logs and state any remaining uncertainty.
@@ -132,6 +139,8 @@ Do not loop retries or file a new issue without approval.
 ## 5. Report concisely
 
 Lead with the actual failure and whether a matching fix exists.
+Keep non-blocking warnings separate from failures, and do not describe them as the reason the build failed.
+Include a brief secondary note about relevant warnings; do not omit them just because they are non-blocking or let them dominate the report.
 Include the matching PRs and their current status, relevant human Teams discussions, and the next action.
 State missing access or uncertain fix inclusion explicitly.
 For multiple signatures, use a small table with failure, known work, and recommended action.
