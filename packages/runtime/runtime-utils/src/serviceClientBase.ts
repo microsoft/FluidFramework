@@ -8,6 +8,7 @@ import { AttachState, type IContainer } from "@fluidframework/container-definiti
 import type { IRequest } from "@fluidframework/core-interfaces";
 import { ErasedTypeImplementation } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
 	type DataStoreKey,
 	type DataStoreKind,
@@ -22,6 +23,7 @@ import type {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
+	FluidDataStoreContextInternal,
 	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -69,10 +71,12 @@ export class DataStoreKindImplementation<T>
 	public constructor(
 		private readonly factory: Pick<
 			DataStoreKindImplementation<T>,
-			"type" | "instantiateDataStore" | "createDataStore"
+			"type" | "createDataStore"
 		> &
+			Partial<Pick<IFluidDataStoreFactory, "instantiateDataStore">> &
 			Partial<Pick<IFluidDataStoreFactory, "IFluidDataStoreFactory">> & {
 				readonly IFluidDataStoreRegistry?: IFluidDataStoreRegistry | undefined;
+				readonly channelFactory?: IChannelFactory;
 			},
 	) {
 		super();
@@ -86,6 +90,16 @@ export class DataStoreKindImplementation<T>
 		context: IFluidDataStoreContext,
 		existing: boolean,
 	): Promise<IFluidDataStoreChannel> {
+		if (this.factory.channelFactory !== undefined) {
+			const native: FluidDataStoreContextInternal = context as FluidDataStoreContextInternal;
+			if (native.createLeafChannel === undefined) {
+				throw new UsageError("This runtime does not support native leaf hosting");
+			}
+			return native.createLeafChannel(this, existing);
+		}
+		if (this.factory.instantiateDataStore === undefined) {
+			throw new UsageError("The data-store kind has no factory");
+		}
 		return this.factory.instantiateDataStore(context, existing);
 	}
 
@@ -96,6 +110,14 @@ export class DataStoreKindImplementation<T>
 
 	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined {
 		return this.factory.IFluidDataStoreRegistry;
+	}
+
+	public get channelFactory(): IChannelFactory | undefined {
+		return this.factory.channelFactory;
+	}
+
+	public get isLeafChannel(): boolean {
+		return this.channelFactory !== undefined;
 	}
 
 	public async adapt(value: Promise<DataStoreKind>): Promise<DataStoreKind<T>> {

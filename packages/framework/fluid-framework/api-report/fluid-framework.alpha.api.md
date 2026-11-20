@@ -291,10 +291,10 @@ export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidH
 };
 
 // @alpha
-export function configuredSharedTree(options: SharedTreeOptions): SharedObjectKindAlpha<ITree>;
+export function configuredSharedTree(options: SharedTreeOptions): DataStoreKind<ITree>;
 
 // @alpha
-export function configuredSharedTreeAlpha(options: SharedTreeOptions): SharedObjectKindAlpha<ITree>;
+export function configuredSharedTreeAlpha(options: SharedTreeOptions): DataStoreKind<ITree>;
 
 // @beta
 export function configuredSharedTreeBeta(options: SharedTreeOptionsBeta): SharedObjectKind<ITree>;
@@ -376,12 +376,12 @@ export interface CustomMetadataTree {
 }
 
 // @alpha @sealed
-export interface DataStoreContext extends SharedObjectCreator {
+export interface DataStoreContext extends DataStoreCreator {
 }
 
 // @alpha @sealed
-export interface DataStoreCreator {
-    createDataStore<T>(kind: DataStoreKey<T>): Promise<T>;
+export interface DataStoreCreator<TConstraint = unknown> {
+    createDataStore<T extends TConstraint>(kind: DataStoreKey<T>): Promise<T>;
 }
 
 // @alpha @input
@@ -392,9 +392,9 @@ export interface DataStoreKind<out T = unknown> extends DataStoreKey<T>, ErasedB
 }
 
 // @alpha @input
-export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutput> {
-    instantiateFirstTime(rootCreator: SharedObjectCreator<TRoot>, context: DataStoreContext): Promise<TRoot>;
-    readonly registry: SharedObjectRegistry;
+export interface DataStoreOptions<in out TRoot, out TOutput> {
+    instantiateFirstTime(rootCreator: DataStoreCreator<TRoot>, context: DataStoreContext): Promise<TRoot>;
+    readonly registry: DataStoreRegistry;
     readonly type: string;
     view(root: TRoot, context: DataStoreContext): Promise<TOutput>;
 }
@@ -416,7 +416,7 @@ interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider
 }
 
 // @alpha
-export function defineDataStore<T, TRoot extends IFluidLoadable>(options: DataStoreOptions<TRoot, T>): DataStoreKind<T>;
+export function defineDataStore<T, TRoot>(options: DataStoreOptions<TRoot, T>): DataStoreKind<T>;
 
 // @alpha
 export function defineTreeDataStore<const TSchema extends ImplicitFieldSchema>(options: TreeDataStoreOptions<TSchema>): DataStoreKind<TreeView<TSchema>>;
@@ -1272,7 +1272,7 @@ TSchema
 export type InsertableTypedNode<TSchema extends TreeNodeSchema, T = UnionToIntersection<TSchema>> = (T extends TreeNodeSchema<string, NodeKind, TreeNode | TreeLeafValue, never, true> ? NodeBuilderData<T> : never) | (T extends TreeNodeSchema ? Unhydrated<TreeNode extends NodeFromSchema<T> ? never : NodeFromSchema<T>> : never);
 
 // @alpha
-export function instantiateTreeFirstTime<TSchema extends ImplicitFieldSchema>(rootCreator: SharedObjectCreator, creator: SharedObjectCreator, treeKind: SharedObjectKey<ITree>, options: Pick<TreeDataStoreOptions<TSchema>, "config" | "initializer">): Promise<ITree>;
+export function instantiateTreeFirstTime<TSchema extends ImplicitFieldSchema>(rootCreator: DataStoreCreator, creator: DataStoreCreator, treeKind: DataStoreKey<ITree>, options: Pick<TreeDataStoreOptions<TSchema>, "config" | "initializer">): Promise<ITree>;
 
 // @public @sealed
 export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {
@@ -2318,37 +2318,16 @@ export interface ServiceOptions {
     readonly oldestSupportedClient: OldestSupportedServiceClientVersion;
 }
 
-// @alpha @sealed
-export interface SharedObjectCreator<TConstraint = IFluidLoadable> {
-    createSharedObject<T extends TConstraint>(kind: SharedObjectKey<T>): Promise<T>;
-}
-
-// @alpha @input
-export type SharedObjectKey<T> = RegistryKey<SharedObjectKindAlpha<T>, SharedObjectKindAlpha>;
-
 // @public @sealed
 export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
     is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject;
 }
 
-// @alpha @sealed
-export interface SharedObjectKindAlpha<out TSharedObject = unknown> extends SharedObjectKind<TSharedObject>, SharedObjectKey<TSharedObject> {
-}
-
-// @alpha @input
-export type SharedObjectRegistry = () => Promise<Registry<SharedObjectKindAlpha<IFluidLoadable>>>;
-
-// @alpha
-export function sharedObjectRegistryFromIterable(entries: Iterable<SharedObjectKindAlpha<IFluidLoadable> | {
-    type: string;
-    kind: () => Promise<SharedObjectKindAlpha<IFluidLoadable>>;
-}>): SharedObjectRegistry;
-
 // @public
 export const SharedTree: SharedObjectKind<ITree>;
 
 // @alpha
-export const SharedTreeAlpha: SharedObjectKindAlpha<ITree>;
+export const SharedTreeAlpha: DataStoreKind<ITree>;
 
 // @alpha @input
 export interface SharedTreeFormatOptions {
@@ -2959,10 +2938,9 @@ export interface TreeContextBeta {
 // @alpha @input
 export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> extends Pick<DataStoreOptions<never, never>, "type"> {
     readonly config: TreeViewConfiguration<TSchema>;
-    readonly initializer?: (creator: SharedObjectCreator) => InsertableTreeFieldFromImplicitField<TSchema>;
-    // (undocumented)
-    readonly key?: SharedObjectKey<ITree>;
-    readonly registry?: Iterable<SharedObjectKindAlpha<IFluidLoadable>> | SharedObjectRegistry;
+    readonly initializer?: (creator: DataStoreCreator) => InsertableTreeFieldFromImplicitField<TSchema>;
+    readonly key?: DataStoreKey<ITree>;
+    readonly registry?: Iterable<DataStoreKind> | DataStoreRegistry;
 }
 
 // @beta @input

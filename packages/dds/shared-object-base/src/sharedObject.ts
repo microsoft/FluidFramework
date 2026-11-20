@@ -25,7 +25,8 @@ import type {
 import type {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
-	RegistryKey,
+	DataStoreKind,
+	DataStoreKey,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	type IExperimentalIncrementalSummaryContext,
@@ -39,6 +40,7 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	toDeltaManagerInternal,
+	DataStoreKindImplementation,
 	type TelemetryContext,
 } from "@fluidframework/runtime-utils/internal";
 import {
@@ -52,7 +54,6 @@ import {
 	type ICustomData,
 	type IFluidErrorBase,
 	LoggingError,
-	UsageError,
 	extractTelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 // eslint-disable-next-line import-x/no-internal-modules -- Needed to avoid specialized /internal ITelemetryLoggerExt
@@ -978,7 +979,7 @@ export interface SharedObjectKind<out TSharedObject = unknown>
 }
 
 /**
- * A {@link @fluidframework/driver-definitions#RegistryKey} for a {@link SharedObjectKind}.
+ * Internal alias for the unified data-store key.
  * @remarks
  * This is implemented by {@link SharedObjectKind}, but alternative implementations can be used if needed.
  *
@@ -987,20 +988,19 @@ export interface SharedObjectKind<out TSharedObject = unknown>
  * TODO: A built in common pattern for the lazy key case should be provided.
  * TODO: things probably break if "adapt" does anything except throw or return the result from the input promise.
  * @input
- * @alpha
+ * @internal
  */
-export type SharedObjectKey<T> = RegistryKey<SharedObjectKindAlpha<T>, SharedObjectKindAlpha>;
+export type SharedObjectKey<T> = DataStoreKey<T>;
 
 /**
  * A {@link SharedObjectKind} that also implements {@link SharedObjectKey}.
  * @privateRemarks
  * All concrete shared object kinds (produced by {@link createSharedObjectKind}) implement this interface.
  * @sealed
- * @alpha
+ * @internal
  */
-export interface SharedObjectKindAlpha<out TSharedObject = unknown>
-	extends SharedObjectKind<TSharedObject>,
-		SharedObjectKey<TSharedObject> {}
+export type SharedObjectKindAlpha<TSharedObject = unknown> = SharedObjectKind<TSharedObject> &
+	DataStoreKind<TSharedObject>;
 
 /**
  * Utility for creating ISharedObjectKind instances.
@@ -1029,34 +1029,27 @@ export function createSharedObjectKind<TSharedObject>(
 export function createSharedObjectKindAlpha<TSharedObject>(
 	factory: (new () => IChannelFactory<TSharedObject>) & { readonly Type: string },
 ): ISharedObjectKind<TSharedObject> & SharedObjectKindAlpha<TSharedObject> {
-	const result: ISharedObjectKind<TSharedObject> &
-		Omit<SharedObjectKindAlpha<TSharedObject>, "brand"> = {
-		getFactory(): IChannelFactory<TSharedObject> {
-			return new factory();
-		},
+	const result = Object.assign(
+		new DataStoreKindImplementation<TSharedObject>({
+			type: factory.Type,
+			channelFactory: new factory(),
+		}),
+		{
+			getFactory(): IChannelFactory<TSharedObject> {
+				return new factory();
+			},
 
-		create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject {
-			return runtime.createChannel(id, factory.Type) as TSharedObject;
-		},
+			create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject {
+				return runtime.createChannel(id, factory.Type) as TSharedObject;
+			},
 
-		is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject {
-			return isChannel(value) && value.attributes.type === factory.Type;
-		},
+			is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject {
+				return isChannel(value) && value.attributes.type === factory.Type;
+			},
 
-		type: factory.Type,
-
-		adapt: (value: SharedObjectKindAlpha): SharedObjectKindAlpha<TSharedObject> => {
-			if (value === resultFinal) {
-				return resultFinal;
-			}
-			if (value.type === result.type) {
-				throw new UsageError(`Conflicting SharedObjectKinds with same type: ${result.type}`);
-			}
-			throw new UsageError(
-				`Mismatched SharedObjectKind type. Expected: ${result.type}, got: ${value.type}`,
-			);
+			type: factory.Type,
 		},
-	};
+	);
 
 	const resultFinal = result as typeof result & SharedObjectKindAlpha<TSharedObject>;
 

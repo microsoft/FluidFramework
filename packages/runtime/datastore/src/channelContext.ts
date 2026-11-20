@@ -30,7 +30,10 @@ import {
 
 import { ChannelDeltaConnection } from "./channelDeltaConnection.js";
 import { ChannelStorageService } from "./channelStorageService.js";
-import type { ISharedObjectRegistry } from "./dataStoreRuntime.js";
+import type {
+	ISharedObjectRegistry,
+	ISharedObjectRegistryInternal,
+} from "./dataStoreRuntime.js";
 
 export const attributesBlobKey = ".attributes";
 
@@ -168,7 +171,11 @@ export async function loadChannelFactoryAndAttributes(
 			}),
 		);
 	}
-	const factory = registry.get(channelFactoryType);
+	const asyncRegistry: ISharedObjectRegistryInternal = registry;
+	const factory =
+		asyncRegistry.getAsync === undefined
+			? registry.get(channelFactoryType)
+			: await asyncRegistry.getAsync(channelFactoryType);
 	if (factory === undefined) {
 		throw new DataCorruptionError(
 			"channelFactoryNotRegisteredForGivenType",

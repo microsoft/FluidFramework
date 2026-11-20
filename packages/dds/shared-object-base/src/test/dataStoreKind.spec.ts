@@ -7,8 +7,29 @@ import { strict as assert } from "node:assert";
 
 import { dataStoreRegistryFromIterable } from "../dataStoreKind.js";
 import { makeStubDataStoreKind } from "../stubSharedObject.js";
+import { createSharedObjectKindAlpha } from "../sharedObject.js";
 
 describe("dataStoreRegistryFromIterable", () => {
+	it("resolves historical DDS identifiers without aliasing composite kinds", async () => {
+		class Factory {
+			public static readonly Type = "map";
+			public readonly type = Factory.Type;
+			public readonly attributes = { type: Factory.Type, snapshotFormatVersion: "1" };
+			public create(): never {
+				throw new Error("Not used");
+			}
+			public async load(): Promise<never> {
+				throw new Error("Not used");
+			}
+		}
+		const kind = createSharedObjectKindAlpha(Factory);
+		const registry = dataStoreRegistryFromIterable([kind]);
+		const prefix = "https://graph.microsoft.com/types/";
+		assert.equal(await registry(`${prefix}map`), kind);
+		const composite = dataStoreRegistryFromIterable([makeStubDataStoreKind("map")]);
+		await assert.rejects(composite(`${prefix}map`), /Unknown data store type/);
+	});
+
 	it("looks up eager kinds from a single-use iterable", async () => {
 		const first = makeStubDataStoreKind("first");
 		const second = makeStubDataStoreKind("second");
@@ -119,7 +140,7 @@ describe("dataStoreRegistryFromIterable", () => {
 		);
 	});
 
-	it("requires an exact type identifier instead of resolving aliases", async () => {
+	it("requires an exact type identifier for composite kinds", async () => {
 		const kind = makeStubDataStoreKind("https://graph.microsoft.com/types/map");
 		const registry = dataStoreRegistryFromIterable([kind]);
 		await assert.rejects(registry("map"), /Unknown data store type: map/);

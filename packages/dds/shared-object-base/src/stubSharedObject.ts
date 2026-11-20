@@ -7,7 +7,7 @@ import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { DataStoreKind } from "@fluidframework/driver-definitions/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 
-import { defineDataStore, sharedObjectRegistryFromIterable } from "./dataStoreKind.js";
+import { defineDataStore, dataStoreRegistryFromIterable } from "./dataStoreKind.js";
 import {
 	type SharedKernel,
 	type SharedKernelFactory,
@@ -55,9 +55,9 @@ const statelessSharedObjectKind = makeSharedObjectKind<IFluidLoadable>({
 export function makeStubDataStoreKind(type: string): DataStoreKind {
 	return defineDataStore({
 		type,
-		registry: sharedObjectRegistryFromIterable([statelessSharedObjectKind]),
+		registry: dataStoreRegistryFromIterable([statelessSharedObjectKind]),
 		async instantiateFirstTime(rootCreator) {
-			return rootCreator.createSharedObject(statelessSharedObjectKind);
+			return rootCreator.createDataStore(statelessSharedObjectKind);
 		},
 		async view() {
 			return {};

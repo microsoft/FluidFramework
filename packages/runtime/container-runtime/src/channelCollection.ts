@@ -12,6 +12,7 @@ import type {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import type {
+	IFluidHandleContext,
 	IFluidHandleInternal,
 	ISignalEnvelope,
 } from "@fluidframework/core-interfaces/internal";
@@ -153,6 +154,18 @@ export interface IFluidParentContextPrivate
 	readonly isReadOnly: () => boolean;
 	readonly oldestSupportedClient: OldestSupportedClientVersion;
 	readonly minVersionForCollab: OldestSupportedClientVersion;
+	/**
+	 * Parent factory path used to resolve DDS children whose snapshots store only a type in .attributes.
+	 * Omitted outside collections that support these legacy child slots.
+	 */
+	readonly leafChannelPackagePath?: readonly string[] | undefined;
+	readonly onChildDirty?: ((id: string) => void) | undefined;
+	readonly submitSignal: (
+		type: string,
+		content: unknown,
+		targetClientId?: string,
+		relativeAddress?: string,
+	) => void;
 }
 
 /**
@@ -205,13 +218,20 @@ export function formParentContext<
 >(
 	context: Omit<IFluidParentContextPrivate & IFluidRootParentContextPrivate, SubmitKeys>,
 	overrides: Pick<T, SubmitKeys>,
+	routing?: {
+		handleContext: IFluidHandleContext;
+		registry: IFluidDataStoreRegistry | undefined;
+		leafChannelPackagePath?: readonly string[];
+	},
 ): Omit<IFluidParentContextPrivate & IFluidRootParentContextPrivate, SubmitKeys> &
 	Pick<T, SubmitKeys> {
 	return {
+		leafChannelPackagePath: routing?.leafChannelPackagePath ?? context.leafChannelPackagePath,
+		onChildDirty: context.onChildDirty?.bind(context),
 		get IFluidDataStoreRegistry() {
-			return context.IFluidDataStoreRegistry;
+			return routing === undefined ? context.IFluidDataStoreRegistry : routing.registry;
 		},
-		IFluidHandleContext: context.IFluidHandleContext,
+		IFluidHandleContext: routing?.handleContext ?? context.IFluidHandleContext,
 		options: context.options,
 		get clientId() {
 			return context.clientId;
@@ -299,8 +319,19 @@ function wrapContextForInnerChannel(
 				localOpMetadata,
 			);
 		},
-		submitSignal: (type: string, content: unknown, targetClientId?: string) => {
-			parentContext.submitSignal({ address: id, contents: { type, content } }, targetClientId);
+		submitSignal: (
+			type: string,
+			content: unknown,
+			targetClientId?: string,
+			relativeAddress?: string,
+		) => {
+			parentContext.submitSignal(
+				{
+					address: relativeAddress === undefined ? id : `${id}/${relativeAddress}`,
+					contents: { type, content },
+				},
+				targetClientId,
+			);
 		},
 	});
 
@@ -463,7 +494,7 @@ export class ChannelCollection
 				attachMessage.snapshot ?? undefined,
 				(nodeId, toPath) => {
 					// nodeId is the relative path under the node being attached. Always starts with "/", but no trailing "/" after an id
-					const fromPath = `/${attachMessage.id}${nodeId === "/" ? "" : nodeId}`;
+					const fromPath = `${this.parentContext.IFluidHandleContext.absolutePath}/${attachMessage.id}${nodeId === "/" ? "" : nodeId}`;
 					this.parentContext.addedGCOutboundRoute(fromPath, toPath, envelope.timestamp);
 				},
 			);
@@ -547,6 +578,7 @@ export class ChannelCollection
 			const pkg = [attachMessage.type];
 			const remoteFluidDataStoreContext = new RemoteFluidDataStoreContext({
 				id: attachMessage.id,
+				attachMessageType: attachMessage.type,
 				snapshot,
 				parentContext: this.wrapContextForInnerChannel(attachMessage.id),
 				storage: new StorageServiceWithAttachBlobs(
@@ -621,7 +653,11 @@ export class ChannelCollection
 		// If message timestamp doesn't exist, this is called in a detached container. Don't notify GC in that case
 		// because it doesn't run in detached container and doesn't need to know about this route.
 		if (messageTimestampMs !== undefined) {
-			this.parentContext.addedGCOutboundRoute("/", `/${internalId}`, messageTimestampMs);
+			this.parentContext.addedGCOutboundRoute(
+				this.parentContext.IFluidHandleContext.absolutePath || "/",
+				`${this.parentContext.IFluidHandleContext.absolutePath}/${internalId}`,
+				messageTimestampMs,
+			);
 		}
 
 		this.aliasMap.set(alias, context.id);
@@ -660,7 +696,7 @@ export class ChannelCollection
 	 * bound list and submitting the attach message. This data store can now be reached from the root.
 	 * @param id - The id of the data store context to make visible.
 	 */
-	private makeDataStoreLocallyVisible(id: string): void {
+	protected makeDataStoreLocallyVisible(id: string): void {
 		const localContext = this.contexts.getUnbound(id);
 		assert(!!localContext, 0x15f /* "Could not find unbound context to bind" */);
 
@@ -706,12 +742,12 @@ export class ChannelCollection
 	 * user expected some other data store (that would receive alias later).
 	 * Please note that above mentioned functions have the implementation they have (allowing #2) due to #1.
 	 */
-	protected createDataStoreId(): string {
+	protected createDataStoreId(prefix = ""): string {
 		/**
 		 * Return uuid if short-ids are explicitly disabled via feature flags.
 		 */
 		if (this.mc.config.getBoolean("Fluid.Runtime.DisableShortIds") === true) {
-			return uuid();
+			return `${prefix}${uuid()}`;
 		} else {
 			// We use three non-overlapping namespaces:
 			// - detached state: even numbers
@@ -726,15 +762,15 @@ export class ChannelCollection
 				);
 				let candidate: string;
 				do {
-					candidate = encodeCompactIdToString(2 * this.nextDetachedDataStoreId++);
+					candidate = `${prefix}${encodeCompactIdToString(2 * this.nextDetachedDataStoreId++)}`;
 				} while (this.contexts.has(candidate) || this.aliasMap.has(candidate));
 				return candidate;
 			}
 			const id = this.parentContext.containerRuntime.generateDocumentUniqueId();
 			if (typeof id === "number") {
-				return encodeCompactIdToString(2 * id + 1);
+				return `${prefix}${encodeCompactIdToString(2 * id + 1)}`;
 			}
-			return id;
+			return `${prefix}${id}`;
 		}
 	}
 
@@ -767,9 +803,11 @@ export class ChannelCollection
 		pkg: readonly string[],
 		contextCtor: new (props: ILocalDetachedFluidDataStoreContextProps) => T,
 		loadingGroupId?: string,
+		isSharedObjectChannel = false,
 	): T {
 		assert(loadingGroupId !== "", 0x974 /* loadingGroupId should not be the empty string */);
 		const context = new contextCtor({
+			isSharedObjectChannel,
 			id,
 			pkg,
 			parentContext: this.wrapContextForInnerChannel(id),
@@ -910,6 +948,7 @@ export class ChannelCollection
 		// the role of creating client.
 		const dataStoreContext = new LocalFluidDataStoreContext({
 			id,
+			attachMessageType: message.type,
 			pkg: undefined,
 			parentContext: this.wrapContextForInnerChannel(id),
 			storage,
@@ -1046,7 +1085,11 @@ export class ChannelCollection
 			});
 
 			detectOutboundReferences(address, contextContents, (fromPath: string, toPath: string) =>
-				this.parentContext.addedGCOutboundRoute(fromPath, toPath, envelope.timestamp),
+				this.parentContext.addedGCOutboundRoute(
+					`${this.parentContext.IFluidHandleContext.absolutePath}${fromPath}`,
+					toPath,
+					envelope.timestamp,
+				),
 			);
 		}
 
@@ -1186,10 +1229,21 @@ export class ChannelCollection
 	}
 
 	public processSignal(messageArg: IInboundSignalMessage, local: boolean): void {
-		const envelope = messageArg.content as IEnvelope;
-		const fluidDataStoreId = envelope.address;
+		const envelope = messageArg.content as IEnvelope<unknown>;
+		// Consume one path segment per collection, keeping the remaining routing separate from application content.
+		const separator = envelope.address.indexOf("/");
+		const fluidDataStoreId =
+			separator === -1 ? envelope.address : envelope.address.slice(0, separator);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const message = { ...messageArg, content: envelope.contents };
+		const message: IInboundSignalMessage & { relativeAddress?: string } = {
+			...messageArg,
+			content: envelope.contents,
+		};
+		if (separator === -1) {
+			delete message.relativeAddress;
+		} else {
+			message.relativeAddress = envelope.address.slice(separator + 1);
+		}
 		const context = this.contexts.get(fluidDataStoreId);
 		// If the data store has been deleted, log an error and ignore this message. This helps prevent document
 		// corruption in case a deleted data store accidentally submitted a signal.
@@ -1756,19 +1810,17 @@ export function detectOutboundReferences(
 
 	recursivelyFindHandles(contents);
 
-	// GC node paths are all absolute paths, hence the "" prefix.
-	// e.g. this will yield "/dataStoreId/ddsId"
-	const fromPath = ["", address, ddsAddress].join("/");
+	// Build a node path relative to this collection, e.g. "/dataStoreId/ddsId".
+	// The caller prefixes the collection's absolute path before notifying GC.
+	// An empty DDS address denotes the channel itself, not a child or a trailing-slash node.
+	const fromPath = ddsAddress === "" ? `/${address}` : ["", address, ddsAddress].join("/");
 	for (const toPath of outboundPaths) {
 		addedOutboundReference(fromPath, toPath);
 	}
 }
 
-// #region Experimentation
-// The code below here is for experimentation (and one test) only.
-
 /**
- * @privateRemarks This class is only used for experimentation/testing.
+ * Forwards operations and signals for a collection hosted inside another channel.
  */
 export class ComposableChannelCollection
 	extends ChannelCollection
@@ -1812,11 +1864,9 @@ export class ComposableChannelCollection
 				): void => {
 					parentContext.submitSignal(
 						envelope.contents.type,
-						{
-							address: envelope.address,
-							contents: envelope.contents.content,
-						} satisfies IEnvelope<unknown>,
+						envelope.contents.content,
 						targetClientId,
+						envelope.address,
 					);
 				},
 			}),
@@ -1856,6 +1906,8 @@ export class ComposableChannelCollection
 		this.rollbackDataStoreOp(content as IEnvelope<FluidDataStoreMessage>, localOpMetadata);
 	}
 }
+
+// #region Experimentation
 
 /**
  * @privateRemarks This factory is only used for experimentation/testing.

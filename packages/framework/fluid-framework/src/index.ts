@@ -97,14 +97,9 @@ export * from "@fluidframework/tree/alpha";
 export {
 	dataStoreRegistryFromIterable,
 	defineDataStore,
-	sharedObjectRegistryFromIterable,
 } from "@fluidframework/shared-object-base/internal";
 export type {
 	DataStoreOptions,
-	SharedObjectCreator,
-	SharedObjectRegistry,
-	SharedObjectKey,
-	SharedObjectKindAlpha,
 	DataStoreContext,
 } from "@fluidframework/shared-object-base/internal";
 export type {
@@ -131,7 +126,7 @@ export {
 } from "@fluidframework/driver-definitions/internal";
 
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
-import type { SharedObjectKindAlpha } from "@fluidframework/shared-object-base/internal";
+import type { DataStoreKind } from "@fluidframework/driver-definitions/internal";
 import type { ITree } from "@fluidframework/tree";
 import {
 	SharedTree as OriginalSharedTree,
@@ -176,9 +171,7 @@ export const SharedTree: SharedObjectKind<ITree> = OriginalSharedTree;
  * ```
  * @alpha
  */
-export function configuredSharedTree(
-	options: SharedTreeOptions,
-): SharedObjectKindAlpha<ITree> {
+export function configuredSharedTree(options: SharedTreeOptions): DataStoreKind<ITree> {
 	return originalConfiguredSharedTree(options);
 }
 
