@@ -4,252 +4,282 @@
  */
 
 import {
-	Excerpt,
-	ExcerptToken,
-	ExcerptTokenKind,
 	type ApiMethod,
 	type ApiMethodSignature,
 	ApiPropertyItem,
+	type Excerpt,
 } from "@microsoft/api-extractor-model";
+import * as ts from "typescript";
 
 import type { ApiTypeLike } from "../../utilities/index.js";
 
-/**
- * Arguments for a declaration's own type parameters, expressed in the current type's scope.
- */
-export type TypeBindings = ReadonlyMap<string, ExcerptToken | undefined>;
+import {
+	asExcerpt,
+	parseType,
+	plainToken,
+	referenceForName,
+	replaceTypes,
+	type TypeReplacement,
+} from "./TypeSyntax.js";
 
 /**
- * The type to display; a fallback always uses the entire original declaration excerpt.
+ * Maps a declaration's type parameter names to argument excerpts in the current type's scope.
+ *
+ * @remarks
+ * An `undefined` entry means the argument could not be resolved. Only members that use that parameter are affected.
+ */
+export type TypeBindings = ReadonlyMap<string, Excerpt | undefined>;
+
+/**
+ * The type information displayed in an inherited member's summary row.
  */
 export interface MemberType {
+	/**
+	 * The property or return type excerpt to render.
+	 */
 	readonly excerpt: Excerpt;
+
+	/**
+	 * Whether to label the excerpt “(as declared)” because it could not be specialized.
+	 */
 	readonly asDeclared: boolean;
 }
 
 /**
- * Matches a whole name such as `Box` or `Collections.Box`.
+ * Maps each of a declaration's type parameter names to an excerpt containing that name.
  *
  * @remarks
- * Checking the whole string keeps a type expression such as `Box | Other` from being mistaken for a single name.
+ * These bindings keep a parameter such as `T` in its declaring scope until a derived type supplies an argument.
  */
-const qualifiedName =
-	/^[$_\p{ID_Start}][$\p{ID_Continue}]*(?:\s*\.\s*[$_\p{ID_Start}][$\p{ID_Continue}]*)*$/u;
+export function localBindings(item: ApiTypeLike): TypeBindings {
+	return new Map(item.typeParameters.map(({ name }) => [name, asExcerpt([plainToken(name)])]));
+}
 
 /**
- * Finds individual identifiers inside a type excerpt such as `Promise<T>`.
+ * The TypeScript syntax kinds for built-in keyword types supported by the inheritance resolver.
  *
  * @remarks
- * The resolver checks each match against the type parameter bindings before replacing it.
+ * A keyword such as `string` contains no type parameter to substitute, so the resolver preserves it as written.
  */
-const identifier = /[$_\p{ID_Start}][$\p{ID_Continue}]*/gu;
-
-/**
- * Built-in type names and boolean literal types that can be used as type arguments without resolving a declaration.
- *
- * @example
- * `Box<string>` binds its parameter to `string` even though the excerpt has no reference to an API item for `string`.
- */
-const intrinsicTypes = new Set([
-	"any",
-	"bigint",
-	"boolean",
-	"never",
-	"null",
-	"number",
-	"object",
-	"string",
-	"symbol",
-	"undefined",
-	"unknown",
-	"void",
-	"true",
-	"false",
+const keywordTypes = new Set([
+	ts.SyntaxKind.AnyKeyword,
+	ts.SyntaxKind.BigIntKeyword,
+	ts.SyntaxKind.BooleanKeyword,
+	ts.SyntaxKind.NeverKeyword,
+	ts.SyntaxKind.NumberKeyword,
+	ts.SyntaxKind.ObjectKeyword,
+	ts.SyntaxKind.StringKeyword,
+	ts.SyntaxKind.SymbolKeyword,
+	ts.SyntaxKind.UndefinedKeyword,
+	ts.SyntaxKind.UnknownKeyword,
+	ts.SyntaxKind.VoidKeyword,
 ]);
 
 /**
- * Capture the reference at the end of a qualified name, without taking a reference
- * from another occurrence of the same name elsewhere in the excerpt.
+ * Identifies the type references in an expression and whether its syntax supports substitution.
+ *
+ * @remarks
+ * References are collected in source order so replacements can preserve the surrounding text.
+ * An expression that introduces a nested scope, such as `infer T`, is still inspected for references but is not rewritten.
  */
-function nameToken(excerpt: Excerpt, text: string, end: number): ExcerptToken {
-	let offset = 0;
-	for (const token of excerpt.spannedTokens) {
-		offset += token.text.length;
-		if (token.canonicalReference !== undefined && offset === end) {
-			return new ExcerptToken(ExcerptTokenKind.Reference, text, token.canonicalReference);
+function inspectType(root: ts.TypeNode): {
+	names: ts.TypeReferenceNode[];
+	supported: boolean;
+} {
+	const names: ts.TypeReferenceNode[] = [];
+	let supported = true;
+	function visit(node: ts.Node): void {
+		if (ts.isTypeReferenceNode(node)) {
+			// In `Box<T>`, record `Box` before visiting `T` so substitutions can be applied in source order.
+			names.push(node);
+			for (const argument of node.typeArguments ?? []) {
+				visit(argument);
+			}
+		} else if (ts.isArrayTypeNode(node)) {
+			// Arrays, parentheses, tuples, unions, and intersections introduce no new type parameters.
+			// Look inside them for uses of the enclosing declaration's parameters, such as `T` in `(T | string)[]`.
+			visit(node.elementType);
+		} else if (ts.isParenthesizedTypeNode(node)) {
+			visit(node.type);
+		} else if (ts.isTupleTypeNode(node)) {
+			for (const element of node.elements) {
+				visit(element);
+			}
+		} else if (ts.isUnionTypeNode(node) || ts.isIntersectionTypeNode(node)) {
+			for (const type of node.types) {
+				visit(type);
+			}
+		} else if (!keywordTypes.has(node.kind) && !ts.isLiteralTypeNode(node)) {
+			// Keywords and literals need no substitution. Other syntax may introduce its own `T`, as in `<T>() => T`.
+			// Don't rewrite that expression, but still collect its names so an unrelated member type can be left unmarked.
+			supported = false;
+			ts.forEachChild(node, visit);
 		}
 	}
-	return new ExcerptToken(ExcerptTokenKind.Content, text);
+	visit(root);
+	return { names, supported };
 }
 
 /**
- * Recognize the whole heritage expression.
+ * Replaces free type parameters in an excerpt with their bound arguments.
  *
- * @example
- * `A<B>` refers to `A`, not `B`.
+ * @remarks
+ * A type argument must be understood in full because it may be substituted into another expression later.
+ * A member type that needs no substitution can be displayed as written. References to declarations and a method's own type parameters are left intact.
+ *
+ * @returns The resulting excerpt, or `undefined` if the substitution cannot be made reliably.
  */
-export function getNamedBase(excerpt: Excerpt):
-	| {
-			reference: NonNullable<ExcerptToken["canonicalReference"]>;
-			typeArguments: ExcerptToken[];
-	  }
-	| undefined {
-	const [outer, ...lists] = excerpt.text.split("<");
-	const name = outer.trim();
-	if (!qualifiedName.test(name) || lists.length > 1) {
+function substitute(
+	excerpt: Excerpt,
+	bindings: TypeBindings,
+	mode: "argument" | "member",
+	shadowed: readonly string[] = [],
+): Excerpt | undefined {
+	const root = parseType(excerpt);
+	if (root === undefined) {
 		return undefined;
 	}
-	const reference = nameToken(excerpt, name, outer.trimEnd().length).canonicalReference;
-	if (reference === undefined) {
+	const { names, supported } = inspectType(root);
+	if (!supported && mode === "argument") {
 		return undefined;
 	}
-	const typeArguments: ExcerptToken[] = [];
-	if (lists.length > 0) {
-		const list = lists[0].trimEnd();
-		if (!list.endsWith(">")) {
-			return undefined;
+	const edits: TypeReplacement[] = [];
+	for (const node of names) {
+		if (referenceForName(excerpt, node.typeName) !== undefined) {
+			continue;
 		}
-		let start = outer.length + 1;
-		for (const part of list.slice(0, -1).split(",")) {
-			const argument = part.trim();
-			if (!qualifiedName.test(argument)) {
+		const name = node.typeName.getText();
+		if (shadowed.includes(name)) {
+			continue;
+		}
+		if (!bindings.has(name)) {
+			if (mode === "argument") {
 				return undefined;
 			}
-			typeArguments.push(nameToken(excerpt, argument, start + part.trimEnd().length));
-			start += part.length + 1;
+			continue;
 		}
+		const replacement = bindings.get(name);
+		if (!supported || node.typeArguments !== undefined || replacement === undefined) {
+			return undefined;
+		}
+		const replacementNode = parseType(replacement);
+		if (
+			replacementNode === undefined ||
+			(shadowed.length > 0 &&
+				inspectType(replacementNode).names.some((use) =>
+					shadowed.includes(use.typeName.getText()),
+				))
+		) {
+			return undefined;
+		}
+
+		// In an array or intersection, a substituted union may need parentheses: T[] -> (A | B)[].
+		const group =
+			(ts.isUnionTypeNode(replacementNode) &&
+				(ts.isArrayTypeNode(node.parent) || ts.isIntersectionTypeNode(node.parent))) ||
+			(ts.isIntersectionTypeNode(replacementNode) && ts.isArrayTypeNode(node.parent));
+		edits.push({ node, replacement, group });
 	}
-	return { reference, typeArguments };
+	return replaceTypes(excerpt, edits);
 }
 
 /**
- * Bind supplied arguments in the derived scope and simple defaults in the base scope.
+ * Binds a base declaration's type parameters to arguments in the derived type's scope.
+ *
+ * @remarks
+ * Supplied arguments use names from the derived type. Defaults use names from the base declaration,
+ * so a default such as `U = T` uses the argument already bound to `T`.
  */
 export function bindBase(
 	base: ApiTypeLike,
-	supplied: readonly ExcerptToken[],
+	supplied: readonly Excerpt[],
 	derived: ApiTypeLike,
 ): TypeBindings {
-	const bindings = new Map<string, ExcerptToken | undefined>();
+	const bindings = new Map<string, Excerpt | undefined>();
+	const locals = localBindings(derived);
 	for (const [index, parameter] of base.typeParameters.entries()) {
 		const argument = supplied[index];
-		if (argument === undefined) {
-			const excerpt = parameter.defaultTypeExcerpt;
-			const name = excerpt.text.trim();
-			if (qualifiedName.test(name)) {
-				const token = nameToken(excerpt, name, excerpt.text.trimEnd().length);
-				bindings.set(
-					parameter.name,
-					token.canonicalReference !== undefined || intrinsicTypes.has(name)
-						? token
-						: bindings.get(name),
-				);
-				continue;
-			}
-		} else if (
-			argument.canonicalReference !== undefined ||
-			intrinsicTypes.has(argument.text) ||
-			derived.typeParameters.some((local) => local.name === argument.text)
-		) {
-			bindings.set(parameter.name, argument);
-			continue;
-		}
-		bindings.set(parameter.name, undefined);
+		bindings.set(
+			parameter.name,
+			argument === undefined
+				? substitute(parameter.defaultTypeExcerpt, bindings, "argument")
+				: substitute(argument, locals, "argument"),
+		);
 	}
 	return bindings;
 }
 
 /**
- * Re-express a member's original bindings one edge closer to the derived type.
+ * Determines whether two type argument excerpts have matching text and declaration references.
+ *
+ * @remarks
+ * Identical names can refer to different declarations, so each reference must have the same target and span in both excerpts.
+ * Differences in how API Extractor splits plain text into tokens do not affect the comparison.
+ */
+function sameArgument(left: Excerpt | undefined, right: Excerpt | undefined): boolean {
+	if (left === right) {
+		return true;
+	}
+	if (left === undefined || left.text !== right?.text) {
+		return false;
+	}
+	function links(argument: Excerpt): string {
+		let offset = 0;
+		const targets: [number, number, string][] = [];
+		for (const token of argument.spannedTokens) {
+			if (token.canonicalReference !== undefined) {
+				targets.push([offset, token.text.length, token.canonicalReference.toString()]);
+			}
+			offset += token.text.length;
+		}
+		return JSON.stringify(targets);
+	}
+	return links(left) === links(right);
+}
+
+/**
+ * Translates a declaration's type argument bindings across one inheritance edge.
+ *
+ * @remarks
+ * If another path has already reached the same declaration, the bindings from both paths must agree.
+ * A conflicting argument is left unresolved so the displayed type does not depend on traversal order.
  */
 export function rebind(
 	bindings: TypeBindings,
 	edge: TypeBindings,
 	previous: TypeBindings | undefined,
 ): TypeBindings {
-	const result = new Map<string, ExcerptToken | undefined>();
+	const result = new Map<string, Excerpt | undefined>();
 	for (const [name, argument] of bindings) {
 		const next =
-			argument !== undefined &&
-			argument.canonicalReference === undefined &&
-			edge.has(argument.text)
-				? edge.get(argument.text)
-				: argument;
-		const other = previous?.get(name);
-
-		// If paths in a diamond disagree, neither path is authoritative.
+			argument === undefined || edge.size === 0
+				? argument
+				: substitute(argument, edge, "member");
 		result.set(
 			name,
-			previous === undefined ||
-				(other?.text === next?.text &&
-					other?.canonicalReference?.toString() === next?.canonicalReference?.toString())
-				? next
-				: undefined,
+			previous === undefined || sameArgument(previous.get(name), next) ? next : undefined,
 		);
 	}
 	return result;
 }
 
 /**
- * Resolve only type uses, never a method's own parameters or a nested binding such as `infer T`.
+ * Determines the property or return type to display for an inherited member.
+ *
+ * @remarks
+ * If the type cannot be specialized reliably, the result uses the entire original excerpt and marks it as declared.
  */
 export function getMemberType(
 	member: ApiPropertyItem | ApiMethod | ApiMethodSignature,
 	bindings: TypeBindings,
 ): MemberType {
-	const excerpt =
+	const original =
 		member instanceof ApiPropertyItem ? member.propertyTypeExcerpt : member.returnTypeExcerpt;
-	if (bindings.size === 0) {
-		return { excerpt, asDeclared: false };
+	if (bindings.size === 0 || original.isEmpty) {
+		return { excerpt: original, asDeclared: false };
 	}
-	const local =
-		member instanceof ApiPropertyItem
-			? []
-			: member.typeParameters.map((parameter) => parameter.name);
-	const original = { excerpt, asDeclared: false };
-	const fallback = { excerpt, asDeclared: true };
-	const tokens: ExcerptToken[] = [];
-	let changed = false;
-	for (const token of excerpt.spannedTokens) {
-		let start = 0;
-		if (token.canonicalReference === undefined) {
-			for (const match of token.text.matchAll(identifier)) {
-				const name = match[0];
-				if (!bindings.has(name) || local.includes(name)) {
-					continue;
-				}
-				const argument = bindings.get(name);
-
-				// Restrict rewriting to type names, applications, arrays, tuples and unions/intersections.
-				// In other syntax an identifier may be a property key, literal, or a fresh type parameter.
-				if (
-					argument === undefined ||
-					/[^\p{ID_Continue}$\s<>,[\]()|&]/u.test(excerpt.text) ||
-					/\b(?:infer|typeof|extends|new)\b/u.test(excerpt.text) ||
-					(argument.canonicalReference === undefined && local.includes(argument.text))
-				) {
-					return fallback;
-				}
-				if (match.index > start) {
-					tokens.push(
-						new ExcerptToken(ExcerptTokenKind.Content, token.text.slice(start, match.index)),
-					);
-				}
-				tokens.push(argument);
-				start = match.index + name.length;
-				changed = true;
-			}
-		}
-		if (start === 0) {
-			tokens.push(token);
-		} else if (start < token.text.length) {
-			tokens.push(new ExcerptToken(ExcerptTokenKind.Content, token.text.slice(start)));
-		}
-	}
-	return changed
-		? {
-				excerpt: new Excerpt(tokens, { startIndex: 0, endIndex: tokens.length }),
-				asDeclared: false,
-			}
-		: original;
+	const shadowed =
+		member instanceof ApiPropertyItem ? [] : member.typeParameters.map(({ name }) => name);
+	const excerpt = substitute(original, bindings, "member", shadowed);
+	return { excerpt: excerpt ?? original, asDeclared: excerpt === undefined };
 }

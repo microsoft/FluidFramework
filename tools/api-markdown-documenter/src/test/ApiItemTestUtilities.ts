@@ -4,9 +4,11 @@
  */
 
 import {
+	ApiEntryPoint,
 	ApiInterface,
 	type ApiItem,
 	ApiMethodSignature,
+	ApiPackage,
 	ApiPropertySignature,
 	ApiTypeAlias,
 	type Excerpt,
@@ -15,7 +17,7 @@ import {
 	type IExcerptTokenRange,
 	ReleaseTag,
 } from "@microsoft/api-extractor-model";
-import type { DocComment } from "@microsoft/tsdoc";
+import { type DocComment, TSDocConfiguration } from "@microsoft/tsdoc";
 
 /**
  * A fixture token supplied as plain text or as an API Extractor token.
@@ -65,10 +67,21 @@ export function createReferenceToken(text: string, canonicalReference: string): 
 }
 
 /**
+ * Creates a test package with one entry point containing the supplied declarations.
+ */
+export function createPackage(name: string, ...members: ApiItem[]): ApiPackage {
+	return new ApiPackage({
+		name,
+		docComment: undefined,
+		tsdocConfiguration: new TSDocConfiguration(),
+		members: [new ApiEntryPoint({ name: "", members })],
+	});
+}
+
+/**
  * Options for constructing a test interface with {@link createInterface}.
  */
 export interface CreateInterfaceOptions {
-
 	/**
 	 * Maps type parameter names to their default type expressions in declaration order.
 	 *
@@ -149,7 +162,6 @@ export function createInterface(
  * Options for constructing a test property signature with {@link createProperty}.
  */
 export interface CreatePropertyOptions {
-
 	/**
 	 * The property's declared type expression.
 	 *
@@ -186,7 +198,6 @@ export function createProperty(
  * Options for constructing a test method signature with {@link createMethod}.
  */
 export interface CreateMethodOptions {
-
 	/**
 	 * The method's return type expression. Omit it for an empty return type excerpt.
 	 */

@@ -10,6 +10,7 @@ export {
 	createTypeExcerpt,
 	createInterface,
 	createMethod,
+	createPackage,
 	createProperty,
 	createReferenceToken,
 	createTypeAlias,

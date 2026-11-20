@@ -12,8 +12,6 @@ import {
 	ApiPropertyItem,
 	ApiTypeAlias,
 	type Excerpt,
-	ExcerptToken,
-	ExcerptTokenKind,
 } from "@microsoft/api-extractor-model";
 
 import { type ApiTypeLike, isStatic } from "../../utilities/index.js";
@@ -23,11 +21,12 @@ import { shouldItemBeIncluded } from "./ApiItemVisibility.js";
 import {
 	bindBase,
 	getMemberType,
-	getNamedBase,
+	localBindings,
 	rebind,
 	type MemberType,
 	type TypeBindings,
 } from "./InheritedMemberTypes.js";
+import { getNamedBase } from "./TypeSyntax.js";
 
 type InstanceMember = ApiPropertyItem | ApiMethod | ApiMethodSignature;
 
@@ -261,16 +260,11 @@ class InheritanceResolver {
 		}
 
 		// Here `Box<T>` still uses its own `T`. A caller following `Box<string>` will bind it to `string`.
-		const localBindings = new Map(
-			item.typeParameters.map(({ name }) => [
-				name,
-				new ExcerptToken(ExcerptTokenKind.Content, name),
-			]),
-		);
+		const declaredBindings = localBindings(item);
 		for (const declaration of declared) {
 			members.set(declaration.canonicalReference.toString(), {
 				declaration,
-				bindings: localBindings,
+				bindings: declaredBindings,
 			});
 		}
 		const result = { members, hidden };
