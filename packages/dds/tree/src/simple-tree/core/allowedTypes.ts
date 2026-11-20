@@ -7,6 +7,7 @@ import {
 	type ErasedBaseType,
 	ErasedTypeImplementation,
 } from "@fluidframework/core-interfaces/internal";
+import { Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -173,74 +174,6 @@ type AllowedTypesFullInternalEvaluated = AllowedTypesFullInternal<
 >;
 
 /**
- * Default {@link AllowedTypesMetadata}, shared by all allowed types created without metadata.
- */
-const emptyAllowedTypesMetadata: AllowedTypesMetadata = Object.freeze({});
-
-/**
- * Default {@link AllowedTypeMetadata}, shared by all allowed types normalized from types given without metadata.
- */
-const emptyAllowedTypeMetadata: AllowedTypeMetadata = Object.freeze({});
-/**
- * Proxy handler for {@link AnnotatedAllowedTypesInternal}.
- * @remarks
- * Shared by all instances, since it has no per-instance state.
- */
-const annotatedAllowedTypesProxyHandler: ProxyHandler<AnnotatedAllowedTypesInternal> = {
-	set: () => {
-		throw new UsageError("AnnotatedAllowedTypes is immutable");
-	},
-
-	get: (target, property, receiver) => {
-		// Hide common array editing methods.
-		if (property === "push" || property === "pop") {
-			return undefined;
-		}
-
-		// Forward array lookup and array methods to the unannotated types array.
-		if (property in target.unannotatedTypes) {
-			return Reflect.get(target.unannotatedTypes, property) as unknown;
-		}
-		// Forward anything else to target.
-		return Reflect.get(target, property) as unknown;
-	},
-
-	has: (target, property) => {
-		if (property in target.unannotatedTypes) {
-			return true;
-		}
-		// Forward anything else to target.
-		return property in target;
-	},
-
-	ownKeys: (target) => {
-		const targetKeys = Reflect.ownKeys(target);
-		const unannotatedTypesKeys = Reflect.ownKeys(target.unannotatedTypes);
-		return [...unannotatedTypesKeys, ...targetKeys];
-	},
-
-	getOwnPropertyDescriptor: (target, property) => {
-		if (Object.prototype.hasOwnProperty.call(target.unannotatedTypes, property)) {
-			const inner = Object.getOwnPropertyDescriptor(target.unannotatedTypes, property);
-			return {
-				...inner,
-				// Since these properties are not on the target, make them non-configurable to confirm with proxy invariants.
-				configurable: true,
-				writable: false,
-			};
-		} else {
-			const inner = Object.getOwnPropertyDescriptor(target, property);
-			return {
-				...inner,
-				writable: false,
-				// Allow only array entries to be enumerable.
-				enumerable: false,
-			};
-		}
-	},
-};
-
-/**
  * The implementation of {@link AnnotatedAllowedTypes}. Also implements {@link AllowedTypesFull}.
  * @remarks
  * Due to TypeScript limitations, this class cannot directly state it implements {@link AllowedTypesFull}.
@@ -266,20 +199,15 @@ export class AnnotatedAllowedTypesInternal<
 	 */
 	private readonly isLazy: boolean;
 
-	/**
-	 * Results of {@link AnnotatedAllowedTypesInternal.evaluate}, {@link AnnotatedAllowedTypesInternal.evaluateSet} and {@link AnnotatedAllowedTypesInternal.evaluateIdentifiers}, each computed on first use.
-	 * @remarks
-	 * Held in a separate object since instances are only reachable through their proxy, which does not allow setting properties.
-	 */
-	private readonly evaluated: {
-		annotated?: AllowedTypesFullInternalEvaluated;
-		set?: ReadonlySet<TreeNodeSchema>;
-		identifiers?: ReadonlySet<string>;
-	} = {};
+	private readonly lazyEvaluate: Lazy<{
+		readonly annotated: AllowedTypesFullInternalEvaluated;
+		readonly set: ReadonlySet<TreeNodeSchema>;
+		readonly identifiers: ReadonlySet<string>;
+	}>;
 
 	private constructor(
 		public readonly types: T,
-		public readonly metadata: AllowedTypesMetadata = emptyAllowedTypesMetadata,
+		public readonly metadata: AllowedTypesMetadata = {},
 	) {
 		super();
 		this.unannotatedTypes = types.map((type) => type.type) as typeof this.unannotatedTypes;
@@ -302,36 +230,37 @@ export class AnnotatedAllowedTypesInternal<
 		}
 
 		const proxy = AnnotatedAllowedTypesInternal.proxy(this);
-		if (!this.isLazy) {
-			this.evaluated.annotated = proxy as AllowedTypesFullInternalEvaluated;
-		}
+
+		this.lazyEvaluate = new Lazy(() => {
+			const annotated = this.isLazy
+				? AnnotatedAllowedTypesInternal.create(
+						this.types.map((type) => ({
+							...type,
+							type: evaluateLazySchema(type.type),
+						})),
+						this.metadata,
+					)
+				: (proxy as AllowedTypesFullInternalEvaluated);
+			return {
+				annotated,
+				set: new Set(annotated.unannotatedTypes),
+				identifiers: new Set(annotated.unannotatedTypes.map((t) => t.identifier)),
+			};
+		});
+
 		return proxy;
 	}
 
 	public evaluate(): AllowedTypesFullInternalEvaluated {
-		const evaluated = this.evaluated;
-		evaluated.annotated ??= AnnotatedAllowedTypesInternal.create(
-			this.types.map((type) => ({
-				...type,
-				type: evaluateLazySchema(type.type),
-			})),
-			this.metadata,
-		);
-		return evaluated.annotated;
+		return this.lazyEvaluate.value.annotated;
 	}
 
 	public evaluateSet(): ReadonlySet<TreeNodeSchema> {
-		const evaluated = this.evaluated;
-		evaluated.set ??= new Set(this.evaluate().unannotatedTypes);
-		return evaluated.set;
+		return this.lazyEvaluate.value.set;
 	}
 
 	public evaluateIdentifiers(): ReadonlySet<string> {
-		const evaluated = this.evaluated;
-		evaluated.identifiers ??= new Set(
-			this.evaluate().unannotatedTypes.map((t) => t.identifier),
-		);
-		return evaluated.identifiers;
+		return this.lazyEvaluate.value.identifiers;
 	}
 
 	/**
@@ -370,13 +299,65 @@ export class AnnotatedAllowedTypesInternal<
 	private static proxy<const T extends readonly AnnotatedAllowedType[]>(
 		result: AnnotatedAllowedTypesInternal<T>,
 	): AnnotatedAllowedTypesInternal<T> & AllowedTypesFull<T> {
-		const proxy = new Proxy(result, annotatedAllowedTypesProxyHandler);
+		const proxy = new Proxy(result, {
+			set: () => {
+				throw new UsageError("AnnotatedAllowedTypes is immutable");
+			},
+
+			get: (target, property, receiver) => {
+				// Hide common array editing methods.
+				if (property === "push" || property === "pop") {
+					return undefined;
+				}
+
+				// Forward array lookup and array methods to the unannotated types array.
+				if (property in target.unannotatedTypes) {
+					return Reflect.get(target.unannotatedTypes, property);
+				}
+				// Forward anything else to target.
+				return Reflect.get(target, property) as unknown;
+			},
+
+			has: (target, property) => {
+				if (property in target.unannotatedTypes) {
+					return true;
+				}
+				// Forward anything else to target.
+				return property in target;
+			},
+
+			ownKeys: (target) => {
+				const targetKeys = Reflect.ownKeys(target);
+				const unannotatedTypesKeys = Reflect.ownKeys(target.unannotatedTypes);
+				return [...unannotatedTypesKeys, ...targetKeys];
+			},
+
+			getOwnPropertyDescriptor: (target, property) => {
+				if (Object.prototype.hasOwnProperty.call(target.unannotatedTypes, property)) {
+					const inner = Object.getOwnPropertyDescriptor(target.unannotatedTypes, property);
+					return {
+						...inner,
+						// Since these properties are not on the target, make them non-configurable to confirm with proxy invariants.
+						configurable: true,
+						writable: false,
+					};
+				} else {
+					const inner = Object.getOwnPropertyDescriptor(target, property);
+					return {
+						...inner,
+						writable: false,
+						// Allow only array entries to be enumerable.
+						enumerable: false,
+					};
+				}
+			},
+		});
 		return proxy as typeof result & UnannotateAllowedTypesList<T>;
 	}
 
 	public static create<const T extends readonly AnnotatedAllowedType[]>(
 		types: T,
-		metadata: AllowedTypesMetadata = emptyAllowedTypesMetadata,
+		metadata: AllowedTypesMetadata = {},
 	): AnnotatedAllowedTypesInternal<Readonly<T>> & AllowedTypesFull<Readonly<T>> {
 		const result = new AnnotatedAllowedTypesInternal(types, metadata);
 		return result as typeof result & UnannotateAllowedTypesList<T>;
@@ -384,7 +365,7 @@ export class AnnotatedAllowedTypesInternal<
 
 	public static createUnannotated<const T extends AllowedTypes>(
 		types: T,
-		metadata: AllowedTypesMetadata = emptyAllowedTypesMetadata,
+		metadata: AllowedTypesMetadata = {},
 	): AnnotatedAllowedTypesInternal & Readonly<T> {
 		Object.freeze(types);
 		const annotatedTypes: AnnotatedAllowedType[] = types.map(normalizeToAnnotatedAllowedType);
@@ -544,7 +525,7 @@ export function normalizeToAnnotatedAllowedType<T extends LazyItem<TreeNodeSchem
 	return isAnnotatedAllowedType(type)
 		? type
 		: {
-				metadata: emptyAllowedTypeMetadata,
+				metadata: {},
 				type,
 			};
 }
