@@ -67,6 +67,7 @@ trigger:
     include:
     - .dockerignore
     - .gitattributes
+    - .github/workflows/pr-bundle-size-comments.yml
     - .gitignore
     - .gitmodules
     - .git-blame-ignore-revs
@@ -132,6 +133,7 @@ pr:
     include:
     - .dockerignore
     - .gitattributes
+    - .github/workflows/pr-bundle-size-comments.yml
     - .gitignore
     - .gitmodules
     - .git-blame-ignore-revs
