@@ -60,17 +60,6 @@ function changes(history: SharedTreeHistory): TaggedChange<SharedTreeChange>[] {
 	return history.map((entry) => entry.change);
 }
 
-function withTrace(histories: readonly SharedTreeHistory[], run: () => void): void {
-	try {
-		run();
-	} catch (error) {
-		throw new Error(
-			`SharedTree axiom failed for ${JSON.stringify(histories.map((history) => history.map((entry) => entry.description)))}`,
-			{ cause: error },
-		);
-	}
-}
-
 describe("SharedTree axioms: bounded multi-field histories", () => {
 	let parent: TreeCheckout;
 	let adapter: SharedTreeAxiomAdapter;
@@ -91,50 +80,39 @@ describe("SharedTree axioms: bounded multi-field histories", () => {
 	it("composition and rebase identities for initial operations", () => {
 		let count = 0;
 		for (const history of historiesOfDepth(1)) {
-			withTrace([history], () => {
-				const edit = history[0].change;
-				const empty = adapter.empty();
-				const metadata = defaultRevisionMetadataFromChanges([empty, edit]);
-				assertTaggedSharedTreeChangesEqual(adapter.rebase(edit, empty, metadata), edit);
-				assertTaggedSharedTreeChangesEqual(adapter.rebase(empty, edit, metadata), empty);
-				for (const composition of [
-					adapter.compose([edit, empty]),
-					adapter.compose([empty, edit]),
-				]) {
-					assertTaggedSharedTreeChangesEqual(composition, makeAnonChange(edit.change));
-					assertSharedTreeReplayEqual(parent, [composition], [edit], mintRevisionTag());
-				}
-			});
+			const edit = history[0].change;
+			const empty = adapter.empty();
+			const metadata = defaultRevisionMetadataFromChanges([empty, edit]);
+			assertTaggedSharedTreeChangesEqual(adapter.rebase(edit, empty, metadata), edit);
+			assertTaggedSharedTreeChangesEqual(adapter.rebase(empty, edit, metadata), empty);
+			for (const composition of [
+				adapter.compose([edit, empty]),
+				adapter.compose([empty, edit]),
+			]) {
+				assertTaggedSharedTreeChangesEqual(composition, makeAnonChange(edit.change));
+				assertSharedTreeReplayEqual(parent, [composition], [edit], mintRevisionTag());
+			}
 			count++;
 		}
 	});
 
 	it("composes each operation with its rollback to a change with no effects", () => {
 		for (const history of historiesOfDepth(1)) {
-			withTrace([history], () => {
-				const edit = history[0].change;
-				const rollback = adapter.invert(edit, true);
-				assert.equal(rollback.rollbackOf, edit.revision);
-				assert.equal(typeof rollback.revision, "number");
-				const composed = adapter.compose([edit, rollback]);
-				assertSharedTreeChangeHasNoEffects(composed);
-				assertSharedTreeReplayEqual(parent, [composed], [], mintRevisionTag());
-			});
+			const edit = history[0].change;
+			const rollback = adapter.invert(edit, true);
+			assert.equal(rollback.rollbackOf, edit.revision);
+			assert.equal(typeof rollback.revision, "number");
+			const composed = adapter.compose([edit, rollback]);
+			assertSharedTreeChangeHasNoEffects(composed);
+			assertSharedTreeReplayEqual(parent, [composed], [], mintRevisionTag());
 		}
 	});
 
 	it("composition matches sequential replay for all two-edit histories", () => {
 		let count = 0;
 		for (const history of historiesOfDepth(2)) {
-			withTrace([history], () => {
-				const edits = changes(history);
-				assertSharedTreeReplayEqual(
-					parent,
-					[adapter.compose(edits)],
-					edits,
-					mintRevisionTag(),
-				);
-			});
+			const edits = changes(history);
+			assertSharedTreeReplayEqual(parent, [adapter.compose(edits)], edits, mintRevisionTag());
 			count++;
 		}
 	});
@@ -143,12 +121,10 @@ describe("SharedTree axioms: bounded multi-field histories", () => {
 		this.timeout(5000);
 		let count = 0;
 		for (const history of historiesOfDepth(3)) {
-			withTrace([history], () => {
-				const [a, b, c] = changes(history);
-				const left = adapter.compose([adapter.compose([a, b]), c]);
-				const right = adapter.compose([a, adapter.compose([b, c])]);
-				assertTaggedSharedTreeChangesEqual(left, right);
-			});
+			const [a, b, c] = changes(history);
+			const left = adapter.compose([adapter.compose([a, b]), c]);
+			const right = adapter.compose([a, adapter.compose([b, c])]);
+			assertTaggedSharedTreeChangesEqual(left, right);
 			count++;
 		}
 	});
@@ -207,26 +183,20 @@ describe("SharedTree axioms: bounded multi-field histories", () => {
 		}
 	});
 
-	it.skip("rebases initial operations over all two-edit histories", () => {
+	it("rebases initial operations over all two-edit histories", () => {
 		const locals = [...historiesOfDepth(1)];
 		const bases = [...historiesOfDepth(2)];
 		let count = 0;
 		for (const local of locals) {
 			for (const base of bases) {
-				withTrace([local, base], () => {
-					const edits = changes(base);
-					const rebased = verifySharedTreeRebaseOverComposition(
-						adapter,
-						local[0].change,
-						edits,
-					);
-					assertSharedTreeReplayEqual(
-						parent,
-						[adapter.compose(edits), rebased],
-						[...edits, rebased],
-						mintRevisionTag(),
-					);
-				});
+				const edits = changes(base);
+				const rebased = verifySharedTreeRebaseOverComposition(adapter, local[0].change, edits);
+				assertSharedTreeReplayEqual(
+					parent,
+					[adapter.compose(edits), rebased],
+					[...edits, rebased],
+					mintRevisionTag(),
+				);
 				count++;
 			}
 		}
