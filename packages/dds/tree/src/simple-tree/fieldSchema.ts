@@ -4,7 +4,6 @@
  */
 
 import type { ErasedType } from "@fluidframework/core-interfaces";
-import { Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { FieldKey } from "../core/index.js";
@@ -356,14 +355,19 @@ export class FieldSchema<
 	 */
 	protected _typeCheck!: MakeNominal;
 
-	private readonly lazyTypes: Lazy<ReadonlySet<TreeNodeSchema>>;
+	/**
+	 * {@link FieldSchema.allowedTypeSet}, once evaluated.
+	 * @remarks
+	 * A field rather than a lazy object with a closure, since large schemas have many field schemas.
+	 */
+	private lazyTypes: ReadonlySet<TreeNodeSchema> | undefined;
 
 	/**
 	 * What types of tree nodes are allowed in this field.
 	 * @remarks Counterpart to {@link FieldSchema.allowedTypes}, with any lazy definitions evaluated.
 	 */
 	public get allowedTypeSet(): ReadonlySet<TreeNodeSchema> {
-		return this.lazyTypes.value;
+		return (this.lazyTypes ??= normalizeAllowedTypes(this.allowedTypes).evaluateSet());
 	}
 
 	/**
@@ -401,7 +405,6 @@ export class FieldSchema<
 			throw new UsageError("FieldSchema is @sealed: sub-classing is not allowed.");
 		}
 
-		this.lazyTypes = new Lazy(() => normalizeAllowedTypes(this.allowedTypes).evaluateSet());
 		// TODO: optional fields should (by default) get a default provider that returns undefined, removing the need to special case them here:
 		this.requiresValue =
 			this.props?.defaultProvider === undefined && this.kind !== FieldKind.Optional;
