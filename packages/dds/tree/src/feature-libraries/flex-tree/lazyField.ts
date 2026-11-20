@@ -79,7 +79,7 @@ import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
  * `makeField` builds a field anchor even on cache hits; `getCachedField` avoids that work when the parent wrapper is already available.
  * Reuse also reduces repeated field-access costs by avoiding wrapper allocation, cursor creation, and listener registration.
  */
-const fieldCache: WeakMap<LazyTreeNode, Map<FieldKey, FlexTreeField>> = new WeakMap();
+const fieldCache: WeakMap<LazyTreeNode, Map<FieldKey, LazyField>> = new WeakMap();
 
 /**
  * Looks up a field without navigating a cursor.
@@ -87,6 +87,22 @@ const fieldCache: WeakMap<LazyTreeNode, Map<FieldKey, FlexTreeField>> = new Weak
  */
 export function getCachedField(node: LazyTreeNode, key: FieldKey): FlexTreeField | undefined {
 	return fieldCache.get(node)?.get(key);
+}
+
+/**
+ * Disposes the fields {@link makeField} cached for `node`, releasing the cursors and anchor references they hold.
+ */
+export function disposeCachedFields(node: LazyTreeNode): void {
+	const fields = fieldCache.get(node);
+	if (fields === undefined) {
+		return;
+	}
+	fieldCache.delete(node);
+	for (const field of fields.values()) {
+		if (!field.isFreed()) {
+			field[disposeSymbol]();
+		}
+	}
 }
 
 export function makeField(
@@ -97,7 +113,7 @@ export function makeField(
 	const fieldAnchor = cursor.buildFieldAnchor();
 	let usedAnchor = false;
 
-	const makeFlexTreeField = (): FlexTreeField => {
+	const makeFlexTreeField = (): LazyField => {
 		usedAnchor = true;
 		const field = new (
 			kindToClass.get(schema) ?? fail(0xb0f /* missing field implementation */)
@@ -122,11 +138,7 @@ export function makeField(
 		return makeFlexTreeField();
 	}
 
-	const innerCache = getOrCreate(
-		fieldCache,
-		cacheKey,
-		() => new Map<FieldKey, FlexTreeField>(),
-	);
+	const innerCache = getOrCreate(fieldCache, cacheKey, () => new Map<FieldKey, LazyField>());
 	const result = getOrCreate(innerCache, fieldAnchor.fieldKey, makeFlexTreeField);
 	if (!usedAnchor) {
 		// The anchor must be disposed to avoid leaking. In the case of a cache hit,

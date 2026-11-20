@@ -98,7 +98,7 @@ describe("LazyField", () => {
 			parent,
 			field: "value",
 		});
-		assert.equal(context.withCursors.size, 0);
+		assert.equal(context.cursorHolderCount, 0);
 		assert.equal(parent.slots.get(flexTreeSlot), undefined);
 		context[disposeSymbol]();
 		assert.throws(() => field.getFieldPath());

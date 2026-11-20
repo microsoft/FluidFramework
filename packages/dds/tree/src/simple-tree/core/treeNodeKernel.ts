@@ -24,6 +24,7 @@ import {
 import { getOrCreateHydratedFlexTreeNode } from "../../feature-libraries/index.js";
 import {
 	ContextSlot,
+	disposeHydratedFlexTreeNode,
 	flexTreeSlot,
 	LazyEntity,
 	TreeStatus,
@@ -89,12 +90,29 @@ interface HydratedState {
 	readonly offAnchorNode: Set<Off>;
 }
 
-/** State within a {@link TreeNodeKernel} that is related to the hydration process */
-type HydrationState = UnhydratedState | HydratedState;
+/**
+ * The {@link HydrationState} of a {@link TreeNodeKernel} after {@link TreeNodeKernel.release}.
+ * @remarks
+ * A released kernel holds nothing from the tree, so it does not keep the tree's objects for its node alive.
+ */
+interface ReleasedState {
+	readonly innerNode: undefined;
+}
 
-/** True if and only if the given {@link HydrationState} is post-hydration */
+const releasedState: ReleasedState = { innerNode: undefined };
+
+/** State within a {@link TreeNodeKernel} that is related to the hydration process */
+type HydrationState = UnhydratedState | HydratedState | ReleasedState;
+
+/** True if and only if the given {@link HydrationState} is post-hydration and not released */
 function isHydrated(state: HydrationState): state is HydratedState {
-	return state.innerNode.isHydrated();
+	return state.innerNode?.isHydrated() === true;
+}
+
+function releasedNodeError(): UsageError {
+	return new UsageError(
+		"This node was released by TreeAlpha.release and cannot be used. Read it again from its parent.",
+	);
 }
 
 /**
@@ -167,12 +185,16 @@ export class TreeNodeKernel {
 	}
 
 	public get context(): Context {
-		if (isHydrated(this.#hydrationState)) {
+		const state = this.#hydrationState;
+		if (isHydrated(state)) {
 			// This can't be cached on this.#hydrated during hydration since initial tree is hydrated before the context is cached on the anchorSet.
 			return (
-				this.#hydrationState.innerNode.anchorNode.anchorSet.slots.get(SimpleContextSlot) ??
+				state.innerNode.anchorNode.anchorSet.slots.get(SimpleContextSlot) ??
 				fail(0xb40 /* missing simple-tree context */)
 			);
+		}
+		if (state.innerNode === undefined) {
+			throw releasedNodeError();
 		}
 		return this.initialContext ?? fail("An unhydrated node must have its initial context");
 	}
@@ -216,6 +238,9 @@ export class TreeNodeKernel {
 
 	public getStatus(): TreeStatus {
 		if (this.disposed) {
+			if (this.#hydrationState === releasedState) {
+				throw releasedNodeError();
+			}
 			return TreeStatus.Deleted;
 		}
 		if (!isHydrated(this.#hydrationState)) {
@@ -235,15 +260,23 @@ export class TreeNodeKernel {
 	}
 
 	public get events(): Listenable<KernelEvents> {
+		const state = this.#getUnreleasedState();
 		assert(!this.disposed, 0xcfa /* Cannot register events on a disposed node */);
 		// Allocate the buffer on first access. See {@link TreeNodeKernel.#eventBuffer} for rationale.
 		if (this.#eventBuffer === undefined) {
-			const eventSource = isHydrated(this.#hydrationState)
-				? this.#hydrationState.innerNode.anchorNode.events
-				: this.#hydrationState.innerNode.events;
+			const eventSource = isHydrated(state)
+				? state.innerNode.anchorNode.events
+				: state.innerNode.events;
 			this.#eventBuffer = new KernelEventBuffer(eventSource);
 		}
 		return this.#eventBuffer;
+	}
+
+	/**
+	 * Whether any listeners are registered on {@link TreeNodeKernel.events}.
+	 */
+	public hasEventListeners(): boolean {
+		return this.#eventBuffer?.hasListeners() === true;
 	}
 
 	public dispose(): void {
@@ -259,13 +292,42 @@ export class TreeNodeKernel {
 	}
 
 	public isHydrated(): this is { anchorNode: AnchorNode; context: HydratedContext } {
-		return isHydrated(this.#hydrationState);
+		// A released node counts as hydrated, although accessing its anchorNode or context throws.
+		return isHydrated(this.#hydrationState) || this.#hydrationState === releasedState;
+	}
+
+	/**
+	 * Whether {@link TreeNodeKernel.release} was called on this kernel.
+	 */
+	public isReleased(): boolean {
+		return this.#hydrationState === releasedState;
+	}
+
+	/**
+	 * Detaches this hydrated node from the tree, after which every use of the node throws a usage error.
+	 * @remarks
+	 * Afterwards, the kernel references none of the tree's objects for this node,
+	 * and the node is not cached on its anchor node, so reading the same location again creates a new node.
+	 * The node's flex tree node is not disposed: see {@link releaseTreeNode}.
+	 */
+	public release(): void {
+		const state = this.#hydrationState;
+		assert(isHydrated(state) && !this.disposed, "Only nodes in a tree can be released");
+		assert(!this.hasEventListeners(), "Nodes with event listeners cannot be released");
+		for (const off of state.offAnchorNode) {
+			off();
+		}
+		state.innerNode.anchorNode.slots.delete(simpleTreeNodeSlot);
+		// Without listeners, the event buffer has no subscriptions to remove and no one to deliver events to.
+		// Dropping it releases its reference to the anchor node's events.
+		this.#eventBuffer = undefined;
+		this.disposed = true;
+		this.#hydrationState = releasedState;
 	}
 
 	public get anchorNode(): AnchorNode | undefined {
-		return isHydrated(this.#hydrationState)
-			? this.#hydrationState.innerNode.anchorNode
-			: undefined;
+		const state = this.#getUnreleasedState();
+		return isHydrated(state) ? state.innerNode.anchorNode : undefined;
 	}
 
 	/**
@@ -278,30 +340,47 @@ export class TreeNodeKernel {
 	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the node has been deleted.
 	 */
 	public getInnerNode(): InnerNode {
-		if (!isHydrated(this.#hydrationState)) {
+		const state = this.#hydrationState;
+		if (!isHydrated(state)) {
+			if (state.innerNode === undefined) {
+				throw releasedNodeError();
+			}
 			debugAssert(
 				() =>
-					this.#hydrationState.innerNode?.context.isDisposed() === false ||
+					state.innerNode.context.isDisposed() === false ||
 					"Unhydrated node should never be disposed",
 			);
-			return this.#hydrationState.innerNode; // Unhydrated case
+			return state.innerNode; // Unhydrated case
 		}
 
 		if (this.disposed) {
 			throw new UsageError("Cannot access a deleted node.");
 		}
 
-		return this.#hydrationState.innerNode;
+		return state.innerNode;
 	}
 
 	/**
 	 * Retrieves the {@link UnhydratedFlexTreeNode} if unhydrated. otherwise undefined.
 	 */
 	public getInnerNodeIfUnhydrated(): UnhydratedFlexTreeNode | undefined {
-		if (isHydrated(this.#hydrationState)) {
+		const state = this.#getUnreleasedState();
+		if (isHydrated(state)) {
 			return undefined;
 		}
-		return this.#hydrationState.innerNode;
+		return state.innerNode;
+	}
+
+	/**
+	 * Gets {@link TreeNodeKernel.#hydrationState}.
+	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if this node has been released.
+	 */
+	#getUnreleasedState(): UnhydratedState | HydratedState {
+		const state = this.#hydrationState;
+		if (state.innerNode === undefined) {
+			throw releasedNodeError();
+		}
+		return state;
 	}
 }
 
@@ -494,6 +573,10 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		}
 	}
 
+	public hasListeners(): boolean {
+		return this.#events.hasListeners();
+	}
+
 	#emit(
 		eventName: keyof KernelEvents,
 		arg?: {
@@ -647,6 +730,56 @@ export function tryDisposeTreeNode(anchorNode: AnchorNode): void {
 		const kernel = getKernel(treeNode);
 		kernel.dispose();
 		anchorNode.slots.delete(simpleTreeNodeSlot);
+	}
+}
+
+/**
+ * Releases the objects created for reading a hydrated `node` and every node under it which has been read:
+ * their {@link TreeNode}s and kernels, their flex tree nodes and fields, and the anchors holding them.
+ * @remarks
+ * The tree's content is not changed.
+ * Afterwards, every use of the released {@link TreeNode}s throws a usage error, and reading the same locations again creates new nodes.
+ * See {@link (TreeAlpha:interface).release} for details.
+ */
+export function releaseTreeNode(node: TreeNode): void {
+	const kernel = getKernel(node);
+	if (kernel.isReleased()) {
+		return;
+	}
+	const status = kernel.getStatus();
+	if (status === TreeStatus.New) {
+		throw new UsageError(
+			"Only nodes in a tree can be released. Unhydrated nodes hold nothing from a tree: drop references to them instead.",
+		);
+	}
+	if (status === TreeStatus.Deleted) {
+		return;
+	}
+	assert(kernel.isHydrated(), "Nodes which are not new must be hydrated");
+	const root = kernel.anchorNode;
+	if (root.anchorSet.isUpdating()) {
+		throw new UsageError("Nodes cannot be released while the tree is being changed.");
+	}
+
+	// Each anchor node precedes its descendants.
+	const anchorNodes: AnchorNode[] = [root];
+	for (const anchorNode of anchorNodes) {
+		const treeNode = anchorNode.slots.get(simpleTreeNodeSlot);
+		if (treeNode !== undefined && getKernel(treeNode).hasEventListeners()) {
+			throw new UsageError(
+				"Nodes cannot be released while they, or nodes under them, have event listeners. Remove the listeners first.",
+			);
+		}
+		anchorNodes.push(...anchorNode.anchoredChildren());
+	}
+
+	// Release descendants first: an anchor node is disposed once it has no children and nothing references it.
+	for (const anchorNode of anchorNodes.reverse()) {
+		const treeNode = anchorNode.slots.get(simpleTreeNodeSlot);
+		if (treeNode !== undefined) {
+			getKernel(treeNode).release();
+		}
+		disposeHydratedFlexTreeNode(anchorNode);
 	}
 }
 

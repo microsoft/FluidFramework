@@ -32,7 +32,7 @@ import {
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
 import { LazyEntity } from "./lazyEntity.js";
-import { getCachedField, makeField } from "./lazyField.js";
+import { disposeCachedFields, getCachedField, makeField } from "./lazyField.js";
 import { currentObserver } from "./observer.js";
 
 /**
@@ -62,6 +62,22 @@ function cleanupTree(anchor: AnchorNode): void {
 	const cached =
 		anchor.slots.get(flexTreeSlot) ?? fail(0xb13 /* tree should only be cleaned up once */);
 	assert(cached instanceof LazyTreeNode, 0x92d /* Expected LazyTreeNode */);
+	cached[disposeSymbol]();
+}
+
+/**
+ * Disposes the {@link LazyTreeNode} cached on `anchorNode` (if any) and the fields cached for it.
+ * @remarks
+ * This releases the cursors and anchor references they hold, so the anchor node can be disposed once nothing else uses it.
+ * The tree's content is not affected: reading it again creates new flex tree nodes and fields.
+ */
+export function disposeHydratedFlexTreeNode(anchorNode: AnchorNode): void {
+	const cached = anchorNode.slots.get(flexTreeSlot);
+	if (cached === undefined) {
+		return;
+	}
+	assert(cached instanceof LazyTreeNode, "Expected LazyTreeNode");
+	disposeCachedFields(cached);
 	cached[disposeSymbol]();
 }
 

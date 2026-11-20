@@ -10,6 +10,7 @@ export {
 	tryGetTreeNodeSchema,
 	type InnerNode,
 	tryDisposeTreeNode,
+	releaseTreeNode,
 	getInnerNode,
 	treeNodeFromAnchor,
 	getSimpleNodeSchemaFromInnerNode,

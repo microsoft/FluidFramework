@@ -573,6 +573,25 @@ describe("AnchorSet", () => {
 			anchors.generationNumber,
 		);
 	});
+
+	it("anchoredChildren lists the anchored children of a node", () => {
+		const [anchors, anchor1, anchor2, , anchor4] = setup();
+		const node1 = anchors.locate(anchor1) ?? assert.fail();
+		const node2 = anchors.locate(anchor2) ?? assert.fail();
+		const node4 = anchors.locate(anchor4) ?? assert.fail();
+		assert.deepEqual([...node4.anchoredChildren()], [node1]);
+		assert.deepEqual([...(node2.parent ?? assert.fail()).anchoredChildren()], [node2]);
+		assert.deepEqual([...node1.anchoredChildren()], []);
+	});
+
+	it("isUpdating is true while a visitor is in use", () => {
+		const anchors = new AnchorSet();
+		assert.equal(anchors.isUpdating(), false);
+		withVisitor(anchors, () => {
+			assert.equal(anchors.isUpdating(), true);
+		});
+		assert.equal(anchors.isUpdating(), false);
+	});
 });
 
 class UnorderedTestLogger {

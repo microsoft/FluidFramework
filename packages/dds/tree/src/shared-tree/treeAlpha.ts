@@ -84,6 +84,7 @@ import {
 	type TreeNodeSchema,
 	toStoredSchema,
 	toUnhydratedSchema,
+	releaseTreeNode,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 
@@ -586,6 +587,38 @@ export interface TreeAlpha {
 		schema: TSchema,
 		content: TContent,
 	): TContent;
+
+	/**
+	 * Releases the objects created for reading `node` and the nodes under it, reducing memory use.
+	 * @remarks
+	 * Reading a node of a {@link TreeView} creates objects for it, including its {@link TreeNode}.
+	 * These are kept as long as the view exists, so that reading the same node again returns the same {@link TreeNode}.
+	 * An app which reads a large tree once (for example, to render it) and keeps the view thus keeps memory proportional to the part of the tree it has read.
+	 * This function frees these objects for `node` and for every node under it which has been read.
+	 * It does not change the tree's content and is not an edit.
+	 *
+	 * Afterwards, the released {@link TreeNode}s cannot be used:
+	 * reading or editing them, subscribing to their events, or passing them to APIs such as {@link (TreeNodeApi:interface).status} throws a usage error.
+	 * Reading the same location again, for example from the parent of `node`, returns a new {@link TreeNode}.
+	 * {@link (TreeNodeApi:interface).schema}, {@link (TreeNodeApi:interface).is} and `instanceof` still work on released nodes.
+	 *
+	 * Additional rules:
+	 *
+	 * - Releasing a node which is already released, or which is deleted, does nothing.
+	 *
+	 * - The root of a view can be released: {@link TreeView.root} then returns a new node.
+	 *
+	 * - Unhydrated nodes cannot be released: they hold nothing from a tree, so dropping references to them is enough.
+	 *
+	 * - Nodes cannot be released while they, or any node under them, have event listeners, for example from {@link (TreeBeta:interface).on} or {@link (TreeAlpha:interface).trackObservations}.
+	 * Nothing is released in that case: remove the listeners first.
+	 * Listeners on other nodes, including ancestors of `node`, are not affected and keep receiving events for changes under `node`.
+	 *
+	 * - Nodes can be released inside transactions and from event listeners, but not while the tree is in the middle of applying a change.
+	 *
+	 * @throws A usage error if `node` cannot be released, as described above.
+	 */
+	release(node: TreeNode): void;
 }
 
 /**
@@ -1154,6 +1187,10 @@ export const TreeAlpha: TreeAlpha = {
 			});
 		}
 		return node;
+	},
+
+	release(node: TreeNode): void {
+		releaseTreeNode(node);
 	},
 };
 

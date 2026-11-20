@@ -259,6 +259,13 @@ export interface AnchorNode extends INormalizedUpPath<AnchorNode> {
 	 * Caller is responsible for freeing the returned Anchor, and must not use the AnchorNode after that.
 	 */
 	getOrCreateChildRef(key: FieldKey, index: number): [Anchor, AnchorNode];
+
+	/**
+	 * Gets the children of this node which have AnchorNodes, in no particular order.
+	 *
+	 * Does NOT add refs, so the returned AnchorNodes must be used with care: changes to the anchors may dispose them.
+	 */
+	anchoredChildren(): Iterable<AnchorNode>;
 }
 
 /**
@@ -366,6 +373,13 @@ export class AnchorSet implements AnchorLocator {
 	 */
 	public isEmpty(): boolean {
 		return this.root.children.size === 0;
+	}
+
+	/**
+	 * Whether a visitor from {@link AnchorSet.acquireVisitor} is in use, meaning this set is in the middle of being updated for a change.
+	 */
+	public isUpdating(): boolean {
+		return this.activeVisitor !== undefined;
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
@@ -1215,6 +1229,13 @@ class PathNode extends ReferenceCountedBase implements AnchorNode {
 		const field = this.children.get(key);
 
 		return field === undefined ? undefined : binaryFind(field, index);
+	}
+
+	public *anchoredChildren(): Iterable<PathNode> {
+		assert(this.status === Status.Alive, "PathNode must be alive");
+		for (const field of this.children.values()) {
+			yield* field;
+		}
 	}
 
 	/**
