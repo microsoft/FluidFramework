@@ -43,7 +43,6 @@ export {
 	type ObjectNodeSchemaPrivate,
 	objectSchema,
 	setField,
-	singletonObjectSchema,
 	type TreeObjectNode,
 	type SimpleKeyMap,
 } from "./object/index.js";
