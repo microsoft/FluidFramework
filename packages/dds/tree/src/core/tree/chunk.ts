@@ -33,6 +33,9 @@ export interface TreeChunk extends ReferenceCounted {
 	 *
 	 * Starts in "fields" mode in a `dummyRoot` field containing the top level nodes.
 	 *
+	 * Each call returns a new cursor, which the caller owns,
+	 * except that a chunk with no nodes may return a shared cursor which has no state and cannot be moved.
+	 *
 	 * This cursor does not own a reference to the data:
 	 * it is up to the caller of this function to ensure the cursor is not used after they release their owning ref to this chunk.
 	 *

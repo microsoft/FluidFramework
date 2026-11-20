@@ -11,12 +11,7 @@ import {
 	type ChangesetLocalId,
 	type RevisionTag,
 } from "../core/index.js";
-import {
-	createTupleComparator,
-	newTupleBTree,
-	type RangeQueryResult,
-	type TupleBTree,
-} from "../util/index.js";
+import { newTupleBTree, type RangeQueryResult, type TupleBTree } from "../util/index.js";
 
 /**
  * A BTree which uses ChangeAtomId flattened into a tuple as the key.
@@ -35,7 +30,18 @@ export function newChangeAtomIdBTree<V>(
 	return newTupleBTree(compareKeys, entries);
 }
 
-const compareKeys = createTupleComparator([comparePartialRevisions, compareChangesetLocalIds]);
+/**
+ * Compares the keys of a {@link ChangeAtomIdBTree}: by revision, then by local ID.
+ * @remarks
+ * The same order as `createTupleComparator` with these two comparators gives, without its per-element dispatch,
+ * since these maps are used on every edit, compose and rebase.
+ */
+function compareKeys(
+	a: readonly [RevisionTag | undefined, ChangesetLocalId],
+	b: readonly [RevisionTag | undefined, ChangesetLocalId],
+): number {
+	return comparePartialRevisions(a[0], b[0]) || compareChangesetLocalIds(a[1], b[1]);
+}
 
 export function getFromChangeAtomIdMap<T>(
 	map: ChangeAtomIdBTree<T>,
