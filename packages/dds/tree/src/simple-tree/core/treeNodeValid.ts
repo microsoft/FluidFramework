@@ -178,7 +178,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	public constructor(input: TInput | InternalTreeNode) {
 		super(privateToken);
 		const schema = this.constructor as typeof TreeNodeValid & TreeNodeSchema;
-		const cache = schema.oneTimeInitialize();
+		schema.oneTimeInitialize();
 
 		if (isTreeNode(input)) {
 			// TODO: update this once TreeBeta.clone is stable.
@@ -194,11 +194,9 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		);
 
 		const result = schema.prepareInstance(this, node);
+		// Only an unhydrated node uses the context given to its kernel: a hydrated node's context comes from its tree.
 		// Cloned unhydrated nodes can have a customized context supporting unknown optional fields.
-		const context =
-			node instanceof UnhydratedFlexTreeNode
-				? node.simpleContext
-				: cache.oneTimeInitialized.component.context;
+		const context = node instanceof UnhydratedFlexTreeNode ? node.simpleContext : undefined;
 		// The TreeNodeKernel associates itself the TreeNode (result here, not node) so it can be looked up later via getKernel.
 		// If desired this could be put in a non-enumerable symbol property for lookup instead, but that gets messy going through proxies,
 		// so just relying on the WeakMap seems like the cleanest approach.
@@ -262,14 +260,27 @@ export function createTreeNodeSchemaPrivateData(
 	childAllowedTypes: readonly AllowedTypesFull[],
 ): TreeNodeSchemaPrivateData {
 	const schemaValid = schemaAsTreeNodeValid(schema);
-	// Since this closes over the schema, ensure this schema is marked as most derived
+	// Since this refers to the schema, ensure this schema is marked as most derived
 	// so if some other subclass is used later, it will error instead of giving inconsistent results.
 	schemaValid.markMostDerived();
 
-	return {
-		idempotentInitialize: () => schemaValid.oneTimeInitialize().oneTimeInitialized,
-		childAllowedTypes,
-	};
+	return new ClassSchemaPrivateData(schemaValid, childAllowedTypes);
+}
+
+/**
+ * {@link TreeNodeSchemaPrivateData} for a class based schema.
+ * @remarks
+ * A class rather than an object with a closure, since large schemas have many schema classes.
+ */
+class ClassSchemaPrivateData implements TreeNodeSchemaPrivateData {
+	public constructor(
+		private readonly schema: typeof TreeNodeValid & TreeNodeSchema,
+		public readonly childAllowedTypes: readonly AllowedTypesFull[],
+	) {}
+
+	public idempotentInitialize(): TreeNodeSchemaInitializedData {
+		return this.schema.oneTimeInitialize().oneTimeInitialized;
+	}
 }
 
 // #region NodeJS custom inspect for TreeNodes.

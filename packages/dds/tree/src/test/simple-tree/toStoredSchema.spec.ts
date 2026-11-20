@@ -16,13 +16,12 @@ import {
 	encodeSchemaCompatibilitySnapshot,
 	normalizeFieldSchema,
 } from "../../simple-tree/index.js";
-import { createSchemaGraph } from "./schemaTestUtils.js";
+import { createSchemaGraph, getObjectNodeSchema, typeSet } from "./schemaTestUtils.js";
 
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	EmptyKey,
-	ObjectNodeStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchema,
 } from "../../core/index.js";
@@ -77,19 +76,6 @@ import {
 
 function getTestDocumentSchemaData(name: string): TreeStoredSchema {
 	return testDocuments.find((test) => test.name === name)?.schemaData ?? assert.fail();
-}
-
-function getObjectNodeSchema(
-	schema: TreeStoredSchema,
-	identifier: string,
-): ObjectNodeStoredSchema {
-	const node = schema.nodeSchema.get(brand(identifier)) ?? assert.fail();
-	assert(node instanceof ObjectNodeStoredSchema);
-	return node;
-}
-
-function typeSet(...identifiers: string[]): Set<TreeNodeSchemaIdentifier> {
-	return new Set(identifiers.map((identifier) => brand<TreeNodeSchemaIdentifier>(identifier)));
 }
 
 // Context identity, initialization order, and failed context construction are covered in createContext.spec.ts.
@@ -228,11 +214,11 @@ describe("toStoredSchema", () => {
 			let reads = 0;
 			for (const node of [Root, Left, Right, Leaf]) {
 				assert(isObjectNodeSchema(node));
-				const fields = node.fields;
-				Object.defineProperty(node, "fields", {
+				const flexKeyMap = node.flexKeyMap;
+				Object.defineProperty(node, "flexKeyMap", {
 					get() {
 						reads++;
-						return fields;
+						return flexKeyMap;
 					},
 				});
 			}
@@ -389,6 +375,40 @@ describe("toStoredSchema", () => {
 			assert.strictEqual(toStoredSchema(Node, StagedSchemaUpgradePolicy.permissive), stored);
 			assert.deepEqual(stored, reference(Node, StagedSchemaUpgradePolicy.permissive));
 		});
+		it("converts schema classes without creating their fields", () => {
+			const sf = new SchemaFactoryAlpha("conversionWithoutFields");
+			class Leaf extends sf.object("Leaf", {
+				value: sf.required(sf.number, {
+					key: "v",
+					metadata: { description: "value" },
+					persistedMetadata: { kept: true },
+				}),
+				label: sf.optional(sf.string),
+			}) {}
+			class Node extends sf.object("Node", {
+				leaf: Leaf,
+				other: sf.optional([Leaf, sf.null]),
+			}) {}
+			for (const node of [Node, Leaf]) {
+				Object.defineProperty(node, "fields", {
+					get: () => assert.fail("Conversion must not create fields"),
+					configurable: true,
+				});
+			}
+			const permissive = toStoredSchema(Node, StagedSchemaUpgradePolicy.permissive);
+			const converted = new Map(permissive.nodeSchema);
+			for (const node of [Node, Leaf]) {
+				Reflect.deleteProperty(node, "fields");
+			}
+			assert.deepEqual(
+				converted,
+				reference(Node, StagedSchemaUpgradePolicy.permissive).nodeSchema,
+			);
+			assert.deepEqual(
+				[...getObjectNodeSchema(permissive, Leaf.identifier).objectNodeFields.keys()].sort(),
+				["label", "v"],
+			);
+		});
 		it("preserves root field kind and metadata in separate root caches", () => {
 			const sf = new SchemaFactoryAlpha("rootCaches");
 			class A extends sf.objectRecursive("A", {
@@ -400,11 +420,12 @@ describe("toStoredSchema", () => {
 			getRootSchemaDerivedData(A);
 			let reads = 0;
 			for (const node of [A, B]) {
-				const fields = node.fields;
-				Object.defineProperty(node, "fields", {
+				assert(isObjectNodeSchema(node));
+				const flexKeyMap = node.flexKeyMap;
+				Object.defineProperty(node, "flexKeyMap", {
 					get() {
 						reads++;
-						return fields;
+						return flexKeyMap;
 					},
 				});
 			}
@@ -494,7 +515,6 @@ describe("toStoredSchema", () => {
 							assert.strictEqual(
 								toStoredSchema(root, {
 									...restrictivePolicy,
-									includeAlreadyEnabledUpgrades: true,
 								}),
 								permissive,
 							);

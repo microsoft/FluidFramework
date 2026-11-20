@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/internal";
+import { assert, fail, debugAssert } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -48,11 +48,14 @@ import {
 	type TreeNodeSchemaInitializedData,
 	privateDataSymbol,
 	createTreeNodeSchemaPrivateData,
+	normalizeAllowedTypes,
 	type FlexContent,
 	type UnhydratedFlexTreeField,
 	createField,
 	type TreeNodeSchemaCorePrivate,
 	type TreeNodeSchemaPrivateData,
+	type TreeNodeSchemaClass,
+	type AllowedTypesFull,
 	kernelSlot,
 	type TreeNodeKernel,
 } from "../../core/index.js";
@@ -300,124 +303,145 @@ function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): Simp
 }
 
 /**
- * Creates a proxy handler for the given schema.
+ * Proxy handler for object nodes of a given schema.
+ * @remarks
+ * The traps are prototype methods rather than closures so that each schema only needs one small handler object.
  *
- * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
- * Otherwise setting of unexpected properties will error.
- * TODO: consider implementing this using `Object.preventExtension` instead.
- * @param customTargetObject - Target object of the proxy.
- * If not provided `{}` is used for the target.
+ * To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
+ * prototype as an object literal `{}`.  This is because 'deepEquals' uses 'Object.getPrototypeOf'
+ * as a way to quickly reject objects with different prototype chains.
+ *
+ * (Note that the prototype of an object literal appears as `[Object: null prototype] {}`, not because
+ * the prototype is null, but because the prototype object itself has a null prototype.)
+ *
+ * TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
+ * a dispatch object to see if it improves performance.
  */
-function createProxyHandler(
-	schema: ObjectNodeSchemaPrivate,
-	allowAdditionalProperties: boolean,
-): ProxyHandler<TreeNode> {
-	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
-	// prototype as an object literal '{}'.  This is because 'deepEquals' uses 'Object.getPrototypeOf'
-	// as a way to quickly reject objects with different prototype chains.
-	//
-	// (Note that the prototype of an object literal appears as '[Object: null prototype] {}', not because
-	// the prototype is null, but because the prototype object itself has a null prototype.)
+class ObjectProxyHandler implements ProxyHandler<TreeNode> {
+	private readonly flexKeyMap: SimpleKeyMap;
 
-	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
-	// a dispatch object to see if it improves performance.
-	const handler: ProxyHandler<TreeNode> = {
-		get(target, propertyKey, proxy): unknown {
-			if (propertyKey === kernelSlot) {
-				return Reflect.get(target, propertyKey);
-			}
-			const fieldInfo = schema.flexKeyMap.get(propertyKey);
-			if (fieldInfo !== undefined) {
-				const flexNode = getInnerNode(proxy);
-				debugAssert(() => !flexNode.context.isDisposed() || "FlexTreeNode is disposed");
-				if (flexNode.tryGetSingleContent !== undefined) {
-					// Read the content without creating a field object for it.
-					const content = flexNode.tryGetSingleContent(fieldInfo.storedKey);
-					if (content !== notLeafContent) {
-						return isFlexTreeNode(content) ? getOrCreateNodeFromInnerNode(content) : content;
-					}
+	/**
+	 * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
+	 * Otherwise setting of unexpected properties will error.
+	 * This is also used to select the proxy target: customizable (subclassed) schema use the node itself, others use `{}`.
+	 * TODO: consider implementing this using `Object.preventExtension` instead.
+	 */
+	public constructor(
+		private readonly schema: ObjectNodeSchemaPrivate,
+		public readonly allowAdditionalProperties: boolean,
+	) {
+		this.flexKeyMap = schema.flexKeyMap;
+	}
+
+	public get(target: TreeNode, propertyKey: string | symbol, proxy: TreeNode): unknown {
+		if (propertyKey === kernelSlot) {
+			return Reflect.get(target, propertyKey);
+		}
+		const fieldInfo = this.flexKeyMap.get(propertyKey);
+		if (fieldInfo !== undefined) {
+			const flexNode = getInnerNode(proxy);
+			debugAssert(() => !flexNode.context.isDisposed() || "FlexTreeNode is disposed");
+			if (flexNode.tryGetSingleContent !== undefined) {
+				// Read the content without creating a field object for it.
+				const content = flexNode.tryGetSingleContent(fieldInfo.storedKey);
+				if (content !== notLeafContent) {
+					return isFlexTreeNode(content) ? getOrCreateNodeFromInnerNode(content) : content;
 				}
-				const field = flexNode.tryGetField(fieldInfo.storedKey);
-				if (field !== undefined) {
-					return tryGetTreeNodeForField(field);
-				}
-
-				return undefined;
+			}
+			const field = flexNode.tryGetField(fieldInfo.storedKey);
+			if (field !== undefined) {
+				return tryGetTreeNodeForField(field);
 			}
 
-			// POJO mode objects don't have TreeNode's built in members on their targets, so special case them:
-			if (propertyKey === typeSchemaSymbol) {
-				return schema;
-			}
-			if (propertyKey === schemaIdentifierBrand) {
-				return schema.identifier;
-			}
+			return undefined;
+		}
 
-			// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
-			return Reflect.get(target, propertyKey, proxy);
-		},
-		set(target, propertyKey, value: InsertableContent | undefined, proxy) {
-			const fieldInfo = schema.flexKeyMap.get(propertyKey);
-			if (fieldInfo === undefined) {
-				// Pass the proxy as the receiver here, so that setters on the prototype receive `proxy` as `this`.
-				return allowAdditionalProperties
-					? Reflect.set(target, propertyKey, value, proxy)
-					: false;
-			}
+		// POJO mode objects don't have TreeNode's built in members on their targets, so special case them:
+		if (propertyKey === typeSchemaSymbol) {
+			return this.schema;
+		}
+		if (propertyKey === schemaIdentifierBrand) {
+			return this.schema.identifier;
+		}
 
-			applyFieldChange(schema, { kind: "proxy", node: proxy }, fieldInfo, value);
-			return true;
-		},
-		deleteProperty(target, propertyKey): boolean {
-			const fieldInfo = schema.flexKeyMap.get(propertyKey);
-			if (fieldInfo === undefined) {
-				return allowAdditionalProperties ? Reflect.deleteProperty(target, propertyKey) : false;
-			}
+		// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
+		return Reflect.get(target, propertyKey, proxy);
+	}
 
-			applyFieldChange(schema, { kind: "target", node: target }, fieldInfo, undefined);
-			return true;
-		},
-		has: (target, propertyKey) => {
-			return (
-				schema.flexKeyMap.has(propertyKey) ||
-				(allowAdditionalProperties && propertyKey !== kernelSlot
-					? Reflect.has(target, propertyKey)
-					: false)
-			);
-		},
-		ownKeys: (target) => {
-			return [
-				...schema.flexKeyMap.keys(),
-				...(allowAdditionalProperties ? ownKeysOfTarget(target) : []),
-			];
-		},
-		getOwnPropertyDescriptor: (target, propertyKey) => {
-			const fieldInfo = schema.flexKeyMap.get(propertyKey);
+	public set(
+		target: TreeNode,
+		propertyKey: string | symbol,
+		value: InsertableContent | undefined,
+		proxy: TreeNode,
+	): boolean {
+		const fieldInfo = this.flexKeyMap.get(propertyKey);
+		if (fieldInfo === undefined) {
+			// Pass the proxy as the receiver here, so that setters on the prototype receive `proxy` as `this`.
+			return this.allowAdditionalProperties
+				? Reflect.set(target, propertyKey, value, proxy)
+				: false;
+		}
 
-			if (fieldInfo === undefined) {
-				return allowAdditionalProperties && propertyKey !== kernelSlot
-					? Reflect.getOwnPropertyDescriptor(target, propertyKey)
-					: undefined;
-			}
+		applyFieldChange(this.schema, { kind: "proxy", node: proxy }, fieldInfo, value);
+		return true;
+	}
 
-			// getOwnPropertyDescriptor is not passed the receiver, so find the proxy from the kernel its target holds.
-			const proxy = proxyOfTarget(target) ?? fail(0xadd /* missing proxy */);
-			const field = getInnerNode(proxy).tryGetField(fieldInfo.storedKey);
+	public deleteProperty(target: TreeNode, propertyKey: string | symbol): boolean {
+		const fieldInfo = this.flexKeyMap.get(propertyKey);
+		if (fieldInfo === undefined) {
+			return this.allowAdditionalProperties
+				? Reflect.deleteProperty(target, propertyKey)
+				: false;
+		}
 
-			const p: PropertyDescriptor = {
-				value: field === undefined ? undefined : tryGetTreeNodeForField(field),
-				writable: true,
-				// Report empty fields as own properties so they shadow inherited properties (even when empty) to match TypeScript typing.
-				// Make empty fields not enumerable so they get skipped when iterating over an object to better align with
-				// JSON and deep equals with JSON compatible object (which can't have undefined fields).
-				enumerable: field !== undefined,
-				configurable: true, // Must be 'configurable' if property is absent from proxy target.
-			};
+		applyFieldChange(this.schema, { kind: "target", node: target }, fieldInfo, undefined);
+		return true;
+	}
 
-			return p;
-		},
-	};
-	return handler;
+	public has(target: TreeNode, propertyKey: string | symbol): boolean {
+		return (
+			this.flexKeyMap.has(propertyKey) ||
+			(this.allowAdditionalProperties && propertyKey !== kernelSlot
+				? Reflect.has(target, propertyKey)
+				: false)
+		);
+	}
+
+	public ownKeys(target: TreeNode): (string | symbol)[] {
+		return [
+			...this.flexKeyMap.keys(),
+			...(this.allowAdditionalProperties ? ownKeysOfTarget(target) : []),
+		];
+	}
+
+	public getOwnPropertyDescriptor(
+		target: TreeNode,
+		propertyKey: string | symbol,
+	): PropertyDescriptor | undefined {
+		const fieldInfo = this.flexKeyMap.get(propertyKey);
+
+		if (fieldInfo === undefined) {
+			return this.allowAdditionalProperties && propertyKey !== kernelSlot
+				? Reflect.getOwnPropertyDescriptor(target, propertyKey)
+				: undefined;
+		}
+
+		// getOwnPropertyDescriptor is not passed the receiver, so find the proxy from the kernel its target holds.
+		const proxy = proxyOfTarget(target) ?? fail(0xadd /* missing proxy */);
+		const field = getInnerNode(proxy).tryGetField(fieldInfo.storedKey);
+
+		const p: PropertyDescriptor = {
+			value: field === undefined ? undefined : tryGetTreeNodeForField(field),
+			writable: true,
+			// Report empty fields as own properties so they shadow inherited properties (even when empty) to match TypeScript typing.
+			// Make empty fields not enumerable so they get skipped when iterating over an object to better align with
+			// JSON and deep equals with JSON compatible object (which can't have undefined fields).
+			enumerable: field !== undefined,
+			configurable: true, // Must be 'configurable' if property is absent from proxy target.
+		};
+
+		return p;
+	}
 }
 
 export function setField(
@@ -474,10 +498,341 @@ export class ObjectFieldSchema<
 	}
 }
 
+/**
+ * Key of the {@link ObjectNodeSchemaData} static on object node schema classes.
+ */
+const objectNodeDataSymbol: unique symbol = Symbol("objectNodeData");
+
+/**
+ * Data derived from the fields of an object node schema.
+ * @remarks
+ * All object node schema without fields share {@link emptyFieldData}.
+ */
+interface ObjectNodeFieldData {
+	/**
+	 * Cache for {@link CustomObjectNodeBase.fields}, computed on first use (see {@link getFields}).
+	 */
+	fields: ReadonlyMap<string, FieldSchemaAlpha & SimpleObjectFieldSchema> | undefined;
+	readonly flexKeyMap: SimpleKeyMap;
+	/**
+	 * Cache for {@link CustomObjectNodeBase.storedKeyToPropertyKey}, computed on first use.
+	 */
+	storedKeyToPropertyKey: ReadonlyMap<FieldKey, string> | undefined;
+	readonly identifierFieldKeys: readonly FieldKey[];
+	readonly childAllowedTypes: readonly AllowedTypesFull[];
+	/**
+	 * Cache for {@link CustomObjectNodeBase.childTypes}, computed on first use.
+	 */
+	childTypes: ReadonlySet<TreeNodeSchema> | undefined;
+}
+
+/**
+ * Everything specific to one object node schema.
+ * @remarks
+ * Each schema class stores this in a single static property (besides `constructorCached`),
+ * and the static members and methods of the schema are implemented once, on {@link CustomObjectNodeBase}, in terms of it.
+ * This keeps each schema class cheap, which matters for schemas with many object node schema such as large schemas with many enum values.
+ */
+interface ObjectNodeSchemaData {
+	readonly identifier: string;
+	readonly info: RestrictiveStringRecord<ImplicitFieldSchema>;
+	readonly implicitlyConstructable: boolean;
+	readonly metadata: NodeSchemaMetadata;
+	readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined;
+	readonly allowUnknownOptionalFields: boolean;
+	readonly fieldData: ObjectNodeFieldData;
+	/**
+	 * The value of nodes of schema created by {@link singletonObjectSchema}.
+	 */
+	readonly singletonValue: string | number | undefined;
+	/**
+	 * If true, nodes use themselves as the target of their proxy (and allow additional properties) even when the schema class is not subclassed.
+	 * @remarks
+	 * Otherwise this is only done when the schema class is subclassed: see {@link CustomObjectNodeBase.prepareInstance}.
+	 */
+	readonly alwaysCustomizable: boolean;
+	/**
+	 * The class created for this schema.
+	 * @remarks
+	 * The most derived schema class is either this class or a subclass of it.
+	 */
+	nodeClass: { readonly prototype: object } | undefined;
+	/**
+	 * Set by {@link CustomObjectNodeBase.oneTimeSetup}.
+	 */
+	handler: ObjectProxyHandler | undefined;
+	/**
+	 * Cache for {@link CustomObjectNodeBase.[privateDataSymbol]}.
+	 */
+	privateData: TreeNodeSchemaPrivateData | undefined;
+}
+
+/**
+ * Prevents modification of a collection which is shared between schemas.
+ * @remarks
+ * `Object.freeze` alone does not prevent modifying the content of Maps and Sets.
+ */
+function freezeSharedCollection<T extends object>(collection: T): T {
+	for (const method of ["set", "add", "delete", "clear"]) {
+		if (method in collection) {
+			Object.defineProperty(collection, method, {
+				value: (): never => fail("Collections shared between schemas must not be modified"),
+			});
+		}
+	}
+	return Object.freeze(collection);
+}
+
+const emptyFieldData: ObjectNodeFieldData = Object.freeze({
+	fields: freezeSharedCollection(new Map()),
+	flexKeyMap: freezeSharedCollection(new Map()),
+	storedKeyToPropertyKey: freezeSharedCollection(new Map()),
+	identifierFieldKeys: Object.freeze([]),
+	childAllowedTypes: Object.freeze([]),
+	childTypes: freezeSharedCollection(new Set<TreeNodeSchema>()),
+});
+
+const emptyMetadata: NodeSchemaMetadata = Object.freeze({});
+
+function createFieldData(
+	info: RestrictiveStringRecord<ImplicitFieldSchema>,
+): ObjectNodeFieldData {
+	if (Object.keys(info).length === 0) {
+		return emptyFieldData;
+	}
+
+	// Performance optimization: cache property key => stored key and schema.
+	const flexKeyMap: SimpleKeyMap = createFlexKeyMapping(info);
+
+	const identifierFieldKeys: FieldKey[] = [];
+	for (const item of flexKeyMap.values()) {
+		if (item.schema.kind === FieldKind.Identifier) {
+			identifierFieldKeys.push(item.storedKey);
+		}
+	}
+
+	return {
+		fields: undefined,
+		flexKeyMap,
+		storedKeyToPropertyKey: undefined,
+		identifierFieldKeys,
+		// The same (cached) normalized allowed types as the corresponding entries of `fields` have.
+		childAllowedTypes: Array.from(flexKeyMap.values(), (value) =>
+			normalizeAllowedTypes(value.schema.allowedTypes),
+		),
+		childTypes: undefined,
+	};
+}
+
+/**
+ * {@link CustomObjectNodeBase.fields}, created on first use: many schemas never need it.
+ */
+function getFields(
+	fieldData: ObjectNodeFieldData,
+): ReadonlyMap<string, FieldSchemaAlpha & SimpleObjectFieldSchema> {
+	return (fieldData.fields ??= new Map(
+		Array.from(fieldData.flexKeyMap, ([key, value]) => [
+			key as string,
+			new ObjectFieldSchema(value.schema.kind, value.schema.allowedTypes, {
+				...value.schema.props,
+				key: getStoredKey(key as string, value.schema),
+			}),
+		]),
+	));
+}
+
+/**
+ * {@link CustomObjectNodeBase.storedKeyToPropertyKey}, created on first use.
+ */
+function getStoredKeyToPropertyKey(
+	fieldData: ObjectNodeFieldData,
+): ReadonlyMap<FieldKey, string> {
+	return (fieldData.storedKeyToPropertyKey ??= new Map(
+		Array.from(fieldData.flexKeyMap, ([key, value]): [FieldKey, string] => [
+			value.storedKey,
+			key as string,
+		]),
+	));
+}
+
+function createObjectNodeSchemaData(
+	identifier: string,
+	info: RestrictiveStringRecord<ImplicitFieldSchema>,
+	implicitlyConstructable: boolean,
+	nodeOptions: ObjectSchemaOptionsAlpha,
+	singleton: { readonly value: string | number } | undefined,
+): ObjectNodeSchemaData {
+	return {
+		identifier,
+		info,
+		implicitlyConstructable,
+		metadata: nodeOptions.metadata ?? emptyMetadata,
+		persistedMetadata: nodeOptions.persistedMetadata,
+		allowUnknownOptionalFields: nodeOptions.allowUnknownOptionalFields ?? false,
+		fieldData: createFieldData(info),
+		singletonValue: singleton?.value,
+		alwaysCustomizable: singleton !== undefined,
+		nodeClass: undefined,
+		handler: undefined,
+		privateData: undefined,
+	};
+}
+
+/**
+ * Base class for all object node schema classes.
+ * @remarks
+ * Implements the schema's static members and methods using the {@link ObjectNodeSchemaData} of the schema,
+ * so the classes created for each schema only need to declare that data.
+ */
 abstract class CustomObjectNodeBase<
 	const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 > extends TreeNodeValid<InsertableObjectFromSchemaRecord<T>> {
 	public static readonly kind = NodeKind.Object;
+
+	public declare static readonly [objectNodeDataSymbol]: ObjectNodeSchemaData;
+
+	protected declare static constructorCached: MostDerivedData | undefined;
+
+	public static get identifier(): string {
+		return this[objectNodeDataSymbol].identifier;
+	}
+	public static get info(): RestrictiveStringRecord<ImplicitFieldSchema> {
+		return this[objectNodeDataSymbol].info;
+	}
+	public static get implicitlyConstructable(): boolean {
+		return this[objectNodeDataSymbol].implicitlyConstructable;
+	}
+	public static get metadata(): NodeSchemaMetadata {
+		return this[objectNodeDataSymbol].metadata;
+	}
+	public static get persistedMetadata(): JsonCompatibleReadOnlyObject | undefined {
+		return this[objectNodeDataSymbol].persistedMetadata;
+	}
+	public static get allowUnknownOptionalFields(): boolean {
+		return this[objectNodeDataSymbol].allowUnknownOptionalFields;
+	}
+	public static get fields(): ReadonlyMap<string, FieldSchemaAlpha & SimpleObjectFieldSchema> {
+		return getFields(this[objectNodeDataSymbol].fieldData);
+	}
+	public static get flexKeyMap(): SimpleKeyMap {
+		return this[objectNodeDataSymbol].fieldData.flexKeyMap;
+	}
+	public static get storedKeyToPropertyKey(): ReadonlyMap<FieldKey, string> {
+		return getStoredKeyToPropertyKey(this[objectNodeDataSymbol].fieldData);
+	}
+	public static get identifierFieldKeys(): readonly FieldKey[] {
+		return this[objectNodeDataSymbol].fieldData.identifierFieldKeys;
+	}
+	public static get childTypes(): ReadonlySet<TreeNodeSchema> {
+		const fieldData = this[objectNodeDataSymbol].fieldData;
+		return (fieldData.childTypes ??= new Set(
+			Array.from(fieldData.flexKeyMap.values(), (f) => [...f.schema.allowedTypeSet]).flat(),
+		));
+	}
+
+	public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
+		const data = this[objectNodeDataSymbol];
+		return (data.privateData ??= createTreeNodeSchemaPrivateData(
+			this as unknown as TreeNodeSchema,
+			data.fieldData.childAllowedTypes,
+		));
+	}
+
+	public static override prepareInstance<T2>(
+		this: typeof TreeNodeValid<T2>,
+		instance: TreeNodeValid<T2>,
+		flexNode: FlexTreeNode,
+	): TreeNodeValid<T2> {
+		// Differentiate between the following cases:
+		//
+		// Case 1: Direct construction (POJO emulation)
+		//
+		//     const Foo = schemaFactory.object("Foo", {bar: schemaFactory.number});
+		//
+		//     assert.deepEqual(new Foo({ bar: 42 }), { bar: 42 },
+		//		   "Prototype chain equivalent to POJO.");
+		//
+		// Case 2: Subclass construction (Customizable Object)
+		//
+		// 	   class Foo extends schemaFactory.object("Foo", {bar: schemaFactory.number}) {}
+		//
+		// 	   assert.notDeepEqual(new Foo({ bar: 42 }), { bar: 42 },
+		// 	       "Subclass prototype chain differs from POJO.");
+		//
+		// In Case 1 (POJO emulation), the prototype chain match '{}' (proxyTarget = undefined)
+		// In Case 2 (Customizable Object), the prototype chain include the user's subclass (proxyTarget = this)
+		//
+		// The handler is created by oneTimeSetup, which the TreeNodeValid constructor runs before this.
+
+		const handler =
+			(this as unknown as typeof CustomObjectNodeBase)[objectNodeDataSymbol].handler ??
+			fail("Object node proxy handler should be created in oneTimeSetup");
+		const proxyTarget = handler.allowAdditionalProperties ? instance : {};
+		const proxy = new Proxy(proxyTarget as TreeNode, handler);
+		return proxy as TreeNodeValid<T2>;
+	}
+
+	public static override buildRawNode<T2>(
+		this: typeof TreeNodeValid<T2>,
+		instance: TreeNodeValid<T2>,
+		input: T2,
+	): UnhydratedFlexTreeNode {
+		return unhydratedFlexTreeFromInsertable(
+			input as object,
+			this as unknown as TreeNodeSchema,
+		);
+	}
+
+	protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
+		// One time initialization that required knowing the most derived type (from this.constructor) and thus has to be lazy.
+		const data = this[objectNodeDataSymbol];
+		const nodeClass = data.nodeClass ?? fail("Object node schema class should be recorded");
+		const customizable = data.alwaysCustomizable || this !== nodeClass;
+		const schema = this as unknown as ObjectNodeSchemaPrivate;
+		data.handler = new ObjectProxyHandler(schema, customizable);
+
+		// First run, do extra validation.
+		// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.
+		// Scan for shadowing inherited members which won't work, but stop scan early to allow shadowing built in (which seems to work ok).
+		{
+			let prototype: object = this.prototype;
+			// There isn't a clear cleaner way to author this loop.
+			while (prototype !== nodeClass.prototype) {
+				for (const [key] of data.fieldData.flexKeyMap) {
+					if (
+						// constructor is a special case, since one is built in on the derived type, and shadowing it works fine since we only use it before fields are applied.
+						key !== "constructor" &&
+						Reflect.getOwnPropertyDescriptor(prototype, key) !== undefined
+					) {
+						throw new UsageError(
+							`Schema ${data.identifier} defines an inherited property "${key.toString()}" which shadows a field. Since fields are exposed as own properties, this shadowing will not work, and is an error.`,
+						);
+					}
+				}
+				// Since this stops at the schema's class, it should never see a null prototype, so this case is safe.
+				// Additionally, if the prototype chain is ever messed up such that the schema's class is not in it,
+				// the null that would show up here does at least ensure this code throws instead of hanging.
+				prototype = Reflect.getPrototypeOf(prototype) as object;
+			}
+		}
+
+		return getTreeNodeSchemaInitializedData(schema, {
+			shallowCompatibilityTest: (content: FactoryContent): CompatibilityLevel =>
+				shallowCompatibilityTest(content, schema),
+			toFlexContent: (
+				content: FactoryContent,
+				allowedTypes: ReadonlySet<TreeNodeSchema>,
+			): FlexContent => objectToFlexContent(content, schema),
+		});
+	}
+
+	public get [schemaIdentifierBrand](): string {
+		return (this.constructor as typeof CustomObjectNodeBase)[objectNodeDataSymbol].identifier;
+	}
+	public get [typeSchemaSymbol](): TreeNodeSchemaClass {
+		return (this.constructor as typeof CustomObjectNodeBase).constructorCached
+			?.constructor as unknown as TreeNodeSchemaClass;
+	}
 }
 
 /**
@@ -507,164 +862,137 @@ export function objectSchema<
 	// implicitly derived from property keys)
 	assertUniqueKeys(identifier, info);
 
-	// Performance optimization: cache property key => stored key and schema.
-	const flexKeyMap: SimpleKeyMap = createFlexKeyMapping(info);
-
-	const identifierFieldKeys: FieldKey[] = [];
-	for (const item of flexKeyMap.values()) {
-		if (item.schema.kind === FieldKind.Identifier) {
-			identifierFieldKeys.push(item.storedKey);
-		}
-	}
-
-	const lazyChildTypes = new Lazy(
-		() => new Set(Array.from(flexKeyMap.values(), (f) => [...f.schema.allowedTypeSet]).flat()),
+	const data = createObjectNodeSchemaData(
+		identifier,
+		info,
+		implicitlyConstructable,
+		nodeOptions,
+		undefined,
 	);
 
-	let privateData: TreeNodeSchemaPrivateData | undefined;
-
-	let handler: ProxyHandler<object>;
-	let customizable: boolean;
-
 	class CustomObjectNode extends CustomObjectNodeBase<T> {
-		public static readonly fields: ReadonlyMap<
-			string,
-			FieldSchemaAlpha & SimpleObjectFieldSchema
-		> = new Map(
-			Array.from(flexKeyMap, ([key, value]) => [
-				key as string,
-				new ObjectFieldSchema(value.schema.kind, value.schema.allowedTypes, {
-					...value.schema.props,
-					key: getStoredKey(key as string, value.schema),
-				}),
-			]),
-		);
-		public static readonly flexKeyMap: SimpleKeyMap = flexKeyMap;
-		public static readonly storedKeyToPropertyKey: ReadonlyMap<FieldKey, string> = new Map<
-			FieldKey,
-			string
-		>(
-			Array.from(flexKeyMap, ([key, value]): [FieldKey, string] => [
-				value.storedKey,
-				key as string,
-			]),
-		);
-		public static readonly identifierFieldKeys: readonly FieldKey[] = identifierFieldKeys;
-		public static readonly allowUnknownOptionalFields: boolean =
-			nodeOptions.allowUnknownOptionalFields ?? false;
-
-		public static override prepareInstance<T2>(
-			this: typeof TreeNodeValid<T2>,
-			instance: TreeNodeValid<T2>,
-			flexNode: FlexTreeNode,
-		): TreeNodeValid<T2> {
-			// Differentiate between the following cases:
-			//
-			// Case 1: Direct construction (POJO emulation)
-			//
-			//     const Foo = schemaFactory.object("Foo", {bar: schemaFactory.number});
-			//
-			//     assert.deepEqual(new Foo({ bar: 42 }), { bar: 42 },
-			//		   "Prototype chain equivalent to POJO.");
-			//
-			// Case 2: Subclass construction (Customizable Object)
-			//
-			// 	   class Foo extends schemaFactory.object("Foo", {bar: schemaFactory.number}) {}
-			//
-			// 	   assert.notDeepEqual(new Foo({ bar: 42 }), { bar: 42 },
-			// 	       "Subclass prototype chain differs from POJO.");
-			//
-			// In Case 1 (POJO emulation), the prototype chain match '{}' (proxyTarget = undefined)
-			// In Case 2 (Customizable Object), the prototype chain include the user's subclass (proxyTarget = this)
-
-			const proxyTarget = customizable ? instance : {};
-			const proxy = new Proxy(proxyTarget, handler) as CustomObjectNode;
-			return proxy;
-		}
-
-		public static override buildRawNode<T2>(
-			this: typeof TreeNodeValid<T2>,
-			instance: TreeNodeValid<T2>,
-			input: T2,
-		): UnhydratedFlexTreeNode {
-			return unhydratedFlexTreeFromInsertable(input as object, this as Output);
-		}
-
-		protected static override constructorCached: MostDerivedData | undefined = undefined;
-
-		protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
-			// One time initialization that required knowing the most derived type (from this.constructor) and thus has to be lazy.
-			customizable = (this as unknown) !== CustomObjectNode;
-			const schema = this as unknown as ObjectNodeSchemaPrivate;
-			handler = createProxyHandler(schema, customizable);
-
-			// First run, do extra validation.
-			// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.
-			// Scan for shadowing inherited members which won't work, but stop scan early to allow shadowing built in (which seems to work ok).
-			{
-				let prototype: object = this.prototype;
-				// There isn't a clear cleaner way to author this loop.
-				while (prototype !== CustomObjectNode.prototype) {
-					for (const [key] of flexKeyMap) {
-						if (
-							// constructor is a special case, since one is built in on the derived type, and shadowing it works fine since we only use it before fields are applied.
-							key !== "constructor" &&
-							Reflect.getOwnPropertyDescriptor(prototype, key) !== undefined
-						) {
-							throw new UsageError(
-								`Schema ${identifier} defines an inherited property "${key.toString()}" which shadows a field. Since fields are exposed as own properties, this shadowing will not work, and is an error.`,
-							);
-						}
-					}
-					// Since this stops at CustomObjectNode, it should never see a null prototype, so this case is safe.
-					// Additionally, if the prototype chain is ever messed up such that CustomObjectNode is not in it,
-					// the null that would show up here does at least ensure this code throws instead of hanging.
-					prototype = Reflect.getPrototypeOf(prototype) as object;
-				}
-			}
-
-			return getTreeNodeSchemaInitializedData(schema, {
-				shallowCompatibilityTest: (data: FactoryContent): CompatibilityLevel =>
-					shallowCompatibilityTest(data, schema),
-				toFlexContent: (
-					data: FactoryContent,
-					allowedTypes: ReadonlySet<TreeNodeSchema>,
-				): FlexContent => objectToFlexContent(data, schema),
-			});
-		}
-
-		public static readonly identifier = identifier;
-		public static readonly info = info;
-		public static readonly implicitlyConstructable: ImplicitlyConstructable =
-			implicitlyConstructable;
-		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
-			return lazyChildTypes.value;
-		}
-		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> =
-			nodeOptions.metadata ?? {};
-		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
-			nodeOptions.persistedMetadata;
-
-		public get [schemaIdentifierBrand](): TName {
-			return identifier;
-		}
-		public get [typeSchemaSymbol](): Output {
-			return CustomObjectNode.constructorCached?.constructor as unknown as Output;
-		}
-
-		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-			return (privateData ??= createTreeNodeSchemaPrivateData(
-				this,
-				Array.from(CustomObjectNode.fields.values(), (schema) => schema.allowedTypesFull),
-			));
-		}
+		public declare static readonly identifier: TName;
+		public declare static readonly info: T;
+		public declare static readonly implicitlyConstructable: ImplicitlyConstructable;
+		public declare static readonly metadata: NodeSchemaMetadata<TCustomMetadata>;
 	}
+	defineSchemaClassData(CustomObjectNode, data);
+
 	type Output = typeof CustomObjectNode &
 		(new (
 			input: InsertableObjectFromSchemaRecordAlpha<T> | InternalTreeNode,
 		) => TreeObjectNode<T, TName>);
 	return CustomObjectNode as Output;
 }
+
+/**
+ * Base class for schema created by {@link singletonObjectSchema}.
+ */
+abstract class SingletonNodeBase extends CustomObjectNodeBase<Record<string, never>> {
+	public constructor(data?: InternalTreeNode | Record<string, never>) {
+		super(data ?? {});
+	}
+
+	public get value(): string | number {
+		const schema = this[typeSchemaSymbol] as unknown as typeof CustomObjectNodeBase;
+		return schema[objectNodeDataSymbol].singletonValue ?? fail("Missing singleton value");
+	}
+
+	public static override toString(): string {
+		return `SingletonSchema(${this[objectNodeDataSymbol]?.singletonValue})`;
+	}
+
+	public static get [Symbol.toStringTag](): string {
+		return this.toString();
+	}
+}
+
+/**
+ * Lets the statics of a base class which only have getters be shadowed by assignment, as data properties can be.
+ * @remarks
+ * Static fields compiled with `useDefineForClassFields: false` (such as `static override metadata = ...` in a subclass of a schema class)
+ * are assigned to the class rather than defined on it, and assigning to an inherited getter without a setter throws.
+ * Each setter defines an own data property on the class assigned to, as assigning to an inherited writable data property would.
+ */
+function allowAssignmentToStatics(
+	baseClass: abstract new (...args: never[]) => unknown,
+	keys: readonly (string | symbol)[],
+): void {
+	for (const key of keys) {
+		const descriptor =
+			Object.getOwnPropertyDescriptor(baseClass, key) ??
+			fail("Static to make assignable should be defined");
+		Object.defineProperty(baseClass, key, {
+			...descriptor,
+			set(this: object, value: unknown): void {
+				Object.defineProperty(this, key, {
+					value,
+					writable: true,
+					enumerable: true,
+					configurable: true,
+				});
+			},
+		});
+	}
+}
+
+// The statics a subclass of a schema class might redeclare as static fields.
+allowAssignmentToStatics(CustomObjectNodeBase, [
+	"identifier",
+	"info",
+	"implicitlyConstructable",
+	"metadata",
+	"persistedMetadata",
+	"allowUnknownOptionalFields",
+	"fields",
+	"flexKeyMap",
+	"storedKeyToPropertyKey",
+	"identifierFieldKeys",
+]);
+allowAssignmentToStatics(SingletonNodeBase, [Symbol.toStringTag]);
+
+/**
+ * Defines an object node schema with no fields whose nodes have a `value` property returning `value`.
+ * @remarks
+ * Implements {@link singletonSchema}.
+ * Only one class is created per schema, and it declares nothing but the schema's data,
+ * since large schemas can have many of these (one per enum value).
+ *
+ * Nodes are customizable objects (see {@link CustomObjectNodeBase.prepareInstance}) so that the `value` getter works.
+ */
+export function singletonObjectSchema<TName extends string, TValue extends string | number>(
+	identifier: TName,
+	value: TValue,
+): TreeNodeSchemaClass<
+	TName,
+	NodeKind.Object,
+	TreeNode & { readonly value: TValue },
+	Record<string, never>,
+	true,
+	Record<string, never>,
+	undefined
+> {
+	const data = createObjectNodeSchemaData(
+		identifier,
+		emptyInfo,
+		true,
+		{ allowUnknownOptionalFields: false },
+		{ value },
+	);
+	class SingletonSchema extends SingletonNodeBase {}
+	defineSchemaClassData(SingletonSchema, data);
+	return SingletonSchema as unknown as TreeNodeSchemaClass<
+		TName,
+		NodeKind.Object,
+		TreeNode & { readonly value: TValue },
+		Record<string, never>,
+		true,
+		Record<string, never>,
+		undefined
+	>;
+}
+
+const emptyInfo: Record<string, never> = Object.freeze({});
 
 /**
  * The proxy (node) whose target is `target`, once its kernel is attached: the proxy forwards the kernel slot to its target.
@@ -678,6 +1006,33 @@ function proxyOfTarget(target: object): TreeNode | undefined {
  */
 function ownKeysOfTarget(target: object): (string | symbol)[] {
 	return Reflect.ownKeys(target).filter((key) => key !== kernelSlot);
+}
+
+/**
+ * Defines the static members which each class created for an object schema has, as static class fields would,
+ * and records the class in `data`.
+ * @remarks
+ * Unlike static class fields, which are initialized by a function closing over `data`,
+ * this does not allocate closure contexts for each class: large schemas can have many classes.
+ */
+function defineSchemaClassData(
+	nodeClass: abstract new (...args: never[]) => CustomObjectNodeBase<never>,
+	data: ObjectNodeSchemaData,
+): void {
+	// TreeNodeValid.markMostDerived requires each schema class to have its own `constructorCached`, initially undefined.
+	Object.defineProperty(nodeClass, "constructorCached", {
+		value: undefined,
+		writable: true,
+		enumerable: true,
+		configurable: true,
+	});
+	Object.defineProperty(nodeClass, objectNodeDataSymbol, {
+		value: data,
+		writable: true,
+		enumerable: true,
+		configurable: true,
+	});
+	data.nodeClass = nodeClass;
 }
 
 /**
@@ -791,7 +1146,7 @@ function shallowCompatibilityTest(
 	// TODO#7441: Consider allowing data to be inserted which has keys that are extraneous/unknown to the schema (those keys are ignored)
 
 	// If the schema has a required key which is not present in the input object, reject it.
-	for (const [fieldKey, fieldSchema] of schema.fields) {
+	for (const [fieldKey, { schema: fieldSchema }] of schema.flexKeyMap) {
 		if (fieldSchema.requiresValue && getFieldProperty(data, fieldKey) === undefined) {
 			return CompatibilityLevel.None;
 		}

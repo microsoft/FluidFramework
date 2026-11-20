@@ -345,6 +345,9 @@ export class SharedTreeKernel
 
 		this.view = {
 			...createViewableTreeAlpha(this.checkout, () => this.exportSimpleSchema()),
+			get storedSchemaVersion() {
+				return schema.schemaVersion;
+			},
 			contentSnapshot: () => this.contentSnapshot(),
 			viewSharedBranchWith: this.viewBranchWith.bind(this),
 			createSharedBranch: this.createSharedBranch.bind(this),
@@ -500,6 +503,9 @@ export function exportSimpleSchema(
 	storedSchema: TreeStoredSchema,
 ): SimpleTreeSchema<SchemaType.Stored> {
 	return {
+		...(storedSchema.schemaVersion === undefined
+			? {}
+			: { schemaVersion: storedSchema.schemaVersion }),
 		root: exportSimpleFieldSchemaStored(storedSchema.rootFieldSchema),
 		definitions: new Map(
 			[...storedSchema.nodeSchema].map(([key, schema]) => {
@@ -545,6 +551,7 @@ export const changeFormatVersionForEditManager = DependentFormatVersion.fromPair
 	[EditManagerFormatVersion.vSharedBranches, SharedTreeChangeFormatVersion.v4],
 	[EditManagerFormatVersion.v6, SharedTreeChangeFormatVersion.v5],
 	[EditManagerFormatVersion.v7, SharedTreeChangeFormatVersion.v5],
+	[EditManagerFormatVersion.vDetachedRoots, SharedTreeChangeFormatVersion.vDetachedRoots],
 ]);
 
 /**
@@ -562,6 +569,7 @@ export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs<
 	[MessageFormatVersion.vSharedBranches, SharedTreeChangeFormatVersion.v4],
 	[MessageFormatVersion.v6, SharedTreeChangeFormatVersion.v5],
 	[MessageFormatVersion.v7, SharedTreeChangeFormatVersion.v5],
+	[MessageFormatVersion.vDetachedRoots, SharedTreeChangeFormatVersion.vDetachedRoots],
 ]);
 
 function getCodecTreeForEditManagerFormat(
@@ -666,6 +674,12 @@ export interface SharedTreeOptions
 	 */
 	readonly enableSharedBranches?: boolean;
 	/**
+	 * Experimental feature flag to enable the ability to edit detached roots.
+	 * @remarks This feature is not yet complete and should not be used in production.
+	 * @defaultValue `false`
+	 */
+	readonly enableDetachedRootEditing?: boolean;
+	/**
 	 * Returns whether a node / field should be incrementally encoded.
 	 * @remarks
 	 * See {@link IncrementalEncodingPolicy}.
@@ -765,6 +779,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	retainHistory: false,
 	validateCommitsOnFirstSubmission: false,
 	validateRebasedCommitsBeforeResubmission: false,
+	enableDetachedRootEditing: false,
 };
 
 /**

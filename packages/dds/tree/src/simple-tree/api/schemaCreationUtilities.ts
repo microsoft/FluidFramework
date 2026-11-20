@@ -9,18 +9,19 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { UnionToTuple } from "../../util/index.js";
 import type {
 	NodeFromSchema,
-	InternalTreeNode,
 	NodeKind,
 	TreeNode,
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
 } from "../core/index.js";
+import { singletonObjectSchema } from "../node-kinds/index.js";
 
 import {
 	type SchemaFactory,
 	SchemaFactoryBeta,
 	type ScopedSchemaName,
 } from "./schemaFactory.js";
+import { scoped } from "./schemaFactoryUtils.js";
 
 /*
  * This file does two things:
@@ -28,7 +29,8 @@ import {
  * 1. Provides tools for making schema for cases like enums.
  *
  * 2. Demonstrates the kinds of schema utilities apps can write.
- * Nothing in here needs access to package internal APIs.
+ * Apart from {@link singletonSchema}, which uses an internal implementation to keep schema with many enum values cheap,
+ * nothing in here needs access to package internal APIs.
  */
 
 /**
@@ -45,24 +47,23 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 	factory: SchemaFactory<TScope, TName>,
 	name: TName,
 ) {
-	class SingletonSchema extends new SchemaFactoryBeta<TScope, TName>(factory.scope).object(
-		name,
-		{},
-		{ allowUnknownOptionalFields: false },
-	) {
-		public constructor(data?: InternalTreeNode | Record<string, never>) {
-			super(data ?? {});
-		}
-		public get value(): TName {
-			return name;
-		}
-
-		public static override toString(): string {
-			return `SingletonSchema(${name})`;
-		}
-
-		public static [Symbol.toStringTag] = `SingletonSchema(${name})`;
-	}
+	// This is equivalent to the following public API based implementation,
+	// but creates one class per schema instead of two, and avoids per-schema closures.
+	// This matters for large schemas with many enum values, since each value gets its own schema.
+	//
+	// class SingletonSchema extends new SchemaFactoryBeta(factory.scope).object(name, {}, { allowUnknownOptionalFields: false }) {
+	// 	public constructor(data?: InternalTreeNode | Record<string, never>) {
+	// 		super(data ?? {});
+	// 	}
+	// 	public get value(): TName {
+	// 		return name;
+	// 	}
+	// 	public static override toString(): string {
+	// 		return `SingletonSchema(${name})`;
+	// 	}
+	// 	public static [Symbol.toStringTag] = `SingletonSchema(${name})`;
+	// }
+	const SingletonSchema = singletonObjectSchema(scoped(factory, name), name);
 
 	type SingletonNodeType = TreeNode & { readonly value: TName };
 

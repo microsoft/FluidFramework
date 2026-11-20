@@ -6,6 +6,6 @@
 		"allowJs": true,
 		"strictNullChecks": true,
 	},
-	"include": ["**/*.js"],
+	"include": ["**/*.js", "**/*.cjs"],
 	"exclude": ["node_modules"],
 }

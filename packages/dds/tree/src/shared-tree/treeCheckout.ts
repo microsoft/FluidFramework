@@ -61,6 +61,7 @@ import {
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	LeafNodeStoredSchema,
+	storedEmptyFieldSchema,
 	diffHistories,
 	type ChangeMetadata,
 	type LabelTree,
@@ -1472,11 +1473,11 @@ export abstract class CheckoutBase implements ITreeCheckout {
 				// They will however be rebased over the rollback of the schema change. This rebasing will
 				// ensure that these data changes are muted if they would render some trees invalid under the
 				// original (reinstated) schema.
-				const newSchema = innerChange.innerChange.schema.new;
+				const newSchema = innerChange.innerChange.output;
 				const telemetryMetrics = getSchemaChangeTelemetryMetrics(
 					this.storedSchema,
 					newSchema,
-					innerChange.innerChange.isInverse,
+					innerChange.innerChange.isRollback,
 				);
 				this.storedSchema.apply(newSchema);
 				this.logger?.sendTelemetryEvent({
@@ -1497,6 +1498,15 @@ export abstract class CheckoutBase implements ITreeCheckout {
 	private readonly onAncestryTrimmed = (revisions: RevisionTag[]): void => {
 		// When the branch is trimmed, we can garbage collect any repair data whose latest relevant revision is one of the
 		// trimmed revisions.
+		// Commits without repair data (such as inserts) need no edit to the forest.
+		const hasRepairData = revisions.some(
+			(revision) =>
+				this._removedRoots.getRootsLastTouchedByRevision(revision)[Symbol.iterator]().next()
+					.done !== true,
+		);
+		if (!hasRepairData) {
+			return;
+		}
 		this.withCombinedVisitor((visitor) => {
 			for (const revision of revisions) {
 				// get all the roots last created or used by the revision
@@ -1830,7 +1840,9 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		}
 		this.checkCanSwitchBranch();
 		this.breaker.run(() => {
-			switchBranch(this.#transaction.branch.fork(targetCommit));
+			const oldBranch = this.#transaction.branch;
+			switchBranch(oldBranch.fork(targetCommit));
+			oldBranch.dispose();
 		});
 	}
 
@@ -1872,10 +1884,8 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		}
 		const revisionForInvert = this.mintRevisionTag();
 		const toUndo = this.changeFamily.rebaser.compose(commitsToUndo);
-		const inverse = this.changeFamily.rebaser.invert(
-			makeAnonChange(toUndo),
-			false,
-			revisionForInvert,
+		const inverse = this.changeFamily.rebaser.ensureCompatibility(
+			this.changeFamily.rebaser.invert(makeAnonChange(toUndo), false, revisionForInvert),
 		);
 		this.#transaction.branch.apply(
 			tagChange(inverse, revisionForInvert),
@@ -2107,7 +2117,9 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		const revisionForInvert = this.mintRevisionTag();
 
 		let change = tagChange(
-			this.changeFamily.rebaser.invert(commitToRevert, false, revisionForInvert),
+			this.changeFamily.rebaser.ensureCompatibility(
+				this.changeFamily.rebaser.invert(commitToRevert, false, revisionForInvert),
+			),
 			revisionForInvert,
 		);
 
@@ -2404,7 +2416,7 @@ function getSchemaChangeTelemetryMetrics(
 	return {
 		changeKind: isInverse
 			? "rollback"
-			: oldSchema.nodeSchema.size === 0
+			: isInitialStoredSchema(oldSchema)
 				? "initialize"
 				: allowsRepoSuperset(defaultSchemaPolicy, oldSchema, newSchema)
 					? "upgrade"
@@ -2418,6 +2430,25 @@ function getSchemaChangeTelemetryMetrics(
 		oldRootAllowedTypeCount: oldSchema.rootFieldSchema.types.size,
 		newRootAllowedTypeCount: newSchema.rootFieldSchema.types.size,
 	};
+}
+
+/**
+ * Returns whether the stored schema is still in its initial state.
+ *
+ * @remarks
+ * Schema-change telemetry classifies an edit from this state as initialization rather than an upgrade.
+ * An empty node collection alone is not enough to identify it: changes to the root field, its metadata,
+ * or application versions also mean that stored schema has already been set.
+ */
+function isInitialStoredSchema(schema: TreeStoredSchema): boolean {
+	const root = schema.rootFieldSchema;
+	return (
+		schema.schemaVersion === undefined &&
+		schema.nodeSchema.size === 0 &&
+		root.kind === storedEmptyFieldSchema.kind &&
+		root.types.size === 0 &&
+		root.persistedMetadata === undefined
+	);
 }
 
 /**

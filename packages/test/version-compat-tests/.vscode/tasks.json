@@ -1,0 +1,27 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build Current Tests",
+			"type": "process",
+			"command": "node",
+			"args": [
+				"${workspaceRoot:FluidFramework}/node_modules/@fluidframework/build-tools/dist/fluidBuild/fluidBuild.js",
+				"--root",
+				"${workspaceRoot:FluidFramework}",
+				"--vscode",
+				"-t",
+				"build:test",
+				"${fileDirname}",
+			],
+			"group": "build",
+			"problemMatcher": [
+				{
+					"base": "$tsc",
+					"fileLocation": "absolute",
+				},
+				"$tslint5",
+			],
+		},
+	],
+}
