@@ -15,6 +15,7 @@ import {
 	type FieldKindIdentifier,
 	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
+	ITreeSubscriptionCursorState,
 	type NormalizedFieldUpPath,
 	type TreeNavigationResult,
 	inCursorNode,
@@ -52,7 +53,7 @@ import {
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
 import { LazyEntity } from "./lazyEntity.js";
-import { type LazyTreeNode, getOrCreateHydratedFlexTreeNode } from "./lazyNode.js";
+import { LazyTreeNode, getOrCreateHydratedFlexTreeNode } from "./lazyNode.js";
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
 
 /**
@@ -210,6 +211,34 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 		return this.context.checkout.forest.tryMoveCursorToField(this.anchor, cursor);
 	}
 
+	protected override cursorFromAncestor(): ITreeSubscriptionCursor | undefined {
+		if (this.anchor.parent === undefined) {
+			return undefined;
+		}
+		const parent = this.context.checkout.forest.anchors.locate(this.anchor.parent);
+		const cursor =
+			parent === undefined ? undefined : LazyTreeNode.forkCursorFromAncestor(parent, true);
+		cursor?.enterField(this.key);
+		return cursor;
+	}
+
+	/**
+	 * The cursor this field holds, if it is current and at this field.
+	 * @remarks
+	 * A held cursor is moved away from its field only briefly, while reading the field's content.
+	 */
+	public currentCursorAtField(): ITreeSubscriptionCursor | undefined {
+		if (this.isFreed()) {
+			return undefined;
+		}
+		const held = this.heldCursor;
+		return held.state === ITreeSubscriptionCursorState.Current &&
+			held.mode === CursorLocationType.Fields &&
+			held.getFieldKey() === this.key
+			? held
+			: undefined;
+	}
+
 	protected override forgetAnchor(): void {
 		this.offAfterDestroy?.();
 		if (this.anchor.parent === undefined) return;
@@ -221,8 +250,29 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 	}
 
 	public atIndex(index: number): FlexTreeUnknownUnboxed {
+		const cached = this.cachedNonLeafChild(index);
+		if (cached !== undefined) {
+			return cached;
+		}
 		return inCursorNode(this.cursor, index, (cursor) =>
 			unboxedFlexNode(this.context, cursor, this.anchor),
+		);
+	}
+
+	/**
+	 * The {@link LazyTreeNode} already created for the node at `index`, if there is one and it is not a leaf.
+	 * @remarks
+	 * Such a node is found through the anchors, so reading it needs no cursor at this field.
+	 */
+	protected cachedNonLeafChild(index: number): LazyTreeNode | undefined {
+		if (this.anchor.parent === undefined) {
+			return undefined;
+		}
+		this.ensureValidForAccess();
+		return LazyTreeNode.cachedNonLeaf(
+			this.context.checkout.forest.anchors
+				.locate(this.anchor.parent)
+				?.childIfAnchored(this.key, index),
 		);
 	}
 
@@ -432,7 +482,7 @@ export class LazyOptionalField extends LazyField implements FlexTreeOptionalFiel
 	}
 
 	public get content(): FlexTreeUnknownUnboxed | undefined {
-		return this.length === 0 ? undefined : this.atIndex(0);
+		return this.cachedNonLeafChild(0) ?? (this.length === 0 ? undefined : this.atIndex(0));
 	}
 }
 
