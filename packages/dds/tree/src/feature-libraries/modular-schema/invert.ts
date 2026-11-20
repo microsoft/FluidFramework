@@ -55,6 +55,7 @@ import {
 	newRootTable,
 	normalizeFieldId,
 	updateConstraints,
+	getFirstFieldForAttach,
 } from "./modularChangeUtils.js";
 import type { FlexFieldKind } from "./fieldKind.js";
 import {
@@ -459,6 +460,37 @@ class InvertNodeManagerI implements InvertNodeManager {
 			this.table.isRollback,
 			this.table.genId,
 		);
+	}
+
+	public getInvertedRenameForRoot(
+		rootId: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<ChangeAtomId | undefined> {
+		let countProcessed = count;
+		const inputRootIdEntry = firstDetachIdFromAttachId(
+			this.table.change.rootNodes,
+			rootId,
+			countProcessed,
+		);
+		const inputRootId = inputRootIdEntry.value;
+		countProcessed = inputRootIdEntry.length;
+
+		const detachEntry = getFirstFieldForDetach(this.table.change, inputRootId, countProcessed);
+		countProcessed = detachEntry.length;
+
+		if (detachEntry.value === undefined) {
+			return { value: undefined, length: countProcessed };
+		}
+
+		const attachEntry = getFirstFieldForAttach(this.table.change, rootId, countProcessed);
+		countProcessed = attachEntry.length;
+
+		if (attachEntry.value !== undefined) {
+			return { value: undefined, length: countProcessed };
+		}
+
+		const attachId = this.getInvertedMoveId(inputRootId);
+		return { value: attachId, length: countProcessed };
 	}
 }
 

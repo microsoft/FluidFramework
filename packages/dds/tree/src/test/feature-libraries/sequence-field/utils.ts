@@ -799,6 +799,13 @@ function newInvertManager(): TestInvertManager {
 		getInvertedMoveId(id: ChangeAtomId): ChangeAtomId {
 			throw new Error("Function not implemented.");
 		},
+
+		getInvertedRenameForRoot(
+			rootId: ChangeAtomId,
+			count: number,
+		): RangeQueryResult<ChangeAtomId | undefined> {
+			throw new Error("Function not implemented.");
+		},
 	};
 
 	return manager;

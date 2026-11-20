@@ -64,6 +64,21 @@ export interface InvertNodeManager {
 	invertAttach(attachId: ChangeAtomId, count: number): RangeQueryResult<NodeId | undefined>;
 
 	getInvertedMoveId(id: ChangeAtomId): ChangeAtomId;
+
+	/**
+	 * Returns the ID `rootId` is renamed to in the inverted changeset, or undefined if it is not renamed.
+	 * Will also return undefined if the root is not detached in the output context of the original changeset.
+	 *
+	 * @param rootId - The root ID from the output context of the original changeset.
+	 * @param count - The number of nodes in the block being queried.
+	 *
+	 * @remarks This is only needed for sequence field to support compatibility with older clients which
+	 * relied on an association between cell renames and root renames.
+	 */
+	getInvertedRenameForRoot(
+		rootId: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<ChangeAtomId | undefined>;
 }
 
 export interface ComposeNodeManager {
