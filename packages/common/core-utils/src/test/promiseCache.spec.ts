@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import type { SinonFakeTimers } from "sinon";
 import { useFakeTimers } from "sinon";
 
-import { PromiseCache } from "@fluidframework/core-utils/internal";
+import { Deferred, PromiseCache } from "@fluidframework/core-utils/internal";
 
 describe("PromiseCache", () => {
 	describe("Basic Cache Mechanism", () => {
@@ -86,6 +86,39 @@ describe("PromiseCache", () => {
 	});
 
 	describe("asyncFn behavior", () => {
+		for (const settled of [false, true]) {
+			it(`retains a ${settled ? "fulfilled" : "pending"} replacement when removed work rejects`, async () => {
+				const cache = new PromiseCache<number, string>();
+				const originalWork = new Deferred<string>();
+				const failure = new Error("original request failed");
+				const original = cache.addOrGet(1, async () => originalWork.promise);
+				const rejected = assert.rejects(original, (error: unknown) => error === failure);
+				assert.equal(cache.remove(1), true);
+
+				const replacementWork = new Deferred<string>();
+				const replacement = cache.addOrGet(1, async () => replacementWork.promise);
+				const cached = cache.get(1);
+				assert.notEqual(cached, undefined);
+				if (settled) {
+					replacementWork.resolve("replacement");
+					await replacement;
+				}
+
+				originalWork.reject(failure);
+				await rejected;
+				assert.equal(
+					cache.get(1),
+					cached,
+					"the older rejection must not evict replacement work",
+				);
+
+				if (!settled) {
+					replacementWork.resolve("replacement");
+				}
+				assert.equal(await replacement, "replacement");
+			});
+		}
+
 		const thrower = async (removeOnError: boolean): Promise<string> => {
 			throw new Error(removeOnError ? "remove" : "Don't remove");
 		};
