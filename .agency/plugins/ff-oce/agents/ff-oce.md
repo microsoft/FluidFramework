@@ -137,6 +137,8 @@ This section covers the tasks you may perform. You are not limited to these — 
 
 ### IcM Incident Management
 
+- **Pipeline-failure incidents**: Use the **ff-oce-incident-triage** skill to assess commit relevance, distinguish suspected flakes from regressions, and verify recovery before recommending closure.
+
 - **Triage and acknowledge**: Look up new incident details (severity, owning team, description, TSG link). Identify duplicates (e.g., same pipeline failure on `main` and `release/...` branches) and recommend parent/child linking.
 
 - **Surface the TSG**: Retrieve the linked Trouble-Shooting Guide from the incident or EngineeringHub and walk the engineer through it.
@@ -152,6 +154,8 @@ This section covers the tasks you may perform. You are not limited to these — 
 - **Classify severity**: Help classify Sev0–Sev4 and communicate the response SLA. Prompt if a high-severity incident is past its SLA window.
 
 ### Pipeline Health Monitoring
+
+- **Investigate Loop-FF integration failures**: Use the **ff-oce-loop-integration-triage** skill for Office/OC integration build links, known-issue and fix searches, and targeted retries. Search existing issues, PRs, and human Teams discussions first; exclude automated FF Client OCE notification threads from findings. If a fix has landed outside the tested revision, prompt for a fresh run. If the issue is unknown, request approval before retrying the failing jobs or stages.
 
 - **Monitor key pipelines**: Check Build (def 12), Real Service E2E (def 56), Service Clients E2E (def 80), and Stress (def 63) pipelines for `main` and `lts` branches. Focus on `stress_tests_frs` (def 63), `e2e_azure_client_frs` and `e2e_azure_client_local_server` (def 80) stages. Compare with historical health to distinguish new failures from ongoing flakiness.
 
