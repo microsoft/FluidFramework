@@ -21,7 +21,6 @@ import {
 	type ITestContainerConfig,
 	type ITestFluidObject,
 	type ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 	toIDeltaManagerFull,
 } from "@fluidframework/test-utils/internal";
 
@@ -67,7 +66,7 @@ describeCompat("opsBeforeReturn load mode", "NoCompat", (getTestObjectProvider) 
 	 */
 	async function createDocumentWithOps(): Promise<number> {
 		const container = await provider.makeTestContainer(testContainerConfig);
-		const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		for (let i = 0; i < opCount; i++) {
 			dataObject.root.set(`key-${i}`, i);
 		}
