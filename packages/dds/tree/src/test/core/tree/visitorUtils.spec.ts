@@ -5,12 +5,15 @@
 
 import { strict as assert } from "node:assert";
 
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	type AnnouncedVisitor,
 	type DeltaVisitor,
 	type FieldKey,
 	combineVisitors,
 	createAnnouncedVisitor,
+	createSourceValidationVisitor,
 } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 
@@ -86,7 +89,81 @@ class LoggingAnnouncedVisitor extends LoggingVisitor implements AnnouncedVisitor
 
 const fieldKey: FieldKey = brand("field");
 
+describe("createSourceValidationVisitor", () => {
+	for (const [name, edit] of [
+		["attach", (visitor: DeltaVisitor) => visitor.attach(fieldKey, { start: 0, end: 1 }, 0)],
+		[
+			"replace",
+			(visitor: DeltaVisitor) =>
+				visitor.replace(
+					fieldKey,
+					{ start: 0, end: 1 },
+					{ start: 0, end: 1 },
+					brand("outgoing"),
+					{ minor: 42 },
+				),
+		],
+		["destroy", (visitor: DeltaVisitor) => visitor.destroy(fieldKey, { start: 0, end: 1 })],
+	] as const) {
+		it(`rejects ancestor-source ${name} before nested visitors or announcements`, () => {
+			const actual: string[] = [];
+			const combined = combineVisitors([
+				combineVisitors([
+					createSourceValidationVisitor(),
+					new LoggingAnnouncedVisitor("av", actual),
+				]),
+				new LoggingVisitor("v", actual),
+			]);
+			const child: FieldKey = brand("child");
+			combined.enterField(fieldKey);
+			combined.enterNode(1);
+			combined.enterField(child);
+			combined.enterNode(0);
+			combined.enterField(child);
+			for (let depth = 2; depth > 0; depth--) {
+				actual.length = 0;
+				assert.throws(
+					() => edit(combined),
+					validateAssertionError(
+						"Cannot consume roots from the detached field containing an entered node",
+					),
+				);
+				assert.deepEqual(actual, []);
+				combined.exitField(child);
+				combined.exitNode(depth === 2 ? 0 : 1);
+			}
+			combined.exitField(fieldKey);
+			combined.enterField(brand("another"));
+			combined.enterNode(0);
+			combined.enterField(child);
+			actual.length = 0;
+			edit(combined);
+			assert(actual.includes(`v: ${name}`));
+			combined.exitField(child);
+			combined.exitNode(0);
+			combined.exitField(brand("another"));
+			combined.free();
+		});
+	}
+});
+
 describe("combineVisitors", () => {
+	it("does not validate sources unless a validating visitor is included", () => {
+		const actual: string[] = [];
+		const combined = combineVisitors([new LoggingAnnouncedVisitor("av", actual)]);
+		const child: FieldKey = brand("child");
+		combined.enterField(fieldKey);
+		combined.enterNode(1);
+		combined.enterField(child);
+		actual.length = 0;
+		combined.attach(fieldKey, { start: 0, end: 1 }, 0);
+		assert.deepEqual(actual, ["av: beforeAttach", "av: attach", "av: afterAttach"]);
+		combined.exitField(child);
+		combined.exitNode(1);
+		combined.exitField(fieldKey);
+		combined.free();
+	});
+
 	it("announces replacement around all nested visitors", () => {
 		const actual: string[] = [];
 		const combined = combineVisitors([

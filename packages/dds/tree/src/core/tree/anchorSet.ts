@@ -36,6 +36,7 @@ import {
 } from "./pathTree.js";
 import { EmptyKey } from "./types.js";
 import type { DeltaVisitor } from "./visitDelta.js";
+import { combineVisitors, createSourceValidationVisitor } from "./visitorUtils.js";
 
 /**
  * A way to refer to a particular tree location within an {@link AnchorSet}.
@@ -1022,8 +1023,9 @@ export class AnchorSet implements AnchorLocator {
 			},
 		};
 		this.#events.emit("treeChanging", this);
-		this.activeVisitor = visitor;
-		return visitor;
+		const combined = combineVisitors([createSourceValidationVisitor(), visitor]);
+		this.activeVisitor = combined;
+		return combined;
 	}
 }
 

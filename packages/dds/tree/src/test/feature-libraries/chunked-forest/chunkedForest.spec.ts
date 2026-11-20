@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	type DeltaVisitor,
 	type FieldKey,
@@ -299,6 +301,38 @@ describe("ChunkedForest", () => {
 			visitor.exitField(rootFieldKey);
 			visitor.free();
 		}
+
+		it("rejects ancestor-source destruction without releasing the active uniform chunk", () => {
+			const { forest, uniform } = setup();
+			const visitor = forest.acquireVisitor();
+			create(visitor, 99);
+			enterInner(visitor);
+			assert.throws(
+				() => visitor.destroy(rootFieldKey, { start: 0, end: 1 }),
+				validateAssertionError(
+					"Cannot consume roots from the detached field containing an entered node",
+				),
+			);
+			assert.equal(forest.roots.fields.get(rootFieldKey)?.[0], uniform);
+			assert.equal(uniform.isUnreferenced(), false);
+			assert.deepEqual(uniform.values, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
+			visitor.enterField(xKey);
+			visitor.replace(source, { start: 0, end: 1 }, { start: 0, end: 1 }, destination, {
+				minor: 0,
+			});
+			visitor.exitField(xKey);
+			visitor.exitNode(0);
+			visitor.exitField(childKey);
+			visitor.exitNode(1);
+			assert.equal(forest.roots.fields.get(rootFieldKey)?.[0], uniform);
+			assert.deepEqual(uniform.values, [1, 2, 3, 99, 5, 6, 7, 8, 9]);
+			visitor.destroy(rootFieldKey, { start: 0, end: 1 });
+			visitor.exitField(rootFieldKey);
+			visitor.free();
+			const remaining = forest.roots.fields.get(rootFieldKey)?.[0];
+			assert(remaining instanceof UniformChunk);
+			assert.deepEqual(remaining.values, [99, 5, 6, 7, 8, 9]);
+		});
 
 		for (const shared of [false, true]) {
 			it(`preserves representation and exclusive ownership during navigation (shared: ${shared})`, () => {

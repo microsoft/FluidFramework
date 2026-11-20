@@ -275,6 +275,8 @@ export interface DeltaVisitor {
 	 * Recursively destroys a range of nodes in a detached field.
 	 * Removes the field if it becomes empty.
 	 * @param detachedField - The key for the detached field containing the nodes to destroy.
+	 * Must not contain any node currently entered by the visitor, even outside `range`.
+	 * Exit all nodes in this field before destroying its roots; being directly in the field is allowed.
 	 * @param range - The half-open range of node indices to destroy, within the detached field.
 	 */
 	destroy(detachedField: FieldKey, range: Range): void;
@@ -284,6 +286,8 @@ export interface DeltaVisitor {
 	 * Removes the source field if it becomes empty.
 	 * @param source - The detached field to transfer the nodes from.
 	 * Must differ from the current field.
+	 * Must not contain any node currently entered by the visitor, even outside `sourceRange`.
+	 * Exit all nodes in this field before consuming its roots.
 	 * @param sourceRange - The half-open range of node indices to transfer, within the source field.
 	 * @param destination - The index at which to attach the nodes.
 	 */
@@ -292,6 +296,8 @@ export interface DeltaVisitor {
 	 * Replaces a range in the current field with a range of nodes from a detached field.
 	 * Transfers the replaced nodes to a new detached field.
 	 * @param source - The detached field containing the incoming nodes.
+	 * Must not contain any node currently entered by the visitor, even outside `sourceRange`.
+	 * Exit all nodes in this field before consuming its roots.
 	 * @param sourceRange - The half-open range of incoming node indices in `source`.
 	 * Its length must equal the length of `range`.
 	 * @param range - The range of existing nodes to replace.

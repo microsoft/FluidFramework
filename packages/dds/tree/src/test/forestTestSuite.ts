@@ -608,6 +608,29 @@ export function testForest(config: ForestTestConfiguration): void {
 				}
 			}
 		}
+
+		it("edits a child from a distinct source and destroys roots after ascending", () => {
+			const forest = factory(new TreeStoredSchemaRepository(jsonSequenceRootSchema));
+			initializeForest(forest, fieldJsonCursor([{ x: 0 }, { x: 1 }, { x: 2 }]));
+			const visitor = forest.acquireVisitor();
+			// A detached source may have the same key as the current child field.
+			visitor.create([singleJsonCursor(99)], xField);
+			visitor.enterField(rootFieldKey);
+			visitor.enterNode(1);
+			visitor.enterField(xField);
+			visitor.detach({ start: 0, end: 1 }, source, detachId, false);
+			visitor.attach(xField, { start: 0, end: 1 }, 0);
+			visitor.replace(source, { start: 0, end: 1 }, { start: 0, end: 1 }, xField, detachId);
+			visitor.destroy(xField, { start: 0, end: 1 });
+			visitor.exitField(xField);
+			visitor.exitNode(1);
+			visitor.destroy(rootFieldKey, { start: 0, end: 1 });
+			visitor.exitField(rootFieldKey);
+			visitor.free();
+			assert.deepEqual(readField(forest, rootFieldKey), [{ x: 1 }, { x: 2 }]);
+			assert.deepEqual(readField(forest, source), []);
+			assert.deepEqual(readField(forest, xField), []);
+		});
 	});
 
 	/**
@@ -646,6 +669,62 @@ export function testForest(config: ForestTestConfiguration): void {
 				() => visitor.free(),
 				validateUsageError(/invalid state by another error/),
 			);
+		}
+
+		for (const [name, edit] of [
+			[
+				"attach",
+				(visitor: DeltaVisitor) => visitor.attach(rootFieldKey, { start: 0, end: 1 }, 0),
+			],
+			[
+				"replace",
+				(visitor: DeltaVisitor) =>
+					visitor.replace(
+						rootFieldKey,
+						{ start: 0, end: 1 },
+						{ start: 0, end: 1 },
+						brand("outgoing"),
+						detachId,
+					),
+			],
+			[
+				"destroy",
+				(visitor: DeltaVisitor) => visitor.destroy(rootFieldKey, { start: 0, end: 1 }),
+			],
+		] as const) {
+			it(`rejects ancestor-source ${name} before notifications or mutation`, () => {
+				const forest = factory(new TreeStoredSchemaRepository(jsonSequenceRootSchema));
+				const content = [{ x: 0 }, { x: 1 }, { x: 2 }];
+				initializeForest(forest, fieldJsonCursor(content));
+				const notifications: string[] = [];
+				forest.events.on("beforeChange", () => notifications.push("beforeChange"));
+				forest.registerAnnouncedVisitor(() =>
+					createAnnouncedVisitor({
+						beforeAttach: () => notifications.push("beforeAttach"),
+						beforeReplace: () => notifications.push("beforeReplace"),
+						beforeDestroy: () => notifications.push("beforeDestroy"),
+					}),
+				);
+				const visitor = forest.acquireVisitor();
+				visitor.enterField(rootFieldKey);
+				visitor.enterNode(1);
+				visitor.enterField(xField);
+				assert.throws(
+					() => edit(visitor),
+					validateAssertionError(
+						"Cannot consume roots from the detached field containing an entered node",
+					),
+				);
+				assert.deepEqual(notifications, []);
+				const cursor = forest.allocateCursor();
+				moveToDetachedField(forest, cursor);
+				assert.deepEqual(mapCursorField(cursor, cursorToJsonObject), content);
+				cursor.free();
+				visitor.exitField(xField);
+				visitor.exitNode(1);
+				visitor.exitField(rootFieldKey);
+				visitor.free();
+			});
 		}
 
 		it("rejects destroying a missing detached field", () => {
