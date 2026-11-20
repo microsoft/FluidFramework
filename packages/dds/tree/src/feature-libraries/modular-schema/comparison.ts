@@ -205,7 +205,7 @@ function reportUnsatisfiedNodeSchemaRequirement(
 	}
 	assert(
 		proposed instanceof ObjectNodeStoredSchema,
-		"Only object and map node requirements can prevent construction of a defined node.",
+		0xe18 /* Only object and map node requirements can prevent construction of a defined node. */,
 	);
 	for (const [fieldKey, field] of proposed.objectNodeFields) {
 		if (isNeverField(policy, originalData, field)) {
@@ -221,7 +221,9 @@ function reportUnsatisfiedNodeSchemaRequirement(
 			return;
 		}
 	}
-	fail("A node that cannot be constructed must have an unsatisfied schema requirement.");
+	fail(
+		0xe19 /* A node that cannot be constructed must have an unsatisfied schema requirement. */,
+	);
 }
 
 function reportNodeKindMismatch(

@@ -120,7 +120,7 @@ export function locateNodeInChunks(
 		}
 		indexWithinChunk -= chunk.topLevelLength;
 	}
-	return chunks.length === 0 ? oob() : fail("missing edited node");
+	return chunks.length === 0 ? oob() : fail(0xe04 /* missing edited node */);
 }
 
 /**
@@ -129,6 +129,6 @@ export function locateNodeInChunks(
 export function validateChunkEditRange(range: Range, length: number): void {
 	assertNonNegativeSafeInteger(range.start);
 	assertNonNegativeSafeInteger(range.end);
-	assert(range.start <= range.end, "Edit range start must not exceed end");
-	assert(range.end <= length, "Edit range must not exceed field length");
+	assert(range.start <= range.end, 0xe05 /* Edit range start must not exceed end */);
+	assert(range.end <= length, 0xe06 /* Edit range must not exceed field length */);
 }

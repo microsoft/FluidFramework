@@ -490,7 +490,7 @@ export function checkSchemaCompatibility(
 					);
 					assert(
 						incompatibilities !== undefined,
-						"A blocked upgrade must have incompatibilities.",
+						0xe1d /* A blocked upgrade must have incompatibilities. */,
 					);
 				}
 				return incompatibilities;
@@ -507,7 +507,7 @@ export function checkSchemaCompatibility(
 						);
 		assert(
 			incompatibilities !== undefined && incompatibilities.length > 0,
-			"A blocked upgrade must have incompatibilities.",
+			0xe1e /* A blocked upgrade must have incompatibilities. */,
 		);
 		upgradeResult = {
 			isCompatible: false,

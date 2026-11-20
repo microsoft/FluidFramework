@@ -45,7 +45,7 @@ export abstract class SchemaChangeset {
 	 * @throws if this changeset is {@link SchemaChangeset.isConflicted | conflicted}.
 	 */
 	public get output(): TreeStoredSchema {
-		assert(!this.isConflicted, "Cannot get output of a conflicted changeset");
+		assert(!this.isConflicted, 0xe1a /* Cannot get output of a conflicted changeset */);
 		return this.getOutput();
 	}
 
