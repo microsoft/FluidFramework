@@ -163,6 +163,19 @@ export interface FlexTreeNode extends FlexTreeEntity, MapTreeNodeViewGeneric<Fle
 	tryGetField(key: FieldKey): undefined | FlexTreeField;
 
 	/**
+	 * Reads the content of a field holding at most one node, without creating a {@link FlexTreeField} for it.
+	 * @returns The content, unboxed like {@link FlexTreeRequiredField.content} (a leaf value or a node);
+	 * undefined if the field is empty; or {@link notLeafContent} if the field holds more than one node
+	 * (or its field object is already cached), in which case {@link FlexTreeNode.tryGetField} must be used.
+	 * @remarks
+	 * Observes the field like {@link FlexTreeNode.tryGetField}.
+	 * Optional: implementations which do not provide it are read with {@link FlexTreeNode.tryGetField}.
+	 */
+	tryGetSingleContent?(
+		key: FieldKey,
+	): FlexTreeUnknownUnboxed | undefined | typeof notLeafContent;
+
+	/**
 	 * Get the field for `key`.
 	 * @param key - which entry to look up.
 	 *
@@ -421,3 +434,8 @@ export type FlexTreeTypedField<Kind extends FlexFieldKind> =
  * Unboxed tree type for unknown schema cases.
  */
 export type FlexTreeUnknownUnboxed = TreeValue | FlexTreeNode;
+
+/**
+ * Returned by {@link FlexTreeNode.tryGetSingleContent} when it can not read a field's content.
+ */
+export const notLeafContent: unique symbol = Symbol("notLeafContent");
