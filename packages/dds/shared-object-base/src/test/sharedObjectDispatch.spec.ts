@@ -23,7 +23,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedObject } from "../sharedObject.js";
+import { installSharedObjectMessageRouter, SharedObject } from "../sharedObject.js";
 import { createSingleBlobSummary } from "../utils.js";
 
 function collection(contents: unknown, metadata: unknown): IRuntimeMessageCollection {
@@ -52,6 +52,12 @@ class MockSharedObject extends SharedObject {
 
 	public submit(contents: unknown, metadata?: unknown): void {
 		this.submitLocalMessage(contents, metadata);
+	}
+
+	public installPassThroughRouter(): void {
+		installSharedObjectMessageRouter(this, (wrappedDeltaHandler) => ({
+			deltaHandler: wrappedDeltaHandler,
+		}));
 	}
 
 	protected summarizeCore(): ISummaryTreeWithStats {
@@ -124,6 +130,23 @@ describe("SharedObject ordinary dispatch", () => {
 			runtime.dispose();
 		}
 		runtimes.length = 0;
+	});
+
+	it("installs a message router once before connecting", () => {
+		const first = createFixture(AttachState.Attached);
+		first.sharedObject.installPassThroughRouter();
+		assert.throws(
+			() => first.sharedObject.installPassThroughRouter(),
+			/Message routing can only be installed once/,
+		);
+
+		const second = createFixture(AttachState.Attached);
+		second.sharedObject.initializeLocal();
+		second.sharedObject.connect(second.services);
+		assert.throws(
+			() => second.sharedObject.installPassThroughRouter(),
+			/Message routing must be installed before connecting/,
+		);
 	});
 
 	for (const initialize of ["create", "load"] as const) {
