@@ -20,6 +20,7 @@ export {
 	type InternalTreeNode,
 	isTreeNode,
 	tryDisposeTreeNode,
+	releaseTreeNode,
 	HydratedContext,
 	SimpleContextSlot,
 	getInnerNode,

@@ -199,6 +199,7 @@ export {
 	type FlexTreeHydratedContextMinimal,
 	type HydratedFlexTreeNode,
 	getOrCreateHydratedFlexTreeNode,
+	disposeHydratedFlexTreeNode,
 	currentObserver,
 	withObservation,
 	type Observer,

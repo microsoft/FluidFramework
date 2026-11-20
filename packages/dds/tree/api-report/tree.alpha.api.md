@@ -2192,6 +2192,7 @@ export interface TreeAlpha {
     key2(node: TreeNode): string | number | undefined;
     // @deprecated
     on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(node: TNode, eventName: K, listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>): () => void;
+    release(node: TreeNode): void;
     tagContentSchema<TSchema extends TreeNodeSchema, TContent extends InsertableField<TSchema>>(schema: TSchema, content: TContent): TContent;
     trackObservations<TResult>(onInvalidation: () => void, trackDuring: () => TResult): ObservationResults<TResult>;
     trackObservationsOnce<TResult>(onInvalidation: () => void, trackDuring: () => TResult): ObservationResults<TResult>;

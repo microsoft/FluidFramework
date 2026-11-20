@@ -89,6 +89,12 @@ export interface FlexTreeHydratedContext
 export const ContextSlot = anchorSlot<Context>();
 
 /**
+ * How many more entries than twice the number of cursor holders a {@link Context}'s list of them may have before it
+ * drops the entries of entities which no longer hold one.
+ */
+const compactionSlack = 64;
+
+/**
  * Implementation of `FlexTreeHydratedContext`.
  *
  * @remarks An editor is required to edit the FlexTree.
@@ -99,7 +105,18 @@ export const ContextSlot = anchorSlot<Context>();
  * This context and the trees it produces observe the kinds of fields from the schema
  */
 export class Context implements FlexTreeHydratedContext, IDisposable {
-	public readonly withCursors: Set<LazyEntity> = new Set();
+	/**
+	 * Entities which held a cursor since the last edit, each listed once (see {@link LazyEntity.markUnlisted}).
+	 * @remarks
+	 * Every entity which holds a cursor (see {@link LazyEntity.holdsCursor}) is listed.
+	 * An entity which gives up its cursor between edits (for example by being disposed) stays listed until the next edit, or until such entries outnumber the holders and the list is compacted,
+	 * so giving one up costs no search.
+	 */
+	readonly #cursorHolders: LazyEntity[] = [];
+	/**
+	 * How many entities hold a cursor.
+	 */
+	#cursorHolderCount = 0;
 	public readonly withAnchors: Set<LazyEntity> = new Set();
 
 	/**
@@ -128,7 +145,7 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	) {
 		this.onDispose = [
 			this.checkout.forest.events.on("beforeChange", () => {
-				this.prepareForEdit();
+				this.releaseCursors();
 			}),
 		];
 
@@ -153,15 +170,82 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	}
 
 	/**
-	 * Called before editing.
-	 * Clears all cursors so editing can proceed.
+	 * Clears the cursor of every entity holding one, so the forest can be edited.
+	 * @remarks
+	 * Called before each edit. Entities move their cursors back when they next need them.
 	 */
-	private prepareForEdit(): void {
+	public releaseCursors(): void {
 		assert(this.disposed === false, 0x802 /* use after dispose */);
-		for (const target of this.withCursors) {
-			target.prepareForEdit();
+		const holders = this.#cursorHolders;
+		for (const entity of holders) {
+			entity.clearCursorForEdit();
 		}
-		assert(this.withCursors.size === 0, 0x773 /* prepareForEdit should remove all cursors */);
+		holders.length = 0;
+		this.#cursorHolderCount = 0;
+	}
+
+	/**
+	 * How many entities hold a cursor.
+	 */
+	public get cursorHolderCount(): number {
+		return this.#cursorHolderCount;
+	}
+
+	/**
+	 * How many entries the list of cursor holders has, including those of entities disposed since the last edit.
+	 * For diagnostics and tests.
+	 */
+	public get listedCursorHolderCount(): number {
+		return this.#cursorHolders.length;
+	}
+
+	/**
+	 * Records that `entity` holds a cursor, listing it unless `listed`, in which case it is already listed.
+	 */
+	public addCursorHolder(entity: LazyEntity, listed: boolean): void {
+		this.#cursorHolderCount++;
+		if (!listed) {
+			this.#compactIfMostlyStale();
+			this.#cursorHolders.push(entity);
+		}
+	}
+
+	/**
+	 * Records that a listed entity gave up its cursor between edits.
+	 * @remarks
+	 * Compacts the list once most of its entries no longer hold a cursor,
+	 * so entities which are no longer used (for example nodes released by `TreeAlpha.release`) are not kept alive until the next edit.
+	 */
+	public removeCursorHolder(): void {
+		this.#cursorHolderCount--;
+		this.#compactIfMostlyStale();
+	}
+
+	/**
+	 * Compacts the list of cursor holders if at least half its entries (beyond some slack) no longer hold a cursor.
+	 * @remarks
+	 * Each compaction at least halves the list, so the work is amortized over the cursors taken and given up since the last one.
+	 */
+	#compactIfMostlyStale(): void {
+		if (this.#cursorHolders.length >= 2 * this.#cursorHolderCount + compactionSlack) {
+			this.#compactCursorHolders();
+		}
+	}
+
+	/**
+	 * Drops the listed entities which no longer hold a cursor.
+	 */
+	#compactCursorHolders(): void {
+		const holders = this.#cursorHolders;
+		let kept = 0;
+		for (const entity of holders) {
+			if (entity.holdsCursor) {
+				holders[kept++] = entity;
+			} else {
+				entity.markUnlisted();
+			}
+		}
+		holders.length = kept;
 	}
 
 	public [disposeSymbol](): void {
@@ -189,7 +273,11 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 			target[disposeSymbol]();
 		}
 		this.lazyRootCache = undefined;
-		assert(this.withCursors.size === 0, 0x774 /* free should remove all cursors */);
+		assert(this.#cursorHolderCount === 0, 0x774 /* free should remove all cursors */);
+		for (const entity of this.#cursorHolders) {
+			entity.markUnlisted();
+		}
+		this.#cursorHolders.length = 0;
 		assert(this.withAnchors.size === 0, 0x775 /* free should remove all anchors */);
 	}
 
