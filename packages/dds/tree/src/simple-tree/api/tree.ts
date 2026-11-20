@@ -1014,33 +1014,33 @@ export type SchemaIncompatibilityReason = string;
  * @sealed @beta
  */
 export type SchemaAllowedTypesDiscrepancy = {
-			readonly mismatch: "allowedTypes";
-			/**
-			 * The field with the discrepancy.
-			 */
+	readonly mismatch: "allowedTypes";
+	/**
+	 * The field with the discrepancy.
+	 */
 	readonly location: SchemaDiscrepancyFieldLocation;
-			/**
-			 * Non-staged node type identifiers allowed by the view schema but not the stored schema.
-			 */
-			readonly view: readonly string[];
-			/**
-			 * Staged node type identifiers allowed by the view schema but not the stored schema.
-			 *
+	/**
+	 * Non-staged node type identifiers allowed by the view schema but not the stored schema.
+	 */
+	readonly view: readonly string[];
+	/**
+	 * Staged node type identifiers allowed by the view schema but not the stored schema.
+	 *
 	 * @remarks
 	 * Staging permits these types to be absent from the stored schema, so their absence does not block viewing.
 	 * They are included here to distinguish these permitted differences from the blocking differences in `view` and `stored`.
-			 */
-			readonly stagedView?: readonly string[];
-			/**
-			 * Node type identifiers allowed by the stored schema but not the view schema.
-			 */
-			readonly stored: readonly string[];
-			/**
-			 * Whether the view field is a staged optional field.
-			 *
-			 * @remarks Omitted when false.
-			 */
-			readonly viewIsStagedOptional?: true;
+	 */
+	readonly stagedView?: readonly string[];
+	/**
+	 * Node type identifiers allowed by the stored schema but not the view schema.
+	 */
+	readonly stored: readonly string[];
+	/**
+	 * Whether the view field is a staged optional field.
+	 *
+	 * @remarks Omitted when false.
+	 */
+	readonly viewIsStagedOptional?: true;
 };
 
 /**
@@ -1057,31 +1057,31 @@ export type SchemaAllowedTypesDiscrepancy = {
  * Differences in allowed node types can still prevent viewing and are reported separately.
  * Whether an upgrade is permitted is checked separately and reported through {@link SchemaUpgradeIncompatibility}.
  * @sealed @beta
-			 */
+ */
 export type SchemaFieldKindDiscrepancy = {
-			readonly mismatch: "fieldKind";
-			/**
-			 * The field with the discrepancy.
-			 */
+	readonly mismatch: "fieldKind";
+	/**
+	 * The field with the discrepancy.
+	 */
 	readonly location: SchemaDiscrepancyFieldLocation;
-			/**
-			 * The field kind required by the view schema.
-			 */
-			readonly view: string;
-			/**
-			 * The field kind recorded in the stored schema.
-			 */
-			readonly stored: string;
-			/**
-			 * Whether the view field is a staged optional field.
-			 *
-			 * @remarks Omitted when false.
-			 */
-			readonly viewIsStagedOptional?: true;
+	/**
+	 * The field kind required by the view schema.
+	 */
+	readonly view: string;
+	/**
+	 * The field kind recorded in the stored schema.
+	 */
+	readonly stored: string;
+	/**
+	 * Whether the view field is a staged optional field.
+	 *
+	 * @remarks Omitted when false.
+	 */
+	readonly viewIsStagedOptional?: true;
 };
 
 /**
-			 * Indicates that a leaf node accepts different value types in the view and stored schemas.
+ * Indicates that a leaf node accepts different value types in the view and stored schemas.
  *
  * @remarks
  * A leaf holds a primitive value or a Fluid handle, not child nodes.
@@ -1091,31 +1091,31 @@ export type SchemaFieldKindDiscrepancy = {
  * In contrast, {@link SchemaStatics.number | SchemaFactory.number} and {@link SchemaStatics.string | SchemaFactory.string} have different node identifiers.
  * If you change a field between them, you get an `"allowedTypes"` mismatch instead.
  * @sealed @beta
-			 */
+ */
 export type SchemaValueSchemaDiscrepancy = {
-			readonly mismatch: "valueSchema";
-			/**
-			 * The identifier of the leaf node schema with the discrepancy.
-			 */
-			readonly nodeType: string;
-			/**
+	readonly mismatch: "valueSchema";
+	/**
+	 * The identifier of the leaf node schema with the discrepancy.
+	 */
+	readonly nodeType: string;
+	/**
 	 * The value schema required by the view, or undefined if no value schema is specified.
 	 *
 	 * @remarks
 	 * Current leaf schemas specify a concrete value type, such as `"Number"` or `"String"`.
-			 */
-			readonly view: string | undefined;
-			/**
+	 */
+	readonly view: string | undefined;
+	/**
 	 * The value schema recorded in the stored schema, or undefined if no value schema is specified.
 	 *
 	 * @remarks
 	 * Current leaf schemas specify a concrete value type, such as `"Number"` or `"String"`.
-			 */
-			readonly stored: string | undefined;
+	 */
+	readonly stored: string | undefined;
 };
 
 /**
-			 * Indicates that a node is represented by different node kinds in the view and stored schemas.
+ * Indicates that a node is represented by different node kinds in the view and stored schemas.
  *
  * @remarks
  * Node kinds describe a node's structure, such as an object, map, array, or leaf.
@@ -1123,21 +1123,21 @@ export type SchemaValueSchemaDiscrepancy = {
  * For example, a view that expects an object cannot use a map with the same identifier.
  * This mismatch also occurs if the view expects an array but the stored schema does not support the required array structure.
  * @sealed @beta
-			 */
+ */
 export type SchemaNodeKindDiscrepancy = {
-			readonly mismatch: "nodeKind";
-			/**
-			 * The identifier of the node schema with the discrepancy.
-			 */
-			readonly nodeType: string;
-			/**
-			 * The node kind required by the view schema.
-			 */
-			readonly view: string;
-			/**
-			 * The node kind recorded in the stored schema.
-			 */
-			readonly stored: string;
+	readonly mismatch: "nodeKind";
+	/**
+	 * The identifier of the node schema with the discrepancy.
+	 */
+	readonly nodeType: string;
+	/**
+	 * The node kind required by the view schema.
+	 */
+	readonly view: string;
+	/**
+	 * The node kind recorded in the stored schema.
+	 */
+	readonly stored: string;
 };
 
 /* eslint-enable @typescript-eslint/consistent-type-definitions -- End of shape-preserving discrepancy aliases. */
