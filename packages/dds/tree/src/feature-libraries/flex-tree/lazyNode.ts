@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert, fail, oob } from "@fluidframework/core-utils/internal";
 
 import {
 	type Anchor,
@@ -12,6 +12,8 @@ import {
 	type FieldKey,
 	type FieldKindIdentifier,
 	type ITreeSubscriptionCursor,
+	ITreeSubscriptionCursorState,
+	LeafNodeStoredSchema,
 	type TreeNavigationResult,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
@@ -27,12 +29,14 @@ import type { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
 	type FlexTreeField,
+	type FlexTreeUnknownUnboxed,
 	type HydratedFlexTreeNode,
 	flexTreeMarker,
 	flexTreeSlot,
+	notLeafContent,
 } from "./flexTreeTypes.js";
 import { LazyEntity } from "./lazyEntity.js";
-import { getCachedField, makeField } from "./lazyField.js";
+import { LazyField, getCachedField, makeField, unboxedFlexNode } from "./lazyField.js";
 import { currentObserver } from "./observer.js";
 
 /**
@@ -97,10 +101,93 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 		return true;
 	}
 
+	/**
+	 * The {@link LazyTreeNode} already created for the node anchored at `anchorNode`, if there is one and it is not a leaf.
+	 * @remarks
+	 * Reading a leaf gives its value, which is read with a cursor.
+	 */
+	public static cachedNonLeaf(anchorNode: AnchorNode | undefined): LazyTreeNode | undefined {
+		const cached = anchorNode?.slots.get(flexTreeSlot);
+		return cached instanceof LazyTreeNode &&
+			!(cached.storedSchema instanceof LeafNodeStoredSchema)
+			? cached
+			: undefined;
+	}
+
 	protected override tryMoveCursorToAnchor(
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
 		return this.context.checkout.forest.tryMoveCursorToNode(this.anchor, cursor);
+	}
+
+	protected override cursorFromAncestor(): ITreeSubscriptionCursor | undefined {
+		return LazyTreeNode.forkCursorFromAncestor(this.anchorNode, false);
+	}
+
+	/**
+	 * Forks the current cursor of the closest {@link LazyTreeNode} holding one at or above `anchorNode`, and moves it down to `anchorNode`.
+	 * @param includeSelf - Whether the {@link LazyTreeNode} at `anchorNode` itself may provide the cursor.
+	 * @returns The forked cursor, at `anchorNode`, or undefined if no such node holds a current cursor.
+	 * @remarks
+	 * Edits clear all cursors, so after one, reading each node would otherwise move a cursor from the root to it.
+	 */
+	public static forkCursorFromAncestor(
+		anchorNode: AnchorNode,
+		includeSelf: boolean,
+	): ITreeSubscriptionCursor | undefined {
+		const keys: FieldKey[] = [];
+		const indexes: number[] = [];
+		let node: AnchorNode | undefined = anchorNode;
+		if (!includeSelf) {
+			keys.push(node.parentField);
+			indexes.push(node.parentIndex);
+			node = node.parent;
+		}
+		while (node !== undefined) {
+			const holder = node.slots.get(flexTreeSlot);
+			if (holder instanceof LazyTreeNode && !holder.isFreed()) {
+				const last = keys.length - 1;
+				const field = last >= 0 ? getCachedField(holder, keys[last] ?? oob()) : undefined;
+				const fieldCursor =
+					field instanceof LazyField ? field.currentCursorAtField() : undefined;
+				if (fieldCursor !== undefined) {
+					const cursor = fieldCursor.fork("LazyEntity from ancestor field");
+					cursor.enterNode(indexes[last] ?? oob());
+					return descend(cursor, last - 1);
+				}
+				const held = holder.currentCursorAtNode();
+				if (held !== undefined) {
+					return descend(held.fork("LazyEntity from ancestor"), last);
+				}
+			}
+			keys.push(node.parentField);
+			indexes.push(node.parentIndex);
+			node = node.parent;
+		}
+		return undefined;
+
+		function descend(cursor: ITreeSubscriptionCursor, from: number): ITreeSubscriptionCursor {
+			for (let index = from; index >= 0; index--) {
+				cursor.enterField(keys[index] ?? oob());
+				cursor.enterNode(indexes[index] ?? oob());
+			}
+			return cursor;
+		}
+	}
+
+	/**
+	 * The cursor this node holds, if it is current and at this node.
+	 * @remarks
+	 * A held cursor is moved away from its node only briefly, while reading the node's content.
+	 */
+	private currentCursorAtNode(): ITreeSubscriptionCursor | undefined {
+		const held = this.heldCursor;
+		return held.state === ITreeSubscriptionCursorState.Current &&
+			held.mode === CursorLocationType.Nodes &&
+			held.type === this.type &&
+			held.fieldIndex === this.anchorNode.parentIndex
+			? held
+			: undefined;
 	}
 
 	protected override forgetAnchor(): void {
@@ -116,33 +203,97 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 		return this.cursor.value;
 	}
 
-	public readonly fields: Pick<Map<FieldKey, FlexTreeField>, typeof Symbol.iterator | "get"> =
-		{
-			get: (key: FieldKey): FlexTreeField | undefined => this.tryGetField(key),
-			[Symbol.iterator]: (): IterableIterator<[FieldKey, FlexTreeField]> => {
-				currentObserver?.observeNodeFields(this);
+	/**
+	 * A view of the non-empty fields of this node.
+	 * @remarks
+	 * A new (small) view is returned on each access, so nodes which are never enumerated do not keep one.
+	 */
+	public get fields(): Pick<Map<FieldKey, FlexTreeField>, typeof Symbol.iterator | "get"> {
+		return new LazyNodeFields(this);
+	}
 
-				return mapCursorFields(this.cursor, (cursor) => {
-					const key: FieldKey = cursor.getFieldKey();
-					const pair: [FieldKey, FlexTreeField] = [
-						key,
-						makeField(this.context, this.storedSchema.getFieldSchema(key).kind, cursor),
-					];
-					return pair;
-				}).values();
-			},
-		};
+	/**
+	 * Implementation of iterating {@link LazyTreeNode.fields}.
+	 */
+	public fieldEntries(): IterableIterator<[FieldKey, FlexTreeField]> {
+		currentObserver?.observeNodeFields(this);
+
+		return mapCursorFields(this.cursor, (cursor) => {
+			const key: FieldKey = cursor.getFieldKey();
+			const pair: [FieldKey, FlexTreeField] = [
+				key,
+				makeField(this.context, this.storedSchema.getFieldSchema(key).kind, cursor),
+			];
+			return pair;
+		}).values();
+	}
 
 	public tryGetField(fieldKey: FieldKey): FlexTreeField | undefined {
 		currentObserver?.observeNodeField(this, fieldKey);
+
+		const cached = getCachedField(this, fieldKey);
+		if (cached !== undefined) {
+			this.ensureValidForAccess();
+			// A field in which a node is anchored is not empty, so this needs no cursor at this node.
+			if (this.anchorNode.childIfAnchored(fieldKey, 0) !== undefined) {
+				return cached;
+			}
+		}
 
 		const schema = this.storedSchema.getFieldSchema(fieldKey);
 		return inCursorField(this.cursor, fieldKey, (cursor) => {
 			if (cursor.getFieldLength() === 0) {
 				return undefined;
 			}
-			return getCachedField(this, fieldKey) ?? makeField(this.context, schema.kind, cursor);
+			return cached ?? makeField(this.context, schema.kind, cursor);
 		});
+	}
+
+	public tryGetSingleContent(
+		key: FieldKey,
+	): FlexTreeUnknownUnboxed | undefined | typeof notLeafContent {
+		currentObserver?.observeNodeField(this, key);
+
+		if (getCachedField(this, key) !== undefined) {
+			return notLeafContent;
+		}
+		const cachedChild = this.cachedSingleChild(key);
+		if (cachedChild !== undefined) {
+			return cachedChild;
+		}
+		const cursor = this.cursor;
+		cursor.enterField(key);
+		let result: FlexTreeUnknownUnboxed | undefined | typeof notLeafContent;
+		const length = cursor.getFieldLength();
+		if (length === 0) {
+			result = undefined;
+		} else if (length === 1) {
+			cursor.enterNode(0);
+			result = unboxedFlexNode(this.context, cursor, { parent: this.anchor, fieldKey: key });
+			cursor.exitNode();
+		} else {
+			result = notLeafContent;
+		}
+		cursor.exitField();
+		return result;
+	}
+
+	/**
+	 * The {@link LazyTreeNode} already created for the only node in the field `key`, if that field cannot hold more than one node and the node is not a leaf.
+	 * @remarks
+	 * Such a node is found through the anchors, so reading it needs no cursor at this node.
+	 * Anchors follow edits, so the node anchored at index 0 of the field is the field's content.
+	 */
+	private cachedSingleChild(key: FieldKey): LazyTreeNode | undefined {
+		const cached = LazyTreeNode.cachedNonLeaf(this.anchorNode.childIfAnchored(key, 0));
+		if (
+			cached === undefined ||
+			this.storedSchema.getFieldSchema(key).kind === FieldKinds.sequence.identifier
+		) {
+			return undefined;
+		}
+		this.ensureValidForAccess();
+		return cached;
 	}
 
 	public getBoxed(key: FieldKey): FlexTreeField {
@@ -235,5 +386,22 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 
 	public keys(): IterableIterator<FieldKey> {
 		return mapCursorFields(this.cursor, (cursor) => cursor.getFieldKey()).values();
+	}
+}
+
+/**
+ * {@link LazyTreeNode.fields}.
+ */
+class LazyNodeFields
+	implements Pick<Map<FieldKey, FlexTreeField>, typeof Symbol.iterator | "get">
+{
+	public constructor(private readonly node: LazyTreeNode) {}
+
+	public get(key: FieldKey): FlexTreeField | undefined {
+		return this.node.tryGetField(key);
+	}
+
+	public [Symbol.iterator](): IterableIterator<[FieldKey, FlexTreeField]> {
+		return this.node.fieldEntries();
 	}
 }

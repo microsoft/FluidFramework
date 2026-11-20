@@ -25,6 +25,7 @@ import {
 } from "../../../util/index.js";
 import type { NodeSchemaOptionsAlpha, System_Unsafe } from "../../api/index.js";
 import {
+	kernelSlot,
 	CompatibilityLevel,
 	type WithType,
 	schemaIdentifierBrand,
@@ -35,6 +36,7 @@ import {
 	typeSchemaSymbol,
 	getSimpleNodeSchemaFromInnerNode,
 	getInnerNode,
+	getInnerNodeFromTarget,
 	type TreeNodeSchemaClass,
 	getKernel,
 	type UnhydratedFlexTreeNode,
@@ -917,8 +919,20 @@ function createArrayNodeProxy(
 	// requirements without use of Array[Symbol.species], which is potentially on a path to deprecation.
 	const proxy: TreeArrayNode = new Proxy<TreeArrayNode>(proxyTarget as TreeArrayNode, {
 		get: (target, key, receiver) => {
-			const field = getSequenceField(receiver);
-			const maybeIndex = asIndexWithinBounds(key, field);
+			if (key === kernelSlot) {
+				return Reflect.get(target, key) as unknown;
+			}
+			const field = getInnerNodeFromTarget(target, receiver).getBoxed(
+				EmptyKey,
+			) as FlexTreeSequenceField;
+			const index = asIndex(key);
+			if (index !== undefined) {
+				const known = field.knownNodeAt?.(index);
+				if (known !== undefined) {
+					return getOrCreateNodeFromInnerUnboxedNode(known);
+				}
+			}
+			const maybeIndex = index !== undefined && index < field.length ? index : undefined;
 
 			if (maybeIndex === undefined) {
 				if (key === "length") {
@@ -981,6 +995,9 @@ function createArrayNodeProxy(
 			return allowAdditionalProperties ? Reflect.set(target, key, newValue, receiver) : false;
 		},
 		has: (target, key) => {
+			if (key === kernelSlot) {
+				return false;
+			}
 			const field = getSequenceField(proxy);
 			const maybeIndex = asIndexWithinBounds(key, field);
 			return maybeIndex !== undefined || Reflect.has(dispatchTarget, key);
@@ -996,7 +1013,7 @@ function createArrayNodeProxy(
 			);
 
 			if (allowAdditionalProperties) {
-				keys.push(...Reflect.ownKeys(target));
+				keys.push(...Reflect.ownKeys(target).filter((key) => key !== kernelSlot));
 			} else {
 				keys.push("length");
 			}
@@ -1024,10 +1041,15 @@ function createArrayNodeProxy(
 					enumerable: false,
 					configurable: false,
 				};
+			} else if (key === kernelSlot) {
+				return undefined;
 			}
 			return Reflect.getOwnPropertyDescriptor(dispatchTarget, key);
 		},
 		defineProperty(target, key, attributes) {
+			if (key === kernelSlot) {
+				return Reflect.defineProperty(target, key, attributes);
+			}
 			const maybeIndex = asIndex(key);
 			if (maybeIndex !== undefined) {
 				throw new UsageError("Shadowing of array indices is not permitted.");
