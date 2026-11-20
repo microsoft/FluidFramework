@@ -1014,8 +1014,7 @@ describe("chunkDecoding", () => {
 			assertRefCount(basic, "shared"); // aggregated and sequence both own a ref.
 			assert(aggregated instanceof SequenceChunk);
 			assert(compareArrays(aggregated.subChunks, [basic, basic2]));
-			basic.referenceRemoved();
-			basic2.referenceRemoved();
+			aggregated.referenceRemoved();
 		}
 
 		assertRefCount(sequence, 1);
@@ -1038,6 +1037,25 @@ describe("chunkDecoding", () => {
 			assertRefCount(basic, 0);
 			assertRefCount(basic2, 0);
 		}
+	});
+
+	it("deaggregates shared sequences without exposing their child array", () => {
+		const child = new BasicChunk(brand("foo"), new Map());
+		const other = new BasicChunk(brand("bar"), new Map());
+		const sequence = new SequenceChunk([child, other]);
+		sequence.referenceAdded();
+		const extracted = deaggregateChunks(sequence);
+		assert.notEqual(extracted, sequence.subChunks);
+		assertRefCount(child, "shared");
+		for (const chunk of extracted) {
+			chunk.referenceRemoved();
+		}
+		extracted.length = 0;
+		assert.equal(sequence.subChunks[0], child);
+		assert.equal(sequence.topLevelLength, 2);
+		assertRefCount(child, 1);
+		sequence.referenceRemoved();
+		assertRefCount(child, 0);
 	});
 
 	describe("EncodedNestedArrayShape", () => {

@@ -81,6 +81,7 @@ export interface IForestSubscription extends WithBreakable {
 	 * Create an independent copy of this forest, that uses the provided schema.
 	 *
 	 * The new copy will not invalidate observers (dependents) of the old one.
+	 * Release any acquired visitor before cloning.
 	 * @param breaker - If provided, the cloned forest will use this breaker instead of inheriting the original's.
 	 * This is useful when creating a fork that should have fault isolation from the original.
 	 */
