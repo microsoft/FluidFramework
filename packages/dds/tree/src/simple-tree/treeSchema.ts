@@ -53,8 +53,7 @@ import {
 	simpleStoredSchemaToStoredSchema,
 	transformSimpleNodeSchema,
 	transformSimpleSchema,
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
-	type toUnhydratedSchema,
+	toUnhydratedSchema,
 } from "./toStoredSchema.js";
 import { walkFieldSchema } from "./walkFieldSchema.js";
 
@@ -96,6 +95,11 @@ export interface TransitiveSchemaInfo {
 	 * A `true` result does not guarantee different results for different policies, since staging can be redundant.
 	 */
 	readonly hasStagedSchema: boolean;
+
+	/**
+	 * Whether this schema or any schema reachable from it declares a {@link SchemaStaticsAlpha.deprecated | deprecated allowed type}.
+	 */
+	readonly hasDeprecatedTypes: boolean;
 
 	/**
 	 * Default unhydrated context for the reachable nodes, excluding root-field annotations.
@@ -140,6 +144,7 @@ export class SchemaComponent implements TransitiveSchemaInfo {
 		 */
 		public readonly dependencies: ReadonlySet<SchemaComponent>,
 		public readonly hasStagedSchema: boolean,
+		public readonly hasDeprecatedTypes: boolean,
 	) {
 		assert(members.length > 0, 0xd9e /* A schema component must contain at least one node */);
 	}
@@ -185,7 +190,7 @@ export class SchemaComponent implements TransitiveSchemaInfo {
 	 * Root-field annotations are not part of an unhydrated node's context.
 	 * @remarks
 	 * Created on first access.
-	 * Reuses the permissive root conversion of one member, since every member reaches the same unfiltered nodes.
+	 * Reuses the unhydrated root conversion of one member, since every member reaches the same unfiltered nodes.
 	 * Does not allow unknown optional fields.
 	 */
 	public get context(): Context {
@@ -201,7 +206,7 @@ export class SchemaComponent implements TransitiveSchemaInfo {
 		return (this.#context = new Context(
 			new UnhydratedContext(
 				defaultSchemaPolicy,
-				data.getStoredSchema(StagedSchemaUpgradePolicy.permissive).nodeSchema,
+				data.getStoredSchema(toUnhydratedSchema).nodeSchema,
 			),
 			data.definitions,
 		));
@@ -255,9 +260,16 @@ export class RootSchemaDerivedData implements TransitiveSchemaInfo {
 	 * Root-specific wrapper around the validated definitions, created on first access.
 	 */
 	#treeSchema: TreeSchema | undefined;
+
 	/**
 	 * Successful root conversions, allocated on demand.
-	 * Roots without staging store one policy-independent result directly; other roots cache by policy identity.
+	 *
+	 * @remarks
+	 * Roots with neither staging nor deprecated allowed types store a single result directly.
+	 * Other roots cache by policy.
+	 *
+	 * If a root has deprecated types but no staging, all document policies share one result,
+	 * while unhydrated nodes use a separate result that includes the deprecated types.
 	 */
 	#storedSchemas:
 		| TreeStoredSchema
@@ -269,6 +281,7 @@ export class RootSchemaDerivedData implements TransitiveSchemaInfo {
 	 */
 	#context: Context | undefined;
 	public readonly hasStagedSchema: boolean;
+	public readonly hasDeprecatedTypes: boolean;
 
 	/**
 	 * Creates root-derived data without initializing an unhydrated context.
@@ -284,10 +297,14 @@ export class RootSchemaDerivedData implements TransitiveSchemaInfo {
 		 */
 		public readonly components: ReadonlySet<SchemaComponent>,
 	) {
+		const types = normalizeAllowedTypesInternal(root.allowedTypesFull);
 		this.hasStagedSchema =
 			root.isStagedOptional !== false ||
-			normalizeAllowedTypesInternal(root.allowedTypesFull).hasStagedTypes ||
+			types.hasStagedTypes ||
 			[...components].some((component) => component.hasStagedSchema);
+		this.hasDeprecatedTypes =
+			types.hasDeprecatedTypes ||
+			[...components].some((component) => component.hasDeprecatedTypes);
 	}
 
 	/**
@@ -310,7 +327,11 @@ export class RootSchemaDerivedData implements TransitiveSchemaInfo {
 
 	/**
 	 * Default context for this root's reachable nodes, independent of root-field annotations.
-	 * Single-component roots share the component's context even when the root field is staged.
+	 *
+	 * @remarks
+	 * When the root references a single component, both reach the same node definitions.
+	 * The root can therefore reuse the component's context even if a root-field entry is staged or deprecated.
+	 *
 	 * Empty and multi-component roots create and cache their own contexts.
 	 */
 	public get context(): Context {
@@ -325,7 +346,7 @@ export class RootSchemaDerivedData implements TransitiveSchemaInfo {
 		return (this.#context = new Context(
 			new UnhydratedContext(
 				defaultSchemaPolicy,
-				this.getStoredSchema(StagedSchemaUpgradePolicy.permissive).nodeSchema,
+				this.getStoredSchema(toUnhydratedSchema).nodeSchema,
 			),
 			definitions,
 		));
@@ -338,7 +359,7 @@ export class RootSchemaDerivedData implements TransitiveSchemaInfo {
 	 * @throws A {@link UsageError} if a callback starts nested schema initialization.
 	 */
 	public getStoredSchema(options: StagedSchemaUpgradePolicy): TreeStoredSchema {
-		if (!this.hasStagedSchema) {
+		if (!this.hasStagedSchema && !this.hasDeprecatedTypes) {
 			// Cache one canonical result when conversion is policy-independent.
 			assert(
 				!(this.#storedSchemas instanceof WeakMap),
@@ -347,12 +368,26 @@ export class RootSchemaDerivedData implements TransitiveSchemaInfo {
 			this.#storedSchemas ??= this.#convertStoredSchema(options);
 			return this.#storedSchemas;
 		}
+
+		let policy = options;
+		if (options === toUnhydratedSchema && !this.hasDeprecatedTypes) {
+
+			// A node not yet in a document allows all staged changes, just like the permissive document policy.
+			// It also allows deprecated types, but there are none here, so both can use the same cached schema.
+			policy = StagedSchemaUpgradePolicy.permissive;
+		} else if (!this.hasStagedSchema && options !== toUnhydratedSchema) {
+
+			// No document policy introduces deprecated types, and there are no staged changes to enable here.
+			// All document policies therefore produce the same schema. Cache it under the restrictive policy.
+			policy = StagedSchemaUpgradePolicy.restrictive;
+		}
+
 		this.#storedSchemas ??= new WeakMap();
 		assert(
 			this.#storedSchemas instanceof WeakMap,
 			0xda2 /* Expected a policy-dependent cache */,
 		);
-		return getOrCreate(this.#storedSchemas, options, () => this.#convertStoredSchema(options));
+		return getOrCreate(this.#storedSchemas, policy, () => this.#convertStoredSchema(policy));
 	}
 
 	/**
@@ -687,8 +722,8 @@ export function toInitialSchema(
  *
  * @remarks
  * Results are shared by root and {@link (StagedSchemaUpgradePolicy:interface)} identity.
- * Roots without {@link TransitiveSchemaInfo.hasStagedSchema | reachable staging} share one result across all staged-upgrade policies,
- * including {@link toUnhydratedSchema} for unhydrated contexts.
+ * Roots without {@link TransitiveSchemaInfo.hasStagedSchema | reachable staging} share one result across all document policies.
+ * Unhydrated contexts share the permissive document result unless a reachable type is deprecated.
  * Conversion reuses cached view-schema analysis and follows only references retained by the policy.
  * Different root identities have separate result caches, even when they share view-schema definitions.
  * Treat the returned schema as immutable.
@@ -756,11 +791,13 @@ function getOrCreateSchemaComponent(root: TreeNodeSchema): SchemaComponent {
 				const identities = new Set(members);
 				const dependencies = new Set<SchemaComponent>();
 				let hasStagedSchema = false;
+				let hasDeprecatedTypes = false;
 				for (const schema of members) {
 					// Allowed type staging
 					for (const field of getTreeNodeSchemaPrivateData(schema).childAllowedTypes) {
 						const allowedTypes = normalizeAndEvaluateAnnotatedAllowedTypes(field);
 						hasStagedSchema ||= allowedTypes.hasStagedTypes;
+						hasDeprecatedTypes ||= allowedTypes.hasDeprecatedTypes;
 						for (const type of allowedTypes.types) {
 							if (!identities.has(type.type)) {
 								dependencies.add(getCompletedComponent(type.type));
@@ -778,8 +815,14 @@ function getOrCreateSchemaComponent(root: TreeNodeSchema): SchemaComponent {
 				}
 				for (const dependency of dependencies) {
 					hasStagedSchema ||= dependency.hasStagedSchema;
+					hasDeprecatedTypes ||= dependency.hasDeprecatedTypes;
 				}
-				const component = new SchemaComponent(members, dependencies, hasStagedSchema);
+				const component = new SchemaComponent(
+					members,
+					dependencies,
+					hasStagedSchema,
+					hasDeprecatedTypes,
+				);
 				for (const schema of members) {
 					schemaComponentCache.set(schema, component);
 				}

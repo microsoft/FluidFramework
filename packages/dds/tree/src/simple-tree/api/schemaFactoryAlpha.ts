@@ -4,10 +4,14 @@
  */
 
 import {
+	type AnnotatedAllowedType,
 	type ImplicitAllowedTypes,
+	type LazyItem,
+	type TreeNodeSchema,
 	normalizeAllowedTypes,
 	isTreeNode,
 	createSchemaUpgrade,
+	deprecateAllowedType,
 } from "../core/index.js";
 import {
 	type FieldSchemaAlpha,
@@ -22,7 +26,13 @@ import {
 import { unhydratedFlexTreeFromInsertableNode } from "../unhydratedFlexTreeFromInsertable.js";
 
 import { cloneTree } from "./cloneTree.js";
-import type { FieldSchemaAlphaUnsafe, System_Unsafe, Unenforced } from "./typesUnsafe.js";
+import type {
+	AnnotatedAllowedTypeUnsafe,
+	FieldSchemaAlphaUnsafe,
+	System_Unsafe,
+	UnannotateAllowedTypeUnsafe,
+	Unenforced,
+} from "./typesUnsafe.js";
 
 /**
  * A provider for values in tree nodes.
@@ -231,6 +241,48 @@ export interface SchemaStaticsAlpha {
 		TCustomMetadata,
 		FieldPropsAlpha<TCustomMetadata> & { defaultProvider: DefaultProvider }
 	>;
+
+	/**
+	 * Marks the specified allowed type as deprecated in this location of the schema.
+	 *
+	 * @remarks
+	 * New documents will not permit the type at this location in the schema.
+	 * The view continues to support this type where it appears in existing documents.
+	 *
+	 * Remove the entire entry from the view only when no supported document permits it and no supported client can reintroduce it.
+	 *
+	 * @param t - The allowed type to deprecate.
+	 *
+	 * @returns A new allowed-type entry that marks `t` as deprecated.
+	 *
+	 * @see {@link SchemaStaticsAlpha.deprecatedRecursive} for recursive types.
+	 */
+	readonly deprecated: <const T extends LazyItem<TreeNodeSchema>>(
+		t: T | AnnotatedAllowedType<T>,
+	) => AnnotatedAllowedType<T>;
+
+	/**
+	 * Marks the specified allowed type as deprecated in this location of a recursive schema.
+	 *
+	 * @remarks
+	 * New documents will not permit the type at this location in the schema.
+	 * The view continues to support this type where it appears in existing documents.
+	 *
+	 * Remove the entire entry from the view only when no supported document permits it and no supported client can reintroduce it.
+	 *
+	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
+	 *
+	 * @param t - The allowed type to deprecate.
+	 *
+	 * @returns A new allowed-type entry that marks `t` as deprecated.
+	 *
+	 * @see {@link SchemaStaticsAlpha.deprecated} for non-recursive cases
+	 */
+	readonly deprecatedRecursive: <
+		const T extends Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>,
+	>(
+		t: T,
+	) => AnnotatedAllowedTypeUnsafe<UnannotateAllowedTypeUnsafe<T>>;
 }
 
 const withDefault = <
@@ -304,6 +356,8 @@ const stagedOptional = <const T extends ImplicitAllowedTypes, const TCustomMetad
 };
 
 export const schemaStaticsAlpha: SchemaStaticsAlpha = {
+	deprecated: deprecateAllowedType,
+	deprecatedRecursive: deprecateAllowedType as SchemaStaticsAlpha["deprecatedRecursive"],
 	withDefault,
 	withDefaultRecursive: withDefault as SchemaStaticsAlpha["withDefaultRecursive"],
 	stagedOptional,

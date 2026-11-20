@@ -75,6 +75,38 @@ export interface AnnotatedAllowedType<T = LazyItem<TreeNodeSchema>> {
 }
 
 /**
+ * Marks an individual allowed-type entry as deprecated without affecting other references to the same node type.
+ *
+ * @remarks
+ * The view recognizes the type where the stored schema already permits it, but this entry never introduces it during initialization or upgrade.
+ */
+const deprecatedAllowedType = Symbol("deprecatedAllowedType");
+
+/**
+ * Whether this allowed-type entry recognizes historical content without introducing it.
+ */
+export function isDeprecatedAllowedType(entry: AnnotatedAllowedType): boolean {
+	return deprecatedAllowedType in entry;
+}
+
+/**
+ * Annotates a reference without evaluating it or carrying over a staged upgrade token.
+ */
+export function deprecateAllowedType<const T extends LazyItem<TreeNodeSchema>>(
+	input: T | AnnotatedAllowedType<T>,
+): AnnotatedAllowedType<T> {
+
+	// Handle bare and annotated inputs alike without calling a lazy reference: its target may not be defined yet.
+	const { type, metadata } = normalizeToAnnotatedAllowedType(input);
+
+	// Keep the caller's metadata except for the staged token: enabling that token must not enable this deprecated entry.
+	// Mark a new entry so the original can still be used elsewhere with its original annotations.
+	const { stagedSchemaUpgrade: _token, ...retainedMetadata } = metadata;
+	const entry = { type, metadata: retainedMetadata, [deprecatedAllowedType]: true };
+	return entry;
+}
+
+/**
  * {@link AllowedTypesFull} but with the lazy schema references eagerly evaluated.
  * @sealed
  * @beta
@@ -262,6 +294,13 @@ export class AnnotatedAllowedTypesInternal<
 	public readonly hasStagedTypes: boolean;
 
 	/**
+	 * Whether any allowed-type entry in this list is marked as deprecated.
+	 * @remarks
+	 * Does not evaluate lazy references or inspect the referenced schemas for deprecated entries.
+	 */
+	public readonly hasDeprecatedTypes: boolean;
+
+	/**
 	 * True if and only if there is at least one lazy schema reference in the types arrays.
 	 */
 	private readonly isLazy: boolean;
@@ -286,6 +325,7 @@ export class AnnotatedAllowedTypesInternal<
 		this.hasStagedTypes = types.some(
 			(type) => type.metadata.stagedSchemaUpgrade !== undefined,
 		);
+		this.hasDeprecatedTypes = types.some(isDeprecatedAllowedType);
 
 		// Since the array has been copied, mutations to it will not be handled correctly so freeze it.
 		// Support for such mutations could be added at a later date by making more things lazy.
@@ -344,6 +384,8 @@ export class AnnotatedAllowedTypesInternal<
 		for (const type of annotatedAllowedTypes.evaluate().types) {
 			simpleAllowedTypes.set(type.type.identifier, {
 				isStaged: type.metadata.stagedSchemaUpgrade ?? false,
+				// Expose the internal deprecation marker as a simple-schema flag, leaving the property absent on unmarked entries.
+				...(isDeprecatedAllowedType(type) && { isDeprecated: true }),
 			});
 		}
 		return simpleAllowedTypes;

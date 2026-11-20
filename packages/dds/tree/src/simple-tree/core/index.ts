@@ -55,16 +55,18 @@ export type {
 	FlexContent,
 } from "./treeNodeSchema.js";
 export {
-	isAnnotatedAllowedTypes,
+	AnnotatedAllowedTypesInternal,
+	createSchemaUpgrade,
+	deprecateAllowedType,
+	evaluateLazySchema,
 	isAnnotatedAllowedType,
+	isAnnotatedAllowedTypes,
+	isDeprecatedAllowedType,
+	markSchemaMostDerived,
 	normalizeAllowedTypes,
+	normalizeAllowedTypesInternal,
 	normalizeAndEvaluateAnnotatedAllowedTypes,
 	normalizeToAnnotatedAllowedType,
-	markSchemaMostDerived,
-	evaluateLazySchema,
-	createSchemaUpgrade,
-	AnnotatedAllowedTypesInternal,
-	normalizeAllowedTypesInternal,
 	SchemaUpgrade,
 } from "./allowedTypes.js";
 export type {

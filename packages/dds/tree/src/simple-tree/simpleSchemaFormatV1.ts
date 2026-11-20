@@ -32,6 +32,7 @@ export const SimpleSchemaFormatVersion = {
 export const SimpleAllowedTypeAttributesFormat = Type.Object(
 	{
 		isStaged: Type.Optional(Type.Boolean()),
+		isDeprecated: Type.Optional(Type.Literal(true)),
 	},
 	noAdditionalProps,
 );

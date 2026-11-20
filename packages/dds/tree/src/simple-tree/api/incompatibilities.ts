@@ -28,6 +28,7 @@ import {
 import { brand } from "../../util/index.js";
 import {
 	NodeKind,
+	isDeprecatedAllowedType,
 	normalizeAndEvaluateAnnotatedAllowedTypes,
 	type AnnotatedAllowedType,
 	type SchemaUpgrade,
@@ -358,7 +359,8 @@ export function findExtraAllowedTypes(
 	const view = viewAllowedTypes.filter(
 		(value) =>
 			!storedAllowedTypes.has(brand(value.type.identifier)) &&
-			value.metadata.stagedSchemaUpgrade === undefined,
+			value.metadata.stagedSchemaUpgrade === undefined &&
+			!isDeprecatedAllowedType(value),
 	);
 	const stagedView = viewAllowedTypes.filter(
 		(value) =>
