@@ -15,11 +15,7 @@ Bundle size reporting is driven by the [pr-bundle-size-comments.yml](../../../..
 - The **Build - client packages** pipeline produces the bundle-size artifact for the PR's head commit.
 - The **Build - Client bundle size artifacts** pipeline produces the baseline artifact for `main` and release branch commits.
 
-Changes to the bundle-size comment workflow also trigger the client build.
-For PRs, GitHub handles the resulting `check_run` events with the workflow from the default branch, not the proposed revision.
-
-When the workflow receives a build creation event, it posts an initial "Pending" comment only if Azure DevOps confirms the build is still queued or running.
-If the creation event is handled after completion, it leaves the comparison result alone.
+While the client build is queued or running, the bundle-size comment may show “Pending.”
 Once the PR (head) and baseline artifacts are both available, it compares them using `flub report comparePipelineBundleArtifacts` and updates the comment with:
 
 - The **base** and **head** commit SHAs used for the comparison.
