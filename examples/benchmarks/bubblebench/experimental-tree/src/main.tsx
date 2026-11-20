@@ -4,7 +4,7 @@
  */
 
 import type { IClient } from "@fluid-example/bubblebench-common";
-import { SharedTree, WriteFormat } from "@fluid-experimental/tree";
+import { SharedTree, SharedTreeFactory, WriteFormat } from "@fluid-experimental/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
@@ -83,5 +83,5 @@ export class Bubblebench extends DataObject {
 export const BubblebenchInstantiationFactory = new DataObjectFactory({
 	type: Bubblebench.Name,
 	ctor: Bubblebench,
-	sharedObjects: [SharedTree.getFactory(WriteFormat.v0_1_1)],
+	sharedObjects: [new SharedTreeFactory(WriteFormat.v0_1_1)],
 });
