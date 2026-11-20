@@ -5,6 +5,7 @@
 
 import { existsSync } from "node:fs";
 import path from "node:path";
+import { stripVTControlCharacters } from "node:util";
 
 import Mocha from "mocha";
 
@@ -57,11 +58,12 @@ interface JUnitTestLike {
 }
 
 /**
- * Minimal typing for mocha's built-in `xunit` reporter constructor and the `test` instance method
+ * Minimal typing for mocha's built-in `xunit` reporter constructor and the instance methods
  * {@link FluidXunitReporter} overrides.
  */
 interface XUnitReporterInstance {
 	test(test: JUnitTestLike, options?: unknown): void;
+	write(line: string): void;
 }
 
 const XUnitReporterCtor = Mocha.reporters.XUnit as unknown as new (
@@ -84,6 +86,8 @@ const XUnitReporterCtor = Mocha.reporters.XUnit as unknown as new (
  * `xunit` sets this to the fully qualified title as well, so that grouping showed test titles instead of
  * file names. This override sets it to the path (relative to the repo root) of the file containing the
  * test.
+ *
+ * Output is also stripped of ANSI escape sequences and XML-invalid control characters.
  *
  * All other behavior — notably, `xunit`'s single flat `<testsuite>` per report file — is unchanged, so
  * this reporter is not subject to the Azure DevOps "Test Run" naming regression that `mocha-junit-reporter`
@@ -109,5 +113,24 @@ export class FluidXunitReporter extends XUnitReporterCtor {
 			parent: { value: wrappedParent, enumerable: true },
 		}) as JUnitTestLike;
 		super.test(wrapped, options);
+	}
+
+	public write(line: string): void {
+		// Mocha HTML-escapes error messages and stacks, including ANSI escape characters.
+		// Decode control-character references before stripping ANSI sequences; XML escaping alone
+		// does not make these characters valid in XML 1.0.
+		const withControlCharacters = line.replace(/&#(?:x[\da-f]+|\d+);/giu, (reference) => {
+			const isHex = reference[2]?.toLowerCase() === "x";
+			const codePoint = Number.parseInt(reference.slice(isHex ? 3 : 2, -1), isHex ? 16 : 10);
+			return codePoint < 0x20 ? String.fromCodePoint(codePoint) : reference;
+		});
+		super.write(
+			// Keep tabs, line feeds, and carriage returns, which are valid in XML 1.0.
+			stripVTControlCharacters(withControlCharacters).replace(
+				// eslint-disable-next-line no-control-regex -- remove XML-invalid control characters
+				/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/gu,
+				"",
+			),
+		);
 	}
 }
