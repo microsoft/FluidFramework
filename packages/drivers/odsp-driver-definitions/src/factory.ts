@@ -186,4 +186,45 @@ export interface HostStoragePolicy {
 	 * as false. This is if the host wants to do some A/B testing.
 	 */
 	avoidPrefetchSnapshotCache?: boolean;
+
+	/**
+	 * Controls how the driver handles a claims challenge from the service.
+	 *
+	 * @remarks
+	 * A claims challenge is a 401 or 403 response with a `WWW-Authenticate` header that contains `error="insufficient_claims"` and a `claims` value.
+	 * For more information, see {@link https://learn.microsoft.com/entra/identity-platform/claims-challenge | Claims challenges}.
+	 *
+	 * By default, the driver gets a new token one time and retries the request.
+	 * The driver gives the decoded claims to the token fetcher in {@link TokenFetchOptions.claims}.
+	 *
+	 * Set this policy to `true` when the host cannot satisfy the challenge itself.
+	 * For example, a service that makes requests for another client must send the challenge to that client.
+	 * When this policy is `true`, the driver does not retry the request.
+	 * The operation fails with the original {@link @fluidframework/driver-definitions#IAuthorizationError}, which has `claims` and `wwwAuthenticate` set.
+	 * The driver does not give the claims to the token fetcher in this case.
+	 * So when you load the document again after the challenge is satisfied, make sure that the token fetcher returns the new token, even when {@link TokenFetchOptions.refresh} is `false`.
+	 * Other authorization errors keep the default behavior.
+	 *
+	 * As for other authorization errors, the driver clears its cached snapshot of the document when a snapshot request fails with the challenge.
+	 * But a load can still succeed, because the driver can use a cached snapshot without waiting for the service.
+	 * A later request, such as connecting to the delta stream or fetching ops, then gets the challenge, and the container closes with the error.
+	 *
+	 * While the container is connected, the driver also refreshes its join session with the service in the background.
+	 * If a refresh gets the challenge, the driver ends the delta stream connection with the error, and the container reconnects.
+	 * The container then closes with the error, unless the token fetcher returns a token that satisfies the challenge.
+	 * If the container does not reconnect, for example because it was loaded with the `LoaderHeader.reconnect` request header set to `false`, it closes without an error.
+	 * The host then gets the challenge when it loads the container again.
+	 *
+	 * So check for a claims challenge in the error of the container's `closed` event as well as in load errors.
+	 *
+	 * To identify a claims challenge, look for an `errorType` of `authorizationError` with a non-empty `claims` value.
+	 * Do not use `wwwAuthenticate` for this, because the driver sets it on all authorization errors from responses that have the header.
+	 *
+	 * This policy applies to the document services that the factory creates.
+	 * It also applies to `prefetchLatestSnapshot` when the factory is given to it.
+	 * It does not apply to `OdspDriverUrlResolverForShareLink`.
+	 *
+	 * @defaultValue `false`
+	 */
+	propagateClaimsChallenges?: boolean;
 }

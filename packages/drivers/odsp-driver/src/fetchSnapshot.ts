@@ -61,6 +61,7 @@ import {
 	getWithRetryForTokenRefresh,
 	getOdspResolvedUrl,
 	getWithRetryForTokenRefreshRepeat,
+	isClaimsChallenge,
 	isSnapshotFetchForLoadingGroup,
 	measure,
 	measureP,
@@ -571,8 +572,8 @@ async function fetchLatestSnapshotCore(
 					fluidEpoch,
 					version: persistedCacheValueVersion,
 				};
-				// eslint-disable-next-line @typescript-eslint/no-floating-promises
-				putInCache(valueWithEpoch);
+				// Callers log cache write failures. Don't let one fail the fetch or go unhandled.
+				putInCache(valueWithEpoch).catch(() => {});
 			}
 
 			event.end({
@@ -854,7 +855,9 @@ function isRedeemSharingLinkError(
 		typeof error === "object" &&
 		error !== null &&
 		(error.errorType === OdspErrorTypes.authorizationError ||
-			error.errorType === OdspErrorTypes.fileNotFoundOrAccessDeniedError)
+			error.errorType === OdspErrorTypes.fileNotFoundOrAccessDeniedError) &&
+		// A claims challenge needs a token with more claims, which redeeming the sharing link can't provide.
+		!isClaimsChallenge(error)
 	) {
 		return true;
 	}

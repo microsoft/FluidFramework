@@ -91,6 +91,7 @@ export function createOdspDocumentServiceFactory(
 							persistedCache,
 							getStorageToken: options.getStorageToken,
 							requestHeaders: this.requestHeaders,
+							propagateClaimsChallenges: this.propagateClaimsChallenges,
 							createDocumentService: async (url, odspLogger, cacheAndTracker, isSummarizer) =>
 								this.createDocumentServiceCore(url, odspLogger, cacheAndTracker, isSummarizer),
 						});

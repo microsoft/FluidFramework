@@ -10,6 +10,7 @@ import { strict as assert } from "node:assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	DriverErrorTypes,
+	type IAuthorizationError,
 	type ISnapshot,
 	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
@@ -45,6 +46,7 @@ import {
 } from "../odspUtils.js";
 
 import {
+	createClaimsChallengeHeader,
 	createResponse,
 	mockFetchMultiple,
 	notFound,
@@ -633,6 +635,39 @@ describe("Tests1 for snapshot fetch", () => {
 				{ eventName: "RedeemFallback", errorType: "fileNotFoundOrAccessDeniedError" },
 				{ eventName: "TreesLatest_end" },
 			]),
+		);
+	});
+
+	it("RedeemFallback is skipped for a claims challenge", async () => {
+		resolved.shareLinkInfo = {
+			sharingLinkToRedeem: "https://microsoft.sharepoint-df.com/sharelink",
+		};
+		hostPolicy.enableRedeemFallback = true;
+
+		const claims = '{"access_token":{"nbf":{"essential":true,"value":"1597959090"}}}';
+		const claimsChallenge = async (): Promise<MockResponse> =>
+			createResponse(
+				{ "www-authenticate": createClaimsChallengeHeader(claims) },
+				undefined,
+				401,
+			);
+
+		// The request and its retry with a new token both get the challenge.
+		// No response is mocked for a redeem request, because redeeming the sharing link can't satisfy the challenge.
+		await assert.rejects(
+			mockFetchMultiple(
+				async () => service.getSnapshot({}),
+				[claimsChallenge, claimsChallenge],
+			),
+			(error: IAuthorizationError) => {
+				assert.strictEqual(error.errorType, OdspErrorTypes.authorizationError);
+				assert.strictEqual(error.claims, claims);
+				return true;
+			},
+		);
+		assert(
+			!mockLogger.events.some((event) => event.eventName.startsWith("Redeem")),
+			"Should not redeem the sharing link for a claims challenge",
 		);
 	});
 
