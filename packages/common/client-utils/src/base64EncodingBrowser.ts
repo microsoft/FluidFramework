@@ -4,12 +4,7 @@
  */
 
 import type { IsoBufferEncoding } from "./buffer.js";
-// This file is a browser-specific implementation of the base64 encoding functions.
-// Aside from the below import statement, this file should be identical to the
-// base64EncodingNode.ts.
-//
-// (See 'Isomorphic Code' section in the package README.md.)
-import { IsoBuffer } from "./bufferBrowser.js";
+import { stringToBuffer, Uint8ArrayToString } from "./bufferBrowser.js";
 
 /**
  * Converts the provided {@link https://en.wikipedia.org/wiki/Base64 | base64}-encoded string
@@ -18,7 +13,7 @@ import { IsoBuffer } from "./bufferBrowser.js";
  * @internal
  */
 export const fromBase64ToUtf8 = (input: string): string =>
-	IsoBuffer.from(input, "base64").toString("utf8");
+	new TextDecoder().decode(stringToBuffer(input, "base64"));
 
 /**
  * Converts the provided {@link https://en.wikipedia.org/wiki/UTF-8 | utf-8}-encoded string
@@ -27,7 +22,7 @@ export const fromBase64ToUtf8 = (input: string): string =>
  * @internal
  */
 export const fromUtf8ToBase64 = (input: string): string =>
-	IsoBuffer.from(input, "utf8").toString("base64");
+	Uint8ArrayToString(new TextEncoder().encode(input), "base64");
 
 /**
  * Convenience function to convert unknown encoding to utf8 that avoids
@@ -45,7 +40,7 @@ export const toUtf8 = (input: string, encoding: IsoBufferEncoding): string => {
 			return input;
 		}
 		default: {
-			return IsoBuffer.from(input, encoding).toString();
+			return new TextDecoder().decode(stringToBuffer(input, encoding));
 		}
 	}
 };

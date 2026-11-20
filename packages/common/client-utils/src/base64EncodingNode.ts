@@ -4,11 +4,6 @@
  */
 
 import type { IsoBufferEncoding } from "./buffer.js";
-// This file is a Node.js-specific implementation of the base64 encoding functions.
-// Aside from the below import statement, this file should be identical to the
-// base64EncodingBrowser.ts.
-//
-// (See 'Isomorphic Code' section in the package README.md.)
 import { IsoBuffer } from "./bufferNode.js";
 
 /**

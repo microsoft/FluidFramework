@@ -16,7 +16,7 @@ import {
 	rootFieldKey,
 	TreeStoredSchemaRepository,
 } from "../../core/index.js";
-import { cursorForMapTreeNode } from "../../feature-libraries/index.js";
+import { checkForestSchema, cursorForMapTreeNode } from "../../feature-libraries/index.js";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import-x/no-internal-modules */
 import { buildForest } from "../../feature-libraries/object-forest/index.js";
@@ -38,7 +38,8 @@ describe("object-forest", () => {
 	// Currently many of its tests fail due to schema violations.
 	describe.skip("forest suite additional assertions", () => {
 		testForest({
-			factory: (schema) => buildForest(new Breakable("testForest"), schema, undefined, true),
+			factory: (schema) =>
+				buildForest(new Breakable("testForest"), schema, undefined, checkForestSchema),
 		});
 	});
 
@@ -83,7 +84,7 @@ describe("object-forest", () => {
 					// Required field, but not content: should error.
 					new TreeStoredSchemaRepository(toInitialSchema(SchemaFactory.string)),
 					undefined,
-					true,
+					checkForestSchema,
 				),
 			validateUsageError(/Tree does not conform to schema/),
 		);
@@ -95,7 +96,7 @@ describe("object-forest", () => {
 			// Field allowing nothing
 			new TreeStoredSchemaRepository(toInitialSchema(SchemaFactory.optional([]))),
 			undefined,
-			true,
+			checkForestSchema,
 		);
 		assert.throws(
 			() =>

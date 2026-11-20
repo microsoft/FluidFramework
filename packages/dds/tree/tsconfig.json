@@ -11,7 +11,8 @@
 		// the bundle accumulates ~17 copies of the same helpers (~1KB each).
 		"importHelpers": true,
 		"noImplicitAny": true,
-		"preserveConstEnums": true,
+		// Internal const enum references are inlined; do not also emit runtime objects.
+		"preserveConstEnums": false,
 		// Allow unused locals.
 		// This is needed for type assertions using the TypeCheck library.
 		// Linter is used to enforce "_" prefix for unused locals to prevent accidentally having unused locals.
