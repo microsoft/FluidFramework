@@ -10,7 +10,7 @@ import {
 	createIdCompressor,
 	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { CodecWriteOptions, ICodecOptions } from "../codec/index.js";
 import {
@@ -65,13 +65,43 @@ export interface IndependentViewTelemetryOptions {
 }
 
 /**
+ * Options for limiting the edit history retained by an independent tree.
+ * @alpha @input
+ */
+export interface IndependentTreeHistoryOptions {
+	/**
+	 * The maximum number of {@link RevertibleAlpha | revertibles} for the tree's commits that are valid at once.
+	 * When defined, the tree also discards the history that no valid revertible needs.
+	 *
+	 * @remarks
+	 * When a revertible is obtained from a `changed` event while this many are valid, the oldest valid revertible is disposed
+	 * (which calls its `onRevertibleDisposed` callback, if any).
+	 * Reverting a revertible disposed this way throws a `UsageError`.
+	 * A revertible being reverted does not count toward this limit until the revert completes,
+	 * so undo and redo never cause another revertible to be disposed.
+	 *
+	 * After each commit is applied, the tree retains only the commits that its valid revertibles need:
+	 * the commit of the oldest valid revertible and all commits after it, or only the latest commit if there are no valid revertibles.
+	 * Older commits, and removed content that only they could restore, are discarded.
+	 * Discarded commits are no longer available through {@link UntypedTreeViewAlpha.branchHistory}.
+	 * History is not discarded during a transaction, during change events, or while the tree has undisposed forks
+	 * (such as those created by {@link UntypedTreeViewAlpha.fork}).
+	 *
+	 * Must be a positive integer, or `Number.POSITIVE_INFINITY` to discard history no revertible needs without limiting the number of revertibles.
+	 * When undefined (the default), the number of revertibles is not limited and all history is retained.
+	 */
+	readonly maxRevertibles?: number | undefined;
+}
+
+/**
  * {@link createIndependentTreeViewAlpha} options.
  * @alpha @input
  */
 export interface IndependentViewOptions
 	extends ForestOptions,
 		Partial<CodecWriteOptions>,
-		IndependentViewTelemetryOptions {
+		IndependentViewTelemetryOptions,
+		IndependentTreeHistoryOptions {
 	/**
 	 * Optional ID compressor for generating and compressing identifiers.
 	 * If not provided, a new one will be created.
@@ -85,6 +115,7 @@ export interface IndependentViewOptions
  */
 export type CreateIndependentTreeAlphaOptions = ForestOptions &
 	IndependentViewTelemetryOptions &
+	IndependentTreeHistoryOptions &
 	(
 		| (IndependentViewOptions & {
 				/**
@@ -279,6 +310,17 @@ export function createIndependentTreeCheckout(
 	const mintRevisionTag = (): RevisionTag => idCompressor.generateCompressedId();
 	const revisionTagCodec = new RevisionTagCodec(idCompressor);
 
+	const maxRevertibles = options?.maxRevertibles;
+	if (
+		maxRevertibles !== undefined &&
+		maxRevertibles !== Number.POSITIVE_INFINITY &&
+		!(Number.isInteger(maxRevertibles) && maxRevertibles >= 1)
+	) {
+		throw new UsageError(
+			`"maxRevertibles" must be a positive integer or Number.POSITIVE_INFINITY, but was ${maxRevertibles}.`,
+		);
+	}
+
 	// To ensure the forest is in schema when constructed, start it with an empty schema and set the schema repository content later.
 	const schemaRepository = new TreeStoredSchemaRepository();
 
@@ -294,6 +336,7 @@ export function createIndependentTreeCheckout(
 		forest,
 		schema: schemaRepository,
 		codecOptions: options,
+		maxRevertibles,
 	});
 
 	if (options?.content !== undefined) {
