@@ -7,6 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	type AnnotatedAllowedType,
+	type AllowedTypesFull,
 	type AllowedTypesFullEvaluated,
 	markSchemaMostDerived,
 } from "./allowedTypes.js";
@@ -58,7 +59,7 @@ export function walkAllowedTypes(
  * Walks without component callbacks still need cycle detection but allocate no Tarjan state.
  * Incremental walks do not evaluate fields inside previously completed components.
  *
- * The `pending` stack replaces recursive depth-first-search calls.
+ * The `pending` stack replaces recursive depth-first-search calls; each frame records its position among its node's references.
  * The separate `analysis.stack` is Tarjan's stack of discovered nodes not yet assigned to an identified strongly connected component.
  * A node can remain on this stack after its traversal frame has finished.
  * Identifying a component and removing its members from the stack precedes invoking its component callback;
@@ -111,7 +112,9 @@ export function walkSchema(
 		onStack: boolean;
 	}
 	/**
-	 * A suspended node visit, retaining its reference iterator until its children have been walked.
+	 * A suspended node visit, retaining its position among its references until its children have been walked.
+	 * @remarks
+	 * See {@link nextReference}, which advances it.
 	 */
 	interface Frame {
 		/**
@@ -119,9 +122,21 @@ export function walkSchema(
 		 */
 		readonly schema: TreeNodeSchema;
 		/**
-		 * Remaining selected references; resuming the iterator also completes allowed-type callbacks.
+		 * The allowed types of each of the node's fields, read when the first reference is requested.
 		 */
-		readonly references: Iterator<TreeNodeSchema>;
+		fields: readonly AllowedTypesFull[] | undefined;
+		/**
+		 * Index in {@link Frame.fields} of the next field to evaluate.
+		 */
+		nextField: number;
+		/**
+		 * The evaluated allowed types of the field whose references are being walked, if any.
+		 */
+		list: AllowedTypesFullEvaluated | undefined;
+		/**
+		 * Index in {@link Frame.list} of the next allowed type to consider.
+		 */
+		nextType: number;
 		/**
 		 * Absent for ordinary walks without component callbacks.
 		 */
@@ -165,15 +180,39 @@ export function walkSchema(
 				};
 
 	/**
-	 * Evaluates fields in declaration order without initializing contexts.
-	 * Preserves complete allowed-type lists for field callbacks while filtering yielded references.
+	 * The next selected reference of the node `frame` visits, or undefined once all have been walked.
+	 * @remarks
+	 * Evaluates fields in declaration order (each when its references are first needed) without initializing contexts.
+	 * Calls the allowed-type callback with each field's complete list once the list's selected references have been walked,
+	 * so filtering prunes previously visited components without hiding annotations from the callback.
+	 * Advances `frame` with explicit state rather than with an iterator: schemas can have thousands of nodes.
 	 */
-	function* references(schema: TreeNodeSchema): IterableIterator<TreeNodeSchema> {
-		// Do not initialize contexts: this walk is itself used during node initialization.
-		for (const field of getTreeNodeSchemaPrivateData(schema).childAllowedTypes) {
-			const types = field.evaluate();
-			// Preserve the full annotation sequence, but prune previously visited components before yielding.
-			yield* visitAllowedTypes(types, referenceVisitor);
+	function nextReference(frame: Frame): TreeNodeSchema | undefined {
+		for (;;) {
+			const list = frame.list;
+			if (list !== undefined) {
+				const types = list.types;
+				while (frame.nextType < types.length) {
+					const allowedType = types[frame.nextType] as AnnotatedAllowedType<TreeNodeSchema>;
+					frame.nextType++;
+					const filter = referenceVisitor.allowedTypeFilter;
+					if (filter === undefined || filter(allowedType)) {
+						return allowedType.type;
+					}
+				}
+				frame.list = undefined;
+				referenceVisitor.allowedTypes?.(list);
+			}
+			// Do not initialize contexts: this walk is itself used during node initialization.
+			const fields = (frame.fields ??= getTreeNodeSchemaPrivateData(
+				frame.schema,
+			).childAllowedTypes);
+			if (frame.nextField >= fields.length) {
+				return undefined;
+			}
+			frame.list = (fields[frame.nextField] as AllowedTypesFull).evaluate();
+			frame.nextField++;
+			frame.nextType = 0;
 		}
 	}
 
@@ -204,7 +243,10 @@ export function walkSchema(
 		pending.push({
 			schema,
 			nodeState,
-			references: references(schema),
+			fields: undefined,
+			nextField: 0,
+			list: undefined,
+			nextType: 0,
 		});
 	}
 
@@ -238,20 +280,20 @@ export function walkSchema(
 		discover(root);
 		let current = pending.at(-1);
 		while (current !== undefined) {
-			const next = current.references.next();
+			const next = nextReference(current);
 			const nodeState = current.nodeState;
-			if (next.done === true) {
+			if (next === undefined) {
 				pending.pop();
 				visitor.node?.(current.schema);
 				if (nodeState !== undefined && analysis !== undefined) {
 					finishNodeAnalysis(analysis, nodeState, pending.at(-1)?.nodeState);
 				}
 			} else {
-				const child = analysis?.states.get(next.value);
+				const child = analysis?.states.get(next);
 				if (nodeState !== undefined && child?.onStack === true) {
 					nodeState.lowLink = Math.min(nodeState.lowLink, child.index);
 				}
-				discover(next.value);
+				discover(next);
 			}
 			current = pending.at(-1);
 		}

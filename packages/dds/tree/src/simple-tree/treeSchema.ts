@@ -837,15 +837,14 @@ function addDefinition(
 	definitions: Map<string, SimpleNodeSchema<SchemaType.View> & TreeNodeSchema>,
 	schema: TreeNodeSchema,
 ): void {
-	if (definitions.has(schema.identifier)) {
+	// Read once: reading a schema class's properties is slow in schemas with many classes.
+	const identifier = schema.identifier;
+	if (definitions.has(identifier)) {
 		throw new UsageError(
-			`Multiple schema encountered with the identifier ${JSON.stringify(schema.identifier)}. Remove or rename them to avoid the collision.`,
+			`Multiple schema encountered with the identifier ${JSON.stringify(identifier)}. Remove or rename them to avoid the collision.`,
 		);
 	}
-	definitions.set(
-		schema.identifier,
-		schema as SimpleNodeSchema<SchemaType.View> & TreeNodeSchema,
-	);
+	definitions.set(identifier, schema as SimpleNodeSchema<SchemaType.View> & TreeNodeSchema);
 }
 
 /**
