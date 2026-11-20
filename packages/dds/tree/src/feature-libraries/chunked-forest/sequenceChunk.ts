@@ -60,7 +60,7 @@ export class SequenceChunk
 	}
 
 	public getEditCursor(): ChunkEditCursor {
-		assert(!this.isShared(), "Editing requires exclusive chunk ownership");
+		assert(!this.isShared(), 0xe0f /* Editing requires exclusive chunk ownership */);
 		return new SequenceEditCursor(this);
 	}
 
@@ -92,11 +92,14 @@ class SequenceEditCursor extends ChunkSequenceCursor implements ChunkEditCursor 
 		return this.chunk.subChunks;
 	}
 	public setFieldChunks(chunks: TreeChunk[]): void {
-		assert(!this.chunk.isShared(), "Editing requires exclusive chunk ownership");
-		assert(chunks === this.chunk.subChunks, "Expected the sequence's own child array");
+		assert(!this.chunk.isShared(), 0xe10 /* Editing requires exclusive chunk ownership */);
+		assert(
+			chunks === this.chunk.subChunks,
+			0xe11 /* Expected the sequence's own child array */,
+		);
 		assert(
 			getFieldLength(chunks) === this.chunk.topLevelLength,
-			"Sequence edits must preserve length",
+			0xe12 /* Sequence edits must preserve length */,
 		);
 	}
 }

@@ -174,7 +174,9 @@ export class TreeNodeKernel {
 				fail(0xb40 /* missing simple-tree context */)
 			);
 		}
-		return this.initialContext ?? fail("An unhydrated node must have its initial context");
+		return (
+			this.initialContext ?? fail(0xe1f /* An unhydrated node must have its initial context */)
+		);
 	}
 
 	/**
