@@ -12,6 +12,8 @@ SharedTree makes it possible to update your [schemas](../schema-definition/index
 Depending on the schema changes, either an older or a newer client may need to upgrade a document created with another version of the schema before using it.
 Write a test using <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">`snapshotSchemaCompatibility`</ApiLink> to verify the compatibility you require.
 
+If your schemas come from reusable packages, see [Schema Libraries and Versioning](./schema-libraries.mdx) for the distinction between library releases, persisted schemas, and application rollout policy.
+
 :::note
 For detailed information about which types of changes are safe versus breaking, see [types of schema changes](./types-of-changes.mdx).
 :::

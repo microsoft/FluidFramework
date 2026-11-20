@@ -140,6 +140,11 @@ export class StringTextAtomNode
  * @remarks
  * This is generic over formatting an embedded object/atom types.
  *
+ * See {@link https://fluidframework.com/docs/data-structures/tree/schema-patterns/configuration-and-composition | Configuration and Composition}
+ * for consumer-provided schemas and scope selection, and
+ * {@link https://fluidframework.com/docs/data-structures/tree/schema-patterns/encapsulation-and-exports | Encapsulation and Exports}
+ * for the type-erasure and subclassing patterns used by this API.
+ *
  * @privateRemarks
  * See `FormattedTextDefault` in `@fluidframework/quill-react` for an example parameterization.
  *
