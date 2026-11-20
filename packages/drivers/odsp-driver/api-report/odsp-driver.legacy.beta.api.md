@@ -218,6 +218,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory, 
     readonly requestHeaders?: Readonly<Record<string, string>>;
     // (undocumented)
     get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents>;
+    readonly useEffectiveMethodForTokenFetch?: boolean;
 }
 
 // @beta @legacy
@@ -256,7 +257,7 @@ export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
 export type OdspPointInTimeDocumentServiceImplementation = (props: IOdspPointInTimeDocumentServiceImplementationProps) => Promise<IDocumentService>;
 
 // @beta @legacy
-export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, _forceAccessTokenViaAuthorizationHeader: boolean, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined, enableRedeemFallback?: boolean, _fetchBinarySnapshotFormat?: boolean, _snapshotFormatFetchType?: SnapshotFormatSupportType, odspDocumentServiceFactory?: OdspDocumentServiceFactory): Promise<boolean>;
+export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, _forceAccessTokenViaAuthorizationHeader: boolean, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined, enableRedeemFallback?: boolean, _fetchBinarySnapshotFormat?: boolean, _snapshotFormatFetchType?: SnapshotFormatSupportType, odspDocumentServiceFactory?: OdspDocumentServiceFactory, useEffectiveMethodForTokenFetch?: boolean): Promise<boolean>;
 
 // @beta @legacy
 export interface ShareLinkFetcherProps {

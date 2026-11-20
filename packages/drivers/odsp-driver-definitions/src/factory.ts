@@ -100,6 +100,14 @@ export interface HostStoragePolicy {
 	snapshotOptions?: ISnapshotOptions;
 
 	/**
+	 * Opts token fetching into the effective GET method authenticated by the service for multipart snapshot and ops downloads.
+	 * If omitted or false, token callbacks continue to receive the outer POST method.
+	 * The full request URL and multipart POST transport are unchanged.
+	 * Snapshot prefetch inherits this setting when supplied with the document service factory.
+	 */
+	useEffectiveMethodForTokenFetch?: boolean;
+
+	/**
 	 * Immutable host-owned attribution metadata applied to every outbound ODSP HTTP request.
 	 *
 	 * Driver-owned request headers take precedence on case-insensitive name collisions. This

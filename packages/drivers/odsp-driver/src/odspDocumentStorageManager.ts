@@ -652,6 +652,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				controller,
 				this.epochTracker,
 				scenarioName,
+				undefined,
+				this.hostPolicy.useEffectiveMethodForTokenFetch,
 			);
 		};
 		const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch): Promise<void> => {
