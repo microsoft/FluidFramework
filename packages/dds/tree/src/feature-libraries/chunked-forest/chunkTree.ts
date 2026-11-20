@@ -34,6 +34,7 @@ import {
 	validateIndexRange,
 } from "../../util/index.js";
 import { isStableNodeIdentifier } from "../node-identifier/index.js";
+import type { CursorAdapter, Field } from "../treeCursorUtils.js";
 
 import { BasicChunk } from "./basicChunk.js";
 import type { IncrementalEncodingPolicy } from "./codec/index.js";
@@ -601,7 +602,7 @@ export function chunkRange(
 		(cursor.mode === CursorLocationType.Nodes) === length > 0,
 		0xb59 /* Should be in nodes mode if not past end */,
 	);
-	let output: TreeChunk[] = [];
+	const output: TreeChunk[] = [];
 	let remaining = length;
 	while (remaining > 0) {
 		assert(cursor.mode === CursorLocationType.Nodes, 0x57f /* should be in nodes */);
@@ -679,28 +680,126 @@ export function chunkRange(
 	// when their combined size fits within the applicable chunk size limit.
 	// Newly converted runs are already packed by uniformChunkFromCursor.
 
-	// If output is large, group it into a tree of sequence chunks.
-	while (output.length > chunkCompressor.policy.sequenceChunkSplitThreshold) {
-		const chunkCount = Math.ceil(
-			output.length / chunkCompressor.policy.sequenceChunkSplitThreshold,
-		);
+	return groupIntoSequenceChunks(output, chunkCompressor.policy);
+}
+
+/**
+ * Groups the chunks of a field into a tree of {@link SequenceChunk}s if there are more than
+ * {@link ChunkPolicy.sequenceChunkSplitThreshold} of them.
+ * @returns `output` if it is short enough, otherwise a new array.
+ */
+function groupIntoSequenceChunks(output: TreeChunk[], policy: ChunkPolicy): TreeChunk[] {
+	let result = output;
+	while (result.length > policy.sequenceChunkSplitThreshold) {
+		const chunkCount = Math.ceil(result.length / policy.sequenceChunkSplitThreshold);
 		const newOutput: TreeChunk[] = [];
 		// Rounding down, and add an extra item to some of the chunks.
-		const chunkSize = Math.floor(output.length / chunkCount);
+		const chunkSize = Math.floor(result.length / chunkCount);
 		// number of chunks to add an extra item to to make total line up.
-		const extra = output.length % chunkCount;
+		const extra = result.length % chunkCount;
 		let previousEnd = 0;
 		for (let index = 0; index < chunkCount; index++) {
 			// If we are in the first `extra` items, add an extra to this chunk.
 			const end = previousEnd + chunkSize + (index < extra ? 1 : 0);
-			newOutput.push(new SequenceChunk(output.slice(previousEnd, end)));
+			newOutput.push(new SequenceChunk(result.slice(previousEnd, end)));
 			previousEnd = end;
 		}
-		assert(previousEnd === output.length, 0x581 /* chunks should add up to total */);
-		output = newOutput;
+		assert(previousEnd === result.length, 0x581 /* chunks should add up to total */);
+		result = newOutput;
 	}
+	return result;
+}
 
-	return output;
+/**
+ * Chunks `nodes`, read through `adapter`, as the content of one field.
+ *
+ * @remarks
+ * Gives the same chunks as {@link chunkField} gives for a cursor over the same nodes (such as {@link stackTreeFieldCursor}),
+ * but reads the nodes directly instead of through a cursor.
+ * Fields without children are omitted, as the forest does not store empty fields.
+ *
+ * The nodes must be in the schema of the policy's shapes.
+ */
+export function chunkFieldFromAdapter<TNode>(
+	nodes: Field<TNode>,
+	adapter: CursorAdapter<TNode>,
+	chunkCompressor: ChunkCompressor,
+): TreeChunk[] {
+	const { policy, idCompressor } = chunkCompressor;
+	const output: TreeChunk[] = [];
+	let index = 0;
+	// Same control flow as chunkRange, which never finds existing chunks to reuse in such content.
+	while (index < nodes.length) {
+		// Not `?? oob()`: a node can be `null` (a null leaf).
+		const node = nodes[index] as TNode;
+		const type = adapter.type(node);
+		const shape = policy.shapeFromSchema(type);
+		if (shape instanceof TreeShape && shape.positions.length <= policy.uniformChunkNodeCount) {
+			const maxTopLevelLength = Math.max(
+				1,
+				Math.floor(policy.uniformChunkNodeCount / shape.positions.length),
+			);
+			const values: TreeValue[] = [];
+			let topLevelLength = 0;
+			do {
+				insertValuesFromAdapter(nodes[index] as TNode, adapter, shape, values, idCompressor);
+				topLevelLength++;
+				index++;
+			} while (
+				topLevelLength < maxTopLevelLength &&
+				index < nodes.length &&
+				adapter.type(nodes[index] as TNode) === type
+			);
+			output.push(
+				new UniformChunk(shape.withTopLevelLength(topLevelLength), values, idCompressor),
+			);
+		} else {
+			const fields: Map<FieldKey, TreeChunk[]> = new Map();
+			for (const key of adapter.keysFromNode(node)) {
+				const children = adapter.getFieldFromNode(node, key);
+				if (children.length > 0) {
+					fields.set(key, chunkFieldFromAdapter(children, adapter, chunkCompressor));
+				}
+			}
+			output.push(new BasicChunk(type, fields, adapter.value(node)));
+			index++;
+		}
+	}
+	// Copied to an array of exactly its length, as chunkField does.
+	return [...groupIntoSequenceChunks(output, policy)];
+}
+
+/**
+ * {@link insertValues} for a node read through `adapter`.
+ */
+function insertValuesFromAdapter<TNode>(
+	node: TNode,
+	adapter: CursorAdapter<TNode>,
+	shape: TreeShape,
+	values: Value[],
+	idCompressor: IIdCompressor | undefined,
+): void {
+	assert(adapter.type(node) === shape.type, "shape and type must match");
+	if (shape.hasValue) {
+		const value = adapter.value(node);
+		if (
+			shape.mayContainCompressedIds &&
+			typeof value === "string" &&
+			idCompressor !== undefined &&
+			isStableNodeIdentifier(value)
+		) {
+			values.push(idCompressor.tryRecompress(value) ?? value);
+		} else {
+			values.push(value);
+		}
+	}
+	for (const [key, childShape, length] of shape.fieldsArray) {
+		const children = adapter.getFieldFromNode(node, key);
+		assert(children.length === length, "unexpected field length");
+		for (const child of children) {
+			insertValuesFromAdapter(child, adapter, childShape, values, idCompressor);
+		}
+	}
 }
 
 /**

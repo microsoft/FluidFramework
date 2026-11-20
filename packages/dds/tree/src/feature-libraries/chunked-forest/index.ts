@@ -14,7 +14,7 @@ export {
 	chunkField,
 	combineChunks,
 } from "./chunkTree.js";
-export { buildChunkedForest } from "./chunkedForest.js";
+export { buildChunkedForest, chunkFieldForForest } from "./chunkedForest.js";
 export {
 	FieldBatchFormatVersion,
 	type FieldBatch,

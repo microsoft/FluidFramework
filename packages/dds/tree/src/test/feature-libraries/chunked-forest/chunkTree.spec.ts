@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { oob } from "@fluidframework/core-utils/internal";
 import {
 	createIdCompressor,
 	SerializationVersion,
@@ -33,6 +34,7 @@ import {
 	basicOnlyChunkPolicy,
 	basicChunkTree,
 	chunkField,
+	chunkFieldFromAdapter,
 	chunkFieldSingle,
 	chunkRange,
 	coalesceUniformChunks,
@@ -67,6 +69,8 @@ import {
 	jsonableTreeFromCursor,
 	jsonableTreeFromFieldCursor,
 } from "../../../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { adapter as jsonableTreeAdapter } from "../../../feature-libraries/treeTextCursor.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import {
 	incrementalEncodingPolicyForAllowedTypes,
@@ -82,6 +86,7 @@ import { brand, makeArray } from "../../../util/index.js";
 import { fieldJsonCursor, singleJsonCursor } from "../../json/index.js";
 import { testIdCompressor } from "../../utils.js";
 
+import { describeChunkLayout } from "./chunkLayout.js";
 import { assertChunkCursorEquals, numberSequenceField } from "./fieldCursorTestUtilities.js";
 import { polygonTree, testData } from "./uniformChunkTestData.js";
 
@@ -1598,6 +1603,132 @@ describe("chunkTree", () => {
 					`round ${round}: expected ${optimal} chunks, got ${field.length}`,
 				);
 			}
+		});
+	});
+
+	describe("chunkFieldFromAdapter", () => {
+		const withId = builder.object("withId", { id: builder.identifier });
+		const adapterSchema = new TreeStoredSchemaRepository(
+			toInitialSchema([empty, builder.number, structValue, structOptional, withId]),
+		);
+
+		function num(n: number): JsonableTree {
+			return { type: brand(numberSchema.identifier), value: n };
+		}
+		function value(x: number): JsonableTree {
+			return { type: brand(structValue.identifier), fields: { x: [num(x)] } };
+		}
+		function optional(x?: number): JsonableTree {
+			const type = brand<TreeNodeSchemaIdentifier>(structOptional.identifier);
+			return x === undefined ? { type } : { type, fields: { x: [num(x)] } };
+		}
+
+		const mixed: JsonableTree[] = [
+			value(1),
+			value(2),
+			optional(3),
+			optional(),
+			{ type: brand(empty.identifier) },
+			num(4),
+			num(5),
+			value(6),
+		];
+
+		const testCases: [name: string, content: JsonableTree[]][] = [
+			["empty", []],
+			["mixed content", mixed],
+			["long uniform runs", makeArray(500, (index) => value(index))],
+			[
+				"long varied sequences",
+				makeArray(200, (index) => mixed[index % mixed.length] ?? oob()),
+			],
+		];
+
+		const policies: [name: string, createPolicy: () => ChunkPolicy][] = [
+			[
+				"schema-derived shapes",
+				() =>
+					makeTreeChunker(
+						adapterSchema,
+						defaultSchemaPolicy,
+						defaultIncrementalEncodingPolicy,
+					),
+			],
+			[
+				"with sequence chunks",
+				() => {
+					const chunker = makeTreeChunker(
+						adapterSchema,
+						defaultSchemaPolicy,
+						defaultIncrementalEncodingPolicy,
+					);
+					return {
+						sequenceChunkSplitThreshold: 3,
+						sequenceChunkInlineThreshold: chunker.sequenceChunkInlineThreshold,
+						uniformChunkNodeCount: chunker.uniformChunkNodeCount,
+						uniformChunkNodeCountDynamicTargetMax:
+							chunker.uniformChunkNodeCountDynamicTargetMax,
+						shapeFromSchema: (type) => chunker.shapeFromSchema(type),
+					};
+				},
+			],
+			["basic chunks only", () => basicOnlyChunkPolicy],
+		];
+
+		for (const [policyName, createPolicy] of policies) {
+			describe(policyName, () => {
+				for (const [name, content] of testCases) {
+					it(`chunks ${name} as a cursor over it would be chunked`, () => {
+						const policy = createPolicy();
+						const compressor = { policy, idCompressor: undefined };
+						const fromAdapter = chunkFieldFromAdapter(
+							content,
+							jsonableTreeAdapter,
+							compressor,
+						);
+						const fromCursor = chunkField(cursorForJsonableTreeField(content), compressor);
+						assert.deepEqual(
+							describeChunkLayout(fromAdapter),
+							describeChunkLayout(fromCursor),
+						);
+						assert.deepEqual(
+							fromAdapter.flatMap((chunk) => jsonableTreeFromFieldCursor(chunk.cursor())),
+							content,
+						);
+					});
+				}
+			});
+		}
+
+		it("compresses identifiers as chunking a cursor does", () => {
+			const idCompressor = testIdCompressor;
+			const content: JsonableTree[] = makeArray(3, () => ({
+				type: brand(withId.identifier),
+				fields: {
+					id: [
+						{
+							type: brand(stringSchema.identifier),
+							value: idCompressor.decompress(idCompressor.generateCompressedId()),
+						},
+					],
+				},
+			}));
+			const compressor = {
+				policy: makeTreeChunker(
+					adapterSchema,
+					defaultSchemaPolicy,
+					defaultIncrementalEncodingPolicy,
+				),
+				idCompressor,
+			};
+			const fromAdapter = chunkFieldFromAdapter(content, jsonableTreeAdapter, compressor);
+			const fromCursor = chunkField(cursorForJsonableTreeField(content), compressor);
+			const [adapterChunk] = fromAdapter;
+			const [cursorChunk] = fromCursor;
+			assert(adapterChunk instanceof UniformChunk);
+			assert(cursorChunk instanceof UniformChunk);
+			assert.deepEqual(adapterChunk.values, cursorChunk.values);
+			assert.equal(typeof adapterChunk.values[0], "number");
 		});
 	});
 });
