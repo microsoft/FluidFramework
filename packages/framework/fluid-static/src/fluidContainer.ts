@@ -382,12 +382,12 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	public async connect(): Promise<void> {
-		this.container.connect?.();
+		this.container.connect();
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	public async disconnect(): Promise<void> {
-		this.container.disconnect?.();
+		this.container.disconnect();
 	}
 
 	public async create<T extends IFluidLoadable>(objectClass: SharedObjectKind<T>): Promise<T> {

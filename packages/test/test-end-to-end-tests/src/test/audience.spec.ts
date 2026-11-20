@@ -12,7 +12,6 @@ import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -148,13 +147,11 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 	it("should add clients in audience as expected in write mode", async function () {
 		// Create a client - client1.
 		const client1Container = await createContainer();
-		const client1DataStore =
-			await getContainerEntryPointBackCompat<TestDataObject>(client1Container);
+		const client1DataStore = (await client1Container.getEntryPoint()) as TestDataObject;
 
 		// Load a second client - client2.
 		const client2Container = await loadContainer();
-		const client2DataStore =
-			await getContainerEntryPointBackCompat<TestDataObject>(client2Container);
+		const client2DataStore = (await client2Container.getEntryPoint()) as TestDataObject;
 
 		// Perform operations to move the clients to "write" mode (if not already in write mode).
 		client1DataStore._root.set("testKey1", "testValue1");
@@ -240,7 +237,7 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 		}
 
 		const container = await provider.makeTestContainer();
-		const entry = await getContainerEntryPointBackCompat<TestDataObject>(container);
+		const entry = (await container.getEntryPoint()) as TestDataObject;
 		await waitForContainerConnection(container);
 		const audience = entry._context.containerRuntime.getAudience();
 

@@ -15,7 +15,6 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
@@ -50,7 +49,7 @@ describeCompat("Flush mode validation", "NoCompat", (getTestObjectProvider, apis
 
 		// Create a Container for the first client.
 		const container1 = await provider.makeTestContainer(configCopy);
-		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		dataObject1map1 = await dataObject1.getSharedObject<ISharedMap>(map1Id);
 		// Send an op in container1 so that it switches to "write" mode and wait for it to be connected.
 		dataObject1map1.set("key", "value");

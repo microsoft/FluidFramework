@@ -31,7 +31,6 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestObjectProvider,
-	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizerFromFactory,
 	defaultTestOldestSupportedClient,
 	summarizeNow,
@@ -118,15 +117,12 @@ describeCompat(
 			[dataStoreFactory2.type, Promise.resolve(dataStoreFactory2)],
 		]);
 
-		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-			ContainerRuntimeFactoryWithDefaultDataStore,
-			{
-				defaultFactory: dataStoreFactory1,
-				oldestSupportedClient: defaultTestOldestSupportedClient,
-				registryEntries: registryStoreEntries,
-				runtimeOptions,
-			},
-		);
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory: dataStoreFactory1,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
+			registryEntries: registryStoreEntries,
+			runtimeOptions,
+		});
 
 		async function createSummarizerWithVersion(summaryVersion?: string): Promise<ISummarizer> {
 			const createSummarizerResult = await createSummarizerFromFactory(
@@ -395,18 +391,15 @@ describeCompat(
 			[tableFactory.type, Promise.resolve(tableFactory)],
 			[cellFactory.type, Promise.resolve(cellFactory)],
 		]);
-		const attachRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-			ContainerRuntimeFactoryWithDefaultDataStore,
-			{
-				defaultFactory: tableFactory,
-				oldestSupportedClient: defaultTestOldestSupportedClient,
-				registryEntries: registry,
-				runtimeOptions: {
-					enableRuntimeIdCompressor: "on",
-					summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
-				},
+		const attachRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory: tableFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
+			registryEntries: registry,
+			runtimeOptions: {
+				enableRuntimeIdCompressor: "on",
+				summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
 			},
-		);
+		});
 
 		let provider: ITestObjectProvider;
 		let mainContainer: IContainer;

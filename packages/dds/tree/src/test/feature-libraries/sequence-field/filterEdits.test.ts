@@ -36,7 +36,6 @@ const id7: ChangeAtomId = { revision: tag3, localId: brand(2) };
 function preserveAllDetaches(
 	id: ChangeAtomId,
 	count: number,
-	endpoint?: ChangeAtomId,
 ): RangeQueryResult<FilterDetachResult> {
 	return { length: count, value: { action: EditFilterStatus.Preserve } };
 }
@@ -44,7 +43,6 @@ function preserveAllDetaches(
 function preserveAllAttaches(
 	id: ChangeAtomId,
 	count: number,
-	endpoint?: ChangeAtomId,
 ): RangeQueryResult<FilterAttachResult> {
 	return { length: count, value: { action: EditFilterStatus.Preserve } };
 }
@@ -52,18 +50,16 @@ function preserveAllAttaches(
 function removeAllDetaches(
 	id: ChangeAtomId,
 	count: number,
-	endpoint?: ChangeAtomId,
 ): RangeQueryResult<FilterDetachResult> {
 	return {
 		length: count,
-		value: { action: EditFilterStatus.Remove, shouldRemoveChild: false },
+		value: { action: EditFilterStatus.Remove },
 	};
 }
 
 function removeAllAttaches(
 	id: ChangeAtomId,
 	count: number,
-	endpoint?: ChangeAtomId,
 ): RangeQueryResult<FilterAttachResult> {
 	return { length: count, value: { action: EditFilterStatus.Remove } };
 }
@@ -72,11 +68,9 @@ export function testFilterEdits(): void {
 	describe("Filter edits", () => {
 		it("Can preserve all", () => {
 			const unfiltered = [
-				MarkMaker.insert(1, id1),
-				MarkMaker.remove(1, id2),
+				MarkMaker.attach(1, id1),
+				MarkMaker.detach(1, id2),
 				MarkMaker.rename(1, id3, id4, { changes: id7 }),
-				MarkMaker.moveOut(1, id5, { finalEndpoint: id6 }),
-				MarkMaker.moveIn(1, id6, { finalEndpoint: id5 }),
 				MarkMaker.tomb(tag1, brand(5), 2),
 			];
 			const filtered = filterEdits(unfiltered, {
@@ -90,11 +84,9 @@ export function testFilterEdits(): void {
 
 		it("Renames removed when preserveOtherEdits is false", () => {
 			const unfiltered = [
-				MarkMaker.insert(1, id1),
-				MarkMaker.remove(1, id2),
+				MarkMaker.attach(1, id1),
+				MarkMaker.detach(1, id2),
 				MarkMaker.rename(1, id3, id4, { changes: id7 }),
-				MarkMaker.moveOut(1, id5, { finalEndpoint: id6 }),
-				MarkMaker.moveIn(1, id6, { finalEndpoint: id5 }),
 				MarkMaker.tomb(tag1, brand(5), 2),
 			];
 
@@ -105,11 +97,9 @@ export function testFilterEdits(): void {
 			});
 
 			const expected = [
-				MarkMaker.insert(1, id1),
-				MarkMaker.remove(1, id2),
+				MarkMaker.attach(1, id1),
+				MarkMaker.detach(1, id2),
 				MarkMaker.tomb(id3.revision, id3.localId, 1, { changes: id7 }),
-				MarkMaker.moveOut(1, id5, { finalEndpoint: id6 }),
-				MarkMaker.moveIn(1, id6, { finalEndpoint: id5 }),
 				MarkMaker.tomb(tag1, brand(5), 2),
 			];
 
@@ -117,7 +107,7 @@ export function testFilterEdits(): void {
 		});
 
 		it("Can filter part of a mark range", () => {
-			const unfiltered = [MarkMaker.insert(3, id1), MarkMaker.remove(3, id3)];
+			const unfiltered = [MarkMaker.attach(3, id1), MarkMaker.detach(3, id3)];
 
 			const filtered = filterEdits(unfiltered, {
 				filterDetach: (id, count) => ({
@@ -140,12 +130,12 @@ export function testFilterEdits(): void {
 			});
 
 			const expected = [
-				MarkMaker.insert(1, id1),
+				MarkMaker.attach(1, id1),
 				MarkMaker.tomb(id2.revision, id2.localId),
-				MarkMaker.insert(1, offsetChangeAtomId(id1, 2)),
-				MarkMaker.remove(1, id3),
+				MarkMaker.attach(1, offsetChangeAtomId(id1, 2)),
+				MarkMaker.detach(1, id3),
 				MarkMaker.skip(1),
-				MarkMaker.remove(1, offsetChangeAtomId(id3, 2)),
+				MarkMaker.detach(1, offsetChangeAtomId(id3, 2)),
 			];
 
 			assertChangesetsEqual(filtered, expected);
@@ -154,9 +144,9 @@ export function testFilterEdits(): void {
 		it("Preserves tombstones", () => {
 			const filtered = filterEdits(
 				[
-					MarkMaker.insert(1, id1),
+					MarkMaker.attach(1, id1),
 					MarkMaker.tomb(tag1, brand(5), 2),
-					MarkMaker.remove(1, id2),
+					MarkMaker.detach(1, id2),
 				],
 				{
 					filterDetach: removeAllDetaches,
@@ -169,54 +159,6 @@ export function testFilterEdits(): void {
 				MarkMaker.tomb(id1.revision, id1.localId, 1),
 				MarkMaker.tomb(tag1, brand(5), 2),
 			]);
-		});
-
-		it("Can convert move-out to remove", () => {
-			const nodeId: ChangeAtomId = { revision: tag1, localId: brand(5) };
-
-			const filtered = filterEdits(
-				[
-					MarkMaker.moveOut(1, id1, { finalEndpoint: id2, changes: nodeId }),
-					MarkMaker.moveIn(1, id2, { finalEndpoint: id1 }),
-				],
-				{
-					filterDetach: (id, count, endpoint) => ({
-						length: 1,
-						value: { action: EditFilterStatus.PreserveWithoutMove },
-					}),
-					filterAttach: removeAllAttaches,
-					preserveOtherEdits: false,
-				},
-			);
-
-			const moveInCell = offsetChangeAtomId(id2, 1);
-			const expected = [
-				MarkMaker.remove(1, id1, { changes: nodeId }),
-				MarkMaker.tomb(moveInCell.revision, moveInCell.localId),
-			];
-
-			assertChangesetsEqual(filtered, expected);
-		});
-
-		it("Can convert move-in to insert", () => {
-			const filtered = filterEdits(
-				[
-					MarkMaker.moveOut(1, id1, { finalEndpoint: id2 }),
-					MarkMaker.moveIn(1, id2, { finalEndpoint: id1 }),
-				],
-				{
-					filterDetach: removeAllDetaches,
-					filterAttach: (id, count, endpoint) => ({
-						length: 1,
-						value: { action: EditFilterStatus.PreserveWithoutMove },
-					}),
-					preserveOtherEdits: false,
-				},
-			);
-
-			const expected = [MarkMaker.skip(1), MarkMaker.insert(1, id2, { cellId: id1 })];
-
-			assertChangesetsEqual(filtered, expected);
 		});
 	});
 }

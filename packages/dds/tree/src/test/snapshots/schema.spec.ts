@@ -6,6 +6,7 @@
 import type { TObject, TString } from "typebox";
 
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
+import { SchemaFormatVersion } from "../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { schemaCodecBuilder } from "../../feature-libraries/schema-index/codec.js";
 import type { isAssignableTo, requireFalse, requireTrue } from "../../util/index.js";
@@ -30,9 +31,16 @@ describe("schema snapshots", () => {
 	for (const schemaFormat of schemaCodecBuilder.registry) {
 		for (const { name, schemaData } of testTrees) {
 			it(`${name} - schema v${schemaFormat.formatVersion}`, () => {
+				const schema =
+					schemaFormat.formatVersion === SchemaFormatVersion.v3Experimental
+						? {
+								...schemaData,
+								schemaVersion: new Map([["com.fluidframework.test", 1]]),
+							}
+						: schemaData;
 				const encoded = schemaFormat
 					.codec({ jsonValidator: FormatValidatorBasic })
-					.encode(schemaData);
+					.encode(schema);
 				takeJsonSnapshot(encoded);
 			});
 		}

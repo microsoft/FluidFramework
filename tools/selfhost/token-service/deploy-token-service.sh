@@ -1024,7 +1024,7 @@ phase_deploy_code() {
 
   log "Installing production dependencies"
   # The one dependency is pure JavaScript, so a local install is portable to the Linux host.
-  ( cd "$stage/app" && npm install --omit=dev --no-audit --no-fund --silent ) ||
+  ( cd "$stage/app" && npm install --registry=https://pkgs.dev.azure.com/fluidframework/public/_packaging/publicPackages/npm/registry/ --omit=dev --no-audit --no-fund --silent ) ||
     fail "npm install failed while staging the deployment package."
 
   ( cd "$stage/app" && zip -qr "$zip" . )

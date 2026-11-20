@@ -169,15 +169,11 @@ export class SharedTreeChangeFamily
 					};
 				}
 				case "schema": {
+					// Reverting schema changes may be supported in the future
+					assert(isRollback, "Reverting schema changes is not supported");
 					return {
 						type: "schema",
-						innerChange: {
-							schema: {
-								new: innerChange.innerChange.schema.old,
-								old: innerChange.innerChange.schema.new,
-							},
-							isInverse: true,
-						},
+						innerChange: innerChange.innerChange.rollback(),
 					};
 				}
 				default: {
@@ -259,6 +255,12 @@ export class SharedTreeChangeFamily
 	): SharedTreeChange {
 		return mapDataChanges(change, (inner) =>
 			this.modularChangeFamily.rebaser.changeRevision(inner, replacer),
+		);
+	}
+
+	public ensureCompatibility(change: SharedTreeChange): SharedTreeChange {
+		return mapDataChanges(change, (inner) =>
+			this.modularChangeFamily.rebaser.ensureCompatibility(inner),
 		);
 	}
 

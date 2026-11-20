@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { asAlpha } from "../../api.js";
+import { asAlpha, asBeta } from "../../api.js";
 import { CommitKind, type RevertibleAlpha, type TransactionLabels } from "../../core/index.js";
 import {
 	jsonableTreeFromFieldCursor,
@@ -50,8 +50,9 @@ import {
 	toUpgradeSchema,
 	SchemaFactoryBeta,
 	TreeViewConfigurationAlpha,
+	StagedSchemaUpgradePolicy,
 	computeSchemaHash,
-	identifySchemaAlpha,
+	identifySchemaWithHash,
 	FieldKind,
 	isTreeNode,
 } from "../../simple-tree/index.js";
@@ -148,7 +149,9 @@ describe("SchematizingSimpleTreeView", () => {
 				const view = getView(
 					new TreeViewConfigurationAlpha({
 						schema: root,
-						schemaIdentity: identifySchemaAlpha({ expectedHash: computeSchemaHash(root) }),
+						schemaIdentity: identifySchemaWithHash({
+							expectedHash: computeSchemaHash(root),
+						}),
 					}),
 				);
 
@@ -159,7 +162,7 @@ describe("SchematizingSimpleTreeView", () => {
 			it("rejects an incorrect hash when constructing the view", () => {
 				const viewConfig = new TreeViewConfigurationAlpha({
 					schema: root,
-					schemaIdentity: identifySchemaAlpha({
+					schemaIdentity: identifySchemaWithHash({
 						expectedHash: computeSchemaHash(schema.string),
 					}),
 				});
@@ -181,17 +184,67 @@ describe("SchematizingSimpleTreeView", () => {
 				assert.deepEqual(jsonTreeFromCheckout(checkout), beforeContent);
 			});
 
+			it("suggests increasing a version on hash mismatch without hashing versions", () => {
+				const libraryId = "test";
+				const previousHash = computeSchemaHash(schema.number);
+				const actualHash = computeSchemaHash(root);
+				const checkout = checkoutWithInitialTree(config, 5);
+				const beforeSchema = checkout.storedSchema.clone();
+				const beforeContent = jsonTreeFromCheckout(checkout);
+				for (const version of [1, 2]) {
+					const schemaVersion = { [libraryId]: version };
+					const viewConfig = new TreeViewConfigurationAlpha({
+						schema: root,
+						schemaIdentity: identifySchemaWithHash({
+							expectedHash: previousHash,
+							schemaVersion,
+						}),
+					});
+					assert.throws(
+						() =>
+							new SchematizingSimpleTreeView(
+								checkout,
+								viewConfig,
+								new MockNodeIdentifierManager(),
+							),
+						validateUsageError(
+							`Expected schema hash does not match the configured schema. Expected "${previousHash}", got "${actualHash}". For an intentional schema change, consider increasing the relevant application-defined schema version.`,
+						),
+					);
+					assert.deepEqual(checkout.storedSchema.clone(), beforeSchema);
+					assert.deepEqual(jsonTreeFromCheckout(checkout), beforeContent);
+					const updatedViewConfig = new TreeViewConfigurationAlpha({
+						schema: root,
+						schemaIdentity: identifySchemaWithHash({
+							expectedHash: actualHash,
+							schemaVersion,
+						}),
+					});
+					const view = new SchematizingSimpleTreeView(
+						checkout,
+						updatedViewConfig,
+						new MockNodeIdentifierManager(),
+					);
+					assert.deepEqual(
+						updatedViewConfig.schemaVersion,
+						new Map(Object.entries(schemaVersion)),
+					);
+					assert.equal(view.compatibility.canView, true);
+					view.dispose();
+				}
+			});
+
 			it("skips the construction check when no expected hash is provided", () => {
 				const view = getView(
 					new TreeViewConfigurationAlpha({
 						schema: root,
-						schemaIdentity: identifySchemaAlpha(),
+						schemaIdentity: identifySchemaWithHash(),
 					}),
 				);
 				view.dispose();
 			});
 
-			it("requires schema identity to be created with identifySchemaAlpha", () => {
+			it("requires schema identity to be created with identifySchema", () => {
 				assert.throws(
 					() =>
 						new TreeViewConfigurationAlpha({
@@ -199,7 +252,7 @@ describe("SchematizingSimpleTreeView", () => {
 							// @ts-expect-error Schema identity is opaque.
 							schemaIdentity: {},
 						}),
-					validateUsageError(/schemaIdentity must be created with identifySchemaAlpha/),
+					validateUsageError(/schemaIdentity must be created with identifySchema/),
 				);
 			});
 		});
@@ -212,7 +265,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const view = tree.viewWith(
 				new TreeViewConfigurationAlpha({
 					schema: schema.number,
-					schemaIdentity: identifySchemaAlpha(),
+					schemaIdentity: identifySchemaWithHash(),
 				}),
 			);
 
@@ -239,7 +292,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const view = tree.viewWith(
 				new TreeViewConfigurationAlpha({
 					schema: upgradedSchema,
-					schemaIdentity: identifySchemaAlpha(),
+					schemaIdentity: identifySchemaWithHash(),
 				}),
 			);
 
@@ -255,6 +308,55 @@ describe("SchematizingSimpleTreeView", () => {
 				tag: TelemetryDataTag.SchemaArtifact,
 			});
 			view.dispose();
+		});
+
+		/**
+		 * V1 enables strings; V2 stages strings and null but selects only null for its upgrade.
+		 * V2's construction check must use its view and policy, while upgrade telemetry must include the retained strings.
+		 * A repeated upgrade must not emit another event.
+		 */
+		it("logs retained staged types in the upgrade target hash", () => {
+			const logger = createMockLoggerExt();
+			const tree = createIndependentTreeAlpha({ logger });
+			const schemaV1 = schema.required([schema.number, schema.string]);
+			const viewV1 = tree.viewWith(new TreeViewConfiguration({ schema: schemaV1 }));
+			viewV1.initialize("retained string");
+			viewV1.dispose();
+
+			const stagedString = schema.staged(schema.string);
+			const stagedNull = schema.staged(schema.null);
+			const schemaV2 = schema.required(
+				schema.types([schema.number, stagedString, stagedNull]),
+			);
+			const nullUpgrade = stagedNull.metadata.stagedSchemaUpgrade;
+			assert(nullUpgrade !== undefined);
+			const policy = StagedSchemaUpgradePolicy.enabledStagedUpgrades(nullUpgrade);
+			const configuredHash = computeSchemaHash(schemaV2, policy);
+			const targetHash = computeSchemaHash([schema.number, schema.string, schema.null]);
+			assert.notEqual(configuredHash, targetHash);
+
+			// The expected hash describes newly initialized V2 documents, not this document's stored history.
+			const viewV2 = tree.viewWith(
+				new TreeViewConfigurationAlpha({
+					schema: schemaV2,
+					stagedUpgradePolicy: policy,
+					schemaIdentity: identifySchemaWithHash({ expectedHash: configuredHash }),
+				}),
+			);
+			viewV2.upgradeSchema();
+			assert.equal(viewV2.root, "retained string");
+			viewV2.root = null;
+			viewV2.upgradeSchema();
+
+			const events = logger
+				.events()
+				.filter((event) => event.eventName.endsWith("SchemaUpgraded"));
+			assert.equal(events.length, 1);
+			assert.deepEqual(events[0]?.schemaHash, {
+				value: targetHash,
+				tag: TelemetryDataTag.SchemaArtifact,
+			});
+			viewV2.dispose();
 		});
 
 		it("does not log hashes without schema identity", () => {
@@ -276,6 +378,45 @@ describe("SchematizingSimpleTreeView", () => {
 					).length,
 				0,
 			);
+			view.dispose();
+		});
+
+		it("increases versions while retaining staged types and skips repeated upgrades", () => {
+			const logger = createMockLoggerExt();
+			const tree = createIndependentTreeAlpha({ logger });
+			const original = tree.viewWith(
+				new TreeViewConfigurationAlpha({
+					schema: [schema.number, schema.string],
+					schemaIdentity: identifySchemaWithHash({ schemaVersion: 1 }),
+				}),
+			);
+			original.initialize("retained string");
+			original.dispose();
+
+			const stagedSchema = schema.types([schema.number, schema.staged(schema.string)]);
+			const view = tree.viewWith(
+				new TreeViewConfigurationAlpha({
+					schema: stagedSchema,
+					schemaIdentity: identifySchemaWithHash({
+						expectedHash: computeSchemaHash(schema.number),
+						schemaVersion: 2,
+					}),
+				}),
+			);
+			assert.equal(view.compatibility.canUpgrade, true);
+			view.upgradeSchema();
+			assert.equal(view.root, "retained string");
+			assert.deepEqual(asAlpha(view).schemaVersion.stored, new Map([["schemaVersion", 2]]));
+			view.upgradeSchema();
+
+			const events = logger
+				.events()
+				.filter((event) => event.eventName.endsWith("SchemaUpgraded"));
+			assert.equal(events.length, 1);
+			assert.deepEqual(events[0]?.schemaHash, {
+				value: computeSchemaHash([schema.number, schema.string]),
+				tag: TelemetryDataTag.SchemaArtifact,
+			});
 			view.dispose();
 		});
 	});
@@ -604,9 +745,9 @@ describe("SchematizingSimpleTreeView", () => {
 			new MockNodeIdentifierManager(),
 		);
 
-		// The unknown optional address field does not block viewing, but an upgrade cannot remove it.
+		// The unknown optional address field permits viewing and is retained by upgrades.
 		assert.equal(viewSpecific.compatibility.canView, true);
-		assert.equal(viewSpecific.compatibility.canUpgrade, false);
+		assert.equal(viewSpecific.compatibility.canUpgrade, true);
 
 		// The document is already initialized, and there are no differences that prevent viewing.
 		assert.equal(viewSpecific.compatibility.canInitialize, false);
@@ -671,9 +812,9 @@ describe("SchematizingSimpleTreeView", () => {
 			new MockNodeIdentifierManager(),
 		);
 
-		// Unknown optional fields permit viewing and moving people, but an upgrade cannot remove address.
+		// Unknown optional fields permit viewing and moving people, and upgrades retain address.
 		assert.equal(viewSpecific.compatibility.canView, true);
-		assert.equal(viewSpecific.compatibility.canUpgrade, false);
+		assert.equal(viewSpecific.compatibility.canUpgrade, true);
 
 		// The document is already initialized, and the unknown field does not prevent viewing.
 		assert.equal(viewSpecific.compatibility.canInitialize, false);
@@ -929,12 +1070,15 @@ describe("SchematizingSimpleTreeView", () => {
 		// The view adds strings to the allowed root types, requiring a schema upgrade before viewing.
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, true);
+		assert.deepEqual(view.compatibility.upgrade, { isCompatible: true });
 		assert.deepEqual(view.compatibility.discrepancies, [
 			{
 				mismatch: "allowedTypes",
 				location: "root",
 				view: ["com.fluidframework.leaf.string"],
 				stored: [],
+				reason:
+					'Cannot view the root field: the view allows node types ["com.fluidframework.leaf.string"] that the stored schema does not allow.',
 			},
 		]);
 		assert.throws(
@@ -945,7 +1089,7 @@ describe("SchematizingSimpleTreeView", () => {
 					error.message,
 					"TreeView.root is unavailable because the view schema is incompatible with the stored schema. The stored schema can be upgraded; call TreeView.upgradeSchema() before reading or writing TreeView.root.",
 				);
-				assert.deepEqual(error.getTelemetryProperties().schemaIncompatibilityDetails, {
+				assert.deepEqual(error.getTelemetryProperties().schemaViewIncompatibilityDetails, {
 					tag: TelemetryDataTag.SchemaArtifact,
 					value: JSON.stringify([
 						{
@@ -953,6 +1097,8 @@ describe("SchematizingSimpleTreeView", () => {
 							location: "root",
 							view: ["com.fluidframework.leaf.string"],
 							stored: [],
+							reason:
+								'Cannot view the root field: the view allows node types ["com.fluidframework.leaf.string"] that the stored schema does not allow.',
 						},
 					]),
 				});
@@ -967,6 +1113,7 @@ describe("SchematizingSimpleTreeView", () => {
 		// The upgrade enables strings, making the root available and clearing the viewing discrepancies.
 		assert.equal(view.compatibility.canView, true);
 		assert.equal(view.compatibility.discrepancies, undefined);
+		assert.deepEqual(view.compatibility.upgrade, { isCompatible: true });
 		assert.equal(view.root, 5);
 	});
 
@@ -987,6 +1134,8 @@ describe("SchematizingSimpleTreeView", () => {
 				location: "root",
 				view: [],
 				stored: ["com.fluidframework.leaf.string"],
+				reason:
+					'Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
 			},
 		]);
 		assert.throws(
@@ -997,7 +1146,7 @@ describe("SchematizingSimpleTreeView", () => {
 					error.message,
 					"TreeView.root is unavailable because the view schema is incompatible with the stored schema. The schemas cannot be upgraded automatically. Use a compatible view schema or explicitly migrate the document schema and data.",
 				);
-				assert.deepEqual(error.getTelemetryProperties().schemaIncompatibilityDetails, {
+				assert.deepEqual(error.getTelemetryProperties().schemaViewIncompatibilityDetails, {
 					tag: TelemetryDataTag.SchemaArtifact,
 					value: JSON.stringify([
 						{
@@ -1005,6 +1154,8 @@ describe("SchematizingSimpleTreeView", () => {
 							location: "root",
 							view: [],
 							stored: ["com.fluidframework.leaf.string"],
+							reason:
+								'Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
 						},
 					]),
 				});
@@ -1014,8 +1165,164 @@ describe("SchematizingSimpleTreeView", () => {
 
 		assert.throws(
 			() => view.upgradeSchema(),
-			(e) => e instanceof UsageError,
+			(error) => {
+				assert(error instanceof UsageError);
+				assert(!view.compatibility.upgrade.isCompatible);
+				assert.deepEqual(error.getTelemetryProperties().schemaUpgradeIncompatibilityDetails, {
+					tag: TelemetryDataTag.SchemaArtifact,
+					value: JSON.stringify(view.compatibility.upgrade.incompatibilities),
+				});
+				return true;
+			},
 		);
+	});
+
+	it("reports upgrade blockers on request when detached content needs an omitted definition", () => {
+		class Stored extends schema.object("OnDemand", {
+			x: schema.number,
+			hidden: schema.optional(schema.number),
+		}) {}
+		class Viewed extends schema.object(
+			"OnDemand",
+			{ x: schema.number },
+			{ allowUnknownOptionalFields: true },
+		) {}
+		const checkout = checkoutWithInitialTree(new TreeViewConfiguration({ schema: Stored }), {
+			x: 1,
+		});
+		const initial = toUpgradeSchema(Stored);
+		checkout.updateSchema({
+			rootFieldSchema: initial.rootFieldSchema,
+			nodeSchema: new Map([
+				...initial.nodeSchema,
+				...toUpgradeSchema(schema.string).nodeSchema,
+			]),
+		});
+		const view = asBeta(
+			new SchematizingSimpleTreeView(
+				checkout,
+				new TreeViewConfiguration({ schema: Viewed }),
+				new MockNodeIdentifierManager(),
+			),
+		);
+		const compatibility = view.compatibility;
+		assert.equal(compatibility.canView, true);
+		assert.equal(compatibility.canUpgrade, false);
+		assert.equal(compatibility.view.isCompatible, true);
+		assert(!compatibility.upgrade.isCompatible);
+		const expected = [
+			{
+				mismatch: "missingNodeSchema",
+				nodeType: schema.string.identifier,
+				reason:
+					'Cannot upgrade node type "com.fluidframework.leaf.string": its stored definition is missing from the proposed schema.',
+			},
+		];
+		const incompatibilities = compatibility.upgrade.incompatibilities;
+		assert.deepEqual(incompatibilities, expected);
+		assert.equal(view.compatibility, compatibility);
+		assert.equal(view.root.x, 1);
+		assert.throws(
+			() => view.upgradeSchema(),
+			(error) => {
+				assert(error instanceof UsageError);
+				assert.deepEqual(error.getTelemetryProperties().schemaUpgradeIncompatibilityDetails, {
+					tag: TelemetryDataTag.SchemaArtifact,
+					value: JSON.stringify(expected),
+				});
+				return true;
+			},
+		);
+	});
+
+	it("updates upgrade diagnostics when a stored schema change prevents both viewing and upgrading", () => {
+		const checkout = checkoutWithInitialTree(config, 5);
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config,
+			new MockNodeIdentifierManager(),
+		);
+		const originalCompatibility = view.compatibility;
+		assert.equal(originalCompatibility.canView, true);
+		assert.equal(originalCompatibility.canUpgrade, true);
+		let schemaChanged = false;
+		view.events.on("schemaChanged", () => {
+			schemaChanged = true;
+		});
+
+		checkout.updateSchema(toUpgradeSchema(configGeneralized.schema));
+
+		assert.equal(schemaChanged, true);
+		assert.equal(view.compatibility.canView, false);
+		assert.equal(view.compatibility.canUpgrade, false);
+		assert.notEqual(view.compatibility, originalCompatibility);
+		assert(!view.compatibility.upgrade.isCompatible);
+		assert.deepEqual(view.compatibility.upgrade.incompatibilities, [
+			{
+				mismatch: "viewIncompatibleAfterUpgrade",
+				reason:
+					"Cannot upgrade: the resulting stored schema would still prevent the view from reading or writing the document.",
+				incompatibilities: [
+					{
+						mismatch: "allowedTypes",
+						location: "root",
+						view: [],
+						stored: [schema.string.identifier],
+						reason:
+							'Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
+					},
+				],
+			},
+		]);
+		assert.equal(originalCompatibility.canView, true);
+		assert.equal(originalCompatibility.canUpgrade, true);
+		assert.deepEqual(originalCompatibility.upgrade, { isCompatible: true });
+	});
+
+	it("computes upgrade incompatibilities from the original schema after schema changes and disposal", () => {
+		class Stored extends schema.object("DeferredDisposal", {
+			x: schema.number,
+			hidden: schema.optional(schema.number),
+		}) {}
+		class Viewed extends schema.object(
+			"DeferredDisposal",
+			{ x: schema.number },
+			{ allowUnknownOptionalFields: true },
+		) {}
+		const checkout = checkoutWithInitialTree(new TreeViewConfiguration({ schema: Stored }), {
+			x: 5,
+		});
+		const initial = toUpgradeSchema(Stored);
+		checkout.updateSchema({
+			rootFieldSchema: initial.rootFieldSchema,
+			nodeSchema: new Map([
+				...initial.nodeSchema,
+				...toUpgradeSchema(schema.string).nodeSchema,
+			]),
+		});
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			new TreeViewConfiguration({ schema: Viewed }),
+			new MockNodeIdentifierManager(),
+		);
+		const previous = view.compatibility;
+		assert(previous.view.isCompatible);
+		assert(!previous.upgrade.isCompatible);
+
+		checkout.updateSchema(toUpgradeSchema([Stored, schema.string]));
+		assert.equal(view.compatibility.view.isCompatible, false);
+		assert.equal(view.compatibility.upgrade.isCompatible, false);
+		assert.notStrictEqual(view.compatibility, previous);
+		view.dispose();
+
+		assert.deepEqual(previous.upgrade.incompatibilities, [
+			{
+				mismatch: "missingNodeSchema",
+				nodeType: schema.string.identifier,
+				reason:
+					'Cannot upgrade node type "com.fluidframework.leaf.string": its stored definition is missing from the proposed schema.',
+			},
+		]);
 	});
 
 	it("Open incompatible document", () => {
@@ -1035,7 +1342,7 @@ describe("SchematizingSimpleTreeView", () => {
 				error.message,
 				"TreeView.root is unavailable because the view schema is incompatible with the stored schema. The schemas cannot be upgraded automatically. Use a compatible view schema or explicitly migrate the document schema and data.",
 			);
-			assert.deepEqual(error.getTelemetryProperties().schemaIncompatibilityDetails, {
+			assert.deepEqual(error.getTelemetryProperties().schemaViewIncompatibilityDetails, {
 				tag: TelemetryDataTag.SchemaArtifact,
 				value: JSON.stringify([
 					{
@@ -1043,6 +1350,8 @@ describe("SchematizingSimpleTreeView", () => {
 						location: "root",
 						view: ["com.fluidframework.leaf.boolean"],
 						stored: ["com.fluidframework.leaf.string"],
+						reason:
+							'Cannot view the root field: the view allows node types ["com.fluidframework.leaf.boolean"] that the stored schema does not allow; the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
 					},
 				]),
 			});
@@ -1439,7 +1748,6 @@ describe("SchematizingSimpleTreeView", () => {
 				assert.equal(viewB.root.content, 43);
 				// ...but then is rolled back after sequencing because the child node was removed by Tree A.
 				provider.synchronizeMessages();
-				assert.equal(viewB.root.content, 42);
 				assert.equal(viewB.root.content, 42);
 			});
 

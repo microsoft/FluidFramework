@@ -17,7 +17,6 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
 describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
@@ -50,15 +49,15 @@ describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 
 	beforeEach("createContainers", async () => {
 		const container1 = await provider.makeTestContainer(createContainerConfig);
-		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		sharedMap1 = await dataObject1.getSharedObject<ISharedMap>(mapId);
 
 		const container2 = await provider.loadTestContainer(loadContainerConfig);
-		const dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		sharedMap2 = await dataObject2.getSharedObject<ISharedMap>(mapId);
 
 		const container3 = await provider.loadTestContainer(loadContainerConfig);
-		const dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
+		const dataObject3 = (await container3.getEntryPoint()) as ITestFluidObject;
 		sharedMap3 = await dataObject3.getSharedObject<ISharedMap>(mapId);
 
 		sharedMap1.set("testKey1", "testValue");
@@ -402,12 +401,12 @@ describeCompat(
 
 		beforeEach("setup", async () => {
 			container1 = await provider.makeTestContainer(testContainerConfig);
-			dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+			dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 			sharedMap1 = await dataObject1.getSharedObject<ISharedMap>(mapId);
 			containerRuntime = dataObject1.context.containerRuntime as IContainerRuntime;
 
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+			dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			sharedMap2 = await dataObject2.getSharedObject<ISharedMap>(mapId);
 		});
 

@@ -259,7 +259,11 @@ export function chunkField(
 	debugAssert(
 		() => started === (length !== 0) || "only 0 length fields should not have nodes",
 	);
-	return chunkRange(cursor, policy, length, false);
+	// PERFORMANCE: This compacting copy removes spare backing-array capacity on V8.
+	// This trades copy time and spare capacity for lower retained memory, especially for single-child fields.
+	// This tradeoff should be reconsidered with other forest performance optimizations, especially
+	// those that change the storage format of single-child fields and could make exact sizing less worthwhile.
+	return [...chunkRange(cursor, policy, length, false)];
 }
 
 /**
@@ -745,13 +749,36 @@ export function splitFieldAtIndex(
 		// For chunks above the bisect threshold, cut at the midpoint and let the loop descend
 		// into whichever half holds nodeIndex. The other half is left untouched.
 		const splitPoint = total > bisectThreshold ? Math.floor(total / 2) : remaining;
-		const cursor = chunk.cursor();
-		cursor.firstNode();
-		const before = chunkRange(cursor, policy, splitPoint, false);
-		const after = chunkRange(cursor, policy, total - splitPoint, true);
+		let before: TreeChunk[];
+		let after: TreeChunk[];
+		if (chunk instanceof UniformChunk) {
+			// Preserve the known shape and value encoding rather than inferring a shape from schema again.
+			// A polymorphic schema could otherwise convert unaffected siblings to BasicChunks during fallback.
+			const shape = chunk.shape.treeShape;
+			const valueSplit = splitPoint * shape.valuesPerTopLevelNode;
+			before = [
+				new UniformChunk(
+					shape.withTopLevelLength(splitPoint),
+					chunk.values.slice(0, valueSplit),
+					chunk.idCompressor,
+				),
+			];
+			after = [
+				new UniformChunk(
+					shape.withTopLevelLength(total - splitPoint),
+					chunk.values.slice(valueSplit),
+					chunk.idCompressor,
+				),
+			];
+		} else {
+			const cursor = chunk.cursor();
+			cursor.firstNode();
+			before = chunkRange(cursor, policy, splitPoint, false);
+			after = chunkRange(cursor, policy, total - splitPoint, true);
+		}
 		replaceArrayRange(chunks, chunkIndex, chunkIndex + 1, [...before, ...after]);
-		// The spliced-out slot held a ref to the original chunk. The two new chunks come with
-		// their own refs from chunkRange, so the slot's ref to the original needs to be released.
+		// Each replacement array entry owns a reference, whether constructed above or returned by chunkRange.
+		// Release the removed array slot's reference to the original chunk.
 		chunk.referenceRemoved();
 	}
 	assert(remaining === 0, 0xcf9 /* nodeIndex exceeds total node count in field */);

@@ -33,7 +33,7 @@ parameters:
 
 - name: primaryRegistry
   type: string
-  default: $(ado-feeds-primary-registry)
+  default: https://pkgs.dev.azure.com/fluidframework/public/_packaging/publicPackages/npm/registry/
 
 # An optional extra segment appended to the pnpm store cache key (separated by |).
 # Note that Azure pipelines interpret unquoted cache keys as files rather than literal strings. E.g. the following specification:
