@@ -727,9 +727,11 @@ export interface IContainerLoadMode {
 	 *
 	 * @remarks
 	 * - `undefined`: The Loader does not wait for trailing ops.
-	 * It starts to fetch them in the background.
+	 * Unless `deltaConnection` is `"none"`, it starts to fetch them in the background.
+	 * If `deltaConnection` is `"none"`, the trailing ops are not fetched until the container connects.
 	 *
 	 * - `"cached"`: The Loader fetches the trailing ops that the driver has cached locally, and processes them before it returns.
+	 * The Loader fetches the remaining trailing ops in the background and does not wait for them.
 	 * Caching is optional and is implemented by the driver.
 	 * If the driver does not cache ops, this is the same as `undefined`.
 	 * The driver can cache many ops, so this can make load slower.

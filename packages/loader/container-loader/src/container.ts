@@ -167,6 +167,7 @@ import {
 	convertISnapshotToSnapshotWithBlobs,
 	convertSnapshotInfoToSnapshot,
 } from "./utils.js";
+import { waitForFetchedOpsToBeProcessed } from "./waitForFetchedOps.js";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -1697,7 +1698,7 @@ export class Container
 		const lastProcessedSequenceNumber =
 			pendingLocalState?.savedOps[pendingLocalState.savedOps.length - 1]?.sequenceNumber ??
 			attributes.sequenceNumber;
-		let opsBeforeReturnP: Promise<void> | undefined;
+		let opsBeforeReturnP: Promise<number> | undefined;
 
 		// Attach op handlers to finish initialization and be able to start processing ops
 		// Kick off any ops fetching if required.
@@ -1772,7 +1773,10 @@ export class Container
 			if (opsBeforeReturnP !== undefined) {
 				this._deltaManager.inbound.resume();
 
-				await PerformanceEvent.timedExecAsync(
+				// The sequence number of the last op that the requested fetch queued.
+				// Ops that arrive later (from the background storage fetch for "cached", or from the delta connection)
+				// must not delay load.
+				const lastFetchedSeqNumber = await PerformanceEvent.timedExecAsync(
 					this.mc.logger,
 					{ eventName: "WaitOps" },
 					async () => opsBeforeReturnP,
@@ -1781,7 +1785,12 @@ export class Container
 					this.mc.logger,
 					{ eventName: "WaitOpProcessing" },
 					async (event) => {
-						const result = await this.waitForFetchedOpsToBeProcessed();
+						const result = await waitForFetchedOpsToBeProcessed(
+							this._deltaManager.inbound,
+							() => this._deltaManager.lastSequenceNumber,
+							lastFetchedSeqNumber,
+							() => this.closed,
+						);
 						event.end({ ...result });
 					},
 				);
@@ -2157,78 +2166,11 @@ export class Container
 		return deltaManager;
 	}
 
-	/**
-	 * Waits until the ops fetched for {@link IContainerLoadMode.opsBeforeReturn} have been processed.
-	 *
-	 * @remarks
-	 * `DeltaQueue.waitTillProcessingDone()` only waits for the current processing turn.
-	 * The runtime can pause the inbound queue during a turn and resume it later,
-	 * for example to yield the JS thread after a processing time budget (see container-runtime's `DeltaScheduler`).
-	 * In that case the processing turn ends while fetched ops are still queued.
-	 *
-	 * This method yields a macrotask whenever processing stops with ops still queued,
-	 * so that such scheduled resumes can run, and then waits for processing again.
-	 * It returns when either:
-	 *
-	 * - the last op known when this method was called has been processed,
-	 *
-	 * - the inbound queue is empty, or
-	 *
-	 * - the queue stays paused across the yield without any progress, which means that some other component holds
-	 * the queue (for example, the runtime waits for the rest of an incomplete batch).
-	 * Waiting further could deadlock, because the ops that release the hold might not be available yet.
-	 */
-	private async waitForFetchedOpsToBeProcessed(): Promise<{
-		targetSeqNumber: number;
-		turns: number;
-		remainingOps: number;
-		stoppedBecausePaused: boolean;
-	}> {
-		const inbound = this._deltaManager.inbound;
-		const targetSeqNumber = this._deltaManager.lastKnownSeqNumber;
-		let turns = 0;
-		let stoppedBecausePaused = false;
-
-		while (true) {
-			await inbound.waitTillProcessingDone();
-			turns++;
-			if (
-				this.closed ||
-				inbound.length === 0 ||
-				this._deltaManager.lastSequenceNumber >= targetSeqNumber
-			) {
-				break;
-			}
-
-			// Processing stopped with ops still queued, so something paused the queue.
-			// Yield a macrotask so that a resume scheduled with setTimeout can run before we check again.
-			// The resumed turn can pause again (and schedule another resume), so detect a hold by lack of progress.
-			const seqBeforeYield = this._deltaManager.lastSequenceNumber;
-			await new Promise<void>((resolve) => setTimeout(resolve, 0));
-			if (
-				!this.closed &&
-				inbound.paused &&
-				inbound.length > 0 &&
-				this._deltaManager.lastSequenceNumber === seqBeforeYield
-			) {
-				stoppedBecausePaused = true;
-				break;
-			}
-		}
-
-		return {
-			targetSeqNumber,
-			turns,
-			remainingOps: inbound.length,
-			stoppedBecausePaused,
-		};
-	}
-
 	private async attachDeltaManagerOpHandler(
 		attributes: IDocumentAttributes,
 		prefetchType?: "cached" | "all" | "none",
 		lastProcessedSequenceNumber?: number,
-	): Promise<void> {
+	): Promise<number> {
 		return this._deltaManager.attachOpHandler(
 			attributes.minimumSequenceNumber /* minimumSequenceNumber */,
 			attributes.sequenceNumber /* snapshotSequenceNumber */,
