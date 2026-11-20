@@ -19,6 +19,7 @@ how it is tested, and what is still open.
 | What compaction is, and which history and which clients it affects | [Part I: Concepts](#part-i-concepts) |
 | The exact API and its guarantees | [Part II: API specification](#part-ii-api-specification) |
 | How it is built, and why | [Part III: Design and implementation](#part-iii-design-and-implementation) |
+| Subsystem block diagram and what the correctness fixes change | [§12.1](#121-subsystem-flow-and-correctness-changes) |
 | How pins (preserved revisions) work | [§11](#11-preserved-revisions-design) |
 | What can corrupt persisted data, and the fixes | [Part IV: Persisted format and data integrity](#part-iv-persisted-format-and-data-integrity) |
 | Each discovered bug, its cause, fix, and named regression | [§17.9: Bug-to-regression index](#179-bug-to-regression-index) |
@@ -760,6 +761,59 @@ feature-libraries (imports shared-tree-core): DefaultRevisionReplacer, modular c
 | Pin ops and rejection | `SharedTreeCore` | Owns sending, processing, resubmitting, rollback, and stashing ops. |
 | Pin API mapping | `SharedTreeKernel` (`@throwIfBroken`) | Converts `CommitRevision` to `RevisionTag` (`idCompressor.tryRecompress`), checks the gate, throws `UsageError`s without breaking the tree. |
 | Pin formats | `*VHistoryCompaction.ts` codecs; selection in `resolveFormatOptions` (`treeFactory.ts`) | Each wraps the matching v7 codec; always registered for reading. |
+
+#### 12.1 Subsystem flow and correctness changes
+
+This diagram shows runtime flow, not import dependencies.
+Both triggers use the same compaction engine in the client that runs the pass.
+The summary path then persists that client's history; a manual request does not itself write a summary or send an op.
+
+```mermaid
+flowchart TD
+    manual["Application: requestCompaction(callback)"]
+    summary["Summarizer: configured summary-time callback"]
+    kernel["SharedTreeKernel.runCompaction<br/>Policy adapter, pass telemetry, error handling"]
+    core["SharedTreeCore.compactHistory<br/>Forward to the history engine"]
+    bounds["EditManager<br/>Collaboration and local-fork bounds<br/>Only eligible, unpinned adjacent pairs reach the policy"]
+    policy["Application callback through the kernel adapter<br/>Boolean or replacement metadata object"]
+    keep["Keep this pair unchanged"]
+    peers["FIXED: SharedBranch.rebasePeersOnto<br/>Move peer bases to the newest eligible survivor<br/>Once before the first merge in the pass"]
+    compose["FIXED: composeTrunkCommits + modular change family<br/>Compose changes; keep original atom IDs<br/>Keep one authored revision: the target"]
+    trunk["FIXED: update the surviving target in place<br/>Clear its cached inverse; update metadata and trunk indexes<br/>Remove the older commit from the trunk"]
+    repair["FIXED: ancestryCompacted event to subscribed checkouts<br/>TreeCheckout + DetachedFieldIndex<br/>Transfer cleanup ownership; do not rename or delete roots"]
+    reads["Historical reads, restore, Undo/Redo<br/>Invert reserves preserved revision namespaces<br/>Reject stale captured revertTo paths"]
+    trim["Later normal history trimming<br/>Release repair roots when their cleanup owner is trimmed"]
+    persist["Summary codecs and storage<br/>Preserve original atom IDs<br/>Revision-remapping callers must maintain maxId"]
+    load["Fresh client or replacement summarizer<br/>Decode retained history and repair data"]
+
+    manual --> kernel
+    summary --> kernel
+    kernel --> core --> bounds --> policy
+    policy -->|false| keep
+    policy -->|true or metadata object| peers
+    peers --> compose --> trunk
+    trunk -->|notify checkouts| repair
+    repair --> reads
+    repair -->|cleanup ownership used later| trim
+    trunk -->|when this client writes a summary| persist
+    persist --> load
+    load -->|subsequent historical reads| reads
+```
+
+**What changes, and why:**
+
+| Subsystem | Earlier faulty behavior | Implemented behavior |
+| --- | --- | --- |
+| Commit composition and repair lookup | Rewriting atom IDs broke references held by repair data, later changes, forks, and revertibles. | Keep lookup IDs stable; normalize only authored revision metadata. |
+| Branch and cache lifecycle | Peer branches could retain removed bases; the surviving commit could retain an inverse for its former change. | Rebase peers before composition and invalidate the survivor's cached inverse. |
+| Repair-data lifetime | Roots could retain a cleanup owner that compaction had removed, so later trimming did not collect them. | Transfer cleanup ownership to the survivor without changing lookup identity; normal trimming still controls release. |
+| Historical navigation | Inversion could lack aliases for preserved namespaces, and a captured restore callback could accept an in-place-mutated path. | Reserve the needed namespaces and reject stale callbacks before applying changes; a fresh callback uses the current path. |
+| Persisted changes | Genuine ID remapping could allocate beyond `maxId`, allowing decoder temporary IDs to collide. | Track the allocated maximum, including range endpoints. Current compaction avoids ID remapping; other remapping callers still need this fix. |
+
+The correctness boundaries are unchanged: compaction cannot bypass collaboration or local-fork protection, preserved revisions, or the trunk-base restriction.
+The fixes change how eligible history is composed and how its dependent state stays valid; they do not change current document content or add a new persisted format.
+Aggregate pass telemetry and opt-in diagnostic traces observe these paths ([§18](#18-implemented-telemetry)).
+For each bug's regression tests and the remaining unproven app failures, see [§17.9](#179-bug-to-regression-index).
 
 ### 13. The algorithm
 
