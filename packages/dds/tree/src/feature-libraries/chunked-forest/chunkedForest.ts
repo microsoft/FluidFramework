@@ -28,6 +28,7 @@ import {
 	type UpPath,
 	aboveRootPlaceholder,
 	combineVisitors,
+	createSourceValidationVisitor,
 	detachedFieldAsKey,
 	makeBreakingVisitor,
 	rootFieldKey,
@@ -38,8 +39,8 @@ import { brand, Breakable, type WithBreakable } from "../../util/index.js";
 
 import { BasicChunk } from "./basicChunk.js";
 import { ChunkCursor, ChunkSequenceCursor } from "./chunkCursor.js";
-import { ChunkEditTraversal } from "./chunkEditTraversal.js";
-import { getFieldLength } from "./chunkEditing.js";
+import { ChunkEditTraversal, spliceChunkField } from "./chunkEditTraversal.js";
+import { getFieldLength, validateChunkEditRange } from "./chunkEditing.js";
 import { type IChunker, chunkField, chunkTree } from "./chunkTree.js";
 
 export { ensureExclusiveBasicChunk } from "./chunkEditTraversal.js";
@@ -131,10 +132,24 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 			oldRoots.referenceRemoved();
 		}
 
-		const editor = new ChunkEditTraversal(this.roots, {
+		const compressor = {
 			policy: this.chunker,
 			idCompressor: this.idCompressor,
-		});
+		};
+		const editor = new ChunkEditTraversal(this.roots, compressor);
+		const takeDetachedRange = (
+			key: FieldKey,
+			chunks: TreeChunk[],
+			range: Range,
+		): TreeChunk[] => {
+			const length = getFieldLength(chunks);
+			validateChunkEditRange(range, length);
+			if (range.start === 0 && range.end === length) {
+				this.roots.fields.delete(key);
+				return chunks;
+			}
+			return spliceChunkField(chunks, range, [], compressor);
+		};
 		const forestVisitor = {
 			forest: this,
 			free(): void {
@@ -145,16 +160,12 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 				);
 				this.forest.activeVisitor = undefined;
 			},
-			destroy(detachedField: FieldKey, count: number): void {
+			destroy(detachedField: FieldKey, range: Range): void {
 				this.forest.#events.emit("beforeChange");
 				const field = this.forest.roots.fields.get(detachedField);
 				assert(field !== undefined, 0xd1d /* Destroyed field must exist */);
-				assert(
-					getFieldLength(field) === count,
-					0xd1e /* Destroy count must match field length */,
-				);
-				this.forest.roots.fields.delete(detachedField);
-				for (const chunk of field) {
+				const removed = takeDetachedRange(detachedField, field, range);
+				for (const chunk of removed) {
 					chunk.referenceRemoved();
 				}
 			},
@@ -174,9 +185,9 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 				this.forest.roots.fields.set(destination, chunks);
 				this.forest.#events.emit("afterRootFieldCreated", destination);
 			},
-			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
+			attach(source: FieldKey, sourceRange: Range, destination: PlaceIndex): void {
 				this.forest.#events.emit("beforeChange");
-				this.attachEdit(source, count, destination);
+				this.attachEdit(source, sourceRange, destination);
 			},
 			detach(source: Range, destination: FieldKey, id: DeltaDetachedNodeId): void {
 				this.forest.#events.emit("beforeChange");
@@ -184,6 +195,7 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 			},
 			replace(
 				source: FieldKey,
+				sourceRange: Range,
 				range: Range,
 				destination: FieldKey,
 				id: DeltaDetachedNodeId,
@@ -208,22 +220,24 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 				const content = this.forest.roots.fields.get(source);
 				assert(content !== undefined, 0xe02 /* Replacement source must exist */);
 				assert(
-					getFieldLength(content) === range.end - range.start,
+					sourceRange.end - sourceRange.start === range.end - range.start,
 					0xe03 /* Replacement lengths must match */,
 				);
-				const removed = editor.splice(range, content);
-				this.forest.roots.fields.delete(source);
+				validateChunkEditRange(range, editor.getFieldLength());
+				const incoming = takeDetachedRange(source, content, sourceRange);
+				const removed = editor.splice(range, incoming);
 				if (removed.length > 0) {
 					this.forest.roots.fields.set(destination, removed);
 				}
 			},
 			/**
-			 * Attaches the range into the current field by transferring it from the given source path.
+			 * Attaches the range into the current field by transferring it from the given source field.
 			 * Does not invalidate dependents.
-			 * @param source - The the range to be attached.
+			 * @param source - The detached field containing the nodes to attach.
+			 * @param sourceRange - The range of nodes to attach from the source field.
 			 * @param destination - The index in the current field at which to attach the content.
 			 */
-			attachEdit(source: FieldKey, count: number, destination: PlaceIndex): void {
+			attachEdit(source: FieldKey, sourceRange: Range, destination: PlaceIndex): void {
 				assert(
 					!editor.isRootField(source),
 					0xd20 /* Attach source field must be different from current field */,
@@ -231,15 +245,15 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 				const sourceField = this.forest.roots.fields.get(source);
 				assert(sourceField !== undefined, 0xd21 /* Attach source field must exist */);
 				assert(
-					getFieldLength(sourceField) === count,
-					0xd22 /* Attach must consume all nodes in source field */,
-				);
-				assert(
 					destination <= editor.getFieldLength(),
 					0xd23 /* Attach destination must not exceed field length */,
 				);
-				editor.splice({ start: destination, end: destination }, sourceField);
-				this.forest.roots.fields.delete(source);
+				validateChunkEditRange(
+					{ start: destination, end: destination },
+					editor.getFieldLength(),
+				);
+				const incoming = takeDetachedRange(source, sourceField, sourceRange);
+				editor.splice({ start: destination, end: destination }, incoming);
 			},
 			/**
 			 * Detaches the range from the current field and transfers it to the given destination if any.
@@ -295,6 +309,7 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 			announcedVisitors.push(getVisitor());
 		}
 		const visitor = combineVisitors([
+			createSourceValidationVisitor(),
 			makeBreakingVisitor(forestVisitor, this.breaker),
 			...announcedVisitors,
 		]);

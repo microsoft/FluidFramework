@@ -107,7 +107,7 @@ function createDirtyVisitor(forest: IEditableForest, dirty: DirtyTreeMap): Annou
 				}
 			}
 		},
-		afterAttach: (_, dst) => {
+		afterAttach: (_, _sourceRange, dst) => {
 			assert(parent !== undefined, 0xc4a /* Expected node */);
 			assert(parentField !== undefined, 0xc4b /* Expected field */);
 			for (let parentIndex = dst.start; parentIndex < dst.end; parentIndex++) {

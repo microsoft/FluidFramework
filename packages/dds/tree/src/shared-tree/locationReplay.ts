@@ -133,10 +133,10 @@ export class LocationReplay {
 					}
 				});
 			},
-			beforeAttach: (_source, count, index) => {
+			beforeAttach: (_source, sourceRange, index) => {
 				forEachGap((gap) => {
 					if (gap.index > index || (gap.index === index && gap.affinity === "after")) {
-						gap.index += count;
+						gap.index += sourceRange.end - sourceRange.start;
 					}
 				});
 			},

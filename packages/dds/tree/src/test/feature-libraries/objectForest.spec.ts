@@ -68,7 +68,7 @@ describe("object-forest", () => {
 		const visitor = forest.acquireVisitor();
 		visitor.enterField(rootFieldKey);
 		assert.throws(
-			() => visitor.destroy(detachedFieldKey, 1),
+			() => visitor.destroy(detachedFieldKey, { start: 0, end: 1 }),
 			validateAssertionError(
 				`Found unexpected cursors when editing with the following annotations: ["named","fork: named","namedFork",null,"fork: undefined"]`,
 			),
