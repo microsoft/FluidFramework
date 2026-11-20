@@ -6,6 +6,7 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
+	EmptyKey,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	type TreeStoredSchema,
@@ -24,9 +25,17 @@ import {
 	SchemaVersionComparison,
 	defaultSchemaPolicy,
 } from "../../feature-libraries/index.js";
+import {
+	booleanSchema,
+	handleSchema,
+	nullSchema,
+	numberSchema,
+	stringSchema,
+} from "../leafNodeSchema.js";
 import { resolveStoredSchemaGenerationOptions } from "../toStoredSchema.js";
 import { getSchemaUpgradeCandidate, toInitialSchema, type TreeSchema } from "../treeSchema.js";
 
+import { tryStoredSchemaAsArray } from "./customTree.js";
 import {
 	getIncompatibilitiesInAllowedContent,
 	type Incompatibility,
@@ -105,7 +114,10 @@ function formatSchemaVersionIncompatibility(
 	};
 }
 
-function formatViewIncompatibility(value: Incompatibility): SchemaViewIncompatibility {
+function formatViewIncompatibility(
+	value: Incompatibility,
+	storedSchema: TreeStoredSchema,
+): SchemaViewIncompatibility {
 	switch (value.mismatch) {
 		case "allowedTypes": {
 			const view = value.view.map(({ type }) => type.identifier).sort();
@@ -123,7 +135,7 @@ function formatViewIncompatibility(value: Incompatibility): SchemaViewIncompatib
 				...(value.viewIsStagedOptional === true
 					? { viewIsStagedOptional: value.viewIsStagedOptional }
 					: {}),
-				reason: `Cannot view ${describeFieldLocation(value)}: ${[
+				reason: `Cannot view ${describeFieldLocation(value, storedSchema)}: ${[
 					view.length > 0
 						? `the view allows node types ${JSON.stringify(view)} that the stored schema does not allow`
 						: undefined,
@@ -144,7 +156,7 @@ function formatViewIncompatibility(value: Incompatibility): SchemaViewIncompatib
 				...(value.viewIsStagedOptional === true
 					? { viewIsStagedOptional: value.viewIsStagedOptional }
 					: {}),
-				reason: `Cannot view ${describeFieldLocation(value)}: the view permits ${describeFieldKind(value.view)}, but the stored schema permits ${describeFieldKind(value.stored)}.`,
+				reason: `Cannot view ${describeFieldLocation(value, storedSchema)}: the view permits ${describeFieldKind(value.view)}, but the stored schema permits ${describeFieldKind(value.stored)}.`,
 			};
 		}
 		case "valueSchema": {
@@ -162,7 +174,7 @@ function formatViewIncompatibility(value: Incompatibility): SchemaViewIncompatib
 				nodeType: value.identifier,
 				view: NodeKind[value.view],
 				stored: getStoredNodeKind(value.stored),
-				reason: `Cannot view node type ${JSON.stringify(value.identifier)}: the stored node structure does not match the view's ${NodeKind[value.view]} definition (stored representation: ${getStoredNodeKind(value.stored)}).`,
+				reason: `Cannot view node type ${JSON.stringify(value.identifier)}: the stored node structure does not match the view's ${NodeKind[value.view]} definition (stored representation: ${getStoredNodeKind(value.stored)}${hasArrayStructure(storedSchema.nodeSchema.get(value.identifier)) ? " (array structure)" : ""}).`,
 			};
 		}
 		default: {
@@ -175,9 +187,13 @@ function formatViewIncompatibility(value: Incompatibility): SchemaViewIncompatib
  * Converts an internal upgrade incompatibility into a public incompatibility with a human-readable reason.
  *
  * @param value - The failed stored-schema upgrade requirement to describe.
+ * @param storedSchema - The document's stored schema before the upgrade.
+ * @param proposedSchema - The candidate stored schema after the upgrade.
  */
 function formatUpgradeIncompatibility(
 	value: StoredSchemaUpgradeIncompatibility,
+	storedSchema: TreeStoredSchema,
+	proposedSchema: TreeStoredSchema,
 ): SchemaUpgradeIncompatibility {
 	switch (value.mismatch) {
 		case "allowedTypes": {
@@ -187,7 +203,9 @@ function formatUpgradeIncompatibility(
 				location: formatIncompatibilityLocation(value),
 				proposed: [...value.proposed].filter((type) => !value.stored.has(type)).sort(),
 				stored,
-				reason: `Cannot upgrade ${describeFieldLocation(value)}: the proposed schema removes allowed node types ${JSON.stringify(stored)}.`,
+				reason:
+					describeRemovedArrayOrObjectField(value, stored, storedSchema, proposedSchema) ??
+					`Cannot upgrade ${describeFieldLocation(value, storedSchema, proposedSchema)}: the proposed schema removes allowed node types ${JSON.stringify(stored)}.`,
 			};
 		}
 		case "fieldKind": {
@@ -196,7 +214,7 @@ function formatUpgradeIncompatibility(
 				location: formatIncompatibilityLocation(value),
 				proposed: value.proposed,
 				stored: value.stored,
-				reason: `Cannot upgrade ${describeFieldLocation(value)}: changing from ${describeFieldKind(value.stored)} to ${describeFieldKind(value.proposed)} is not permitted by the schema upgrade rules.`,
+				reason: `Cannot upgrade ${describeFieldLocation(value, storedSchema, proposedSchema)}: changing from ${describeFieldKind(value.stored)} to ${describeFieldKind(value.proposed)} is not permitted by the schema upgrade rules.`,
 			};
 		}
 		case "valueSchema": {
@@ -214,7 +232,7 @@ function formatUpgradeIncompatibility(
 				nodeType: value.identifier,
 				proposed: getStoredNodeKind(value.proposed),
 				stored: getStoredNodeKind(value.stored),
-				reason: `Cannot upgrade node type ${JSON.stringify(value.identifier)}: changing the stored node representation from ${getStoredNodeKind(value.stored)} to ${getStoredNodeKind(value.proposed)} is not permitted.`,
+				reason: `Cannot upgrade node type ${JSON.stringify(value.identifier)}: changing the stored node representation from ${getStoredNodeKind(value.stored)}${hasArrayStructure(value.stored) ? " (array structure)" : ""} to ${getStoredNodeKind(value.proposed)}${hasArrayStructure(value.proposed) ? " (array structure)" : ""} is not permitted.`,
 			};
 		}
 		case "missingNodeSchema": {
@@ -267,7 +285,7 @@ function getSchemaUpgradeIncompatibilityDetails(
 		)
 	) {
 		return incompatibilities.map((incompatibility) =>
-			formatUpgradeIncompatibility(incompatibility),
+			formatUpgradeIncompatibility(incompatibility, stored, proposed),
 		);
 	}
 	return getPostUpgradeViewIncompatibilities(viewSchema, proposed);
@@ -282,7 +300,7 @@ function getPostUpgradeViewIncompatibilities(
 ): readonly SchemaUpgradeIncompatibility[] | undefined {
 	const incompatibilities = [
 		...getIncompatibilitiesInAllowedContent(viewSchema, candidate),
-	].map((incompatibility) => formatViewIncompatibility(incompatibility));
+	].map((incompatibility) => formatViewIncompatibility(incompatibility, candidate));
 	return incompatibilities.length === 0
 		? undefined
 		: [
@@ -307,12 +325,89 @@ function formatValueSchema(value: ValueSchema | undefined): string | undefined {
 	return value === undefined ? undefined : ValueSchema[value];
 }
 
-function describeFieldLocation(value: SchemaIncompatibilityLocation): string {
-	return value.identifier === undefined
-		? "the root field"
-		: value.fieldKey === undefined
+function describeFieldLocation(
+	value: SchemaIncompatibilityLocation,
+	storedSchema: TreeStoredSchema,
+	proposedSchema?: TreeStoredSchema,
+): string {
+	if (value.identifier === undefined) {
+		return "the root field";
+	}
+	const storedIsArray = hasArrayStructure(storedSchema.nodeSchema.get(value.identifier));
+	const proposedIsArray = hasArrayStructure(proposedSchema?.nodeSchema.get(value.identifier));
+	const location =
+		value.fieldKey === undefined
 			? `map entries of node type ${JSON.stringify(value.identifier)}`
-			: `field ${JSON.stringify(value.fieldKey)} of node type ${JSON.stringify(value.identifier)}`;
+			: value.fieldKey === EmptyKey && (storedIsArray || proposedIsArray)
+				? `array elements of node type ${JSON.stringify(value.identifier)} (stored key "")`
+				: `field ${JSON.stringify(value.fieldKey)} of node type ${JSON.stringify(value.identifier)}`;
+	return proposedSchema !== undefined && storedIsArray !== proposedIsArray
+		? `${location} (${storedIsArray ? "stored" : "proposed"} schema has array structure)`
+		: location;
+}
+
+function describeRemovedArrayOrObjectField(
+	{ identifier, fieldKey }: SchemaIncompatibilityLocation,
+	removedTypes: readonly string[],
+	storedSchema: TreeStoredSchema,
+	proposedSchema: TreeStoredSchema,
+): string | undefined {
+	if (identifier === undefined || fieldKey === undefined) {
+		return undefined;
+	}
+	const stored = storedSchema.nodeSchema.get(identifier);
+	const proposed = proposedSchema.nodeSchema.get(identifier);
+	if (
+		!(stored instanceof ObjectNodeStoredSchema) ||
+		!(proposed instanceof ObjectNodeStoredSchema) ||
+		proposed.objectNodeFields.has(fieldKey)
+	) {
+		return undefined;
+	}
+	const storedIsArray = hasArrayStructure(stored);
+	const proposedIsArray = hasArrayStructure(proposed);
+	if (storedIsArray === proposedIsArray) {
+		return undefined;
+	}
+
+	const types = removedTypes.map(describeAllowedNodeType).join(", ");
+	const node = JSON.stringify(identifier);
+	const field = JSON.stringify(fieldKey);
+	return storedIsArray
+		? `Cannot upgrade node type ${node}: the stored array allows ${types} as elements, but the proposed object has no array elements.`
+		: `Cannot upgrade node type ${node}: the stored object allows ${types} in field ${field}, but the proposed array has no field ${field}.`;
+}
+
+function describeAllowedNodeType(type: string): string {
+	switch (type) {
+		case booleanSchema.identifier: {
+			return "booleans";
+		}
+		case handleSchema.identifier: {
+			return "Fluid handles";
+		}
+		case nullSchema.identifier: {
+			return "null";
+		}
+		case numberSchema.identifier: {
+			return "numbers";
+		}
+		case stringSchema.identifier: {
+			return "strings";
+		}
+		default: {
+			return `nodes of type ${JSON.stringify(type)}`;
+		}
+	}
+}
+
+function hasArrayStructure(schema: TreeNodeStoredSchema | undefined): boolean {
+	// Other stored object shapes can come from lower-level APIs and need not represent arrays.
+	return (
+		schema instanceof ObjectNodeStoredSchema &&
+		schema.objectNodeFields.size === 1 &&
+		tryStoredSchemaAsArray(schema) !== undefined
+	);
 }
 
 function describeFieldKind(kind: string): string {
@@ -423,7 +518,7 @@ export function checkSchemaCompatibility(
 		stored,
 		upgradeCollector,
 	)) {
-		viewIncompatibilities.push(formatViewIncompatibility(incompatibility));
+		viewIncompatibilities.push(formatViewIncompatibility(incompatibility, stored));
 	}
 	const canView = viewIncompatibilities.length === 0;
 
@@ -503,7 +598,7 @@ export function checkSchemaCompatibility(
 				: canUpgradeStored
 					? postUpgradeViewIncompatibilities
 					: upgradeIncompatibilities.map((incompatibility) =>
-							formatUpgradeIncompatibility(incompatibility),
+							formatUpgradeIncompatibility(incompatibility, stored, wouldUpgradeTo),
 						);
 		assert(
 			incompatibilities !== undefined && incompatibilities.length > 0,
