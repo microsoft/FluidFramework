@@ -57,7 +57,6 @@ function createMockApiFunction(
 
 describe("ApiItemTransformUtilities", () => {
 	describe("getFilteredMembers", () => {
-
 		/**
 		 * Creates a derived interface with inherited, local, and excluded properties for the member-selection tests.
 		 *

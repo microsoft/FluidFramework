@@ -4,17 +4,17 @@
  */
 
 import {
-	ApiClass,
-	ApiInterface,
+	type ApiClass,
+	type ApiInterface,
 	type ApiItem,
-	ApiMethod,
-	ApiMethodSignature,
-	ApiPropertyItem,
-	ApiTypeAlias,
+	ApiItemKind,
+	type ApiMethod,
+	type ApiMethodSignature,
+	type ApiPropertyItem,
 	type Excerpt,
 } from "@microsoft/api-extractor-model";
 
-import { type ApiTypeLike, isStatic } from "../../utilities/index.js";
+import { type ApiTypeLike, isPropertyItem, isStatic } from "../../utilities/index.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 
 import { shouldItemBeIncluded } from "./ApiItemVisibility.js";
@@ -48,7 +48,10 @@ interface MemberSet {
 	 * @remarks
 	 * Members excluded from the documentation still participate in override resolution.
 	 */
-	readonly members: Map<string, { declaration: InstanceMember; bindings: TypeBindings }>;
+	readonly members: Map<
+		string,
+		{ declaration: InstanceMember; bindings: TypeBindings; overrideKey: string }
+	>;
 
 	/**
 	 * Canonical reference strings of declarations replaced by a nearer declaration of the same name.
@@ -61,19 +64,66 @@ interface MemberSet {
 
 function isInstanceMember(item: ApiItem): item is InstanceMember {
 	return (
-		(item instanceof ApiPropertyItem ||
-			item instanceof ApiMethod ||
-			item instanceof ApiMethodSignature) &&
-		!isStatic(item) &&
-		!item.displayName.startsWith("[")
+		(isPropertyItem(item) ||
+			item.kind === ApiItemKind.Method ||
+			item.kind === ApiItemKind.MethodSignature) &&
+		!isStatic(item)
 	);
 }
 
+/**
+ * Identifies the member slot that a nearer declaration would override.
+ *
+ * @remarks
+ * A symbol's display name is not its identity: two packages can each export a different `key`.
+ * Use only a reference covering the whole expression between the name's brackets, never a reference in the member type.
+ */
+function getOverrideKey(member: InstanceMember): string | undefined {
+	if (!member.name.startsWith("[")) {
+		return `name:${member.name}`;
+	}
+	const { text, spannedTokens } = member.excerpt;
+	const open = text.indexOf("[");
+	const close = text.indexOf("]", open + 1);
+	if (
+		open < 0 ||
+		close < 0 ||
+		text.slice(open, close + 1).replaceAll(/\s/gu, "") !== member.name.replaceAll(/\s/gu, "")
+	) {
+		return undefined;
+	}
+	const key = text.slice(open + 1, close).trim();
+	const start = text.indexOf(key, open + 1);
+	let offset = 0;
+	for (const token of spannedTokens) {
+		if (offset > start) {
+			break;
+		}
+		if (offset === start && token.text === key && token.canonicalReference !== undefined) {
+			return `reference:${token.canonicalReference.toString()}`;
+		}
+		offset += token.text.length;
+	}
+	return undefined;
+}
+
+function isInterface(item: ApiItem): item is ApiInterface {
+	return item.kind === ApiItemKind.Interface;
+}
+
+function isClass(item: ApiItem): item is ApiClass {
+	return item.kind === ApiItemKind.Class;
+}
+
+function isTypeLike(item: ApiItem): item is ApiTypeLike {
+	return isClass(item) || isInterface(item) || item.kind === ApiItemKind.TypeAlias;
+}
+
 function getBaseExcerpts(item: ApiTypeLike): readonly Excerpt[] {
-	if (item instanceof ApiInterface) {
+	if (isInterface(item)) {
 		return item.extendsTypes.map((base) => base.excerpt);
 	}
-	if (item instanceof ApiClass) {
+	if (isClass(item)) {
 		return item.extendsType === undefined ? [] : [item.extendsType.excerpt];
 	}
 	return [item.typeExcerpt];
@@ -168,14 +218,27 @@ class InheritanceResolver {
 					`Cannot resolve base "${target.reference.toString()}" of ${item.displayName}: ${errorMessage}`,
 				);
 			} else if (
-				(resolvedApiItem instanceof ApiClass ||
-					resolvedApiItem instanceof ApiInterface ||
-					resolvedApiItem instanceof ApiTypeAlias) &&
+				isTypeLike(resolvedApiItem) &&
 				shouldItemBeIncluded(resolvedApiItem, this.config)
 			) {
+				// Class heritage names a constructor value. A same-named interface or alias is not
+				// evidence about its instances unless it actually merges with a class declaration.
+				const mergedClass = isInterface(resolvedApiItem)
+					? resolvedApiItem.getMergedSiblings().find(isClass)
+					: undefined;
+				const base =
+					mergedClass !== undefined && shouldItemBeIncluded(mergedClass, this.config)
+						? mergedClass
+						: resolvedApiItem;
+				if (isClass(item) && !isClass(base)) {
+					this.config.logger.verbose(
+						`Skipping unverified superclass "${target.reference.toString()}" of ${item.displayName}.`,
+					);
+					continue;
+				}
 				bases.push({
-					base: resolvedApiItem,
-					bindings: bindBase(resolvedApiItem, target.typeArguments, item),
+					base,
+					bindings: bindBase(base, target.typeArguments, item),
 				});
 			}
 		}
@@ -217,7 +280,17 @@ class InheritanceResolver {
 		const members: MemberSet["members"] = new Map();
 		const hidden = new Set<string>();
 		let complete = true;
-		for (const { base, bindings } of this.getBases(item)) {
+		const parts = this.getDeclarationParts(item);
+		const edges = parts.flatMap((part) => {
+			const edgesOfPart = this.getBases(part.base);
+			return part.base === item
+				? edgesOfPart
+				: edgesOfPart.map((edge) => ({
+						base: edge.base,
+						bindings: rebind(edge.bindings, part.bindings, undefined),
+					}));
+		});
+		for (const { base, bindings } of edges) {
 			// Only revisiting a type on this path is a cycle. Two branches may legitimately share a base.
 			if (active.has(base)) {
 				const edge = `${item.canonicalReference.toString()} -> ${base.canonicalReference.toString()}`;
@@ -238,7 +311,7 @@ class InheritanceResolver {
 			// disagree, leave the binding unresolved rather than choosing a path by traversal order.
 			for (const [key, member] of inherited.members) {
 				members.set(key, {
-					declaration: member.declaration,
+					...member,
 					bindings: rebind(member.bindings, bindings, members.get(key)?.bindings),
 				});
 			}
@@ -250,28 +323,51 @@ class InheritanceResolver {
 
 		// Check local names before filtering: even an excluded override must hide the base member.
 		// Also remove declarations already overridden on one branch but inherited unchanged on another.
-		const declared = item.members.filter(isInstanceMember);
-		const localNames = new Set(declared.map((member) => member.name));
+		const declared = parts.flatMap((part) =>
+			part.base.members.filter(isInstanceMember).flatMap((declaration) => {
+				const overrideKey = getOverrideKey(declaration);
+				return overrideKey === undefined
+					? []
+					: [{ declaration, bindings: part.bindings, overrideKey }];
+			}),
+		);
+		const localNames = new Set(declared.map((member) => member.overrideKey));
 		for (const [key, member] of members) {
-			if (localNames.has(member.declaration.name) || hidden.has(key)) {
+			if (localNames.has(member.overrideKey) || hidden.has(key)) {
 				members.delete(key);
 				hidden.add(key);
 			}
 		}
 
-		// Here `Box<T>` still uses its own `T`. A caller following `Box<string>` will bind it to `string`.
-		const declaredBindings = localBindings(item);
-		for (const declaration of declared) {
-			members.set(declaration.canonicalReference.toString(), {
-				declaration,
-				bindings: declaredBindings,
-			});
+		for (const member of declared) {
+			members.set(member.declaration.canonicalReference.toString(), member);
 		}
 		const result = { members, hidden };
 		if (complete) {
 			this.completed.set(item, result);
 		}
 		return result;
+	}
+
+	/**
+	 * Collects the visible declarations that contribute to this instance type.
+	 *
+	 * @remarks
+	 * A merged interface contributes alongside the class, not as a more distant base.
+	 * Preserve the original owners for links and bind any additional defaulted interface parameters in order.
+	 */
+	private getDeclarationParts(item: ApiTypeLike): BaseEdge[] {
+		const bindings = localBindings(item);
+		const parts: BaseEdge[] = [{ base: item, bindings }];
+		if (isClass(item)) {
+			const supplied = [...bindings.values()].filter((argument) => argument !== undefined);
+			for (const sibling of item.getMergedSiblings()) {
+				if (isInterface(sibling) && shouldItemBeIncluded(sibling, this.config)) {
+					parts.push({ base: sibling, bindings: bindBase(sibling, supplied, item) });
+				}
+			}
+		}
+		return parts;
 	}
 }
 

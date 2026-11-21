@@ -10,7 +10,7 @@ import {
 	type ApiMethodSignature,
 	ApiModel,
 	ApiProperty,
-	type ApiPropertySignature,
+	ApiPropertySignature,
 	ExcerptTokenKind,
 	type IExcerptToken,
 	ReleaseTag,
@@ -35,6 +35,13 @@ import { getInheritedMembers } from "../InheritedMembers.js";
 
 const packageName = "test-api";
 
+/**
+ * Creates a reference to a named declaration in the fixture model.
+ *
+ * @remarks
+ * Most bases are interfaces in the local package. Override the kind or package to exercise class,
+ * alias, and cross-package resolution without changing how the resolver looks up the reference.
+ */
 function createReference(
 	name: string,
 	kind = "interface",
@@ -50,6 +57,8 @@ describe("InheritedMembers", () => {
 		let config: ApiItemTransformationConfiguration;
 		let warnings: string[];
 
+		// Use a fresh configuration per test: the resolver caches completed traversals and reported
+		// cycles by configuration. Calls within one test can then exercise that cache deliberately.
 		beforeEach(() => {
 			apiModel = new ApiModel();
 			const testPackage = createPackage(packageName);
@@ -69,6 +78,8 @@ describe("InheritedMembers", () => {
 		it("returns no inherited declarations for a type without bases", () => {
 			const item = createInterface("Root", { members: [createProperty("own")] });
 			entry.addMember(item);
+
+			// A nonempty root distinguishes "inherited members only" from "all visible members."
 			expect(getInheritedMembers(item, config).size).to.equal(0);
 		});
 
@@ -104,6 +115,8 @@ describe("InheritedMembers", () => {
 				bases: [createReference("Left"), createReference("Right")],
 			});
 			entry.addMember(item);
+
+			// Unlike two paths to one Root.value, these two value declarations have different owners and link targets.
 			expect([...getInheritedMembers(item, config).keys()]).to.have.members([left, right]);
 		});
 
@@ -120,6 +133,8 @@ describe("InheritedMembers", () => {
 			});
 			entry.addMember(item);
 			expect([...getInheritedMembers(item, config).keys()]).to.have.members([override, other]);
+
+			// Excluding Refined.value removes the row. It does not undo the override and reveal Root.value.
 			expect([
 				...getInheritedMembers(item, {
 					...config,
@@ -128,7 +143,7 @@ describe("InheritedMembers", () => {
 			]).to.have.members([other]);
 		});
 
-		it("follows a superclass but does not inherit static, computed, or interface-contract members", () => {
+		it("follows a superclass but does not inherit static members, unresolved computed keys, or contract members", () => {
 			const propertyOptions = {
 				docComment: undefined,
 				releaseTag: ReleaseTag.Public,
@@ -163,6 +178,8 @@ describe("InheritedMembers", () => {
 			const item = new ApiClass({
 				...classOptions,
 				name: "Derived",
+
+				// The two token ranges model `extends Base implements Contract`; only the first supplies members.
 				excerptTokens: [createReference("Base", "class"), createReference("Contract")],
 				extendsTokenRange: { startIndex: 0, endIndex: 1 },
 				implementsTokenRanges: [{ startIndex: 1, endIndex: 2 }],
@@ -171,6 +188,44 @@ describe("InheritedMembers", () => {
 			entry.addMember(createInterface("Contract", { members: [createProperty("optional")] }));
 			entry.addMember(item);
 			expect([...getInheritedMembers(item, config).keys()]).to.have.members([inherited]);
+		});
+
+		it("matches symbol overrides by the key declaration, not by its spelling or the type of the member", () => {
+			/**
+			 * Creates a computed property whose bracketed key links to the supplied symbol declaration.
+			 */
+			function createSymbolProperty(name: string, keyReference: string): ApiPropertySignature {
+				return new ApiPropertySignature({
+					name: `[${name}]`,
+					docComment: undefined,
+					releaseTag: ReleaseTag.Public,
+					isOptional: false,
+					isReadonly: true,
+					excerptTokens: [
+						{ kind: ExcerptTokenKind.Content, text: "readonly [" },
+						createReferenceToken(name, keyReference),
+						{ kind: ExcerptTokenKind.Content, text: "]: " },
+						{ kind: ExcerptTokenKind.Content, text: "number" },
+					],
+					propertyTypeTokenRange: { startIndex: 3, endIndex: 4 },
+				});
+			}
+			const left = createSymbolProperty("key", "left!key:var");
+			const right = createSymbolProperty("key", "right!key:var");
+			const override = createSymbolProperty("renamedKey", "left!key:var");
+			entry.addMember(createInterface("Left", { members: [left] }));
+			entry.addMember(createInterface("Right", { members: [right] }));
+			const intermediate = createInterface("Intermediate", {
+				bases: [createReference("Left"), createReference("Right")],
+				members: [override],
+			});
+			entry.addMember(intermediate);
+			const leaf = createInterface("Leaf", { bases: [createReference("Intermediate")] });
+			entry.addMember(leaf);
+
+			// A re-export can change the spelling of one key without overriding the unrelated key from Right.
+			expect([...getInheritedMembers(intermediate, config).keys()]).to.have.members([right]);
+			expect([...getInheritedMembers(leaf, config).keys()]).to.have.members([override, right]);
 		});
 
 		for (const boundary of ["excluded type", "excluded package", "release level"]) {
@@ -233,6 +288,8 @@ describe("InheritedMembers", () => {
 			apiModel.addMember(
 				createPackage("another-api", createInterface("Remote", { members: [external] })),
 			);
+
+			// A new configuration represents a new documentation run; it must not reuse the earlier missing-base result.
 			expect([...getInheritedMembers(item, { ...config }).keys()]).to.have.members([
 				local,
 				external,
@@ -268,6 +325,8 @@ describe("InheritedMembers", () => {
 			let map: ApiMethodSignature;
 
 			beforeEach(() => {
+				// In Box<T = string, U = T>, value uses U and read uses T. The count property needs no
+				// substitution at all, while map<T>() introduces a different T with the same spelling.
 				valueMember = createProperty("value", { type: "U" });
 				list = createProperty("list", { type: "T[]" });
 				count = createProperty("count", { type: "number" });
@@ -289,6 +348,8 @@ describe("InheritedMembers", () => {
 					const item = createTypeAlias(name, createReference("Box"), typeArguments);
 					entry.addMember(item);
 					const result = getInheritedMembers(item, config);
+
+					// Looking up both original members checks their identity as well as the specialized property and return types.
 					for (const member of [valueMember, read]) {
 						expect(result.get(member)?.excerpt.text).to.equal(expected);
 						expect(result.get(member)?.asDeclared).to.equal(false);
@@ -308,6 +369,9 @@ describe("InheritedMembers", () => {
 				);
 				const item = createTypeAlias("Forwarded", createReference("Either", "type"));
 				entry.addMember(item);
+
+				// ListBox contributes one array layer and Box.list contributes the second.
+				// Neither application binds the T declared by map itself.
 				const result = getInheritedMembers(item, config);
 				expect(result.get(read)?.excerpt.text).to.equal("(string | number)[]");
 				expect(result.get(list)?.excerpt.text).to.equal("(string | number)[][]");
@@ -318,6 +382,9 @@ describe("InheritedMembers", () => {
 			it("preserves references and argument boundaries in nested applications", () => {
 				const other = createInterface("Other");
 				entry.addMember(other);
+
+				// In Box<Box<Other[], number>, boolean>, only the second comma separates the outer arguments.
+				// The link to Other belongs to the inner expression and must survive the substitution.
 				const item = createTypeAlias(
 					"Nested",
 					createReference("Box"),
@@ -347,6 +414,8 @@ describe("InheritedMembers", () => {
 				);
 				entry.addMember(item);
 				const result = getInheritedMembers(item, config);
+
+				// The mapped argument affects read(): T. It does not prevent value: U from using the explicit string argument.
 				expect(result.get(read)?.excerpt).to.equal(read.returnTypeExcerpt);
 				expect(result.get(read)?.asDeclared).to.equal(true);
 				expect(result.get(valueMember)?.excerpt.text).to.equal("string");
@@ -361,12 +430,16 @@ describe("InheritedMembers", () => {
 				});
 				entry.addMember(item);
 				const result = getInheritedMembers(item, config);
+
+				// Both paths reach the same Box.value, but its dependent default U = T differs between them.
+				// The declaration's own U is a safer fallback than whichever argument was visited last.
 				expect(result.get(valueMember)?.excerpt).to.equal(valueMember.propertyTypeExcerpt);
 				expect(result.get(valueMember)?.asDeclared).to.equal(true);
 				expect(result.get(count)?.asDeclared).to.equal(false);
 			});
 
 			it("does not guess a base from a constituent, type argument, or partial expression", () => {
+				// Every excerpt contains a real Box reference. None identifies Box as the outer type of a valid forwarding alias.
 				for (const item of [
 					createTypeAlias("Union", createReference("Box"), " | string"),
 					createTypeAlias("Array", createReference("Box"), "<string>[]"),

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { Excerpt } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 
 import {
@@ -31,8 +32,20 @@ function getBindingTexts(bindings: TypeBindings): Record<string, string | undefi
 	return Object.fromEntries([...bindings].map(([name, value]) => [name, value?.text]));
 }
 
+/**
+ * Merges the arguments supplied for `T` by two inheritance paths.
+ *
+ * @remarks
+ * An empty edge prevents substitution from changing either excerpt before `rebind` compares them.
+ * The result is the current excerpt if both paths agree, or `undefined` if they conflict.
+ */
+function mergeArguments(current: Excerpt, previous: Excerpt): Excerpt | undefined {
+	return rebind(new Map([["T", current]]), new Map(), new Map([["T", previous]])).get("T");
+}
+
 describe("InheritedMemberTypes", () => {
 	describe("localBindings", () => {
+		// Local bindings describe the declaration before any caller has supplied or omitted arguments.
 		it("returns no bindings for a declaration without type parameters", () => {
 			expect(localBindings(createInterface("Container")).size).to.equal(0);
 		});
@@ -48,6 +61,7 @@ describe("InheritedMemberTypes", () => {
 	});
 
 	describe("bindBase", () => {
+		// U depends on T rather than having a constant default, so the order in which defaults are evaluated is observable.
 		const base = createInterface("Container", { typeParameters: { T: "string", U: "T[]" } });
 
 		it("evaluates omitted defaults in declaration order", () => {
@@ -69,6 +83,7 @@ describe("InheritedMemberTypes", () => {
 		});
 
 		it("uses an explicitly supplied argument instead of an unresolved default", () => {
+			// Unknown has neither a declaration reference nor a binding. Supplying boolean for U bypasses its default T.
 			const bindings = bindBase(
 				createInterface("Container", { typeParameters: { T: undefined, U: "T" } }),
 				[createTypeExcerpt("Unknown"), createTypeExcerpt("boolean")],
@@ -123,6 +138,51 @@ describe("InheritedMemberTypes", () => {
 			);
 		});
 
+		it("ignores trivia and redundant parentheses without moving links or changing the displayed excerpt", () => {
+			const target = createReferenceToken("Thing", "pkg-a!Thing:interface");
+			const current = createTypeExcerpt("Box< [ /* before */ (", target, "),\nstring ] >");
+			const previous = createTypeExcerpt("(Box<[", target, ",string]>)");
+
+			// Compare normalized syntax to decide agreement, but keep the caller's original spelling and link spans for display.
+			expect(mergeArguments(current, previous)).to.equal(current);
+		});
+
+		it("ignores grouping within a chain of the same operator, but not across operators", () => {
+			const current = createTypeExcerpt("string | (number | boolean)");
+			expect(
+				mergeArguments(current, createTypeExcerpt("(string | number) | boolean")),
+			).to.equal(current);
+
+			// Removing parentheses here changes what the array or intersection applies to, not just how the type is printed.
+			for (const [left, right] of [
+				["(string | number)[]", "string | number[]"],
+				["(A | B) & C", "A | (B & C)"],
+			]) {
+				expect(mergeArguments(createTypeExcerpt(left), createTypeExcerpt(right))).to.be
+					.undefined;
+			}
+		});
+
+		it("preserves whitespace and comment-like text inside literals", () => {
+			// A whitespace- or comment-stripping regex would also strip characters from the literal's value.
+			for (const [left, right] of [
+				['"a  b"', '"a b"'],
+				["`a/*x*/b`", "`ab`"],
+			]) {
+				expect(mergeArguments(createTypeExcerpt(left), createTypeExcerpt(right))).to.be
+					.undefined;
+			}
+		});
+
+		it("distinguishes link positions within one syntax token", () => {
+			const target = createReferenceToken("oo", "pkg-a!Thing:interface");
+			const current = createTypeExcerpt("F", target, "o");
+			const previous = createTypeExcerpt(" ( Fo", target, ")");
+
+			// Both identifiers read Fooo. The link covers the middle two letters in one and the last two in the other.
+			expect(mergeArguments(current, previous)).to.be.undefined;
+		});
+
 		it("leaves only the conflicting parameter unresolved when identical names link to different declarations", () => {
 			const current = new Map([
 				["T", createTypeExcerpt(createReferenceToken("Thing", "pkg-a!Thing:interface"))],
@@ -132,6 +192,8 @@ describe("InheritedMemberTypes", () => {
 				["T", createTypeExcerpt(createReferenceToken("Thing", "pkg-b!Thing:interface"))],
 				["U", createTypeExcerpt("number")],
 			]);
+
+			// Displaying Thing without checking its package would silently choose one declaration as the link target.
 			expect(getBindingTexts(rebind(current, new Map(), previous))).to.deep.equal({
 				T: undefined,
 				U: "number",
@@ -142,11 +204,9 @@ describe("InheritedMemberTypes", () => {
 			// Both excerpts display `Thing | Thing`. Only the first occurrence is linked in one;
 			// only the second is linked in the other. Comparing text and link targets alone would miss this.
 			const target = createReferenceToken("Thing", "pkg-a!Thing:interface");
-			const current = new Map([["T", createTypeExcerpt(target, " | Thing")]]);
-			const previous = new Map([["T", createTypeExcerpt("Thing | ", target)]]);
-			expect(getBindingTexts(rebind(current, new Map(), previous))).to.deep.equal({
-				T: undefined,
-			});
+			const current = createTypeExcerpt(target, " | Thing");
+			const previous = createTypeExcerpt("Thing | ", target);
+			expect(mergeArguments(current, previous)).to.be.undefined;
 		});
 
 		it("does not recover a binding that was already ambiguous on another path", () => {
@@ -163,6 +223,8 @@ describe("InheritedMemberTypes", () => {
 		it("returns the original excerpt without a fallback label when there is nothing to specialize", () => {
 			const member = createProperty("value", { type: "number" });
 			const result = getMemberType(member, new Map());
+
+			// Reusing the original excerpt does not itself mean fallback: number was already the final type.
 			expect(result.excerpt).to.equal(member.propertyTypeExcerpt);
 			expect(result.asDeclared).to.equal(false);
 		});
@@ -173,6 +235,8 @@ describe("InheritedMemberTypes", () => {
 				createProperty("value", { type: "T[]" }),
 				new Map([["T", createTypeExcerpt(target, " | string")]]),
 			);
+
+			// Without grouping, Thing | string[] would describe a different property. The link must still cover Thing alone.
 			expect(result.excerpt.text).to.equal("(Thing | string)[]");
 			expect(
 				result.excerpt.spannedTokens
@@ -191,6 +255,8 @@ describe("InheritedMemberTypes", () => {
 				createMethod("read", { returnType: "[T, U]", typeParameters: ["U"] }),
 				bindings,
 			);
+
+			// In read<U>(): [T, U], only the first tuple element comes from the enclosing declaration.
 			expect(result.excerpt.text).to.equal("[number, U]");
 			expect(result.asDeclared).to.equal(false);
 		});

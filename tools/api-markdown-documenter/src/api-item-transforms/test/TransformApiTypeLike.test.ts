@@ -7,6 +7,7 @@ import {
 	ApiClass,
 	type ApiItem,
 	ApiItemKind,
+	ApiMethod,
 	ApiModel,
 	ApiProperty,
 	ReleaseTag,
@@ -83,8 +84,52 @@ function getColumnNames(table: Table): string[] {
 	});
 }
 
-describe("transformApiTypeLike", () => {
+/**
+ * Creates a test class with an optional base from the same package.
+ */
+function createClass(name: string, members: ApiItem[], base?: ApiClass): ApiClass {
+	return new ApiClass({
+		name,
+		members,
+		docComment: undefined,
+		isAbstract: false,
+		isExported: true,
+		releaseTag: ReleaseTag.Public,
+		typeParameters: [],
+		excerptTokens:
+			base === undefined
+				? []
+				: [createReferenceToken(base.name, `test-api!${base.name}:class`)],
+		extendsTokenRange: base === undefined ? undefined : { startIndex: 0, endIndex: 1 },
+		implementsTokenRanges: [],
+	});
+}
 
+/**
+ * Creates a class method with an empty signature and the specified overload and access flags.
+ */
+function createClassMethod(
+	name: string,
+	options: { isProtected?: boolean; isStatic?: boolean; overloadIndex?: number } = {},
+): ApiMethod {
+	return new ApiMethod({
+		name,
+		docComment: undefined,
+		releaseTag: ReleaseTag.Public,
+		isAbstract: false,
+		isOptional: false,
+		isProtected: false,
+		isStatic: false,
+		overloadIndex: 1,
+		...options,
+		parameters: [],
+		typeParameters: [],
+		excerptTokens: [],
+		returnTypeTokenRange: { startIndex: 0, endIndex: 0 },
+	});
+}
+
+describe("transformApiTypeLike", () => {
 	// A method link can target a heading on the declaring type's page or a separate method document.
 	// In either layout the name must identify the individual overload; the Declared By link is shared.
 	for (const layout of [HierarchyKind.Section, HierarchyKind.Document] as const) {
@@ -115,6 +160,26 @@ describe("transformApiTypeLike", () => {
 			}
 		});
 	}
+
+	it("does not label an inherited instance method as an overload of a static method", () => {
+		const read = createClassMethod("read");
+		const base = createClass("Base", [
+			read,
+			createClassMethod("read", { isStatic: true }),
+			createClassMethod("read", { isStatic: true, overloadIndex: 2 }),
+		]);
+		const derived = createClass("Derived", [], base);
+		const config = createConfig([base, derived], { includeInheritedMembers: true });
+		const table = getTable(
+			transformApiTypeLike(derived, config, () => []),
+			"Methods",
+		);
+
+		// Only the instance declaration is inherited, so its ordinary link text is unambiguous.
+		expect(table.children.slice(1).map((row) => row.children[0].children)).to.deep.equal([
+			[getLinkForApiItem(read, config)],
+		]);
+	});
 
 	it("groups members by kind, specializes inherited types, and generates details only for local declarations", () => {
 		const value = createProperty("item2", { type: "T" });
@@ -176,9 +241,72 @@ describe("transformApiTypeLike", () => {
 		expect(getColumnNames(getTable(sections, "Methods"))).not.to.include("Inherited From");
 	});
 
+	it("links only documented types or explicit URI overrides in specialized member cells", () => {
+		const value = createProperty("value", { type: "T" });
+		const read = createMethod("read", { returnType: "T" });
+		const base = createInterface("Base", {
+			typeParameters: { T: undefined },
+			members: [value, read],
+		});
+		const hidden = createInterface("Hidden");
+		const beta = createInterface("Beta", { releaseTag: ReleaseTag.Beta });
+		const external = createInterface("External");
+		const visible = createInterface("Visible");
+
+		// One union puts all four link policies in the same type cell: explicitly excluded, below
+		// the release cutoff, excluded with an external destination, and visible in this suite.
+		const derived = createInterface("Derived", {
+			bases: [
+				[
+					createReferenceToken("Base", "test-api!Base:interface"),
+					"<",
+					createReferenceToken("Hidden", "test-api!Hidden:interface"),
+					" | ",
+					createReferenceToken("Beta", "test-api!Beta:interface"),
+					" | ",
+					createReferenceToken("External", "test-api!External:interface"),
+					" | ",
+					createReferenceToken("Visible", "test-api!Visible:interface"),
+					">",
+				],
+			],
+		});
+		const config = createConfig([base, hidden, beta, external, visible, derived], {
+			includeInheritedMembers: true,
+			minimumReleaseLevel: ReleaseTag.Public,
+			exclude: (item) => item === hidden || item === external,
+			getUriBaseOverrideForItem: (item) =>
+				item === external ? "https://example.com/api" : undefined,
+		});
+		const sections = transformApiTypeLike(derived, config, () => []);
+		for (const [heading, column, member] of [
+			["Properties", "Type", value],
+			["Methods", "Return Type", read],
+		] as const) {
+			const table = getTable(sections, heading);
+			const cells = table.children[1].children;
+
+			// Filtering the type argument must not strip the member or declaring type links from the row.
+			expect(cells[0].children).to.deep.equal([getLinkForApiItem(member, config)]);
+			expect(cells[1].children).to.deep.equal([getLinkForApiItem(base, config)]);
+			expect(cells[getColumnNames(table).indexOf(column)].children).to.deep.equal([
+				{ type: "text", value: "Hidden" },
+				{ type: "text", value: " | " },
+				{ type: "text", value: "Beta" },
+				{ type: "text", value: " | " },
+				getLinkForApiItem(external, config, "External"),
+				{ type: "text", value: " | " },
+				getLinkForApiItem(visible, config, "Visible"),
+			]);
+		}
+	});
+
 	it("omits base members by default and does not inline details for a local member with its own document", () => {
 		const base = createInterface("Base", { members: [createMethod("read")] });
-		const local = createProperty("position");
+		const hidden = createInterface("Position");
+		const local = createProperty("position", {
+			type: createReferenceToken("Position", "test-api!Position:interface"),
+		});
 		const derived = createInterface("Derived", {
 			bases: [createReferenceToken("Base", "test-api!Base:interface")],
 			members: [local],
@@ -186,7 +314,8 @@ describe("transformApiTypeLike", () => {
 
 		// Leave inheritance at its default. Set both property kinds to Document because the detail section
 		// is grouped under Property, while the actual interface member is a PropertySignature.
-		const config = createConfig([base, derived], {
+		const config = createConfig([base, derived, hidden], {
+			exclude: (item) => item === hidden,
 			hierarchy: {
 				[ApiItemKind.Property]: HierarchyKind.Document,
 				[ApiItemKind.PropertySignature]: HierarchyKind.Document,
@@ -201,6 +330,11 @@ describe("transformApiTypeLike", () => {
 		expect(properties.children[1].children[0].children).to.deep.equal([
 			getLinkForApiItem(local, config),
 		]);
+
+		// The visibility rule for specialized types does not change ordinary excerpt links.
+		const typeCell =
+			properties.children[1].children[getColumnNames(properties).indexOf("Type")];
+		expect(typeCell.children).to.deep.equal([getLinkForApiItem(hidden, config, "Position")]);
 	});
 
 	it("keeps a class's static and instance properties in separate tables", () => {
@@ -216,18 +350,7 @@ describe("transformApiTypeLike", () => {
 		};
 		const shared = new ApiProperty({ ...options, name: "shared", isStatic: true });
 		const own = new ApiProperty({ ...options, name: "own", isStatic: false });
-		const item = new ApiClass({
-			name: "Reader",
-			docComment: undefined,
-			isAbstract: false,
-			isExported: true,
-			releaseTag: ReleaseTag.Public,
-			typeParameters: [],
-			excerptTokens: [],
-			extendsTokenRange: undefined,
-			implementsTokenRanges: [],
-			members: [shared, own],
-		});
+		const item = createClass("Reader", [shared, own]);
 		const config = createConfig([item], { includeInheritedMembers: true });
 		const sections = transformApiTypeLike(item, config, () => []);
 
@@ -242,6 +365,51 @@ describe("transformApiTypeLike", () => {
 			expect(table.children.slice(1).map((row) => row.children[0].children)).to.deep.equal([
 				[getLinkForApiItem(member, config)],
 			]);
+		}
+	});
+
+	it("marks inherited protected methods and properties without changing declared modifiers", () => {
+		const value = new ApiProperty({
+			name: "value",
+			docComment: undefined,
+			releaseTag: ReleaseTag.Public,
+			isAbstract: false,
+			isOptional: false,
+			isProtected: true,
+			isStatic: false,
+			excerptTokens: [],
+			isReadonly: true,
+			propertyTypeTokenRange: { startIndex: 0, endIndex: 0 },
+		});
+		const read = createClassMethod("read", { isProtected: true });
+		const base = createClass("Base", [value, read]);
+		const derived = createClass("Derived", [], base);
+		const config = createConfig([base, derived], { includeInheritedMembers: true });
+
+		// On Base, the property already shows readonly and the method needs no Modifiers column.
+		const declared = transformApiTypeLike(base, config, () => []);
+		const properties = getTable(declared, "Properties");
+		const readonlyModifier = { type: "inlineCode", value: "readonly" };
+		const modifierColumn = getColumnNames(properties).indexOf("Modifiers");
+		expect(properties.children[1].children[modifierColumn].children).to.deep.equal([
+			readonlyModifier,
+		]);
+		expect(getColumnNames(getTable(declared, "Methods"))).not.to.include("Modifiers");
+
+		// Derived has no local signature to show access. Its method therefore needs a Modifiers column
+		// even though that column was absent on Base; its property must retain readonly as well.
+		const inherited = transformApiTypeLike(derived, config, () => []);
+		const protectedModifier = { type: "inlineCode", value: "protected" };
+		for (const [heading, expected] of [
+			["Methods", [protectedModifier]],
+			["Properties", [protectedModifier, { type: "text", value: ", " }, readonlyModifier]],
+		] as const) {
+			const table = getTable(inherited, heading);
+			const columns = getColumnNames(table);
+			expect(columns).to.include("Modifiers");
+			expect(table.children[1].children[columns.indexOf("Modifiers")].children).to.deep.equal(
+				expected,
+			);
 		}
 	});
 });

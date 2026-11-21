@@ -3,8 +3,24 @@
  * Licensed under the MIT License.
  */
 
+import { createRequire } from "node:module";
+
 import { Excerpt, ExcerptToken, ExcerptTokenKind } from "@microsoft/api-extractor-model";
-import * as ts from "typescript";
+import type * as TypeScript from "typescript";
+
+const require = createRequire(import.meta.url);
+let compiler: typeof TypeScript | undefined;
+
+/**
+ * Loads the TypeScript compiler the first time a transformation needs to parse a type.
+ *
+ * @remarks
+ * The public transform is synchronous. Using a module-local `require` keeps that contract
+ * without making consumers load the compiler when they import the package.
+ */
+export function getTypeScript(): typeof TypeScript {
+	return (compiler ??= require("typescript") as typeof TypeScript);
+}
 
 /**
  * The type alias prefix that lets the TypeScript parser read a standalone type expression.
@@ -14,7 +30,7 @@ const prefix = "type ExcerptType = ";
 /**
  * Parse results keyed by excerpt, including `undefined` for excerpts that failed to parse.
  */
-const parsedTypes = new WeakMap<Excerpt, ts.TypeNode | undefined>();
+const parsedTypes = new WeakMap<Excerpt, TypeScript.TypeNode | undefined>();
 
 /**
  * Parses an API Extractor excerpt as a single TypeScript type.
@@ -25,8 +41,9 @@ const parsedTypes = new WeakMap<Excerpt, ts.TypeNode | undefined>();
  *
  * @returns The parsed type node, or `undefined` if the excerpt does not parse as one complete type.
  */
-export function parseType(excerpt: Excerpt): ts.TypeNode | undefined {
+export function parseType(excerpt: Excerpt): TypeScript.TypeNode | undefined {
 	if (!parsedTypes.has(excerpt)) {
+		const ts = getTypeScript();
 		const file = ts.createSourceFile(
 			"excerpt.ts",
 			`${prefix}${excerpt.text}`,
@@ -80,6 +97,7 @@ function sliceTokens(excerpt: Excerpt, start: number, end: number): ExcerptToken
 	if (start === end) {
 		return tokens;
 	}
+
 	let offset = prefix.length;
 	for (const token of excerpt.spannedTokens) {
 		if (offset >= end) {
@@ -103,6 +121,92 @@ function sliceTokens(excerpt: Excerpt, start: number, end: number): ExcerptToken
 }
 
 /**
+ * Builds a comparison key from the parsed structure, token spellings, and declaration links of a type argument.
+ *
+ * @remarks
+ * A parenthesized type can be replaced by its child in the tree, but stripping parentheses from the source
+ * would incorrectly equate `(A | B)[]` with `A | B[]`. Link endpoints count only the characters in significant tokens,
+ * so a comment before a linked name does not move its link. A link covering only part of a name still has a distinct span.
+ */
+export function getTypeComparisonKey(excerpt: Excerpt): string | undefined {
+	const root = parseType(excerpt);
+	if (root === undefined) {
+		return undefined;
+	}
+	const ts = getTypeScript();
+	const parts: (number | string | [number, number, string])[] = [];
+	const tokens: TypeScript.Node[] = [];
+
+	/**
+	 * Records the ordered tokens and the boundaries of the operations that contain them.
+	 *
+	 * @remarks
+	 * `A | (B | C)` has the same ordered operands as `A | B | C`.
+	 * Cross a nested union or intersection without recording a boundary only when the enclosing operator is the same.
+	 */
+	function visit(node: TypeScript.Node, parentKind?: TypeScript.SyntaxKind): void {
+		if (ts.isParenthesizedTypeNode(node)) {
+			visit(node.type, parentKind);
+		} else if (ts.isToken(node)) {
+			parts.push(node.kind, node.getText());
+			tokens.push(node);
+		} else if (!ts.isJSDoc(node)) {
+			const transparent =
+				node.kind === ts.SyntaxKind.SyntaxList ||
+				(node.kind === parentKind &&
+					(ts.isUnionTypeNode(node) || ts.isIntersectionTypeNode(node)));
+			if (!transparent) {
+				parts.push(node.kind);
+			}
+			for (const child of node.getChildren()) {
+				visit(child, transparent ? parentKind : node.kind);
+			}
+			if (!transparent) {
+				parts.push("end");
+			}
+		}
+	}
+	visit(root);
+
+	let tokenIndex = 0;
+	let significantLength = 0;
+
+	/**
+	 * Projects a source position onto the sequence of significant token characters.
+	 *
+	 * @remarks
+	 * Excerpt tokens are ordered and do not overlap. Their endpoints can therefore share a cursor,
+	 * including when one declaration reference spans more than one syntax token.
+	 */
+	function normalizedOffset(position: number): number {
+		while (tokenIndex < tokens.length) {
+			const token = tokens[tokenIndex];
+			const tokenStart = token.getStart();
+			if (position <= token.end) {
+				return significantLength + Math.max(0, position - tokenStart);
+			}
+			significantLength += token.end - tokenStart;
+			tokenIndex++;
+		}
+		return significantLength;
+	}
+
+	let start = prefix.length;
+	for (const token of excerpt.spannedTokens) {
+		const end = start + token.text.length;
+		if (token.canonicalReference !== undefined) {
+			parts.push([
+				normalizedOffset(start),
+				normalizedOffset(end),
+				token.canonicalReference.toString(),
+			]);
+		}
+		start = end;
+	}
+	return JSON.stringify(parts);
+}
+
+/**
  * Looks up the canonical declaration reference for a parsed type name.
  *
  * @example
@@ -112,9 +216,9 @@ function sliceTokens(excerpt: Excerpt, start: number, end: number): ExcerptToken
  */
 export function referenceForName(
 	excerpt: Excerpt,
-	name: ts.EntityName,
+	name: TypeScript.EntityName,
 ): ExcerptToken["canonicalReference"] {
-	const identifier = ts.isQualifiedName(name) ? name.right : name;
+	const identifier = getTypeScript().isQualifiedName(name) ? name.right : name;
 	return sliceTokens(excerpt, identifier.getStart(), identifier.end).at(-1)
 		?.canonicalReference;
 }
@@ -133,6 +237,7 @@ export function getNamedBase(excerpt: Excerpt):
 			typeArguments: Excerpt[];
 	  }
 	| undefined {
+	const ts = getTypeScript();
 	let type = parseType(excerpt);
 	while (type !== undefined && ts.isParenthesizedTypeNode(type)) {
 		type = type.type;
@@ -159,7 +264,7 @@ export interface TypeReplacement {
 	/**
 	 * The source node whose span is replaced.
 	 */
-	readonly node: ts.TypeNode;
+	readonly node: TypeScript.TypeNode;
 
 	/**
 	 * The argument excerpt to insert in place of the node.

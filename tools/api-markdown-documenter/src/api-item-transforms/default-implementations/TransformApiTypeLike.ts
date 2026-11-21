@@ -9,7 +9,7 @@ import {
 	type ApiItem,
 	ApiItemKind,
 	type ApiMethod,
-	ApiPropertyItem,
+	type ApiPropertyItem,
 } from "@microsoft/api-extractor-model";
 
 import type { Section } from "../../mdast/index.js";
@@ -17,6 +17,7 @@ import {
 	ApiModifier,
 	getApiItemKind,
 	getScopedMemberNameForDiagnostics,
+	isPropertyItem,
 	isStatic,
 	type ApiConstructorLike,
 	type ApiTypeLike,
@@ -138,8 +139,7 @@ export function transformApiTypeLike(
 		const staticMethods = allMethods.filter((apiMethod) => isStatic(apiMethod));
 
 		const instanceProperties = members.filter(
-			(member): member is ApiPropertyItem =>
-				member instanceof ApiPropertyItem && !isStatic(member),
+			(member): member is ApiPropertyItem => isPropertyItem(member) && !isStatic(member),
 		);
 		const instanceMethods = members.filter(
 			(member) =>

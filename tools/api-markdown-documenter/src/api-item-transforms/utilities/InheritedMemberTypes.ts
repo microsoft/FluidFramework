@@ -3,18 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type ApiMethod,
-	type ApiMethodSignature,
+import type {
+	ApiMethod,
+	ApiMethodSignature,
 	ApiPropertyItem,
-	type Excerpt,
+	Excerpt,
 } from "@microsoft/api-extractor-model";
-import * as ts from "typescript";
+import type * as ts from "typescript";
 
-import type { ApiTypeLike } from "../../utilities/index.js";
+import { type ApiTypeLike, isPropertyItem } from "../../utilities/index.js";
 
 import {
 	asExcerpt,
+	getTypeComparisonKey,
+	getTypeScript,
 	parseType,
 	plainToken,
 	referenceForName,
@@ -59,21 +61,9 @@ export function localBindings(item: ApiTypeLike): TypeBindings {
  * The TypeScript syntax kinds for built-in keyword types supported by the inheritance resolver.
  *
  * @remarks
- * A keyword such as `string` contains no type parameter to substitute, so the resolver preserves it as written.
+ * The set is initialized during inspection, not at import time, so the default transform does not load TypeScript.
  */
-const keywordTypes = new Set([
-	ts.SyntaxKind.AnyKeyword,
-	ts.SyntaxKind.BigIntKeyword,
-	ts.SyntaxKind.BooleanKeyword,
-	ts.SyntaxKind.NeverKeyword,
-	ts.SyntaxKind.NumberKeyword,
-	ts.SyntaxKind.ObjectKeyword,
-	ts.SyntaxKind.StringKeyword,
-	ts.SyntaxKind.SymbolKeyword,
-	ts.SyntaxKind.UndefinedKeyword,
-	ts.SyntaxKind.UnknownKeyword,
-	ts.SyntaxKind.VoidKeyword,
-]);
+let keywordTypes: ReadonlySet<ts.SyntaxKind> | undefined;
 
 /**
  * Identifies the type references in an expression and whether its syntax supports substitution.
@@ -86,6 +76,20 @@ function inspectType(root: ts.TypeNode): {
 	names: ts.TypeReferenceNode[];
 	supported: boolean;
 } {
+	const ts = getTypeScript();
+	const keywords = (keywordTypes ??= new Set([
+		ts.SyntaxKind.AnyKeyword,
+		ts.SyntaxKind.BigIntKeyword,
+		ts.SyntaxKind.BooleanKeyword,
+		ts.SyntaxKind.NeverKeyword,
+		ts.SyntaxKind.NumberKeyword,
+		ts.SyntaxKind.ObjectKeyword,
+		ts.SyntaxKind.StringKeyword,
+		ts.SyntaxKind.SymbolKeyword,
+		ts.SyntaxKind.UndefinedKeyword,
+		ts.SyntaxKind.UnknownKeyword,
+		ts.SyntaxKind.VoidKeyword,
+	]));
 	const names: ts.TypeReferenceNode[] = [];
 	let supported = true;
 	function visit(node: ts.Node): void {
@@ -109,7 +113,7 @@ function inspectType(root: ts.TypeNode): {
 			for (const type of node.types) {
 				visit(type);
 			}
-		} else if (!keywordTypes.has(node.kind) && !ts.isLiteralTypeNode(node)) {
+		} else if (!keywords.has(node.kind) && !ts.isLiteralTypeNode(node)) {
 			// Keywords and literals need no substitution. Other syntax may introduce its own `T`, as in `<T>() => T`.
 			// Don't rewrite that expression, but still collect its names so an unrelated member type can be left unmarked.
 			supported = false;
@@ -139,6 +143,7 @@ function substitute(
 	if (root === undefined) {
 		return undefined;
 	}
+	const ts = getTypeScript();
 	const { names, supported } = inspectType(root);
 	if (!supported && mode === "argument") {
 		return undefined;
@@ -210,31 +215,20 @@ export function bindBase(
 }
 
 /**
- * Determines whether two type argument excerpts have matching text and declaration references.
+ * Determines whether two paths bind a parameter to the same type syntax and declaration references.
  *
  * @remarks
- * Identical names can refer to different declarations, so each reference must have the same target and span in both excerpts.
- * Differences in how API Extractor splits plain text into tokens do not affect the comparison.
+ * This compares syntax, not assignability. If either argument does not parse, the resolver cannot establish agreement.
  */
 function sameArgument(left: Excerpt | undefined, right: Excerpt | undefined): boolean {
 	if (left === right) {
 		return true;
 	}
-	if (left === undefined || left.text !== right?.text) {
+	if (left === undefined || right === undefined) {
 		return false;
 	}
-	function links(argument: Excerpt): string {
-		let offset = 0;
-		const targets: [number, number, string][] = [];
-		for (const token of argument.spannedTokens) {
-			if (token.canonicalReference !== undefined) {
-				targets.push([offset, token.text.length, token.canonicalReference.toString()]);
-			}
-			offset += token.text.length;
-		}
-		return JSON.stringify(targets);
-	}
-	return links(left) === links(right);
+	const key = getTypeComparisonKey(left);
+	return key !== undefined && key === getTypeComparisonKey(right);
 }
 
 /**
@@ -273,13 +267,12 @@ export function getMemberType(
 	member: ApiPropertyItem | ApiMethod | ApiMethodSignature,
 	bindings: TypeBindings,
 ): MemberType {
-	const original =
-		member instanceof ApiPropertyItem ? member.propertyTypeExcerpt : member.returnTypeExcerpt;
+	const isProperty = isPropertyItem(member);
+	const original = isProperty ? member.propertyTypeExcerpt : member.returnTypeExcerpt;
 	if (bindings.size === 0 || original.isEmpty) {
 		return { excerpt: original, asDeclared: false };
 	}
-	const shadowed =
-		member instanceof ApiPropertyItem ? [] : member.typeParameters.map(({ name }) => name);
+	const shadowed = isProperty ? [] : member.typeParameters.map(({ name }) => name);
 	const excerpt = substitute(original, bindings, "member", shadowed);
 	return { excerpt: excerpt ?? original, asDeclared: excerpt === undefined };
 }

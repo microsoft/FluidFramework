@@ -56,8 +56,8 @@ A small resolver over public model APIs is preferable to recovering lost provena
 | Starting declaration | Proposed behavior |
 | --- | --- |
 | Interface | Follow each `extendsTypes` entry and its bases. Include named instance properties, event properties, and methods, with their overloads. |
-| Class | Follow `extendsType` through the base class chain. Include protected inherited members with their existing modifier. |
-| Forwarding type alias | Follow an alias chain or a named generic application such as `type A = Box<string[]>` when the target resolves to a supported class, interface, or forwarding alias. Title the source column **Declared By**: an alias names an existing type rather than inheriting from it. A class or interface may also name a supported alias as a base. |
+| Class | Follow `extendsType` through verified class declarations and include members and heritage from a visible interface merged with the class. A class extends a constructor **value**: a reference to a same-named interface or type alias alone does not establish the instances' type. Skip that edge rather than guessing. Mark protected inherited members with `protected`. |
+| Forwarding type alias | Follow an alias chain or a named generic application such as `type A = Box<string[]>` when the target resolves to a supported class, interface, or forwarding alias. Title the source column **Declared By**: an alias names an existing type rather than inheriting from it. An interface may also name a supported alias as a base. |
 | Other type aliases and expressions | Keep the existing signature and do not invent members. Defer intersections, even of named types: two constituents can refine the same property. Unions, mapped/conditional types, utilities such as `Pick`, indexed access, inline object types, and mixin calls are not equivalent to their first referenced type. |
 
 The first version covers `Property`, `PropertySignature`, `Method`, and `MethodSignature`; use `isEventProperty` to keep events in their own table as today.
