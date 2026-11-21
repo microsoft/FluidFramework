@@ -67,6 +67,9 @@ importers:
       mdast-util-to-markdown:
         specifier: ^2.1.2
         version: 2.1.2
+      typescript:
+        specifier: ~5.9.2
+        version: 5.9.3
       unist-util-remove-position:
         specifier: ^5.0.0
         version: 5.0.0
@@ -149,9 +152,6 @@ importers:
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
-      typescript:
-        specifier: ~5.9.2
-        version: 5.9.3
 
 packages:
 

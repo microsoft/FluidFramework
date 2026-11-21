@@ -153,6 +153,18 @@ Each [layer in the system](#architectural-overview) has its own configuration wi
 Some of the configs may contain a large number of options, but fret not!
 The vast majority of these options have default values that have been crafted to produce high quality documentation for your library with minimal specification.
 
+#### Inherited members
+
+Set `includeInheritedMembers: true` when calling `transformApiModel` or `MarkdownRenderer.renderApiModel` to list inherited instance properties, events, and methods alongside a type's own members.
+For example, if `Reader extends BaseReader`, the Properties table on `Reader` marks `ready` as inherited and links to `BaseReader.ready` for details.
+If `Reader` redeclares `ready`, only its own declaration appears.
+The option defaults to `false`.
+
+The default transforms follow class and interface `extends` references within the loaded API model.
+A type alias that names a class or interface, directly or through another alias, can also show that type's members.
+
+Implemented interfaces and complex alias expressions such as unions and mapped types do not contribute members.
+
 ## Architectural Overview
 
 As noted above, this library is intended to be consumed programmatically.

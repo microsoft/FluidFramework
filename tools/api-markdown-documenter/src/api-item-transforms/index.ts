@@ -13,6 +13,8 @@ export {
 	doesItemRequireOwnDocument,
 	doesItemKindRequireOwnDocument,
 	filterItems,
+	type FilteredMembers,
+	getFilteredMembers,
 	getHeadingForApiItem,
 	getLinkForApiItem,
 	getLinkTargetForApiItem,

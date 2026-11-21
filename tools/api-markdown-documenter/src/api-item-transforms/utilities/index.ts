@@ -9,12 +9,14 @@ export {
 	doesItemRequireOwnDocument,
 	doesItemKindRequireOwnDocument,
 	filterItems,
+	type FilteredMembers,
+	getFilteredMembers,
 	getHeadingForApiItem,
 	getLinkForApiItem,
 	getLinkTargetForApiItem,
-	isItemOrAncestorExcluded,
-	shouldItemBeIncluded,
 } from "./ApiItemTransformUtilities.js";
+export { isItemOrAncestorExcluded, shouldItemBeIncluded } from "./ApiItemVisibility.js";
 export { createDocument, checkForDuplicateDocumentPaths } from "./DocumentUtilities.js";
 export { mdastToHtml } from "./HtmlUtilities.js";
+export type { MemberType } from "./InheritedMemberTypes.js";
 export { resolveSymbolicLink } from "./ReferenceUtilities.js";

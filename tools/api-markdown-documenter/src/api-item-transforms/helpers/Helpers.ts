@@ -15,7 +15,6 @@ import {
 	type Excerpt,
 	ExcerptTokenKind,
 	type HeritageType,
-	type IResolveDeclarationReferenceResult,
 	type TypeParameter,
 	ApiPropertyItem,
 	ApiVariable,
@@ -59,7 +58,11 @@ import {
 	HierarchyKind,
 	type ApiItemTransformationConfiguration,
 } from "../configuration/index.js";
-import { doesItemKindRequireOwnDocument, getLinkForApiItem } from "../utilities/index.js";
+import {
+	doesItemKindRequireOwnDocument,
+	getLinkForApiItem,
+	shouldItemBeIncluded,
+} from "../utilities/index.js";
 
 import {
 	createParametersSummaryTable,
@@ -387,20 +390,18 @@ export function createTypeParametersSection(
 }
 
 /**
- * Renders a doc paragraph for the provided TSDoc excerpt.
- *
- * @remarks This function is a helper to parse TSDoc excerpt token syntax into documentation with the appropriate links.
- * It will generate links to any API members that are a part of the same API suite (model). Other token contents
- * will be rendered as plain text.
+ * Renders excerpt tokens as text, linking references that resolve in the API model.
  *
  * @param excerpt - The TSDoc excerpt to render.
  * @param config - See {@link ApiItemTransformationConfiguration}.
+ * @param onlyLinkDocumentedItems - If true, render excluded targets as text unless they have an explicit URI base.
  *
  * @returns The rendered contents, if any.
  */
 export function createExcerptSpanWithHyperlinks(
 	excerpt: Excerpt,
 	config: ApiItemTransformationConfiguration,
+	onlyLinkDocumentedItems = false,
 ): PhrasingContent[] {
 	if (excerpt.isEmpty) {
 		return [];
@@ -408,33 +409,28 @@ export function createExcerptSpanWithHyperlinks(
 
 	const content: PhrasingContent[] = [];
 	for (const token of excerpt.spannedTokens) {
-		// Markdown doesn't provide a standardized syntax for hyperlinks inside code spans, so we will render
-		// the type expression as DocPlainText.  Instead of creating multiple DocParagraphs, we can simply
-		// discard any newlines and let the renderer do normal word-wrapping.
+		// Keep multiline excerpts in a single span so the renderer can wrap the text around links.
 		const unwrappedTokenText: string = token.text.replace(/[\n\r]+/g, " ");
 
-		let wroteHyperlink = false;
-
-		// If it's hyperlink-able, then append a DocLinkTag
 		if (token.kind === ExcerptTokenKind.Reference && token.canonicalReference) {
-			const apiItemResult: IResolveDeclarationReferenceResult =
-				config.apiModel.resolveDeclarationReference(token.canonicalReference, undefined);
+			const { resolvedApiItem } = config.apiModel.resolveDeclarationReference(
+				token.canonicalReference,
+				undefined,
+			);
 
-			if (apiItemResult.resolvedApiItem) {
-				content.push(
-					getLinkForApiItem(apiItemResult.resolvedApiItem, config, unwrappedTokenText),
-				);
-				wroteHyperlink = true;
+			// A URI override can point to documentation published outside this suite.
+			if (
+				resolvedApiItem !== undefined &&
+				(!onlyLinkDocumentedItems ||
+					shouldItemBeIncluded(resolvedApiItem, config) ||
+					config.getUriBaseOverrideForItem(resolvedApiItem) !== undefined)
+			) {
+				content.push(getLinkForApiItem(resolvedApiItem, config, unwrappedTokenText));
+				continue;
 			}
 		}
 
-		// If the token was not one from which we generated hyperlink text, write as plain text instead
-		if (!wroteHyperlink) {
-			content.push({
-				type: "text",
-				value: unwrappedTokenText,
-			});
-		}
+		content.push({ type: "text", value: unwrappedTokenText });
 	}
 
 	return content;

@@ -1,5 +1,10 @@
 # @fluid-tools/api-markdown-documenter
 
+## Unreleased
+
+Set `includeInheritedMembers: true` to list inherited instance properties, events, and methods alongside declared members, with links to their original declarations.
+Existing output is unchanged by default.
+
 ## 0.24.0
 
 ### Features

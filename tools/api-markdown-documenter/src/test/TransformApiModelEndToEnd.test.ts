@@ -70,9 +70,11 @@ describe("API model transformation end-to-end tests", () => {
 			describe("Ensure no duplicate document paths", () => {
 				for (const [configName, inputConfig] of testConfigs) {
 					it(configName, async () => {
+						// Derived pages may summarize the same declaration, but only its owner should produce a member document.
 						const config: ApiItemTransformationOptions = {
 							...inputConfig,
 							apiModel,
+							includeInheritedMembers: true,
 						};
 
 						const documents = transformApiModel(config);

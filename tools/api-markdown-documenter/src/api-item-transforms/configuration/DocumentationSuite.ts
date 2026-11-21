@@ -32,6 +32,23 @@ import {
  */
 export interface DocumentationSuiteConfiguration {
 	/**
+	 * Whether the default transforms list inherited instance properties, events, and methods in member tables.
+	 *
+	 * @remarks
+	 * Each inherited row links to its original declaration; only direct declarations get member details.
+	 *
+	 * For a type alias such as `type Reader = Stream`, the table on `Reader` lists the instance members of `Stream`.
+	 * By contrast, `class Reader implements Stream` does not inherit members from `Stream`:
+	 * the class table lists only members that `Reader` declares or inherits from a base class.
+	 *
+	 * Note: The default value for this will change to `true` in a future release.
+	 * It is recommended to explicitly opt in or out of this behavior in your configuration before then.
+	 *
+	 * @defaultValue `false`
+	 */
+	readonly includeInheritedMembers?: boolean;
+
+	/**
 	 * Whether or not to include a top-level heading in rendered documents.
 	 *
 	 * @defaultValue `true`
@@ -298,6 +315,7 @@ export function getDocumentationSuiteConfigurationWithDefaults(
 
 	return {
 		hierarchy,
+		includeInheritedMembers: options?.includeInheritedMembers ?? false,
 		includeTopLevelDocumentHeading: options?.includeTopLevelDocumentHeading ?? true,
 		includeBreadcrumb: options?.includeBreadcrumb ?? true,
 		getUriBaseOverrideForItem:
