@@ -220,6 +220,22 @@ describe("InheritedMemberTypes", () => {
 	});
 
 	describe("getMemberType", () => {
+		it("marks a callback as declared only when it reuses the outer type parameter name", () => {
+			const bindings = new Map([["T", createTypeExcerpt("string")]]);
+
+			// The callable declares its own parameter in both cases. When its name matches the
+			// enclosing T, the resolver conservatively falls back rather than changing the callable's contract.
+			for (const [type, asDeclared] of [
+				["<T>() => T", true],
+				["<U>() => U", false],
+			] as const) {
+				const member = createProperty("callback", { type });
+				const result = getMemberType(member, bindings);
+				expect(result.excerpt, type).to.equal(member.propertyTypeExcerpt);
+				expect(result.asDeclared, type).to.equal(asDeclared);
+			}
+		});
+
 		it("returns the original excerpt without a fallback label when there is nothing to specialize", () => {
 			const member = createProperty("value", { type: "number" });
 			const result = getMemberType(member, new Map());

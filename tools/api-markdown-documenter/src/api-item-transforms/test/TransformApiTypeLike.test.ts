@@ -241,6 +241,44 @@ describe("transformApiTypeLike", () => {
 		expect(getColumnNames(getTable(sections, "Methods"))).not.to.include("Inherited From");
 	});
 
+	it("labels only the inherited callable property whose type requires a fallback", () => {
+		const shadowed = createProperty("shadowed", { type: "<T>() => T" });
+		const unrelated = createProperty("unrelated", { type: "<U>() => U" });
+		const base = createInterface("Base", {
+			typeParameters: { T: undefined },
+			members: [shadowed, unrelated],
+		});
+		const derived = createInterface("Derived", {
+			bases: [[createReferenceToken("Base", "test-api!Base:interface"), "<string>"]],
+		});
+		const config = createConfig([base, derived], { includeInheritedMembers: true });
+		const table = getTable(
+			transformApiTypeLike(derived, config, () => []),
+			"Properties",
+		);
+		const typeColumn = getColumnNames(table).indexOf("Type");
+
+		// Both signatures must remain generic. Only the one that mentions T needs a label;
+		// marking the entire table would incorrectly suggest that the U signature also needed substitution.
+		const rows = table.children.slice(1).map(({ children }) => ({
+			name: children[0].children,
+			type: children[typeColumn].children,
+		}));
+		expect(rows).to.deep.equal([
+			{
+				name: [getLinkForApiItem(shadowed, config)],
+				type: [
+					{ type: "text", value: "<T>() => T" },
+					{ type: "text", value: " (as declared)" },
+				],
+			},
+			{
+				name: [getLinkForApiItem(unrelated, config)],
+				type: [{ type: "text", value: "<U>() => U" }],
+			},
+		]);
+	});
+
 	it("links only documented types or explicit URI overrides in specialized member cells", () => {
 		const value = createProperty("value", { type: "T" });
 		const read = createMethod("read", { returnType: "T" });
