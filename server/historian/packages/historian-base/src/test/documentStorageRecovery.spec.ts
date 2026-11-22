@@ -554,6 +554,7 @@ describe("document storage recovery", () => {
 
 	it("reuses a durable summary after sharing one lifecycle lookup with routing", async () => {
 		initialized = true;
+		config.set("restGitService:reuseCustomerAccessTokenForSummaryOwnership", true);
 		storageNameRetriever.getForRequest = async (_tenant, _document, read) => {
 			const document = await read();
 			assert.ok(document);
@@ -571,6 +572,9 @@ describe("document storage recovery", () => {
 			.set("Authorization", authorization)
 			.expect(200, summary);
 		sinon.assert.calledTwice(readDocument);
+		for (const call of readDocument.getCalls()) {
+			assert.deepStrictEqual(call.args, [tenantId, documentId, { accessToken }]);
+		}
 		assert.strictEqual(operations.length, 1);
 	});
 
@@ -582,6 +586,7 @@ describe("document storage recovery", () => {
 	]) {
 		it(`rejects cached durable content after ${Object.keys(changes)[0]} changes`, async () => {
 			initialized = true;
+			config.set("restGitService:reuseCustomerAccessTokenForSummaryOwnership", true);
 			const app = createApp({ cache: new TestCache() });
 			await request(app)
 				.get(`/repos/${tenantId}/git/summaries/latest`)
@@ -593,6 +598,25 @@ describe("document storage recovery", () => {
 				.set("Authorization", authorization)
 				.expect(status);
 			assert.strictEqual(operations.length, 1);
+		});
+	}
+
+	for (const status of [401, 403]) {
+		it(`rejects a durable summary before routing when the caller is denied with ${status}`, async () => {
+			initialized = true;
+			config.set("restGitService:reuseCustomerAccessTokenForSummaryOwnership", true);
+			readDocument.rejects(new NetworkError(status, "Caller denied"));
+			storageNameRetriever.getForRequest = async (_tenant, _document, read) => {
+				const document = await read();
+				assert.ok(document);
+				return document.storageName ?? storageName;
+			};
+			await request(createApp())
+				.get(`/repos/${tenantId}/git/summaries/latest`)
+				.set("Authorization", authorization)
+				.expect(status);
+			sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId, { accessToken });
+			assert.strictEqual(operations.length, 0);
 		});
 	}
 

@@ -627,8 +627,9 @@ export async function createGitServiceWithAccess(
 				purgeStaticCache: documentManager.purgeStaticCache.bind(documentManager),
 		  }
 		: documentManager;
+	let validatedDocumentRequest: Promise<IDocument> | undefined;
 	const validateDocument = () =>
-		validateSummaryDocument({
+		(validatedDocumentRequest ??= validateSummaryDocument({
 			tenantId,
 			authorization,
 			documentManager: requestDocumentManager,
@@ -638,7 +639,10 @@ export async function createGitServiceWithAccess(
 			ignoreEphemeralFlag,
 			reuseCustomerAccessToken:
 				config.get("restGitService:reuseCustomerAccessTokenForSummaryOwnership") ?? false,
-		});
+		}).catch((error) => {
+			validatedDocumentRequest = undefined;
+			throw error;
+		}));
 	const requestStorageNameRetriever:
 		| (IStorageNameRetriever & {
 				getForRequest?(
@@ -653,7 +657,15 @@ export async function createGitServiceWithAccess(
 	const getStorageName = () =>
 		(storageNameRequest ??=
 			gitrestOwnershipValidation && requestStorageNameRetriever?.getForRequest
-				? requestStorageNameRetriever.getForRequest(tenantId, documentId, readDocument)
+				? requestStorageNameRetriever.getForRequest(tenantId, documentId, () =>
+						createArgs.validateDurableSummaryAccess &&
+						!postIsEphemeral &&
+						accessProof === undefined &&
+						accessOperation !== undefined &&
+						accessOperation !== "create"
+							? validateDocument()
+							: readDocument(),
+				  )
 				: Promise.resolve(storageNameRetriever?.get(tenantId, documentId)));
 
 	const customData: ITenantCustomDataExternal = details.customData;
@@ -773,6 +785,7 @@ export async function createGitServiceWithAccess(
 						await service.backfillDocumentStorage();
 					} finally {
 						documentRequest = undefined;
+						validatedDocumentRequest = undefined;
 						storageNameRequest = undefined;
 					}
 			  }

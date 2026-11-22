@@ -72,6 +72,9 @@ error code and implement conditional backfill. No client transport or Historian 
 Protected durable summary routes use an active `alfred-fallback` access proof from the current
 request's document validation. This enables summary caching, including version-SHA reads,
 without accepting old entries that lack the validated document's creation time.
+Request-aware durable routing and lifecycle validation share one validated document lookup,
+including when customer-token reuse is enabled. The lookup remains local to the current
+request and is cleared after legacy recovery; it is not a cross-request authorization cache.
 Cache misses still reach GitRest for ownership and soft-deletion checks.
 Validated durable writes and deletes also invalidate proofless summary entries and their
 latest-version pointer, so validation-disabled instances cannot keep serving old summaries.
