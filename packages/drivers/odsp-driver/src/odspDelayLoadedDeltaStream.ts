@@ -338,7 +338,12 @@ export class OdspDelayLoadedDeltaStream {
 				}).catch((error) => {
 					// With propagateClaimsChallenges, the driver does not retry a claims challenge,
 					// and the caller only logs refresh errors.
-					// So end the connection with the challenge, as when the service disconnects with an authorization error.
+					// The connection would end soon anyway.
+					// Join session asks the service to replace its access checks with these refreshes (Prefer: FluidRemoveCheckAccess),
+					// so the service disconnects a client that doesn't refresh its session within refreshSessionDurationSeconds.
+					// This refresh runs 30 seconds before that and isn't scheduled again after it fails.
+					// So end the connection now with the challenge instead of later without it,
+					// as when the service disconnects with an authorization error.
 					// The container then reconnects and gets the challenge again,
 					// unless the host already has a token that satisfies it.
 					if (

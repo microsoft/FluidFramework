@@ -55,7 +55,3 @@ So check for a claims challenge in the error of the container's `closed` event a
 
 `propagateClaimsChallenges` also applies to [`prefetchLatestSnapshot`](https://fluidframework.com/docs/api/odsp-driver/#prefetchlatestsnapshot-function) when the factory is passed in its `odspDocumentServiceFactory` parameter.
 It doesn't apply to [`OdspDriverUrlResolverForShareLink`](https://fluidframework.com/docs/api/odsp-driver/odspdriverurlresolverforsharelink-class).
-
-For a document opened from a sharing link, the driver no longer redeems the link in a separate request when the snapshot request fails with a claims challenge.
-This change applies whether or not `propagateClaimsChallenges` is `true`.
-Redeeming the link can't satisfy the challenge, and an error from the redeem request could replace the challenge.

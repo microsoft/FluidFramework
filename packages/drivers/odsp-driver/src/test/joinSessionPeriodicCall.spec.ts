@@ -239,6 +239,7 @@ describe("joinSessions Tests", () => {
 				url: createOdspUrl({ driveId, itemId, siteUrl, dataStorePath: "/" }),
 			});
 			const documentService = await factory.createDocumentService(resolvedUrl, logger);
+			const refreshSessionDurationSeconds = 100;
 
 			const disposeErrors: unknown[] = [];
 			const connection = deltaConnection as {
@@ -258,14 +259,15 @@ describe("joinSessions Tests", () => {
 			// (JoinSessionSyncWait), as in a real session.
 			await mockFetchOk(async () => documentService.connectToDeltaStream(client), {
 				...joinSessionResponse,
-				refreshSessionDurationSeconds: 100,
+				refreshSessionDurationSeconds,
 			});
 			createDeltaConnectionStub.restore();
 
-			// Tick 70 seconds so that the refresh runs and calls the real fetchJoinSession.
+			// The refresh runs before the session expires, so advancing the clock by the session duration runs it.
+			// The refresh calls the real fetchJoinSession, and nothing is scheduled after it fails.
 			tokenFetches.length = 0;
 			await mockFetchMultiple(
-				async () => tickClock(70000),
+				async () => tickClock(refreshSessionDurationSeconds * 1000),
 				Array.from(
 					{ length: requestCount },
 					() => async () =>

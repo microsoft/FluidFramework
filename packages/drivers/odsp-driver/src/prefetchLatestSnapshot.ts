@@ -160,6 +160,7 @@ export async function prefetchLatestSnapshot(
 				loadingGroupIds,
 				enableRedeemFallback,
 				odspDocumentServiceFactory?.requestHeaders,
+				odspDocumentServiceFactory?.propagateClaimsChallenges,
 			)
 				.then(async (value) => {
 					assert(!!snapshotEpoch, 0x585 /* prefetched snapshot should have a valid epoch */);

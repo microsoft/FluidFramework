@@ -677,6 +677,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				loadingGroupIds,
 				this.hostPolicy.enableRedeemFallback,
 				this.hostPolicy.hostProvidedRequestHeaders,
+				this.hostPolicy.propagateClaimsChallenges,
 			);
 			return odspSnapshot;
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -719,6 +720,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					loadingGroupIds,
 					this.hostPolicy.enableRedeemFallback,
 					this.hostPolicy.hostProvidedRequestHeaders,
+					this.hostPolicy.propagateClaimsChallenges,
 				);
 				return odspSnapshot;
 			}
