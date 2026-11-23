@@ -18,6 +18,8 @@ import {
 	type FieldKey,
 	type MapTree,
 	type RevisionTag,
+	combineVisitors,
+	createSourceValidationVisitor,
 	makeDetachedFieldIndex,
 	visitDelta,
 } from "../../../core/index.js";
@@ -99,7 +101,12 @@ function testDeltaVisit(
 	for (const methodName of visitorMethods) {
 		visitor[methodName] = makeChecker(methodName);
 	}
-	visit(delta, visitor, detachedFieldIndex, revision);
+	visit(
+		delta,
+		combineVisitors([createSourceValidationVisitor(), visitor]),
+		detachedFieldIndex,
+		revision,
+	);
 	assert.deepEqual(result, expected);
 }
 
