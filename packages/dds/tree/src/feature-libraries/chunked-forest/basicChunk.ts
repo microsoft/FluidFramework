@@ -85,7 +85,7 @@ export class BasicChunk extends ReferenceCountedBase implements EditableChunk, C
 	}
 
 	public getEditCursor(): BasicChunkLocalCursor {
-		assert(!this.isShared(), "Editing requires exclusive chunk ownership");
+		assert(!this.isShared(), 0xde2 /* Editing requires exclusive chunk ownership */);
 		return this.getLocalCursor();
 	}
 
@@ -134,7 +134,7 @@ export class BasicChunkLocalCursor implements ChunkInlineCursor, ChunkEditCursor
 	 * @param chunk - Borrowed storage to navigate. The caller must keep it alive while using the cursor.
 	 */
 	public reset(chunk: BasicChunk): void {
-		assert(this.depth === 0, "Only an exited adapter can be reused");
+		assert(this.depth === 0, 0xde3 /* Only an exited adapter can be reused */);
 		this.chunk = chunk;
 	}
 	public get mode(): CursorLocationType {
@@ -144,19 +144,19 @@ export class BasicChunkLocalCursor implements ChunkInlineCursor, ChunkEditCursor
 		return this.depth < 2;
 	}
 	public get [cursorChunk](): BasicChunk {
-		assert(this.depth === 1, "Expected a node");
+		assert(this.depth === 1, 0xde4 /* Expected a node */);
 		return this.chunk;
 	}
 	public get value(): Value {
-		assert(this.depth === 1, "Expected a node");
+		assert(this.depth === 1, 0xde5 /* Expected a node */);
 		return this.chunk.value;
 	}
 	public get type(): TreeType {
-		assert(this.depth === 1, "Expected a node");
+		assert(this.depth === 1, 0xde6 /* Expected a node */);
 		return this.chunk.type;
 	}
 	public get fieldIndex(): number {
-		assert(this.depth === 1, "Expected a node");
+		assert(this.depth === 1, 0xde7 /* Expected a node */);
 		return 0;
 	}
 	public get chunkStart(): number {
@@ -165,12 +165,12 @@ export class BasicChunkLocalCursor implements ChunkInlineCursor, ChunkEditCursor
 	public readonly chunkLength = 1;
 
 	public getFieldKey(): FieldKey {
-		assert(this.mode === CursorLocationType.Fields, "Expected a field");
+		assert(this.mode === CursorLocationType.Fields, 0xde8 /* Expected a field */);
 		return this.depth === 0 ? dummyRoot : (this.keys[this.keyIndex] ?? oob());
 	}
 
 	public getFieldChunks(): TreeChunk[] | undefined {
-		assert(this.mode === CursorLocationType.Fields, "Expected a field");
+		assert(this.mode === CursorLocationType.Fields, 0xde9 /* Expected a field */);
 		return this.depth === 0 ? undefined : (this.chunk.fields.get(this.getFieldKey()) ?? []);
 	}
 
@@ -179,12 +179,12 @@ export class BasicChunkLocalCursor implements ChunkInlineCursor, ChunkEditCursor
 	}
 
 	public enterNode(index: number): void {
-		assert(this.depth === 0 && index === 0, "Only the root node is stored inline");
+		assert(this.depth === 0 && index === 0, 0xdea /* Only the root node is stored inline */);
 		this.depth = 1;
 	}
 
 	public seekNodes(offset: number): boolean {
-		assert(this.depth === 1, "Expected a node");
+		assert(this.depth === 1, 0xdeb /* Expected a node */);
 		if (offset === 0) {
 			return true;
 		}
@@ -193,12 +193,12 @@ export class BasicChunkLocalCursor implements ChunkInlineCursor, ChunkEditCursor
 	}
 
 	public exitNode(): void {
-		assert(this.depth === 1, "Expected a node");
+		assert(this.depth === 1, 0xdec /* Expected a node */);
 		this.depth = 0;
 	}
 
 	public enterField(key: FieldKey): void {
-		assert(this.depth === 1, "Expected a node");
+		assert(this.depth === 1, 0xded /* Expected a node */);
 		// A one-key array uses the same state as field enumeration, trading an allocation on explicit entry
 		// for a single representation shared by enterField, firstField, and nextField.
 		this.keys = [key];
@@ -207,7 +207,7 @@ export class BasicChunkLocalCursor implements ChunkInlineCursor, ChunkEditCursor
 	}
 
 	public firstField(): boolean {
-		assert(this.depth === 1, "Expected a node");
+		assert(this.depth === 1, 0xdee /* Expected a node */);
 		if (this.chunk.fields.size === 0) {
 			return false;
 		}
@@ -219,7 +219,7 @@ export class BasicChunkLocalCursor implements ChunkInlineCursor, ChunkEditCursor
 	}
 
 	public nextField(): boolean {
-		assert(this.depth === 2, "Expected an owned field");
+		assert(this.depth === 2, 0xdef /* Expected an owned field */);
 		if (++this.keyIndex < this.keys.length) {
 			return true;
 		}
@@ -228,22 +228,22 @@ export class BasicChunkLocalCursor implements ChunkInlineCursor, ChunkEditCursor
 	}
 
 	public exitField(): void {
-		assert(this.depth === 2, "Expected an owned field");
+		assert(this.depth === 2, 0xdf0 /* Expected an owned field */);
 		this.depth = 1;
 		this.keys = [];
 		this.keyIndex = 0;
 	}
 
 	public getPath(prefix?: PathRootPrefix): UpPath {
-		assert(this.depth === 1, "Expected a node");
+		assert(this.depth === 1, 0xdf1 /* Expected a node */);
 		return (
 			prefixPath(prefix, { parent: undefined, parentField: dummyRoot, parentIndex: 0 }) ??
-			fail("Expected a node path")
+			fail(0xdf2 /* Expected a node path */)
 		);
 	}
 
 	public getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
-		assert(this.mode === CursorLocationType.Fields, "Expected a field");
+		assert(this.mode === CursorLocationType.Fields, 0xdf3 /* Expected a field */);
 		return prefixFieldPath(prefix, {
 			field: this.getFieldKey(),
 			parent:
@@ -263,8 +263,8 @@ export class BasicChunkLocalCursor implements ChunkInlineCursor, ChunkEditCursor
 	}
 
 	public setFieldChunks(chunks: TreeChunk[]): void {
-		assert(this.depth === 2, "Expected a field owned by the node");
-		assert(!this.chunk.isShared(), "Editing requires exclusive chunk ownership");
+		assert(this.depth === 2, 0xdf4 /* Expected a field owned by the node */);
+		assert(!this.chunk.isShared(), 0xdf5 /* Editing requires exclusive chunk ownership */);
 		if (chunks.length === 0) {
 			this.chunk.fields.delete(this.getFieldKey());
 		} else {

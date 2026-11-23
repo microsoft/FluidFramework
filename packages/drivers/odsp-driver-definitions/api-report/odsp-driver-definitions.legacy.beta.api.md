@@ -26,6 +26,7 @@ export interface HostStoragePolicy {
     // (undocumented)
     opsBatchSize?: number;
     opsCaching?: IOpsCachingPolicy;
+    propagateClaimsChallenges?: boolean;
     sessionOptions?: ICollabSessionOptions;
     // (undocumented)
     snapshotOptions?: ISnapshotOptions;

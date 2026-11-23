@@ -28,7 +28,7 @@ export function makeSchemaChangeCodec(
 			// Other types of schema changes will be supported in the future
 			assert(
 				schemaChange instanceof CompareAndSwapSchemaChangeset,
-				"Only compare-and-swap schema changes may be encoded",
+				0xe1b /* Only compare-and-swap schema changes may be encoded */,
 			);
 			assert(
 				!schemaChange.isRollback,
@@ -36,7 +36,7 @@ export function makeSchemaChangeCodec(
 			);
 			assert(
 				!schemaChange.isConflicted,
-				"Conflicted schema changes should never be transmitted",
+				0xe1c /* Conflicted schema changes should never be transmitted */,
 			);
 			return {
 				new: schemaCodec.encode(schemaChange.output),

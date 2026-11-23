@@ -16,14 +16,22 @@ import {
 	throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import {
+	type InstrumentedStorageTokenFetcher,
 	type OdspError,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import type { IFluidErrorBase } from "@fluidframework/telemetry-utils/internal";
+import {
+	type IFluidErrorBase,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 
 import type { IOdspSocketError } from "../contracts.js";
 import { errorObjectFromSocketError } from "../odspError.js";
-import { fetchAndParseAsJSONHelper, getWithRetryForTokenRefresh } from "../odspUtils.js";
+import {
+	fetchAndParseAsJSONHelper,
+	getWithRetryForTokenRefresh,
+	toInstrumentedOdspStorageTokenFetcher,
+} from "../odspUtils.js";
 import { pkgVersion } from "../packageVersion.js";
 
 import { mockFetchError } from "./mockFetch.js";
@@ -350,6 +358,72 @@ describe("Odsp Error", () => {
 			}
 		});
 		assert.strictEqual(res, 1, "did not successfully retried with realm passed as tenantId");
+	});
+
+	describe("propagateClaimsChallenges", () => {
+		/**
+		 * Creates an instrumented storage token fetcher that counts calls to the host token fetcher.
+		 */
+		function createTokenFetcher(propagateClaimsChallenges: boolean): {
+			getAuthHeader: InstrumentedStorageTokenFetcher;
+			hostCalls: () => number;
+		} {
+			let calls = 0;
+			const getAuthHeader = toInstrumentedOdspStorageTokenFetcher(
+				createChildLogger(),
+				{ siteUrl: "https://contoso.sharepoint.com", driveId: "driveId", itemId: "itemId" },
+				async () => {
+					calls++;
+					return "token";
+				},
+				propagateClaimsChallenges,
+			);
+			return { getAuthHeader, hostCalls: () => calls };
+		}
+
+		it("fails with the claims challenge instead of fetching a new token", async () => {
+			const { getAuthHeader, hostCalls } = createTokenFetcher(true);
+			const challenge = createOdspNetworkErrorWithResponse(
+				"some error",
+				401,
+				testResponseWithInsufficientClaims,
+			);
+			await assert.rejects(
+				getWithRetryForTokenRefresh(async (options) => {
+					await getAuthHeader(options, "test");
+					throw challenge;
+				}),
+				(error) => error === challenge,
+				"the original claims challenge should be thrown",
+			);
+			assert.strictEqual(hostCalls(), 1, "the host should not be asked for a new token");
+		});
+
+		it("retries an authorization error without claims", async () => {
+			const { getAuthHeader, hostCalls } = createTokenFetcher(true);
+			const res = await getWithRetryForTokenRefresh(async (options) => {
+				await getAuthHeader(options, "test");
+				if (options.refresh) {
+					return 1;
+				}
+				throwAuthorizationErrorWithRealm("some error");
+			});
+			assert.strictEqual(res, 1, "should retry with a new token");
+			assert.strictEqual(hostCalls(), 2, "the host should be asked for a new token");
+		});
+
+		it("retries a claims challenge when not enabled", async () => {
+			const { getAuthHeader, hostCalls } = createTokenFetcher(false);
+			const res = await getWithRetryForTokenRefresh(async (options) => {
+				await getAuthHeader(options, "test");
+				if (options.refresh) {
+					return 1;
+				}
+				throwAuthorizationErrorWithInsufficientClaims("some error");
+			});
+			assert.strictEqual(res, 1, "should retry with a new token");
+			assert.strictEqual(hostCalls(), 2, "the host should be asked for a new token");
+		});
 	});
 
 	it("Check Epoch Mismatch error props", async () => {
