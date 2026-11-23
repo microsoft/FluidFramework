@@ -36,7 +36,7 @@ export function cloneTree<const TSchema extends ImplicitFieldSchema>(
 	);
 	const context = new Context(
 		flexContext,
-		SchemaComponent.fromSchema(kernel.schema).definitions,
+		SchemaComponent.fromSchema(kernel.schema).reachableDefinitions,
 	);
 
 	const fieldSchema: TreeFieldStoredSchema = {
