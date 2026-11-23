@@ -10,6 +10,7 @@ import { strict as assert } from "node:assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	DriverErrorTypes,
+	type IAuthorizationError,
 	type ISnapshot,
 	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
@@ -42,9 +43,11 @@ import {
 	type INewFileInfo,
 	type IOdspResponse,
 	createCacheSnapshotKey,
+	toInstrumentedOdspStorageTokenFetcher,
 } from "../odspUtils.js";
 
 import {
+	createClaimsChallengeHeader,
 	createResponse,
 	mockFetchMultiple,
 	notFound,
@@ -634,6 +637,97 @@ describe("Tests1 for snapshot fetch", () => {
 				{ eventName: "TreesLatest_end" },
 			]),
 		);
+	});
+
+	describe("RedeemFallback with a claims challenge", () => {
+		const claims = '{"access_token":{"nbf":{"essential":true,"value":"1597959090"}}}';
+		const wwwAuthenticate = createClaimsChallengeHeader(claims);
+		const claimsChallenge = async (): Promise<MockResponse> =>
+			createResponse({ "www-authenticate": wwwAuthenticate }, undefined, 401);
+
+		beforeEach(() => {
+			resolved.shareLinkInfo = {
+				sharingLinkToRedeem: "https://microsoft.sharepoint-df.com/sharelink",
+			};
+		});
+
+		it("is skipped when propagateClaimsChallenges is true", async () => {
+			let tokenFetchCount = 0;
+			const propagatingService = new OdspDocumentStorageService(
+				resolved,
+				toInstrumentedOdspStorageTokenFetcher(
+					logger,
+					resolved,
+					async () => {
+						tokenFetchCount++;
+						return "token";
+					},
+					true, // propagateClaimsChallenges
+				),
+				logger,
+				true,
+				{ ...nonPersistentCache, persistedCache: epochTracker },
+				{ ...hostPolicy, enableRedeemFallback: true, propagateClaimsChallenges: true },
+				epochTracker,
+				async () => ({}),
+				() => "tenantid/id",
+			);
+
+			// Only one response is mocked, because the driver neither retries the request nor redeems the sharing link.
+			await assert.rejects(
+				mockFetchMultiple(async () => propagatingService.getSnapshot({}), [claimsChallenge]),
+				(error: IAuthorizationError) => {
+					assert.strictEqual(error.errorType, OdspErrorTypes.authorizationError);
+					assert.strictEqual(error.claims, claims);
+					assert.strictEqual(error.wwwAuthenticate, wwwAuthenticate);
+					return true;
+				},
+			);
+			assert.strictEqual(tokenFetchCount, 1, "the host should not be asked for a new token");
+			assert(
+				!mockLogger.events.some((event) => event.eventName.startsWith("Redeem")),
+				"Should not redeem the sharing link",
+			);
+		});
+
+		it("still runs when propagateClaimsChallenges is not set", async () => {
+			hostPolicy.enableRedeemFallback = true;
+			const snapshot: ISnapshot = {
+				blobContents,
+				snapshotTree: snapshotTreeWithGroupId,
+				ops: [],
+				latestSequenceNumber: 0,
+				sequenceNumber: 0,
+				snapshotFormatV: 1,
+			};
+
+			// The request and its retry with a new token both get the challenge, so the driver redeems the sharing link
+			// and fetches the snapshot again, as for other authorization errors.
+			await assert.doesNotReject(
+				mockFetchMultiple(
+					async () => service.getSnapshot({}),
+					[
+						claimsChallenge,
+						claimsChallenge,
+						async (): Promise<MockResponse> => okResponse({}, {}),
+						async (): Promise<MockResponse> =>
+							createResponse(
+								{ "x-fluid-epoch": "epoch1", "content-type": "application/ms-fluid" },
+								convertToCompactSnapshot(snapshot),
+								200,
+							),
+					],
+				),
+				"Should succeed",
+			);
+			assert(
+				mockLogger.matchEvents([
+					{ eventName: "RedeemShareLink_end" },
+					{ eventName: "RedeemFallback", errorType: OdspErrorTypes.authorizationError },
+					{ eventName: "TreesLatest_end" },
+				]),
+			);
+		});
 	});
 
 	it("Redeem sharing link on location redirection error", async () => {

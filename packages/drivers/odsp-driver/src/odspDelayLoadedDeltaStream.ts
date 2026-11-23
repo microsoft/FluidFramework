@@ -45,6 +45,7 @@ import {
 	type TokenFetchOptionsEx,
 	getJoinSessionCacheKey,
 	getWithRetryForTokenRefresh,
+	isClaimsChallenge,
 } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { fetchJoinSession } from "./vroom.js";
@@ -322,6 +323,7 @@ export class OdspDelayLoadedDeltaStream {
 
 		await new Promise<void>((resolve, reject) => {
 			this.joinSessionRefreshTimer = setTimeout(() => {
+				const connection = this.currentConnection;
 				this.clearJoinSessionTimer();
 				// Clear the timer as it is going to be scheduled again as part of refreshing join session.
 				getWithRetryForTokenRefresh(async (options) => {
@@ -334,6 +336,25 @@ export class OdspDelayLoadedDeltaStream {
 					);
 					resolve();
 				}).catch((error) => {
+					// With propagateClaimsChallenges, the driver does not retry a claims challenge,
+					// and the caller only logs refresh errors.
+					// The connection would end soon anyway.
+					// Join session asks the service to replace its access checks with these refreshes (Prefer: FluidRemoveCheckAccess),
+					// so the service disconnects a client that doesn't refresh its session within refreshSessionDurationSeconds.
+					// This refresh runs 30 seconds before that and isn't scheduled again after it fails.
+					// So end the connection now with the challenge instead of later without it,
+					// as when the service disconnects with an authorization error.
+					// The container then reconnects and gets the challenge again,
+					// unless the host already has a token that satisfies it.
+					if (
+						this.hostPolicy.propagateClaimsChallenges === true &&
+						isClaimsChallenge(error) &&
+						connection !== undefined &&
+						connection === this.currentConnection &&
+						!connection.disposed
+					) {
+						connection.dispose(error as Error);
+					}
 					// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 					reject(error);
 				});
