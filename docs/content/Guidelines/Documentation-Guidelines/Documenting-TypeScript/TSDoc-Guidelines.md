@@ -32,6 +32,41 @@ export class Foo {
 }
 ```
 
+## Summary
+
+The summary is the opening description in a TSDoc comment, before any [block tags](#block-tags), such as `@remarks` or `@param`.
+It does not use a tag of its own.
+
+Use the summary to briefly describe the documented declaration or API and its purpose.
+Readers should be able to understand what the API represents or does without reading the rest of the comment.
+Keep the summary concise so it is useful in IntelliSense and generated API overviews.
+
+Put additional information in the appropriate tagged blocks instead of expanding the summary:
+
+- [@remarks](#remarks) for detailed behavior, requirements, and context.
+- [@param](#param) and [@typeParam](#typeparam) for information specific to parameters and type parameters.
+- [@returns](#returns) for return-value semantics.
+- [@throws](#throws) for supported error contracts.
+- [@example](#example) for usage examples.
+
+### Summary Example
+
+In this example, the summary briefly describes what the function creates.
+The `@remarks` and `@param` blocks provide details about the sequence and its length.
+
+```typescript
+/**
+ * Creates a sequence of numbers.
+ *
+ * @remarks
+ * The sequence starts at zero and increases by one.
+ *
+ * @param length - The number of elements to create.
+ * Must be a non-negative integer.
+ */
+export declare function createSequence(length: number): number[];
+```
+
 ## Formatting Guidelines
 
 ### Single-Line Comments
@@ -355,7 +390,7 @@ See: <https://api-extractor.com/pages/tsdoc/tag_remarks/>
 
 ##### \@remarks: Guidance
 
-This tag should be used to offer additional context about the API beyond the short summary offered as a part of the main comment body.
+This tag should be used to offer additional context about the API beyond the short [summary](#summary) offered as a part of the main comment body.
 
 ##### \@remarks: Rationale
 
@@ -842,7 +877,7 @@ If you are having trouble adding a reference tag, take a look at the following a
 
 When a TSDoc comment refers to another API, prefer `{@link}` syntax over plain text or inline code.
 
-Use `{@link}` for the first reference to each API within a given TSDoc block, such as the summary, an `@remarks` block, or an `@param` block.
+Use `{@link}` for the first reference to each API within a given TSDoc block, such as the [summary](#summary), an `@remarks` block, or an `@param` block.
 For subsequent references to the same API within that block, use inline code syntax, such as `Bar`.
 
 Apply this rule independently to each block: the first reference in a new block should use `{@link}`, even if an earlier block already links to the same API.
