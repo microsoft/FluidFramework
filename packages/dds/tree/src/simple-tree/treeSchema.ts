@@ -371,12 +371,10 @@ export class RootSchemaDerivedData implements TransitiveSchemaInfo {
 
 		let policy = options;
 		if (options === toUnhydratedSchema && !this.hasDeprecatedTypes) {
-
 			// A node not yet in a document allows all staged changes, just like the permissive document policy.
 			// It also allows deprecated types, but there are none here, so both can use the same cached schema.
 			policy = StagedSchemaUpgradePolicy.permissive;
 		} else if (!this.hasStagedSchema && options !== toUnhydratedSchema) {
-
 			// No document policy introduces deprecated types, and there are no staged changes to enable here.
 			// All document policies therefore produce the same schema. Cache it under the restrictive policy.
 			policy = StagedSchemaUpgradePolicy.restrictive;

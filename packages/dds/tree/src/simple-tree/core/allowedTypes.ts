@@ -96,7 +96,6 @@ export function isDeprecatedAllowedType(entry: AnnotatedAllowedType): boolean {
 export function deprecateAllowedType<const T extends LazyItem<TreeNodeSchema>>(
 	input: T | AnnotatedAllowedType<T>,
 ): AnnotatedAllowedType<T> {
-
 	// Handle bare and annotated inputs alike without calling a lazy reference: its target may not be defined yet.
 	const { type, metadata } = normalizeToAnnotatedAllowedType(input);
 
