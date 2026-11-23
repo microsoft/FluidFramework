@@ -30,8 +30,8 @@ import {
 import { type ChunkEditCursor, type EditableChunk, getFieldLength } from "./chunkEditing.js";
 import {
 	type ChunkEdit,
-	ChunkSequence,
 	type ChunkSequenceEditor,
+	assertChunksReadable,
 	MutableChunk,
 } from "./chunkSequence.js";
 
@@ -40,8 +40,7 @@ import {
  */
 export class BasicChunk extends MutableChunk implements EditableChunk, CompositeChunk {
 	public readonly topLevelLength: number = 1;
-	private readonly fieldSequences = new Map<FieldKey, ChunkSequence>();
-	private readonly fieldViews = new Map<FieldKey, readonly TreeChunk[]>();
+	private readonly fieldData = new Map<FieldKey, TreeChunk[]>();
 
 	public override hasStableTopLevelLength(): boolean {
 		return true;
@@ -53,7 +52,7 @@ export class BasicChunk extends MutableChunk implements EditableChunk, Composite
 
 	public get fields(): ReadonlyMap<FieldKey, readonly TreeChunk[]> {
 		this.assertReadable();
-		return this.fieldViews;
+		return this.fieldData;
 	}
 
 	/**
@@ -65,7 +64,7 @@ export class BasicChunk extends MutableChunk implements EditableChunk, Composite
 		/**
 		 * Fields of this node.
 		 * @remarks
-		 * Containers are copied and their child references transferred to field owners.
+		 * Containers are copied and their child references transferred to this chunk.
 		 * Editing requires authority obtained through the owning path.
 		 * Fields with no nodes must be removed from the map.
 		 */
@@ -75,36 +74,20 @@ export class BasicChunk extends MutableChunk implements EditableChunk, Composite
 	) {
 		super();
 		for (const [key, chunks] of fields) {
-			const sequence = new ChunkSequence(chunks, this);
-			this.fieldSequences.set(key, sequence);
-			this.fieldViews.set(key, sequence.chunks);
+			this.fieldData.set(key, this.adoptChildren(chunks));
 		}
 	}
 
 	public acquireField(editor: ChunkEdit, key: FieldKey): ChunkSequenceEditor {
 		editor.assertFor(this);
-		let sequence = this.fieldSequences.get(key);
-		if (sequence === undefined) {
-			sequence = new ChunkSequence([], this);
-			this.fieldSequences.set(key, sequence);
-		}
-		return sequence.acquireEditor(
-			editor,
-			() => {
-				if (sequence.chunks.length === 0) {
-					this.fieldSequences.delete(key);
-					this.fieldViews.delete(key);
-					sequence.dispose();
-				}
-			},
-			(chunks) => {
-				if (chunks.length === 0) {
-					this.fieldViews.delete(key);
-				} else {
-					this.fieldViews.set(key, chunks);
-				}
-			},
-		);
+		const data = this.fieldData.get(key) ?? [];
+		return editor.acquireField(key, data, (chunks) => {
+			if (chunks.length === 0) {
+				this.fieldData.delete(key);
+			} else {
+				this.fieldData.set(key, data);
+			}
+		});
 	}
 
 	public takeField(editor: ChunkEdit, key: FieldKey): TreeChunk[] {
@@ -118,7 +101,7 @@ export class BasicChunk extends MutableChunk implements EditableChunk, Composite
 
 	public createField(editor: ChunkEdit, key: FieldKey, chunks: readonly TreeChunk[]): void {
 		editor.assertFor(this);
-		assert(!this.fieldSequences.has(key), "Field already exists");
+		assert(!this.fieldData.has(key), "Field already exists");
 		const field = this.acquireField(editor, key);
 		try {
 			field.splice(0, 0, chunks);
@@ -131,6 +114,7 @@ export class BasicChunk extends MutableChunk implements EditableChunk, Composite
 		this.assertCloneable();
 		const fields = new Map<FieldKey, TreeChunk[]>();
 		for (const [key, children] of this.fields) {
+			assertChunksReadable(children);
 			const field = children.map((child) => {
 				child.referenceAdded();
 				return child;
@@ -162,8 +146,8 @@ export class BasicChunk extends MutableChunk implements EditableChunk, Composite
 	}
 
 	protected onUnreferenced(): void {
-		for (const sequence of this.fieldSequences.values()) {
-			sequence.dispose();
+		for (const children of this.fieldData.values()) {
+			this.disposeChildren(children);
 		}
 	}
 }

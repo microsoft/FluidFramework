@@ -94,7 +94,7 @@ export function isEditableChunk(chunk: TreeChunk): chunk is EditableChunk {
 /**
  * Returns the sum of {@link TreeChunk.topLevelLength} over a chunk sequence.
  * @remarks
- * Owned sequences maintain this total during edits; unowned arrays are scanned.
+ * Indexed sequences maintain this total during edits; other arrays are scanned.
  */
 export function getFieldLength(chunks: readonly TreeChunk[]): number {
 	return (

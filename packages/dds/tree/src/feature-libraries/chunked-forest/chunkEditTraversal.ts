@@ -27,6 +27,7 @@ import { type ChunkEdit, ChunkSequenceEditor } from "./chunkSequence.js";
 import {
 	type ChunkCompressor,
 	basicChunkTree,
+	groupChunks,
 	splitFieldAtIndex,
 	coalesceUniformChunks,
 } from "./chunkTree.js";
@@ -134,6 +135,9 @@ function spliceChunkField(
 		start: Math.max(0, start - 1),
 		end: Math.min(chunks.length, start + content.length + 1),
 	});
+	if (chunks.length > compressor.policy.sequenceChunkSplitThreshold) {
+		field.transformRange(0, chunks.length, (owned) => groupChunks(owned, compressor.policy));
+	}
 	return removed;
 }
 

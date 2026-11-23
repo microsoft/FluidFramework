@@ -25,7 +25,7 @@ import {
 	type IdDecodingContext,
 } from "../../../util/index.js";
 import { BasicChunk } from "../basicChunk.js";
-import { defaultChunkPolicy } from "../chunkTree.js";
+import { defaultChunkPolicy, groupChunks } from "../chunkTree.js";
 import { emptyChunk } from "../emptyChunk.js";
 import { SequenceChunk } from "../sequenceChunk.js";
 import { TreeShape, UniformChunk, type ChunkShape, type FieldShape } from "../uniformChunk.js";
@@ -512,17 +512,16 @@ export function deaggregateChunks(chunk: TreeChunk): TreeChunk[] {
 	if (chunk === emptyChunk) {
 		return [];
 	}
-	// TODO: when handling of SequenceChunks has better performance (for example in cursors),
-	// consider keeping SequenceChunks here if they are longer than some threshold.
 	if (chunk instanceof SequenceChunk) {
+		if (chunk.subChunks.length > defaultChunkPolicy.sequenceChunkInlineThreshold) {
+			return [chunk];
+		}
 		// Could return [] here, however the logic in this file is designed to never produce an empty SequenceChunk, so its better to throw an error here to detect bugs.
 		assert(chunk.subChunks.length > 0, 0x735 /* Unexpected empty sequence */);
 		// Logic in this file is designed to never produce an unneeded (single item) SequenceChunks, so its better to throw an error here to detect bugs.
 		assert(chunk.subChunks.length > 1, 0x736 /* Unexpected single item sequence */);
 
 		for (const sub of chunk.subChunks) {
-			// The logic in this file is designed to never produce an nested SequenceChunks or emptyChunk, so its better to throw an error here to detect bugs.
-			assert(!(sub instanceof SequenceChunk), 0x737 /* unexpected nested sequence */);
 			assert(sub !== emptyChunk, 0x738 /* unexpected empty chunk */);
 		}
 		return chunk.takeChildren();
@@ -534,10 +533,10 @@ export function deaggregateChunks(chunk: TreeChunk): TreeChunk[] {
 /**
  * Normalize a {@link TreeChunk}[] into a single TreeChunk.
  *
- * Avoids creating nested or less than 2 child {@link SequenceChunk}s.
+ * Keeps long sequences grouped and avoids wrappers with fewer than two children.
  */
 export function aggregateChunks(input: TreeChunk[]): TreeChunk {
-	const chunks = input.flatMap(deaggregateChunks);
+	const chunks = groupChunks(input.flatMap(deaggregateChunks), defaultChunkPolicy);
 	switch (chunks.length) {
 		case 0: {
 			return emptyChunk;

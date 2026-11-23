@@ -5,11 +5,11 @@
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
 
-import type { ChunkedCursor, TreeChunk } from "../../core/index.js";
+import type { ChunkedCursor, FieldKey, TreeChunk } from "../../core/index.js";
 import { ReferenceCountedBase, replaceArrayRange } from "../../util/index.js";
 
 const ownershipKey = Symbol("chunk ownership");
-const sequences = new WeakMap<readonly TreeChunk[], ChunkSequence>();
+const sequences = new WeakMap<readonly TreeChunk[], ChunkSequence | ChunkSequenceEditor>();
 
 /**
  * A mutable chunk whose editing authority follows its owning references.
@@ -90,6 +90,25 @@ export abstract class MutableChunk extends ReferenceCountedBase implements TreeC
 	protected assertCloneable(): void {
 		assert(this.editor === undefined, "Cannot clone a chunk during an edit");
 	}
+
+	/** Copies a child array and takes ownership of its references without allocating an index. */
+	protected adoptChildren(chunks: readonly TreeChunk[]): TreeChunk[] {
+		const children = [...chunks];
+		for (const child of children) {
+			adopt(child);
+		}
+		return children;
+	}
+
+	/** Releases the references in an owned child array. */
+	protected disposeChildren(chunks: TreeChunk[]): void {
+		assertChunksReadable(chunks);
+		for (const child of chunks) {
+			release(child);
+			child.referenceRemoved();
+		}
+		chunks.length = 0;
+	}
 }
 
 /**
@@ -109,6 +128,7 @@ class MutationState {
 export class ChunkEdit {
 	private active = true;
 	private childScopes = 0;
+	private fields: FieldKey[] | undefined;
 	private readonly previousLength: number;
 	public readonly mutationState: MutationState;
 
@@ -150,6 +170,34 @@ export class ChunkEdit {
 		assert(key === ownershipKey, "Invalid ownership authority");
 		this.assertFor(this.chunk);
 		this.childScopes += delta;
+	}
+
+	/**
+	 * Borrows an unindexed field owned by this chunk.
+	 * The caller supplies the owned array, not an external reference to its children.
+	 */
+	public acquireField(
+		key: FieldKey,
+		chunks: TreeChunk[],
+		onChange: (chunks: readonly TreeChunk[]) => void,
+	): ChunkSequenceEditor {
+		this.assertReadable();
+		const fields = (this.fields ??= []);
+		assert(!fields.includes(key), "Field already has an editor");
+		assert(!sequences.has(chunks), "Field array already has an owner or editor");
+		const editor = new ChunkSequenceEditor(
+			ownershipKey,
+			undefined,
+			chunks,
+			this,
+			() => {
+				fields.splice(fields.indexOf(key), 1);
+			},
+			onChange,
+		);
+		fields.push(key);
+		sequences.set(chunks, editor);
+		return editor;
 	}
 
 	public close(commit = true): void {
@@ -296,7 +344,7 @@ export class ChunkSequence {
 		this.totalLength = total;
 	}
 
-	private assertReadable(): void {
+	public assertReadable(): void {
 		assert(!this.disposed, "Sequence ownership has been released");
 		assert(!this.failed, "Sequence edit failed");
 		this.editor?.assertReadable();
@@ -318,7 +366,7 @@ export class ChunkSequenceEditor {
 
 	public constructor(
 		key: typeof ownershipKey,
-		private readonly sequence: ChunkSequence,
+		private readonly sequence: ChunkSequence | undefined,
 		private readonly data: TreeChunk[],
 		private readonly parent?: ChunkEdit,
 		private readonly onClose?: () => void,
@@ -378,9 +426,10 @@ export class ChunkSequenceEditor {
 			"Invalid chunk range",
 		);
 		const input = this.data.slice(start, end);
-		const previousLength = this.sequence.preserveLength
-			? input.reduce((length, chunk) => length + chunk.topLevelLength, 0)
-			: undefined;
+		const previousLength =
+			(this.sequence?.preserveLength ?? false)
+				? input.reduce((length, chunk) => length + chunk.topLevelLength, 0)
+				: undefined;
 		this.mutating = true;
 		this.mutationState.mutations++;
 		let completed = false;
@@ -399,7 +448,7 @@ export class ChunkSequenceEditor {
 				adopt(chunk);
 			}
 			replaceArrayRange(this.data, start, end, output);
-			this.sequence.refresh(ownershipKey, start);
+			this.sequence?.refresh(ownershipKey, start);
 			this.onChange?.(this.data);
 			completed = true;
 		} finally {
@@ -407,7 +456,7 @@ export class ChunkSequenceEditor {
 			this.mutationState.mutations--;
 			if (!completed) {
 				this.failed = true;
-				this.sequence.markFailed(ownershipKey);
+				this.sequence?.markFailed(ownershipKey);
 			}
 		}
 	}
@@ -425,10 +474,11 @@ export class ChunkSequenceEditor {
 		assert(this.childScopes === 0, "Sequence already has a child editor");
 		const chunk = this.data[index] ?? oob();
 		assert(chunk instanceof MutableChunk, "Chunk does not support controlled mutation");
+		const sequencePreservesLength = this.sequence?.preserveLength ?? false;
 		const stable =
-			preserveLength ?? (this.sequence.preserveLength || chunk.hasStableTopLevelLength());
+			preserveLength ?? (sequencePreservesLength || chunk.hasStableTopLevelLength());
 		assert(
-			!this.sequence.preserveLength || stable,
+			!sequencePreservesLength || stable,
 			"Fixed-length sequences require stable child edits",
 		);
 		assert(!speculative || stable, "Speculative child edits must preserve length");
@@ -490,11 +540,11 @@ export class ChunkSequenceEditor {
 		if (!preserveLength) {
 			this.unstableChildren--;
 		}
-		if (chunk.topLevelLength !== previousLength) {
+		if (this.sequence !== undefined && chunk.topLevelLength !== previousLength) {
 			this.changedFrom = Math.min(this.changedFrom ?? index, index);
 		}
 		if (this.unstableChildren === 0 && this.changedFrom !== undefined) {
-			this.sequence.refresh(ownershipKey, this.changedFrom);
+			this.sequence?.refresh(ownershipKey, this.changedFrom);
 			this.changedFrom = undefined;
 		}
 	}
@@ -503,7 +553,10 @@ export class ChunkSequenceEditor {
 		assert(this.active && !this.mutating, "Invalid sequence editor close");
 		assert(this.childScopes === 0, "Close child editors before their parent");
 		this.active = false;
-		this.sequence.closeEditor(ownershipKey, this);
+		this.sequence?.closeEditor(ownershipKey, this);
+		if (this.sequence === undefined && !this.failed) {
+			sequences.delete(this.data);
+		}
 		this.parent?.changeChildScopes(ownershipKey, -1);
 		if (!this.failed) {
 			this.onClose?.();
@@ -524,10 +577,22 @@ function release(chunk: TreeChunk): void {
 }
 
 /**
- * Resolves a borrowed array to its owner without caching unowned arrays.
+ * Rejects reads while an edit is incomplete or after an edit has failed.
+ */
+export function assertChunksReadable(chunks: readonly TreeChunk[]): void {
+	sequences.get(chunks)?.assertReadable();
+}
+
+/**
+ * Resolves an indexed owner and checks any active unindexed field editor.
  */
 export function getChunkSequence(chunks: readonly TreeChunk[]): ChunkSequence | undefined {
-	return sequences.get(chunks);
+	const owner = sequences.get(chunks);
+	if (owner instanceof ChunkSequenceEditor) {
+		owner.assertReadable();
+		return undefined;
+	}
+	return owner;
 }
 
 /**

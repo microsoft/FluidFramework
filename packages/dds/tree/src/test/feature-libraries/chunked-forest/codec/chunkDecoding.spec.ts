@@ -23,6 +23,7 @@ import {
 import { BasicChunk } from "../../../../feature-libraries/chunked-forest/basicChunk.js";
 import {
 	chunkField,
+	defaultChunkPolicy,
 	makeTreeChunker,
 	tryCoalesceUniformChunks,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -1056,6 +1057,32 @@ describe("chunkDecoding", () => {
 		assertRefCount(child, 1);
 		sequence.referenceRemoved();
 		assertRefCount(child, 0);
+	});
+
+	it("retains grouped long sequences when decoding fields", () => {
+		const count = defaultChunkPolicy.sequenceChunkSplitThreshold ** 2 + 1;
+		const expected = Array.from({ length: count }, (_, value) => ({
+			type: brand<TreeNodeSchemaIdentifier>("number"),
+			value,
+		}));
+		const leaves = expected.map((node) => new BasicChunk(node.type, new Map(), node.value));
+		const sequence = aggregateChunks(leaves);
+		assert(sequence instanceof SequenceChunk);
+		function checkGroup(chunk: TreeChunk): void {
+			if (chunk instanceof SequenceChunk) {
+				assert(chunk.subChunks.length <= defaultChunkPolicy.sequenceChunkSplitThreshold);
+				for (const child of chunk.subChunks) {
+					checkGroup(child);
+				}
+			}
+		}
+		checkGroup(sequence);
+		const fields = deaggregateChunks(sequence);
+		assert(fields.some((chunk) => chunk instanceof SequenceChunk));
+		const combined = aggregateChunks(fields);
+		assertChunkCursorEquals(combined, expected);
+		combined.referenceRemoved();
+		assert(leaves.every((leaf) => leaf.isUnreferenced()));
 	});
 
 	describe("EncodedNestedArrayShape", () => {

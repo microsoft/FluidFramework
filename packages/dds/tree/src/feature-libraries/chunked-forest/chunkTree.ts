@@ -59,7 +59,7 @@ export function makeTreeChunker(
 	return new Chunker(
 		schema,
 		policy,
-		defaultChunkPolicy.sequenceChunkInlineThreshold,
+		defaultChunkPolicy.sequenceChunkSplitThreshold,
 		defaultChunkPolicy.sequenceChunkInlineThreshold,
 		defaultChunkPolicy.uniformChunkNodeCount,
 		defaultChunkPolicy.uniformChunkNodeCountDynamicTargetMax,
@@ -454,10 +454,9 @@ export function tryShapeFromFieldSchema(
  * Use `makeTreeChunker` to create a policy with the defaults, but leverages to schema.
  */
 export const defaultChunkPolicy: ChunkPolicy = {
-	// Currently ChunkedForest and BasicTreeCursor don't handle SequenceChunks very efficiently:
-	// they likely add more overhead than they save for now, so don't create them.
-	sequenceChunkSplitThreshold: Number.POSITIVE_INFINITY,
-	sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
+	// Keep short fields flat and bound the child arrays of long fields.
+	sequenceChunkSplitThreshold: 64,
+	sequenceChunkInlineThreshold: 16,
 	// Current UniformChunk handling doesn't scale well to large chunks, so set a modest size limit:
 	uniformChunkNodeCount: 400,
 	uniformChunkNodeCountDynamicTargetMax: 25,
@@ -603,7 +602,7 @@ export function chunkRange(
 		(cursor.mode === CursorLocationType.Nodes) === length > 0,
 		0xb59 /* Should be in nodes mode if not past end */,
 	);
-	let output: TreeChunk[] = [];
+	const output: TreeChunk[] = [];
 	let remaining = length;
 	while (remaining > 0) {
 		assert(cursor.mode === CursorLocationType.Nodes, 0x57f /* should be in nodes */);
@@ -629,9 +628,10 @@ export function chunkRange(
 							subChunk.referenceAdded();
 							output.push(subChunk);
 						}
+					} else {
+						chunk.referenceAdded();
+						output.push(chunk);
 					}
-					chunk.referenceAdded();
-					output.push(chunk);
 					remaining -= chunkLength;
 					reusedChunk = true;
 					let seek = chunkLength;
@@ -681,11 +681,18 @@ export function chunkRange(
 	// when their combined size fits within the applicable chunk size limit.
 	// Newly converted runs are already packed by uniformChunkFromCursor.
 
-	// If output is large, group it into a tree of sequence chunks.
-	while (output.length > chunkCompressor.policy.sequenceChunkSplitThreshold) {
-		const chunkCount = Math.ceil(
-			output.length / chunkCompressor.policy.sequenceChunkSplitThreshold,
-		);
+	return groupChunks(output, chunkCompressor.policy);
+}
+
+/**
+ * Groups long child arrays into a tree of sequence chunks.
+ * Consumes the input's owning references and returns owning references to the grouped storage.
+ * Short arrays are returned unchanged.
+ */
+export function groupChunks(chunks: TreeChunk[], policy: ChunkPolicy): TreeChunk[] {
+	let output = chunks;
+	while (output.length > policy.sequenceChunkSplitThreshold) {
+		const chunkCount = Math.ceil(output.length / policy.sequenceChunkSplitThreshold);
 		const newOutput: TreeChunk[] = [];
 		// Rounding down, and add an extra item to some of the chunks.
 		const chunkSize = Math.floor(output.length / chunkCount);
@@ -773,7 +780,15 @@ export function splitFieldAtIndex(
 		const splitPoint = total > bisectThreshold ? Math.floor(total / 2) : remaining;
 		let before: TreeChunk[];
 		let after: TreeChunk[];
-		if (chunk instanceof UniformChunk) {
+		if (chunk instanceof SequenceChunk) {
+			const children = chunk.subChunks.map((child) => {
+				child.referenceAdded();
+				return child;
+			});
+			const split = splitFieldAtIndex(children, splitPoint, policy);
+			before = groupChunks(children.slice(0, split), policy.policy);
+			after = groupChunks(children.slice(split), policy.policy);
+		} else if (chunk instanceof UniformChunk) {
 			// Preserve the known shape and value encoding rather than inferring a shape from schema again.
 			// A polymorphic schema could otherwise convert unaffected siblings to BasicChunks during fallback.
 			const shape = chunk.shape.treeShape;

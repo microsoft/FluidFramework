@@ -13,6 +13,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 import {
 	CursorLocationType,
+	cursorChunk,
 	EmptyKey,
 	type FieldKey,
 	type JsonableTree,
@@ -308,13 +309,18 @@ describe("chunkTree", () => {
 
 	describe("chunkRange", () => {
 		it("inlines a reused SequenceChunk without duplicating its nodes", () => {
-			// A chunk-backed cursor enables chunkRange's reuse path rather than rebuilding the nodes.
 			const sequence = new SequenceChunk([
 				new BasicChunk(brand(numberSchema.identifier), new Map(), 0),
 				new BasicChunk(brand(numberSchema.identifier), new Map(), 1),
 			]);
 			const cursor = sequence.cursor();
 			assert(cursor.firstNode());
+			// Expose the whole sequence, not just the leaf selected by ChunkCursor.
+			Object.defineProperties(cursor, {
+				[cursorChunk]: { value: sequence },
+				chunkStart: { value: 0 },
+				chunkLength: { value: sequence.topLevelLength },
+			});
 
 			const chunks = chunkRange(
 				cursor,
@@ -327,7 +333,37 @@ describe("chunkTree", () => {
 				chunks.reduce((length, chunk) => length + chunk.topLevelLength, 0),
 				sequence.topLevelLength,
 			);
-			assertChunkCursorEquals(new SequenceChunk(chunks), numberSequenceField(2));
+			const result = new SequenceChunk(chunks);
+			assertChunkCursorEquals(result, numberSequenceField(2));
+			result.referenceRemoved();
+			sequence.referenceRemoved();
+		});
+
+		it("keeps short fields flat and groups long fields with the default chunker", () => {
+			const policy = makeTreeChunker(
+				new TreeStoredSchemaRepository(schema),
+				defaultSchemaPolicy,
+				defaultIncrementalEncodingPolicy,
+			);
+			try {
+				const limit = defaultChunkPolicy.sequenceChunkSplitThreshold;
+				for (const length of [1, limit, limit + 1]) {
+					const expected = Array.from({ length }, () => ({
+						type: brand<TreeNodeSchemaIdentifier>(structOptional.identifier),
+					}));
+					const chunks = chunkField(cursorForJsonableTreeField(expected), {
+						policy,
+						idCompressor: undefined,
+					});
+					assert.equal(chunks.length, length <= limit ? length : 2);
+					assert(chunks.every((chunk) => chunk instanceof SequenceChunk === length > limit));
+					const result = new SequenceChunk(chunks);
+					assertChunkCursorEquals(result, expected);
+					result.referenceRemoved();
+				}
+			} finally {
+				policy.dispose();
+			}
 		});
 
 		it("single basic chunk", () => {

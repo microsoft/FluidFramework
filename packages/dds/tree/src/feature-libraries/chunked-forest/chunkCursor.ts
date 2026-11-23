@@ -491,8 +491,9 @@ export abstract class ChunkTraversal
 		while (this.parentStack.length > 0) {
 			const frame = this.restoreParent();
 			const fieldIndex = frame.chunkStartIndex + index;
-			const owner = getChunkSequence(frame.chunks);
-			if (owner !== undefined && (index < -1 || index > exited.rootLength)) {
+			const owner =
+				index < -1 || index > exited.rootLength ? getChunkSequence(frame.chunks) : undefined;
+			if (owner !== undefined) {
 				if (fieldIndex >= 0 && fieldIndex < owner.length) {
 					this.enterNodeAt(
 						fieldIndex,

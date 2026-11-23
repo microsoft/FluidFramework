@@ -41,7 +41,7 @@ import { ChunkCursor, ChunkSequenceCursor } from "./chunkCursor.js";
 import { ChunkEditTraversal } from "./chunkEditTraversal.js";
 import { getFieldLength } from "./chunkEditing.js";
 import { ChunkSequence } from "./chunkSequence.js";
-import { type IChunker, chunkField, chunkTree } from "./chunkTree.js";
+import { type IChunker, chunkField, chunkTree, groupChunks } from "./chunkTree.js";
 
 export { ensureExclusiveBasicChunk } from "./chunkEditTraversal.js";
 export { locateNodeInChunks } from "./chunkEditing.js";
@@ -182,7 +182,11 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 						shouldRechunk: () => true,
 					}),
 				);
-				this.forest.roots.createField(rootEdit, destination, chunks);
+				this.forest.roots.createField(
+					rootEdit,
+					destination,
+					groupChunks(chunks, this.forest.chunker),
+				);
 				this.forest.#events.emit("afterRootFieldCreated", destination);
 			},
 			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
@@ -224,7 +228,11 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 				);
 				const removed = editor.splice(range, this.forest.roots.takeField(rootEdit, source));
 				if (removed.length > 0) {
-					this.forest.roots.createField(rootEdit, destination, removed);
+					this.forest.roots.createField(
+						rootEdit,
+						destination,
+						groupChunks(removed, this.forest.chunker),
+					);
 				}
 			},
 			/**
@@ -284,7 +292,11 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 					}
 				} else {
 					if (newField.length > 0) {
-						this.forest.roots.createField(rootEdit, destination, newField);
+						this.forest.roots.createField(
+							rootEdit,
+							destination,
+							groupChunks(newField, this.forest.chunker),
+						);
 					}
 				}
 			},
