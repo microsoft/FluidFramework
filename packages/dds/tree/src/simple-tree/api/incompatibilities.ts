@@ -207,14 +207,7 @@ export function* getIncompatibilitiesInAllowedContent(
 	stored: TreeStoredSchema,
 	upgradeCollector?: UpgradeLocationCollector,
 ): Iterable<Incompatibility> {
-	// check root field incompatibilities
-	yield* getFieldIncompatibilities(
-		view.root,
-		stored.rootFieldSchema,
-		undefined,
-		undefined,
-		upgradeCollector,
-	);
+	yield* getRootFieldIncompatibilities(view, stored.rootFieldSchema, upgradeCollector);
 
 	// Check all of the stored nodes, including their fields for incompatibilities.
 	for (const [identifier, storedSchema] of stored.nodeSchema) {
@@ -226,6 +219,23 @@ export function* getIncompatibilitiesInAllowedContent(
 		}
 		// Note that nodes that are missing in the view schema are only a problem if other stored schema nodes actually reference them which will produce its own incompatibility, so we can rely on that to produce any needed incompatibilities.
 	}
+}
+
+/**
+ * The part of {@link getIncompatibilitiesInAllowedContent} which compares the root fields.
+ */
+export function* getRootFieldIncompatibilities(
+	view: TreeSchema,
+	storedRoot: TreeFieldStoredSchema,
+	upgradeCollector?: UpgradeLocationCollector,
+): Iterable<Incompatibility> {
+	yield* getFieldIncompatibilities(
+		view.root,
+		storedRoot,
+		undefined,
+		undefined,
+		upgradeCollector,
+	);
 }
 
 function* getNodeIncompatibilities(

@@ -9,6 +9,7 @@ import {
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	type TreeStoredSchema,
+	type TreeFieldStoredSchema,
 	type TreeNodeStoredSchema,
 	TreeStoredSchemaRepository,
 	ValueSchema,
@@ -16,6 +17,7 @@ import {
 import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js";
 import { NodeKind } from "../core/index.js";
 import {
+	allowsFieldSuperset,
 	allowsRepoSuperset,
 	type SchemaIncompatibilityLocation,
 	type StoredSchemaUpgradeIncompatibility,
@@ -25,10 +27,16 @@ import {
 	defaultSchemaPolicy,
 } from "../../feature-libraries/index.js";
 import { resolveStoredSchemaGenerationOptions } from "../toStoredSchema.js";
-import { getSchemaUpgradeCandidate, toInitialSchema, type TreeSchema } from "../treeSchema.js";
+import {
+	composeFieldSchema,
+	getSchemaUpgradeCandidate,
+	toInitialSchema,
+	type TreeSchema,
+} from "../treeSchema.js";
 
 import {
 	getIncompatibilitiesInAllowedContent,
+	getRootFieldIncompatibilities,
 	type Incompatibility,
 	type UpgradeLocationCollector,
 } from "./incompatibilities.js";
@@ -245,10 +253,75 @@ function formatUpgradeIncompatibility(
 }
 
 /**
+ * How {@link computeSchemaCompatibility} compares a view schema with stored schemas.
+ */
+interface SchemaComparison {
+	/**
+	 * Finds the incompatibilities which prevent the view schema from viewing `stored`.
+	 * See {@link getIncompatibilitiesInAllowedContent}.
+	 */
+	viewIncompatibilities(
+		stored: TreeStoredSchema,
+		upgradeCollector?: UpgradeLocationCollector,
+	): Iterable<Incompatibility>;
+
+	/**
+	 * Whether `superset` allows all content `original` allows, collecting the reasons it does not into `incompatibilities` if provided.
+	 * See {@link allowsRepoSuperset}.
+	 */
+	allowsSuperset(
+		original: TreeStoredSchema,
+		superset: TreeStoredSchema,
+		comparisonMode?: SchemaComparisonMode,
+		incompatibilities?: StoredSchemaUpgradeIncompatibility[],
+	): boolean;
+}
+
+/**
+ * The {@link SchemaComparison} of whole stored schemas.
+ */
+function fullComparison(viewSchema: TreeSchema): SchemaComparison {
+	return {
+		viewIncompatibilities: (stored, upgradeCollector) =>
+			getIncompatibilitiesInAllowedContent(viewSchema, stored, upgradeCollector),
+		allowsSuperset: (original, superset, comparisonMode, incompatibilities) =>
+			allowsRepoSuperset(
+				defaultSchemaPolicy,
+				original,
+				superset,
+				comparisonMode,
+				incompatibilities,
+			),
+	};
+}
+
+/**
+ * The {@link SchemaComparison} of stored schemas which have the same node schemas, generated from `viewSchema`:
+ * only their root fields can differ, so only those are compared.
+ */
+function rootFieldComparison(viewSchema: TreeSchema): SchemaComparison {
+	return {
+		viewIncompatibilities: (stored, upgradeCollector) =>
+			getRootFieldIncompatibilities(viewSchema, stored.rootFieldSchema, upgradeCollector),
+		allowsSuperset: (original, superset, comparisonMode, incompatibilities) =>
+			allowsFieldSuperset(
+				defaultSchemaPolicy,
+				original,
+				original.rootFieldSchema,
+				superset.rootFieldSchema,
+				comparisonMode,
+				incompatibilities === undefined
+					? undefined
+					: { incompatibilities, identifier: undefined, fieldKey: undefined },
+			),
+	};
+}
+
+/**
  * Explains the schema requirements that prevent upgrading `stored` to `proposed`.
  */
 function getSchemaUpgradeIncompatibilityDetails(
-	viewSchema: TreeSchema,
+	comparison: SchemaComparison,
 	stored: TreeStoredSchema,
 	proposed: TreeStoredSchema,
 ): readonly SchemaUpgradeIncompatibility[] | undefined {
@@ -257,32 +330,24 @@ function getSchemaUpgradeIncompatibilityDetails(
 		return [formatSchemaVersionIncompatibility(stored, proposed)];
 	}
 	const incompatibilities: StoredSchemaUpgradeIncompatibility[] = [];
-	if (
-		!allowsRepoSuperset(
-			defaultSchemaPolicy,
-			stored,
-			proposed,
-			comparisonMode,
-			incompatibilities,
-		)
-	) {
+	if (!comparison.allowsSuperset(stored, proposed, comparisonMode, incompatibilities)) {
 		return incompatibilities.map((incompatibility) =>
 			formatUpgradeIncompatibility(incompatibility),
 		);
 	}
-	return getPostUpgradeViewIncompatibilities(viewSchema, proposed);
+	return getPostUpgradeViewIncompatibilities(comparison, proposed);
 }
 
 /**
  * Explains why an otherwise permitted stored-schema upgrade would still prevent viewing.
  */
 function getPostUpgradeViewIncompatibilities(
-	viewSchema: TreeSchema,
+	comparison: SchemaComparison,
 	candidate: TreeStoredSchema,
 ): readonly SchemaUpgradeIncompatibility[] | undefined {
-	const incompatibilities = [
-		...getIncompatibilitiesInAllowedContent(viewSchema, candidate),
-	].map((incompatibility) => formatViewIncompatibility(incompatibility));
+	const incompatibilities = [...comparison.viewIncompatibilities(candidate)].map(
+		(incompatibility) => formatViewIncompatibility(incompatibility),
+	);
 	return incompatibilities.length === 0
 		? undefined
 		: [
@@ -386,13 +451,78 @@ export function checkSchemaCompatibility(
 	viewSchema: TreeSchema,
 	stored: TreeStoredSchema,
 	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
-): Omit<SchemaCompatibilityStatusBeta, "canInitialize"> & {
-	enabledUpgrades: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
-} {
-	// The public API surface assumes defaultSchemaPolicy
-	const policy = defaultSchemaPolicy;
+): SchemaCompatibility {
 	const configuredPolicy = resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades);
+	return computeSchemaCompatibility(
+		fullComparison(viewSchema),
+		stored,
+		getSchemaUpgradeCandidate(viewSchema, stored, configuredPolicy),
+		toInitialSchema(viewSchema.root, configuredPolicy, viewSchema.schemaVersion),
+	);
+}
 
+/**
+ * The result of {@link checkSchemaCompatibility}.
+ */
+export type SchemaCompatibility = Omit<SchemaCompatibilityStatusBeta, "canInitialize"> & {
+	enabledUpgrades: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
+};
+
+/**
+ * {@link checkSchemaCompatibility} for a stored schema whose node schemas are those of `generated`.
+ *
+ * @param viewSchema - Schema for the view. Must not have any staged upgrades (see {@link TransitiveSchemaInfo.hasStagedSchema}).
+ * @param generated - The stored schema {@link toInitialSchema} generates from `viewSchema` (with its schema version).
+ * @param stored - The stored schema to check compatibility against. Its node schemas must be those of `generated`.
+ *
+ * @remarks
+ * Gives the same result as {@link checkSchemaCompatibility} in this case, but only compares root fields:
+ * a view schema has no incompatibilities with the node schemas generated from it,
+ * and since it has no staged upgrades, none are enabled and the schema it would upgrade to differs from `generated` only in its root field.
+ *
+ * This is the case while a document is being initialized from the view schema,
+ * which may install `generated` with a relaxed root field before installing `generated` itself.
+ */
+export function checkGeneratedSchemaCompatibility(
+	viewSchema: TreeSchema,
+	generated: TreeStoredSchema,
+	stored: TreeStoredSchema,
+): SchemaCompatibility {
+	const rootFieldSchema: TreeFieldStoredSchema = composeFieldSchema(
+		generated.rootFieldSchema,
+		stored.rootFieldSchema,
+		viewSchema.root,
+	);
+	const wouldUpgradeTo: TreeStoredSchema =
+		viewSchema.schemaVersion === undefined
+			? { nodeSchema: generated.nodeSchema, rootFieldSchema }
+			: {
+					nodeSchema: generated.nodeSchema,
+					rootFieldSchema,
+					schemaVersion: viewSchema.schemaVersion,
+				};
+	return computeSchemaCompatibility(
+		rootFieldComparison(viewSchema),
+		stored,
+		wouldUpgradeTo,
+		generated,
+	);
+}
+
+/**
+ * Implementation of {@link checkSchemaCompatibility} and {@link checkGeneratedSchemaCompatibility}.
+ *
+ * @param comparison - How to compare the view schema with stored schemas.
+ * @param stored - The stored schema to check compatibility against.
+ * @param wouldUpgradeTo - The stored schema `stored` would be upgraded to (see {@link getSchemaUpgradeCandidate}).
+ * @param viewStoredSchema - The stored schema generated from the view schema, used for {@link SchemaCompatibilityStatus.isEquivalent}.
+ */
+function computeSchemaCompatibility(
+	comparison: SchemaComparison,
+	stored: TreeStoredSchema,
+	wouldUpgradeTo: TreeStoredSchema,
+	viewStoredSchema: TreeStoredSchema,
+): SchemaCompatibility {
 	// Collect upgrade locations during the incompatibility walk (single pass).
 	const totalLocations = new Map<SchemaUpgrade, number>();
 	const enabledLocations = new Map<SchemaUpgrade, number>();
@@ -418,17 +548,12 @@ export function checkSchemaCompatibility(
 	// Complete the full walk even after finding an incompatibility so incompatibility details and
 	// staged-upgrade status contain all available information for debugging.
 	const viewIncompatibilities: SchemaViewIncompatibility[] = [];
-	for (const incompatibility of getIncompatibilitiesInAllowedContent(
-		viewSchema,
-		stored,
-		upgradeCollector,
-	)) {
+	for (const incompatibility of comparison.viewIncompatibilities(stored, upgradeCollector)) {
 		viewIncompatibilities.push(formatViewIncompatibility(incompatibility));
 	}
 	const canView = viewIncompatibilities.length === 0;
 
 	const enabledUpgrades = computeUpgradeStatuses(totalLocations, enabledLocations);
-	const wouldUpgradeTo = getSchemaUpgradeCandidate(viewSchema, stored, configuredPolicy);
 
 	const upgradeIncompatibilities: StoredSchemaUpgradeIncompatibility[] | undefined = canView
 		? undefined
@@ -437,8 +562,7 @@ export function checkSchemaCompatibility(
 	// The upgrade must continue to allow all content permitted by the stored schema and let this view read and edit the resulting schema.
 	const canUpgradeStored =
 		comparisonMode !== undefined &&
-		allowsRepoSuperset(
-			policy,
+		comparison.allowsSuperset(
 			stored,
 			wouldUpgradeTo,
 			comparisonMode,
@@ -446,26 +570,20 @@ export function checkSchemaCompatibility(
 		);
 	const postUpgradeViewIncompatibilities =
 		canUpgradeStored && !canView
-			? getPostUpgradeViewIncompatibilities(viewSchema, wouldUpgradeTo)
+			? getPostUpgradeViewIncompatibilities(comparison, wouldUpgradeTo)
 			: undefined;
 	const canUpgrade =
 		canUpgradeStored &&
 		(canView
-			? getIncompatibilitiesInAllowedContent(viewSchema, wouldUpgradeTo)
-					[Symbol.iterator]()
-					.next().done === true
+			? comparison.viewIncompatibilities(wouldUpgradeTo)[Symbol.iterator]().next().done ===
+				true
 			: postUpgradeViewIncompatibilities === undefined);
 
 	// `isEquivalent` (deprecated) compares the view's generated schema, independently of upgrades already enabled in this document.
-	const viewStoredSchema = toInitialSchema(
-		viewSchema.root,
-		configuredPolicy,
-		viewSchema.schemaVersion,
-	);
 	const isEquivalent =
 		canView &&
-		allowsRepoSuperset(policy, stored, viewStoredSchema) &&
-		allowsRepoSuperset(policy, viewStoredSchema, stored) &&
+		comparison.allowsSuperset(stored, viewStoredSchema) &&
+		comparison.allowsSuperset(viewStoredSchema, stored) &&
 		compareSchemaVersions(stored.schemaVersion, viewStoredSchema.schemaVersion) ===
 			SchemaVersionComparison.Equal;
 
@@ -484,7 +602,7 @@ export function checkSchemaCompatibility(
 			get incompatibilities() {
 				if (incompatibilities === undefined) {
 					incompatibilities = getSchemaUpgradeIncompatibilityDetails(
-						viewSchema,
+						comparison,
 						storedSnapshot,
 						wouldUpgradeTo,
 					);

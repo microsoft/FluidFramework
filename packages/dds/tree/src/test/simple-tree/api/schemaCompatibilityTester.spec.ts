@@ -8,16 +8,22 @@ import { strict as assert } from "node:assert";
 import {
 	EmptyKey,
 	storedEmptyFieldSchema,
+	type TreeFieldStoredSchema,
 	type TreeStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	TreeStoredSchemaRepository,
 	ValueSchema,
 } from "../../../core/index.js";
-import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
+import {
+	allowsRepoSuperset,
+	defaultSchemaPolicy,
+	FieldKinds,
+} from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { LeafNodeSchema } from "../../../simple-tree/leafNodeSchema.js";
 import {
+	checkGeneratedSchemaCompatibility,
 	checkSchemaCompatibility,
 	getSchemaUpgradeCandidate,
 	isSchemaUpgradeAllowed,
@@ -40,6 +46,7 @@ import {
 } from "../../../simple-tree/index.js";
 import { SchemaFactoryAlpha } from "../../../simple-tree/index.js";
 import type { areSafelyAssignable, requireTrue } from "../../../util/index.js";
+import { testSchema } from "../../testTrees.js";
 import { expectSchemaEqual, TestSchemaRepository } from "../../utils.js";
 
 const emptySchema: TreeStoredSchema = {
@@ -2301,4 +2308,70 @@ describe("checkSchemaCompatibility enabledUpgrades", () => {
 		assert(result.enabledUpgrades !== undefined);
 		assert.equal(result.enabledUpgrades.get(childUpgrade), "enabled");
 	});
+});
+
+describe("checkGeneratedSchemaCompatibility", () => {
+	/**
+	 * Root field schemas to compare with a generated stored schema's node schemas:
+	 * the generated root itself, the relaxed root which `initialize` installs first, and roots which differ from it.
+	 */
+	function storedRootsFor(generated: TreeStoredSchema): TreeFieldStoredSchema[] {
+		const root = generated.rootFieldSchema;
+		const roots: TreeFieldStoredSchema[] = [
+			root,
+			{ ...root, kind: FieldKinds.optional.identifier },
+			{ ...root, kind: FieldKinds.required.identifier },
+			{ ...root, types: new Set() },
+		];
+		const [firstType] = root.types;
+		if (firstType !== undefined && root.types.size > 1) {
+			roots.push({ ...root, types: new Set([firstType]) });
+		}
+		const otherType = [...generated.nodeSchema.keys()].find((type) => !root.types.has(type));
+		if (otherType !== undefined) {
+			roots.push({
+				...root,
+				types: new Set<TreeNodeSchemaIdentifier>([...root.types, otherType]),
+			});
+		}
+		return roots;
+	}
+
+	/**
+	 * Checks that {@link checkGeneratedSchemaCompatibility} gives the whole result {@link checkSchemaCompatibility} gives,
+	 * for stored schemas with the node schemas generated from `view` and each of the roots from {@link storedRootsFor},
+	 * both with the generated schema's version and without one (as the relaxed root which `initialize` installs first has).
+	 */
+	function checkMatches(view: TreeViewConfigurationAlpha): void {
+		const generated = toInitialSchema(view.root, view.stagedUpgradePolicy, view.schemaVersion);
+		for (const rootFieldSchema of storedRootsFor(generated)) {
+			const storedSchemas: TreeStoredSchema[] = [{ ...generated, rootFieldSchema }];
+			if (generated.schemaVersion !== undefined) {
+				storedSchemas.push({ nodeSchema: generated.nodeSchema, rootFieldSchema });
+			}
+			for (const stored of storedSchemas) {
+				assert.deepEqual(
+					checkGeneratedSchemaCompatibility(view, generated, stored),
+					checkSchemaCompatibility(view, stored, view.stagedUpgradePolicy),
+				);
+			}
+		}
+	}
+
+	for (const testCase of testSchema) {
+		if (testCase.hasStagedSchema === true) {
+			continue;
+		}
+		it(`matches checkSchemaCompatibility for ${testCase.name}`, () => {
+			checkMatches(new TreeViewConfigurationAlpha({ schema: testCase.schema }));
+		});
+		it(`matches checkSchemaCompatibility for ${testCase.name} with a schema version`, () => {
+			checkMatches(
+				new TreeViewConfigurationAlpha({
+					schema: testCase.schema,
+					schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: 1 } }),
+				}),
+			);
+		});
+	}
 });

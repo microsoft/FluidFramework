@@ -643,7 +643,7 @@ function composeMapNodeSchema(
  *
  * @returns The original candidate if unchanged, or a new field with the combined allowed types, supported optionality, and candidate metadata.
  */
-function composeFieldSchema(
+export function composeFieldSchema(
 	candidate: TreeFieldStoredSchema,
 	stored: TreeFieldStoredSchema,
 	viewField?: SimpleFieldSchema<SchemaType.View>,
