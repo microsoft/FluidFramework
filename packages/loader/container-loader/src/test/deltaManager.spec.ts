@@ -26,6 +26,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { type SinonFakeTimers, useFakeTimers } from "sinon";
 
+import { CatchUpMonitor } from "../catchUpMonitor.js";
 import { ConnectionManager } from "../connectionManager.js";
 import type { IConnectionManagerFactoryArgs } from "../contracts.js";
 import { DeltaManager } from "../deltaManager.js";
@@ -178,6 +179,106 @@ describe("Loader", () => {
 
 			after(() => {
 				clock.restore();
+			});
+
+			describe("Sequence number initialization", () => {
+				async function connectBeforeSnapshot(
+					checkpointSequenceNumber: number | undefined,
+				): Promise<void> {
+					deltaConnection = Object.assign(new MockDocumentDeltaConnection("test"), {
+						checkpointSequenceNumber,
+					});
+					deltaConnection.mode = "read";
+					const service = new MockDocumentService(undefined, () => deltaConnection);
+					const client: IClient = {
+						mode: "read",
+						details: { capabilities: { interactive: true } },
+						permission: [],
+						user: { id: "test" },
+						scopes: [],
+					};
+					deltaManager = new DeltaManager(
+						() => service,
+						logger,
+						() => false,
+						(props) =>
+							new ConnectionManager(
+								() => service,
+								() => false,
+								() => false,
+								client,
+								false,
+								logger,
+								props,
+							),
+					);
+					const connected = new Promise<void>((resolve) => {
+						deltaManager.once("connect", () => resolve());
+					});
+					deltaManager.connect({
+						reason: { text: "test" },
+						fetchOpsFromStorage: false,
+					});
+					await connected;
+				}
+
+				afterEach(() => {
+					deltaManager.dispose();
+				});
+
+				for (const snapshotSequenceNumber of [0, 10]) {
+					it(`preserves the checkpoint when snapshot ${snapshotSequenceNumber} loads after connection`, async () => {
+						const checkpointSequenceNumber = snapshotSequenceNumber + 2;
+						await connectBeforeSnapshot(checkpointSequenceNumber);
+						assert.equal(deltaManager.lastKnownSeqNumber, checkpointSequenceNumber);
+
+						await deltaManager.attachOpHandler(0, snapshotSequenceNumber, {
+							process() {},
+							processSignal() {},
+						});
+
+						let caughtUp = false;
+						const monitor = new CatchUpMonitor(deltaManager, () => {
+							caughtUp = true;
+						});
+						try {
+							monitor.start();
+							assert.equal(caughtUp, false, "The snapshot is behind the checkpoint");
+							assert.equal(deltaManager.lastKnownSeqNumber, checkpointSequenceNumber);
+							assert.equal(deltaManager.lastSequenceNumber, snapshotSequenceNumber);
+
+							seq = snapshotSequenceNumber + 1;
+							deltaConnection.emitOp(docId, [generateOp()]);
+							await deltaManager.inbound.waitTillProcessingDone();
+							assert.equal(caughtUp, false, "The checkpoint has not been processed");
+							assert.equal(deltaManager.lastSequenceNumber, snapshotSequenceNumber + 1);
+
+							deltaConnection.emitOp(docId, [generateOp()]);
+							await deltaManager.inbound.waitTillProcessingDone();
+							assert.equal(caughtUp, true);
+							assert.equal(deltaManager.lastSequenceNumber, checkpointSequenceNumber);
+						} finally {
+							monitor.dispose();
+						}
+					});
+				}
+
+				for (const checkpointSequenceNumber of [undefined, 0, 5]) {
+					it(`uses the loaded state when the checkpoint is ${checkpointSequenceNumber}`, async () => {
+						await connectBeforeSnapshot(checkpointSequenceNumber);
+						await deltaManager.attachOpHandler(
+							0,
+							10,
+							{ process() {}, processSignal() {} },
+							"none",
+							20,
+						);
+
+						assert.equal(deltaManager.initialSequenceNumber, 10);
+						assert.equal(deltaManager.lastSequenceNumber, 20);
+						assert.equal(deltaManager.lastKnownSeqNumber, 20);
+					});
+				}
 			});
 
 			describe("Update Minimum Sequence Number", () => {

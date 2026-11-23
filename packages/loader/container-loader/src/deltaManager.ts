@@ -595,7 +595,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		this.lastProcessedSequenceNumber = lastProcessedSequenceNumber;
 		this.minSequenceNumber = minSequenceNumber;
 		this.lastQueuedSequenceNumber = lastProcessedSequenceNumber;
-		this.lastObservedSeqNumber = lastProcessedSequenceNumber;
+		// The connection may already have supplied a checkpoint newer than the loaded state.
+		this.updateLatestKnownOpSeqNumber(lastProcessedSequenceNumber);
 
 		// We will use same check in other places to make sure all the seq number above are set properly.
 		assert(
