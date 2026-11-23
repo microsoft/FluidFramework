@@ -22,7 +22,6 @@ If you give a different schema object that has the same identifier, the import t
 This occurs also if the two schema objects define the same schema.
 
 To find the unknown optional fields in the imported tree, use [`TreeContextAlpha.unknownFieldSchemas`](https://fluidframework.com/docs/api/fluid-framework/treecontextalpha-interface#unknownfieldschemas-propertysignature) of the view.
-The imported tree is unhydrated, so its own context does not supply this information.
 
 #### Example
 

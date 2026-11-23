@@ -319,12 +319,17 @@ export interface TreeAlpha {
 	 * @remarks
 	 * This supports input containing
 	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields| unknown optional fields} only with a view (see {@link TreeImportOptions}).
+	 *
 	 * It also supports {@link SchemaStaticsBeta.staged | staged} allowed types.
 	 * With a view, staged allowed types are supported only if the stored schema of the document includes them.
+	 *
 	 * Non-empty default values for fields are currently not supported (must be provided in the input).
 	 * The content will be validated against the schema and an error will be thrown if out of schema.
-	 * To copy a node that is available, use {@link (TreeBeta:interface).clone} instead.
-	 * It keeps unknown optional fields and avoids unnecessary data serialization.
+	 *
+	 * If you have the node that you want to copy, use {@link (TreeBeta:interface).clone} instead of an export and an import.
+	 * `clone` copies the persisted data of the node directly.
+	 * It keeps unknown optional fields without a view.
+	 * It also does not export the node to data and import that data again, so it does less work.
 	 */
 	importVerbose<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
