@@ -250,6 +250,89 @@ describe("dictionarySpecialization", () => {
 		assert.deepEqual(constantLeafValues(encoded), []);
 	});
 
+	it("keeps a pin if it saves more bytes than its signatures and runs cost", () => {
+		const sf = new SchemaFactoryAlpha("test");
+		class Item extends sf.object("Item", { flag: sf.boolean }) {}
+		class Items extends sf.array("Items", Item) {}
+		const schema = toStoredSchema(Items, StagedSchemaUpgradePolicy.restrictive);
+		// 80 items in runs of 8. Without the pin, the flag uses the dictionary. Then each item holds a shape index and a comma.
+		// The pin removes these 160 bytes, and its 2 signatures and 10 runs cost less.
+		const root = new Items(
+			Array.from(
+				{ length: 80 },
+				(_, index) => new Item({ flag: Math.floor(index / 8) % 2 === 0 }),
+			),
+		);
+		const encoded = encodeAndCheck(Items, schema, root);
+		// Each value of the flag has a specialized item shape.
+		assert.equal(encoded.shapes.filter((shape) => shape.f !== undefined).length, 2);
+	});
+
+	it("unpins a leaf if its signatures and runs cost more bytes than the pin saves", () => {
+		const sf = new SchemaFactoryAlpha("test");
+		class Item extends sf.object("Item", { tag: sf.string }) {}
+		class Items extends sf.array("Items", Item) {}
+		const schema = toStoredSchema(Items, StagedSchemaUpgradePolicy.restrictive);
+		// 160 items with 8 values in runs of 8. The tag is pinned first, because its value changes one time in 8 items.
+		// The pin removes a shape index and a comma from each item, but it adds 8 signatures and 20 runs.
+		const values = ["aaaa", "bbbb", "cccc", "dddd", "eeee", "ffff", "gggg", "hhhh"];
+		const root = new Items(
+			Array.from(
+				{ length: 160 },
+				(_, index) => new Item({ tag: values[Math.floor(index / 8) % values.length] }),
+			),
+		);
+		const encoded = encodeAndCheck(Items, schema, root);
+		// The tag uses the dictionary, so its values have constant leaf shapes.
+		assert.deepEqual(constantLeafValues(encoded).sort(), values);
+		// All items have one signature, so they are one run.
+		// The nested array shapes are the single-type sequence and the shape of that run.
+		assert.equal(encoded.shapes.filter((shape) => shape.a !== undefined).length, 2);
+	});
+
+	it("unpins a leaf if its rare values cost more bytes than its common value saves", () => {
+		const sf = new SchemaFactoryAlpha("test");
+		class Item extends sf.object("Item", { n: sf.number }) {}
+		class Items extends sf.array("Items", Item) {}
+		const schema = toStoredSchema(Items, StagedSchemaUpgradePolicy.restrictive);
+		// 2000 zeros, then 100 different values. On average, each value is in 21 items, and the value changes one time in 21 items.
+		// So the leaf is pinned first. But each of the 100 values is in only one item, and adds a signature and a run.
+		const values = [
+			...Array.from({ length: 2000 }, () => 0),
+			...Array.from({ length: 100 }, (_, index) => index + 1),
+		];
+		const encoded = encodeAndCheck(
+			Items,
+			schema,
+			new Items(values.map((n) => new Item({ n }))),
+		);
+		assert.deepEqual(constantLeafValues(encoded), []);
+	});
+
+	it("unpins a leaf if the signatures of the pinned leaves together cost more bytes than the pins save", () => {
+		const sf = new SchemaFactoryAlpha("test");
+		class Item extends sf.object("Item", { a: sf.number, b: sf.number }) {}
+		class Items extends sf.array("Items", Item) {}
+		const schema = toStoredSchema(Items, StagedSchemaUpgradePolicy.restrictive);
+		// 400 items. Each leaf has 8 values in runs of 10, so each leaf is pinned first.
+		// If only one leaf is pinned, the pin saves more bytes than its 8 signatures and approximately 40 runs cost.
+		// The runs of `b` start 5 items after the runs of `a`, so the two pins together make 16 signatures and 80 runs.
+		// These cost more bytes than one pin saves, so the strategy unpins one leaf.
+		const root = new Items(
+			Array.from(
+				{ length: 400 },
+				(_, index) =>
+					new Item({
+						a: Math.floor(index / 10) % 8,
+						b: Math.floor((index + 5) / 10) % 8,
+					}),
+			),
+		);
+		const encoded = encodeAndCheck(Items, schema, root);
+		// Each value of the leaf that stays pinned has a specialized item shape. With two pinned leaves, there are 16.
+		assert.equal(encoded.shapes.filter((shape) => shape.f !== undefined).length, 8);
+	});
+
 	it("does not pin a leaf with more values than it counts", () => {
 		const sf = new SchemaFactoryAlpha("test");
 		class Numbers extends sf.array("Numbers", sf.number) {}
