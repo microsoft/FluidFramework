@@ -201,7 +201,7 @@ export type ChangeMetadataBeta = CommitMetadata & ({
 });
 
 // @alpha
-export function checkCompatibility(documentViewConfiguration: TreeViewConfiguration, clientViewConfiguration: TreeViewConfiguration): Omit<SchemaCompatibilityStatusBeta, "canInitialize">;
+export function checkCompatibility(documentViewConfiguration: ITreeViewConfigurationAlpha, clientViewConfiguration: ITreeViewConfigurationAlpha): Omit<SchemaCompatibilityStatusBeta, "canInitialize">;
 
 // @alpha
 export function cloneWithReplacements(root: unknown, rootKey: string, replacer: (key: string, value: unknown) => {
@@ -475,7 +475,7 @@ export function eraseSchemaDetailsSubclassable<TNode, ExtraSchemaProperties = un
 export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>): T;
 
 // @alpha
-export function exportCompatibilitySchemaSnapshot(config: Pick<TreeViewConfiguration, "schema">): JsonCompatibleReadOnly;
+export function exportCompatibilitySchemaSnapshot(config: Pick<ITreeViewConfigurationAlpha, "schema" | "schemaIdentity">): JsonCompatibleReadOnly;
 
 // @beta
 export namespace ExtensibleUnionNode {
@@ -914,9 +914,20 @@ export type ICriticalContainerError = IErrorBase;
 export type IdentifierIndex = TreeIndex<string, TreeNode>;
 
 // @alpha
-export function identifySchemaAlpha(options?: {
+export function identifySchema(options?: IdentifySchemaOptions): SchemaIdentity;
+
+// @alpha @input
+export interface IdentifySchemaOptions {
+    readonly schemaVersion?: SchemaVersionMap | number;
+}
+
+// @alpha
+export function identifySchemaWithHash(options?: IdentifySchemaWithHashOptions): SchemaIdentity;
+
+// @alpha @input
+export interface IdentifySchemaWithHashOptions extends IdentifySchemaOptions {
     readonly expectedHash?: string;
-}): SchemaIdentity;
+}
 
 // @public @sealed
 export interface IDisposable {
@@ -1168,7 +1179,7 @@ export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 
 // @alpha
-export function importCompatibilitySchemaSnapshot(config: JsonCompatibleReadOnly): TreeViewConfiguration;
+export function importCompatibilitySchemaSnapshot(config: JsonCompatibleReadOnly): TreeViewConfigurationAlpha;
 
 // @alpha
 export type IncrementalEncodingPolicy = (nodeIdentifier: string | undefined, fieldKey?: string) => boolean;
@@ -2136,6 +2147,7 @@ const schemaIdentifierBrand: unique symbol;
 
 // @alpha @sealed
 export interface SchemaIdentity extends ErasedBaseType<"@fluidframework/tree.SchemaIdentity"> {
+    readonly schemaVersion: SchemaVersions | undefined;
 }
 
 // @beta
@@ -2220,7 +2232,7 @@ export type SchemaUpgradeFieldKindIncompatibility = {
 };
 
 // @beta @sealed
-export type SchemaUpgradeIncompatibility = SchemaUpgradeAllowedTypesIncompatibility | SchemaUpgradeFieldKindIncompatibility | SchemaUpgradeValueSchemaIncompatibility | SchemaUpgradeNodeKindIncompatibility | SchemaUpgradeMissingNodeSchemaIncompatibility | SchemaUpgradeUnsatisfiedNodeSchemaIncompatibility | SchemaUpgradeViewIncompatibility;
+export type SchemaUpgradeIncompatibility = SchemaUpgradeAllowedTypesIncompatibility | SchemaUpgradeFieldKindIncompatibility | SchemaUpgradeValueSchemaIncompatibility | SchemaUpgradeNodeKindIncompatibility | SchemaUpgradeMissingNodeSchemaIncompatibility | SchemaUpgradeUnsatisfiedNodeSchemaIncompatibility | SchemaUpgradeVersionIncompatibility | SchemaUpgradeViewIncompatibility;
 
 // @beta @sealed
 export type SchemaUpgradeMissingNodeSchemaIncompatibility = {
@@ -2255,6 +2267,14 @@ export type SchemaUpgradeValueSchemaIncompatibility = {
 };
 
 // @beta @sealed
+export type SchemaUpgradeVersionIncompatibility = {
+    readonly mismatch: "schemaVersion";
+    readonly reason: SchemaIncompatibilityReason;
+    readonly proposed: Readonly<Record<string, number>> | undefined;
+    readonly stored: Readonly<Record<string, number>> | undefined;
+};
+
+// @beta @sealed
 export type SchemaUpgradeViewIncompatibility = {
     readonly mismatch: "viewIncompatibleAfterUpgrade";
     readonly reason: SchemaIncompatibilityReason;
@@ -2268,6 +2288,12 @@ export type SchemaValueSchemaDiscrepancy = {
     readonly view: string | undefined;
     readonly stored: string | undefined;
 };
+
+// @alpha
+export type SchemaVersionMap = Readonly<Record<string, number>>;
+
+// @alpha
+export type SchemaVersions = ReadonlyMap<string, number>;
 
 // @beta @sealed
 export type SchemaViewIncompatibility = SchemaDiscrepancy & {
@@ -2415,6 +2441,7 @@ export interface SimpleRecordNodeSchema<Type extends SchemaType = SchemaType, ou
 export interface SimpleTreeSchema<Type extends SchemaType = SchemaType> {
     readonly definitions: ReadonlyMap<string, SimpleNodeSchema<Type>>;
     readonly root: SimpleFieldSchema<Type>;
+    readonly schemaVersion?: SchemaVersions;
 }
 
 // @beta
@@ -3106,6 +3133,7 @@ export interface TreeSchema extends SimpleTreeSchema<SchemaType.View> {
     readonly definitions: ReadonlyMap<string, SimpleNodeSchema<SchemaType.View> & TreeNodeSchema>;
     // (undocumented)
     readonly root: FieldSchemaAlpha;
+    readonly schemaVersion?: SchemaVersions;
 }
 
 // @alpha @input
@@ -3143,6 +3171,7 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
     // (undocumented)
     get root(): ReadableField<TSchema>;
     set root(newRoot: InsertableField<TSchema>);
+    readonly schemaVersion: TreeViewSchemaVersions;
 }
 
 // @beta @sealed
@@ -3172,6 +3201,7 @@ export class TreeViewConfigurationAlpha<const TSchema extends ImplicitFieldSchem
     // (undocumented)
     readonly root: FieldSchemaAlpha;
     readonly schemaIdentity: ITreeViewConfigurationAlpha["schemaIdentity"];
+    get schemaVersion(): SchemaVersions | undefined;
     readonly stagedUpgradePolicy: StagedSchemaUpgradePolicy;
 }
 
@@ -3180,6 +3210,12 @@ export interface TreeViewEvents {
     commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
     rootChanged(): void;
     schemaChanged(): void;
+}
+
+// @alpha @sealed
+export interface TreeViewSchemaVersions {
+    readonly stored: SchemaVersions | undefined;
+    readonly view: SchemaVersions | undefined;
 }
 
 // @public @system
@@ -3317,6 +3353,7 @@ export interface ViewableTreeAlpha extends ViewableTree {
     exportSimpleSchema(): SimpleTreeSchema;
     exportVerbose(): VerboseTree | undefined;
     forkBranch(): TreeBranchHandleAlpha;
+    readonly storedSchemaVersion: SchemaVersions | undefined;
 }
 
 // @alpha

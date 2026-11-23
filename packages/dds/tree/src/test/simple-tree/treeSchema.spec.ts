@@ -487,7 +487,7 @@ describe("treeSchema", () => {
 				expectSchemaEqual(result, toInitialSchema(expectedCandidate));
 				assert.deepEqual(structuredClone(stored), storedSnapshot);
 
-				// Neither the cached conversion nor a candidate for another document may inherit this document's enabled string upgrade.
+				// The cached conversion and another document's candidate must still exclude the staged string type.
 				expectSchemaEqual(toInitialSchema(before, policy), toInitialSchema(expectedFresh));
 				expectSchemaEqual(
 					getSchemaUpgradeCandidate(createTreeSchema(before), fresh, policy),
@@ -627,13 +627,13 @@ describe("treeSchema", () => {
 				new Set(initial.nodeSchema.keys()),
 				new Set([schemaFactory.number.identifier]),
 			);
-			const candidate = getSchemaUpgradeCandidate(
+			const result = getSchemaUpgradeCandidate(
 				view,
 				stored,
 				StagedSchemaUpgradePolicy.restrictive,
 			);
 			assert.deepEqual(
-				new Set(candidate.nodeSchema.keys()),
+				new Set(result.nodeSchema.keys()),
 				new Set([
 					schemaFactory.number.identifier,
 					Task.identifier,
@@ -641,8 +641,8 @@ describe("treeSchema", () => {
 					schemaFactory.string.identifier,
 				]),
 			);
-			expectSchemaEqual(candidate, stored);
-			assert.equal(isSchemaUpgradeAllowed(view, stored, candidate), true);
+			expectSchemaEqual(result, stored);
+			assert.equal(isSchemaUpgradeAllowed(view, stored, result), true);
 		});
 
 		it("retains an omitted optional field and its metadata without replacing view metadata", () => {

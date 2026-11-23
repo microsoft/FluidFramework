@@ -121,7 +121,7 @@ export class UniformChunk extends MutableChunk implements EditableChunk {
 	}
 
 	public getEditCursor(edit?: ChunkEdit): Cursor & ChunkEditCursor {
-		assert(!this.isShared(), "Editing requires exclusive chunk ownership");
+		assert(!this.isShared(), 0xe13 /* Editing requires exclusive chunk ownership */);
 		const scope = edit ?? this.acquireEditor(true);
 		scope.assertFor(this);
 		assert(scope.preserveLength, "Uniform editing cursors require stable chunk length");
@@ -173,7 +173,7 @@ export class UniformChunk extends MutableChunk implements EditableChunk {
 		edit.mutate(() => {
 			for (let index = 0; index < values.length; index++) {
 				const value = values[index];
-				assert(value !== undefined, "Missing replacement value");
+				assert(value !== undefined, 0xe17 /* Missing replacement value */);
 				this.chunkValues[start + index] = value;
 			}
 		});
@@ -193,7 +193,10 @@ export class UniformChunk extends MutableChunk implements EditableChunk {
 					for (let index = 0; index < incoming.chunkValues.length; index++) {
 						const previous = this.chunkValues[start + index];
 						const value = incoming.chunkValues[index];
-						assert(previous !== undefined && value !== undefined, "Missing leaf value");
+						assert(
+							previous !== undefined && value !== undefined,
+							0xe15 /* Missing leaf value */,
+						);
 						this.chunkValues[start + index] = value;
 						incoming.chunkValues[index] = previous;
 					}
@@ -680,7 +683,7 @@ class Cursor
 	public trySplice(range: Range, content: readonly TreeChunk[]): TreeChunk[] | undefined {
 		assert(this.edit !== undefined, "An editing scope is required");
 		this.edit.assertFor(this.chunk);
-		assert(!this.chunk.isShared(), "Editing requires exclusive chunk ownership");
+		assert(!this.chunk.isShared(), 0xe14 /* Editing requires exclusive chunk ownership */);
 		validateChunkEditRange(range, this.getFieldLength());
 		const count = range.end - range.start;
 		if (getFieldLength(content) !== count) {
@@ -734,7 +737,7 @@ class Cursor
 					return undefined;
 				}
 				const value = cursor.value;
-				assert(value !== undefined, "Leaf replacement must have a value");
+				assert(value !== undefined, 0xe16 /* Leaf replacement must have a value */);
 				values.push(value);
 				cursor.exitNode();
 			}

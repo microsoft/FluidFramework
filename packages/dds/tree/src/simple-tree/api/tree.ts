@@ -15,6 +15,7 @@ import type {
 	RevertibleAlphaFactory,
 	RevertibleFactory,
 	RevertToOptionsAlpha,
+	SchemaVersions,
 } from "../../core/index.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
 import type { TreeStatus } from "../../feature-libraries/index.js";
@@ -129,6 +130,15 @@ export interface ITree extends ViewableTree, IFluidLoadable {}
  * @alpha
  */
 export interface ViewableTreeAlpha extends ViewableTree {
+	/**
+	 * Contains the application-defined versions in the document's stored schema.
+	 *
+	 * @remarks
+	 * This reads the document's current versions rather than the versions configured for a particular view.
+	 * These {@link SchemaVersions} can change when a {@link TreeViewAlpha} initializes or upgrades the stored schema.
+	 */
+	readonly storedSchemaVersion: SchemaVersions | undefined;
+
 	/**
 	 * Creates an independent branch from this tree's current state.
 	 *
@@ -1149,6 +1159,7 @@ export type SchemaUpgradeIncompatibility =
 	| SchemaUpgradeNodeKindIncompatibility
 	| SchemaUpgradeMissingNodeSchemaIncompatibility
 	| SchemaUpgradeUnsatisfiedNodeSchemaIncompatibility
+	| SchemaUpgradeVersionIncompatibility
 	| SchemaUpgradeViewIncompatibility;
 
 /* eslint-disable @typescript-eslint/consistent-type-definitions -- Object aliases preserve the original inline variants' index-signature assignability. */
@@ -1360,6 +1371,31 @@ export type SchemaUpgradeViewIncompatibility = {
 	readonly incompatibilities: readonly SchemaViewIncompatibility[];
 };
 
+/**
+ * The proposed schema decreases or removes an application-defined schema version.
+ *
+ * @remarks
+ * An upgrade must retain each stored library identifier and must not decrease its version.
+ * A version increase or a new identifier does not permit another version to decrease or disappear.
+ * An absent version map differs from an empty map: an upgrade cannot remove even an empty stored map.
+ * @sealed @beta
+ */
+export type SchemaUpgradeVersionIncompatibility = {
+	readonly mismatch: "schemaVersion";
+	/**
+	 * Explains why the proposed versions prevent the upgrade.
+	 */
+	readonly reason: SchemaIncompatibilityReason;
+	/**
+	 * All proposed library identifiers and versions, or undefined if the proposed schema has no version map.
+	 */
+	readonly proposed: Readonly<Record<string, number>> | undefined;
+	/**
+	 * All stored library identifiers and versions, or undefined if the stored schema has no version map.
+	 */
+	readonly stored: Readonly<Record<string, number>> | undefined;
+};
+
 /* eslint-enable @typescript-eslint/consistent-type-definitions -- End of shape-preserving incompatibility aliases. */
 
 /**
@@ -1511,6 +1547,27 @@ export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
 }
 
 /**
+ * The configured and stored application-defined schema versions available through a {@link TreeViewAlpha}.
+ *
+ * @remarks
+ * Comparing these maps helps identify differences between the application configuration and the document.
+ * The configured versions remain fixed for a view, while the stored versions follow changes to the document's schema.
+ * {@link SchemaVersions} describes the meaning of absent and empty maps and the rules for upgrading them.
+ *
+ * @sealed @alpha
+ */
+export interface TreeViewSchemaVersions {
+	/**
+	 * Versions from the view's configuration, used when initializing or upgrading the document.
+	 */
+	readonly view: SchemaVersions | undefined;
+	/**
+	 * Versions currently stored in the document.
+	 */
+	readonly stored: SchemaVersions | undefined;
+}
+
+/**
  * {@link TreeView} with proposed changes to the schema aware typing to allow use with `UnsafeUnknownSchema`.
  *
  * @see {@link TreeViewBeta} for beta APIs
@@ -1526,6 +1583,15 @@ export interface TreeViewAlpha<
 			"root" | "initialize" | "fork" | "runTransaction" | "runTransactionAsync" | "isView"
 		>,
 		UntypedTreeViewAlpha {
+	/**
+	 * Contains the configured and stored application-defined schema versions.
+	 *
+	 * @remarks
+	 * {@link TreeViewSchemaVersions} describes how these maps relate to the view and document.
+	 * The {@link TreeViewEvents.schemaChanged} event reports updates to the stored schema.
+	 */
+	readonly schemaVersion: TreeViewSchemaVersions;
+
 	get root(): ReadableField<TSchema>;
 
 	set root(newRoot: InsertableField<TSchema>);
@@ -1608,7 +1674,7 @@ export interface SchemaCompatibilityStatus {
 	 * @deprecated
 	 * This property isn't needed as a part of application flows for loading a document.
 	 * Use {@link SchemaCompatibilityStatus.canView} to determine if a document can be viewed as-is.
-	 * Use {@link SchemaCompatibilityStatus.canUpgrade} to determine if the stored schema can be upgraded to match the view schema, when the document is not viewable as-is.
+	 * Use {@link SchemaCompatibilityStatus.canUpgrade} to determine if the stored schema can be upgraded to support the view, when the document is not viewable as-is.
 	 *
 	 * When diagnosing schema incompatibility issues, use the `incompatibilities` on
 	 * {@link SchemaCompatibilityStatusBeta.view} and {@link SchemaCompatibilityStatusBeta.upgrade}.
@@ -1635,7 +1701,6 @@ export interface SchemaCompatibilityStatus {
 	 * - A {@link SchemaStaticsAlpha.stagedOptional | staged-optional field} lets the view handle missing content where the stored field is already optional.
 	 *
 	 * These allowances determine whether the current document can be used; they do not by themselves determine {@link SchemaCompatibilityStatus.canUpgrade}.
-	 * For example, a view that tolerates unknown optional fields can read a document while still being unable to upgrade it because it omits those fields.
 	 *
 	 * When the set of documents allowed by the view schema is a strict superset of those allowed by the stored schema,
 	 * `canView` is false because writes to the document using the view schema could make the document violate its stored schema.
@@ -1667,10 +1732,10 @@ export interface SchemaCompatibilityStatus {
 	 * The {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy} chooses which staged upgrades to enable.
 	 * The target also retains existing allowed types and supported optionality at their stored locations, independently of that policy.
 	 *
+	 * Object views that allow {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields} can also omit stored optional fields without preventing later upgrades.
+	 * The target retains those fields and the node definitions they require, rather than deleting content the reduced view cannot see.
+	 *
 	 * The target is accepted only if it satisfies the stored-schema upgrade rules and gives the requesting view read/write access.
-	 * This preservation does not retain optional fields omitted from an object's view schema.
-	 * Adding an optional field can therefore let older views continue reading when they allow {@link ObjectSchemaOptions.allowUnknownOptionalFields}, while preventing those views from making further upgrades.
-	 * Keep the field in future view declarations if those clients need to upgrade documents that contain it.
 	 */
 	readonly canUpgrade: boolean;
 

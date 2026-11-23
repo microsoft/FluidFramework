@@ -24,16 +24,43 @@ import { compareSets } from "../../util/index.js";
 import type { FullSchemaPolicy } from "./fieldKind.js";
 import { isNeverField, isNeverTree } from "./isNeverTree.js";
 import type {
-	SchemaDiscrepancyLocation,
-	StoredSchemaUpgradeDiscrepancy,
-} from "./schemaDiscrepancy.js";
+	SchemaIncompatibilityLocation,
+	StoredSchemaUpgradeIncompatibility,
+} from "./schemaIncompatibility.js";
 
-interface ComparisonDiagnostics extends SchemaDiscrepancyLocation {
-	readonly discrepancies: StoredSchemaUpgradeDiscrepancy[];
+interface ComparisonDiagnostics extends SchemaIncompatibilityLocation {
+	readonly incompatibilities: StoredSchemaUpgradeIncompatibility[];
 }
 
 interface NodeComparisonDiagnostics extends ComparisonDiagnostics {
 	readonly identifier: TreeNodeSchemaIdentifier;
+}
+
+/**
+ * Selects the rules used to compare allowed schema content.
+ *
+ * @remarks
+ * These modes separate content compatibility from the ordering needed to prevent upgrade cycles.
+ * Neither mode compares schema versions itself.
+ */
+export enum SchemaComparisonMode {
+	/**
+	 * Compares allowed content and requires field-kind changes to be listed in {@link FieldKindOptions.allowMonotonicUpgradeFrom}.
+	 * That additional restriction prevents clients from repeatedly reversing changes between field kinds that allow the same content.
+	 * Because these rules provide an upgrade ordering without version increases, this is the default mode.
+	 */
+	Monotonic,
+
+	/**
+	 * Compares allowed content without enforcing monotonic field-kind upgrade rules.
+	 * Instead, field-kind changes are checked with {@link allowsMultiplicitySuperset}, and fields with no valid content are treated as subsets of all fields.
+	 * This permits some changes between distinct schemas that allow the same content, but it can also permit their inverse.
+	 *
+	 * To prevent those cycles, upgrade validation must use this mode only when both version maps are present,
+	 * no versions decrease or disappear, and at least one version increases or a library identifier is added.
+	 * These conditions can be checked with {@link compareSchemaVersions}.
+	 */
+	ContentOnly,
 }
 
 /**
@@ -43,7 +70,8 @@ interface NodeComparisonDiagnostics extends ComparisonDiagnostics {
  *
  * `undefined` TreeNodeStoredSchema means the schema is not present (and thus treated as a NeverTree).
  *
- * @param diagnostics - If you supply this argument, the function adds failed upgrade requirements to `diagnostics.discrepancies`.
+ * @param comparisonMode - The content comparison rules. Defaults to {@link SchemaComparisonMode.Monotonic}.
+ * @param diagnostics - If you supply this argument, the function adds failed upgrade requirements to `diagnostics.incompatibilities`.
  * It keeps existing entries and compares the other fields to find more failures.
  * If you omit this argument, the function does not collect failure details and can stop at the first failure.
  */
@@ -52,6 +80,7 @@ export function allowsTreeSuperset(
 	originalData: TreeStoredSchema,
 	original: TreeNodeStoredSchema | undefined,
 	superset: TreeNodeStoredSchema | undefined,
+	comparisonMode: SchemaComparisonMode = SchemaComparisonMode.Monotonic,
 	diagnostics?: NodeComparisonDiagnostics,
 ): boolean {
 	if (isNeverTree(policy, originalData, original)) {
@@ -60,7 +89,7 @@ export function allowsTreeSuperset(
 	if (isNeverTree(policy, originalData, superset)) {
 		if (diagnostics !== undefined) {
 			if (superset === undefined) {
-				diagnostics.discrepancies.push({
+				diagnostics.incompatibilities.push({
 					mismatch: "missingNodeSchema",
 					identifier: diagnostics.identifier,
 				});
@@ -76,7 +105,7 @@ export function allowsTreeSuperset(
 		if (superset instanceof LeafNodeStoredSchema) {
 			const leafCompatible = allowsValueSuperset(original.leafValue, superset.leafValue);
 			if (!leafCompatible && diagnostics !== undefined) {
-				diagnostics.discrepancies.push({
+				diagnostics.incompatibilities.push({
 					mismatch: "valueSchema",
 					identifier: diagnostics.identifier,
 					stored: original.leafValue,
@@ -108,7 +137,7 @@ export function allowsTreeSuperset(
 				originalData,
 				original.mapFields,
 				superset.mapFields,
-				true,
+				comparisonMode,
 				diagnostics,
 			);
 		}
@@ -125,7 +154,7 @@ export function allowsTreeSuperset(
 			superset instanceof MapNodeStoredSchema
 				? superset.mapFields
 				: (superset.objectNodeFields.get(fieldKey) ?? storedEmptyFieldSchema),
-			true,
+			comparisonMode,
 			diagnostics === undefined ? undefined : { ...diagnostics, fieldKey },
 		);
 		compatible = fieldCompatible && compatible;
@@ -167,7 +196,7 @@ function reportUnsatisfiedNodeSchemaRequirement(
 	diagnostics: NodeComparisonDiagnostics,
 ): void {
 	if (proposed instanceof MapNodeStoredSchema) {
-		diagnostics.discrepancies.push({
+		diagnostics.incompatibilities.push({
 			mismatch: "nodeSchemaCannotBeSatisfied",
 			identifier: diagnostics.identifier,
 			requirement: { kind: "requiredMapEntries" },
@@ -176,11 +205,11 @@ function reportUnsatisfiedNodeSchemaRequirement(
 	}
 	assert(
 		proposed instanceof ObjectNodeStoredSchema,
-		"Only object and map node requirements can prevent construction of a defined node.",
+		0xe18 /* Only object and map node requirements can prevent construction of a defined node. */,
 	);
 	for (const [fieldKey, field] of proposed.objectNodeFields) {
 		if (isNeverField(policy, originalData, field)) {
-			diagnostics.discrepancies.push({
+			diagnostics.incompatibilities.push({
 				mismatch: "nodeSchemaCannotBeSatisfied",
 				identifier: diagnostics.identifier,
 				requirement: {
@@ -192,7 +221,9 @@ function reportUnsatisfiedNodeSchemaRequirement(
 			return;
 		}
 	}
-	fail("A node that cannot be constructed must have an unsatisfied schema requirement.");
+	fail(
+		0xe19 /* A node that cannot be constructed must have an unsatisfied schema requirement. */,
+	);
 }
 
 function reportNodeKindMismatch(
@@ -200,7 +231,7 @@ function reportNodeKindMismatch(
 	proposed: TreeNodeStoredSchema,
 	diagnostics: NodeComparisonDiagnostics | undefined,
 ): false {
-	diagnostics?.discrepancies.push({
+	diagnostics?.incompatibilities.push({
 		mismatch: "nodeKind",
 		identifier: diagnostics.identifier,
 		stored: original,
@@ -226,16 +257,14 @@ export function allowsValueSuperset(
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  *
- * @param monotonicOnly - If true, only allow changes of field kinds which are explicitly listed in {@link FieldKindOptions.allowMonotonicUpgradeFrom}.
- * This prevents this function from considering two different schemas as equivalent, preventing upgrades which would allow their inverse.
- * This prevents infinite upgrade loops where two clients could keep upgrading between two schemas.
+ * @param comparisonMode - The content comparison rules. Defaults to {@link SchemaComparisonMode.Monotonic}.
  *
- * @param diagnostics - If you supply this argument, the function adds failed upgrade requirements to `diagnostics.discrepancies`.
+ * @param diagnostics - If you supply this argument, the function adds failed upgrade requirements to `diagnostics.incompatibilities`.
  * It keeps existing entries and checks both allowed types and field kinds so it can report a failure in each.
  * If you omit this argument, the function does not collect failure details and can stop at the first failure.
  *
  * @remarks
- * True if a client should be able to {@link TreeView.upgradeSchema} from a field schema using this field kind and `originalTypes` to `superset`.
+ * Schema versions are not checked here.
  *
  * @privateRemarks
  * See also {@link FieldKindOptions.allowMonotonicUpgradeFrom} for constraints on the implementation.
@@ -245,10 +274,13 @@ export function allowsFieldSuperset(
 	originalData: TreeStoredSchema,
 	original: TreeFieldStoredSchema,
 	superset: TreeFieldStoredSchema,
-	monotonicOnly: boolean = true,
+	comparisonMode: SchemaComparisonMode = SchemaComparisonMode.Monotonic,
 	diagnostics?: ComparisonDiagnostics,
 ): boolean {
-	if (!monotonicOnly && isNeverField(policy, originalData, original)) {
+	if (
+		comparisonMode === SchemaComparisonMode.ContentOnly &&
+		isNeverField(policy, originalData, original)
+	) {
 		return true;
 	}
 
@@ -257,7 +289,7 @@ export function allowsFieldSuperset(
 		if (diagnostics === undefined) {
 			return false;
 		}
-		diagnostics.discrepancies.push({
+		diagnostics.incompatibilities.push({
 			mismatch: "allowedTypes",
 			identifier: diagnostics.identifier,
 			fieldKey: diagnostics.fieldKey,
@@ -272,14 +304,16 @@ export function allowsFieldSuperset(
 
 	const supersetKind = policy.fieldKinds.get(superset.kind) ?? fail(0xb1b /* missing kind */);
 
-	const kindCompatible = monotonicOnly
-		? supersetKind.options.allowMonotonicUpgradeFrom.has(original.kind)
-		: allowsMultiplicitySuperset(
-				(policy.fieldKinds.get(original.kind) ?? fail(0xcab /* missing kind */)).multiplicity,
-				supersetKind.multiplicity,
-			);
+	const kindCompatible =
+		comparisonMode === SchemaComparisonMode.Monotonic
+			? supersetKind.options.allowMonotonicUpgradeFrom.has(original.kind)
+			: allowsMultiplicitySuperset(
+					(policy.fieldKinds.get(original.kind) ?? fail(0xcab /* missing kind */))
+						.multiplicity,
+					supersetKind.multiplicity,
+				);
 	if (!kindCompatible && diagnostics !== undefined) {
-		diagnostics.discrepancies.push({
+		diagnostics.incompatibilities.push({
 			mismatch: "fieldKind",
 			identifier: diagnostics.identifier,
 			fieldKey: diagnostics.fieldKey,
@@ -316,13 +350,15 @@ export function allowsTreeSchemaIdentifierSuperset(
  * however if any extra fields and fields with unconstrained types are reachable,
  * it would have to compare everything anyway.
  *
- * @param discrepancies - When provided, collect failed upgrade requirements instead of stopping at the first one.
+ * @param comparisonMode - The content comparison rules. Defaults to {@link SchemaComparisonMode.Monotonic}.
+ * @param incompatibilities - When provided, collect failed upgrade requirements instead of stopping at the first one.
  */
 export function allowsRepoSuperset(
 	policy: FullSchemaPolicy,
 	original: TreeStoredSchema,
 	superset: TreeStoredSchema,
-	discrepancies?: StoredSchemaUpgradeDiscrepancy[],
+	comparisonMode: SchemaComparisonMode = SchemaComparisonMode.Monotonic,
+	incompatibilities?: StoredSchemaUpgradeIncompatibility[],
 ): boolean {
 	if (original === superset) {
 		return true;
@@ -333,12 +369,12 @@ export function allowsRepoSuperset(
 		original,
 		original.rootFieldSchema,
 		superset.rootFieldSchema,
-		true,
-		discrepancies === undefined
+		comparisonMode,
+		incompatibilities === undefined
 			? undefined
-			: { discrepancies, identifier: undefined, fieldKey: undefined },
+			: { incompatibilities, identifier: undefined, fieldKey: undefined },
 	);
-	if (!compatible && discrepancies === undefined) {
+	if (!compatible && incompatibilities === undefined) {
 		return false;
 	}
 	// Check if all schemas in original are included in superset, and permit a superset of the node content.
@@ -351,12 +387,13 @@ export function allowsRepoSuperset(
 				original,
 				schema,
 				superset.nodeSchema.get(key),
-				discrepancies === undefined
+				comparisonMode,
+				incompatibilities === undefined
 					? undefined
-					: { discrepancies, identifier: key, fieldKey: undefined },
+					: { incompatibilities, identifier: key, fieldKey: undefined },
 			)
 		) {
-			if (discrepancies === undefined) {
+			if (incompatibilities === undefined) {
 				return false;
 			}
 			compatible = false;
@@ -365,6 +402,73 @@ export function allowsRepoSuperset(
 	// Any schema in superset not in original are already known to be superset of original since they are "never" due to being missing.
 	// Therefore, we do not need to check them.
 	return compatible;
+}
+
+/**
+ * Describes the direction of a schema version change from the original map to the updated map.
+ */
+export enum SchemaVersionComparison {
+	/**
+	 * Both maps have identical identifiers and values, or both are absent.
+	 */
+	Equal,
+	/**
+	 * At least one version increases or an identifier is added, with no decreases or removals.
+	 * Adding the first map, including an empty one, also counts as an increase.
+	 */
+	Increase,
+	/**
+	 * At least one version decreases or an identifier is removed, with no increases or additions.
+	 * Removing the entire map, including an empty one, also counts as a decrease.
+	 */
+	Decrease,
+	/**
+	 * Some versions increase or identifiers are added, while others decrease or are removed.
+	 * Neither map can be upgraded to the other without decreasing or removing a version.
+	 */
+	Incompatible,
+}
+
+/**
+ * Compares schema versions in upgrade order, from `original` to `updated`.
+ *
+ * @remarks
+ * An absent map differs from an empty map.
+ * The comparison considers version ordering only.
+ * Upgrade validation must also check allowed content and prevent the first version map from enabling non-monotonic upgrades.
+ */
+export function compareSchemaVersions(
+	original: TreeStoredSchema["schemaVersion"],
+	updated: TreeStoredSchema["schemaVersion"],
+): SchemaVersionComparison {
+	if (original === undefined) {
+		return updated === undefined
+			? SchemaVersionComparison.Equal
+			: SchemaVersionComparison.Increase;
+	}
+	if (updated === undefined) {
+		return SchemaVersionComparison.Decrease;
+	}
+	let increases = false;
+	let decreases = false;
+	for (const [libraryId, version] of original) {
+		const updatedVersion = updated.get(libraryId);
+		if (updatedVersion === undefined || updatedVersion < version) {
+			decreases = true;
+		} else if (updatedVersion > version) {
+			increases = true;
+		}
+	}
+	for (const libraryId of updated.keys()) {
+		if (!original.has(libraryId)) {
+			increases = true;
+			break;
+		}
+	}
+	if (increases) {
+		return decreases ? SchemaVersionComparison.Incompatible : SchemaVersionComparison.Increase;
+	}
+	return decreases ? SchemaVersionComparison.Decrease : SchemaVersionComparison.Equal;
 }
 
 /**

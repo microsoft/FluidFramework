@@ -25,6 +25,7 @@ import {
 	type NormalizedFieldUpPath,
 	LeafNodeStoredSchema,
 	type TreeNodeSchemaIdentifier,
+	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	ValueSchema,
 } from "../../core/index.js";
@@ -1620,6 +1621,36 @@ describe("sharedTreeView", () => {
 			assert.deepEqual([...view.root], ["parent"]);
 			view.dispose();
 		});
+
+		for (const rewindCount of [0, 1, 2]) {
+			it(`lets history be trimmed after a fork rewound ${rewindCount} times is disposed`, () => {
+				const provider = new TestTreeProviderLite(1);
+				const view = provider.trees[0].kernel.viewWith(config);
+				view.initialize([]);
+				view.root.insertAtEnd("A");
+				provider.synchronizeMessages();
+				const revisionA = view.branchHistory.getHead()?.revision;
+				assert(revisionA !== undefined);
+				view.root.insertAtEnd("B");
+				provider.synchronizeMessages();
+
+				const fork = view.fork();
+				for (let i = 0; i < rewindCount; i++) {
+					fork.rewindTo(revisionA);
+				}
+				view.root.insertAtEnd("C");
+				provider.synchronizeMessages();
+				fork.root.insertAtEnd("D");
+				view.merge(fork);
+				provider.synchronizeMessages();
+				assert.deepEqual([...view.root].sort(), ["A", "B", "C", "D"]);
+
+				view.root.insertAtEnd("E");
+				provider.synchronizeMessages();
+				assert.equal(view.branchHistory.length, 1);
+				view.dispose();
+			});
+		}
 	});
 
 	describe("history", () => {
@@ -2305,6 +2336,44 @@ describe("sharedTreeView", () => {
 				oldRootAllowedTypeCount: oldSchema.rootFieldSchema.types.size,
 				newRootAllowedTypeCount: oldSchema.rootFieldSchema.types.size,
 			});
+		});
+
+		it("does not classify a version-only schema change as initialization", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				SharedTreeTestFactory.build(() => {}, undefined, {
+					allowPossiblyIncompatibleWriteVersionOverrides: true,
+					writeVersionOverrides: new Map([["Schema", "schemaVersion"]]),
+				}),
+			);
+			const [tree] = provider.trees;
+			const view = tree.kernel.viewWith(
+				new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation }),
+			);
+			view.initialize([]);
+			const schema: TreeStoredSchema = {
+				rootFieldSchema: {
+					kind: FieldKinds.optional.identifier,
+					types: new Set(),
+					persistedMetadata: undefined,
+				},
+				nodeSchema: new Map(),
+			};
+			view.checkout.updateSchema(schema, true);
+			view.checkout.updateSchema({
+				rootFieldSchema: schema.rootFieldSchema,
+				nodeSchema: schema.nodeSchema,
+				schemaVersion: new Map([["com.fluidframework.test", 1]]),
+			});
+
+			const schemaChangeEvents = provider.logger
+				.events()
+				.filter((event) =>
+					event.eventName.endsWith(TreeCheckout.schemaChangeTelemetryEventName),
+				);
+			const versionChangeEvent = schemaChangeEvents.at(-1);
+			assert(versionChangeEvent !== undefined, "Expected schema change telemetry.");
+			assert.equal(parseCodeArtifactDetails(versionChangeEvent.details).changeKind, "upgrade");
 		});
 	});
 

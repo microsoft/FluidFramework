@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import {
+	type IAuthorizationError,
 	type IGenericNetworkError,
 	type IThrottlingWarning,
 	DriverErrorTypes,
@@ -85,6 +86,37 @@ describe("OdspErrorUtils", () => {
 				"Error should be an authorizationError",
 			);
 			assert.equal(networkError.canRetry, false, "canRetry should be preserved");
+		});
+
+		it("AuthorizationError Test 401 with claims challenge", () => {
+			const wwwAuthenticate =
+				'Bearer realm="6c482541-f706-4168-9e58-8e35a9992f58", error="insufficient_claims", claims="eyJhY2Nlc3NfdG9rZW4iOnsibmJmIjp7ImVzc2VudGlhbCI6dHJ1ZSwgInZhbHVlIjoiMTU5Nzk1OTA5MCJ9fX0="';
+			const response = {
+				headers: new Headers({ "www-authenticate": wwwAuthenticate }),
+			} as unknown as Response;
+			const networkError = createOdspNetworkError(
+				"Test Message",
+				401 /* statusCode */,
+				undefined /* retryAfterSeconds */,
+				response,
+			);
+			assert(
+				networkError.errorType === DriverErrorTypes.authorizationError,
+				"Error should be an authorizationError",
+			);
+			const authError = networkError as IAuthorizationError;
+			assert.equal(authError.wwwAuthenticate, wwwAuthenticate, "header should be preserved");
+			assert.equal(
+				authError.claims,
+				'{"access_token":{"nbf":{"essential":true, "value":"1597959090"}}}',
+				"claims should be decoded from the header",
+			);
+			assert(isILoggingError(networkError), "Error should support getTelemetryProperties()");
+			assert.equal(
+				networkError.getTelemetryProperties().wwwAuthenticate,
+				undefined,
+				"header should not be logged",
+			);
 		});
 
 		it("OutOfStorageError Test 507", () => {

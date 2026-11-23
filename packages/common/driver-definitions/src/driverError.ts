@@ -189,6 +189,18 @@ export interface IAuthorizationError extends IDriverErrorBase {
 	readonly errorType: typeof DriverErrorTypes.authorizationError;
 	readonly claims?: string;
 	readonly tenantId?: string;
+
+	/**
+	 * The raw value of the `WWW-Authenticate` response header, if the service sent one.
+	 *
+	 * @remarks
+	 * A service that makes requests for another client can forward this value to that client.
+	 * The client can then use it to get a new token that satisfies the challenge.
+	 * For more information, see {@link https://learn.microsoft.com/entra/identity-platform/claims-challenge | Claims challenges}.
+	 *
+	 * This value can contain sensitive information, so drivers do not include it in telemetry.
+	 */
+	readonly wwwAuthenticate?: string;
 }
 
 /**

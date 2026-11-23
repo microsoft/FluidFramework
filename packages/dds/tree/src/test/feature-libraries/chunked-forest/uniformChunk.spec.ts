@@ -239,7 +239,10 @@ describe("uniformChunk", () => {
 		it("requires exclusive ownership", () => {
 			const chunk = new UniformChunk(numberShape.withTopLevelLength(1), [1]);
 			chunk.referenceAdded();
-			assert.throws(() => chunk.getEditCursor(), /exclusive chunk ownership/);
+			assert.throws(
+				() => chunk.getEditCursor(),
+				validateAssertionError("Editing requires exclusive chunk ownership"),
+			);
 		});
 		it("does not mutate shared incoming storage", () => {
 			const chunk = new UniformChunk(numberShape.withTopLevelLength(1), [1]);

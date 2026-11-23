@@ -7,7 +7,11 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import type { TreeStoredSchema } from "../../core/index.js";
 import { defaultSchemaPolicy } from "../default-schema/index.js";
-import { allowsRepoSuperset } from "../modular-schema/index.js";
+import {
+	allowsRepoSuperset,
+	compareSchemaVersions,
+	SchemaVersionComparison,
+} from "../modular-schema/index.js";
 
 /** A change to the document's stored schema */
 export abstract class SchemaChangeset {
@@ -41,7 +45,7 @@ export abstract class SchemaChangeset {
 	 * @throws if this changeset is {@link SchemaChangeset.isConflicted | conflicted}.
 	 */
 	public get output(): TreeStoredSchema {
-		assert(!this.isConflicted, "Cannot get output of a conflicted changeset");
+		assert(!this.isConflicted, 0xe1a /* Cannot get output of a conflicted changeset */);
 		return this.getOutput();
 	}
 
@@ -133,7 +137,8 @@ export class NarrowingSchemaChangeset extends SchemaChangeset {
 
 /**
  * A {@link SchemaChangeset} that changes the schema if and only if the current schema is equivalent to the original schema in which this change was first authored
- * @remarks The original schema defaults to the input schema unless explicitly provided
+ * @remarks The original schema defaults to the input schema unless explicitly provided.
+ * Application-defined schema versions must also match, including whether a version map is present.
  */
 export class CompareAndSwapSchemaChangeset extends SchemaChangeset {
 	public constructor(
@@ -204,6 +209,8 @@ function areSchemasDivergent(a: TreeStoredSchema, b: TreeStoredSchema): boolean 
 
 function areSchemasEquivalent(a: TreeStoredSchema, b: TreeStoredSchema): boolean {
 	return (
+		compareSchemaVersions(a.schemaVersion, b.schemaVersion) ===
+			SchemaVersionComparison.Equal &&
 		allowsRepoSuperset(defaultSchemaPolicy, a, b) &&
 		allowsRepoSuperset(defaultSchemaPolicy, b, a)
 	);

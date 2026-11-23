@@ -54,7 +54,14 @@ describe("schemaSummarizer", () => {
 		for (const schemaFormat of schemaCodecBuilder.registry) {
 			const encode = (schema: TreeStoredSchema): JsonCompatibleReadOnly => {
 				const codec = schemaFormat.codec({ jsonValidator: FormatValidatorBasic });
-				const result: JsonCompatibleReadOnly = codec.encode(schema);
+				const schemaWithVersion =
+					schemaFormat.formatVersion === SchemaFormatVersion.v3Experimental
+						? {
+								...schema,
+								schemaVersion: new Map([["com.fluidframework.test", 1]]),
+							}
+						: schema;
+				const result: JsonCompatibleReadOnly = codec.encode(schemaWithVersion);
 				return result;
 			};
 

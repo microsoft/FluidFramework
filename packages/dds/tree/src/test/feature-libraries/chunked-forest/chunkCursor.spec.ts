@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	EmptyKey,
 	CursorLocationType,
@@ -179,11 +181,14 @@ describe("chunkCursor", () => {
 			assert(cursor.firstNode());
 			assert.equal(cursor.value, 2);
 			assert.deepEqual(calls, ["prepare", "adapter"]);
-			assert.throws(() => cursor.fork(), /Editing navigation must not be forked/);
+			assert.throws(
+				() => cursor.fork(),
+				validateAssertionError("Editing navigation must not be forked"),
+			);
 			assert.equal(cursor.restoreOwningField(), 0);
 			assert.equal(cursor.getFieldLength(), 1);
 			cursor.releaseNavigation();
-			assert.throws(() => cursor.value, /Cursor has been freed/);
+			assert.throws(() => cursor.value, validateAssertionError("Cursor has been freed"));
 			assert.equal(replacement.isUnreferenced(), false);
 			replacement.referenceRemoved();
 		});
@@ -236,12 +241,15 @@ describe("chunkCursor", () => {
 			assert.equal(cursor.value, 1);
 			const basicFork = cursor.fork();
 			cursor.select(uniform);
-			assert.throws(() => cursor.value, /Expected an inline-node adapter/);
+			assert.throws(
+				() => cursor.value,
+				validateAssertionError("Expected an inline-node adapter"),
+			);
 			assert(cursor.firstNode());
 			assert.equal(cursor.value, 2);
 			const uniformFork = cursor.fork();
 			cursor.clear();
-			assert.throws(() => cursor.value, /Cursor has been freed/);
+			assert.throws(() => cursor.value, validateAssertionError("Cursor has been freed"));
 			assert.equal(basicFork.value, 1);
 			assert.equal(uniformFork.value, 2);
 			cursor.select(basic);

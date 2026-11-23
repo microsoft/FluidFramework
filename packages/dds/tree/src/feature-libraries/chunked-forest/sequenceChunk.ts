@@ -75,7 +75,7 @@ export class SequenceChunk extends MutableChunk implements CompositeChunk, Edita
 	}
 
 	public getEditCursor(edit?: ChunkEdit): ChunkEditCursor {
-		assert(!this.isShared(), "Editing requires exclusive chunk ownership");
+		assert(!this.isShared(), 0xe0f /* Editing requires exclusive chunk ownership */);
 		const scope = edit ?? this.acquireEditor();
 		scope.assertFor(this);
 		return new SequenceEditCursor(this, this.children.acquireEditor(scope), scope);
