@@ -120,6 +120,12 @@ Custom kind transforms remain in control of their output.
 
 ## Follow-up work
 
-- Handle `implementsTypes` and contract notes separately: `implements` checks a contract rather than supplying members. Link matching class members to their interface declarations and distinguish interface-only declarations from members the class actually exposes.
-- Include static members
-- For overridden members, display a notice and link to the canonical source of the overridden member.
+- **Link class members to the interface contracts they satisfy.**
+  The **Implements** line already lists the interfaces a class implements, but it does not identify which class member satisfies each interface declaration.
+  Keep interface-only declarations separate from members the class actually exposes.
+- **Include inherited static class members in the static summary tables.**
+  These tables currently list only static members declared on the class itself.
+- **Automatically link an overriding member to the base declaration it overrides.**
+  The resolver already suppresses the replaced declaration so the member appears only once.
+  Add an **Overrides** link to the overriding declaration without requiring the author to write it in TSDoc.
+S
