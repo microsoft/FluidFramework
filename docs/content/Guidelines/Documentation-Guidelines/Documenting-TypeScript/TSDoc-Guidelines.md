@@ -840,7 +840,20 @@ If you are having trouble adding a reference tag, take a look at the following a
 
 ##### \@link: Guidance
 
-Use this to link to another API member.
+When a TSDoc comment refers to another API, prefer `{@link}` syntax over plain text or inline code.
+
+Use `{@link}` for the first reference to each API within a given TSDoc block, such as the summary, an `@remarks` block, or an `@param` block.
+For subsequent references to the same API within that block, use inline code syntax, such as `Bar`.
+
+Apply this rule independently to each block: the first reference in a new block should use `{@link}`, even if an earlier block already links to the same API.
+
+##### \@link: Rationale
+
+Using `{@link}` for API references:
+
+- Creates navigable references in the generated API documentation on our website.
+- Improves IntelliSense navigation, such as using Ctrl+click to follow a reference to its declaration.
+- Makes references more likely to be updated automatically when the API is renamed with standard refactoring tools.
 
 ##### \@link: Enforcement
 
@@ -878,6 +891,23 @@ import { Bar } from 'baz'
 export class Foo extends Bar {
 	...
 }
+```
+
+###### Repeated references within and across comment blocks
+
+In this example, the summary, `@remarks`, and `@param` blocks each link to `Bar` on first reference.
+Subsequent references within each block use inline code.
+
+```typescript
+/**
+ * Creates a copy of a {@link Bar} without modifying the original `Bar`.
+ *
+ * @remarks
+ * The returned {@link Bar} is independent of the original `Bar`.
+ *
+ * @param source - The {@link Bar} to copy.
+ */
+export declare function cloneBar(source: Bar): Bar;
 ```
 
 #### {\@inheritDoc}
