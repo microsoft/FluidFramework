@@ -24,6 +24,7 @@ import {
 } from "../../../feature-libraries/index.js";
 import { FieldKinds } from "../../../feature-libraries/index.js";
 import {
+	exportVerboseFiltered,
 	SchematizingSimpleTreeView,
 	TreeAlpha,
 	TreeBeta,
@@ -61,7 +62,6 @@ import {
 	isTreeNode,
 	KeyEncodingOptions,
 	type NodeFromSchema,
-	NodeKind,
 	StagedSchemaUpgradePolicy,
 	SchemaFactory,
 	SchemaFactoryAlpha,
@@ -4457,7 +4457,7 @@ describe("treeNodeApi", () => {
 					child: { a: 1, b: 2 },
 					list: [{ a: 3, b: 4 }],
 				});
-				const filter: TreeFieldFilter = (parentSchema, storedKey, parentIdentifier) => {
+				const filter: TreeFieldFilter = (parentSchemaIdentifier, storedKey) => {
 					switch (storedKey) {
 						// Use this filter for the fields of the nodes in these fields.
 						case "child":
@@ -4466,10 +4466,7 @@ describe("treeNodeApi", () => {
 						}
 						// The field of an array node: include all elements, with all of their content.
 						case "": {
-							return (
-								parentSchema.kind === NodeKind.Array &&
-								parentIdentifier === FilterList.identifier
-							);
+							return parentSchemaIdentifier === FilterList.identifier;
 						}
 						// Read `root` while the export is in the fields of other nodes.
 						default: {
@@ -4477,7 +4474,7 @@ describe("treeNodeApi", () => {
 						}
 					}
 				};
-				assert.deepEqual(TreeAlpha.exportVerbose(root, { filter }), {
+				assert.deepEqual(exportVerboseFiltered(root, {}, filter), {
 					type: FilterParent.identifier,
 					fields: {
 						child: { type: FilterChild.identifier, fields: { a: 1 } },
@@ -4488,10 +4485,13 @@ describe("treeNodeApi", () => {
 					},
 				});
 				// An omitted array field gives an empty array of elements.
-				assert.deepEqual(TreeAlpha.exportVerbose(root.list, { filter: () => false }), {
-					type: FilterList.identifier,
-					fields: [],
-				});
+				assert.deepEqual(
+					exportVerboseFiltered(root.list, {}, () => false),
+					{
+						type: FilterList.identifier,
+						fields: [],
+					},
+				);
 			});
 
 			it("filters unknown optional fields", () => {
@@ -4500,13 +4500,14 @@ describe("treeNodeApi", () => {
 				const unknownFields = view.unknownFieldSchemas?.get(AllowsUnknownOptionalFields);
 
 				// Include one unknown optional field, with all of its content.
-				const includeRecursive: TreeFieldFilter = (parentSchema, storedKey) =>
+				const includeRecursive: TreeFieldFilter = (parentSchemaIdentifier, storedKey) =>
 					storedKey === "recursive";
 				assert.deepEqual(
-					TreeAlpha.exportVerbose(root, {
-						keys: KeyEncodingOptions.allStoredKeys,
-						filter: includeRecursive,
-					}),
+					exportVerboseFiltered(
+						root,
+						{ keys: KeyEncodingOptions.allStoredKeys },
+						includeRecursive,
+					),
 					{
 						type: AllowsUnknownOptionalFields.identifier,
 						fields: {
@@ -4520,13 +4521,10 @@ describe("treeNodeApi", () => {
 
 				// Include each unknown optional field, but not the fields of the node in it.
 				// The value of a leaf node is always included.
-				const omitContent: TreeFieldFilter = (parentSchema, storedKey) =>
+				const omitContent: TreeFieldFilter = (parentSchemaIdentifier, storedKey) =>
 					unknownFields?.has(storedKey) === true ? () => false : false;
 				assert.deepEqual(
-					TreeAlpha.exportVerbose(root, {
-						keys: KeyEncodingOptions.allStoredKeys,
-						filter: omitContent,
-					}),
+					exportVerboseFiltered(root, { keys: KeyEncodingOptions.allStoredKeys }, omitContent),
 					{
 						type: AllowsUnknownOptionalFields.identifier,
 						fields: {

@@ -76,7 +76,7 @@ import {
 	isTreeNode,
 	toInitialSchema,
 	type TreeParsingOptions,
-	type TreeFieldFilterOptions,
+	type TreeFieldFilter,
 	type NodeChangedData,
 	type TreeChangeEventsBeta,
 	type ConciseTree,
@@ -90,7 +90,6 @@ import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js"
 
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
-import { exportSimpleSchema } from "./sharedTree.js";
 import {
 	borrowCursorFromTreeNodeOrValue,
 	exportConcise,
@@ -331,20 +330,13 @@ export interface TreeAlpha {
 	 * There are several cases this may be preferred to {@link (TreeBeta:interface).(exportConcise:1)}:
 	 *
 	 * 1. When not using {@link ITreeConfigurationOptions.preventAmbiguity} (or when using `useStableFieldKeys`), `exportConcise` can produce ambiguous data (the type may be unclear on some nodes).
-	 * `exportVerbose` will always be unambiguous.
-	 * It is lossless if {@link TreeEncodingOptions.keys} is {@link KeyEncodingOptions.allStoredKeys}
-	 * and no {@link TreeFieldFilterOptions.filter | filter} omits fields.
+	 * `exportVerbose` will always be unambiguous and thus lossless.
 	 *
 	 * 2. When the data might be interpreted without access to the exact same view schema. In such cases, the types may be unknowable if not included.
 	 *
 	 * 3. When easy access to the type is desired.
-	 *
-	 * To export only some fields, use {@link TreeFieldFilterOptions.filter}.
 	 */
-	exportVerbose(
-		node: TreeNode | TreeLeafValue,
-		options?: TreeEncodingOptions & TreeFieldFilterOptions,
-	): VerboseTree;
+	exportVerbose(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): VerboseTree;
 
 	/**
 	 * Export the content of the provided `tree` in a compressed JSON compatible format.
@@ -913,40 +905,15 @@ export const TreeAlpha: TreeAlpha = {
 		);
 	},
 
-	exportVerbose(
-		node: TreeNode | TreeLeafValue,
-		options?: TreeEncodingOptions & TreeFieldFilterOptions,
-	): VerboseTree {
+	exportVerbose(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): VerboseTree {
 		if (isTreeValue(node)) {
 			return node;
 		}
-		const config: TreeEncodingOptions & TreeFieldFilterOptions = { ...options };
+		const config: TreeEncodingOptions = { ...options };
 
+		const cursor = borrowCursorFromTreeNodeOrValue(node);
 		const kernel = getKernel(node);
-		const innerNode = kernel.getInnerNode();
-		// The filter gets the stored schema of each node, so convert the stored schema one time for each export.
-		const simpleStoredSchema =
-			config.filter === undefined
-				? undefined
-				: exportSimpleSchema(kernel.context.flexContext.schema).definitions;
-		if (config.filter === undefined || !innerNode.isHydrated()) {
-			return verboseFromCursor(
-				innerNode.borrowCursor(),
-				kernel.context,
-				config,
-				simpleStoredSchema,
-			);
-		}
-		// For a hydrated node, the borrowed cursor is the cursor of the node.
-		// The filter can read the node, which moves that cursor, so use a separate cursor.
-		const forest = innerNode.context.checkout.forest;
-		const filterCursor = forest.allocateCursor("TreeAlpha.exportVerbose filter");
-		forest.moveCursorToPath(innerNode.anchorNode, filterCursor);
-		try {
-			return verboseFromCursor(filterCursor, kernel.context, config, simpleStoredSchema);
-		} finally {
-			filterCursor.free();
-		}
+		return verboseFromCursor(cursor, kernel.context, config);
 	},
 
 	exportCompressed(
@@ -1206,4 +1173,33 @@ function borrowFieldCursorFromTreeNodeOrValue(
 	// TODO: avoid copy: borrow cursor from field instead.
 	const mapTree = mapTreeFromCursor(cursor);
 	return cursorForMapTreeField([mapTree]);
+}
+
+/**
+ * Like {@link TreeAlpha.exportVerbose}, but exports only the fields that `filter` selects.
+ * @remarks
+ * This is not public API.
+ * It is a building block for public APIs that export only part of a tree, such as only the unknown optional fields of a node.
+ * To export unknown optional fields, use {@link KeyEncodingOptions.allStoredKeys}.
+ */
+export function exportVerboseFiltered(
+	node: TreeNode,
+	options: TreeEncodingOptions,
+	filter: TreeFieldFilter,
+): VerboseTree {
+	const kernel = getKernel(node);
+	const innerNode = kernel.getInnerNode();
+	if (!innerNode.isHydrated()) {
+		return verboseFromCursor(innerNode.borrowCursor(), kernel.context, options, filter);
+	}
+	// For a hydrated node, the borrowed cursor is the cursor of the node.
+	// The filter can read the node, which moves that cursor, so use a separate cursor.
+	const forest = innerNode.context.checkout.forest;
+	const filterCursor = forest.allocateCursor("exportVerboseFiltered");
+	forest.moveCursorToPath(innerNode.anchorNode, filterCursor);
+	try {
+		return verboseFromCursor(filterCursor, kernel.context, options, filter);
+	} finally {
+		filterCursor.free();
+	}
 }

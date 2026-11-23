@@ -257,7 +257,6 @@ export {
 	KeyEncodingOptions,
 	type TreeParsingOptions,
 	type TreeFieldFilter,
-	type TreeFieldFilterOptions,
 	incrementalSummaryHint,
 	incrementalEncodingPolicyForAllowedTypes,
 	type SchemaFactory_base,
