@@ -22,7 +22,7 @@ export class Foo {
 	public bar: Bar;
 
 	/**
-	 * Creates a {@link Baz} from {@link bar} and the provided {@link qux}.
+	 * Creates a {@link Baz} from {@link Foo.bar | bar} and the provided `qux`.
 	 *
 	 * @param qux - Contains the extra information needed to create the Baz.
 	 */
@@ -67,6 +67,64 @@ The `@remarks` and `@param` blocks provide details about the sequence and its le
 export declare function createSequence(length: number): number[];
 ```
 
+## Documenting API Contracts
+
+TypeScript types do not express every requirement or guarantee of an API.
+Document the information callers need to use the API correctly, rather than repeating its name or signature.
+Consider the following questions where relevant:
+
+- What values are accepted, including ranges, empty inputs, and special values?
+  Does omitting an optional value have the same behavior as explicitly passing `undefined`?
+- Does the API modify its inputs or other observable state?
+  Does it retain references to inputs that callers might later modify?
+- Is a returned object newly created, cached, or shared with other callers?
+  Is a returned collection a live view of changing state or a snapshot of the state at the time of the call?
+- What ordering is guaranteed, and how are duplicates handled?
+  Can repeated calls produce additional effects?
+- Who is responsible for releasing resources, disposing returned objects, or unsubscribing from events?
+  How long do returned values remain valid?
+
+Put parameter-specific requirements in [@param](#param) or [@typeParam](#typeparam), return-value guarantees in [@returns](#returns), and broader behavior in [@remarks](#remarks).
+For optional properties, use [@defaultValue](#defaultvalue) to describe defaults that are not expressed in the declaration.
+Document supported error conditions as described in [@throws](#throws).
+Only describe guarantees that the API actually provides.
+
+### Asynchronous Behavior and Lifetimes
+
+For APIs that return promises, use `@returns` to explain what fulfillment means, not just the type of the result.
+For example, distinguish between work being queued, applied locally, or acknowledged by the Fluid service.
+Document the actual completion guarantee without implying that later stages have also completed.
+
+Distinguish synchronous exceptions from promise rejections.
+When documenting supported error conditions with `@throws`, state whether each condition throws before returning a promise or rejects the returned promise.
+Do not imply that rejection rolls back earlier state changes unless the API guarantees it.
+
+For callbacks and events, document relevant timing and ordering guarantees.
+State whether a callback can run before the registering call returns, whether it can call back into related APIs, and whether it can run more than once.
+Describe how callback errors propagate when that behavior is part of the supported contract.
+
+If cancellation is supported, document how it is requested, how it is reported, and whether work or state changes can remain after cancellation.
+For APIs that require cleanup, explain who must perform it and what happens to pending work, returned values, and callbacks after disposal or unsubscription.
+Do not imply that cleanup stops an already running callback unless the API guarantees it.
+
+#### Asynchronous Contract Example
+
+This example distinguishes successful completion, a synchronous input error, and an asynchronous failure.
+
+```typescript
+/**
+ * Reads text from a remote resource.
+ *
+ * @param url - An absolute URL for the resource to read.
+ * @returns A promise that fulfills with the text after the entire response body has been read.
+ * @throws Throws a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypeError | TypeError} synchronously
+ * if `url` is not an absolute URL.
+ * @throws Rejects the returned promise with an {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error | Error}
+ * if the resource cannot be read.
+ */
+export declare function readText(url: string): Promise<string>;
+```
+
 ## Formatting Guidelines
 
 ### Single-Line Comments
@@ -96,14 +154,22 @@ export function foo() {
 }
 ```
 
+### TSDoc Syntax and Markdown
+
+TSDoc defines its own syntax; it does not formally support Markdown syntax as a whole.
+IntelliSense may render additional Markdown syntax in previews, but this does not guarantee that the syntax will work in generated API documentation.
+Use syntax supported by TSDoc, such as inline code spans, fenced code examples, paragraph breaks, and [TSDoc tags](#tsdoc-tags).
+
+Use `{@link}` for API references and uniform resource locators (URLs), rather than Markdown link syntax such as `[label](url)`.
+See the [link guidance](#link) for choosing declaration references or URL targets.
+Put code-like text, such as literal values and type expressions, in inline code spans.
+Outside code spans and fenced code blocks, escape characters that TSDoc would otherwise interpret as syntax, such as `\@`, `\{`, and `\<`.
+
 ### Custom Formatting
 
-Documentation content (within the scope of a given documentation block) should be formatted as plain text.
-No custom indentation or other formatting should be used.
-
-Custom formatting will be largely disregarded by tooling, and may cause undesired behavior in some cases.
-
-When writing more complex API source-code documentation, please utilize TSDoc's suite of [tags](#tsdoc-tags) instead.
+Write prose without custom indentation or alignment.
+Such layout can be disregarded by tooling or cause unexpected rendering.
+Use [TSDoc tags](#tsdoc-tags) to structure the comment instead.
 
 ### Example: Multi-line parameter comment
 
@@ -237,6 +303,9 @@ See: <https://api-extractor.com/pages/tsdoc/tag_returns/>
 
 Similar to [@param](#param), this should be used for any documentation pertaining to the return value of a function, method, etc. for the purpose of documenting contracts, side effects, or any other non-redundant semantic information.
 
+Consider the return-value questions in [Documenting API Contracts](#documenting-api-contracts), including identity, sharing, and lifetime.
+For promise-returning APIs, also follow the [asynchronous behavior guidance](#asynchronous-behavior-and-lifetimes).
+
 ##### \@returns: Rationale
 
 Helps to clearly differentiate what a function/method _does_ from what it _produces_.
@@ -270,11 +339,17 @@ When an input is not currently supported but its error behavior is not intended 
 Alternatively, note in `@throws` that the API may throw while the input remains unsupported, documenting that it will either throw or otherwise handle the input correctly.
 These approaches preserve the ability to support the input later without changing a documented error contract.
 
-Use `{@link ...}` to reference exported project error types when they are available at the API's support level and their use is part of the API contract.
-Use code formatting for standard JavaScript error types, such as `RangeError`.
-Otherwise, describe the error using properties that callers can observe, such as `errorType: "usageError"`, without linking to an internal implementation type.
+Use declaration references in `{@link ...}` for exported error types in the same release group when they are externally available and their use is part of the API contract.
+For error types outside the release group, including standard JavaScript errors, use inline code syntax to refer to the name, or use URL links to their public documentation.
+
+> [!TIP]
+> For standard JavaScript types, including errors, consider linking to [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects).
+> For example, `{@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError | RangeError}` links to the reference documentation for `RangeError`.
+
+If no supported error type is exposed, describe the error using properties that callers can observe, such as `errorType: "usageError"`, without linking to an internal implementation type.
 
 Document input requirements with `@param` or `@remarks` in addition to `@throws`.
+For promise-returning APIs, distinguish synchronous throws from promise rejections as described in the [asynchronous behavior guidance](#asynchronous-behavior-and-lifetimes).
 
 An `@throws` block does not imply that an error is safe to catch or that the affected state remains usable.
 Document recoverability or fault-isolation guarantees only when the API provides a reliable way to identify the error and explicitly defines the usable state after it occurs.
@@ -290,9 +365,12 @@ See the [error-handling guidelines](../../Coding-Guidelines.md#errors) for guida
  *
  * @param items - The items to read from.
  * @param index - Must be an integer in the range [0, items.length).
- * @throws A `RangeError` if index is not an integer inside the supported range.
+ * @throws A {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError | RangeError}
+ * if `index` is not an integer inside the supported range.
  */
-export function getItemAt(items: readonly string[], index: number): string;
+export function getItemAt(items: readonly string[], index: number): string {
+	...
+}
 ```
 
 #### \@typeParam
@@ -307,6 +385,9 @@ For example, when constraining to a complex union type.
 Whenever possible, it is recommended to extract as much semantic information out of function/method-level documentation and into type-level documentation.
 This enables easier documentation reuse.
 The `@typeParam` block should be reserved for additional information not already represented by any type constraints.
+
+Use the format `@typeParam T - Description`, including the type parameter name and a hyphen.
+List `@typeParam` tags in the same order as the corresponding type parameters in the declaration.
 
 ##### \@typeParam: Rationale
 
@@ -332,9 +413,9 @@ export interface Foo {
 /**
  * ...
  *
- * @typeParam Supplementary type semantics of T not represented by Foo.
+ * @typeParam T - Additional semantics of `T` not described by {@link Foo}.
  */
-export function bar<T extends Foo>(input: T): Baz {
+export function createBaz<T extends Foo>(input: T): Baz {
 	...
 }
 ```
@@ -352,9 +433,9 @@ There are two reasonable approaches here, but one is definitely preferred when p
 /**
  * ...
  *
- * @typeParam T Semantic documentation for union type: `Bar | Baz | undefined`.
+ * @typeParam T - Semantic documentation for union type: `Bar | Baz | undefined`.
  */
-export function Foo<T extends Bar | Baz | undefined>(input: T): number {
+export function processValue<T extends Bar | Baz | undefined>(input: T): number {
 	...
 }
 ```
@@ -367,19 +448,19 @@ Extracting the type and its documentation out of the function allows it to be re
 /**
  * Semantic documentation for the union type `Bar | Baz | undefined`, as it is used by functions in this module.
  */
-export const type Qux = Bar | Baz | undefined;
+export type Qux = Bar | Baz | undefined;
 
 /**
- * Foo documentation
+ * Processes a value.
  */
-export function Foo<T extends Qux>(input: T): number {
+export function processValue<T extends Qux>(input: T): number {
 	...
 }
 
 /**
- * Foo2 documentation
+ * Processes a pair of values.
  */
-export function Foo2<T extends Qux>(input1: T, input2: T): number {
+export function processValues<T extends Qux>(input1: T, input2: T): number {
 	...
 }
 ```
@@ -605,7 +686,9 @@ More concretely this means never implementing or extending `@sealed` types, and 
 
 ```typescript
 /**
- * @sealed This type may be used, but must not be extended.
+ * Description of `Foo`.
+ *
+ * @sealed
  */
 export class Foo {}
 ```
@@ -613,9 +696,9 @@ export class Foo {}
 ```typescript
 export class Foo {
 	/**
-	 * Creates an {@link Bar} from this.
-     *
-	 * @sealed This member may be used, but must not be overridden.
+	 * Creates a {@link Bar} from this.
+	 *
+	 * @sealed
 	 */
 	public createBar(): Bar {
 		...
@@ -652,7 +735,9 @@ Spreading an input into another value of the same type is valid.
 
 ```typescript
 /**
- * @input This type may be implemented, but must not read from.
+ * Description of `Options`.
+ *
+ * @input
  */
 export interface Options {
 	enable: boolean;
@@ -718,11 +803,14 @@ It is recommended that any subclass which extends a member annotated with `@virt
 ##### Example
 
 ```typescript
-public class Foo {
+export class Foo {
 	/**
-	 * Creates an {@link Bar} from this.
-     *
-	 * @virtual This implementation is naive. Subclasses may wish to do something smarter.
+	 * Creates a {@link Bar} from this.
+	 *
+	 * @remarks
+	 * Subclasses may override this method to provide a more efficient implementation.
+	 *
+	 * @virtual
 	 */
 	public createBar(): Bar {
 		...
@@ -832,6 +920,7 @@ See <https://api-extractor.com/pages/tsdoc/tag_eventproperty/>
 
 Properties whose values are event objects should be annotated with this tag.
 It is a useful signal to the consumer as to how the property should be used.
+Document event timing, callback behavior, and cleanup obligations as described in [Asynchronous Behavior and Lifetimes](#asynchronous-behavior-and-lifetimes).
 
 ##### \@eventProperty Example
 
@@ -875,7 +964,18 @@ If you are having trouble adding a reference tag, take a look at the following a
 
 ##### \@link: Guidance
 
-When a TSDoc comment refers to another API, prefer `{@link}` syntax over plain text or inline code.
+When a TSDoc comment refers to another API in the same release group, prefer `{@link}` syntax over plain text or inline code.
+Use declaration references, such as `{@link Bar}` or `{@link baz#Bar}`, only for APIs in the same release group, including APIs in other packages in that group.
+Choose targets that are available to the intended audience at the documented API's support level.
+Do not link customer-facing documentation to private or internal implementation declarations.
+Use inline code for parameter names, literal values, and type expressions rather than trying to resolve them as API declarations.
+
+For APIs or concepts outside of the release group, use `{@link}` with a URL target pointing to their published documentation instead of a declaration reference.
+This includes APIs in other release groups, external libraries, and JavaScript built-ins.
+
+> [!TIP]
+> For JavaScript built-ins, consider linking to [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects).
+> For example, use `{@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map | Map}` rather than trying to resolve `Map` as a declaration in the release group.
 
 Use `{@link}` for the first reference to each API within a given TSDoc block, such as the [summary](#summary), an `@remarks` block, or an `@param` block.
 For subsequent references to the same API within that block, use inline code syntax, such as `Bar`.
@@ -888,7 +988,7 @@ Using `{@link}` for API references:
 
 - Creates navigable references in the generated API documentation on our website.
 - Improves IntelliSense navigation, such as using Ctrl+click to follow a reference to its declaration.
-- Makes references more likely to be updated automatically when the API is renamed with standard refactoring tools.
+- Makes declaration references more likely to be updated automatically when the API is renamed with standard refactoring tools.
 
 ##### \@link: Enforcement
 
@@ -910,22 +1010,35 @@ export interface Bar {
 /**
  * Foo implementation of {@link Bar}.
  */
-export class Foo extends Bar {
+export class Foo implements Bar {
 	...
 }
 ```
 
-###### Linking to an imported member from another package
+###### Linking to an imported member from another package in the same release group
+
+In this example, `baz` and the package being documented are in the same release group.
 
 ```typescript
-import { Bar } from 'baz'
+import type { Bar } from "baz";
 
 /**
  * Foo implementation of {@link baz#Bar}.
  */
-export class Foo extends Bar {
+export class Foo implements Bar {
 	...
 }
+```
+
+###### Linking to documentation outside of the release group
+
+Use URL targets for external APIs and concepts, including built-ins.
+
+```typescript
+/**
+ * Creates an empty {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map | Map}.
+ */
+export declare function createIndex(): Map<string, number>;
 ```
 
 ###### Repeated references within and across comment blocks
@@ -986,7 +1099,7 @@ export interface Logger {
 	/**
 	 * Logs the provided data.
 	 */
-	public log(data: unknown);
+	log(data: unknown): void;
 }
 
 /**
@@ -1027,7 +1140,9 @@ The `log` method naturally inherits its documentation from `BaseLogger.log`.
 However, the `@sealed` tag requires a local TSDoc comment.
 Using `@inheritDoc` preserves the inherited documentation without duplicating its summary.
 
-###### Inheriting documentation from an imported member from another package
+###### Inheriting documentation from an imported member from another package in the same release group
+
+In this example, `telemetry` and the package being documented are in the same release group.
 
 ```typescript
 import { Logger } from "telemetry";
@@ -1045,7 +1160,8 @@ export function log(logger: Logger, data: unknown): void {
 It is also possible to alias links, including both symbol and URL links.
 So if you wish to control how the link will appear textually, this is an option.
 
-Note that this syntax works for both the [`{@link}` tag](#link) and the [`{@inheritDoc}` tag](#inheritdoc).
+This syntax applies to the [`{@link}` tag](#link).
+The [`{@inheritDoc}` tag](#inheritdoc) accepts a declaration reference, not a URL target or custom link text.
 
 ##### Link Aliasing Example
 
