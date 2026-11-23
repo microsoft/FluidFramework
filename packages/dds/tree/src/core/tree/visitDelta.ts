@@ -136,6 +136,8 @@ export function visitDelta(
 	// and cleans up resources associated with that cycle, but subsequent edits that attempt
 	// to resurrect that content do not behave correctly with this implementation. See work item
 	// for more details.
+	// Destroying the nodes also invalidates retained node references, which can help avoid document
+	// corruption as invalidated nodes will reject edits locally before any ops are submitted.
 	for (const root of cyclicRoots) {
 		visitor.destroy(detachedFieldIndex.toFieldKey(root), 1);
 	}
