@@ -12,11 +12,83 @@ import {
 	extractPersistedSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/storedSchema.js";
-import { TreeViewConfigurationAlpha, type SchemaUpgrade } from "../../../simple-tree/index.js";
+import {
+	SchemaFactoryAlpha,
+	SchemaFactory,
+	TreeViewConfigurationAlpha,
+	type SchemaUpgrade,
+} from "../../../simple-tree/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { getStagedSchemaUpgrades, testDocuments } from "../../testTrees.js";
 
 describe("simple-tree storedSchema", () => {
+	it("exposes upgrade diagnostics when a persisted schema cannot be viewed or upgraded", () => {
+		const sf = new SchemaFactoryAlpha("persistedDiagnostics");
+		const persisted = extractPersistedSchema(
+			[sf.number, sf.string],
+			FluidClientVersion.v2_0,
+			() => assert.fail("This schema has no staged upgrades."),
+		);
+		const status = comparePersistedSchema(persisted, sf.number, {
+			jsonValidator: FormatValidatorBasic,
+		});
+		assert.equal(status.canView, false);
+		assert.equal(status.canUpgrade, false);
+		assert(!status.view.isCompatible);
+		assert(!status.upgrade.isCompatible);
+		assert.deepEqual(status.upgrade.incompatibilities, [
+			{
+				mismatch: "viewIncompatibleAfterUpgrade",
+				reason:
+					"Cannot upgrade: the resulting stored schema would still prevent the view from reading or writing the document.",
+				incompatibilities: [
+					{
+						mismatch: "allowedTypes",
+						location: "root",
+						view: [],
+						stored: [sf.string.identifier],
+						reason:
+							'Cannot view the root field: the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
+					},
+				],
+			},
+		]);
+	});
+
+	it("retains a removed optional field when checking a historical persisted schema", () => {
+		const factory = new SchemaFactory("taskRollback");
+
+		class Before extends factory.object("Task", {
+			title: factory.string,
+			notes: factory.optional(factory.string),
+		}) {}
+
+		// Remove the `notes` field.
+		// A client using this schema can still open documents that contain the `notes` field as an unknown optional field.
+		// Documents created with this schema will need to be upgraded before they can be viewed by clients using the `Before` schema.
+		class After extends factory.object("Task", {
+			title: factory.string,
+		}) {}
+
+		const historical = extractPersistedSchema(Before, FluidClientVersion.v2_0, () =>
+			assert.fail("This scenario does not contain staged schema"),
+		);
+		const current = extractPersistedSchema(After, FluidClientVersion.v2_0, () =>
+			assert.fail("This scenario does not contain staged schema"),
+		);
+		const options = { jsonValidator: FormatValidatorBasic };
+
+		// As with a live view, retaining the historical `notes` field makes the reduced view's proposed upgrade a no-op.
+		const reducedView = comparePersistedSchema(historical, After, options);
+		assert.equal(reducedView.canView, true);
+		assert.equal(reducedView.canUpgrade, true);
+
+		// Extraction still uses only the supplied view: a fresh document has no `notes` field, so the historical view must add it.
+		const originalView = comparePersistedSchema(current, Before, options);
+		assert.equal(originalView.canView, false);
+		assert.equal(originalView.canUpgrade, true);
+	});
+
 	describe("test-schema", () => {
 		useSnapshotDirectory("simple-tree-storedSchema");
 		// TODO: Should also loop over schema formats once `extractPersistedSchema` takes the format version as an argument.
@@ -62,13 +134,8 @@ describe("simple-tree storedSchema", () => {
 					const status = comparePersistedSchema(persistedA, test.schema, {
 						jsonValidator: FormatValidatorBasic,
 					});
-					assert.deepEqual(status, {
-						isEquivalent: true,
-						canView: true,
-						canUpgrade: true,
-						discrepancies: undefined,
-						enabledUpgrades: new Map(),
-					});
+					assert.equal(status.canView, true);
+					assert.equal(status.canUpgrade, true);
 				});
 			}
 		}

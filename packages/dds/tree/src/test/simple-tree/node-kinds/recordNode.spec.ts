@@ -164,6 +164,44 @@ describe("RecordNode", () => {
 			assert.notDeepEqual(dNode, aNode);
 		});
 
+		it("reports non-configurable symbol-keyed own properties of the node", () => {
+			// Every node has the JavaScript private field `#brand` declared by `TreeNode`.
+			// Tools that transpile JavaScript private fields to symbol-keyed properties for runtimes older than ES2022,
+			// such as Babel with its `privateFieldsAsSymbols` assumption, turn it into a non-configurable symbol-keyed
+			// property that `TreeNode`'s constructor defines on the node.
+			// A customizable record's proxy wraps the node itself, so it must report that property.
+			//
+			// This test simulates such a property by defining one on the node before the proxy wraps it.
+			// The proxy is created by `prepareInstance`, an internal static method of every schema class, which the test
+			// wraps; it is not part of the class's type, so it is accessed with `Reflect`.
+			// A symbol-keyed property declared by the subclass can't be used instead: one on the prototype is not an own
+			// property of the node, and one defined on the instance by the subclass goes through the proxy, which rejects it.
+			const transpiledPrivateField = Symbol("brand");
+			class Test extends schemaFactory.record(
+				"transpiledPrivateField",
+				schemaFactory.number,
+			) {}
+			const prepareInstance = Reflect.get(Test, "prepareInstance") as (
+				this: unknown,
+				...args: unknown[]
+			) => unknown;
+			Object.defineProperty(Test, "prepareInstance", {
+				value(this: unknown, instance: object, ...rest: unknown[]): unknown {
+					Object.defineProperty(instance, transpiledPrivateField, {
+						value: 1,
+						writable: true,
+					});
+					return prepareInstance.call(this, instance, ...rest);
+				},
+			});
+			const node = init(Test, { a: 1, b: 2 });
+			assert.deepEqual(Object.keys(node), ["a", "b"]);
+			assert.deepEqual(Reflect.ownKeys(node), ["a", "b", transpiledPrivateField]);
+			assert.equal(Reflect.getOwnPropertyDescriptor(node, transpiledPrivateField)?.value, 1);
+			assert.equal(transpiledPrivateField in node, true);
+			assert.deepEqual({ ...node }, { a: 1, b: 2 });
+		});
+
 		describe("doesn't allow extra properties", () => {
 			function assertConstructionFails<
 				TInsertable,

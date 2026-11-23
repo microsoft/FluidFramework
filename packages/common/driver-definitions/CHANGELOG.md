@@ -1,5 +1,13 @@
 # @fluidframework/driver-definitions
 
+## 3.13.0
+
+Dependency updates only.
+
+## 3.12.0
+
+Dependency updates only.
+
 ## 3.11.0
 
 Dependency updates only.
@@ -32,37 +40,37 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Require the oldest supported client version in ServiceOptions ([#27902](https://github.com/microsoft/FluidFramework/pull/27902)) [da0dd40c087](https://github.com/microsoft/FluidFramework/commit/da0dd40c087b075822f0a9be723e1879f25d23b5)
+#### Require the oldest supported client version in ServiceOptions ([#27902](https://github.com/microsoft/FluidFramework/pull/27902)) [da0dd40c087](https://github.com/microsoft/FluidFramework/commit/da0dd40c087b075822f0a9be723e1879f25d23b5)
 
-  The alpha [`ServiceOptions.oldestSupportedClient`](https://fluidframework.com/docs/api/driver-definitions/serviceoptions-interface#oldestsupportedclient-propertysignature) property is now required. Code that constructs service options must specify the oldest Fluid Framework client version that can open and process documents written by the service client.
+The alpha [`ServiceOptions.oldestSupportedClient`](https://fluidframework.com/docs/api/driver-definitions/serviceoptions-interface#oldestsupportedclient-propertysignature) property is now required. Code that constructs service options must specify the oldest Fluid Framework client version that can open and process documents written by the service client.
 
-  ```typescript
-  const options: ServiceOptions = {
-    oldestSupportedClient: "2.100.0",
-  };
-  ```
+```typescript
+const options: ServiceOptions = {
+  oldestSupportedClient: "2.100.0",
+};
+```
 
-- Collect container telemetry through ServiceClient ([#28259](https://github.com/microsoft/FluidFramework/pull/28259)) [11261004291](https://github.com/microsoft/FluidFramework/commit/11261004291599575a23483fbaf8b20f4ff1afc1)
+#### Collect container telemetry through ServiceClient ([#28259](https://github.com/microsoft/FluidFramework/pull/28259)) [11261004291](https://github.com/microsoft/FluidFramework/commit/11261004291599575a23483fbaf8b20f4ff1afc1)
 
-  The alpha [ServiceOptions](https://fluidframework.com/docs/api/driver-definitions/serviceoptions-interface) interface now accepts an optional `logger`.
-  Session, ephemeral, and Tinylicious clients forward telemetry from containers they create or load to this logger.
-  Existing callers can omit the option without changing their behavior.
+The alpha [ServiceOptions](https://fluidframework.com/docs/api/driver-definitions/serviceoptions-interface) interface now accepts an optional `logger`.
+Session, ephemeral, and Tinylicious clients forward telemetry from containers they create or load to this logger.
+Existing callers can omit the option without changing their behavior.
 
-  ```typescript
-  import { startEphemeralService } from "@fluidframework/local-driver/alpha";
+```typescript
+import { startEphemeralService } from "@fluidframework/local-driver/alpha";
 
-  const service = startEphemeralService();
-  const client = service.newClient({
-    oldestSupportedClient: "2.100.0",
-    logger: {
-      send(event) {
-        console.log(event);
-      },
+const service = startEphemeralService();
+const client = service.newClient({
+  oldestSupportedClient: "2.100.0",
+  logger: {
+    send(event) {
+      console.log(event);
     },
-  });
-  ```
+  },
+});
+```
 
-  The same `logger` option is supported by `getSessionService().newClient(...)` and `createTinyliciousServiceClient(...)`.
+The same `logger` option is supported by `getSessionService().newClient(...)` and `createTinyliciousServiceClient(...)`.
 
 ## 3.1.0
 
@@ -72,182 +80,182 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Removal of direct CommonJS support ([#28124](https://github.com/microsoft/FluidFramework/pull/28124)) [0f84e3b8878](https://github.com/microsoft/FluidFramework/commit/0f84e3b8878a5e75b2253976d98fd963bbd9db88)
+#### Removal of direct CommonJS support ([#28124](https://github.com/microsoft/FluidFramework/pull/28124)) [0f84e3b8878](https://github.com/microsoft/FluidFramework/commit/0f84e3b8878a5e75b2253976d98fd963bbd9db88)
 
-  Direct `require()` import is no longer directly supported.
-  Package is transpiled as ECMAScript Module.
+Direct `require()` import is no longer directly supported.
+Package is transpiled as ECMAScript Module.
 
-  See [Removal of direct CommonJS support in v3.0](https://github.com/microsoft/FluidFramework/issues/27444) for more information.
+See [Removal of direct CommonJS support in v3.0](https://github.com/microsoft/FluidFramework/issues/27444) for more information.
 
-- Require modern TypeScript module resolution ([#27970](https://github.com/microsoft/FluidFramework/pull/27970)) [325e2016ca9](https://github.com/microsoft/FluidFramework/commit/325e2016ca9978d4a1f7552c97ba34feac9df41f)
+#### Require modern TypeScript module resolution ([#27970](https://github.com/microsoft/FluidFramework/pull/27970)) [325e2016ca9](https://github.com/microsoft/FluidFramework/commit/325e2016ca9978d4a1f7552c97ba34feac9df41f)
 
-  Fluid Framework Client packages no longer include type declaration compatibility entrypoints for TypeScript's legacy Node10 resolution mode (`"moduleResolution": "node"` or `"node10"`).
-  Applications upgrading to Fluid Framework 3.0 must use one of the following supported configurations:
-  - `"module": "Node16"` with `"moduleResolution": "Node16"`
-  - `"module": "NodeNext"` with `"moduleResolution": "NodeNext"`
-  - `"module": "ESNext"` with `"moduleResolution": "Bundler"`
+Fluid Framework Client packages no longer include type declaration compatibility entrypoints for TypeScript's legacy Node10 resolution mode (`"moduleResolution": "node"` or `"node10"`).
+Applications upgrading to Fluid Framework 3.0 must use one of the following supported configurations:
+- `"module": "Node16"` with `"moduleResolution": "Node16"`
+- `"module": "NodeNext"` with `"moduleResolution": "NodeNext"`
+- `"module": "ESNext"` with `"moduleResolution": "Bundler"`
 
-  Existing public package entrypoints exposed through `package.json` exports, including `/alpha`, `/beta`, and `/legacy`, remain available under supported module resolution modes.
+Existing public package entrypoints exposed through `package.json` exports, including `/alpha`, `/beta`, and `/legacy`, remain available under supported module resolution modes.
 
-  See [Removal of Node10 resolutions in v3.0](https://github.com/microsoft/FluidFramework/issues/27457) for more information.
+See [Removal of Node10 resolutions in v3.0](https://github.com/microsoft/FluidFramework/issues/27457) for more information.
 
-- Client packages now target ES2022 ([#27846](https://github.com/microsoft/FluidFramework/pull/27846)) [91c78541bdd](https://github.com/microsoft/FluidFramework/commit/91c78541bddcbca5d6c5f357b023eeaee617d885)
+#### Client packages now target ES2022 ([#27846](https://github.com/microsoft/FluidFramework/pull/27846)) [91c78541bdd](https://github.com/microsoft/FluidFramework/commit/91c78541bddcbca5d6c5f357b023eeaee617d885)
 
-  The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
-  The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
-  All actively supported Node.js versions and evergreen browsers already meet this requirement.
+The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
+The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
+All actively supported Node.js versions and evergreen browsers already meet this requirement.
 
-  Note that Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the README for every client package.
+Note that Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the README for every client package.
 
-  It is possible this change could impact users of less up to date JavaScript runtimes.
-  Impacted users can use a tool like [babel](https://babeljs.io/) to transpile out unsupported language features.
+It is possible this change could impact users of less up to date JavaScript runtimes.
+Impacted users can use a tool like [babel](https://babeljs.io/) to transpile out unsupported language features.
 
-- Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
+#### Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
 
-  FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
+FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
 
 ## 2.116.0
 
 ### Minor Changes
 
-- Rename minVersionForCollab to oldestSupportedClient ([#27806](https://github.com/microsoft/FluidFramework/pull/27806)) [86b912170c](https://github.com/microsoft/FluidFramework/commit/86b912170c0e12ebeb481c5201f923c72bf94498)
+#### Rename minVersionForCollab to oldestSupportedClient ([#27806](https://github.com/microsoft/FluidFramework/pull/27806)) [86b912170c](https://github.com/microsoft/FluidFramework/commit/86b912170c0e12ebeb481c5201f923c72bf94498)
 
-  The cross-client compatibility parameter has new names:
-  - The
-    [`MinimumVersionForCollab`](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias)
-    type is now
-    [`OldestSupportedClientVersion`](https://fluidframework.com/docs/api/runtime-definitions/oldestsupportedclientversion-typealias).
-  - [`LoadContainerRuntimeParams.minVersionForCollab`](https://fluidframework.com/docs/api/container-runtime/loadcontainerruntimeparams-interface#minversionforcollab-propertysignature)
-    is now
-    [`LoadContainerRuntimeParams.oldestSupportedClient`](https://fluidframework.com/docs/api/container-runtime/loadcontainerruntimeparams-interface#oldestsupportedclient-propertysignature).
-  - [`BaseContainerRuntimeFactoryProps.minVersionForCollab`](https://fluidframework.com/docs/api/aqueduct/basecontainerruntimefactoryprops-interface#minversionforcollab-propertysignature)
-    is now
-    [`BaseContainerRuntimeFactoryProps.oldestSupportedClient`](https://fluidframework.com/docs/api/aqueduct/basecontainerruntimefactoryprops-interface#oldestsupportedclient-propertysignature).
-  - [`createTreeContainerRuntimeFactory`](https://fluidframework.com/docs/api/fluid-static/#createtreecontainerruntimefactory-function)
-    now accepts `oldestSupportedClient`.
-    `minVersionForCollaboration` remains available as a deprecated overload.
-  - `@fluidframework/driver-definitions` now exports its minor-only version type as
-    [`OldestSupportedServiceClientVersion`](https://fluidframework.com/docs/api/driver-definitions/oldestsupportedserviceclientversion-typealias),
-    and
-    [`ServiceOptions.oldestSupportedClient`](https://fluidframework.com/docs/api/driver-definitions/serviceoptions-interface#oldestsupportedclient-propertysignature)
-    is available.
-  - [`AzureClient`](https://fluidframework.com/docs/api/azure-client/azureclient-class),
-    [`OdspClient`](https://fluidframework.com/docs/api/odsp-client/odspclient-class),
-    and
-    [`TinyliciousClient`](https://fluidframework.com/docs/api/tinylicious-client/tinyliciousclient-class)
-    methods now use `oldestSupportedClient` and
-    [`OldestSupportedClientVersion`](https://fluidframework.com/docs/api/runtime-definitions/oldestsupportedclientversion-typealias)
-    in their signatures.
+The cross-client compatibility parameter has new names:
+- The
+  [`MinimumVersionForCollab`](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias)
+  type is now
+  [`OldestSupportedClientVersion`](https://fluidframework.com/docs/api/runtime-definitions/oldestsupportedclientversion-typealias).
+- [`LoadContainerRuntimeParams.minVersionForCollab`](https://fluidframework.com/docs/api/container-runtime/loadcontainerruntimeparams-interface#minversionforcollab-propertysignature)
+  is now
+  [`LoadContainerRuntimeParams.oldestSupportedClient`](https://fluidframework.com/docs/api/container-runtime/loadcontainerruntimeparams-interface#oldestsupportedclient-propertysignature).
+- [`BaseContainerRuntimeFactoryProps.minVersionForCollab`](https://fluidframework.com/docs/api/aqueduct/basecontainerruntimefactoryprops-interface#minversionforcollab-propertysignature)
+  is now
+  [`BaseContainerRuntimeFactoryProps.oldestSupportedClient`](https://fluidframework.com/docs/api/aqueduct/basecontainerruntimefactoryprops-interface#oldestsupportedclient-propertysignature).
+- [`createTreeContainerRuntimeFactory`](https://fluidframework.com/docs/api/fluid-static/#createtreecontainerruntimefactory-function)
+  now accepts `oldestSupportedClient`.
+  `minVersionForCollaboration` remains available as a deprecated overload.
+- `@fluidframework/driver-definitions` now exports its minor-only version type as
+  [`OldestSupportedServiceClientVersion`](https://fluidframework.com/docs/api/driver-definitions/oldestsupportedserviceclientversion-typealias),
+  and
+  [`ServiceOptions.oldestSupportedClient`](https://fluidframework.com/docs/api/driver-definitions/serviceoptions-interface#oldestsupportedclient-propertysignature)
+  is available.
+- [`AzureClient`](https://fluidframework.com/docs/api/azure-client/azureclient-class),
+  [`OdspClient`](https://fluidframework.com/docs/api/odsp-client/odspclient-class),
+  and
+  [`TinyliciousClient`](https://fluidframework.com/docs/api/tinylicious-client/tinyliciousclient-class)
+  methods now use `oldestSupportedClient` and
+  [`OldestSupportedClientVersion`](https://fluidframework.com/docs/api/runtime-definitions/oldestsupportedclientversion-typealias)
+  in their signatures.
 
-  The previous property and type names in `@fluidframework/runtime-definitions`,
-  `@fluidframework/container-runtime`, `@fluidframework/aqueduct`, and
-  `@fluidframework/fluid-static` are deprecated and will be removed in future
-  releases. Where both old and new property names remain available, specifying both
-  is an error. The alpha `MinimumVersionForCollaboration` type and
-  `ServiceOptions.minVersionForCollaboration` property are replaced directly rather
-  than retained as aliases.
+The previous property and type names in `@fluidframework/runtime-definitions`,
+`@fluidframework/container-runtime`, `@fluidframework/aqueduct`, and
+`@fluidframework/fluid-static` are deprecated and will be removed in future
+releases. Where both old and new property names remain available, specifying both
+is an error. The alpha `MinimumVersionForCollaboration` type and
+`ServiceOptions.minVersionForCollaboration` property are replaced directly rather
+than retained as aliases.
 
-  ```typescript
-  // Before
-  const runtime = await loadContainerRuntime({
-    context,
-    registryEntries,
-    provideEntryPoint,
-    minVersionForCollab: "2.40.0",
-  });
+```typescript
+// Before
+const runtime = await loadContainerRuntime({
+  context,
+  registryEntries,
+  provideEntryPoint,
+  minVersionForCollab: "2.40.0",
+});
 
-  // After
-  const runtime = await loadContainerRuntime({
-    context,
-    registryEntries,
-    provideEntryPoint,
-    oldestSupportedClient: "2.40.0",
-  });
-  ```
+// After
+const runtime = await loadContainerRuntime({
+  context,
+  registryEntries,
+  provideEntryPoint,
+  oldestSupportedClient: "2.40.0",
+});
+```
 
-  Telemetry property names are unchanged.
+Telemetry property names are unchanged.
 
 ## 2.115.0
 
 ### Minor Changes
 
-- Simplify creating attached Fluid containers with ServiceClient ([#27789](https://github.com/microsoft/FluidFramework/pull/27789)) [1671447b57](https://github.com/microsoft/FluidFramework/commit/1671447b57852875ec90a9d1c16b3817ce25e004)
+#### Simplify creating attached Fluid containers with ServiceClient ([#27789](https://github.com/microsoft/FluidFramework/pull/27789)) [1671447b57](https://github.com/microsoft/FluidFramework/commit/1671447b57852875ec90a9d1c16b3817ce25e004)
 
-  Added `ServiceClient.createAttachedContainer` which creates and attaches a Fluid container in one operation.
-  It is a convenient shorthand for calling `createContainer` followed by `attach` when detached-container access is not needed.
+Added `ServiceClient.createAttachedContainer` which creates and attaches a Fluid container in one operation.
+It is a convenient shorthand for calling `createContainer` followed by `attach` when detached-container access is not needed.
 
-  ```typescript
-  const container = await client.createAttachedContainer(dataStoreKind);
-  ```
+```typescript
+const container = await client.createAttachedContainer(dataStoreKind);
+```
 
 ## 2.114.0
 
 ### Minor Changes
 
-- Add new @alpha ServiceClient API for creating and loading Fluid containers ([#27693](https://github.com/microsoft/FluidFramework/pull/27693)) [ee47192d4a](https://github.com/microsoft/FluidFramework/commit/ee47192d4ae91bc28f9154c4d1ead2acad762f3c)
+#### Add new @alpha ServiceClient API for creating and loading Fluid containers ([#27693](https://github.com/microsoft/FluidFramework/pull/27693)) [ee47192d4a](https://github.com/microsoft/FluidFramework/commit/ee47192d4ae91bc28f9154c4d1ead2acad762f3c)
 
-  This introduces an experimental (`@alpha`), service-agnostic API for working with Fluid containers whose root is an arbitrary data store, along with an in-memory implementation for testing.
+This introduces an experimental (`@alpha`), service-agnostic API for working with Fluid containers whose root is an arbitrary data store, along with an in-memory implementation for testing.
 
-  The new surface is made up of:
-  - `ServiceClient` (`@fluidframework/driver-definitions`): the entry point for creating and loading containers. Along with it come the supporting container types (`FluidContainer`, `FluidContainerWithService`, `FluidContainerAttached`), the data store model (`DataStoreKind`, `DataStoreKey`, `DataStoreRegistry`, `DataStoreCreator`), and the generic registry primitives (`Registry`, `RegistryKey`, `lookupInRegistry`, `createBasicRegistryKey`).
-  - `defineDataStore` and `sharedObjectRegistryFromIterable` (`@fluidframework/shared-object-base`): build a `DataStoreKind` from a root shared object and a registry of shared object kinds.
-  - `defineTreeDataStore` and `instantiateTreeFirstTime` (`@fluidframework/tree`): a SharedTree-specific convenience wrapper that produces a `DataStoreKind` backed by a `TreeView`.
-  - `startEphemeralService` (`@fluidframework/local-driver`): starts an in-memory `EphemeralService` for tests. The service owns the lifetime of the in-memory documents and resources, and produces `ServiceClient`s connected to it (via `EphemeralService.newClient` or `EphemeralService.defaultClient`). The helpers `cleanupEphemeralService` and `getDefaultEphemeralService` manage an optional default service instance.
+The new surface is made up of:
+- `ServiceClient` (`@fluidframework/driver-definitions`): the entry point for creating and loading containers. Along with it come the supporting container types (`FluidContainer`, `FluidContainerWithService`, `FluidContainerAttached`), the data store model (`DataStoreKind`, `DataStoreKey`, `DataStoreRegistry`, `DataStoreCreator`), and the generic registry primitives (`Registry`, `RegistryKey`, `lookupInRegistry`, `createBasicRegistryKey`).
+- `defineDataStore` and `sharedObjectRegistryFromIterable` (`@fluidframework/shared-object-base`): build a `DataStoreKind` from a root shared object and a registry of shared object kinds.
+- `defineTreeDataStore` and `instantiateTreeFirstTime` (`@fluidframework/tree`): a SharedTree-specific convenience wrapper that produces a `DataStoreKind` backed by a `TreeView`.
+- `startEphemeralService` (`@fluidframework/local-driver`): starts an in-memory `EphemeralService` for tests. The service owns the lifetime of the in-memory documents and resources, and produces `ServiceClient`s connected to it (via `EphemeralService.newClient` or `EphemeralService.defaultClient`). The helpers `cleanupEphemeralService` and `getDefaultEphemeralService` manage an optional default service instance.
 
-  Apart from the `@fluidframework/local-driver` helpers (which come from `@fluidframework/local-driver/alpha`), these APIs are also re-exported from `fluid-framework`. None reference any `@legacy` types.
+Apart from the `@fluidframework/local-driver` helpers (which come from `@fluidframework/local-driver/alpha`), these APIs are also re-exported from `fluid-framework`. None reference any `@legacy` types.
 
-  Example:
+Example:
 
-  ```typescript
-  import { startEphemeralService } from "@fluidframework/local-driver/alpha";
-  import {
-    ServiceClient,
-    defineTreeDataStore,
-    TreeViewConfiguration,
-    SchemaFactory,
-  } from "fluid-framework/alpha";
-  import { strict as assert } from "node:assert";
+```typescript
+import { startEphemeralService } from "@fluidframework/local-driver/alpha";
+import {
+  ServiceClient,
+  defineTreeDataStore,
+  TreeViewConfiguration,
+  SchemaFactory,
+} from "fluid-framework/alpha";
+import { strict as assert } from "node:assert";
 
-  // Start an ephemeral in-memory service and get a ServiceClient connected to it.
-  const service = startEphemeralService();
-  const client: ServiceClient = service.defaultClient;
-  // Define a DataStoreKind which uses a SharedTree.
-  // In this case the schema is for a single number with an initializer that starts the it at 1.
-  // This schema is captures in the type allowing for strongly typed access to the data in the tree,
-  // where the type matches the schema based runtime enforcement of the schema.
-  const numberStore = defineTreeDataStore({
-    type: "my-app-root",
-    config: new TreeViewConfiguration({ schema: SchemaFactory.number }),
-    initializer: () => 1,
-  });
+// Start an ephemeral in-memory service and get a ServiceClient connected to it.
+const service = startEphemeralService();
+const client: ServiceClient = service.defaultClient;
+// Define a DataStoreKind which uses a SharedTree.
+// In this case the schema is for a single number with an initializer that starts the it at 1.
+// This schema is captures in the type allowing for strongly typed access to the data in the tree,
+// where the type matches the schema based runtime enforcement of the schema.
+const numberStore = defineTreeDataStore({
+  type: "my-app-root",
+  config: new TreeViewConfiguration({ schema: SchemaFactory.number }),
+  initializer: () => 1,
+});
 
-  // Create a container in the service with the above DataStoreKind.
-  // Ideally this creation would use a service independent API, and only the attach call would be service dependent,
-  // but that is not supported yet.
-  const detachedContainer1 = await client.createContainer(numberStore);
-  const container1 = await detachedContainer1.attach();
+// Create a container in the service with the above DataStoreKind.
+// Ideally this creation would use a service independent API, and only the attach call would be service dependent,
+// but that is not supported yet.
+const detachedContainer1 = await client.createContainer(numberStore);
+const container1 = await detachedContainer1.attach();
 
-  // We now have easy and type safe access to the data in the tree, which will be synced over the service.
-  assert.equal(container1.data.root, 1);
+// We now have easy and type safe access to the data in the tree, which will be synced over the service.
+assert.equal(container1.data.root, 1);
 
-  // A second client can load the same container from the service, and will see the same data.
-  const container2 = await client.loadContainer(container1.id, numberStore);
-  assert.equal(container2.data.root, 1);
+// A second client can load the same container from the service, and will see the same data.
+const container2 = await client.loadContainer(container1.id, numberStore);
+assert.equal(container2.data.root, 1);
 
-  // Both clients can modify the data, and the changes will be synced over the service.
-  container2.data.root = 2;
-  // Since we are using an ephemeral service, we can await the synchronization using service.synchronize.
-  await service.synchronize();
+// Both clients can modify the data, and the changes will be synced over the service.
+container2.data.root = 2;
+// Since we are using an ephemeral service, we can await the synchronization using service.synchronize.
+await service.synchronize();
 
-  // And now the changes are visible for all clients.
-  assert.equal(container1.data.root, 2);
-  assert.equal(container2.data.root, 2);
-  ```
+// And now the changes are visible for all clients.
+assert.equal(container1.data.root, 2);
+assert.equal(container2.data.root, 2);
+```
 
-  Note that this example does a couple of things which are difficult to do with the other API surfaces:
-  1. It creates a container, then loads a second copy of it, allowing for collaboration. There is currently no non-legacy API surface which allows this without spawning a server process. This is also cleaner than the exacting legacy API options, and can replace the test specific APIs for this as well.
-  2. It creates a container which has a SharedTree at the root, and nothing else. This avoids depending on legacy DDS implementations, which is great for long-term document support and bundle size. This is currently impossible using `fluid-static`, which forces a special root data store. It is also impossible if using `aqueduct`, which forces a root directory in every data store. It can be done using the low level legacy APIs directly, but this new API for it is much simpler.
-  3. There is a common interface all services implement (`ServiceClient`), making the container creation part of the code work for any service implementation.
+Note that this example does a couple of things which are difficult to do with the other API surfaces:
+1. It creates a container, then loads a second copy of it, allowing for collaboration. There is currently no non-legacy API surface which allows this without spawning a server process. This is also cleaner than the exacting legacy API options, and can replace the test specific APIs for this as well.
+2. It creates a container which has a SharedTree at the root, and nothing else. This avoids depending on legacy DDS implementations, which is great for long-term document support and bundle size. This is currently impossible using `fluid-static`, which forces a special root data store. It is also impossible if using `aqueduct`, which forces a root directory in every data store. It can be done using the low level legacy APIs directly, but this new API for it is much simpler.
+3. There is a common interface all services implement (`ServiceClient`), making the container creation part of the code work for any service implementation.
 
 ## 2.113.0
 
@@ -281,9 +289,9 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+#### Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
 
-  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
 
 ## 2.93.0
 
@@ -317,13 +325,13 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Added layerIncompatibilityError to FluidErrorTypes, ContainerErrorTypes, DriverErrorTypes and OdspErrorTypes ([#26068](https://github.com/microsoft/FluidFramework/pull/26068)) [a8532bdd903](https://github.com/microsoft/FluidFramework/commit/a8532bdd903626524f17d2ec650d8904046e5308)
+#### Added layerIncompatibilityError to FluidErrorTypes, ContainerErrorTypes, DriverErrorTypes and OdspErrorTypes ([#26068](https://github.com/microsoft/FluidFramework/pull/26068)) [a8532bdd903](https://github.com/microsoft/FluidFramework/commit/a8532bdd903626524f17d2ec650d8904046e5308)
 
-  The Fluid error type `layerIncompatibilityError` is added to `FluidErrorTypes` and is now @legacy @beta. It is also added to `ContainerErrorTypes`, `DriverErrorTypes` and `OdspErrorTypes` which extend `FluidErrorTypes`.
-  `layerIncompatibilityError` was added as @legacy @alpha in version 2.72.0.
-  The corresponding interface `ILayerIncompatibilityError` for errors of type `layerIncompatibilityError` is now also @legacy @beta.
+The Fluid error type `layerIncompatibilityError` is added to `FluidErrorTypes` and is now @legacy @beta. It is also added to `ContainerErrorTypes`, `DriverErrorTypes` and `OdspErrorTypes` which extend `FluidErrorTypes`.
+`layerIncompatibilityError` was added as @legacy @alpha in version 2.72.0.
+The corresponding interface `ILayerIncompatibilityError` for errors of type `layerIncompatibilityError` is now also @legacy @beta.
 
-  See [this issue](https://github.com/microsoft/FluidFramework/issues/25813) for more details.
+See [this issue](https://github.com/microsoft/FluidFramework/issues/25813) for more details.
 
 ## 2.74.0
 
@@ -353,15 +361,15 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Move IPersistedCache types to driver-definitions ([#25518](https://github.com/microsoft/FluidFramework/pull/25518)) [54fca68d91](https://github.com/microsoft/FluidFramework/commit/54fca68d91aeb40bdef14b1fe8b8f3c28168b6de)
+#### Move IPersistedCache types to driver-definitions ([#25518](https://github.com/microsoft/FluidFramework/pull/25518)) [54fca68d91](https://github.com/microsoft/FluidFramework/commit/54fca68d91aeb40bdef14b1fe8b8f3c28168b6de)
 
-  In an effort to decouple the driver web cache from the odsp driver a number of types have been moved from `@fluidframework/odsp-driver-definitions` to `@fluidframework/driver-definitions`. The moved types have been deprecated in `@fluidframework/odsp-driver-definitions`, and any usages should be moved to `@fluidframework/driver-definitions`.
+In an effort to decouple the driver web cache from the odsp driver a number of types have been moved from `@fluidframework/odsp-driver-definitions` to `@fluidframework/driver-definitions`. The moved types have been deprecated in `@fluidframework/odsp-driver-definitions`, and any usages should be moved to `@fluidframework/driver-definitions`.
 
-  The moved types are:
-  - `IEntry`
-  - `IFileEntry`
-  - `ICacheEntry`
-  - `IPersistedCache`
+The moved types are:
+- `IEntry`
+- `IFileEntry`
+- `ICacheEntry`
+- `IPersistedCache`
 
 ## 2.61.0
 
@@ -391,28 +399,28 @@ Dependency updates only.
 
 ### Minor Changes
 
-- The reason parameter on the disconnect event is now optional to allow for clean, non-error disconnections ([#24840](https://github.com/microsoft/FluidFramework/pull/24840)) [82a1c5a1362](https://github.com/microsoft/FluidFramework/commit/82a1c5a1362d3362886bdcc12859ce60a2744bdb)
+#### The reason parameter on the disconnect event is now optional to allow for clean, non-error disconnections ([#24840](https://github.com/microsoft/FluidFramework/pull/24840)) [82a1c5a1362](https://github.com/microsoft/FluidFramework/commit/82a1c5a1362d3362886bdcc12859ce60a2744bdb)
 
-  To enable better handling of intentional disconnects (for example [`Container.dispose()`](https://fluidframework.com/docs/api/container-loader/container/dispose)), the `reason` parameter of the `disconnect` event on [`IDocumentDeltaConnectionEvents`](https://fluidframework.com/docs/api/driver-definitions/idocumentdeltaconnectionevents) is being deprecated as a required parameter.
+To enable better handling of intentional disconnects (for example [`Container.dispose()`](https://fluidframework.com/docs/api/container-loader/container/dispose)), the `reason` parameter of the `disconnect` event on [`IDocumentDeltaConnectionEvents`](https://fluidframework.com/docs/api/driver-definitions/idocumentdeltaconnectionevents) is being deprecated as a required parameter.
 
-  In a future release, the `reason` parameter will become optional.
+In a future release, the `reason` parameter will become optional.
 
-  **Old signature:**
+**Old signature:**
 
-  ```typescript
-  listener: (reason: IAnyDriverError) => void
-  ```
+```typescript
+listener: (reason: IAnyDriverError) => void
+```
 
-  **New signature:**
+**New signature:**
 
-  ```typescript
-  listener: (reason?: IAnyDriverError) => void
-  ```
+```typescript
+listener: (reason?: IAnyDriverError) => void
+```
 
-  Developers with listeners for the `disconnect` event should update their implementations to handle cases where the `reason` parameter is `undefined`.
-  This indicates a clean disconnect, which should not be treated as an error.
+Developers with listeners for the `disconnect` event should update their implementations to handle cases where the `reason` parameter is `undefined`.
+This indicates a clean disconnect, which should not be treated as an error.
 
-  The breaking change is scheduled to be released in version **2.60**.
+The breaking change is scheduled to be released in version **2.60**.
 
 ## 2.42.0
 
@@ -498,127 +506,127 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+#### Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
 
-  Update package implementations to use TypeScript 5.4.5.
+Update package implementations to use TypeScript 5.4.5.
 
-- fluid-framework: Remove some types from `@public` that are not needed ([#21326](https://github.com/microsoft/FluidFramework/pull/21326)) [b629cb80b0](https://github.com/microsoft/FluidFramework/commit/b629cb80b0e5ecdc750270807f77a0e30fab4559)
+#### fluid-framework: Remove some types from `@public` that are not needed ([#21326](https://github.com/microsoft/FluidFramework/pull/21326)) [b629cb80b0](https://github.com/microsoft/FluidFramework/commit/b629cb80b0e5ecdc750270807f77a0e30fab4559)
 
-  Mark the following APIs `@alpha` instead of `@public`:
-  - IBranchOrigin
-  - ISequencedDocumentMessage
-  - ISignalMessage
-  - ISignalMessageBase
-  - ITrace
+Mark the following APIs `@alpha` instead of `@public`:
+- IBranchOrigin
+- ISequencedDocumentMessage
+- ISignalMessage
+- ISignalMessageBase
+- ITrace
 
-- Update to ES 2022 ([#21292](https://github.com/microsoft/FluidFramework/pull/21292)) [68921502f7](https://github.com/microsoft/FluidFramework/commit/68921502f79b1833c4cd6d0fe339bfb126a712c7)
+#### Update to ES 2022 ([#21292](https://github.com/microsoft/FluidFramework/pull/21292)) [68921502f7](https://github.com/microsoft/FluidFramework/commit/68921502f79b1833c4cd6d0fe339bfb126a712c7)
 
-  Update tsconfig to target ES 2022.
+Update tsconfig to target ES 2022.
 
 ## 2.0.0-rc.4.0.0
 
 ### Minor Changes
 
-- Make several driver types no longer public [b7ad7d0b55](https://github.com/microsoft/FluidFramework/commit/b7ad7d0b55884dd8954abf7c398e518838b9bda0)
+#### Make several driver types no longer public [b7ad7d0b55](https://github.com/microsoft/FluidFramework/commit/b7ad7d0b55884dd8954abf7c398e518838b9bda0)
 
-  Move the following types from `@public` to `@alpha`:
-  - ITokenClaims
-  - IDocumentMessage
-  - IClientConfiguration
-  - IAnyDriverError
-  - IDriverErrorBase
-  - DriverErrorTypes
+Move the following types from `@public` to `@alpha`:
+- ITokenClaims
+- IDocumentMessage
+- IClientConfiguration
+- IAnyDriverError
+- IDriverErrorBase
+- DriverErrorTypes
 
-  `DriverErrorTypes` is no longer exported from the `fluid-framework` package.
+`DriverErrorTypes` is no longer exported from the `fluid-framework` package.
 
 ## 2.0.0-rc.3.0.0
 
 ### Major Changes
 
-- Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+#### Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
 
-  Fluid Framework packages have been updated to use the [package.json "exports"
-  field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
-  TypeScript types and implementation code.
+Fluid Framework packages have been updated to use the [package.json "exports"
+field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
+TypeScript types and implementation code.
 
-  This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-  - `"moduleResolution": "Node16"` with `"module": "Node16"`
-  - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
+This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
+- `"moduleResolution": "Node16"` with `"module": "Node16"`
+- `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 
-  We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
-  for use with modern versions of Node.js _and_ Bundlers.
-  [See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
-  regarding the module and moduleResolution options.
+We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
+for use with modern versions of Node.js _and_ Bundlers.
+[See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
+regarding the module and moduleResolution options.
 
-  **Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
-  to distinguish stable APIs from those that are in development.**
+**Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
+to distinguish stable APIs from those that are in development.**
 
 ### Minor Changes
 
-- driver-definitions: update submitSignal content type to string [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+#### driver-definitions: update submitSignal content type to string [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
 
-  Change IDocumentDeltaConnection.submitSignal's content argument type to string which represents actual/known use.
+Change IDocumentDeltaConnection.submitSignal's content argument type to string which represents actual/known use.
 
 ## 2.0.0-rc.2.0.0
 
 ### Minor Changes
 
-- driver-definitions: Deprecate `ISnapshotContents` ([#19314](https://github.com/microsoft/FluidFramework/issues/19314)) [fc731b69de](https://github.com/microsoft/FluidFramework/commits/fc731b69deed4a2987e9b97d8918492d689bafbc)
+#### driver-definitions: Deprecate `ISnapshotContents` ([#19314](https://github.com/microsoft/FluidFramework/issues/19314)) [fc731b69de](https://github.com/microsoft/FluidFramework/commits/fc731b69deed4a2987e9b97d8918492d689bafbc)
 
-  `ISnapshotContents` is deprecated. It has been replaced with `ISnapshot`.
+`ISnapshotContents` is deprecated. It has been replaced with `ISnapshot`.
 
-- driver-definitions: repositoryUrl removed from IDocumentStorageService ([#19522](https://github.com/microsoft/FluidFramework/issues/19522)) [90eb3c9d33](https://github.com/microsoft/FluidFramework/commits/90eb3c9d33d80e24caa1393a50f414c5602f6aa3)
+#### driver-definitions: repositoryUrl removed from IDocumentStorageService ([#19522](https://github.com/microsoft/FluidFramework/issues/19522)) [90eb3c9d33](https://github.com/microsoft/FluidFramework/commits/90eb3c9d33d80e24caa1393a50f414c5602f6aa3)
 
-  The `repositoryUrl` member of `IDocumentStorageService` was unused and always equal to the empty string. It has been removed.
+The `repositoryUrl` member of `IDocumentStorageService` was unused and always equal to the empty string. It has been removed.
 
-- Deprecated error-related enums have been removed ([#19067](https://github.com/microsoft/FluidFramework/issues/19067)) [59793302e5](https://github.com/microsoft/FluidFramework/commits/59793302e56784cfb6ace0e6469345f3565b3312)
+#### Deprecated error-related enums have been removed ([#19067](https://github.com/microsoft/FluidFramework/issues/19067)) [59793302e5](https://github.com/microsoft/FluidFramework/commits/59793302e56784cfb6ace0e6469345f3565b3312)
 
-  Error-related enums `ContainerErrorType`, `DriverErrorType`, `OdspErrorType` and `RouterliciousErrorType` were previously
-  deprecated and are now removed. There are replacement object-based enumerations of `ContainerErrorTypes`,
-  `DriverErrorTypes`, `OdspErrorTypes` and `RouterliciousErrorTypes`. Refer to the release notes of [Fluid Framework version
-  2.0.0-internal.7.0.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.0.0-internal.7.0.0) for details
-  on the replacements.
+Error-related enums `ContainerErrorType`, `DriverErrorType`, `OdspErrorType` and `RouterliciousErrorType` were previously
+deprecated and are now removed. There are replacement object-based enumerations of `ContainerErrorTypes`,
+`DriverErrorTypes`, `OdspErrorTypes` and `RouterliciousErrorTypes`. Refer to the release notes of [Fluid Framework version
+2.0.0-internal.7.0.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.0.0-internal.7.0.0) for details
+on the replacements.
 
-- container-definitions: Added containerMetadata prop on IContainer interface ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
+#### container-definitions: Added containerMetadata prop on IContainer interface ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
 
-  Added `containerMetadata` prop on IContainer interface.
+Added `containerMetadata` prop on IContainer interface.
 
-- runtime-definitions: Moved ISignalEnvelope interface to core-interfaces ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
+#### runtime-definitions: Moved ISignalEnvelope interface to core-interfaces ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
 
-  The `ISignalEnvelope` interface has been moved to the @fluidframework/core-interfaces package.
+The `ISignalEnvelope` interface has been moved to the @fluidframework/core-interfaces package.
 
 ## 2.0.0-rc.1.0.0
 
 ### Minor Changes
 
-- Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
+#### Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
 
-  The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
-  - @fluidframework/gitresources
-  - @fluidframework/server-kafka-orderer
-  - @fluidframework/server-lambdas
-  - @fluidframework/server-lambdas-driver
-  - @fluidframework/server-local-server
-  - @fluidframework/server-memory-orderer
-  - @fluidframework/protocol-base
-  - @fluidframework/server-routerlicious
-  - @fluidframework/server-routerlicious-base
-  - @fluidframework/server-services
-  - @fluidframework/server-services-client
-  - @fluidframework/server-services-core
-  - @fluidframework/server-services-ordering-kafkanode
-  - @fluidframework/server-services-ordering-rdkafka
-  - @fluidframework/server-services-ordering-zookeeper
-  - @fluidframework/server-services-shared
-  - @fluidframework/server-services-telemetry
-  - @fluidframework/server-services-utils
-  - @fluidframework/server-test-utils
-  - tinylicious
+The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
+- @fluidframework/gitresources
+- @fluidframework/server-kafka-orderer
+- @fluidframework/server-lambdas
+- @fluidframework/server-lambdas-driver
+- @fluidframework/server-local-server
+- @fluidframework/server-memory-orderer
+- @fluidframework/protocol-base
+- @fluidframework/server-routerlicious
+- @fluidframework/server-routerlicious-base
+- @fluidframework/server-services
+- @fluidframework/server-services-client
+- @fluidframework/server-services-core
+- @fluidframework/server-services-ordering-kafkanode
+- @fluidframework/server-services-ordering-rdkafka
+- @fluidframework/server-services-ordering-zookeeper
+- @fluidframework/server-services-shared
+- @fluidframework/server-services-telemetry
+- @fluidframework/server-services-utils
+- @fluidframework/server-test-utils
+- tinylicious
 
-- Updated @fluidframework/protocol-definitions ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
+#### Updated @fluidframework/protocol-definitions ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
 
-  The @fluidframework/protocol-definitions dependency has been upgraded to v3.1.0. [See the full
-  changelog.](https://github.com/microsoft/FluidFramework/blob/main/common/lib/protocol-definitions/CHANGELOG.md#310)
+The @fluidframework/protocol-definitions dependency has been upgraded to v3.1.0. [See the full
+changelog.](https://github.com/microsoft/FluidFramework/blob/main/common/lib/protocol-definitions/CHANGELOG.md#310)
 
 ## 2.0.0-internal.8.0.0
 
@@ -644,68 +652,68 @@ Dependency updates only.
 
 ### Major Changes
 
-- odsp-driver: Load container in readonly mode when driver throws DriverErrorType.outOfStorage [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+#### odsp-driver: Load container in readonly mode when driver throws DriverErrorType.outOfStorage [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
-  Handle DriverErrorType.outOfStorage error from driver and load the container in readonly mode. Currently there is no
-  handling and when the join session throws this error, the container will get closed. With this we use NoDeltaStream
-  object as connection and load the container in read mode, so that it loads properly. We also notify the that the
-  container is "readonly" through the event on delta manager so that apps can listen to this and show any UX etc. The app
-  can listen to the event like this:
+Handle DriverErrorType.outOfStorage error from driver and load the container in readonly mode. Currently there is no
+handling and when the join session throws this error, the container will get closed. With this we use NoDeltaStream
+object as connection and load the container in read mode, so that it loads properly. We also notify the that the
+container is "readonly" through the event on delta manager so that apps can listen to this and show any UX etc. The app
+can listen to the event like this:
 
-  ```ts
-  container.deltaManager.on(
-    "readonly",
-    (
-      readonly?: boolean,
-      readonlyConnectionReason?: { text: string; error?: IErrorBase },
-    ) => {
-      // error?.errorType will be equal to DriverErrorType.outOfStorage in this case
-      // App logic
-    },
-  );
-  ```
+```ts
+container.deltaManager.on(
+  "readonly",
+  (
+    readonly?: boolean,
+    readonlyConnectionReason?: { text: string; error?: IErrorBase },
+  ) => {
+    // error?.errorType will be equal to DriverErrorType.outOfStorage in this case
+    // App logic
+  },
+);
+```
 
-- Dependencies on @fluidframework/protocol-definitions package updated to 3.0.0 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+#### Dependencies on @fluidframework/protocol-definitions package updated to 3.0.0 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
-  This included the following changes from the protocol-definitions release:
-  - Updating signal interfaces for some planned improvements. The intention is split the interface between signals
-    submitted by clients to the server and the resulting signals sent from the server to clients.
-    - A new optional type member is available on the ISignalMessage interface and a new ISentSignalMessage interface has
-      been added, which will be the typing for signals sent from the client to the server. Both extend a new
-      ISignalMessageBase interface that contains common members.
-  - The @fluidframework/common-definitions package dependency has been updated to version 1.0.0.
+This included the following changes from the protocol-definitions release:
+- Updating signal interfaces for some planned improvements. The intention is split the interface between signals
+  submitted by clients to the server and the resulting signals sent from the server to clients.
+  - A new optional type member is available on the ISignalMessage interface and a new ISentSignalMessage interface has
+    been added, which will be the typing for signals sent from the client to the server. Both extend a new
+    ISignalMessageBase interface that contains common members.
+- The @fluidframework/common-definitions package dependency has been updated to version 1.0.0.
 
-- routerlicious-driver: remove dead blob aggregation concepts and code [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+#### routerlicious-driver: remove dead blob aggregation concepts and code [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
-  Dead concepts blob aggregation like `aggregateBlobsSmallerThanBytes` and `minBlobSize` have been removed.
+Dead concepts blob aggregation like `aggregateBlobsSmallerThanBytes` and `minBlobSize` have been removed.
 
-- Server upgrade: dependencies on Fluid server packages updated to 2.0.1 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+#### Server upgrade: dependencies on Fluid server packages updated to 2.0.1 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
-  Dependencies on the following Fluid server package have been updated to version 2.0.1:
-  - @fluidframework/gitresources: 2.0.1
-  - @fluidframework/server-kafka-orderer: 2.0.1
-  - @fluidframework/server-lambdas: 2.0.1
-  - @fluidframework/server-lambdas-driver: 2.0.1
-  - @fluidframework/server-local-server: 2.0.1
-  - @fluidframework/server-memory-orderer: 2.0.1
-  - @fluidframework/protocol-base: 2.0.1
-  - @fluidframework/server-routerlicious: 2.0.1
-  - @fluidframework/server-routerlicious-base: 2.0.1
-  - @fluidframework/server-services: 2.0.1
-  - @fluidframework/server-services-client: 2.0.1
-  - @fluidframework/server-services-core: 2.0.1
-  - @fluidframework/server-services-ordering-kafkanode: 2.0.1
-  - @fluidframework/server-services-ordering-rdkafka: 2.0.1
-  - @fluidframework/server-services-ordering-zookeeper: 2.0.1
-  - @fluidframework/server-services-shared: 2.0.1
-  - @fluidframework/server-services-telemetry: 2.0.1
-  - @fluidframework/server-services-utils: 2.0.1
-  - @fluidframework/server-test-utils: 2.0.1
-  - tinylicious: 2.0.1
+Dependencies on the following Fluid server package have been updated to version 2.0.1:
+- @fluidframework/gitresources: 2.0.1
+- @fluidframework/server-kafka-orderer: 2.0.1
+- @fluidframework/server-lambdas: 2.0.1
+- @fluidframework/server-lambdas-driver: 2.0.1
+- @fluidframework/server-local-server: 2.0.1
+- @fluidframework/server-memory-orderer: 2.0.1
+- @fluidframework/protocol-base: 2.0.1
+- @fluidframework/server-routerlicious: 2.0.1
+- @fluidframework/server-routerlicious-base: 2.0.1
+- @fluidframework/server-services: 2.0.1
+- @fluidframework/server-services-client: 2.0.1
+- @fluidframework/server-services-core: 2.0.1
+- @fluidframework/server-services-ordering-kafkanode: 2.0.1
+- @fluidframework/server-services-ordering-rdkafka: 2.0.1
+- @fluidframework/server-services-ordering-zookeeper: 2.0.1
+- @fluidframework/server-services-shared: 2.0.1
+- @fluidframework/server-services-telemetry: 2.0.1
+- @fluidframework/server-services-utils: 2.0.1
+- @fluidframework/server-test-utils: 2.0.1
+- tinylicious: 2.0.1
 
-- Minimum TypeScript version now 5.1.6 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+#### Minimum TypeScript version now 5.1.6 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
-  The minimum supported TypeScript version for Fluid 2.0 clients is now 5.1.6.
+The minimum supported TypeScript version for Fluid 2.0 clients is now 5.1.6.
 
 ## 2.0.0-internal.6.4.0
 
@@ -715,39 +723,39 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Add new error type enumeration that extends common errors from core-interfaces ([#17078](https://github.com/microsoft/FluidFramework/issues/17078)) [5c4bf0d9c2](https://github.com/microsoft/FluidFramework/commits/5c4bf0d9c224af86d0c2205c67c6e64405fee51c)
+#### Add new error type enumeration that extends common errors from core-interfaces ([#17078](https://github.com/microsoft/FluidFramework/issues/17078)) [5c4bf0d9c2](https://github.com/microsoft/FluidFramework/commits/5c4bf0d9c224af86d0c2205c67c6e64405fee51c)
 
-  Deprecates existing `DriverErrorType` enum in favor of the new `DriverErrorTypes` type.
+Deprecates existing `DriverErrorType` enum in favor of the new `DriverErrorTypes` type.
 
 ## 2.0.0-internal.6.2.0
 
 ### Minor Changes
 
-- Remove use of @fluidframework/common-definitions ([#16638](https://github.com/microsoft/FluidFramework/issues/16638)) [a8c81509c9](https://github.com/microsoft/FluidFramework/commits/a8c81509c9bf09cfb2092ebcf7265205f9eb6dbf)
+#### Remove use of @fluidframework/common-definitions ([#16638](https://github.com/microsoft/FluidFramework/issues/16638)) [a8c81509c9](https://github.com/microsoft/FluidFramework/commits/a8c81509c9bf09cfb2092ebcf7265205f9eb6dbf)
 
-  The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
-  imported from the **@fluidframework/core-interfaces** package:
-  - interface IDisposable
-  - interface IErrorEvent
-  - interface IErrorEvent
-  - interface IEvent
-  - interface IEventProvider
-  - interface ILoggingError
-  - interface ITaggedTelemetryPropertyType
-  - interface ITelemetryBaseEvent
-  - interface ITelemetryBaseLogger
-  - interface ITelemetryErrorEvent
-  - interface ITelemetryGenericEvent
-  - interface ITelemetryLogger
-  - interface ITelemetryPerformanceEvent
-  - interface ITelemetryProperties
-  - type ExtendEventProvider
-  - type IEventThisPlaceHolder
-  - type IEventTransformer
-  - type ReplaceIEventThisPlaceHolder
-  - type ReplaceIEventThisPlaceHolder
-  - type TelemetryEventCategory
-  - type TelemetryEventPropertyType
+The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
+imported from the **@fluidframework/core-interfaces** package:
+- interface IDisposable
+- interface IErrorEvent
+- interface IErrorEvent
+- interface IEvent
+- interface IEventProvider
+- interface ILoggingError
+- interface ITaggedTelemetryPropertyType
+- interface ITelemetryBaseEvent
+- interface ITelemetryBaseLogger
+- interface ITelemetryErrorEvent
+- interface ITelemetryGenericEvent
+- interface ITelemetryLogger
+- interface ITelemetryPerformanceEvent
+- interface ITelemetryProperties
+- type ExtendEventProvider
+- type IEventThisPlaceHolder
+- type IEventTransformer
+- type ReplaceIEventThisPlaceHolder
+- type ReplaceIEventThisPlaceHolder
+- type TelemetryEventCategory
+- type TelemetryEventPropertyType
 
 ## 2.0.0-internal.6.1.0
 
@@ -757,13 +765,13 @@ Dependency updates only.
 
 ### Major Changes
 
-- Remove Interface IFluidResolvedUrl [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+#### Remove Interface IFluidResolvedUrl [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
 
-  IFluidResolvedUrl was deprecated and is now removed. All usages should use IResolvedUrl instead
+IFluidResolvedUrl was deprecated and is now removed. All usages should use IResolvedUrl instead
 
-- Upgraded typescript transpilation target to ES2020 [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+#### Upgraded typescript transpilation target to ES2020 [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
 
-  Upgraded typescript transpilation target to ES2020. This is done in order to decrease the bundle sizes of Fluid Framework packages. This has provided size improvements across the board for ex. Loader, Driver, Runtime etc. Reduced bundle sizes helps to load lesser code in apps and hence also helps to improve the perf.If any app wants to target any older versions of browsers with which this target version is not compatible, then they can use packages like babel to transpile to a older target.
+Upgraded typescript transpilation target to ES2020. This is done in order to decrease the bundle sizes of Fluid Framework packages. This has provided size improvements across the board for ex. Loader, Driver, Runtime etc. Reduced bundle sizes helps to load lesser code in apps and hence also helps to improve the perf.If any app wants to target any older versions of browsers with which this target version is not compatible, then they can use packages like babel to transpile to a older target.
 
 ## 2.0.0-internal.5.4.0
 
@@ -785,13 +793,13 @@ Dependency updates only.
 
 ### Major Changes
 
-- IResolvedUrl equivalent to IFluidResolvedUrl [8b242fdc79](https://github.com/microsoft/FluidFramework/commits/8b242fdc796714cf1da9ad3f90d02efb122af0c2)
+#### IResolvedUrl equivalent to IFluidResolvedUrl [8b242fdc79](https://github.com/microsoft/FluidFramework/commits/8b242fdc796714cf1da9ad3f90d02efb122af0c2)
 
-  In @fluidframework/driver-definitions, IResolvedUrlBase and IWebResolvedUrl have now been removed.
+In @fluidframework/driver-definitions, IResolvedUrlBase and IWebResolvedUrl have now been removed.
 
-  This makes IResolvedUrl and IFluidResolvedUrl equivalent. Since all ResolvedUrls are now FluidResolvedUrls we no longer
-  need to differentiate them. In @fluidframework/driver-utils isFluidResolvedUrl and ensureFluidResolvedUrl have been
-  removed due to this.
+This makes IResolvedUrl and IFluidResolvedUrl equivalent. Since all ResolvedUrls are now FluidResolvedUrls we no longer
+need to differentiate them. In @fluidframework/driver-utils isFluidResolvedUrl and ensureFluidResolvedUrl have been
+removed due to this.
 
 ## 2.0.0-internal.4.4.0
 

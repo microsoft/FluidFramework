@@ -13,7 +13,9 @@ The transform reads the package name from `package.json`.
 | `headingLevel`    | integer | Inferred         | Set the context heading level from 1 through 6.         | This value overrides the depth inferred from the marker position.                                                                     |
 | `devDependency`   | boolean | `false`          | Add `-D` to the installation command.                   | None.                                                                                                                                    |
 
-## Example
+## Examples
+
+### Markdown
 
 The following marker generates a level-three section for a development dependency because it follows a level-three heading:
 
@@ -22,4 +24,15 @@ The following marker generates a level-three section for a development dependenc
 
 <!-- markdown-magic:begin {"transform":"installation-instructions","devDependency":true} -->
 <!-- markdown-magic:end -->
+```
+
+### MDX
+
+For an MDX document, use MDX comments:
+
+```mdx
+### Existing section
+
+{/* markdown-magic:begin {"transform":"installation-instructions","devDependency":true} */}
+{/* markdown-magic:end */}
 ```

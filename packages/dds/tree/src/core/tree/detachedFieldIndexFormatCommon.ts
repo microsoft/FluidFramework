@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "@sinclair/typebox";
-import type { Static, TSchema } from "@sinclair/typebox";
+import * as Type from "typebox/type";
+import type { Static, TSchema } from "typebox";
 
 import { brandedIntegerType, strictEnum, type Values } from "../../util/index.js";
 
@@ -61,7 +61,9 @@ export const EncodedRootsForRevision = <Schema extends TSchema>(tRevisionTag: Sc
 		// Used to represent a revision in which a single node was detached
 		Type.Tuple([tRevisionTag, DetachId, ForestRootIdSchema]),
 	]);
-export type EncodedRootsForRevision = Static<ReturnType<typeof EncodedRootsForRevision>>;
+export type EncodedRootsForRevision<Schema extends TSchema> = Static<
+	ReturnType<typeof EncodedRootsForRevision<Schema>>
+>;
 
 export const Format = <
 	TVersion extends DetachedFieldIndexFormatVersion,
@@ -81,4 +83,7 @@ export const Format = <
 		{ additionalProperties: false },
 	);
 
-export type Format = Static<ReturnType<typeof Format>>;
+export type Format<
+	TVersion extends DetachedFieldIndexFormatVersion,
+	TRevisionTagSchema extends TSchema,
+> = Static<ReturnType<typeof Format<TVersion, TRevisionTagSchema>>>;

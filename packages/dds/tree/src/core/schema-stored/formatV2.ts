@@ -3,12 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import type { ObjectOptions, Static } from "@sinclair/typebox";
-import * as Type from "@sinclair/typebox";
+import type { TObjectOptions, Static } from "typebox";
+import * as Type from "typebox/type";
 
 import { unionOptions } from "../../codec/index.js";
 import type { JsonCompatibleReadOnlyObject } from "../../util/index.js";
-import { JsonCompatibleReadOnlySchema } from "../../util/index.js";
+import {
+	JsonCompatibleReadOnlySchema,
+	stringKeyRecord,
+	typeboxInterface,
+} from "../../util/index.js";
 
 import {
 	FieldKindIdentifierSchema,
@@ -18,9 +22,7 @@ import {
 
 export type PersistedMetadataFormat = Static<typeof PersistedMetadataFormat>;
 export const PersistedMetadataFormat = Type.Optional(
-	Type.Unsafe<JsonCompatibleReadOnlyObject>(
-		Type.Record(Type.String(), JsonCompatibleReadOnlySchema),
-	),
+	Type.Unsafe<JsonCompatibleReadOnlyObject>(stringKeyRecord(JsonCompatibleReadOnlySchema)),
 );
 
 const FieldSchemaFormatBase = Type.Object({
@@ -29,10 +31,14 @@ const FieldSchemaFormatBase = Type.Object({
 	metadata: PersistedMetadataFormat,
 });
 
-const noAdditionalProps: ObjectOptions = { additionalProperties: false };
+const noAdditionalProps: TObjectOptions = { additionalProperties: false };
 
 export type FieldSchemaFormat = Static<typeof FieldSchemaFormat>;
-export const FieldSchemaFormat = Type.Composite([FieldSchemaFormatBase], noAdditionalProps);
+export const FieldSchemaFormat = typeboxInterface(
+	[FieldSchemaFormatBase],
+	{},
+	noAdditionalProps,
+);
 
 /**
  * Format for the content of a {@link TreeNodeStoredSchema}.
@@ -44,7 +50,7 @@ export const TreeNodeSchemaUnionFormat = Type.Object(
 		/**
 		 * Object node union member.
 		 */
-		object: Type.Optional(Type.Record(Type.String(), FieldSchemaFormat)),
+		object: Type.Optional(stringKeyRecord(FieldSchemaFormat)),
 		/**
 		 * Map node union member.
 		 */

@@ -19,9 +19,7 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/inter
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
-	createContainerRuntimeFactoryWithDefaultDataStore,
 	defaultTestOldestSupportedClient,
-	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
 describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, apis) => {
@@ -60,15 +58,12 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, api
 			summaryConfigOverrides,
 		},
 	};
-	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-		ContainerRuntimeFactoryWithDefaultDataStore,
-		{
-			defaultFactory: dataObjectFactory,
-			oldestSupportedClient: defaultTestOldestSupportedClient,
-			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-			runtimeOptions,
-		},
-	);
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory: dataObjectFactory,
+		oldestSupportedClient: defaultTestOldestSupportedClient,
+		registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
+		runtimeOptions,
+	});
 
 	let mainContainer: IContainer;
 	let mainDataStore: TestDataObject;
@@ -133,7 +128,7 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, api
 
 		// Create and set up a container for the first client.
 		mainContainer = await provider.createContainer(runtimeFactory, { logger: mockLogger });
-		mainDataStore = await getContainerEntryPointBackCompat<TestDataObject>(mainContainer);
+		mainDataStore = (await mainContainer.getEntryPoint()) as TestDataObject;
 		// Create and setup a summary collection that will be used to track and wait for summaries.
 		summaryCollection = new SummaryCollection(mainContainer.deltaManager, createChildLogger());
 
@@ -220,7 +215,7 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, api
 
 		// Load and set up a new main container with the above summary and validate that it loads with summaryNumber 2.
 		mainContainer = await loadContainer(summaryVersion);
-		mainDataStore = await getContainerEntryPointBackCompat<TestDataObject>(mainContainer);
+		mainDataStore = (await mainContainer.getEntryPoint()) as TestDataObject;
 		// Create and setup a summary collection that will be used to track and wait for summaries.
 		summaryCollection = new SummaryCollection(mainContainer.deltaManager, createChildLogger());
 		validateLoadStats(2, 1, 1, "Second container should load with correct data store stats");

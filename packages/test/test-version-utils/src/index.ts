@@ -13,12 +13,6 @@ export {
 	TestDataObjectType,
 } from "./compatUtils.js";
 export {
-	describeInstallVersions,
-	IRequestedFluidVersions,
-	DescribeWithVersions,
-	DescribeSuiteWithVersions,
-} from "./describeWithVersions.js";
-export {
 	DescribeCompat,
 	DescribeCompatSuite,
 	describeCompat,
@@ -67,5 +61,4 @@ export {
 export {
 	getRequestedVersion,
 	type GetRequestedVersionOptions,
-	versionToComparisonNumber,
 } from "./versionUtils.js";

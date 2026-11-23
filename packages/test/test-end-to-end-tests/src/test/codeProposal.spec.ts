@@ -22,7 +22,6 @@ import {
 	TestFluidObjectFactory,
 	createAndAttachContainer,
 	createDocumentId,
-	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
 interface ICodeProposalTestPackage extends IFluidPackage {
@@ -193,7 +192,7 @@ describeCompat("CodeProposal.EndToEnd", "NoCompat", (getTestObjectProvider, apis
 		const maps: ISharedMap[] = [];
 		for (const container of containers) {
 			if (!container.closed) {
-				const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 				const map = await dataObject.getSharedObject<ISharedMap>("map");
 				const key = createDocumentId();
 				map.set(key, key);

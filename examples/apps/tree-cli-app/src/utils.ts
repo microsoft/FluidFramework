@@ -37,8 +37,9 @@ import {
 	type ConciseTree,
 	type JsonCompatible,
 } from "@fluidframework/tree/beta";
-import * as Type from "@sinclair/typebox";
-import type { Static } from "@sinclair/typebox";
+import type { Static } from "typebox";
+// eslint-disable-next-line import-x/no-internal-modules -- Public entry point allowed by eslint-config-fluid 15.
+import * as Type from "typebox/type";
 
 import type { Item } from "./schema.js";
 import { config, List } from "./schema.js";
@@ -261,8 +262,8 @@ export function rejectHandles(key: string, value: unknown): unknown {
 const options: ForestOptions & ICodecOptions = { jsonValidator: FormatValidatorBasic };
 
 const File = Type.Object({
-	tree: Type.Unsafe<JsonCompatible<IFluidHandle>>(),
-	schema: Type.Unsafe<JsonCompatible>(),
-	idCompressor: Type.Unsafe<SerializedIdCompressorWithOngoingSession>(),
+	tree: Type.Unsafe<JsonCompatible<IFluidHandle>>({}),
+	schema: Type.Unsafe<JsonCompatible>({}),
+	idCompressor: Type.Unsafe<SerializedIdCompressorWithOngoingSession>({}),
 });
 type File = Static<typeof File>;

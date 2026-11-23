@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelFactory,
 	IChannel,
@@ -42,12 +43,19 @@ import {
 	storedEmptyFieldSchema,
 	EmptyKey,
 	RebaseValidation,
+	type TreeChunk,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Inspect chunk storage in integration tests.
+import { BasicChunk } from "../../feature-libraries/chunked-forest/basicChunk.js";
 import {
 	ChunkedForest,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/chunked-forest/chunkedForest.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Inspect chunk storage in integration tests.
+import { SequenceChunk } from "../../feature-libraries/chunked-forest/sequenceChunk.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Inspect chunk storage in integration tests.
+import { UniformChunk } from "../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
 	ComparisonForest,
 	flexTreeSlot,
@@ -71,12 +79,17 @@ import {
 } from "../../shared-tree/index.js";
 import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
+import { stringKey } from "../../shared-tree-core/editManagerSummarizer.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 import {
 	SchemaFactory,
+	identifySchema,
 	type TreeFieldFromImplicitField,
 	type TreeViewAlpha,
 	TreeViewConfiguration,
+	TreeViewConfigurationAlpha,
+	StagedSchemaUpgradePolicy,
 	type ValidateRecursiveSchema,
 	SchemaFactoryAlpha,
 	type ITree,
@@ -97,6 +110,8 @@ import { brand } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContent } from "../feature-libraries/flex-tree/utils.js";
 import { TestAnchor } from "../testAnchor.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Reuse the formatted-text test domain.
+import { FormattedTextTest } from "../text/formattedTextTest.js";
 import {
 	type ITestTreeProvider,
 	SharedTreeTestFactory,
@@ -407,6 +422,21 @@ describe("SharedTree", () => {
 		}
 	});
 
+	it("exposes stored schema versions", () => {
+		const libraryId = "test";
+		const tree = treeTestFactory();
+		const view = tree.viewWith(
+			new TreeViewConfigurationAlpha({
+				schema: numberSchema,
+				schemaIdentity: identifySchema({ schemaVersion: { [libraryId]: 1 } }),
+			}),
+		);
+
+		assert.equal(tree.storedSchemaVersion, undefined);
+		view.initialize(1);
+		assert.deepEqual(tree.storedSchemaVersion, new Map([["test", 1]]));
+	});
+
 	it("can be connected to another tree", async () => {
 		const provider = await TestTreeProvider.create(2);
 		assert(provider.trees[0].isAttached());
@@ -432,6 +462,150 @@ describe("SharedTree", () => {
 		// Ensure that a tree which connects after the edit has already happened also catches up
 		const joinedLaterTree = await provider.createTree();
 		validateTreeConsistency(provider.trees[0], joinedLaterTree);
+	});
+
+	describe("formatted text chunk counts", () => {
+		const text = "ab".repeat(500);
+		const configuration = new TreeViewConfiguration({ schema: FormattedTextTest.Tree });
+		const factory = configuredSharedTree({
+			jsonValidator: FormatValidatorBasic,
+			forest: ForestTypeOptimized,
+		}).getFactory();
+
+		function assertReasonableChunkCount(tree: ITree, description: string): void {
+			const forest = (tree as ITreePrivate).kernel.checkout.forest;
+			assert(forest instanceof ChunkedForest);
+			const roots = forest.roots.fields.get(rootFieldKey);
+			assert(roots !== undefined);
+			const visited = new Set<TreeChunk>();
+			const pending = [...roots];
+			while (pending.length > 0) {
+				const chunk = pending.pop();
+				assert(chunk !== undefined);
+				if (visited.has(chunk)) {
+					continue;
+				}
+				visited.add(chunk);
+				if (chunk instanceof BasicChunk) {
+					for (const children of chunk.fields.values()) {
+						pending.push(...children);
+					}
+				} else if (chunk instanceof SequenceChunk) {
+					pending.push(...chunk.subChunks);
+				} else {
+					assert(chunk instanceof UniformChunk);
+				}
+			}
+			const maximumChunkCount = text.length * 4;
+			assert(
+				visited.size <= maximumChunkCount,
+				`${description}: expected at most ${maximumChunkCount} chunks for ${text.length} characters, found ${visited.size}`,
+			);
+		}
+
+		it("loads formatted text into a compact chunked forest", async () => {
+			const provider = await TestTreeProvider.create(1, SummarizeType.onDemand, factory);
+			const view = provider.trees[0].viewWith(configuration);
+			view.initialize(FormattedTextTest.Tree.fromString(text));
+			await provider.ensureSynchronized();
+			await provider.summarize();
+			const loadedTree = await provider.createTree();
+			const loadedView = loadedTree.viewWith(configuration);
+			assert.equal(loadedView.root.fullString(), text);
+			assertReasonableChunkCount(loadedTree, "Summary load");
+		});
+
+		it("loads formatted text when schema storage is delayed", async () => {
+			const provider = new TestTreeProviderLite(1, factory);
+			const tree = provider.trees[0];
+			const view = tree.viewWith(configuration);
+			view.initialize(FormattedTextTest.Tree.fromString(text));
+			provider.synchronizeMessages();
+			const { summary } = await tree.summarize();
+			const storage = MockStorage.createFromSummary(summary);
+			const readBlob = storage.readBlob.bind(storage);
+			let delayedSchema = false;
+			storage.readBlob = async (path) => {
+				if (path.endsWith("/SchemaString")) {
+					delayedSchema = true;
+					await new Promise<void>((resolve) => setImmediate(resolve));
+				}
+				return readBlob(path);
+			};
+			const runtime = new MockFluidDataStoreRuntime({
+				idCompressor: provider.getCompressor(tree),
+			});
+			const loadedTree = await factory.load(
+				runtime,
+				"loaded",
+				{
+					deltaConnection: runtime.createDeltaConnection(),
+					objectStorage: storage,
+				},
+				factory.attributes,
+			);
+			assert(delayedSchema);
+			const loadedView = loadedTree.viewWith(configuration);
+			assert.equal(loadedView.root.fullString(), text);
+			assertReasonableChunkCount(loadedTree, "Delayed schema load");
+		});
+
+		it("inserts formatted text into compact local and remote chunked forests", () => {
+			const provider = new TestTreeProviderLite(2, factory);
+			const [sender, receiver] = provider.trees;
+			const senderView = sender.viewWith(configuration);
+			senderView.initialize(FormattedTextTest.Tree.fromString(""));
+			provider.synchronizeMessages();
+			const receiverView = receiver.viewWith(configuration);
+			senderView.root.insertAt(0, text);
+			provider.synchronizeMessages();
+			assert.equal(senderView.root.fullString(), text);
+			assert.equal(receiverView.root.fullString(), text);
+			assertReasonableChunkCount(sender, "Local insertion");
+			assertReasonableChunkCount(receiver, "Remote insertion");
+		});
+	});
+
+	it("loads schema before reading forest storage", async () => {
+		const factory = configuredSharedTree({ forest: ForestTypeOptimized }).getFactory();
+		const provider = new TestTreeProviderLite(1, factory);
+		const tree = provider.trees[0];
+		const configuration = new TreeViewConfiguration({ schema: StringArray });
+		tree.viewWith(configuration).initialize(["loaded"]);
+		provider.synchronizeMessages();
+		const { summary } = await tree.summarize();
+		const storage = MockStorage.createFromSummary(summary);
+		const readBlob = storage.readBlob.bind(storage);
+		let schemaReadCompleted = false;
+		let forestRead = false;
+		storage.readBlob = async (path) => {
+			if (path.endsWith("/SchemaString")) {
+				await new Promise<void>((resolve) => setImmediate(resolve));
+				const contents = await readBlob(path);
+				schemaReadCompleted = true;
+				return contents;
+			}
+			if (path.includes("/Forest/")) {
+				assert(schemaReadCompleted, "Forest storage must not be read before schema loading");
+				forestRead = true;
+			}
+			return readBlob(path);
+		};
+		const runtime = new MockFluidDataStoreRuntime({
+			idCompressor: provider.getCompressor(tree),
+		});
+		const loadedTree = await factory.load(
+			runtime,
+			"loaded",
+			{
+				deltaConnection: runtime.createDeltaConnection(),
+				objectStorage: storage,
+			},
+			factory.attributes,
+		);
+		assert(schemaReadCompleted);
+		assert(forestRead);
+		assert.deepEqual([...loadedTree.viewWith(configuration).root], ["loaded"]);
 	});
 
 	it("can summarize and load", async () => {
@@ -500,7 +674,7 @@ describe("SharedTree", () => {
 				const containerRuntimeFactory = new MockContainerRuntimeFactory();
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-				const factory = new SharedTreeTestFactory(() => {});
+				const factory = SharedTreeTestFactory.build(() => {});
 
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
@@ -649,9 +823,133 @@ describe("SharedTree", () => {
 		);
 
 		// Check schema loaded
-		assert(view2.compatibility.isEquivalent);
+		assert(view2.compatibility.canView);
 		// Check content loaded
 		assert.deepEqual([...view2.root], ["A"]);
+	});
+
+	it("preserves newer document content through older-client upgrades, summary, and reload", async () => {
+		const factory = new SchemaFactoryAlpha("persistedTaskRollout");
+		class Reminder extends factory.object("Reminder", {
+			message: factory.string,
+		}) {}
+		const stagedPriority = factory.types([factory.number, factory.staged(factory.string)]);
+		const stagedHours = factory.stagedOptional(factory.number);
+		class Before extends factory.object("Task", {
+			title: factory.string,
+			priority: stagedPriority,
+			estimatedHours: stagedHours,
+			isApproved: factory.optional(factory.boolean),
+		}) {}
+
+		// Fully enable string priorities and optional effort estimates, retire approval, and add reminders in the later schema.
+		class After extends factory.object("Task", {
+			title: factory.string,
+			reminder: factory.optional(Reminder),
+			priority: [factory.number, factory.string],
+			estimatedHours: factory.optional(factory.number),
+		}) {}
+
+		// The older view restores approval while retaining the newer document's reminder definition and enabled staged upgrades.
+		class Expected extends factory.object("Task", {
+			title: factory.string,
+			reminder: factory.optional(Reminder),
+			priority: [factory.number, factory.string],
+			estimatedHours: factory.optional(factory.number),
+			isApproved: factory.optional(factory.boolean),
+		}) {}
+
+		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+		const [tree] = provider.trees;
+		const creator = tree.viewWith(
+			new TreeViewConfiguration({ schema: After, enableSchemaValidation }),
+		);
+		creator.initialize({
+			title: "Prepare release",
+			reminder: { message: "Ask the reviewer" },
+			priority: "high",
+		});
+		await provider.ensureSynchronized();
+		creator.dispose();
+
+		// Load the newer document with the older staged schema, then persist its composed upgrade.
+		const config = new TreeViewConfigurationAlpha({
+			schema: Before,
+			stagedUpgradePolicy: StagedSchemaUpgradePolicy.restrictive,
+			enableSchemaValidation,
+		});
+		const older = tree.viewWith(config);
+		assert.equal(older.compatibility.canView, false);
+		assert.equal(older.compatibility.canUpgrade, true);
+		older.upgradeSchema();
+		older.root.isApproved = true;
+		await provider.ensureSynchronized();
+		await provider.summarize();
+		await provider.ensureSynchronized();
+
+		// Load new clients from the summary, not merely new views on an existing checkout.
+		const loadedTree = await provider.createTree();
+		const loaded = loadedTree.viewWith(config);
+		expectSchemaEqual(loadedTree.kernel.checkout.storedSchema, toInitialSchema(Expected));
+		assert.equal(loaded.compatibility.canView, true);
+		assert.equal(loaded.root.priority, "high");
+		assert.equal(loaded.root.estimatedHours, undefined);
+		assert.equal(loaded.root.isApproved, true);
+		assert.equal("reminder" in loaded.root, false);
+		loaded.dispose();
+
+		// A view that declares reminders must recover the node and content that the older client's upgrade preserved.
+		const inspectingTree = await provider.createTree();
+		const inspecting = inspectingTree.viewWith(
+			new TreeViewConfiguration({ schema: Expected, enableSchemaValidation }),
+		);
+		assert.equal(inspecting.root.reminder?.message, "Ask the reviewer");
+
+		// Backport an optional `label` to the older client without changing its staged declarations.
+		// Reloading the newer document must not prevent that client from composing another upgrade.
+		class BeforeWithLabel extends factory.object("Task", {
+			title: factory.string,
+			priority: stagedPriority,
+			estimatedHours: stagedHours,
+			isApproved: factory.optional(factory.boolean),
+			label: factory.optional(factory.string),
+		}) {}
+
+		// Only `label` is new; all fields and types retained in the previous summary must survive again.
+		class ExpectedLater extends factory.object("Task", {
+			title: factory.string,
+			reminder: factory.optional(Reminder),
+			priority: [factory.number, factory.string],
+			estimatedHours: factory.optional(factory.number),
+			isApproved: factory.optional(factory.boolean),
+			label: factory.optional(factory.string),
+		}) {}
+		const patchedOlder = loadedTree.viewWith(
+			new TreeViewConfigurationAlpha({
+				schema: BeforeWithLabel,
+				stagedUpgradePolicy: StagedSchemaUpgradePolicy.restrictive,
+				enableSchemaValidation,
+			}),
+		);
+		assert.equal(patchedOlder.compatibility.canView, false);
+		assert.equal(patchedOlder.compatibility.canUpgrade, true);
+		patchedOlder.upgradeSchema();
+		patchedOlder.root.label = "Ready";
+		patchedOlder.root.priority = "urgent";
+		patchedOlder.root.estimatedHours = 4;
+		patchedOlder.root.estimatedHours = undefined;
+		await provider.ensureSynchronized();
+
+		expectSchemaEqual(loadedTree.kernel.checkout.storedSchema, toInitialSchema(ExpectedLater));
+		expectSchemaEqual(
+			inspectingTree.kernel.checkout.storedSchema,
+			toInitialSchema(ExpectedLater),
+		);
+		assert.equal(patchedOlder.compatibility.canView, true);
+		assert.equal(patchedOlder.root.label, "Ready");
+		assert.equal(inspecting.root.priority, "urgent");
+		assert.equal(inspecting.root.estimatedHours, undefined);
+		assert.equal(inspecting.root.reminder?.message, "Ask the reviewer");
 	});
 
 	it("can process ops after loading from summary", async () => {
@@ -748,6 +1046,124 @@ describe("SharedTree", () => {
 			initialTree: ["b", "c"],
 		});
 	});
+
+	for (const { attachState, lastToFinish } of [
+		AttachState.Detached,
+		AttachState.Attached,
+	].flatMap((runtimeAttachState) =>
+		["edit manager", "schema"].map((componentName) => ({
+			attachState: runtimeAttachState,
+			lastToFinish: componentName,
+		})),
+	)) {
+		it(`restores sequencing while ${attachState} when ${lastToFinish} finishes last`, async () => {
+			const factory = DefaultTestSharedTreeKind.getFactory();
+			const runtime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
+			const source = factory.create(runtime, "source");
+			const configuration = new TreeViewConfiguration({ schema: StringArray });
+			const sourceView = source.viewWith(configuration);
+			sourceView.initialize(["a"]);
+			asAlpha(sourceView).fork();
+			sourceView.root.insertAtEnd("b");
+			const { summary } = await source.summarize();
+			const storage = MockStorage.createFromSummary(summary);
+			const readBlob = storage.readBlob.bind(storage);
+			const editManagerStarted = new Deferred<void>();
+			const releaseEditManager = new Deferred<void>();
+			const schemaStarted = new Deferred<void>();
+			const releaseSchema = new Deferred<void>();
+			storage.readBlob = async (path) => {
+				if (path.endsWith(`/${stringKey}`)) {
+					editManagerStarted.resolve();
+					await releaseEditManager.promise;
+				} else if (path.endsWith("/SchemaString")) {
+					schemaStarted.resolve();
+					await releaseSchema.promise;
+				}
+				return readBlob(path);
+			};
+			const targetRuntime = new MockFluidDataStoreRuntime({
+				attachState,
+				idCompressor: runtime.idCompressor,
+			});
+			new MockContainerRuntimeFactory().createContainerRuntime(targetRuntime);
+			let loadFinished = false;
+			const loading = factory
+				.load(
+					targetRuntime,
+					"target",
+					{
+						deltaConnection: targetRuntime.createDeltaConnection(),
+						objectStorage: storage,
+					},
+					factory.attributes,
+				)
+				.then((tree) => {
+					loadFinished = true;
+					return tree;
+				});
+			await Promise.all([editManagerStarted.promise, schemaStarted.promise]);
+			const [first, last] =
+				lastToFinish === "edit manager"
+					? [releaseSchema, releaseEditManager]
+					: [releaseEditManager, releaseSchema];
+			first.resolve();
+			await new Promise<void>((resolve) => setImmediate(resolve));
+			assert(!loadFinished, "Loading must wait for every component");
+			last.resolve();
+			const target = await loading;
+			const targetView = target.viewWith(configuration);
+			assert.deepEqual([...targetView.root], ["a", "b"]);
+			targetView.root.insertAtEnd("c");
+			assert.deepEqual([...targetView.root], ["a", "b", "c"]);
+		});
+	}
+
+	for (const failingBlob of [stringKey, "SchemaString"]) {
+		it(`rejects a failed ${failingBlob} read while another summary component is pending`, async () => {
+			const factory = DefaultTestSharedTreeKind.getFactory();
+			const runtime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
+			const source = factory.create(runtime, "source");
+			source.viewWith(new TreeViewConfiguration({ schema: StringArray })).initialize(["a"]);
+			const { summary } = await source.summarize();
+			const storage = MockStorage.createFromSummary(summary);
+			const readBlob = storage.readBlob.bind(storage);
+			const otherBlob = failingBlob === stringKey ? "SchemaString" : stringKey;
+			const failingReadStarted = new Deferred<void>();
+			const otherReadStarted = new Deferred<void>();
+			const failRead = new Deferred<void>();
+			const releaseOtherRead = new Deferred<void>();
+			storage.readBlob = async (path) => {
+				if (path.endsWith(`/${failingBlob}`)) {
+					failingReadStarted.resolve();
+					await failRead.promise;
+					throw new Error("Intentional summary read failure");
+				}
+				if (path.endsWith(`/${otherBlob}`)) {
+					otherReadStarted.resolve();
+					await releaseOtherRead.promise;
+				}
+				return readBlob(path);
+			};
+			const rejected = assert.rejects(
+				factory.load(
+					runtime,
+					"target",
+					{
+						deltaConnection: runtime.createDeltaConnection(),
+						objectStorage: storage,
+					},
+					factory.attributes,
+				),
+				/Intentional summary read failure/,
+			);
+			await Promise.all([failingReadStarted.promise, otherReadStarted.promise]);
+			failRead.resolve();
+			await rejected;
+			releaseOtherRead.resolve();
+			await new Promise<void>((resolve) => setImmediate(resolve));
+		});
+	}
 
 	it("can load a summary while detached", async () => {
 		// This test exercises the case where a detached tree loads a summary from another detached tree.
@@ -859,7 +1275,7 @@ describe("SharedTree", () => {
 		const provider = await TestTreeProvider.create(
 			1,
 			SummarizeType.onDemand,
-			new SharedTreeTestFactory(onCreate),
+			SharedTreeTestFactory.build(onCreate),
 		);
 		const tree1 = provider.trees[0];
 		const view1 = tree1.viewWith(
@@ -899,7 +1315,7 @@ describe("SharedTree", () => {
 		const provider = await TestTreeProvider.create(
 			1,
 			SummarizeType.onDemand,
-			new SharedTreeTestFactory(onCreate),
+			SharedTreeTestFactory.build(onCreate),
 		);
 		const tree1 = provider.trees[0];
 		const view1 = tree1.viewWith(
@@ -941,7 +1357,7 @@ describe("SharedTree", () => {
 		const provider = await TestTreeProvider.create(
 			1,
 			SummarizeType.onDemand,
-			new SharedTreeTestFactory(onCreate),
+			SharedTreeTestFactory.build(onCreate),
 		);
 		const tree1 = provider.trees[0];
 		const view1 = tree1.viewWith(
@@ -1441,7 +1857,7 @@ describe("SharedTree", () => {
 		const provider = await TestTreeProvider.create(
 			1,
 			undefined,
-			new SharedTreeTestFactory(onCreate),
+			SharedTreeTestFactory.build(onCreate),
 		);
 		const view = provider.trees[0].viewWith(
 			new TreeViewConfiguration({
@@ -2954,7 +3370,7 @@ describe("SharedTree", () => {
 		const provider = await TestTreeProvider.create(
 			1,
 			undefined,
-			new SharedTreeTestFactory(onCreate),
+			SharedTreeTestFactory.build(onCreate),
 		);
 		const [tree] = provider.trees;
 		assert.deepEqual(
@@ -3604,7 +4020,7 @@ describe("SharedTree", () => {
 					const provider = await TestTreeProvider.create(
 						1,
 						SummarizeType.onDemand,
-						new SharedTreeTestFactory(() => {}, undefined, internalOption),
+						SharedTreeTestFactory.build(() => {}, undefined, internalOption),
 					);
 					const tree1 = provider.trees[0];
 					const config = new TreeViewConfiguration({

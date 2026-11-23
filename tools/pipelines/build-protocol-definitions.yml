@@ -6,6 +6,11 @@
 name: $(Build.BuildId)
 
 parameters:
+- name: installAllPlatforms
+  displayName: Save dependencies for all supported platforms
+  type: boolean
+  default: false
+
 - name: releaseBuildOverride
   displayName: Release Build (default = not released)
   type: string
@@ -89,6 +94,7 @@ variables:
 extends:
   template: /tools/pipelines/templates/build-npm-package.yml@self
   parameters:
+    installAllPlatforms: ${{ parameters.installAllPlatforms }}
     publish: ${{ variables.publish }}
     publishOverride: ${{ parameters.publishOverride }}
     publishAsPartOfBuild: false

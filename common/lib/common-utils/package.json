@@ -48,6 +48,7 @@
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
+		"install-no-frozen": "node ../../../scripts/install-no-frozen.cjs",
 		"lint": "fluid-build . --task lint --task check:are-the-types-wrong",
 		"lint:fix": "fluid-build . --task lint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
