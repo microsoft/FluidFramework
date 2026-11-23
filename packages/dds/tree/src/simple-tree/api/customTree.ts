@@ -69,7 +69,10 @@ export type TreeParsingOptions = TreeEncodingOptions<
  * The tree can then contain the {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields} that this stored schema allows.
  *
  * The view must be able to view its document (see {@link SchemaCompatibilityStatus.canView}).
- * The schema given to the import must use the same schema objects as the view schema of this view.
+ * The import must use the same schema objects as the view.
+ * Each node schema in the schema that you give to the import must come from the {@link TreeViewConfiguration} of the view.
+ * If you give a different schema object that has the same identifier, the import throws an error.
+ * This occurs also if the two schema objects define the same schema.
  *
  * To get the view of a node in a document, use `TreeAlpha.context(node)` and check {@link TreeContextAlpha.isView | isView()}.
  * @alpha
@@ -105,7 +108,7 @@ export enum KeyEncodingOptions {
 	/**
 	 * Use stored keys, and include {@link ObjectSchemaOptions.allowUnknownOptionalFields|Unknown optional fields}.
 	 * @remarks
-	 * Supported for export.
+	 * Supported for import and export.
 	 * For import, also provide a view (see {@link TreeImportOptions}).
 	 */
 	allStoredKeys = "allStoredKeys",

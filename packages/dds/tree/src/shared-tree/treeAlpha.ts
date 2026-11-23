@@ -237,7 +237,8 @@ export interface TreeIdentifierUtils {
  * @privateRemarks
  * TODO:
  * There should be a way to provide a source for defaulted identifiers for unhydrated node creation, either via these APIs or some way to add them to its output later.
- * The view option of {@link TreeImportOptions} could be such an option, and could also be used to enable unknown optional fields in the other creation APIs.
+ * The `view` property of {@link TreeImportOptions} could supply this source.
+ * It could also enable unknown optional fields in the other creation APIs.
  *
  * @sealed @alpha
  */
@@ -313,16 +314,17 @@ export interface TreeAlpha {
 	 * Construct tree content compatible with a field defined by the provided `schema`.
 	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
 	 * @param data - The data used to construct the field content. See {@link (TreeAlpha:interface).(exportVerbose:1)}.
-	 * @param options - Options for the import. See {@link TreeImportOptions}.
+	 * @param options - Options for the import.
+	 * If you do not specify options, the data must use property keys ({@link KeyEncodingOptions.usePropertyKeys}), and the import does not use a view.
 	 * @remarks
 	 * This supports input containing
 	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields| unknown optional fields} only with a view (see {@link TreeImportOptions}).
-	 * It does support {@link SchemaStaticsBeta.staged | staged} allowed types.
+	 * It also supports {@link SchemaStaticsBeta.staged | staged} allowed types.
 	 * With a view, staged allowed types are supported only if the stored schema of the document includes them.
 	 * Non-empty default values for fields are currently not supported (must be provided in the input).
 	 * The content will be validated against the schema and an error will be thrown if out of schema.
 	 * To copy a node that is available, use {@link (TreeBeta:interface).clone} instead.
-	 * It keeps unknown optional fields and does not convert the node to data.
+	 * It keeps unknown optional fields and avoids unnecessary data serialization.
 	 */
 	importVerbose<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
@@ -896,12 +898,14 @@ export const TreeAlpha: TreeAlpha = {
 		options?: TreeImportOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 		const view = options?.view;
+		// The type of TreeImportOptions prevents these cases.
 		if (options?.keys === KeyEncodingOptions.allStoredKeys) {
-			if (view === undefined) {
-				throw new UsageError("Importing with allStoredKeys requires a view.");
-			}
-		} else if (view !== undefined) {
-			throw new UsageError("A view can be used only when importing with allStoredKeys.");
+			assert(view !== undefined, "Importing with `allStoredKeys` requires a view.");
+		} else {
+			assert(
+				view === undefined,
+				"A view can be used only when importing with `allStoredKeys`.",
+			);
 		}
 		const config: TreeEncodingOptions = { ...options };
 		// Create a config which is standalone, and thus can be used without having to refer back to the schema.
@@ -920,7 +924,7 @@ export const TreeAlpha: TreeAlpha = {
 			assert(view instanceof SchematizingSimpleTreeView, "Unexpected view implementation");
 			if (!view.compatibility.canView) {
 				throw new UsageError(
-					"Cannot import with a view that cannot view its document. See TreeView.compatibility.",
+					"Cannot import with a view that cannot view its document. See `TreeView.compatibility`.",
 				);
 			}
 			context = getUnhydratedContextWithStoredSchema(schema, view.checkout.storedSchema);
@@ -929,7 +933,7 @@ export const TreeAlpha: TreeAlpha = {
 			for (const [schemaIdentifier, definition] of context.schema) {
 				if (viewDefinitions.get(schemaIdentifier) !== definition) {
 					throw new UsageError(
-						`The schema ${JSON.stringify(schemaIdentifier)} is not the same schema object as in the view schema of the view.`,
+						`The schema ${JSON.stringify(schemaIdentifier)} is not the same object as the schema with this identifier in the view. Use the same schema objects as the view.`,
 					);
 				}
 			}

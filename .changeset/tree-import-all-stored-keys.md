@@ -3,7 +3,7 @@
 "fluid-framework": minor
 "__section": tree
 ---
-Import trees that use all stored keys
+Import trees that contain unknown optional fields
 
 [`TreeAlpha.importVerbose`](https://fluidframework.com/docs/api/fluid-framework/treealpha-interface#importverbose-methodsignature) now supports [`KeyEncodingOptions.allStoredKeys`](https://fluidframework.com/docs/api/fluid-framework/keyencodingoptions-enum#allstoredkeys-enummember).
 Before this change, you could use `allStoredKeys` only for export.
@@ -15,7 +15,11 @@ Set `keys` to `KeyEncodingOptions.allStoredKeys`.
 Set `view` to a view of the document.
 The import then uses the stored schema of the view's document.
 All of the data must agree with this stored schema, and you can insert the result into that document.
-The view must be able to view its document, and the schema that you give to the import must come from the view schema of that view.
+The view must be able to view its document (see [`TreeView.compatibility`](https://fluidframework.com/docs/api/fluid-framework/treeview-interface#compatibility-propertysignature)).
+The import must use the same schema objects as the view.
+Each node schema in the schema that you give to the import must come from the `TreeViewConfiguration` of the view.
+If you give a different schema object that has the same identifier, the import throws an error.
+This occurs also if the two schema objects define the same schema.
 
 To find the unknown optional fields in the imported tree, use [`TreeContextAlpha.unknownFieldSchemas`](https://fluidframework.com/docs/api/fluid-framework/treecontextalpha-interface#unknownfieldschemas-propertysignature) of the view.
 The imported tree is unhydrated, so its own context does not supply this information.

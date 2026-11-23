@@ -27,16 +27,16 @@ export function getUnhydratedContext(schema: ImplicitFieldSchema): Context {
 /**
  * Utility for creating {@link Context}s for unhydrated nodes that use the provided stored schema.
  * @remarks
- * Unlike {@link getUnhydratedContext}, the resulting context uses `storedSchema`, not a stored schema derived from `schema`.
+ * Unlike {@link getUnhydratedContext}, the resulting context uses `storedSchema`, not a stored schema derived from `viewSchema`.
  * Use this for nodes that must agree with the stored schema of a document, which can include unknown optional fields.
  */
 export function getUnhydratedContextWithStoredSchema(
-	schema: ImplicitFieldSchema,
+	viewSchema: ImplicitFieldSchema,
 	storedSchema: TreeStoredSchema,
 ): Context {
 	return new Context(
 		new UnhydratedContext(defaultSchemaPolicy, storedSchema.nodeSchema),
-		getRootSchemaDerivedData(schema).definitions,
+		getRootSchemaDerivedData(viewSchema).definitions,
 	);
 }
 

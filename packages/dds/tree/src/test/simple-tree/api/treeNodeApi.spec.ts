@@ -4277,7 +4277,7 @@ describe("treeNodeApi", () => {
 						TreeAlpha.importVerbose(OptionalField, data, {
 							keys: KeyEncodingOptions.allStoredKeys,
 						}),
-					validateUsageError(/requires a view/),
+					validateAssertionError(/requires a view/),
 				);
 
 				const tree = createIndependentTreeAlpha();
@@ -4291,7 +4291,9 @@ describe("treeNodeApi", () => {
 							keys: KeyEncodingOptions.allStoredKeys,
 							view,
 						}),
-					validateUsageError(/is not the same schema object as in the view schema/),
+					validateUsageError(
+						/is not the same object as the schema with this identifier in the view/,
+					),
 				);
 				assert.throws(
 					() =>
@@ -4300,7 +4302,7 @@ describe("treeNodeApi", () => {
 							// @ts-expect-error A view is allowed only with allStoredKeys.
 							view,
 						}),
-					validateUsageError(/only when importing with allStoredKeys/),
+					validateAssertionError(/only when importing with `allStoredKeys`/),
 				);
 				view.dispose();
 
