@@ -153,6 +153,15 @@ export class SharedTreeCore<
 
 	private readonly schemaAndPolicy: ClonableSchemaAndPolicy;
 
+	/**
+	 * Checks that a composed change round-trips through the change codec used for summaries.
+	 */
+	private readonly validateComposedChange: (
+		change: TChange,
+		revision: RevisionTag,
+		sessionId: SessionId,
+	) => void;
+
 	private static readonly maxBranchNameLength = 1024;
 
 	/**
@@ -233,6 +242,19 @@ export class SharedTreeCore<
 			dependentChangeFormatVersion: changeFormatVersionForEditManager,
 			revisionTagCodec,
 		});
+		const summaryChangeCodec = this.editManager.changeFamily.codecs.resolve(
+			changeFormatVersionForEditManager.lookup(editManagerCodec.writeVersion),
+		);
+		this.validateComposedChange = (change, revision, sessionId) => {
+			const context = {
+				originatorId: sessionId,
+				revision,
+				idCompressor: this.idCompressor,
+				schema: this.schemaAndPolicy,
+				isSummary: true,
+			};
+			summaryChangeCodec.decode(summaryChangeCodec.encode(change, context), context);
+		};
 		this.summarizables = [
 			new EditManagerSummarizer(
 				this.editManager,
@@ -625,7 +647,12 @@ export class SharedTreeCore<
 	}
 	/**
 	 * Compacts the main branch's retained history.
-	 * @remarks See {@link EditManager.compactHistory}.
+	 * @param engineFailureIsolation - When provided, engine failures are isolated instead of propagating:
+	 * a pair that fails to compose is left uncombined, and a failure to rebase peers ends the pass early.
+	 * Its `onEngineFailure` callback receives each isolated error.
+	 * When provided, each composed change is also checked to round-trip through the summary change codec before it is applied,
+	 * so compaction cannot produce history that fails to summarize or load.
+	 * @remarks See {@link EditManager.compactHistory} and {@link HistoryCompactionEngineOptions}.
 	 */
 	public compactHistory(
 		canCompact: (
@@ -635,8 +662,21 @@ export class SharedTreeCore<
 		onCommitCompacted?: () => void,
 		stats?: HistoryCompactionStats,
 		operationId?: number,
+		engineFailureIsolation?: { readonly onEngineFailure?: (error: unknown) => void },
 	): number {
-		return this.editManager.compactHistory(canCompact, onCommitCompacted, stats, operationId);
+		return this.editManager.compactHistory(
+			canCompact,
+			onCommitCompacted,
+			stats,
+			operationId,
+			engineFailureIsolation === undefined
+				? undefined
+				: {
+						isolateFailures: true,
+						onEngineFailure: engineFailureIsolation.onEngineFailure,
+						validateComposedChange: this.validateComposedChange,
+					},
+		);
 	}
 
 	/**

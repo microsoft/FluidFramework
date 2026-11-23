@@ -97,6 +97,14 @@ export class EditManager<
 	 */
 	private readonly preservedRevisions = new Set<RevisionTag>();
 
+	/**
+	 * Pairs whose composition failed in this session, keyed by {@link compactionPairKey}.
+	 * @remarks
+	 * Session-local and not summarized: a new client retries the pair once, then remembers it.
+	 * Only populated when {@link HistoryCompactionEngineOptions.isolateFailures} is set.
+	 */
+	private readonly failedCompactionPairs = new Set<string>();
+
 	private readonly sharedBranches = new Map<
 		BranchId,
 		SharedBranch<TEditor, TChangeset, TChangeProcessingContext>
@@ -623,6 +631,8 @@ export class EditManager<
 	 *
 	 * A pair whose `current` or `target` is {@link EditManager.setRevisionPreserved | preserved} is skipped without calling `canCompact`,
 	 * so a preserved commit's change and metadata remain unchanged by compaction.
+	 *
+	 * See {@link HistoryCompactionEngineOptions} for how engine failures (as opposed to `canCompact` failures) are handled.
 	 */
 	public compactHistory(
 		canCompact: (
@@ -632,7 +642,9 @@ export class EditManager<
 		onCommitCompacted?: () => void,
 		stats?: HistoryCompactionStats,
 		operationId?: number,
+		options?: HistoryCompactionEngineOptions<TChangeset>,
 	): number {
+		const isolateFailures = options?.isolateFailures === true;
 		if (stats !== undefined) {
 			stats.failureStage = "eligibility";
 		}
@@ -752,6 +764,18 @@ export class EditManager<
 				});
 				continue;
 			}
+			const pairKey = compactionPairKey(current.revision, target.revision);
+			if (isolateFailures && this.failedCompactionPairs.has(pairKey)) {
+				if (stats !== undefined) {
+					stats.skippedFailedPairCount++;
+				}
+				this.historyTrace?.record("CompactionPairSkipped", {
+					operationId,
+					pairIndex: index,
+					reason: "previousEngineFailure",
+				});
+				continue;
+			}
 			if (stats !== undefined) {
 				stats.failureStage = "policy";
 			}
@@ -770,7 +794,26 @@ export class EditManager<
 					// A peer branch may be based on (or contain) a commit that is about to be composed away.
 					// Every peer has seen the newest eligible commit (it is within the minimum sequence number bound),
 					// so rebasing peers onto it removes their references to the commits that compaction removes.
-					mainBranch.rebasePeersOnto(newestEligible[1]);
+					try {
+						mainBranch.rebasePeersOnto(newestEligible[1]);
+					} catch (error: unknown) {
+						if (!isolateFailures) {
+							throw error;
+						}
+						// Nothing has been composed yet, and a peer rebased onto a commit it has already seen is valid,
+						// so the history is unchanged. Composing without rebasing every peer is unsafe, so end the pass.
+						if (stats !== undefined) {
+							stats.failedPairCount++;
+							stats.isolatedFailureStage ??= "peerRebase";
+						}
+						this.historyTrace?.record("CompactionPairFailed", {
+							operationId,
+							pairIndex: index,
+							stage: "peerRebase",
+						});
+						options?.onEngineFailure?.(error);
+						return removedCount;
+					}
 					peersRebased = true;
 					this.historyTrace?.record("CompactionPeersRebased", {
 						operationId,
@@ -783,12 +826,33 @@ export class EditManager<
 				if (stats !== undefined) {
 					stats.failureStage = "composition";
 				}
-				mainBranch.composeTrunkCommits(
-					current,
-					target,
-					decision === true ? undefined : decision,
-					this.historyTrace?.scoped({ operationId, pairIndex: index }),
-				);
+				try {
+					mainBranch.composeTrunkCommits(
+						current,
+						target,
+						decision === true ? undefined : decision,
+						this.historyTrace?.scoped({ operationId, pairIndex: index }),
+						options?.validateComposedChange,
+					);
+				} catch (error: unknown) {
+					if (!isolateFailures) {
+						throw error;
+					}
+					// `composeTrunkCommits` does not mutate anything when it throws, so the pair stays as it was.
+					// Remember it so later passes in this session do not retry a deterministic failure.
+					this.failedCompactionPairs.add(pairKey);
+					if (stats !== undefined) {
+						stats.failedPairCount++;
+						stats.isolatedFailureStage ??= "composition";
+					}
+					this.historyTrace?.record("CompactionPairFailed", {
+						operationId,
+						pairIndex: index,
+						stage: "composition",
+					});
+					options?.onEngineFailure?.(error);
+					continue;
+				}
 				this.trimmer.emit("ancestryCompacted", current.revision, target.revision);
 				removedCount++;
 				this.historyTrace?.record("CompactionPairMerged", {
@@ -1230,6 +1294,18 @@ export interface HistoryCompactionStats {
 	 */
 	failureStage?: "eligibility" | "policy" | "peerRebase" | "composition";
 	/**
+	 * The number of pairs whose engine failure was isolated (see {@link HistoryCompactionEngineOptions.isolateFailures}).
+	 */
+	failedPairCount: number;
+	/**
+	 * The stage of the first isolated engine failure in this pass, if any.
+	 */
+	isolatedFailureStage?: "peerRebase" | "composition";
+	/**
+	 * The number of pairs skipped without consulting the policy because they failed in an earlier pass.
+	 */
+	skippedFailedPairCount: number;
+	/**
 	 * The number of trunk commits eligible for compaction when the pass started.
 	 */
 	eligibleCommitCount: number;
@@ -1262,7 +1338,41 @@ export function createHistoryCompactionStats(): HistoryCompactionStats {
 		eligiblePairCount: 0,
 		preservedPairCount: 0,
 		peerBranchCount: 0,
+		failedPairCount: 0,
+		skippedFailedPairCount: 0,
 	};
+}
+
+/**
+ * Options for how {@link EditManager.compactHistory} handles failures inside the compaction engine.
+ */
+export interface HistoryCompactionEngineOptions<TChangeset> {
+	/**
+	 * When `true`, a failure to rebase peers or to compose a pair does not escape the pass.
+	 * @remarks
+	 * The failing step leaves the history unchanged: a failed composition skips that pair, and a failed peer rebase ends the pass.
+	 * A failed pair is remembered for the lifetime of the {@link EditManager} and skipped in later passes.
+	 * Failures from the `canCompact` callback are never isolated; they always propagate to the caller.
+	 */
+	readonly isolateFailures?: boolean;
+	/**
+	 * Called with each isolated failure, for telemetry.
+	 */
+	readonly onEngineFailure?: (error: unknown) => void;
+	/**
+	 * Called with each composed change before it replaces the target commit's change.
+	 * Throwing rejects the composition without modifying the history.
+	 * @remarks Used to check that a composed change can be written to and read from a summary.
+	 */
+	readonly validateComposedChange?: (
+		change: TChangeset,
+		revision: RevisionTag,
+		sessionId: SessionId,
+	) => void;
+}
+
+function compactionPairKey(current: RevisionTag, target: RevisionTag): string {
+	return `${String(current)}:${String(target)}`;
 }
 
 export interface SummaryData<TChangeset> {
@@ -1565,6 +1675,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 		target: GraphCommit<TChangeset>,
 		mergedMetadata?: CustomMetadataTree,
 		historyTrace?: HistoryTraceSink,
+		validateComposedChange?: HistoryCompactionEngineOptions<TChangeset>["validateComposedChange"],
 	): void {
 		assert(target.parent === current, "Only adjacent commits can be composed");
 		assert(current.parent !== undefined, "The trunk base cannot be composed away");
@@ -1584,19 +1695,25 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 			stage = "revisionReplacement";
 			recordHistoryTrace(historyTrace, "CompactionRevisionReplacementStarted");
 			// Collapse revision metadata, but keep durable IDs shared with repair data and other branches.
-			replaceChangeInPlace(
-				composed,
-				rebaser.changeRevision(
-					composedChange,
-					{
-						updatedRevision: target.revision,
-						isObsolete: () => false,
-						getUpdatedAtomId: (id) => id,
-					},
-					historyTrace,
-				),
+			const revisedChange = rebaser.changeRevision(
+				composedChange,
+				{
+					updatedRevision: target.revision,
+					isObsolete: () => false,
+					getUpdatedAtomId: (id) => id,
+				},
+				historyTrace,
 			);
 			recordHistoryTrace(historyTrace, "CompactionRevisionReplacementCompleted");
+			if (validateComposedChange !== undefined) {
+				stage = "validation";
+				const targetMetadata =
+					this.commitMetadata.get(target.revision) ??
+					fail("Only sequenced trunk commits can be composed");
+				validateComposedChange(revisedChange, target.revision, targetMetadata.sessionId);
+			}
+			// Nothing is mutated before this point, so a failure above leaves both commits unchanged.
+			replaceChangeInPlace(composed, revisedChange);
 		} catch (error: unknown) {
 			recordHistoryTrace(historyTrace, "CompactionChangeFailed", { stage });
 			throw error;

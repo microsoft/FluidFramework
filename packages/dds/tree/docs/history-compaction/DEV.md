@@ -2,7 +2,7 @@
 
 This is the detailed guide to application-guided history compaction in SharedTree.
 It explains what compaction is, which history it changes, the API contract, the design that is implemented,
-how revisions are preserved, what can go wrong with persisted data, what telemetry exists,
+how compaction treats preserved revisions, what can go wrong with persisted data, what telemetry exists,
 how it is tested, and what is still open.
 
 > Status: **experimental (`@alpha`)**.
@@ -10,7 +10,8 @@ how it is tested, and what is still open.
 > Compaction (manual and summary-time) and preserved revisions (pins, opt-in) are implemented and tested.
 > Stable repair identities, repair-data cleanup ownership, cached-inverse invalidation, and maximum-ID tracking are implemented and covered by regressions.
 > Other integrity risks and proposed telemetry remain open ([Part IV](#part-iv-persisted-format-and-data-integrity)).
-> The short, app-facing guide is [APP_GUIDE.md](./APP_GUIDE.md).
+> The short, app-facing guide is [APP_GUIDE.md](./APP_GUIDE.md); open questions for app teams are in [APP_QUESTIONS.md](./APP_QUESTIONS.md).
+> Preserved revisions (pins) have their own guide: [revision-preservation/DEV.md](./revision-preservation/DEV.md).
 
 ## How to read this guide
 
@@ -20,7 +21,7 @@ how it is tested, and what is still open.
 | The exact API and its guarantees | [Part II: API specification](#part-ii-api-specification) |
 | How it is built, and why | [Part III: Design and implementation](#part-iii-design-and-implementation) |
 | Subsystem block diagram and what the correctness fixes change | [§12.1](#121-subsystem-flow-and-correctness-changes) |
-| How pins (preserved revisions) work | [§11](#11-preserved-revisions-design) |
+| How pins (preserved revisions) work | [revision-preservation/DEV.md](./revision-preservation/DEV.md); compaction side in [§11](#11-how-compaction-handles-pins) |
 | What can corrupt persisted data, and the fixes | [Part IV: Persisted format and data integrity](#part-iv-persisted-format-and-data-integrity) |
 | Each discovered bug, its cause, fix, and named regression | [§17.9: Bug-to-regression index](#179-bug-to-regression-index) |
 | What to monitor | [Part V: Telemetry](#part-v-telemetry) |
@@ -35,14 +36,15 @@ how it is tested, and what is still open.
   3. [History model: trunk, MSN, and trimming vs. compaction](#3-history-model-trunk-msn-and-trimming-vs-compaction)
   4. [Which history gets compacted](#4-which-history-gets-compacted)
   5. [Commits needed for correctness vs. commits kept only for history](#5-commits-needed-for-correctness-vs-commits-kept-only-for-history)
+     - [Prerequisites for the bug examples](#51-reading-a-composed-history)
 - [Part II: API specification](#part-ii-api-specification)
   6. [Public types](#6-public-types)
   7. [The policy contract](#7-the-policy-contract)
   8. [Where and when compaction runs](#8-where-and-when-compaction-runs)
-  9. [Preserved revisions API](#9-preserved-revisions-api)
+  9. [Interaction with preserved revisions](#9-interaction-with-preserved-revisions)
 - [Part III: Design and implementation](#part-iii-design-and-implementation)
   10. [Design decisions](#10-design-decisions)
-  11. [Preserved revisions design](#11-preserved-revisions-design)
+  11. [How compaction handles pins](#11-how-compaction-handles-pins)
   12. [Architecture: where the code lives](#12-architecture-where-the-code-lives)
   13. [The algorithm](#13-the-algorithm)
   14. [Metadata before and after compaction](#14-metadata-before-and-after-compaction)
@@ -138,7 +140,7 @@ An interactive client has local history, and so does the summarizer.
 | Runs the configured policy | Only for the attach summary of a tree created detached (a no-op: nothing is old enough) | Before every summary that includes the tree |
 | Benefit of compaction | Lower memory in a long session | Smaller summaries, faster loads, lower memory for **all** future clients |
 | Risk of compaction | Breaking undo, revert, or local branches ([§17](#17-data-integrity-risks-and-fixes)) | Low for itself, but **its mistakes are persisted** and inherited by every loading client |
-| Sends pin rejections | No (logs only) | Yes ([§11.4](#114-rule-4-the-summarizer-rejects-pins-it-cannot-keep)) |
+| Sends pin rejections | No (logs only) | Yes ([§11.4](./revision-preservation/DEV.md#44-rule-4-the-summarizer-rejects-pins-it-cannot-keep)) |
 
 **Why local compaction on interactive clients matters little:**
 an interactive client's history disappears when the user closes the app, it is not shared,
@@ -252,7 +254,7 @@ SharedTree keeps a commit for one of two reasons:
 | The newest eligible commit | Correctness | Commits after it have it as their parent and depend on its output state. It can absorb older commits but is never removed. |
 | A commit an open local fork is based on, and every later one | Correctness | The fork's base must exist. |
 | The trunk base | Structural | It is the root of the retained chain. |
-| A preserved (pinned) commit | App guarantee | The app asked for this point in time to stay restorable ([§9](#9-preserved-revisions-api)). Never `current` or `target`. |
+| A preserved (pinned) commit | App guarantee | The app asked for this point in time to stay restorable ([§9](#9-interaction-with-preserved-revisions)). Never `current` or `target`. |
 | Any other commit older than the MSN | **History only** | Offered to the policy, oldest first. |
 
 A commit moves from "correctness" to "history only" when the MSN passes it (and no fork holds it).
@@ -265,7 +267,96 @@ The `CanCompactCommit` JSDoc lists the same rules.
 > The eligibility boundary protects collaboration and existing fork bases; it is not the whole correctness contract.
 > Reconstruction of every retained state also needs stable repair identities, valid inverse changes, and repair data kept until its surviving owner is trimmed.
 > These are Fluid's responsibilities, not application policy decisions.
-> The reproduced defects and their fixes are in [§17.1](#171-high-composition-renumbers-detach-ids-so-repair-data-no-longer-matches) and [§17.2](#172-high-repair-data-for-composed-away-revisions-is-never-freed).
+> The reproduced defects and their fixes are in [§17.1](#171-fixed-composition-renumbered-detach-ids-so-repair-data-no-longer-matched) and [§17.2](#172-fixed-repair-data-for-composed-away-revisions-was-never-freed).
+
+#### 5.1 Reading a composed history
+
+In the examples below, `H1` is a commit and `R1` is its revision identifier.
+`H2*` means the surviving H2 commit after it absorbs H1; the `*` is notation for this guide, not a stored flag.
+Assume the commits being combined are eligible and unpinned.
+
+```text
+Before: H0 -- H1 (delete a) -- H2 (delete b)
+After:  H0 ----------------- H2* (delete a, then delete b)
+```
+
+**Composition combines changes, not just history labels.**
+H2 originally described the step from H1's state to H2's state.
+H2* must describe the whole step from H0's state to H2's state.
+Its revision remains R2, but its change and parent are different.
+The current document stays the same, and H1 stops being a retained point.
+
+Correctness therefore means more than "the current array still looks right."
+You must still be able to read or restore every retained state, undo supported edits, process later peer edits, and load a summary.
+The bugs in [§17.9](#179-bug-to-regression-index) affect these later operations, often after compaction itself appears to succeed.
+
+#### 5.2 Repair data: lookup identity versus cleanup ownership
+
+Deleting a node removes it from the visible tree, but SharedTree can keep the detached node as **repair data**.
+An inverse change can use that data to put the node back.
+The **forest** stores tree content, including detached content; the **detached-field index** lets the engine find detached roots.
+
+Keep these two pieces of information separate:
+
+| Information | Question it answers | Example |
+| --- | --- | --- |
+| Lookup identity | Which detached node does this change need? | `(R1, 0)` identifies the node `a` detached by H1. |
+| Cleanup owner | Which revision's later trimming allows this root to be collected? | Initially R1; after H1 is absorbed into H2*, ownership transfers to R2. |
+
+Internal **atom IDs** use a pair `(revision, localId)`.
+The revision provides a namespace, so `(R1, 0)` and `(R2, 0)` are different IDs.
+These IDs also identify internal change operations such as moves; they are not all detached-root IDs.
+The **authored revision metadata** says which revision the change is attributed to.
+A change authored as R2 can validly contain atom IDs from R1.
+Changing its authored metadata does not mean you should rename those IDs.
+
+An address-book analogy helps: changing who is responsible for removing an entry does not change the address that existing references use.
+Renaming the lookup identity breaks those references.
+Leaving cleanup ownership on a removed commit means the cleanup notification never arrives.
+See [example 2](#example-2-repair-lookup-identities-changed) and [example 4](#example-4-composed-away-repair-roots-never-collected).
+
+#### 5.3 Inverses, aliases, and cached history paths
+
+An **inverse change** reverses a change.
+If a change performs edits 1, 2, 3, and 4, its inverse must undo them in reverse order: `[-4, -3, -2, -1]`.
+History navigation computes changes between retained points using these inverses.
+Rebase also uses rollback inverses internally.
+
+During inversion, the engine can allocate an **alias**, an alternate internal ID for an existing atom ID.
+The alias allocator must first reserve the ID ranges for the original revision namespaces it will use.
+If a composed change retains a move ID from R1, reserving only its authored revision R2 is insufficient.
+That is why stable repair identities need the accompanying alias fix in [example 3](#example-3-inverse-aliases-missing-for-preserved-namespaces).
+
+The engine can cache an inverse on a commit object to avoid computing it again.
+Compaction keeps the survivor's object but changes what that object does.
+The old inverse is no longer valid and must be cleared ([example 5](#example-5-cached-inverse-covers-only-the-former-survivor)).
+Likewise, a captured `revertTo` callback has a path computed from the history that existed when you acquired it.
+Keeping the same head object does not prove that the path is unchanged ([example 6](#example-6-captured-history-callback-accepts-a-mutated-path)).
+
+#### 5.4 ID allocation and summary validation
+
+A changeset's `maxId` records its maximum local ID.
+If revision replacement allocates larger IDs, it must raise this maximum too.
+The summary **codec** (encoder/decoder) uses the maximum to allocate temporary IDs above the changeset's existing IDs.
+A stale maximum can cause a collision even when the encoded data is valid JSON.
+See [example 1](#example-1-stale-maximum-after-id-remapping).
+
+A summary includes both current content and retained history.
+Checking current content alone cannot prove that the history changes will decode or restore correctly.
+The engine validates each proposed composition with a codec round-trip before changing the trunk.
+This lets it leave a failing pair unchanged rather than break the tree and prevent summaries ([example 8](#example-8-engine-failure-blocked-summaries)).
+
+#### 5.5 Peer branches and rebasing
+
+A **rebase** adjusts a change to apply after changes that were not in its original base.
+For each remote peer, the receiving engine tracks a branch used to interpret that peer's edits.
+This is internal bookkeeping, not an application-created local fork.
+Its last commit can remain old while the peer is idle, even after the peer has received newer document edits.
+
+If compaction removes that old commit, updating only the trunk is insufficient: the peer branch can still refer to the old commit object.
+Before composition, the engine rebases peer branches onto the newest eligible commit, which will survive.
+The collaboration-window bound makes this safe; it does not by itself update those references.
+See [example 7](#example-7-idle-peer-retains-a-composed-away-base).
 
 ---
 
@@ -371,7 +462,9 @@ The app must not mutate the object after returning it.
 | Where | What happens |
 | --- | --- |
 | Summary-time policy throws or returns an invalid value | Decided: the wrapper records the error and answers "do not combine" for every remaining pair. Merges already made are kept. `HistoryCompaction` is logged with `status: "failure"`, `failureSource: "policy"`. The summary is still written. The tree is **not** broken. |
-| Manual `requestCompaction` policy throws | Open ([§24.2](#242-manual-requestcompaction-when-the-policy-throws)): the error propagates; merges already made stay; the caller gets no count; telemetry reports partial progress. The error passes through the kernel's breaker, so **the tree is marked broken**. |
+| Manual `requestCompaction` policy throws | Open ([§24.2](#242-manual-requestcompaction-when-the-policy-throws)): the error propagates; merges already made stay; the caller gets no count; telemetry reports partial progress. The error passes through the kernel's breaker, so **the tree is marked broken**. Documented with `@throws` on `requestCompaction`. |
+| Engine fails to compose or validate a pair (manual or summary) | Decided ([§13.5](#135-engine-failure-isolation)): nothing is mutated for that pair; it is left uncombined, remembered for this session, and skipped by later passes. The pass continues with later pairs. `HistoryCompaction` is logged with `status: "partialFailure"`, `failureSource: "engine"`, `failedPairCount`, and the error. The summary is still written, the tree is **not** broken, and manual calls return the count without throwing. |
+| Engine fails to rebase peer branches | Same, except the pass ends at once (no pair is composed without first rebasing peers). `failureStage: "peerRebase"`. |
 | `setRevisionPreserved` usage errors | `UsageError`, tree not broken (`@throwIfBroken`, checks before any state change). |
 
 #### 7.5 Examples
@@ -409,7 +502,7 @@ const policy: CanCompactCommit = (pair) => pair.current.custom?.keep !== true &&
 ```
 
 Note: `keep: true` only stops that commit from being `current`; it can still absorb older commits as `target`.
-Use a pin ([§9](#9-preserved-revisions-api)) to protect a commit in both directions.
+Use a pin ([§9](#9-interaction-with-preserved-revisions)) to protect a commit in both directions.
 
 ### 8. Where and when compaction runs
 
@@ -420,7 +513,7 @@ Compaction runs only at these call sites:
 | --- | --- | --- | --- |
 | Summarization (configured policy) | `SharedTreeKernel.summarizeCore` → `compactHistoryForSummary` → `runCompaction` | The client writing the summary (normally the summarizer); this is **stored** history | Implemented |
 | App call, any number of times | `historyCompaction.requestCompaction` → `runCompaction` | The calling client's memory | Implemented |
-| MSN advance | Would hook `EditManager.advanceMinimumSequenceNumber`, next to `trimHistory` | Every client's memory, continuously | Not implemented ([§24.5](#245-smaller-open-items)) |
+| MSN advance | Would hook `EditManager.advanceMinimumSequenceNumber`, next to `trimHistory` | Every client's memory, continuously | Not implemented ([§24.6](#246-smaller-open-items)) |
 
 #### 8.1 The configured policy (summary time)
 
@@ -483,46 +576,22 @@ Measured with N = 10, 8 rounds of 5 commits each (one group per round), compacti
 | Without compaction | 10 | 2 (groups 6–7) |
 | With compaction | 6 | 4 (groups 4–7) |
 
-A possible improvement, "compact before trimming", is listed in [§24.5](#245-smaller-open-items).
+A possible improvement, "compact before trimming", is listed in [§24.6](#246-smaller-open-items).
 
-### 9. Preserved revisions API
+### 9. Interaction with preserved revisions
 
-A **pin** keeps one point in time restorable even if the policy would merge it away
-(a named version, a published version, a point before a risky bulk edit).
-"Preserved" means: **the document state right after revision R stays restorable, under the same revision.**
+Apps can pin a revision with `historyCompaction.setRevisionPreserved` (opt-in through `enableRevisionPreservation`)
+so it stays restorable under the same revision. The full API, design, format, and risks are in
+[revision-preservation/DEV.md](./revision-preservation/DEV.md).
 
-```typescript
-const factory = configuredSharedTree({
-	retainHistory: 1000,
-	historyCompaction: { canCompactCommit: sameSession, enableRevisionPreservation: true },
-}).getFactory();
-
-const compaction = asAlpha(tree).historyCompaction;
-compaction.setRevisionPreserved(revision, true); // pin; sent to every client
-compaction.isRevisionPreserved(revision); // true once this client applied the pin (optimistic for the caller)
-compaction.setRevisionPreserved(revision, false); // unpin
-compaction.events.on("revisionPreservationRejected", (revision) => { /* the checkpoint is gone */ });
-```
-
-`setRevisionPreserved` throws a `UsageError` when:
-
-- `enableRevisionPreservation` is off, or shared branches or detached-root editing is enabled;
-- pinning a revision this client does not know;
-- pinning a revision no longer in the main history (trimmed or compacted).
-
-Unpinning an unknown revision does nothing. These errors do not break the tree.
-`setRevisionPreserved` returns `void`: the real outcome is known only when the summarizer processes the op.
-
-Contract summary:
+What compaction guarantees about pins:
 
 | Question | Answer |
 | --- | --- |
-| Does a pin stop compaction? | Yes, in both directions, on every client. |
-| Does a pin stop trimming by `retainHistory`? | **No.** A pinned commit outside the limit is trimmed and its pin dropped ([§11.2](#112-rule-2-pins-do-not-stop-trimming)). |
-| Is a pin shared? | Yes, through an op, and stored in the summary. |
-| Is `isRevisionPreserved() === true` a guarantee? | No. It is optimistic until the summarizer processes the pin. If the summarizer already lost R, it sends a rejection and `revisionPreservationRejected` fires ([§11.4](#114-rule-4-the-summarizer-rejects-pins-it-cannot-keep)). |
-| Can I tell trimming from compaction in a rejection? | No. |
-| Should I auto-retry after a rejection? | No: re-pinning is rejected again. |
+| Does a pin stop compaction? | Yes, in both directions, on every client ([§11](#11-how-compaction-handles-pins)). |
+| Does the policy see pinned pairs? | No: they are skipped before the policy is called. |
+| Does a pin stop trimming by `retainHistory`? | **No.** A pinned commit outside the limit is trimmed and its pin dropped. |
+| Does compaction alone need the pin format? | No. Without `enableRevisionPreservation` compaction uses the v7 formats. |
 
 ---
 
@@ -543,16 +612,17 @@ Contract summary:
 | **One callback decides and shapes metadata.** | A separate `ComposeCommitMetadata` (option c) needed two functions to read the pair the same way. | `CanCompactCommit` is the only callback. |
 | **Configured on the factory, not registered at runtime.** | The summarizer is built from the same container code and registry, so a factory option reaches it with no extra app code. | `SharedTreeOptions.historyCompaction.canCompactCommit`, run in `summarizeCore` ([§15](#15-how-the-policy-reaches-the-summarizer-approaches-considered)). |
 | **The summarizer is what matters for storage.** | Only its history is stored; interactive clients gain little. | The option runs wherever the summary is written. |
-| **A faulty policy must not block summaries or break the tree.** | Summaries keep the document loadable. | Summary-time errors are caught, logged, and end compaction. |
+| **A faulty policy must not block summaries or break the tree.** | Summaries keep the document loadable. | Summary-time policy errors are caught and logged; every remaining pair is answered "do not combine". A manual-call policy error still propagates and breaks the tree ([§24.2](#242-manual-requestcompaction-when-the-policy-throws)). |
+| **An engine failure on one pair must not block summaries or break the tree.** | A deterministic failure would otherwise recur on every summary, so the document would stop getting summaries and new clients would replay ever more ops. | Per-pair isolation in `EditManager.compactHistory`; each composed change is validated against the summary codec before the trunk is mutated; failed pairs are skipped for the rest of the session ([§13.5](#135-engine-failure-isolation)). |
+| **Failed pairs are remembered per session, not persisted.** | Persisting them would need a format change; a new client or summarizer retrying once lets a document recover after a fix ships. | `EditManager.failedCompactionPairs`, keyed by `current:target` revisions. |
 | **Never touch what collaboration or local state needs.** | Peers need the window; forks need their base. | Eligibility capped by the MSN and the oldest local fork base. |
 | **Retention limit and compaction compose.** | Apps want bounded *and* compact history. | A compacted commit counts as one toward `retainHistory: N`. |
-| **Pins are shared through an op and stored in the summary.** | A pin only protects stored history if the summarizer knows it; authored metadata cannot be edited later. | `preserveRevision` op and `preservedTrunkIndices` summary field. |
-| **Pins are opt-in, under a separate format.** | Older clients cannot read the new op and summary format. | `enableRevisionPreservation` selects `history-compaction\|v0.1`. |
-| **Pins are optimistic; the summarizer rejects what it cannot keep.** | The caller cannot know synchronously whether the summarizer still has R. | Rejection op with `rejected: true` and the `revisionPreservationRejected` event. |
+| **Pins are a separate, opt-in feature.** | Pins add an op and summary format that compaction alone does not need. | Documented in [revision-preservation/DEV.md §3](./revision-preservation/DEV.md#3-design-decisions). |
 
-### 11. Preserved revisions design
+### 11. How compaction handles pins
 
-#### 11.1 Rule 1: pins block compaction in both directions
+The pin feature itself (op, rejection, storage, edge cases, proposed redesign) is documented in
+[revision-preservation/DEV.md](./revision-preservation/DEV.md). This section covers only what the compaction engine does.
 
 ```text
 history:   A1 ─ A2 ─ [A3] ─ A4 ─ A5      ([A3] is preserved; the policy says "yes" to every pair)
@@ -565,167 +635,11 @@ history:   A1 ─ A2 ─ [A3] ─ A4 ─ A5      ([A3] is preserved; the policy 
 result:    A2' ─ [A3] ─ A5'              A3 keeps its original change data and metadata
 ```
 
-`EditManager.compactHistory` skips a pair if `preservedRevisions` contains either revision, before calling the policy.
-Preservation is a guarantee, not a hint. One pinned middle commit blocks two pairs (`preservedPairCount: 2`).
-Unpinning makes the surrounding pairs eligible again on the next pass.
-
-#### 11.2 Rule 2: pins do not stop trimming
-
-Option **P1** is implemented: a pinned commit counts toward `retainHistory: N` like any other.
-When it falls outside the limit it is trimmed, and `EditManager.trimHistory` removes its pin.
-
-- `retainHistory` stays the one setting that bounds memory and storage.
-- Apps that need pins to live forever use `retainHistory: true`.
-- Option **P2** (pins hold trimming back) can be added later as an opt-in.
-
-Not yet done: telling the app when its own client trimmed a pin. A new pin on a revision the summarizer already trimmed is rejected (Rule 4).
-
-**How a trimmed pin leaves the persisted format.**
-No op or cleanup step is needed: the next summary from the summarizer simply no longer contains it.
-
-1. The summarizer trims the commit: `EditManager.trimHistory` deletes each trimmed revision from `preservedRevisions`.
-2. `EditManager.getSummaryData` writes only pins whose revision is in the summarized main trunk.
-3. The format cannot hold an orphaned pin: `preservedTrunkIndices` are positions in that summary's own `trunk` array ([§11.5](#115-how-pins-are-stored)).
-4. A summary is a full snapshot, so clients loading the new summary no longer see the pin.
-
-Caveats:
-
-- Only trimming on the **summarizer** changes storage. An interactive client that trims changes only its own memory.
-- It can be delayed: with no new ops for the tree, the runtime reuses the previous summary handle ([§8.1](#81-the-configured-policy-summary-time)),
-  and a freshly loaded client does not trim until it learns the MSN ([§22.3](#223-a-freshly-loaded-client-cannot-compact-yet)).
-- With `retainHistory: true` nothing is trimmed, so a pin lasts until it is unpinned.
-- Older summaries in storage still contain the pin, but clients load from the newest one.
-- Test: "is dropped when the retention limit removes the commit" (`historyCompaction.spec.ts`).
-
-#### 11.3 Rule 3: pins are shared through an op
-
-Stored history is compacted by the summarizer, so a pin kept only in the user's client would not protect it.
-
-```text
-app client                             service                summarizer client
-──────────                             ───────                ─────────────────
-setRevisionPreserved(R, true)
-  apply locally (set now has R)
-  send { type: "preserveRevision" } ─► sequence ─► all clients ─► apply (set now has R)
-                                                                  summarize:
-                                                                    policy skips (R, next)
-                                                                    write preservedTrunkIndices
-```
-
-- Applied locally at once; re-applying when the op comes back does nothing.
-- Every client applies the same pin ops in the same order, so all agree on the preserved set for the commits they still have.
-- A pin on a not-yet-sequenced local commit is fine: the pin op is sent after the commit op.
-
-#### 11.4 Rule 4: the summarizer rejects pins it cannot keep
-
-**The problem.**
-The pin applies locally at once, but the summarizer may have compacted or trimmed R before it processes the pin op.
-Previously the summarizer silently ignored it, while the pinning client's `isRevisionPreserved` stayed `true`;
-the checkpoint was gone after reload.
-Interactive clients keep their full history, so they cannot detect this.
-
-**Implemented: option 1 (telemetry) and option 2 (rejection op).**
-
-```text
-app client                      service                 summarizer client (already compacted R)
-──────────                      ───────                 ─────────────────
-setRevisionPreserved(R, true)
-  set has R (optimistic)
-  send pin(R) ───────────────► sequence ─► all ────────► R not in history → ignore
-                                                          log PreserveRevisionIgnored{rejectionSent: true}
-                                          ◄───────────── send { type: "preserveRevision", R, preserved: false, rejected: true }
-                               sequence ─► all clients
-  set loses R                                             (set never had R)
-  log PreserveRevisionRejected{wasPreserved: true}
-  emit revisionPreservationRejected(R)
-```
-
-- Only the summarizer sends a rejection, because only its history reaches storage. Interactive clients only log.
-- Every client processes the rejection like an unpin, so all agree again.
-- The event fires on every client that had R marked when the rejection arrived (not only the requester).
-- The summarizer is detected by `KernelArgs.isSummarizerClient`, which checks `deltaManager.clientDetails.type === "summarizer"`
-  (the check `ContainerRuntime` uses). `SharedTreeCore.isSummarizerClient()` is a protected hook, `false` by default.
-- Code: `SharedTreeCore.onPreserveRevisionIgnored` and `processPreserveRevisionRejection` (`sharedTreeCore.ts`);
-  `SharedTreeKernel.onRevisionPreservationRejected` emits the app event (`sharedTree.ts`).
-
-| Case | Behaviour |
-| --- | --- |
-| **The summarizer sends an op.** | Fluid intends to disallow local changes in the summarizer; today it only logs them (`identifyLocalChangeInSummarizer` in `packages/runtime/datastore/src/dataStoreRuntime.ts`). If that becomes an error, switch to option 4. **Main risk of option 2.** |
-| Pinned again after a rejection | Rejected again, one event per rejection. |
-| A later pin of the same R is pending when a rejection arrives | The optimistic pin is removed; the later pin is applied and rejected again. |
-| No summarizer connected | No rejection until a summarizer processes the pin. A later one that loads a summary still containing R accepts it. |
-| R was trimmed on the summarizer | Also rejected; indistinguishable from compaction. |
-| Rollback of a rejection | Nothing; rejections are never local edits. |
-
-**Option 4 (alternative, not implemented): only allow pins inside the collaboration window.**
-`setRevisionPreserved(R, true)` would throw unless R is newer than the MSN (or unsequenced).
-Since compaction only touches commits below the window, no client can have removed R before processing the pin.
-
-- Pros: no rejection op; works if the summarizer is forbidden from sending ops; the result is known when the call returns.
-- Cons: old checkpoints cannot be pinned after the fact (a common timeline request); success depends on timing.
-- Can be combined with option 2: window pins always succeed, older pins may be rejected.
-
-Other alternatives considered: check after a reload (option 3, slow) and a summarizer acknowledgement for every pin (more ops).
-
-#### 11.5 How pins are stored
-
-A commit cannot hold the pin: authored `customMetadata` never changes,
-and the summary stores each commit as `{ revision, sessionId, change, customMetadata?, sequenceNumber }`.
-Pins are stored **next to** the commits.
-
-```text
-EditManager summary (v7)               EditManager summary (history-compaction|v0.1)
-  trunk:    [c0, c1, c2, c3]             trunk:                 [c0, c1, c2, c3]   ← unchanged
-  branches: [...]                        branches:              [...]
-                                         preservedTrunkIndices: [1, 3]            ← c1 and c3 are pinned
-```
-
-| Where | Form | Code |
-| --- | --- | --- |
-| Memory | `Set<RevisionTag>` in `EditManager` | `editManager.ts`: `preservedRevisions` |
-| Op | `{ version, type: "preserveRevision", originatorId, revision, preserved, rejected? }`; revision encoded relative to `originatorId` | `messageFormatVHistoryCompaction.ts`, `messageCodecVHistoryCompaction.ts` |
-| Summary | `preservedTrunkIndices`: positions in the summary's `trunk` array | `editManagerFormatVHistoryCompaction.ts`, `editManagerCodecsVHistoryCompaction.ts` |
-
-Indices, not revisions: the trunk is in the same blob, so indices are shorter, need no ID-compressor encoding,
-and cannot point outside the summary. Only pins whose commit is in the summarized trunk are written.
-An empty list reads back as "no pins"; an out-of-range index is an error.
-
-#### 11.6 Pin edge cases
-
-| Case | Behaviour |
-| --- | --- |
-| Race with compaction | See Rule 4. To avoid it, pin soon after the commit is made, or tag the commit with metadata and check the tag in the policy. |
-| Pin op for a commit this client already trimmed | Ignored, with `PreserveRevisionIgnored`. |
-| Resubmit after reconnect | Sent again unchanged. Tested: a pin requested while disconnected reaches the summarizer after reconnect. |
-| Rollback (abandoned transaction) | Approximate: applies the opposite pin. **Can diverge** ([§17.3](#173-medium-rolling-back-a-pin-can-diverge-from-other-clients)). |
-| Stashed ops | Re-applied locally when loaded. |
-| Detached tree | No op; the local set is written in the attach summary. |
-
-#### 11.7 Op leaks and lost rejections
-
-Compaction sends no ops. Only pins (`preserveRevision`) and the summarizer's rejections do.
-There is no unbounded or silent op leak in the engine, but these cases can produce extra ops or a stale pin.
-None of them is covered by a test yet.
-
-| Case | Possible? | Effect | Code |
-| --- | --- | --- | --- |
-| **Lost rejection on summarizer handoff.** The summarizer processes pin(R) at seq S and queues a rejection. It writes a summary at or after S, then closes before the rejection is sequenced. The next summarizer loads that summary and never re-processes pin(R). | Rare. Before summarizing, `ContainerRuntime` waits for pending ops (`Fluid.Summarizer.waitForPendingOpsTimeoutMs`, default 1s) and can fail the summary (`shouldFailSummaryOnPendingOps`); the final attempt may still continue. | The requester keeps `isRevisionPreserved(R) === true` for the session and gets no event. The pin is not in storage, so a reload is correct. | `SharedTreeCore.onPreserveRevisionIgnored`; `containerRuntime.ts` "PendingOpsWhileSummarizing" |
-| **Duplicate rejection.** A new summarizer loads a summary older than pin(R) and rejects it again, after the old summarizer's rejection was already sequenced. | Yes | One extra op. Clients still agree. No second app event unless R was pinned again in between (that pin would be rejected anyway). | `processPreserveRevisionRejection` (`wasPreserved`) |
-| **Rejection ping-pong.** The app re-pins on every `revisionPreservationRejected`. | Yes, caused by the app | One pin op and one rejection per retry, forever. Apps must not retry automatically ([§9](#9-preserved-revisions-api)). | — |
-| **Rollback** of a pin that changed nothing | Yes | Local pin state diverges ([§17.3](#173-medium-rolling-back-a-pin-can-diverge-from-other-clients)). | `SharedTreeCore.rollback` |
-| **Stashed pin that is a no-op** (revision gone at load) | Yes | `applyStashedOp` changes nothing, but the op is still resubmitted. Others ignore or reject it. Clients agree again. | `applyStashedOp`, `reSubmitCore` |
-| **Rejection sent while processing an op** | Supported | `ContainerRuntime.process` runs in `ensureNoDataModelChanges`, so the op is reentrant. The outbox rebases batches with reentrant ops (resubmits them through `reSubmitCore`) before sending. | `opLifecycle/outbox.ts` (`hasReentrantOps`) |
-| **Summarizer has a pending op at summary time** | Yes | Can log `PendingOpsWhileSummarizing` and delay a summary by up to the wait timeout. | `containerRuntime.ts` |
-| **In-memory pin set grows** | No | Unpin, trimming, and rejection remove entries. With `retainHistory: true`, pins last until unpinned, by design. | `EditManager.preservedRevisions` |
-
-Possible fixes for a lost rejection, not implemented:
-
-- Have the summarizer also check pins against its own trunk before writing a summary, and send rejections for any it holds but cannot honour.
-  This would not catch a pin it never processed.
-- Let interactive clients re-check their optimistic pins against a newly loaded summary, as in option 3 of [§11.4](#114-rule-4-the-summarizer-rejects-pins-it-cannot-keep).
-- Use option 4 (only pin inside the collaboration window). It needs no rejection at all.
-
-Proposed telemetry is in [§19](#19-proposed-integrity-telemetry) (`PreserveRevision:RejectionPendingAtSummary`, `PreserveRevision:DuplicateRejection`).
+- `EditManager.compactHistory` skips a pair if `preservedRevisions` contains either revision, **before** calling the policy.
+  The policy never sees a blocked pair. One pinned middle commit blocks two pairs (`preservedPairCount: 2`).
+- Unpinning makes the surrounding pairs eligible again on the next pass.
+- Pins do not hold back trimming: `EditManager.trimHistory` removes the pin of each trimmed commit.
+- `EditManager.getSummaryData` writes only pins whose commit is in the summarized trunk.
 
 ### 12. Architecture: where the code lives
 
@@ -753,14 +667,13 @@ feature-libraries (imports shared-tree-core): DefaultRevisionReplacer, modular c
 | Telemetry | `SharedTreeKernel.runCompaction` | Owns the timer, decision counters, error classification, and the final event. `EditManager.compactHistory` reports each completed composition through a callback, forwarded by `SharedTreeCore.compactHistory`. |
 | Opt-in diagnostic tracing | `shared-tree-core/historyTrace.ts`, called by the kernel, core, edit manager, and edit manager summarizer | Correlates configuration, retention decisions, pair-level compaction, preservation, and summary/load activity without changing the public API or persisted formats. |
 | Engine | `EditManager.compactHistory` (`shared-tree-core/editManager.ts`) | `EditManager` already owns the trunk, MSN, fork tracking, retention, trimming, and summary data. |
+| Engine-failure isolation | `EditManager.compactHistory` (`HistoryCompactionEngineOptions`, `failedCompactionPairs`) | `EditManager` is not breaker-wrapped, so a caught error there never marks the tree broken. `SharedTreeKernel` and `SharedTreeCore` are `@breakingClass`: any error escaping any of their methods, private ones included, breaks the tree. |
+| Composed-change validation | `SharedTreeCore.validateComposedChange`, called by `composeTrunkCommits` before mutating | Round-trips the composed change through the summary-format change codec, so failures that would otherwise surface while writing the summary happen per pair, where they can be isolated. `SharedTreeCore` owns the codecs and ID compressor. |
 | In-place composition | `SharedBranch.composeTrunkCommits` | The shared branch owns `sequenceIdToCommit` and `commitMetadata`, which must stay in sync. |
 | Revision normalization | `composeTrunkCommits` supplies an identity atom replacer to `changeRevision` | Keeps original atom identities while collapsing authored revision metadata to the survivor; no injected factory or higher-layer dependency. |
 | Inverse cache invalidation | `core/rebase/utils.ts`: `replaceChangeInPlace` | The survivor keeps its object identity, but an inverse cached for its old change must not survive replacement. |
 | Repair-data cleanup ownership | `ancestryCompacted` in `branch.ts`; `TreeCheckout`; `DetachedFieldIndex.updateLatestRevisionForRoots` | Every subscribed checkout transfers ownership from the removed revision to the survivor without renaming or deleting roots. |
-| Pin storage | `EditManager.preservedRevisions` | Trimmed with the trunk and written in the same summary blob. |
-| Pin ops and rejection | `SharedTreeCore` | Owns sending, processing, resubmitting, rollback, and stashing ops. |
-| Pin API mapping | `SharedTreeKernel` (`@throwIfBroken`) | Converts `CommitRevision` to `RevisionTag` (`idCompressor.tryRecompress`), checks the gate, throws `UsageError`s without breaking the tree. |
-| Pin formats | `*VHistoryCompaction.ts` codecs; selection in `resolveFormatOptions` (`treeFactory.ts`) | Each wraps the matching v7 codec; always registered for reading. |
+| Pins (storage, ops, API, formats) | `EditManager`, `SharedTreeCore`, `SharedTreeKernel`, `*VHistoryCompaction.ts` | See [revision-preservation/DEV.md §5](./revision-preservation/DEV.md#5-where-the-code-lives). |
 
 #### 12.1 Subsystem flow and correctness changes
 
@@ -771,34 +684,58 @@ The summary path then persists that client's history; a manual request does not 
 ```mermaid
 flowchart TD
     manual["Application: requestCompaction(callback)"]
-    summary["Summarizer: configured summary-time callback"]
-    kernel["SharedTreeKernel.runCompaction<br/>Policy adapter, pass telemetry, error handling"]
-    core["SharedTreeCore.compactHistory<br/>Forward to the history engine"]
-    bounds["EditManager<br/>Collaboration and local-fork bounds<br/>Only eligible, unpinned adjacent pairs reach the policy"]
-    policy["Application callback through the kernel adapter<br/>Boolean or replacement metadata object"]
+    summary["Summarizer: summarizeCore runs the configured callback"]
+    kernel["SharedTreeKernel.runCompaction (breaker-wrapped)<br/>Policy adapter, engineFailureIsolation, HistoryCompaction event"]
+    core["SharedTreeCore.compactHistory (breaker-wrapped)<br/>Adds validateComposedChange (summary codec)"]
+    bounds["EditManager.compactHistory<br/>Collaboration and local-fork bounds"]
+    pinned{"Pinned, or failed<br/>earlier this session?"}
+    skip["Skip pair<br/>(policy not called)"]
+    policy["Application callback through decideCompaction<br/>Boolean or replacement metadata object"]
     keep["Keep this pair unchanged"]
-    peers["FIXED: SharedBranch.rebasePeersOnto<br/>Move peer bases to the newest eligible survivor<br/>Once before the first merge in the pass"]
-    compose["FIXED: composeTrunkCommits + modular change family<br/>Compose changes; keep original atom IDs<br/>Keep one authored revision: the target"]
-    trunk["FIXED: update the surviving target in place<br/>Clear its cached inverse; update metadata and trunk indexes<br/>Remove the older commit from the trunk"]
-    repair["FIXED: ancestryCompacted event to subscribed checkouts<br/>TreeCheckout + DetachedFieldIndex<br/>Transfer cleanup ownership; do not rename or delete roots"]
-    reads["Historical reads, restore, Undo/Redo<br/>Invert reserves preserved revision namespaces<br/>Reject stale captured revertTo paths"]
-    trim["Later normal history trimming<br/>Release repair roots when their cleanup owner is trimmed"]
-    persist["Summary codecs and storage<br/>Preserve original atom IDs<br/>Revision-remapping callers must maintain maxId"]
-    load["Fresh client or replacement summarizer<br/>Decode retained history and repair data"]
+    peers["FIXED: SharedBranch.rebasePeersOnto<br/>Once, before the first merge in the pass"]
+    peerFail["NEW: end the pass<br/>status partialFailure, failureStage peerRebase"]
+    compose["FIXED: composeTrunkCommits, step 1<br/>Compose; keep original atom IDs; one authored revision<br/>NEW: validate with summary codec; no mutation yet"]
+    pairFail["NEW: leave pair unchanged<br/>Add to failedCompactionPairs; failedPairCount++<br/>Continue with next pair"]
+    trunk["FIXED: composeTrunkCommits, steps 1 to 4<br/>replaceChangeInPlace clears cached inverse<br/>Metadata, parent relink, map cleanup"]
+    repair["FIXED: EditManager emits ancestryCompacted<br/>TreeCheckout + DetachedFieldIndex<br/>Transfer cleanup ownership; never rename roots"]
+    reads["Historical reads, restore, Undo/Redo<br/>Invert reserves preserved namespaces<br/>Reject stale captured revertTo paths"]
+    trim["Later normal history trimming<br/>Releases repair roots and pins of trimmed commits"]
+    persist["Summary: EditManager summary codec<br/>Written even after a partialFailure<br/>preservedTrunkIndices when pins are enabled"]
+    load["Fresh client or replacement summarizer<br/>Decodes history, pins, repair data<br/>Failed-pair memory starts empty"]
+
+    pinApi["Application: setRevisionPreserved(R)"]
+    pinOp["SharedTreeCore: preserveRevision op<br/>(history-compaction format)"]
+    pinSet["EditManager.preservedRevisions"]
+    reject["Summarizer: R already compacted or trimmed<br/>Sends rejection op; clients unpin R"]
 
     manual --> kernel
     summary --> kernel
-    kernel --> core --> bounds --> policy
+    kernel --> core --> bounds --> pinned
+    pinned -->|yes| skip
+    pinned -->|no| policy
     policy -->|false| keep
     policy -->|true or metadata object| peers
-    peers --> compose --> trunk
-    trunk -->|notify checkouts| repair
+    peers -->|throws| peerFail
+    peers --> compose
+    compose -->|throws| pairFail
+    compose --> trunk --> repair
     repair --> reads
     repair -->|cleanup ownership used later| trim
     trunk -->|when this client writes a summary| persist
+    pairFail -->|when this client writes a summary| persist
     persist --> load
     load -->|subsequent historical reads| reads
+
+    pinApi --> pinOp -->|sequenced on every client| pinSet
+    pinSet --> pinned
+    pinSet --> persist
+    pinOp -.->|R not in summarizer history| reject
+    reject --> pinSet
 ```
+
+`NEW` marks the engine-failure isolation (§13.5); `FIXED` marks the data-integrity fixes (§17).
+The kernel and core are `@breakingClass`: an error escaping either one marks the tree broken.
+The isolation is therefore in `EditManager`, which is not breaker-wrapped.
 
 **What changes, and why:**
 
@@ -809,6 +746,7 @@ flowchart TD
 | Repair-data lifetime | Roots could retain a cleanup owner that compaction had removed, so later trimming did not collect them. | Transfer cleanup ownership to the survivor without changing lookup identity; normal trimming still controls release. |
 | Historical navigation | Inversion could lack aliases for preserved namespaces, and a captured restore callback could accept an in-place-mutated path. | Reserve the needed namespaces and reject stale callbacks before applying changes; a fresh callback uses the current path. |
 | Persisted changes | Genuine ID remapping could allocate beyond `maxId`, allowing decoder temporary IDs to collide. | Track the allocated maximum, including range endpoints. Current compaction avoids ID remapping; other remapping callers still need this fix. |
+| Failure handling | An engine error during summary compaction escaped the breaker-wrapped kernel: the tree broke, and every later summary failed the same way. | Validate each composed change before mutating; skip and remember a failing pair; still write the summary (§13.5, §17.10). |
 
 The correctness boundaries are unchanged: compaction cannot bypass collaboration or local-fork protection, preserved revisions, or the trunk-base restriction.
 The fixes change how eligible history is composed and how its dependent state stays valid; they do not change current document content or add a new persisted format.
@@ -893,16 +831,49 @@ Without that reservation, restore can fail with `0xd40`.
    its next edit was rebased over the composed commit that already contained its earlier edit, so that edit was **applied twice** and the summarizer diverged from every other client.
    The rebase is safe: the newest eligible commit is within the MSN bound, so every peer has seen it, and it always survives composition.
    `trimHistory` uses the same helper.
-1. Replaces `target.change` through `replaceChangeInPlace`, clearing any inverse cached for the old change.
+1. Composes and re-tags the change, then (when failures are isolated) validates it with the summary codec.
+   Nothing has been mutated yet, so a failure here leaves the pair unchanged ([§13.5](#135-engine-failure-isolation)).
+   Then replaces `target.change` through `replaceChangeInPlace`, clearing any inverse cached for the old change.
 2. Sets `target.customMetadata` from `decideCompaction`: the returned object as `{ metadata, children: [] }`, or for `true`,
    `{ metadata: undefined, children: [currentTree, targetTree] }` (or the one that exists).
 3. Sets `target.parent = current.parent`, cutting `current` out.
 4. Removes `current` from `sequenceIdToCommit` and `commitMetadata`.
-5. Emits `ancestryCompacted(current.revision, target.revision)` so subscribed checkouts transfer repair-data cleanup ownership to the survivor.
+5. After `composeTrunkCommits` returns, `EditManager.compactHistory` emits `ancestryCompacted(current.revision, target.revision)` so subscribed checkouts transfer repair-data cleanup ownership to the survivor.
+   It is not emitted for a failed pair.
 
 `target` keeps its object identity, revision, and sequence ID, so commits pointing at it stay valid.
 
-#### 13.5 What compaction does not do
+#### 13.5 Engine-failure isolation
+
+**Problem (fixed).** An engine error during summary-time compaction (for example an assertion while composing, or a codec failure while encoding the composed change) escaped through the breaker-wrapped kernel.
+The tree was marked broken and the summary failed.
+The error was deterministic, so every later summary failed the same way: the document stopped getting summaries and every new client replayed a growing op tail.
+
+**Fix.** `SharedTreeKernel.runCompaction` passes `engineFailureIsolation` to `SharedTreeCore.compactHistory` for both triggers, which turns on `HistoryCompactionEngineOptions.isolateFailures` and the summary-codec validator.
+`EditManager.compactHistory` then:
+
+```text
+for each eligible pair (current, target):
+    pinned?                                → skip ("preservedRevision")
+    failed earlier in this session?        → skip ("previousEngineFailure"), skippedFailedPairCount++
+    policy says no?                        → keep
+    first merge: rebasePeersOnto throws?   → record, end the pass (nothing composed yet; peers stay valid)
+    composeTrunkCommits:
+        compose + changeRevision + validateComposedChange (encode/decode with the summary codec)
+        throws?                            → remember pair, failedPairCount++, continue with the next pair
+        else replaceChangeInPlace, metadata, parent relink, map cleanup
+    emit ancestryCompacted
+```
+
+- **Atomicity.** Every step that can throw runs before the first mutation (`replaceChangeInPlace`), so a failed pair is untouched.
+- **Progress.** A failed pair is not a barrier: after `(e1', e2)` fails, `(e2, e3)` can still merge, so most history is still compacted.
+- **Memory.** Failed pairs are kept in `EditManager.failedCompactionPairs` for the session only; new clients and summarizers retry once.
+- **What it does not cover.** Errors outside the engine: a manual policy throw (still breaks the tree, §7.4), and summary encoding failures not caught by the validator (the validator uses the same change codec and write version, so these should not occur).
+- **Cost.** One encode and one decode per composed pair, on the summarize path.
+
+Tests: the "engine failure isolation" group in `historyCompaction.spec.ts` and "keeps summarizing and loading when compaction fails inside the summarizer" in the e2e suite ([§21](#21-test-map)).
+
+#### 13.6 What compaction does not do
 
 - It sends no op; other clients are unaffected.
 - It does not emit `ancestryTrimmed` or release repair data during composition; the survivor owns its later cleanup.
@@ -1003,15 +974,12 @@ A mistake here does not stay local; it is written into the summary and inherited
 | Op format | v7 | v7 (no new op) | `history-compaction\|v0.1` (adds `preserveRevision`) |
 | EditManager summary format | v7 | v7 | `history-compaction\|v0.1` (adds `preservedTrunkIndices`) |
 | Trunk contents in the summary | Every retained commit | **Fewer commits; composed changes; rewritten metadata** | Same, plus pin indices |
-| Forest / detached-field index | Unchanged | **Not updated** for composed revisions (§17.1, §17.2) | Same |
+| Forest / detached-field index | Unchanged | Lookup IDs unchanged; cleanup ownership of composed-away roots moves to the survivor (fixed, §17.1, §17.2) | Same |
 | Readable by older releases | Yes | Yes | **No** |
 
 - Compaction alone uses no new format: a compacted trunk is a valid v7 trunk.
   Its risks come from **content** (composed changes and repair-data consistency), not just from the container format.
-- The pin option sets write-version overrides in `resolveFormatOptions` (`treeFactory.ts`) with `allowPossiblyIncompatibleWriteVersionOverrides`, like shared branches.
-  The new codecs are always registered for reading.
-- **Only enable pins when every client runs a version with these codecs.** A future step is to gate this on `minVersionForCollab`.
-- With `enableSharedBranches` or `enableDetachedRootEditing`, those formats win and pins are unavailable (`setRevisionPreserved` throws `UsageError`; the shared-branches codec rejects pin messages).
+- Pin formats, compatibility, and the shared-branches interaction are in [revision-preservation/DEV.md §6](./revision-preservation/DEV.md#6-persisted-format).
 
 ### 17. Data-integrity risks and fixes
 
@@ -1020,16 +988,18 @@ Severity: **High** = reproduces and can lose or misapply user data, or make clie
 The table marks implemented fixes separately from unresolved risks.
 Sections marked **Fixed** describe implemented fixes, not a guarantee that all compaction paths are safe.
 
-| # | Severity | Risk | Persisted? |
-| --- | --- | --- | --- |
-| [17.1](#171-high-composition-renumbers-detach-ids-so-repair-data-no-longer-matches) | Fixed | Detach-ID renumbering breaks rewind/restore; cached old inverses can also omit absorbed changes | Was persisted via the summarizer |
-| [17.2](#172-high-repair-data-for-composed-away-revisions-is-never-freed) | Fixed | Repair data for `current.revision` is never freed | Was persisted in later summaries |
-| [17.3](#173-medium-rolling-back-a-pin-can-diverge-from-other-clients) | Medium | Pin rollback unpins a revision others still treat as pinned | Pin state only |
-| [17.4](#174-watch-format-and-compatibility) | Watch | New formats not gated by `minVersionForCollab` | Yes |
-| [17.5](#175-watch-invariants-with-no-detection-today) | Watch | Silent trunk bookkeeping regressions | Yes |
-| [17.6](#176-fixed-idle-peer-double-apply) | Fixed | Idle peer's edit applied twice | Was persisted; fixed |
+| # | Severity | Status | Risk | Persisted? |
+| --- | --- | --- | --- | --- |
+| [17.1](#171-fixed-composition-renumbered-detach-ids-so-repair-data-no-longer-matched) | High | Fixed | Detach-ID renumbering broke rewind/restore; cached old inverses could also omit absorbed changes | Was persisted via the summarizer |
+| [17.2](#172-fixed-repair-data-for-composed-away-revisions-was-never-freed) | High | Fixed | Repair data for `current.revision` was never freed | Was persisted in later summaries |
+| [17.3](#173-medium-rolling-back-a-pin-can-diverge-from-other-clients) | Medium | Open | Pin rollback unpins a revision others still treat as pinned | Pin state only |
+| [17.4](#174-watch-format-and-compatibility) | Watch | Open | New formats not gated by `minVersionForCollab` | Yes |
+| [17.5](#175-watch-invariants-with-no-detection-today) | Watch | Open | Silent trunk bookkeeping regressions | Yes |
+| [17.6](#176-fixed-idle-peer-double-apply) | High | Fixed | Idle peer's edit applied twice | Was persisted |
+| [17.8](#178-fixed-remapped-ids-exceed-the-encoded-maximum) | High | Fixed | Remapped IDs exceeded the encoded `maxId` (`0xdbd`) | Summary failed to encode |
+| [17.10](#1710-fixed-an-engine-failure-during-summary-compaction-blocked-summaries) | High | Fixed | An engine failure during summary compaction broke the tree and blocked every later summary | No summary written |
 
-#### 17.1 High: composition renumbers detach IDs, so repair data no longer matches
+#### 17.1 Fixed: composition renumbered detach IDs, so repair data no longer matched
 
 **Status: fixed for the covered reproductions.**
 The previous `DefaultRevisionReplacer` collapsed atom namespaces as well as authored revision metadata.
@@ -1061,7 +1031,7 @@ The nine-merge workload in §22.6 also reproduces `0x928` when the former atom-r
 That is a synthetic reproduction of the same assertion and stack path, not a replay of the app's original edits.
 The rename-decoding failure remains a separate investigation.
 
-#### 17.2 High: repair data for composed-away revisions is never freed
+#### 17.2 Fixed: repair data for composed-away revisions was never freed
 
 **Status: fixed.**
 Previously, `composeTrunkCommits` deleted `current`, but only `trimHistory` emitted `ancestryTrimmed`, and only for revisions still on the trunk.
@@ -1083,10 +1053,7 @@ The detached-index unit test covers multiple roots, existing survivor-owned root
 
 #### 17.3 Medium: rolling back a pin can diverge from other clients
 
-**Where:** `SharedTreeCore.rollback` sets the preserved state to `!message.preserved`, whatever it was before.
-If the original call changed nothing (pinning an already-pinned revision), rollback unpins a revision other clients still treat as pinned.
-
-**Fix:** record the prior state in `localOpMetadata` at submit; restore it on rollback, or skip if the op was a no-op.
+Moved to [revision-preservation/DEV.md §7.1](./revision-preservation/DEV.md#71-medium-rolling-back-a-pin-can-diverge-from-other-clients).
 
 #### 17.4 Watch: format and compatibility
 
@@ -1100,12 +1067,11 @@ Fix: gate on `minVersionForCollab` before any production rollout.
 | --- | --- |
 | `EditManager.compactHistory`, after the loop | Trunk bookkeeping drifts (head changed, counts disagree, maps out of sync, a peer based below the newest eligible commit). |
 | Parent relinking in `composeTrunkCommits` | Broken trunk chain. |
-| Summary decode of `preservedTrunkIndices` | An out-of-range index throws a plain `Error` (should be an assert or `UsageError` with a string message). |
 | Summary load | Loaded trunk differs from what the summarizer wrote. |
-| Message decode and `applyStashedOp` | Unknown format version; a stashed pin that is a no-op. |
-| Summarizer-sent rejection ops | Fluid may start dropping or forbidding them. |
+| Message decode | Unknown format version. |
 
 The matching events are in [§19](#19-proposed-integrity-telemetry).
+Pin-specific invariants are in [revision-preservation/DEV.md §7.3](./revision-preservation/DEV.md#73-invariants-with-no-detection-today).
 
 #### 17.6 Fixed: idle-peer double apply
 
@@ -1139,7 +1105,9 @@ The summary regressions author 42 or 49 commits containing inserts, cross-array 
 Two later edits advance the collaboration window.
 An uncompacted control retains all revisions; manual or summary-time callback compaction combines the tagged run.
 Strict validation then checks compaction, summary encoding, reload, unchanged current content, and the exact surviving revision list.
-Before the fix, both controls pass and all four compacted cases fail with `0xdbd` in the decoder.
+These cases failed with `0xdbd` when compaction still remapped atom IDs.
+Compaction now uses the identity atom replacer (§13.3), so they **no longer exercise the maxId fix**; they now guard stable identities.
+The regression for the maxId fix itself is the modular-family test above, plus the deliberate stale-maximum fixture below.
 
 This reproduces and fixes a rename collision, not every cause of that assertion.
 The application must rebuild and consume the fixed package.
@@ -1154,18 +1122,90 @@ The covered repair-data defects in §17.1–17.2 are fixed separately; the appli
 These are separate defects, even when they produce the same assertion.
 All regressions listed as active below run without skipping integrity failures.
 The heap measurements and logged walkthrough are optional measurements/examples, not disabled correctness regressions.
+Read [§5.1–5.5](#51-reading-a-composed-history) first if composition, repair IDs, inverses, or peer branches are unfamiliar.
+Each bug title links to a worked example below, in the same order as the table.
+The examples use small histories to explain the failure mechanism; the regression column names the executable coverage.
 
 | Bug and status | Why compaction caused it | Implemented fix | Corresponding regression |
 | --- | --- | --- | --- |
-| **Stale maximum after ID remapping — fixed** (`0xdbd`) | Collapsing revision namespaces allocated larger local IDs but kept the old `maxId`. The persisted decoder then reused an allocated ID for a temporary node, creating incompatible rename mappings. | `ModularChangeFamily.changeRevision` tracks the highest allocated ID, including range endpoints. Current compaction avoids remapping, but other callers still need this fix. | [Modular family tests](../../src/test/feature-libraries/modular-schema/modularChangeFamily.spec.ts): `raises maxId when collapsing revisions allocates new local IDs`. [History tests](../../src/test/shared-tree/historyCompaction.spec.ts): the 42/49 mixed-edit round-trips and `encodes and reloads 42 mixed edits using stale maximum compaction`; the latter deliberately corrupts the maximum and requires the original rename assertion plus its conflicting mappings and codec. |
-| **Repair lookup identities changed — fixed for the covered reproductions** (`0x928`, `0x92a`, restore failures) | A change's atom IDs were rewritten to the survivor's revision, but the forest, later commits, forks, and revertibles still used the original detached-node IDs. The nodes could remain stored while becoming unreachable by the required identity. | Preserve original atom IDs and normalize only authored revision metadata. Do not rename or delete repair-index entries during composition. | [History tests](../../src/test/shared-tree/historyCompaction.spec.ts): `preserves rewind, restore and existing Undo after manual compaction and reload` and its summary variant, plus the 42/49 mixed-edit rewind/restore checks. [E2E tests](../../../../test/test-end-to-end-tests/src/test/treeHistoryCompaction.spec.ts): all four `controlled lifecycle matrix` cases and the three `retained navigation and persisted replacements` cases (§22.6). Restoring the former transformation reproduces `0x928` after nine manual merges. |
-| **Inverse aliases missing for preserved namespaces — fixed** (`0xd40`) | After keeping atom identities, a survivor authored as R2 could still contain a move ID from R1. Inversion reserved aliases only for authored revisions, then requested an unreserved alias for R1. | Reserve namespaces represented in `crossFieldKeys` as well as authored revision metadata before inversion. | [History tests](../../src/test/shared-tree/historyCompaction.spec.ts): the manual/summary retained-state restore tests and 42/49 mixed-edit restore checks. These restore to the initial state on source and reloaded clients, not just verify current content. |
-| **Composed-away repair roots never collected — fixed** | Roots still named the removed revision as their cleanup owner. That revision would never appear in a later trim notification because compaction had removed it from the trunk. | Emit `ancestryCompacted(removed, survivor)` and transfer cleanup ownership in every subscribed checkout, keeping lookup identities unchanged. Normal trimming later releases the roots. | [History tests](../../src/test/shared-tree/historyCompaction.spec.ts): `releases repair roots from composed-away revisions when the surviving history is trimmed`. [Detached-index tests](../../src/test/core/tree/detachedFieldIndex.spec.ts): `transfers cleanup ownership for all roots without changing their identities`. |
-| **Cached inverse covers only the former survivor — fixed** | Rebase can cache an inverse on a commit object. Compaction kept that object but replaced its change with a larger composed change, leaving the old inverse cached. Rewind could omit absorbed edits. | Replace the change through `replaceChangeInPlace`, which clears the cached rollback before subsequent history diffs. | [EditManager tests](../../src/test/shared-tree-core/edit-manager/editManagerCorrectness.test.ts): `invalidates cached rollback data when the surviving commit absorbs older changes`. It warms the cache through rebase, disposes the forks, compacts four commits, and requires `[-4, -3, -2, -1]` rather than the former `[-4]`. |
-| **Captured history callback accepts a mutated path — fixed** (`0x7ce` in the current reproduction) | A captured `revertTo` callback checked the head object and trim flags. Compaction could keep the same head and commit objects while changing a path entry's change, so the callback passed its check and composed a stale path. | Snapshot the changes when creating the callback and reject changed entries with the existing `UsageError` contract before applying anything. A freshly acquired callback uses the current path. | [History tests](../../src/test/shared-tree/historyCompaction.spec.ts): `rejects a stale captured revertTo callback` and `accepts a current captured revertTo callback`. They also verify unchanged content after rejection, successful fresh restore, and subsequent replicated edits. |
-| **Idle peer retains a composed-away base — fixed** | A remote peer's branch could still point to its last sequenced commit after compaction removed that commit from the trunk. Its next edit was then rebased over a composed change containing its earlier edit, applying that earlier edit twice. | Rebase peer branches onto the newest eligible survivor before any composition. | [EditManager tests](../../src/test/shared-tree-core/edit-manager/editManagerCorrectness.test.ts): `keeps an idle peer's branch consistent when its last commit is composed away` and its concurrent-peer-edit variant. The E2E manual/summary tests also check subsequent collaboration (§17.6). |
+| **[Stale maximum after ID remapping](#example-1-stale-maximum-after-id-remapping) — fixed** (`0xdbd`) | Collapsing revision namespaces allocated larger local IDs but kept the old `maxId`. The persisted decoder then reused an allocated ID for a temporary node, creating incompatible rename mappings. | `ModularChangeFamily.changeRevision` tracks the highest allocated ID, including range endpoints. Current compaction avoids remapping, but other callers still need this fix. | [Modular family tests](../../src/test/feature-libraries/modular-schema/modularChangeFamily.spec.ts): `raises maxId when collapsing revisions allocates new local IDs`. [History tests](../../src/test/shared-tree/historyCompaction.spec.ts): `encodes and reloads 42 mixed edits using stale maximum compaction`, which deliberately corrupts the maximum and requires the original rename assertion plus its conflicting mappings and codec. The 42/49 mixed-edit round-trips no longer exercise this fix, because compaction no longer remaps IDs (§17.8). |
+| **[Repair lookup identities changed](#example-2-repair-lookup-identities-changed) — fixed for the covered reproductions** (`0x928`, `0x92a`, restore failures) | A change's atom IDs were rewritten to the survivor's revision, but the forest, later commits, forks, and revertibles still used the original detached-node IDs. The nodes could remain stored while becoming unreachable by the required identity. | Preserve original atom IDs and normalize only authored revision metadata. Do not rename or delete repair-index entries during composition. | [History tests](../../src/test/shared-tree/historyCompaction.spec.ts): `preserves rewind, restore and existing Undo after manual compaction and reload` and its summary variant, plus the 42/49 mixed-edit rewind/restore checks. [E2E tests](../../../../test/test-end-to-end-tests/src/test/treeHistoryCompaction.spec.ts): all four `controlled lifecycle matrix` cases and the three `retained navigation and persisted replacements` cases (§22.6). Restoring the former transformation reproduces `0x928` after nine manual merges. |
+| **[Inverse aliases missing for preserved namespaces](#example-3-inverse-aliases-missing-for-preserved-namespaces) — fixed** (`0xd40`) | After keeping atom identities, a survivor authored as R2 could still contain a move ID from R1. Inversion reserved aliases only for authored revisions, then requested an unreserved alias for R1. | Reserve namespaces represented in `crossFieldKeys` as well as authored revision metadata before inversion. | [History tests](../../src/test/shared-tree/historyCompaction.spec.ts): the manual/summary retained-state restore tests and 42/49 mixed-edit restore checks. These restore to the initial state on source and reloaded clients, not just verify current content. |
+| **[Composed-away repair roots never collected](#example-4-composed-away-repair-roots-never-collected) — fixed** | Roots still named the removed revision as their cleanup owner. That revision would never appear in a later trim notification because compaction had removed it from the trunk. | Emit `ancestryCompacted(removed, survivor)` and transfer cleanup ownership in every subscribed checkout, keeping lookup identities unchanged. Normal trimming later releases the roots. | [History tests](../../src/test/shared-tree/historyCompaction.spec.ts): `releases repair roots from composed-away revisions when the surviving history is trimmed`. [Detached-index tests](../../src/test/core/tree/detachedFieldIndex.spec.ts): `transfers cleanup ownership for all roots without changing their identities`. |
+| **[Cached inverse covers only the former survivor](#example-5-cached-inverse-covers-only-the-former-survivor) — fixed** | Rebase can cache an inverse on a commit object. Compaction kept that object but replaced its change with a larger composed change, leaving the old inverse cached. Rewind could omit absorbed edits. | Replace the change through `replaceChangeInPlace`, which clears the cached rollback before subsequent history diffs. | [EditManager tests](../../src/test/shared-tree-core/edit-manager/editManagerCorrectness.test.ts): `invalidates cached rollback data when the surviving commit absorbs older changes`. It warms the cache through rebase, disposes the forks, compacts four commits, and requires `[-4, -3, -2, -1]` rather than the former `[-4]`. |
+| **[Captured history callback accepts a mutated path](#example-6-captured-history-callback-accepts-a-mutated-path) — fixed** (`0x7ce` in the current reproduction) | A captured `revertTo` callback checked the head object and trim flags. Compaction could keep the same head and commit objects while changing a path entry's change, so the callback passed its check and composed a stale path. | Snapshot the changes when creating the callback and reject changed entries with the existing `UsageError` contract before applying anything. A freshly acquired callback uses the current path. | [History tests](../../src/test/shared-tree/historyCompaction.spec.ts): `rejects a stale captured revertTo callback` and `accepts a current captured revertTo callback`. They also verify unchanged content after rejection, successful fresh restore, and subsequent replicated edits. |
+| **[Idle peer retains a composed-away base](#example-7-idle-peer-retains-a-composed-away-base) — fixed** | A remote peer's branch could still point to its last sequenced commit after compaction removed that commit from the trunk. Its next edit was then rebased over a composed change containing its earlier edit, applying that earlier edit twice. | Rebase peer branches onto the newest eligible survivor before any composition. | [EditManager tests](../../src/test/shared-tree-core/edit-manager/editManagerCorrectness.test.ts): `keeps an idle peer's branch consistent when its last commit is composed away` and its concurrent-peer-edit variant. The E2E manual/summary tests also check subsequent collaboration (§17.6). |
+| **[Engine failure blocked summaries](#example-8-engine-failure-blocked-summaries) — fixed** (§17.10) | Compaction runs inside the breaker-wrapped `summarizeCore`. An engine error escaped, broke the tree, and failed the summary; being deterministic, it failed every later summary too. | Per-pair isolation with a pre-mutation codec round-trip; failed pairs skipped for the session; status `partialFailure` (§13.5). | [History tests](../../src/test/shared-tree/historyCompaction.spec.ts): `engine failure isolation` group (manual and summary × compose and validate failures; no retry of a failed pair; validator runs for every composed change). [E2E tests](../../../../test/test-end-to-end-tests/src/test/treeHistoryCompaction.spec.ts): `keeps summarizing and loading when compaction fails inside the summarizer`. |
 
-**Example of the identity and lifetime distinction:**
+##### Example 1: Stale maximum after ID remapping
+
+**Setup:** two builds have IDs `(R1, 0)` and `(R2, 0)`, with `maxId: 0`.
+These IDs do not collide because their revision namespaces differ.
+
+```text
+Collapse both namespaces into R3:
+    (R1, 0) -> (R3, 0)
+    (R2, 0) -> (R3, 1)   must allocate 1 to keep the IDs distinct
+
+Without fix: maxId = 0   decoder can allocate temporary local ID 1
+With fix:    maxId = 1   decoder allocates above 1
+```
+
+**What breaks without the fix:** the decoder can reuse an occupied ID.
+In the mixed-edit reproduction, the collision produces incompatible rename mappings and `0xdbd`; the summary cannot be encoded successfully.
+The two-build example is the focused allocation regression, not a claim that two builds alone reproduce that rename assertion.
+
+**Why this fix is needed:** any caller that allocates replacement IDs must report their actual maximum, including the end of an allocated range.
+Turning off codec validation only hides the collision.
+Current compaction preserves IDs, so the normal 42/49-edit round-trips cover stable identities instead; the modular test and deliberately stale-maximum fixture cover this defect.
+
+##### Example 2: Repair lookup identities changed
+
+**Setup:** H0 contains `[a, b, c]`; H1 deletes `a` under `(R1, 0)`; H2 deletes `b` under `(R2, 0)`.
+After combining H1 into H2*, the visible content is still `[c]`.
+Now ask a new private fork to read H0, or restore H0 after loading the summary.
+
+```text
+Forest still stores:       a at (R1, 0), b at (R2, 0)
+Before fix: composed IDs   rewritten into R2's namespace
+            inverse       asks for a under a rewritten ID, not (R1, 0)
+            result        required repair lookup fails; a is still stored
+
+With fix: composed IDs    remain (R1, 0) and (R2, 0)
+          inverse         can find a and b
+          restored H0     [a, b, c]
+```
+
+**Why this fix is needed:** removing H1 as a selectable history point does not remove the need to reverse its deletion when restoring H0.
+Only the authored revision becomes R2.
+Renaming the repair index to match the rewritten change is not sufficient either: later commits, existing forks, and undo entries can still use `(R1, 0)`.
+Keep the original lookup identities everywhere.
+This is a lookup failure, not proof that repair data was physically collected.
+
+##### Example 3: Inverse aliases missing for preserved namespaces
+
+**Setup:** H1 moves node `a` from `left` to `right`; H2 makes another edit.
+H2* is authored as R2 but, after the stable-identity fix, still contains H1's move ID `(R1, 0)`.
+Its `crossFieldKeys` describe the move's source/destination coordination across fields.
+
+```text
+Restore a state before the move:
+    inverse needs to coordinate moving a from right back to left
+    inverse requests an alias for the preserved move ID (R1, 0)
+
+Before fix: reserve authored namespace R2 only -> R1 is unreserved -> 0xd40
+With fix:   reserve authored R2 and crossFieldKeys namespace R1 -> alias available
+```
+
+**Why this fix is needed:** preserving an ID solves the forest lookup problem, but the inverse allocator must also support that ID's namespace.
+This is a separate failure in constructing the inverse, not a missing node in the forest.
+Reserving namespaces from `crossFieldKeys` supplies the required ranges without rewriting the preserved IDs or claiming that R1 is another authored revision.
+
+##### Example 4: Composed-away repair roots never collected
+
+**Setup:** use the same two deletions as example 2.
+This time all lookup identities are correct, so restoring H0 works.
+The question is what happens after the application no longer retains this history.
 
 ```text
 H0: [a, b, c]
@@ -1176,15 +1216,113 @@ Compact H1 into H2*:
     H0 and H2* remain readable; H1 is no longer a retained point.
     Keep both original repair lookup IDs.
     Transfer (R1, 0)'s cleanup owner to R2.
-    Recompute any cached inverse for H2*.
 
 Later trim H2*:
     Release the roots now owned by R2, subject to normal correctness boundaries.
 ```
 
-Changing lookup identity and transferring cleanup ownership are not interchangeable.
-The former broke historical reconstruction; omitting the latter leaked repair data.
-Keeping roots forever or skipping compaction would hide one symptom without implementing the required lifetime.
+**What breaks without the fix:** `a` keeps cleanup owner R1.
+Later trimming reports the surviving R2, but never R1: H1 is already gone from the trunk.
+The root owned by R1 remains indefinitely and is included in later summaries.
+
+**Why this fix is needed:** `ancestryCompacted(R1, R2)` transfers responsibility for later collection, not the root's lookup identity.
+Emitting `ancestryTrimmed(R1)` during compaction would free `a` too early and break restoration of H0.
+Keeping all roots forever avoids that failure but leaks memory and summary storage.
+The cleanup regression therefore checks both stages: two roots immediately after the merge, then no roots after retention advances and the surviving history is trimmed.
+
+##### Example 5: Cached inverse covers only the former survivor
+
+**Setup:** four commits perform edits `[1]`, `[2]`, `[3]`, and `[4]`.
+A divergent fork rebase computes and caches H4's rollback `[-4]`.
+Dispose the forks so their bases no longer block compaction, then combine all four commits into H4*.
+
+```text
+H4* change:                     [1, 2, 3, 4]
+H4* object:                     same object as the original H4
+Before fix, cached inverse:     [-4]
+Correct inverse after the fix:  [-4, -3, -2, -1]
+```
+
+**What breaks without the fix:** rewinding from H4* to the base undoes only edit 4.
+It omits the three absorbed edits, even though the current content was unchanged by compaction.
+
+**Why this fix is needed:** a cache belongs to the change it was computed from, not merely to the surviving object or revision.
+`replaceChangeInPlace` clears the old rollback when replacing the change.
+The next history diff computes the complete inverse.
+This does not replace the alias fix: the cache must be invalidated, and the newly computed inverse must still support every preserved namespace.
+
+##### Example 6: Captured history callback accepts a mutated path
+
+**Setup:** H0 is `[]`; H1 appends `a`; H2 appends `b`.
+Acquire `H0.revertTo` while the path is H0 → H1 → H2, but do not invoke it yet.
+Then combine H1 into H2*.
+
+```text
+At capture:   path includes H1 (append a), H2 (append b)
+After merge:  H1 is removed; the same H2 object now appends a, then b
+Head check:   still sees the same H2 object, so identity alone misses the change
+```
+
+**What breaks without the fix:** the callback accepts a path captured before compaction even though a path entry now describes a different change.
+In the regression this reaches internal assertion `0x7ce`, rather than rejecting stale use at the API boundary.
+
+**Why this fix is needed:** invalidating the survivor's cached inverse does not refresh a callback already held by application code.
+The callback snapshots path changes and checks them before applying anything.
+The stale callback now throws `UsageError` and leaves `[a, b]` unchanged.
+Acquire a fresh `H0.revertTo` from the current history; it can restore `[]`, and later replicated edits still work.
+An unchanged path remains valid, as the companion regression verifies.
+
+##### Example 7: Idle peer retains a composed-away base
+
+**Setup:** peer B authors edit 1.
+Other peers author edits 2, 3, and 4; B receives them but sends no new edit yet.
+On the compacting client, the internal branch tracked for B can still end at B's last authored commit H1.
+Advance the collaboration window so H1–H4 are eligible.
+
+```text
+Before: trunk          H0 -- H1(B: 1) -- H2(2) -- H3(3) -- H4(4)
+        B's branch           ^ last authored commit
+
+After composition without peer rebase:
+        trunk          H0 ------------------------------- H4*([1, 2, 3, 4])
+        B's branch     still points to the removed H1 object
+```
+
+**What breaks without the fix:** B now sends edit 5 based on the state after edits 1–4.
+Reconciling B's stale branch with the composed trunk can treat edit 1 as part of the changes to apply again.
+That applies B's earlier edit twice on the compacting client, causing divergence; a summary can carry the bad peer bookkeeping to a loading client.
+
+**Why this fix is needed:** eligibility proves the history is old enough to rewrite, not that all internal references have already moved.
+Rebase B's tracked branch onto H4 **before** composition.
+H4 survives as H4*, so B's next edit yields exactly `[1, 2, 3, 4, 5]` once each.
+The regression checks this on both the compacting manager and a summary-loaded manager, including a variant where B's earlier edit was concurrent.
+The numbers are the test's edit intentions, not application array values.
+
+##### Example 8: Engine failure blocked summaries
+
+**Setup:** H1, H2, and H3 are eligible, and the app policy approves merging them.
+The engine throws while composing H1 into H2 or validating the proposed combined change.
+The policy itself did not throw.
+
+```text
+Before fix:
+    engine error escapes summarizeCore
+    -> breaker marks the tree broken
+    -> summary fails
+    -> replacement summarizer loads the same history and fails again
+
+With fix:
+    compose and codec-validate before mutating H2
+    -> failure leaves H1 and H2 unchanged; remember the failed pair
+    -> continue the pass (H2 and H3 can still be considered)
+    -> write a loadable summary; report partialFailure
+```
+
+**Why this fix is needed:** optional history reduction must not prevent the document from getting summaries.
+Catching an error only after changing the trunk would risk persisting a partly updated pair.
+Pre-mutation validation and per-pair isolation preserve the pair's original history on failure.
+The session remembers failed pairs to avoid repeatedly attempting the same failure; a new summarizer session retries, so a fixed engine can later compact them.
+This isolates the covered engine failures; it does not disable codec checks, ignore arbitrary corruption, or change the policy-error contract.
 
 **Rejected fix, not shipped behavior:** retaining several authored revisions on the composed commit failed rollback's single-authored-revision assertion (`0xdad`).
 That experiment was discarded.
@@ -1198,7 +1336,23 @@ These injected-failure tests check diagnostics; §22.6 separately checks real co
 **Still unproven or unresolved:** the app's original document/edit sequence and exact rename-decoding conflict have not been replayed.
 The reported cross-field ownership mismatch is not independently reproduced.
 Passing optional-replacement/lazy-GC tests does not establish that every cause of a rename assertion is fixed, or that it shares a cause with `0x928`.
-The pin rollback bug (§17.3) and format-compatibility risk (§17.4) also remain open; this work does not claim to fix them.
+The pin rollback bug ([revision-preservation §7.1](./revision-preservation/DEV.md#71-medium-rolling-back-a-pin-can-diverge-from-other-clients)) and format-compatibility risk (§17.4) also remain open; this work does not claim to fix them.
+
+#### 17.10 Fixed: an engine failure during summary compaction blocked summaries
+
+**Symptom.** If the compaction engine threw while the summarizer compacted (an assertion while composing, or a codec error for the composed change), the error escaped `summarizeCore`.
+`SharedTreeKernel` is `@breakingClass`, so the tree was marked broken and the summary failed.
+The failure is deterministic for a given history, so the next summarizer failed the same way: the document stopped getting summaries, and every new client replayed an ever-growing op tail.
+The previously documented "summary-time errors are caught" covered only **policy** errors.
+
+**Fix** (§13.5): isolate engine failures per pair in `EditManager`, which is not breaker-wrapped.
+Each composed change is round-tripped through the summary codec before the trunk is mutated, so encoding problems surface per pair.
+A failed pair stays uncombined, is remembered for the session, and the summary is still written.
+A new summarizer session retries once; if the bug is fixed by then, the pair is compacted.
+
+**Verification.** The e2e test patches the summarizer's `compose` to throw for `composeTrunkCommits` calls.
+It requires a `partialFailure` event (`failedPairCount: 8`), an unbroken summarizer, a summary that loads with matching content, and a second pass that skips the 8 remembered pairs.
+It then restores `compose` in a new summarizer session and requires 8 pairs to be removed.
 
 ---
 
@@ -1224,8 +1378,8 @@ It replaces the experimental `HistoryCompactionBeforeSummary` and `HistoryCompac
 | Field | Meaning |
 | --- | --- |
 | `trigger` | `"manual"` or `"summary"` (the configured `summarizeCore` hook, including GC handle collection). The execution path, not the client role. |
-| `status` | `"success"` or `"failure"`. |
-| `failureSource` | `"policy"` (thrown error or invalid return) or `"engine"`. Unset on success. |
+| `status` | `"success"`, `"partialFailure"` (the engine failed on at least one pair, was isolated, and the pass continued or ended cleanly), or `"failure"` (an error stopped the pass). A pass that only skips pairs remembered as failed reports `"success"` with `skippedFailedPairCount > 0`. |
+| `failureSource` | `"policy"` (thrown error or invalid return) or `"engine"`. Unset on success. The engine error is attached to `"engine"` events only; a policy failure never carries an error, even if an engine failure was isolated earlier in the same pass (that one is still counted in `failedPairCount`). |
 | `durationMs` | Pass time including policy calls (monotonic clock). Excludes summary encoding and upload. |
 | `removedCount` | Completed compositions, including those before a failure. Equals a successful manual call's return value. |
 | `policyCallCount` | Policy calls, including the one that throws or returns an invalid value. |
@@ -1236,6 +1390,9 @@ It replaces the experimental `HistoryCompactionBeforeSummary` and `HistoryCompac
 | `eligibleCommitCount` | Trunk commits eligible this pass (below the window and every fork base). |
 | `eligiblePairCount` | `eligibleCommitCount - 1`, or 0. |
 | `preservedPairCount` | Pairs skipped because a commit is pinned. |
+| `failedPairCount` | Pairs whose composition, validation, or peer rebase threw and was isolated this pass. |
+| `isolatedFailureStage` | Stage of the first isolated engine failure this pass (`"composition"` or `"peerRebase"`), even when the pass later ends in a policy failure. `failureStage` is the stage of the outcome reported by `status`. |
+| `skippedFailedPairCount` | Pairs skipped without calling the policy because they failed earlier in this session. |
 | `peerBranchCount` | Remote branches rebased before the first composition; 0 when nothing composed. |
 | `operationId`, `treeId`, `sessionId`, `isSummarizer` | Correlation coordinates and client role, available even when verbose tracing is disabled. The operation ID is local to a tree/session; join using all three identifiers. |
 | `summaryOperationId` | The enclosing local summary attempt, for summary-triggered passes. Not an uploaded summary or acknowledgement ID. |
@@ -1248,14 +1405,15 @@ It replaces the experimental `HistoryCompactionBeforeSummary` and `HistoryCompac
 | `oldestBlockingForkId`, `oldestBlockingForkAgeMs` | Identifier and monotonic age of the longest-lived registered branch at the oldest base. Join to fork lifecycle events using tree/session/fork IDs. A branch at that base only limits this pass when `limitingBoundary` is `"localFork"` or `"both"`. |
 | `collaborationBoundLag` | Nonnegative sequence-number distance from trunk head to the collaboration upper bound. This is not a commit count or elapsed time. |
 | `historyCountBefore`, `historyCountAfter` | Available main-branch commit counts, including unsequenced commits. Their difference is `removedCount`, including partial progress before a failure. |
-| `zeroRemovalReason` | Only present for zero removals: the limiting boundary when there are no pairs; `"insufficientRetainedHistory"` when all available history is eligible but has fewer than two commits; `"revisionPreserved"`, `"appPolicyRejected"`, or `"mixedPairDisposition"` for eligible pairs; `"failure"` if the pass failed. |
-| `failureStage` | Only present on failure: `"eligibility"`, `"policy"`, `"peerRebase"`, or `"composition"`. Policy failure takes precedence over the later engine stage. Summary encoding happens after the pass and is traced separately. |
+| `zeroRemovalReason` | Only present for zero removals: the limiting boundary when there are no pairs; `"insufficientRetainedHistory"` when all available history is eligible but has fewer than two commits; `"revisionPreserved"`, `"previousEngineFailure"` (every pair failed earlier in this session), `"appPolicyRejected"`, or `"mixedPairDisposition"` for eligible pairs; `"failure"` if the pass failed or had an isolated engine failure (`"partialFailure"`). |
+| `failureStage` | Present on `"failure"` and `"partialFailure"`: `"eligibility"`, `"policy"`, `"peerRebase"`, or `"composition"` (which includes validation). Policy failure takes precedence over the later engine stage; for `"partialFailure"` it is the first isolated stage. Summary encoding happens after the pass and is traced separately. |
 
 Invariants: `removedCount = defaultMergeCount + replacementMergeCount`;
-with no failure, `eligiblePairCount = preservedPairCount + policyCallCount`.
+with no `"failure"`, `eligiblePairCount = preservedPairCount + skippedFailedPairCount + policyCallCount`.
 
 Privacy: app policy errors are **not** passed to the logger (no message or stack).
-Engine failures attach the internal error, as other SharedTree error events do.
+Engine failures attach the internal error, as other SharedTree error events do; `"partialFailure"` is sent with the error category.
+The diagnostic trace (§18.3) records `CompactionPairFailed` (with `stage`) and `CompactionPairSkipped` with reason `"previousEngineFailure"`.
 
 Reading the event:
 
@@ -1285,15 +1443,7 @@ Estimated retained bytes are not available: commit counts and returned-metadata 
 
 #### 18.2 Pin events
 
-| Event | Sent by | Fields |
-| --- | --- | --- |
-| `PreserveRevisionIgnored` | Any client that processes a pin for a revision it no longer has | `isSummarizer`, `rejectionSent` (only the summarizer sends one), `local` (whether the pin was this client's own) |
-| `PreserveRevisionRejected` | Every client that processes a rejection op | `wasPreserved` (whether it raised the app event), `local` |
-
-On an interactive client, `PreserveRevisionIgnored` with `rejectionSent: false` is harmless.
-In the summarizer's logs it means a requested checkpoint was already gone.
-
-The app event `revisionPreservationRejected` is the app-visible signal; telemetry is for operators.
+Moved to [revision-preservation/DEV.md §8.1](./revision-preservation/DEV.md#81-implemented-events).
 
 #### 18.3 Opt-in history diagnostic trace
 
@@ -1423,20 +1573,18 @@ The existing aggregate `HistoryCompaction` and preservation telemetry remains un
 
 | Event | Emitted from | Fields | Detects |
 | --- | --- | --- | --- |
-| `HistoryCompaction:RevisionRemap` | `composeTrunkCommits`, after `changeRevision` | `renumberedIdCount` (returned by the replacer), `detachedRootsForCurrent`, `detachedRootsForTarget` (`removedRoots.getRootsLastTouchedByRevision`) | 17.1 early warning: non-zero renumbering with detached roots |
+| `HistoryCompaction:RevisionRemap` | — | — | **Obsolete**: compaction no longer remaps atom IDs (identity replacer, §13.3), so there is nothing to count. Kept only as a record. |
 | `RevertTo:MissingRepairData` | `TreeCheckout` revert path, before `0x8cd` would fire | `pathLength`, `compactedCommitCount`, missing `(revision, localId)` | 17.1 user impact |
 | `HistoryCompaction:OrphanedRepairData` | `composeTrunkCommits` | `rootCount` for `current.revision` | 17.2 |
 | `DetachedFieldIndex:SizeAtSummary` | Forest summarizer | `entryCount`, `oldestReferencedRevisionOlderThanTrunkBase` | 17.2 leak in storage |
-| `PreserveRevision:RollbackStateUnknown` | `SharedTreeCore.rollback` | `preserved`, `priorState` | 17.3 |
-| `PreserveRevision:RejectionPendingAtSummary` | Summarizer, in `summarizeCore` | `pendingRejectionCount` (rejections sent but not yet sequenced) | Lost rejection on summarizer handoff ([§11.7](#117-op-leaks-and-lost-rejections)) |
-| `PreserveRevision:DuplicateRejection` | `processPreserveRevisionRejection` | `local` (sent when the revision was not preserved and no pin for it is pending) | Duplicate rejections or app retry loops ([§11.7](#117-op-leaks-and-lost-rejections)) |
 | `HistoryCompaction:InvariantViolated` (on failure only) | End of `compactHistory` | `headRevisionUnchanged`, trunk length delta vs `removedCount`, map sizes equal, `minPeerBaseSeq >= newestEligibleSeq`, `minimumSequenceNumber` | 17.5 |
 | `HistoryCompaction:TrunkChainBroken` | `composeTrunkCommits` | Head does not reach `trunkBase` within trunk length | 17.5 |
-| `EditManagerSummary:PreservedIndexOutOfRange` | Summary decode | `index`, `trunkLength`, `formatVersion` | 17.5 |
 | `EditManagerSummary:LoadMismatch` | Summary load | `trunkLength` and trunk-revision hash written vs loaded (needs a summary change) | 17.5 |
 | `TreeOp:UnsupportedFormatVersion`, `PreserveRevision:StashedNoop` | Message decode, `applyStashedOp` | `version`, `supportedVersions`; `preserved` | 17.4, 17.5 |
 | `SharedTree:FormatSelected` (once per load) | `treeFactory.ts` | `editManagerFormat`, `messageFormat`, `minVersionForCollab` | 17.4 |
 | Extra `HistoryCompaction` fields | `runCompaction` | `rejectedReason` counts (for example `"detach"`) | Effect of the 17.1 short-term fix |
+
+Proposed pin events (`PreserveRevision:*`, `EditManagerSummary:PreservedIndexOutOfRange`) are in [revision-preservation/DEV.md §8.2](./revision-preservation/DEV.md#82-proposed-events).
 
 Revisions in proposed events must be logged only in a privacy-safe form (or omitted), consistent with §18.
 
@@ -1446,16 +1594,14 @@ Revisions in proposed events must be logged only in a privacy-safe form (or omit
 | --- | --- | --- | --- |
 | Compaction is running | `HistoryCompaction` with `trigger: "summary"` from summarizer sessions | Regular events with `removedCount > 0` | No events: option not configured, logger not attached, or no new ops |
 | Policy health | `status: "failure"`, `failureSource: "policy"` | ~0 | App bug; summaries still written |
-| Engine health | `failureSource: "engine"` | 0 | SharedTree bug; attached error |
+| Engine health | `failureSource: "engine"`; `status: "partialFailure"` and `failedPairCount` | 0 | SharedTree bug; attached error. Summaries are still written; a growing `skippedFailedPairCount` means history is not being compacted |
 | Cost | `durationMs`, `policyCallCount` vs `eligibleCommitCount` | Bounded by retained commits | Growing with history: needs option e ([§25](#25-api-review-findings-and-options)) |
 | Policy effectiveness | `removedCount / eligiblePairCount` | App-specific | Near 0: metadata missing (`minVersionForCollab < 2.117`?) |
 | Metadata growth | `replacementMetadataLength` | Stable per pass | Growing: replacement objects accumulating |
 | Pins blocking | `preservedPairCount` | Small | Large: many pins prevent compaction |
+| Pin health | Lost checkpoints, rejection delivery, retry loops | — | See [revision-preservation/DEV.md §8.3](./revision-preservation/DEV.md#83-how-to-monitor-a-rollout) |
 | Peer safety | `peerBranchCount` | Any | Combine with content-divergence reports |
-| Lost checkpoints | `PreserveRevisionIgnored` with `isSummarizer: true`; `PreserveRevisionRejected` with `wasPreserved: true` | Rare | Pinning too late; consider option 4 or metadata tags |
-| Rejection delivery | `rejectionSent: true` not followed by `PreserveRevisionRejected` | Always followed | Summarizer ops dropped or forbidden, or lost on handoff ([§11.7](#117-op-leaks-and-lost-rejections)) |
-| Retry loops | `PreserveRevisionRejected` count per document and session; `DuplicateRejection` (proposed) | Rare | App re-pins after rejection |
-| Corruption (once §19 lands) | `RevisionRemap`, `OrphanedRepairData`, `InvariantViolated`, `RevertTo:MissingRepairData` | 0 for invariant/missing events | Stop rollout |
+| Corruption (once §19 lands) | `OrphanedRepairData`, `InvariantViolated`, `RevertTo:MissingRepairData` | 0 for invariant/missing events | Stop rollout |
 | Zero-removal diagnosis | Zero-removal rate grouped by `zeroRemovalReason`, trigger, and client role | App-specific; repeated no-ops are diagnostic, not automatically errors | Sustained local-fork protection, collaboration lag, pins, or policy rejection |
 | Eligibility | `eligibleCommitCount / retainedCommitCount`, when retained count is nonzero | App-specific | Low ratio: inspect `limitingBoundary`; use the separate unsequenced count |
 | Fork retention | `oldestBlockingForkAgeMs`, oldest base, and matching creation/disposal events | Branches release when their owners finish | Old base and growing age when a local fork actually limits the pass |
@@ -1493,11 +1639,12 @@ Calls to the `summarize` helper summarize the chosen tree directly.
 | commit metadata given to the policy | cannot distinguish default-compacted metadata from a nested transaction; cannot revert, and its parents reflect the history as it is being compacted; offers each commit once it leaves the collaboration window…; keeps every original commit's metadata in customTree…; when the policy returns the combined commit's metadata (group); with the default merge, a rule that needs the start of a run cannot bound it | Policy inputs, worked example, option b |
 | with a retention limit | only compacts the commits that the retention limit keeps; keeps more points in time within the same limit when compacting | [§8.4](#84-retention-limit-and-compaction-together) |
 | telemetry | does not report a summary pass when no policy is configured; reports completed default and replacement merges; distinguishes no pairs, policy rejection, preserved revisions, and mixed pair dispositions; counts unsequenced local edits; correlates normal fork inventory and lifecycle without verbose tracing; reports partial progress and policy failure stages (manual and summary) | [§18.1](#181-historycompaction) |
+| telemetry › engine failure isolation | skips a pair whose composition / validation fails (manual and summary): tree not broken, 3 of 4 removed, `partialFailure`, reload and collaboration continue; does not retry a failed pair in a later pass (manual and summary); does not attach an isolated engine error to a later policy failure; validates every composed change against the summary codec | Engine-failure isolation ([§13.5](#135-engine-failure-isolation), [§17.10](#1710-fixed-an-engine-failure-during-summary-compaction-blocked-summaries)). Failures are injected by patching `compose` or the validator; the isolation logic itself is real. |
 | retained-state integrity | manual and summary compaction with rewind, restore, retained preview, Undo/Redo, summary reload, replicated restore; cleanup after retention advances; current and stale captured `revertTo` callbacks | Stable repair identities, cleanup ownership, and safe callback invalidation (§17.1–17.2) |
 | mixed-edit summary round-trip | 42 and 49 commits, uncompacted controls and manual/summary callback compaction; strict validation, surviving revisions, content, reload, initial-state rewind and restore; deliberate stale-maximum diagnostic fixture | Stable identities through inserts, moves, nested edits, and deletes; rename-conflict diagnostics (§17.8) |
 | diagnostic tracing | disabled by default; correlates pair decisions and completed merges; explains retention and fork bounds; traces summary policy skips, summarizer encoding and reload, preservation, and partial failures; excludes application data; tolerates a throwing diagnostic sink | [§18.3](#183-opt-in-history-diagnostic-trace) |
 | policy configured to run when summarizing | compacts the history of the tree that writes the summary; writes a smaller summary than the same tree without the policy | Configured option |
-| preserved revisions | never combines a preserved commit in either direction (positions); can be compacted again once it is no longer preserved; is shared with other clients; is honoured by the summary policy of another client and stored in the summary; is dropped when the retention limit removes the commit; when another client no longer has the revision (rejected by the summarizer…; can be preserved again after it is rejected…; is only logged by a client that is not the summarizer); cannot preserve a revision that is no longer in the history; keeps detached-root editing usable when revision preservation is also requested; requires enableRevisionPreservation | [§9](#9-preserved-revisions-api), [§11](#11-preserved-revisions-design) |
+| preserved revisions | (pin behavior) | See [revision-preservation/DEV.md §9.1](./revision-preservation/DEV.md#91-unit-tests) |
 
 Also: `compactHistory` tests in `src/test/shared-tree-core/edit-manager/editManagerCorrectness.test.ts`
 (engine, including idle-peer consistency and invalidation of a cached inverse on the surviving commit),
@@ -1517,11 +1664,20 @@ Runs on the local in-memory driver, Tinylicious, or another configured driver.
 | a client loaded from a summary can compact using only persisted metadata | 2 groups of 5: 8 removed after learning the MSN |
 | keeps an idle client's edits consistent after the summarizer compacts its last commit (manual / summary) | Idle-peer fix ([§17.6](#176-fixed-idle-peer-double-apply)) |
 | the summarizer client compacts with the policy from the tree's options | 4 groups of 10: 36 removed by the summarizer; interactive client keeps full history; logger sees summarizer and manual events, eligibility and peer counts |
-| preserved revisions: is honoured by a real summarizer client | Middle pin blocks two pairs (`preservedPairCount: 2`); 2 removed; pin and metadata survive reload |
-| preserved revisions: is honoured when requested while disconnected | Pin reaches the summarizer after reconnect |
-| preserved revisions: is rejected by the summarizer when it already compacted the revision | Rule 4 end to end |
+| preserved revisions: (3 tests) | See [revision-preservation/DEV.md §9.2](./revision-preservation/DEV.md#92-end-to-end-tests) |
 | controlled lifecycle matrix (default, local driver only) | Identical deletion workload with compaction disabled, summary-only, manual, and manual with retained readers; requires real merges, acknowledged summaries, exact-version reload, current content, Undo/Redo, repair identities, and retained-revision reads ([§22.5](#225-controlled-lifecycle-reproduction)) |
 | retained navigation and persisted replacements (default, local driver only) | Optional replacements and nested sequence edits that are later removed; nine merges; every surviving revision; repeated backward reads and fresh-fork forward reads; cold summarizer realization through GC; another acknowledged summary and fresh reload (§22.6) |
+| keeps summarizing and loading when compaction fails inside the summarizer | Injected engine failure in the summarizer: `partialFailure` (8 failed pairs), GC pass skips them, summarizer not broken, summary loads and collaborates, a new summarizer session compacts all 8 ([§17.10](#1710-fixed-an-engine-failure-during-summary-compaction-blocked-summaries)) |
+| converges when edits are in flight while the summarizer compacts | Two clients edit concurrently with a summary request; all clients and a client loaded from the summary converge. The test does not guarantee the edits are still unsequenced when the summarizer's compaction pass runs, so it is a convergence smoke test, not a deterministic race test. |
+| applies a long-lived client's undo of a compacted edit on a client loaded from the compacted summary | Undo of an edit the summarizer composed away, sent by a client that kept full history, applies correctly on a client loaded from the compacted summary |
+
+**Known e2e gaps** (not covered yet):
+
+- **Cross-version compatibility.** The suite uses `NoCompat`; nothing loads a compacted summary or pin op with an older or newer runtime. Required before rollout, together with `minVersionForCollab` gating (§17.4).
+- **Non-local drivers.** The lifecycle matrix and navigation suites are local-driver only; nothing runs against Tinylicious, ODSP, or FRS in CI.
+- **Summarizer handoff.** No test switches summarizer clients mid-history. Pin-specific handoff gaps are in [revision-preservation/DEV.md §9.2](./revision-preservation/DEV.md#92-end-to-end-tests).
+- **Pins.** See [revision-preservation/DEV.md §9.2](./revision-preservation/DEV.md#92-end-to-end-tests).
+- **Real engine failures.** Engine-failure tests inject the error; no reproduction of an actual composition bug exists to run end to end.
 
 ### 22. What the tests showed
 
@@ -1698,9 +1854,7 @@ npm run build:test:esm
 # Compaction tests
 npx mocha --spec "lib/test/shared-tree/historyCompaction.spec.js" --fgrep "History compaction"
 
-# Pin codec tests
-npx mocha --fgrep "message codec"
-npx mocha --fgrep "EditManager Codec"
+# Pin tests: see revision-preservation/DEV.md §9.3
 
 # Engine tests
 npx mocha --spec "lib/test/shared-tree-core/edit-manager/editManagerCorrectness.test.js" --fgrep "compactHistory"
@@ -1798,7 +1952,8 @@ NODE_OPTIONS=--max-old-space-size=8192 pnpm run build --force --concurrency 4
 
 #### 24.2 Manual `requestCompaction` when the policy throws
 
-Today: the error propagates, merges so far stay, the caller gets no count, and the tree is marked broken.
+Today: the error propagates, merges so far stay, the caller gets no count, and the tree is marked broken (documented with `@throws` on `requestCompaction`).
+Engine failures no longer do this; they are isolated per pair (§13.5). Only policy errors remain.
 Options: catch like the summary path and rethrow after stopping (reporting the partial count), or ask about all pairs first and merge afterwards (all or nothing).
 
 #### 24.3 Summarizer flow
@@ -1809,15 +1964,18 @@ Options: catch like the summary path and rethrow after stopping (reporting the p
 
 #### 24.4 Pins
 
-- Telling the app when its own client trimmed a pin.
-- Whether the summarizer may keep sending rejection ops if Fluid forbids summarizer ops; option 4 is the fallback.
-- A rejection lost on summarizer handoff leaves a stale optimistic pin ([§11.7](#117-op-leaks-and-lost-rejections)).
-- Exact rollback (§17.3).
-- Gating by `minVersionForCollab`.
-- Pins with shared branches.
-- Option P2 (pins hold trimming back).
+Moved to [revision-preservation/DEV.md §10](./revision-preservation/DEV.md#10-open-questions).
 
-#### 24.5 Smaller open items
+#### 24.5 Engine-failure isolation follow-ups
+
+- Failed pairs are remembered per session only. A deterministic bug costs one failed attempt per new summarizer session; persisting them would need a format change.
+- The validator adds one encode and one decode per composed pair. Measure on large histories before rollout.
+- The e2e failure test injects the error; there is no known real composition bug to replay.
+- A peer-rebase failure ends the pass but is not remembered, so every later pass retries it. Remembering it would need a key that does not depend on a pair.
+- `failedCompactionPairs` is not pruned when history is trimmed. It only grows on failures, so the leak is small, but `trimHistory` could delete keys for trimmed revisions.
+- The e2e fault injection recognizes a compaction call by looking for `composeTrunkCommits` in the stack trace. That breaks if the method is renamed or inlined; a test-only hook would be more robust.
+
+#### 24.6 Smaller open items
 
 - **Compact before trimming:** run the policy before count-based trimming so N counts compacted points only. Costs: runs on every MSN change and on interactive clients (undo risks).
 - **MSN-advance trigger** ([§8](#8-where-and-when-compaction-runs)): compacts as soon as a commit is history-only; helps long-lived interactive clients, but runs on the op hot path and needs option e first.
@@ -1892,6 +2050,9 @@ The design concern "metadata for a compaction SharedTree cannot carry out" canno
 
 #### 25.5 Questions for app teams
 
+The app-facing version, built on a worked A–E example with space for answers, is [APP_QUESTIONS.md](./APP_QUESTIONS.md).
+Keep the two lists in sync.
+
 1. What metadata do you attach to each edit, and how large is it?
 2. After combining, do you need each original commit's metadata, or one merged value? How should conflicts merge?
 3. Would you merge it yourself, and should originals be kept underneath (outer node) or replaced? Can that be deterministic, given it runs on the summarizer?
@@ -1919,8 +2080,7 @@ The design concern "metadata for a compaction SharedTree cannot carry out" canno
 | Pass | One run of compaction over the eligible commits (manual or summary). |
 | `current` / `target` | The older commit (removed if combined) and the newer one (absorbs it, keeps its revision). |
 | Local fork | A local branch of the tree; its base and later trunk commits are not eligible. |
-| Pin / preserved revision | A revision marked with `setRevisionPreserved`; never combined in either direction. |
-| `preservedTrunkIndices` | The summary field storing pins as positions in the summarized trunk. |
+| Pin / preserved revision | A revision marked with `setRevisionPreserved`; never combined in either direction. See [revision-preservation/DEV.md](./revision-preservation/DEV.md). |
 | Revertible / repair data | Undo/redo support; repair data holds removed content (`DetachedFieldIndex`) so it can be restored. |
 | Summary | A stored snapshot of the document that new clients load from. |
 | Summarizer client | The hidden, elected client that writes summaries. |

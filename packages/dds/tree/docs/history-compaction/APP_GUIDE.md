@@ -3,7 +3,9 @@
 **Experimental, alpha API on this branch.**
 Use compaction to keep selected restore points instead of every intermediate edit.
 It preserves the current document content, but removes the ability to restore the state between combined commits.
-See [DEV.md](./DEV.md) for implementation details and limitations.
+See [DEV.md](./DEV.md) for implementation details and limitations,
+and [revision-preservation/DEV.md](./revision-preservation/DEV.md) for preserved revisions (pins).
+Open design questions for app teams, with a worked example, are in [APP_QUESTIONS.md](./APP_QUESTIONS.md).
 
 ## 1. Configure the tree
 

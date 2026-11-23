@@ -112,6 +112,10 @@ export type CanCompactCommit = (candidate: {
  * so history that becomes eligible without any new ops for this tree is compacted at the next summary after the tree changes.
  *
  * If the policy throws, the error is logged, any pairs already combined stay combined, and the summary is still written.
+ * If combining a pair fails inside SharedTree, the failure is logged, that pair is left uncombined (and is not retried by this client),
+ * the remaining pairs are still considered, and the summary is still written.
+ * If SharedTree fails while preparing other clients' branches for compaction, the failure is logged, the pass ends without combining further pairs,
+ * and the summary is still written.
  * @alpha @input
  */
 export interface SummaryHistoryCompactionOptions {
@@ -160,6 +164,12 @@ export interface TreeHistoryCompaction {
 	 * This lets the application combine a run of several commits.
 	 * Commits that are still needed for correctness are never offered to the policy; see {@link CanCompactCommit}.
 	 * @returns The number of commits removed from the history by combining them into the commit after them.
+	 * @throws The error thrown by `canCompactCommit`, if any. Pairs combined before the error stay combined.
+	 * Because the error escapes SharedTree, the tree treats it as fatal and becomes unusable, so the policy should not throw.
+	 * @remarks
+	 * If combining a pair fails inside SharedTree, the failure is logged and that pair is left uncombined (and is not retried by this client).
+	 * If SharedTree fails while preparing other clients' branches for compaction, the failure is logged and the pass ends early.
+	 * Neither case throws.
 	 */
 	requestCompaction(canCompactCommit: CanCompactCommit): number;
 

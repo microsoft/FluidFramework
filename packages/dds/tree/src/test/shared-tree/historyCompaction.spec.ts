@@ -2463,6 +2463,197 @@ describe("History compaction", () => {
 				});
 			});
 		}
+
+		describe("engine failure isolation", () => {
+			interface Kernel {
+				readonly checkout: ISharedTree["kernel"]["checkout"];
+				readonly changeFamily: { readonly rebaser: ChangeRebaser<SharedTreeChange> };
+				validateComposedChange: (
+					change: SharedTreeChange,
+					revision: RevisionTag,
+					...rest: unknown[]
+				) => void;
+			}
+
+			function kernelOf(tree: ITree): Kernel {
+				return (tree as ISharedTree).kernel as unknown as Kernel;
+			}
+
+			/**
+			 * Makes composition fail whenever the given revision is the target of a compaction pair.
+			 * `generateHistory("append", 1, 5)` ends with `e0..e4, x, y`, so 4 ancestors of the head is `e2`.
+			 */
+			function failCompositionInto(
+				tree: ITree,
+				ancestorsOfHead: number,
+				stage: "compose" | "validate",
+			): { readonly target: RevisionTag; failures: number; composeCalls: number } {
+				const kernel = kernelOf(tree);
+				let target = kernel.checkout.getLocationHead();
+				for (let index = 0; index < ancestorsOfHead; index++) {
+					target = target.parent ?? assert.fail("Expected an ancestor");
+				}
+				const state = { target: target.revision, failures: 0, composeCalls: 0 };
+				if (stage === "compose") {
+					const rebaser = kernel.changeFamily.rebaser;
+					const compose = rebaser.compose.bind(rebaser);
+					Object.assign(rebaser, {
+						compose: (changes: Parameters<typeof compose>[0]) => {
+							if (changes.length === 2 && changes[1]?.revision === state.target) {
+								state.composeCalls++;
+								state.failures++;
+								throw new Error("injected engine failure");
+							}
+							return compose(changes);
+						},
+					});
+				} else {
+					const validate = kernel.validateComposedChange;
+					kernel.validateComposedChange = (change, revision, ...rest) => {
+						if (revision === state.target) {
+							state.failures++;
+							throw new Error("injected validation failure");
+						}
+						validate(change, revision, ...rest);
+					};
+				}
+				return state;
+			}
+
+			for (const trigger of ["manual", "summary"] as const) {
+				for (const stage of ["compose", "validate"] as const) {
+					it(`skips a pair whose ${stage} step fails in a ${trigger} pass without breaking the tree`, async () => {
+						const { provider, view, otherView } = generateHistory(
+							"append",
+							1,
+							5,
+							true,
+							trigger === "summary" ? sameGroup : undefined,
+						);
+						const [tree] = provider.trees;
+						const commitsBefore = countCommits(view.branchHistory);
+						const injected = failCompositionInto(tree, 4, stage);
+						const start = provider.logger.events().length;
+
+						let summary: ISummaryTree;
+						if (trigger === "manual") {
+							assert.equal(asAlpha(tree).historyCompaction.requestCompaction(sameGroup), 3);
+							summary = await summarize(tree);
+						} else {
+							summary = await summarize(tree);
+						}
+
+						assert.equal(injected.failures, 1);
+						assert.equal(countCommits(view.branchHistory), commitsBefore - 3);
+						expectRun(provider, start, {
+							trigger,
+							status: "partialFailure",
+							category: "error",
+							failureSource: "engine",
+							failureStage: "composition",
+							removedCount: 3,
+							failedPairCount: 1,
+							skippedFailedPairCount: 0,
+						});
+
+						const loaded = await loadFromSummary(summary, provider.getCompressor(tree));
+						assert.equal(
+							countCommits(loaded.kernel.checkout.branchHistory),
+							commitsBefore - 3,
+						);
+						assert.deepEqual([...asAlpha(loaded.viewWith(config)).root], [...view.root]);
+
+						view.root.insertAtEnd("still editable");
+						otherView.root.insertAtEnd("peer edit");
+						provider.synchronizeMessages();
+						assert.deepEqual([...view.root], [...otherView.root]);
+						assert.deepEqual([...view.root].slice(-2).sort(), ["peer edit", "still editable"]);
+					});
+				}
+
+				it(`does not retry a failed pair in a later ${trigger} pass`, async () => {
+					// `e0, e1, e2, x, y`: `e0` composes into `e1`, then the (`e1`, `e2`) pair fails and remains.
+					const { provider } = generateHistory(
+						"append",
+						1,
+						3,
+						true,
+						trigger === "summary" ? sameGroup : undefined,
+					);
+					const [tree] = provider.trees;
+					const injected = failCompositionInto(tree, 2, "compose");
+					const pass = async (): Promise<void> => {
+						if (trigger === "manual") {
+							asAlpha(tree).historyCompaction.requestCompaction(sameGroup);
+						} else {
+							await summarize(tree);
+						}
+					};
+					await pass();
+					const start = provider.logger.events().length;
+					await pass();
+					assert.equal(injected.composeCalls, 1, "The failed pair is not composed again");
+					expectRun(provider, start, {
+						trigger,
+						status: "success",
+						removedCount: 0,
+						failedPairCount: 0,
+						skippedFailedPairCount: 1,
+					});
+				});
+			}
+
+			it("does not attach an isolated engine error to a later policy failure", async () => {
+				// Pairs are (initialize, e0), (e0, e1), (e1, e2), (e2, e3), ...:
+				// (e1, e2) fails to compose and the policy throws for (e2, e3).
+				let calls = 0;
+				const throwingPolicy: CanCompactCommit = (pair) => {
+					calls++;
+					if (calls === 4) {
+						throw new Error("policy failure");
+					}
+					return sameGroup(pair);
+				};
+				const { provider } = generateHistory("append", 1, 5, true, throwingPolicy);
+				const [tree] = provider.trees;
+				calls = 0;
+				const injected = failCompositionInto(tree, 4, "compose");
+				const start = provider.logger.events().length;
+				await summarize(tree);
+				assert.equal(injected.failures, 1);
+				expectRun(provider, start, {
+					trigger: "summary",
+					status: "failure",
+					failureSource: "policy",
+					failureStage: "policy",
+					failedPairCount: 1,
+				});
+				const event = provider.logger
+					.events()
+					.slice(start)
+					.find((loggedEvent) => loggedEvent.eventName.endsWith("HistoryCompaction"));
+				assert(event !== undefined);
+				assert.notEqual(
+					event.error,
+					"injected engine failure",
+					"The engine error is not reported as the policy's",
+				);
+			});
+
+			it("validates every composed change against the summary codec", () => {
+				const { provider } = generateHistory("append", 1, 5);
+				const [tree] = provider.trees;
+				const kernel = kernelOf(tree);
+				const validate = kernel.validateComposedChange;
+				let validated = 0;
+				kernel.validateComposedChange = (...args) => {
+					validated++;
+					validate(...args);
+				};
+				assert.equal(asAlpha(tree).historyCompaction.requestCompaction(sameGroup), 4);
+				assert.equal(validated, 4);
+			});
+		});
 	});
 
 	describe("policy configured to run when summarizing", () => {

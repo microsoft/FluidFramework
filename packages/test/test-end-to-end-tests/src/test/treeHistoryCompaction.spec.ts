@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat, type CompatApis } from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects, type CompatApis } from "@fluid-private/test-version-utils";
 import { LoaderHeader, type IContainer } from "@fluidframework/container-definitions/internal";
 import type {
 	ContainerRuntime,
@@ -225,6 +225,30 @@ async function getSummarizerTree(summarizer: ISummarizer): Promise<ITree & ITree
 	assert(handle !== undefined, "default data store must exist");
 	const dataObject = await handle.get();
 	return dataObject.getSharedObject<ITree & ITreeAlpha>(treeId);
+}
+
+/**
+ * Makes every history-compaction composition in `tree` throw, to simulate a compaction engine bug.
+ * Other uses of composition (such as applying ops) are unaffected.
+ * @returns A function that removes the injected failure.
+ */
+function failCompactionCompositions(tree: ITree): () => void {
+	interface Rebaser {
+		compose(changes: readonly unknown[]): unknown;
+	}
+	// `changeFamily` is internal to the tree package; this test reaches it only to inject a fault.
+	const { rebaser } = (tree as unknown as { kernel: { changeFamily: { rebaser: Rebaser } } })
+		.kernel.changeFamily;
+	const compose = rebaser.compose.bind(rebaser);
+	Object.assign(rebaser, {
+		compose: (changes: readonly unknown[]) => {
+			if (new Error("probe").stack?.includes("composeTrunkCommits") === true) {
+				throw new Error("injected compaction failure");
+			}
+			return compose(changes);
+		},
+	});
+	return () => Object.assign(rebaser, { compose });
 }
 
 /**
@@ -1526,6 +1550,221 @@ describeCompat("SharedTree history compaction", "NoCompat", (getTestObjectProvid
 			view2.root.insertAtEnd("after reload");
 			await provider.ensureSynchronized();
 			assert.deepEqual([...view2.root], [...view1.root]);
+		});
+
+		itExpects(
+			"keeps summarizing and loading when compaction fails inside the summarizer",
+			[
+				{
+					eventName: "fluid:telemetry:FluidDataStoreRuntime:HistoryCompaction",
+					category: "error",
+					error: "injected compaction failure",
+				},
+			],
+			async () => {
+				const logger = new MockLogger();
+				const container1 = await provider.makeTestContainer(withPolicy.testContainerConfig);
+				const view1 = withPolicy.viewTree(await getTree(container1));
+				view1.initialize([]);
+				await provider.ensureSynchronized();
+				const { summarizer } = await createSummarizer(
+					provider,
+					container1,
+					withPolicy.summarizerContainerConfig,
+					undefined,
+					logger,
+				);
+				const summarizerTree = await getSummarizerTree(summarizer);
+				const summarizerView = withPolicy.viewTree(summarizerTree);
+				const restore = failCompactionCompositions(summarizerTree);
+
+				makeGroupedEdits(view1, 2, 5);
+				await advanceCollabWindow(provider, container1, view1);
+				const commitsBefore = historyOf(summarizerView.branchHistory).length;
+				logger.clear();
+				const { summaryVersion } = await summarizeNow(summarizer);
+				restore();
+
+				const failedPasses = logger.events.filter((event) =>
+					event.eventName.endsWith("HistoryCompaction"),
+				);
+				assert.deepEqual(
+					failedPasses.map(
+						({
+							status,
+							failureSource,
+							removedCount,
+							failedPairCount,
+							skippedFailedPairCount,
+						}) => ({
+							status,
+							failureSource,
+							removedCount,
+							failedPairCount,
+							skippedFailedPairCount,
+						}),
+					),
+					[
+						// Both groups have 4 pairs, and every composition fails.
+						{
+							status: "partialFailure",
+							failureSource: "engine",
+							removedCount: 0,
+							failedPairCount: 8,
+							skippedFailedPairCount: 0,
+						},
+						// GC runs summarizeCore again; the failed pairs are not retried in this session.
+						{
+							status: "success",
+							failureSource: undefined,
+							removedCount: 0,
+							failedPairCount: 0,
+							skippedFailedPairCount: 8,
+						},
+					],
+				);
+				assert.equal(historyOf(summarizerView.branchHistory).length, commitsBefore);
+
+				// The summarizer is not broken: it keeps applying ops and writing summaries that load.
+				view1.root.insertAtEnd("after failure");
+				await provider.ensureSynchronized();
+				assert.deepEqual([...summarizerView.root], [...view1.root]);
+				const loaded = await provider.loadTestContainer(withPolicy.testContainerConfig, {
+					[LoaderHeader.version]: summaryVersion,
+				});
+				const loadedView = withPolicy.viewTree(await getTree(loaded));
+				await provider.ensureSynchronized();
+				assert.deepEqual([...loadedView.root], [...view1.root]);
+				loadedView.root.insertAtStart("from loaded client");
+				await provider.ensureSynchronized();
+				assert.deepEqual([...loadedView.root], [...view1.root]);
+
+				// A new summarizer session retries the pairs and compacts them.
+				summarizer.close();
+				logger.clear();
+				const { summarizer: nextSummarizer } = await createSummarizer(
+					provider,
+					container1,
+					withPolicy.summarizerContainerConfig,
+					undefined,
+					logger,
+				);
+				const { summaryVersion: recoveredVersion } = await summarizeNow(nextSummarizer);
+				const recovered = logger.events.find((event) =>
+					event.eventName.endsWith("HistoryCompaction"),
+				);
+				assert.equal(recovered?.status, "success");
+				assert.equal(recovered?.removedCount, 8);
+				const reloaded = await provider.loadTestContainer(withPolicy.testContainerConfig, {
+					[LoaderHeader.version]: recoveredVersion,
+				});
+				const reloadedView = withPolicy.viewTree(await getTree(reloaded));
+				await provider.ensureSynchronized();
+				assert.deepEqual([...reloadedView.root], [...view1.root]);
+			},
+		);
+
+		it("converges when edits are in flight while the summarizer compacts", async () => {
+			const container1 = await provider.makeTestContainer(withPolicy.testContainerConfig);
+			const view1 = withPolicy.viewTree(await getTree(container1));
+			view1.initialize([]);
+			await provider.ensureSynchronized();
+			const container2 = await provider.loadTestContainer(withPolicy.testContainerConfig);
+			const view2 = withPolicy.viewTree(await getTree(container2));
+			const { summarizer } = await createSummarizer(
+				provider,
+				container1,
+				withPolicy.summarizerContainerConfig,
+			);
+			const summarizerView = withPolicy.viewTree(await getSummarizerTree(summarizer));
+			makeGroupedEdits(view1, 3, 4);
+			await advanceCollabWindow(provider, container1, view1);
+			const commitsBefore = historyOf(summarizerView.branchHistory).length;
+
+			// These edits are not yet sequenced when the summary starts.
+			// One continues the last compacted group from the other client.
+			const summarizing = summarizeNow(summarizer);
+			view1.root.insertAtEnd("in flight 1");
+			view2.runTransaction(() => view2.root.insertAtEnd("in flight 2"), {
+				customMetadata: { group: 2 },
+			});
+			view2.root.removeAt(0);
+			const { summaryVersion } = await summarizing;
+			await provider.ensureSynchronized();
+
+			assert(historyOf(summarizerView.branchHistory).length < commitsBefore);
+			assert.deepEqual([...view2.root], [...view1.root]);
+			assert.deepEqual([...summarizerView.root], [...view1.root]);
+			const loaded = await provider.loadTestContainer(withPolicy.testContainerConfig, {
+				[LoaderHeader.version]: summaryVersion,
+			});
+			const loadedView = withPolicy.viewTree(await getTree(loaded));
+			await provider.ensureSynchronized();
+			assert.deepEqual([...loadedView.root], [...view1.root]);
+
+			// Every client, including the one loaded from the compacted summary, keeps collaborating.
+			view1.root.insertAtStart("after 1");
+			view2.root.insertAtEnd("after 2");
+			loadedView.root.removeAt(1);
+			await provider.ensureSynchronized();
+			for (const view of [view2, loadedView, summarizerView]) {
+				assert.deepEqual([...view.root], [...view1.root]);
+			}
+		});
+
+		it("applies a long-lived client's undo of a compacted edit on a client loaded from the compacted summary", async () => {
+			const container1 = await provider.makeTestContainer(withPolicy.testContainerConfig);
+			const view1 = withPolicy.viewTree(await getTree(container1));
+			view1.initialize(["a", "b", "c", "d"]);
+			await provider.ensureSynchronized();
+			const { summarizer } = await createSummarizer(
+				provider,
+				container1,
+				withPolicy.summarizerContainerConfig,
+			);
+			const summarizerView = withPolicy.viewTree(await getSummarizerTree(summarizer));
+
+			let undo: RevertibleAlpha | undefined;
+			const off = view1.events.on("changed", (_data, getRevertible) => {
+				undo ??= getRevertible?.();
+			});
+			view1.runTransaction(() => view1.root.removeAt(0), { customMetadata: { group: 0 } });
+			off();
+			view1.runTransaction(() => view1.root.removeAt(0), { customMetadata: { group: 0 } });
+			view1.runTransaction(() => view1.root.insertAtEnd("e"), {
+				customMetadata: { group: 0 },
+			});
+			await advanceCollabWindow(provider, container1, view1);
+			const commitsBefore = historyOf(summarizerView.branchHistory).length;
+			const { summaryVersion } = await summarizeNow(summarizer);
+			assert.equal(
+				historyOf(summarizerView.branchHistory).length,
+				commitsBefore - 2,
+				"The removal being undone was composed away in the summary",
+			);
+
+			const loaded = await provider.loadTestContainer(withPolicy.testContainerConfig, {
+				[LoaderHeader.version]: summaryVersion,
+			});
+			const loadedView = withPolicy.viewTree(await getTree(loaded));
+			await provider.ensureSynchronized();
+			assert.deepEqual([...loadedView.root], [...view1.root]);
+
+			// Client 1 kept its uncompacted history, so its undo refers to the original removal.
+			assert(undo !== undefined);
+			undo.revert();
+			await provider.ensureSynchronized();
+			assert.equal(view1.root[0], "a");
+			assert.deepEqual([...loadedView.root], [...view1.root]);
+			assert.deepEqual([...summarizerView.root], [...view1.root]);
+
+			const { summaryVersion: afterUndo } = await summarizeNow(summarizer);
+			const reloaded = await provider.loadTestContainer(withPolicy.testContainerConfig, {
+				[LoaderHeader.version]: afterUndo,
+			});
+			const reloadedView = withPolicy.viewTree(await getTree(reloaded));
+			await provider.ensureSynchronized();
+			assert.deepEqual([...reloadedView.root], [...view1.root]);
 		});
 	});
 

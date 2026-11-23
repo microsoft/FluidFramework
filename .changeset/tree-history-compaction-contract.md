@@ -30,6 +30,9 @@ const removedCount = asAlpha(tree).historyCompaction.requestCompaction(
 To compact the history that gets stored, set the new `historyCompaction` option in `SharedTreeOptions` (from `@fluidframework/tree/alpha`).
 Its `canCompactCommit` policy runs on the client that writes the summary (normally the summarizer client), right before each summary of the tree is written.
 If the policy throws, compaction stops and a failure is logged, but the summary is still written.
+If SharedTree itself fails to combine a pair, that pair is left uncombined and skipped for the rest of the session, the failure is logged, and compaction and the summary continue.
+If SharedTree fails while preparing other clients' branches for compaction, the failure is logged and the pass ends early, but the summary is still written.
+`requestCompaction` does not throw for either kind of failure.
 
 Every executed manual or summary-time pass emits a `HistoryCompaction` telemetry event through the existing Fluid logger, including passes that remove no commits.
 It reports the trigger, duration, status, policy calls and rejections, and completed default-metadata and replacement-metadata merges.

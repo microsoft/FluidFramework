@@ -500,9 +500,11 @@ export class SharedTreeKernel
 	/**
 	 * Runs the configured summary compaction policy, if any.
 	 * @remarks
-	 * A faulty policy must not block summarization or break the tree.
+	 * A faulty policy or a compaction engine failure must not block summarization or break the tree.
 	 * Policy errors are caught inside the decision callback in {@link SharedTreeKernel.runCompaction},
 	 * before escaping any breaker-wrapped method.
+	 * Engine failures are isolated per pair by `EditManager.compactHistory`: the failing pair is left uncompacted,
+	 * and each composed change is checked to round-trip through the summary codec before it is applied.
 	 */
 	private compactHistoryForSummary(summaryOperationId?: number): void {
 		const policy = this.summaryCompactionPolicy;
@@ -593,6 +595,11 @@ export class SharedTreeKernel
 				},
 				passStats,
 				operationId,
+				{
+					onEngineFailure: (error) => {
+						engineError ??= error;
+					},
+				},
 			);
 		} catch (error: unknown) {
 			if (failureSource === undefined) {
@@ -601,6 +608,7 @@ export class SharedTreeKernel
 			}
 			throw error;
 		} finally {
+			const isolatedFailure = failureSource === undefined && passStats.failedPairCount > 0;
 			const event = {
 				operationId,
 				summaryOperationId,
@@ -608,14 +616,19 @@ export class SharedTreeKernel
 				sessionId: this.idCompressor.localSessionId,
 				isSummarizer: this.getIsSummarizerClient(),
 				trigger,
-				status: failureSource === undefined ? "success" : "failure",
-				failureSource,
+				status:
+					failureSource === undefined
+						? isolatedFailure
+							? "partialFailure"
+							: "success"
+						: "failure",
+				failureSource: isolatedFailure ? "engine" : failureSource,
 				durationMs: performanceNow() - started,
 				...statistics,
 				...passStats,
 				failureStage:
 					failureSource === undefined
-						? undefined
+						? passStats.isolatedFailureStage
 						: failureSource === "policy"
 							? "policy"
 							: passStats.failureStage,
@@ -623,28 +636,32 @@ export class SharedTreeKernel
 				historyCountAfter: passStats.retainedCommitCount - statistics.removedCount,
 				zeroRemovalReason:
 					statistics.removedCount === 0
-						? failureSource === undefined
+						? failureSource === undefined && !isolatedFailure
 							? passStats.eligiblePairCount === 0
 								? passStats.limitingBoundary === "none"
 									? "insufficientRetainedHistory"
 									: passStats.limitingBoundary
 								: passStats.preservedPairCount === passStats.eligiblePairCount
 									? "revisionPreserved"
-									: statistics.rejectedPairCount === passStats.eligiblePairCount
-										? "appPolicyRejected"
-										: "mixedPairDisposition"
+									: passStats.skippedFailedPairCount === passStats.eligiblePairCount
+										? "previousEngineFailure"
+										: statistics.rejectedPairCount === passStats.eligiblePairCount
+											? "appPolicyRejected"
+											: "mixedPairDisposition"
 							: "failure"
 						: undefined,
 			};
 			this.historyTrace?.record("CompactionCompleted", event);
-			if (failureSource === undefined) {
+			if (failureSource === undefined && !isolatedFailure) {
 				this.breaker.logger?.sendTelemetryEvent({ eventName: "HistoryCompaction", ...event });
 			} else {
 				// Policy errors can contain application data, so only report the failure category.
 				// Engine errors come from Fluid itself, so they are attached to help diagnose them.
+				// A policy failure can follow an isolated engine failure in the same pass;
+				// the engine error is then left out so it is not reported as the policy's error.
 				this.breaker.logger?.sendErrorEvent(
 					{ eventName: "HistoryCompaction", ...event },
-					engineError,
+					failureSource === "policy" ? undefined : engineError,
 				);
 			}
 		}
