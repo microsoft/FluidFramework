@@ -8,6 +8,12 @@ module.exports = {
 		ecmaVersion: "2022",
 	},
 	overrides: [
+		{
+			files: ["**/*.mjs"],
+			parserOptions: {
+				sourceType: "module",
+			},
+		},
 		// Rules for code
 		{
 			files: ["src/**/*.{ts,tsx}", "test/**/*.{ts,tsx}"],

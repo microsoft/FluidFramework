@@ -14911,7 +14911,7 @@ importers:
         specifier: ^0.3.0
         version: 0.3.0(@changesets/cli@2.29.8)(supports-color@10.2.2)
       typescript:
-        specifier: catalog:TypeScript
+        specifier: ~6.0.3
         version: 6.0.3
     devDependencies:
       '@biomejs/biome':
