@@ -7,9 +7,11 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
 	EmptyKey,
+	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	type TreeStoredSchema,
+	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	TreeStoredSchemaRepository,
 	ValueSchema,
@@ -25,13 +27,6 @@ import {
 	SchemaVersionComparison,
 	defaultSchemaPolicy,
 } from "../../feature-libraries/index.js";
-import {
-	booleanSchema,
-	handleSchema,
-	nullSchema,
-	numberSchema,
-	stringSchema,
-} from "../leafNodeSchema.js";
 import { resolveStoredSchemaGenerationOptions } from "../toStoredSchema.js";
 import { getSchemaUpgradeCandidate, toInitialSchema, type TreeSchema } from "../treeSchema.js";
 
@@ -114,6 +109,13 @@ function formatSchemaVersionIncompatibility(
 	};
 }
 
+/**
+ * Explains why the view cannot read or write content allowed by the stored schema.
+ *
+ * @param value - The difference found when comparing the view with the stored schema.
+ * @param storedSchema - The schema used in that comparison: the current document schema
+ * when checking access now, or the proposed schema when checking access after an upgrade.
+ */
 function formatViewIncompatibility(
 	value: Incompatibility,
 	storedSchema: TreeStoredSchema,
@@ -169,12 +171,18 @@ function formatViewIncompatibility(
 			};
 		}
 		case "nodeKind": {
+			const view = NodeKind[value.view];
+			const stored = getStoredNodeKind(value.stored);
+			const representation = describeNodeRepresentation(
+				stored,
+				storedSchema.nodeSchema.get(value.identifier),
+			);
 			return {
 				mismatch: value.mismatch,
 				nodeType: value.identifier,
-				view: NodeKind[value.view],
-				stored: getStoredNodeKind(value.stored),
-				reason: `Cannot view node type ${JSON.stringify(value.identifier)}: the stored node structure does not match the view's ${NodeKind[value.view]} definition (stored representation: ${getStoredNodeKind(value.stored)}${hasArrayStructure(storedSchema.nodeSchema.get(value.identifier)) ? " (array structure)" : ""}).`,
+				view,
+				stored,
+				reason: `Cannot view node type ${JSON.stringify(value.identifier)}: the stored node structure does not match the view's ${view} definition (stored representation: ${representation}).`,
 			};
 		}
 		default: {
@@ -227,12 +235,16 @@ function formatUpgradeIncompatibility(
 			};
 		}
 		case "nodeKind": {
+			const stored = getStoredNodeKind(value.stored);
+			const proposed = getStoredNodeKind(value.proposed);
+			const from = describeNodeRepresentation(stored, value.stored);
+			const to = describeNodeRepresentation(proposed, value.proposed);
 			return {
 				mismatch: value.mismatch,
 				nodeType: value.identifier,
-				proposed: getStoredNodeKind(value.proposed),
-				stored: getStoredNodeKind(value.stored),
-				reason: `Cannot upgrade node type ${JSON.stringify(value.identifier)}: changing the stored node representation from ${getStoredNodeKind(value.stored)}${hasArrayStructure(value.stored) ? " (array structure)" : ""} to ${getStoredNodeKind(value.proposed)}${hasArrayStructure(value.proposed) ? " (array structure)" : ""} is not permitted.`,
+				proposed,
+				stored,
+				reason: `Cannot upgrade node type ${JSON.stringify(value.identifier)}: changing the stored node representation from ${from} to ${to} is not permitted.`,
 			};
 		}
 		case "missingNodeSchema": {
@@ -264,6 +276,11 @@ function formatUpgradeIncompatibility(
 
 /**
  * Explains the schema requirements that prevent upgrading `stored` to `proposed`.
+ *
+ * @param viewSchema - The view that must be able to read and write the document after the upgrade.
+ * @param stored - The document schema before the upgrade.
+ * @param proposed - The candidate schema to check against the upgrade rules and the view.
+ * @returns The reasons the upgrade is blocked, or `undefined` if it is allowed.
  */
 function getSchemaUpgradeIncompatibilityDetails(
 	viewSchema: TreeSchema,
@@ -293,6 +310,10 @@ function getSchemaUpgradeIncompatibilityDetails(
 
 /**
  * Explains why an otherwise permitted stored-schema upgrade would still prevent viewing.
+ *
+ * @param viewSchema - The view that requested the upgrade.
+ * @param candidate - The stored schema the view would use after the upgrade.
+ * @returns An upgrade incompatibility that lists the viewing failures, or `undefined` if the view can use the candidate.
  */
 function getPostUpgradeViewIncompatibilities(
 	viewSchema: TreeSchema,
@@ -325,6 +346,15 @@ function formatValueSchema(value: ValueSchema | undefined): string | undefined {
 	return value === undefined ? undefined : ValueSchema[value];
 }
 
+/**
+ * Names the field in a viewing or upgrade reason.
+ * An object field can also have an empty key, so the key identifies array elements
+ * only if the stored or proposed node has array structure.
+ *
+ * @param value - The location of the field, including its containing node type if it is not the root.
+ * @param storedSchema - The schema checked for viewing, or the document schema before an upgrade.
+ * @param proposedSchema - The candidate schema for an upgrade. Omit it for a viewing reason.
+ */
 function describeFieldLocation(
 	value: SchemaIncompatibilityLocation,
 	storedSchema: TreeStoredSchema,
@@ -346,12 +376,23 @@ function describeFieldLocation(
 		: location;
 }
 
+/**
+ * Describes the content lost when a change between an array and an object removes a field.
+ *
+ * @param location - The node type and field key where the allowed types differ.
+ * @param removedTypes - The child types the stored field allows but the proposed schema no longer allows at that key.
+ * @param storedSchema - The document schema that defines the field and its allowed child types.
+ * @param proposedSchema - The candidate schema that may omit the field.
+ * @returns A reason that names the lost array elements or object field,
+ * or `undefined` for other changes so the caller can report the removed types directly.
+ */
 function describeRemovedArrayOrObjectField(
-	{ identifier, fieldKey }: SchemaIncompatibilityLocation,
-	removedTypes: readonly string[],
+	location: SchemaIncompatibilityLocation,
+	removedTypes: readonly TreeNodeSchemaIdentifier[],
 	storedSchema: TreeStoredSchema,
 	proposedSchema: TreeStoredSchema,
 ): string | undefined {
+	const { identifier, fieldKey } = location;
 	if (identifier === undefined || fieldKey === undefined) {
 		return undefined;
 	}
@@ -370,7 +411,9 @@ function describeRemovedArrayOrObjectField(
 		return undefined;
 	}
 
-	const types = removedTypes.map(describeAllowedNodeType).join(", ");
+	const types = removedTypes
+		.map((type) => describeAllowedNodeType(type, storedSchema))
+		.join(", ");
 	const node = JSON.stringify(identifier);
 	const field = JSON.stringify(fieldKey);
 	return storedIsArray
@@ -378,31 +421,64 @@ function describeRemovedArrayOrObjectField(
 		: `Cannot upgrade node type ${node}: the stored object allows ${types} in field ${field}, but the proposed array has no field ${field}.`;
 }
 
-function describeAllowedNodeType(type: string): string {
-	switch (type) {
-		case booleanSchema.identifier: {
+/**
+ * Names the values a removed child type allowed. For leaves, the name describes the values
+ * rather than the schema identifier, for example, "strings". Other types keep their identifier.
+ *
+ * @param type - The identifier of a child type allowed by the stored field.
+ * @param storedSchema - The schema before the upgrade, where the child type's definition is looked up.
+ */
+function describeAllowedNodeType(
+	type: TreeNodeSchemaIdentifier,
+	storedSchema: TreeStoredSchema,
+): string {
+	const schema = storedSchema.nodeSchema.get(type);
+	if (!(schema instanceof LeafNodeStoredSchema)) {
+		return `nodes of type ${JSON.stringify(type)}`;
+	}
+	switch (schema.leafValue) {
+		case ValueSchema.Boolean: {
 			return "booleans";
 		}
-		case handleSchema.identifier: {
+		case ValueSchema.FluidHandle: {
 			return "Fluid handles";
 		}
-		case nullSchema.identifier: {
+		case ValueSchema.Null: {
 			return "null";
 		}
-		case numberSchema.identifier: {
+		case ValueSchema.Number: {
 			return "numbers";
 		}
-		case stringSchema.identifier: {
+		case ValueSchema.String: {
 			return "strings";
 		}
 		default: {
-			return `nodes of type ${JSON.stringify(type)}`;
+			return unreachableCase(schema.leafValue);
 		}
 	}
 }
 
+/**
+ * Describes a stored node kind in a reason. Arrays have the stored kind `Object`,
+ * so the reason also identifies their array structure.
+ *
+ * @param kind - The stored kind reported in the structured incompatibility.
+ * @param schema - The node definition used to identify array structure. If absent, only the kind is reported.
+ */
+function describeNodeRepresentation(
+	kind: ReturnType<typeof getStoredNodeKind>,
+	schema: TreeNodeStoredSchema | undefined,
+): string {
+	return hasArrayStructure(schema) ? `${kind} (array structure)` : kind;
+}
+
+/**
+ * Tests whether a stored node has the shape of a simple-tree array:
+ * an object with a single sequence field at the empty key.
+ *
+ * @param schema - The stored node definition to check, or `undefined` if the schema has no definition for the node.
+ */
 function hasArrayStructure(schema: TreeNodeStoredSchema | undefined): boolean {
-	// Other stored object shapes can come from lower-level APIs and need not represent arrays.
 	return (
 		schema instanceof ObjectNodeStoredSchema &&
 		schema.objectNodeFields.size === 1 &&

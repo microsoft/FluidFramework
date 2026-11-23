@@ -1072,6 +1072,8 @@ describe("checkSchemaCompatibility", () => {
 			);
 		});
 
+		// A leaf's value kind determines its description, even when it has a custom identifier.
+		// Other nodes use their schema identifier because they have no leaf value.
 		class CustomElement extends factory.object("diagnostics.CustomElement", {}) {}
 		for (const [type, description] of [
 			[factory.number, "numbers"],
@@ -1079,9 +1081,12 @@ describe("checkSchemaCompatibility", () => {
 			[factory.boolean, "booleans"],
 			[factory.null, "null"],
 			[factory.handle, "Fluid handles"],
+			[new LeafNodeSchema("diagnostics.CustomString", ValueSchema.String), "strings"],
 			[CustomElement, 'nodes of type ".diagnostics.CustomElement"'],
 		] as const) {
-			it(`explains array and object field differences in both directions for ${description}`, () => {
+			it(`explains array and object field differences in both directions for ${type.identifier}`, () => {
+				// Reuse the node identifier and child type so only the child's location changes:
+				// the array stores elements under the empty key, while the object uses field "x".
 				class ArrayNode extends factory.array("diagnostics.ArrayObject", type) {}
 				class ObjectNode extends factory.object("diagnostics.ArrayObject", {
 					x: factory.optional(type),
@@ -1107,6 +1112,8 @@ describe("checkSchemaCompatibility", () => {
 					);
 					assert(!result.view.isCompatible);
 					assert(!result.upgrade.isCompatible);
+					// The proposed schema omits the stored field. This explains both failures below:
+					// it no longer allows the child type at that key, and it forbids the field itself.
 					assertIncompatibilities(result.upgrade.incompatibilities, [
 						{
 							mismatch: "allowedTypes",
@@ -1140,6 +1147,8 @@ describe("checkSchemaCompatibility", () => {
 				{ canView: false, canUpgrade: false },
 			).upgrade;
 			assert(!upgrade.isCompatible);
+			// Arrays are stored as objects, so the structured kind stays "Object".
+			// Only the reason distinguishes an array from other stored objects.
 			assertIncompatibilities(upgrade.incompatibilities, [
 				{
 					mismatch: "nodeKind",
@@ -1181,6 +1190,8 @@ describe("checkSchemaCompatibility", () => {
 				result.upgrade.incompatibilities[0]?.reason,
 				`Cannot upgrade field "" of node type ${JSON.stringify(RequiredObject.identifier)}: changing from zero or one child to exactly one child is not permitted by the schema upgrade rules.`,
 			);
+			// Unlike field "x", this field already uses the array's element key.
+			// A sequence of numbers still allows both cases the optional field permits: no child or one number.
 			expectCompatibility({ view: ArrayNode, stored }, { canView: false, canUpgrade: true });
 		});
 
