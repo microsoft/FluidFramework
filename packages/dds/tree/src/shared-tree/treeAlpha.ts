@@ -1178,8 +1178,6 @@ function borrowFieldCursorFromTreeNodeOrValue(
 /**
  * Like {@link TreeAlpha.exportVerbose}, but exports only the fields that `filter` selects.
  * @remarks
- * This is not public API.
- * It is a building block for public APIs that export only part of a tree, such as only the unknown optional fields of a node.
  * To export unknown optional fields, use {@link KeyEncodingOptions.allStoredKeys}.
  */
 export function exportVerboseFiltered(

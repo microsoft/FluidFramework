@@ -72,9 +72,6 @@ export type TreeParsingOptions = TreeEncodingOptions<
  * Otherwise, the filter to use for the fields of the nodes in this field.
  * A leaf node has no fields, so the result always includes the value of a leaf node in full.
  * @remarks
- * This is not public API.
- * It is a building block for public APIs that export only part of a tree, such as only the unknown optional fields of a node.
- *
  * The export calls the filter one time for each field of each node that it visits.
  * For an array node, the export calls the filter one time, for the field that contains all the elements.
  *
