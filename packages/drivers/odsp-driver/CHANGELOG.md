@@ -1,5 +1,70 @@
 # @fluidframework/odsp-driver
 
+## 3.14.0
+
+### Minor Changes
+
+#### Claims challenges from OneDrive and SharePoint can be returned to the host instead of being retried ([#28751](https://github.com/microsoft/FluidFramework/pull/28751)) [7ebb8814dc](https://github.com/microsoft/FluidFramework/commit/7ebb8814dc5f9b4fa6e9d47089c725d8f7d721d4)
+
+A claims challenge is a 401 or 403 response with a `WWW-Authenticate` header that asks for a token with more claims.
+For more information, see [Claims challenges](https://learn.microsoft.com/entra/identity-platform/claims-challenge).
+By default, the driver gets a new token one time and retries the request.
+It gives the decoded claims to the host's token fetcher in [`TokenFetchOptions.claims`](https://fluidframework.com/docs/api/odsp-driver-definitions/tokenfetchoptions-interface#claims-propertysignature).
+
+Some hosts can't satisfy the challenge themselves.
+For example, a service that makes requests for another client must send the challenge to that client.
+These hosts can now set the new `propagateClaimsChallenges` property of [`HostStoragePolicy`](https://fluidframework.com/docs/api/odsp-driver-definitions/hoststoragepolicy-interface) to `true`.
+The driver then doesn't retry the request, and the operation fails with the original authorization error.
+The error has the decoded `claims`, and the raw header value in the new `wwwAuthenticate` property of [`IAuthorizationError`](https://fluidframework.com/docs/api/driver-definitions/iauthorizationerror-interface).
+
+```typescript
+import { DriverErrorTypes } from "@fluidframework/driver-definitions/legacy";
+import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver/legacy";
+
+const documentServiceFactory = new OdspDocumentServiceFactory(
+  getStorageToken,
+  getWebsocketToken,
+  persistedCache,
+  { propagateClaimsChallenges: true },
+);
+
+// ...
+
+if (error.errorType === DriverErrorTypes.authorizationError && error.claims) {
+  // Send error.wwwAuthenticate to the client, which can then get a token with the required claims.
+}
+```
+
+To identify a claims challenge, check for a non-empty `claims` value, as in the example.
+Don't check for `wwwAuthenticate`, because the driver sets it on every authorization error from a response that has the header, even when `propagateClaimsChallenges` isn't `true`.
+
+When `propagateClaimsChallenges` is `true`, the driver doesn't give the claims to the token fetcher.
+So when you load the document again after the challenge is satisfied, make sure that the token fetcher returns the new token, even when [`TokenFetchOptions.refresh`](https://fluidframework.com/docs/api/odsp-driver-definitions/tokenfetchoptions-interface#refresh-propertysignature) is `false`.
+
+As for other authorization errors, the driver clears its cached snapshot of the document when a snapshot request fails with the challenge.
+But a load can still succeed, because the driver can use a cached snapshot without waiting for the service.
+A later request, such as connecting to the delta stream or fetching ops, then gets the challenge, and the container closes with the error.
+
+While the container is connected, the driver also refreshes its join session with the service in the background.
+If a refresh gets the challenge, the driver ends the delta stream connection with the error, and the container reconnects.
+The container then closes with the error, unless the token fetcher returns a token that satisfies the challenge.
+If the container doesn't reconnect, for example because it was loaded with the [`LoaderHeader.reconnect`](https://fluidframework.com/docs/api/container-definitions/loaderheader-enum#reconnect-enummember) request header set to `false`, it closes without an error.
+The host then gets the challenge when it loads the container again.
+
+So check for a claims challenge in the error of the container's `closed` event as well as in load errors.
+
+`propagateClaimsChallenges` also applies to [`prefetchLatestSnapshot`](https://fluidframework.com/docs/api/odsp-driver/#prefetchlatestsnapshot-function) when the factory is passed in its `odspDocumentServiceFactory` parameter.
+It doesn't apply to [`OdspDriverUrlResolverForShareLink`](https://fluidframework.com/docs/api/odsp-driver/odspdriverurlresolverforsharelink-class).
+
+#### Failed snapshot prefetches and cache writes no longer cause unhandled promise rejections ([#28751](https://github.com/microsoft/FluidFramework/pull/28751)) [7ebb8814dc](https://github.com/microsoft/FluidFramework/commit/7ebb8814dc5f9b4fa6e9d47089c725d8f7d721d4)
+
+[`prefetchLatestSnapshot`](https://fluidframework.com/docs/api/odsp-driver/#prefetchlatestsnapshot-function) returns `false` when it can't fetch the snapshot.
+Before this fix, the failure could also cause an unhandled promise rejection, for example when the `odspDocumentServiceFactory` argument wasn't given.
+
+The driver writes each snapshot that it downloads to the host's persisted cache.
+Before this fix, if that write failed, the failure also caused an unhandled promise rejection.
+This could happen when loading a container or when prefetching a snapshot.
+
 ## 3.13.0
 
 ### Minor Changes
