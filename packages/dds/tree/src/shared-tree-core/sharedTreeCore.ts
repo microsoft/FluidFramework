@@ -54,7 +54,11 @@ import type { BranchId, SharedTreeBranch } from "./branch.js";
 import { BranchCommitEnricher } from "./branchCommitEnricher.js";
 import type { ChangeEnricher } from "./changeEnricher.js";
 import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
-import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
+import {
+	EditManager,
+	type HistoryCompactionPolicy,
+	minimumPossibleSequenceNumber,
+} from "./editManager.js";
 import { makeEditManagerCodecBuilder } from "./editManagerCodecs.js";
 import type { EditManagerFormatVersion, SeqNumber } from "./editManagerFormatCommons.js";
 import { EditManagerSummarizer } from "./editManagerSummarizer.js";
@@ -287,6 +291,16 @@ export class SharedTreeCore<
 			);
 		}
 		builder.addWithStats(summarizablesTreeKey, summarizableBuilder.getSummaryTree());
+	}
+
+	/**
+	 * Compacts retained history using the supplied per-pair decision callback.
+	 * @remarks
+	 * Does not validate reader compatibility or update checkout state.
+	 * No application option or automatic summary hook invokes this method.
+	 */
+	public compactHistory(canCompact: HistoryCompactionPolicy<TChange>): number {
+		return this.editManager.compactHistory(canCompact);
 	}
 
 	protected async loadInternal(

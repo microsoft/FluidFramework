@@ -12,6 +12,9 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 import {
 	type ChangeFamilyEditor,
 	CommitKind,
+	type CustomMetadataTree,
+	diffHistories,
+	flattenCustomMetadata,
 	type GraphCommit,
 	type RevisionTag,
 } from "../../../core/index.js";
@@ -1474,6 +1477,564 @@ export function testCorrectness(): void {
 					}
 				}
 			}
+		});
+
+		describe("compactHistory", () => {
+			// Example notation: BASE <-- A <-- B <-- C (HEAD); arrows point to parents.
+			// A, B, C name revisions with intentions [1], [2], [3], not new composed revision IDs.
+			// B[1, 2] means the original B survives with both changes; A leaves the trunk and its indexes.
+			// The survivor keeps its revision and sequence ID. BASE is never composed away.
+			// Custom metadata is undefined unless the example explicitly supplies a metadata tree.
+
+			function setupRetainedHistory(count: number, msn: number): TestEditManager {
+				const { manager } = testChangeEditManagerFactory({ historyRetention: true });
+				sequencePeerCommits(manager, count, 1, 1);
+				manager.advanceMinimumSequenceNumber(brand(msn));
+				assert.equal(manager.getTrunkCommits("main").length, count);
+				return manager;
+			}
+
+			function trunkIntentions(manager: TestEditManager): number[][] {
+				return manager
+					.getTrunkChanges("main")
+					.map((change) => (TestChange.isNonEmptyChange(change) ? change.intentions : []));
+			}
+
+			function setupHistoryWithMetadata(
+				metadata: readonly (CustomMetadataTree | undefined)[],
+			): TestEditManager {
+				const { manager } = testChangeEditManagerFactory({ historyRetention: true });
+				for (const [index, customMetadata] of metadata.entries()) {
+					manager.addSequencedChanges(
+						[
+							{
+								change: TestChange.mint(
+									makeArray(index, (i) => i + 1),
+									[index + 1],
+								),
+								revision: mintRevisionTag(),
+								customMetadata,
+							},
+						],
+						peer1,
+						brand(index + 1),
+						brand(index),
+						"main",
+					);
+				}
+				manager.advanceMinimumSequenceNumber(brand(metadata.length));
+				return manager;
+			}
+
+			describe("history compaction", () => {
+				for (const count of [0, 1]) {
+					it(`leaves ${count} retained commits unchanged without offering a pair`, () => {
+						// Before/after: BASE (HEAD), or BASE <-- A[1] (HEAD).
+						// There is no pair of retained revisions: BASE cannot be absorbed into A.
+						// No policy call, removed revision, change rewrite, or metadata wrapper is needed.
+
+						// Setup
+						const manager = setupRetainedHistory(count, count);
+						const head = manager.getTrunkHead("main");
+
+						// Act
+						const removed = manager.compactHistory(() => assert.fail("No pair exists"));
+
+						// Verify
+						assert.equal(removed, 0);
+						assert.equal(manager.getTrunkHead("main"), head);
+						assert.equal(manager.getTrunkCommits("main").length, count);
+					});
+				}
+
+				it("leaves history unchanged when the policy rejects every pair", () => {
+					// Before: BASE <-- A[1] <-- B[2] <-- C[3] (HEAD).
+					// Reject (A, B), then (B, C).
+					// After:  BASE <-- A[1] <-- B[2] <-- C[3] (HEAD).
+					// A, B, and C keep their objects, changes, parents, and undefined custom metadata.
+
+					// Setup
+					const manager = setupRetainedHistory(3, 3);
+					const before = manager.getTrunkCommits("main");
+					const changes = before.map((commit) => commit.change);
+
+					// Act
+					const removed = manager.compactHistory(() => false);
+
+					// Verify
+					assert.equal(removed, 0);
+					assert.deepEqual(manager.getTrunkCommits("main"), before);
+					assert.deepEqual(manager.getTrunkChanges("main"), changes);
+				});
+
+				it("composes oldest first while retaining the survivor and the trunk base", () => {
+					// Before: BASE <-- A[1] <-- B[2] <-- C[3] (HEAD).
+					// (A, B): BASE <-- B[1, 2] <-- C[3] (HEAD); A leaves the trunk and indexes.
+					// (B, C): BASE <-- C[1, 2, 3] (HEAD); B leaves the trunk and indexes.
+					// The second policy call sees B's composed [1, 2], not its original [2].
+					// C keeps its object, revision, and sequence ID; C.parent becomes BASE.
+					// All custom metadata stays undefined; another pass has no pair to offer.
+
+					// Setup
+					const manager = setupRetainedHistory(3, 3);
+					const commits = manager.getTrunkCommits("main");
+					const survivor = commits[2];
+					assert(survivor !== undefined);
+					const revision = survivor.revision;
+					const base = commits[0]?.parent;
+					const decisions: number[][][] = [];
+
+					// Act
+					const removed = manager.compactHistory((current, target) => {
+						assert(TestChange.isNonEmptyChange(current.change));
+						assert(TestChange.isNonEmptyChange(target.change));
+						decisions.push([current.change.intentions, target.change.intentions]);
+						return true;
+					});
+
+					// Verify
+					assert.equal(removed, 2);
+					assert.deepEqual(decisions, [
+						[[1], [2]],
+						[[1, 2], [3]],
+					]);
+					assert.deepEqual(manager.getTrunkCommits("main"), [survivor]);
+					assert.equal(manager.getTrunkHead("main"), survivor);
+					assert.equal(survivor.revision, revision);
+					assert.equal(survivor.parent, base);
+					assert.deepEqual(trunkIntentions(manager), [[1, 2, 3]]);
+					assert.equal(
+						manager.compactHistory(() => assert.fail("No pair remains")),
+						0,
+					);
+					checkChangeList(manager, [1, 2, 3]);
+				});
+
+				it("continues after a rejected pair without removing the rejected predecessor", () => {
+					// Before: BASE <-- A[1] <-- B[2] <-- C[3] <-- D[4] (HEAD).
+					// Reject (A, B); approve (B, C), then (C[2, 3], D).
+					// After:  BASE <-- A[1] <-- D[2, 3, 4] (HEAD).
+					// A stays unchanged; B and C are removed; D keeps its revision with parent A.
+					// A's edit is not absorbed later in this pass. Custom metadata remains undefined.
+
+					// Setup
+					const manager = setupRetainedHistory(4, 4);
+					const first = manager.getTrunkCommits("main")[0];
+
+					// Act
+					const removed = manager.compactHistory((current) => current !== first);
+
+					// Verify
+					assert.equal(removed, 2);
+					assert.equal(manager.getTrunkCommits("main")[0], first);
+					assert.deepEqual(trunkIntentions(manager), [[1], [2, 3, 4]]);
+				});
+
+				it("compacts acknowledged local commits", () => {
+					// Before: BASE <-- A[1] <-- B[2] <-- C[3] (trunk and local HEAD).
+					// A, B, and C are local-authored but acknowledged at sequence numbers 1, 2, and 3.
+					// After:  BASE <-- C[1, 2, 3] (trunk and local HEAD).
+					// A and B are removed; C keeps its revision and sequence ID, with undefined metadata.
+					// No unsequenced local commits remain; authorship does not prevent compaction.
+
+					// Setup
+					const { manager } = testChangeEditManagerFactory({ historyRetention: true });
+					for (let index = 1; index <= 3; index++) {
+						const commit = applyLocalCommit(
+							manager,
+							makeArray(index - 1, (i) => i + 1),
+							index,
+						);
+						manager.addSequencedChanges(
+							[commit],
+							manager.localSessionId,
+							brand(index),
+							brand(index - 1),
+							"main",
+						);
+					}
+					manager.advanceMinimumSequenceNumber(brand(3));
+					const survivor = manager.getTrunkHead("main");
+
+					// Act
+					const removed = manager.compactHistory(() => true);
+
+					// Verify
+					assert.equal(removed, 2);
+					assert.deepEqual(trunkIntentions(manager), [[1, 2, 3]]);
+					assert.equal(manager.getTrunkHead("main"), survivor);
+					assert.deepEqual(manager.getLocalCommits("main"), []);
+				});
+
+				it("compacts commits sharing a sequence number within a batch", () => {
+					// Before: BASE <-- A[1] <-- B[2] <-- C[3] (HEAD).
+					// A, B, and C share sequence number 1, with batch indexes 0, 1, and 2.
+					// At minimum sequence number 1, all three are eligible.
+					// After:  BASE <-- C[1, 2, 3] (HEAD).
+					// Remove A/B and their sequence-ID entries, not C's entry for the same sequence number.
+					// C retains batch index 2 and undefined custom metadata.
+
+					// Setup
+					const { manager } = testChangeEditManagerFactory({ historyRetention: true });
+					const commits = makeArray(3, (index) =>
+						peerCommit(
+							peer1,
+							makeArray(index, (i) => i + 1),
+							index + 1,
+						),
+					);
+					manager.addSequencedChanges(commits, peer1, brand(1), brand(0), "main");
+					manager.advanceMinimumSequenceNumber(brand(1));
+					const survivor = manager.getTrunkHead("main");
+
+					// Act
+					const removed = manager.compactHistory(() => true);
+
+					// Verify
+					assert.equal(removed, 2);
+					assert.deepEqual(trunkIntentions(manager), [[1, 2, 3]]);
+					assert.equal(manager.getTrunkHead("main"), survivor);
+				});
+
+				it("does not compact commits above the collaboration bound", () => {
+					// Before: BASE <-- A[1] <-- B[2] <-- C[3] <-- D[4] (HEAD).
+					// Sequence numbers are 1, 2, 3, 4; minimum sequence number 2 makes only A/B eligible.
+					// After:  BASE <-- B[1, 2] <-- C[3] <-- D[4] (HEAD).
+					// A is removed; B keeps revision B/sequence number 2 and now points to BASE.
+					// C/D keep their original objects and changes. All custom metadata stays undefined.
+
+					// Setup
+					const manager = setupRetainedHistory(4, 2);
+					const protectedCommits = manager.getTrunkCommits("main").slice(2);
+					const protectedChanges = protectedCommits.map((commit) => commit.change);
+
+					// Act
+					const removed = manager.compactHistory(() => true);
+
+					// Verify
+					assert.equal(removed, 1);
+					assert.deepEqual(trunkIntentions(manager), [[1, 2], [3], [4]]);
+					assert.deepEqual(manager.getTrunkCommits("main").slice(1), protectedCommits);
+					assert.deepEqual(manager.getTrunkChanges("main").slice(1), protectedChanges);
+				});
+
+				it("keeps registered fork bases and newer commits unchanged", () => {
+					// Before: BASE <-- A[1] <-- B[2] <-- C[3] <-- D[4] <-- E[5] (main HEAD).
+					//                                  ^ fork HEAD/base
+					// After:  BASE <-- B[1, 2] <-- C[3] <-- D[4] <-- E[5] (main HEAD).
+					// A is removed; B survives. The fork still points to the same C object/change.
+					// Even with minimum sequence number 5, C/D/E cannot be composed while the fork exists.
+					// Custom metadata stays undefined, including on the protected revisions.
+
+					// Setup
+					const manager = setupRetainedHistory(3, 3);
+					const fork = manager.getLocalBranch("main").fork();
+					const base = fork.getHead();
+					const change = base.change;
+					sequencePeerCommits(manager, 2, 4, 4);
+					manager.advanceMinimumSequenceNumber(brand(5));
+
+					// Act
+					const removed = manager.compactHistory(() => true);
+
+					// Verify
+					assert.equal(removed, 1);
+					assert.equal(fork.getHead(), base);
+					assert.equal(base.change, change);
+					assert.deepEqual(trunkIntentions(manager), [[1, 2], [3], [4], [5]]);
+					fork.dispose();
+				});
+
+				it("does not offer unsequenced local edits to the policy", () => {
+					// Before: BASE <-- A[1] <-- B[2] <-- C[3] (trunk HEAD) <-- D[4] (local HEAD).
+					// D is unsequenced: neither argument to the policy may be D.
+					// After:  BASE <-- C[1, 2, 3] (trunk HEAD) <-- D[4] (local HEAD).
+					// Remove A/B; keep C's revision and D's object, change, and parent C.
+					// Custom metadata remains undefined; the full local state still includes all four edits.
+
+					// Setup
+					const manager = setupRetainedHistory(3, 3);
+					applyLocalCommit(manager, [1, 2, 3], 4);
+					const local = manager.getLocalBranch("main").getHead();
+					const change = local.change;
+
+					// Act
+					const removed = manager.compactHistory((current, target) => {
+						assert.notEqual(current, local);
+						assert.notEqual(target, local);
+						return true;
+					});
+
+					// Verify
+					assert.equal(removed, 2);
+					assert.deepEqual(manager.getLocalCommits("main"), [local]);
+					assert.equal(local.change, change);
+					assert.deepEqual(trunkIntentions(manager), [[1, 2, 3]]);
+					checkChangeList(manager, [1, 2, 3, 4]);
+				});
+
+				it("allows previously protected history after its fork is disposed", () => {
+					// Before: BASE <-- A[1] <-- B[2] (main HEAD and fork HEAD/base).
+					// While the fork exists, B is protected: no pair is offered and A/B stay unchanged.
+					// Dispose the fork; then (A, B) produces BASE <-- B[1, 2] (main HEAD).
+					// A is removed; B keeps its revision with parent BASE and undefined custom metadata.
+
+					// Setup
+					const manager = setupRetainedHistory(2, 2);
+					const fork = manager.getLocalBranch("main").fork();
+					assert.equal(
+						manager.compactHistory(() => assert.fail("The fork still needs this pair")),
+						0,
+					);
+
+					// Act
+					fork.dispose();
+					const removed = manager.compactHistory(() => true);
+
+					// Verify
+					assert.equal(removed, 1);
+					assert.deepEqual(trunkIntentions(manager), [[1, 2]]);
+				});
+
+				describe("retention and policy combinations", () => {
+					for (const retention of [false, true, 0, 1, 2, 4] as const) {
+						for (const retainedByMsn of [0, 2]) {
+							for (const approve of [false, true]) {
+								it(`retainHistory=${retention}, ${retainedByMsn} collaboration-protected commits, policy ${approve ? "approves" : "rejects"}`, () => {
+									// Example for retention=4 and retainedByMsn=2:
+									// Before trimming: BASE <-- A[1] <-- B[2] <-- C[3] <-- D[4] <-- E[5] <-- F[6] (HEAD).
+									// Before compaction: BASE <-- C[3] <-- D[4] <-- E[5] <-- F[6] (HEAD).
+									// A/B have already left retained history; E/F are collaboration-protected.
+									// Approve: BASE <-- D[3, 4] <-- E[5] <-- F[6] (HEAD); C is removed, D survives.
+									// Reject: C/D/E/F stay separate. All custom metadata remains undefined.
+									// With false/0 retention, only correctness-needed history remains: no pair is offered.
+
+									// Setup
+									const manager = setupManager({
+										commitCount: 6,
+										startingPolicy: retention,
+										retainedByMsn,
+										retainedByFork: 0,
+									});
+									const before = trunkIntentions(manager);
+									const eligibleCount = before.length - retainedByMsn;
+									const offeredPairs = Math.max(0, eligibleCount - 1);
+									const expected =
+										approve && offeredPairs > 0
+											? [before.slice(0, eligibleCount).flat(), ...before.slice(eligibleCount)]
+											: before;
+									let calls = 0;
+
+									// Act
+									const removed = manager.compactHistory(() => {
+										calls++;
+										return approve;
+									});
+
+									// Verify
+									assert.equal(calls, offeredPairs);
+									assert.equal(removed, approve ? offeredPairs : 0);
+									assert.deepEqual(trunkIntentions(manager), expected);
+									assert.equal(manager.getHistoryRetention(), retention);
+								});
+							}
+						}
+					}
+				});
+
+				describe("known bugs (fixes deferred)", () => {
+					it.skip("updates a warmed history count when commits are removed", () => {
+						// Before: BASE <-- A[1] <-- B[2] <-- C[3] <-- D[4] (HEAD); cached count = 4.
+						// After:  BASE <-- D[1, 2, 3, 4] (HEAD); A/B/C are removed, D's revision survives.
+						// Required: invalidate the branch count cache so the next read returns 1, not 4.
+						// Custom metadata stays undefined; it is the history cache that is stale.
+
+						// Setup
+						const manager = setupRetainedHistory(4, 4);
+						const main = manager.getLocalBranch("main");
+						assert.equal(main.getCommitCount(), 4);
+
+						// Act
+						const removed = manager.compactHistory(() => true);
+
+						// Verify
+						assert.equal(removed, 3);
+						assert.equal(main.getCommitCount(), 1);
+					});
+
+					it.skip("invalidates the surviving commit's cached inverse", () => {
+						// Before: BASE <-- A[1] <-- B[2] <-- C[3] <-- D[4] (main HEAD).
+						//                  ^ divergent fork adds X[99]; a temporary fork rebases onto X.
+						// That rebase caches D's inverse [-4]; both forks are disposed before compaction.
+						// After: BASE <-- D[1, 2, 3, 4] (HEAD), still revision D with undefined metadata.
+						// Required: discard D's cached inverse; rollback to BASE must undo [-4, -3, -2, -1].
+
+						// Setup
+						const { manager, family } = testChangeEditManagerFactory({
+							historyRetention: true,
+						});
+						sequencePeerCommits(manager, 4, 1, 1);
+						manager.advanceMinimumSequenceNumber(brand(4));
+						const first = manager.getTrunkCommits("main")[0];
+						const base = first?.parent ?? assert.fail("Expected a trunk base");
+						const main = manager.getLocalBranch("main");
+						const divergent = main.fork(first);
+						applyBranchCommit(divergent, [1], 99);
+						const temporary = main.fork();
+						temporary.rebaseOnto(divergent);
+						temporary.dispose();
+						divergent.dispose();
+
+						// Act
+						manager.compactHistory(() => true);
+						const rollback = diffHistories(
+							family.rebaser,
+							manager.getTrunkHead("main"),
+							base,
+							mintRevisionTag,
+						);
+
+						// Verify
+						assert(TestChange.isNonEmptyChange(rollback));
+						assert.deepEqual(rollback.intentions, [-4, -3, -2, -1]);
+					});
+
+					it.skip("does not replay an idle peer's earlier edit after compaction", () => {
+						// Before: BASE <-- A[1, peer2] <-- B[2, peer1] <-- C[3, peer1] <-- D[4, peer1] (HEAD).
+						// Compact: BASE <-- D[1, 2, 3, 4] (HEAD); A/B/C leave the trunk.
+						// Receive E[5] from idle peer2: BASE <-- D[1, 2, 3, 4] <-- E[5] (HEAD).
+						// Required: peer2's tracked history must not replay A, whose edit already lives in D.
+						// Authorship/session bookkeeping is distinct from custom metadata, which is undefined here.
+
+						// Setup
+						const { manager } = testChangeEditManagerFactory({ historyRetention: true });
+						sequencePeerCommits(manager, 1, 1, 1, peer2);
+						sequencePeerCommits(manager, 3, 2, 2, peer1);
+						manager.advanceMinimumSequenceNumber(brand(4));
+
+						// Act
+						manager.compactHistory(() => true);
+						sequencePeerCommits(manager, 1, 5, 5, peer2);
+
+						// Verify
+						checkChangeList(manager, [1, 2, 3, 4, 5]);
+						assert.deepEqual(trunkIntentions(manager), [[1, 2, 3, 4], [5]]);
+					});
+				});
+			});
+
+			describe("metadata compaction", () => {
+				it("replaces pair metadata when the policy supplies a metadata tree", () => {
+					// Before: BASE <-- A[1, M_A] <-- B[2, M_B] (HEAD).
+					// M_A = { metadata: { label: "before" }, children: [] }; M_B uses label "after".
+					// Policy returns M = { metadata: { label: "composed" }, children: [] }.
+					// After: BASE <-- B[1, 2, M] (HEAD); remove A, retain revision B.
+					// B.customMetadata is exactly M, not a wrapper around M_A/M_B; neither old label survives.
+
+					// Setup
+					const manager = setupHistoryWithMetadata([
+						{ metadata: { label: "before" }, children: [] },
+						{ metadata: { label: "after" }, children: [] },
+					]);
+					const metadata: CustomMetadataTree = {
+						metadata: { label: "composed" },
+						children: [],
+					};
+
+					// Act
+					const removed = manager.compactHistory(() => metadata);
+
+					// Verify
+					assert.equal(removed, 1);
+					assert.equal(manager.getTrunkHead("main").customMetadata, metadata);
+				});
+
+				it("combines existing metadata as children in commit order", () => {
+					// Before: BASE <-- A[1, M_A] <-- B[2, M_B] (HEAD).
+					// M_A.metadata = { label: "before", keep: true }; M_B.metadata = { label: "after" }.
+					// Policy returns true: BASE <-- B[1, 2, M_AB] (HEAD); A leaves the graph.
+					// M_AB = { metadata: undefined, children: [M_A, M_B] } preserves both authored trees.
+					// Flattening gives { label: "after", keep: true }: B wins conflicts, A supplies missing keys.
+					// Removing revision A from the graph does not discard its metadata subtree.
+
+					// Setup
+					const before: CustomMetadataTree = {
+						metadata: { label: "before", keep: true },
+						children: [],
+					};
+					const after: CustomMetadataTree = { metadata: { label: "after" }, children: [] };
+					const manager = setupHistoryWithMetadata([before, after]);
+
+					// Act
+					const removed = manager.compactHistory(() => true);
+
+					// Verify
+					assert.equal(removed, 1);
+					const metadata = manager.getTrunkHead("main").customMetadata;
+					assert.deepEqual(metadata, { metadata: undefined, children: [before, after] });
+					assert.deepEqual(flattenCustomMetadata(metadata), { label: "after", keep: true });
+				});
+
+				for (const position of ["neither", "older", "newer"] as const) {
+					it(`handles metadata on ${position === "neither" ? "neither commit" : `only the ${position} commit`}`, () => {
+						// Before: BASE <-- A[1, M_A] <-- B[2, M_B] (HEAD).
+						// After:  BASE <-- B[1, 2, M] (HEAD); A is removed in all three cases.
+						// older:  (M_A, M_B) = (M, undefined); B inherits A's exact metadata tree.
+						// newer:  (M_A, M_B) = (undefined, M); B keeps its exact metadata tree.
+						// neither: both are undefined; B stays undefined, with no empty wrapper.
+
+						// Setup
+						const metadata: CustomMetadataTree = { metadata: { label: "kept" }, children: [] };
+						const manager = setupHistoryWithMetadata([
+							position === "older" ? metadata : undefined,
+							position === "newer" ? metadata : undefined,
+						]);
+
+						// Act
+						const removed = manager.compactHistory(() => true);
+
+						// Verify
+						assert.equal(removed, 1);
+						assert.equal(
+							manager.getTrunkHead("main").customMetadata,
+							position === "neither" ? undefined : metadata,
+						);
+						assert.deepEqual(trunkIntentions(manager), [[1, 2]]);
+					});
+				}
+
+				describe("known bugs (fixes deferred)", () => {
+					it.skip("rejects unencodable metadata before mutating history", () => {
+						// Before: BASE <-- A[1] <-- B[2] (HEAD); both custom metadata fields are undefined.
+						// Policy returns M = 10,000 nested wrappers around { label: "nested" }.
+						// Required after encoding rejects M: BASE <-- A[1] <-- B[2] (HEAD), unchanged.
+						// A must not be removed, B must not absorb [1], and neither may acquire M.
+
+						// Setup
+						const manager = setupRetainedHistory(2, 2);
+						const before = manager.getTrunkCommits("main");
+						const changes = before.map((commit) => commit.change);
+						let metadata: CustomMetadataTree = { metadata: { label: "nested" }, children: [] };
+						for (let depth = 0; depth < 10000; depth++) {
+							metadata = { metadata: undefined, children: [metadata] };
+						}
+						let error: unknown;
+
+						// Act
+						try {
+							manager.compactHistory(() => metadata);
+						} catch (error_) {
+							error = error_;
+						}
+
+						// Verify
+						assert(error instanceof RangeError);
+						assert.deepEqual(manager.getTrunkCommits("main"), before);
+						assert.deepEqual(manager.getTrunkChanges("main"), changes);
+						assert(before.every((commit) => commit.customMetadata === undefined));
+					});
+				});
+			});
 		});
 
 		it("summary load only keep commits required by MSN and the history retention policy", () => {
