@@ -16,6 +16,7 @@ import { expect } from "chai";
 
 import { getApiItemTransformationConfigurationWithDefaults } from "../../configuration/index.js";
 import { getInheritedMembers } from "../InheritedMembers.js";
+import { getFilteredMembers } from "../index.js";
 
 describe("getInheritedMembers with API Extractor declarations", () => {
 	/**
@@ -95,6 +96,47 @@ describe("getInheritedMembers with API Extractor declarations", () => {
 		});
 		expect([...filtered.keys()].map((item) => item.name)).to.deep.equal(["classProperty"]);
 	});
+
+	for (const excludeInterfaceProperty of [false, true]) {
+		it(`prefers the class property when the matching interface property is ${excludeInterfaceProperty ? "excluded" : "visible"}`, () => {
+			const { model, items } = loadFixture();
+			const base = items.find(
+				(item): item is ApiClass =>
+					item instanceof ApiClass && item.name === "TestClassWithMergedInterface",
+			);
+			const augment = base
+				?.getMergedSiblings()
+				.find((item): item is ApiInterface => item instanceof ApiInterface);
+			const derived = items.find(
+				(item): item is ApiClass =>
+					item instanceof ApiClass && item.name === "TestClassExtendingMergedClass",
+			);
+			if (base === undefined || augment === undefined || derived === undefined) {
+				throw new Error("Missing merged class/interface fixture.");
+			}
+			const [classProperty] = base.findMembersByName("classProperty");
+			const [interfaceProperty] = augment.findMembersByName("classProperty");
+			const [interfaceOnly] = augment.findMembersByName("mergedInterfaceProperty");
+
+			// The report gives both declarations the same reference. Check object identity to distinguish
+			// keeping the class declaration from merely deduplicating rows with the same property name.
+			expect(classProperty.canonicalReference.toString()).to.equal(
+				interfaceProperty.canonicalReference.toString(),
+			);
+			const config = getApiItemTransformationConfigurationWithDefaults({
+				apiModel: model,
+				includeInheritedMembers: true,
+				exclude: (item) => excludeInterfaceProperty && item === interfaceProperty,
+			});
+			for (const type of [base, derived]) {
+				const { members } = getFilteredMembers(type, config);
+				const matches = members.filter((member) => member.displayName === "classProperty");
+				expect(matches, type.name).to.have.length(1);
+				expect(matches[0], type.name).to.equal(classProperty);
+				expect(members, type.name).to.include(interfaceOnly);
+			}
+		});
+	}
 
 	it("retains well-known and declared symbol members with canonical declaration links", () => {
 		const { model, items } = loadFixture();

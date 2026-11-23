@@ -321,9 +321,10 @@ class InheritanceResolver {
 		}
 		active.delete(item);
 
-		// Check local names before filtering: even an excluded override must hide the base member.
-		// Also remove declarations already overridden on one branch but inherited unchanged on another.
-		const declared = parts.flatMap((part) =>
+		// A class property and its merged interface signature can share a canonical reference.
+		// Insert the class's own members last so that its declaration wins when both use the same key.
+		const [own, ...mergedInterfaces] = parts;
+		const declared = [...mergedInterfaces, own].flatMap((part) =>
 			part.base.members.filter(isInstanceMember).flatMap((declaration) => {
 				const overrideKey = getOverrideKey(declaration);
 				return overrideKey === undefined
@@ -331,6 +332,9 @@ class InheritanceResolver {
 					: [{ declaration, bindings: part.bindings, overrideKey }];
 			}),
 		);
+
+		// Check local names before filtering: even an excluded override must hide the base member.
+		// Also remove declarations already overridden on one branch but inherited unchanged on another.
 		const localNames = new Set(declared.map((member) => member.overrideKey));
 		for (const [key, member] of members) {
 			if (localNames.has(member.overrideKey) || hidden.has(key)) {

@@ -359,6 +359,33 @@
 					"members": [
 						{
 							"kind": "PropertySignature",
+							"canonicalReference": "test-inheritance!TestClassWithMergedInterface#classProperty:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "classProperty: "
+								},
+								{
+									"kind": "Content",
+									"text": "T"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "classProperty",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							}
+						},
+						{
+							"kind": "PropertySignature",
 							"canonicalReference": "test-inheritance!TestClassWithMergedInterface#mergedInterfaceProperty:member",
 							"docComment": "",
 							"excerptTokens": [
