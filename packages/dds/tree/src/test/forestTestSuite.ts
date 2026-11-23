@@ -14,6 +14,7 @@ import {
 	type DeltaFieldChanges,
 	type DeltaFieldMap,
 	type DeltaMark,
+	type DeltaRoot,
 	type DeltaVisitor,
 	type DetachedField,
 	EmptyKey,
@@ -28,12 +29,14 @@ import {
 	type TreeStoredSchemaSubscription,
 	type UpPath,
 	clonePath,
+	combineVisitors,
 	createAnnouncedVisitor,
 	detachedFieldAsKey,
 	makeDetachedFieldIndex,
 	mapCursorField,
 	moveToDetachedField,
 	rootFieldKey,
+	visitDelta,
 } from "../core/index.js";
 import {
 	cursorForJsonableTreeField,
@@ -409,6 +412,115 @@ export function testForest(config: ForestTestConfiguration): void {
 		assert.equal(detachedCursor.getFieldLength(), 0);
 	});
 
+	// TODO: AB#89314: This test validates current behavior, but that behavior likely needs to change
+	// to support correct handling of any changes that resurrect content previously made part of a cycle
+	// (which can happen via undo/redo or from other concurrent edits).
+	it("discards a disconnected cycle without losing escaped or unrelated nodes", () => {
+		const forest = factory(new TreeStoredSchemaRepository(jsonSequenceRootSchema));
+		initializeForest(forest, fieldJsonCursor([["escaped", "stay"], "outside"]));
+		const cyclePath: UpPath = {
+			parent: undefined,
+			parentField: rootFieldKey,
+			parentIndex: 0,
+		};
+		const escaped = forest.anchors.track({
+			parent: cyclePath,
+			parentField: EmptyKey,
+			parentIndex: 0,
+		});
+		const cycleAnchor = forest.anchors.track(cyclePath);
+		const cycleChild = forest.anchors.track({
+			parent: cyclePath,
+			parentField: EmptyKey,
+			parentIndex: 1,
+		});
+		const cycleNode = forest.anchors.locate(cycleAnchor);
+		assert(cycleNode !== undefined);
+		let destroyed = false;
+		cycleNode.events.on("afterDestroy", () => {
+			destroyed = true;
+		});
+		const outside = forest.anchors.track({
+			parent: undefined,
+			parentField: rootFieldKey,
+			parentIndex: 1,
+		});
+		const cycleId = { minor: 42 };
+		const escapedId = { minor: 44 };
+		const unrelatedId = { minor: 45 };
+		const index = makeDetachedFieldIndex();
+		applyTestDelta(new Map(), forest, {
+			build: [{ id: unrelatedId, trees: chunkFromJsonTrees(["detached"]) }],
+			detachedFieldIndex: index,
+		});
+		const unrelatedPath: UpPath = {
+			parent: undefined,
+			parentField: index.toFieldKey(index.getEntry(unrelatedId)),
+			parentIndex: 0,
+		};
+		const unrelated = forest.anchors.track(unrelatedPath);
+		const delta: DeltaRoot = {
+			build: [{ id: { minor: 43 }, trees: chunkFromJsonTrees(["incoming"]) }],
+			fields: new Map([
+				[
+					rootFieldKey,
+					{
+						marks: [
+							{
+								count: 1,
+								detach: cycleId,
+								fields: new Map([
+									[
+										EmptyKey,
+										{
+											marks: [
+												{ count: 1, detach: escapedId },
+												{ count: 2, attach: cycleId },
+												{ count: 1 },
+											],
+										},
+									],
+								]),
+							},
+							{ count: 1 },
+							{ count: 1, attach: escapedId },
+						],
+					},
+				],
+			]),
+		};
+		const visitor = combineVisitors([
+			forest.acquireVisitor(),
+			forest.anchors.acquireVisitor(),
+		]);
+		visitDelta(delta, visitor, index, undefined);
+		visitor.free();
+		const readField = (field: FieldKey): JsonCompatible[] => {
+			const cursor = forest.getCursorAboveDetachedFields();
+			cursor.enterField(field);
+			return mapCursorField(cursor, cursorToJsonObject);
+		};
+		assert.deepEqual(readField(rootFieldKey), ["outside", "escaped"]);
+		expectEqualPaths(forest.anchors.locate(outside), {
+			parent: undefined,
+			parentField: rootFieldKey,
+			parentIndex: 0,
+		});
+		expectEqualPaths(forest.anchors.locate(escaped), {
+			parent: undefined,
+			parentField: rootFieldKey,
+			parentIndex: 1,
+		});
+		assert.equal(destroyed, true);
+		assert.equal(forest.anchors.locate(cycleAnchor), undefined);
+		assert.equal(forest.anchors.locate(cycleChild), undefined);
+		const entries = [...index.entries()];
+		assert.equal(entries.length, 1);
+		assert.deepEqual(entries[0].id, unrelatedId);
+		assert.deepEqual(readField(index.toFieldKey(entries[0].root)), ["detached"]);
+		expectEqualPaths(forest.anchors.locate(unrelated), unrelatedPath);
+	});
+
 	/**
 	 * This suite checks that forests assert on invalid deltas.
 	 *
@@ -745,6 +857,14 @@ export function testForest(config: ForestTestConfiguration): void {
 		it("set fields as replace", () => {
 			const forest = factory(new TreeStoredSchemaRepository(jsonSequenceRootSchema));
 			initializeForest(forest, fieldJsonCursor([nestedContent]));
+			let replacements = 0;
+			forest.registerAnnouncedVisitor(() =>
+				createAnnouncedVisitor({
+					afterReplace: () => {
+						replacements++;
+					},
+				}),
+			);
 
 			const setField: DeltaMark = {
 				count: 1,
@@ -773,6 +893,91 @@ export function testForest(config: ForestTestConfiguration): void {
 			reader.enterField(xField);
 			assert.equal(reader.firstNode(), true);
 			assert.equal(reader.value, true);
+			assert.equal(replacements, 1);
+			reader.free();
+		});
+
+		it("replaces a range with consistent announcements, anchors, and detached content", () => {
+			const forest = factory(new TreeStoredSchemaRepository(jsonSequenceRootSchema));
+			initializeForest(forest, fieldJsonCursor([1, 2, 3, 4]));
+			const source: FieldKey = brand("incoming");
+			const destination: FieldKey = brand("outgoing");
+			const creator = forest.acquireVisitor();
+			creator.create([singleJsonCursor(10), singleJsonCursor(11)], source);
+			creator.free();
+			const readField = (fieldKey: FieldKey): JsonCompatible[] => {
+				const cursor = forest.allocateCursor();
+				forest.tryMoveCursorToField({ fieldKey, parent: undefined }, cursor);
+				const values = mapCursorField(cursor, cursorToJsonObject);
+				cursor.free();
+				return values;
+			};
+			const outgoingAnchor = forest.anchors.track({
+				parent: undefined,
+				parentField: rootFieldKey,
+				parentIndex: 1,
+			});
+			const incomingAnchor = forest.anchors.track({
+				parent: undefined,
+				parentField: source,
+				parentIndex: 0,
+			});
+			const siblingAnchor = forest.anchors.track({
+				parent: undefined,
+				parentField: rootFieldKey,
+				parentIndex: 3,
+			});
+			const events: string[] = [];
+			forest.registerAnnouncedVisitor(() =>
+				createAnnouncedVisitor({
+					beforeReplace: (incoming, range, outgoing) => {
+						events.push("beforeReplace");
+						assert.equal(incoming, source);
+						assert.deepEqual(range, { start: 1, end: 3 });
+						assert.equal(outgoing, destination);
+						assert.deepEqual(readField(rootFieldKey), [1, 2, 3, 4]);
+						assert.deepEqual(readField(source), [10, 11]);
+						assert.deepEqual(readField(destination), []);
+					},
+					afterReplace: () => {
+						events.push("afterReplace");
+						assert.deepEqual(readField(rootFieldKey), [1, 10, 11, 4]);
+						assert.deepEqual(readField(source), []);
+						assert.deepEqual(readField(destination), [2, 3]);
+						expectEqualPaths(forest.anchors.locate(outgoingAnchor), {
+							parent: undefined,
+							parentField: destination,
+							parentIndex: 0,
+						});
+						expectEqualPaths(forest.anchors.locate(incomingAnchor), {
+							parent: undefined,
+							parentField: rootFieldKey,
+							parentIndex: 1,
+						});
+						expectEqualPaths(forest.anchors.locate(siblingAnchor), {
+							parent: undefined,
+							parentField: rootFieldKey,
+							parentIndex: 3,
+						});
+					},
+				}),
+			);
+			forest.events.on("beforeChange", () => {
+				events.push("beforeChange");
+				assert.deepEqual(readField(rootFieldKey), [1, 2, 3, 4]);
+			});
+			const visitor = combineVisitors([
+				forest.acquireVisitor(),
+				forest.anchors.acquireVisitor(),
+			]);
+			visitor.enterField(rootFieldKey);
+			visitor.replace(source, { start: 1, end: 3 }, destination, detachId);
+			visitor.exitField(rootFieldKey);
+			visitor.free();
+			assert.deepEqual(events, ["beforeReplace", "beforeChange", "afterReplace"]);
+			forest.forgetAnchor(outgoingAnchor);
+			forest.forgetAnchor(incomingAnchor);
+			forest.forgetAnchor(siblingAnchor);
 		});
 
 		it("remove", () => {

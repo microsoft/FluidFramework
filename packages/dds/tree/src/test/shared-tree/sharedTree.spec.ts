@@ -84,9 +84,12 @@ import { stringKey } from "../../shared-tree-core/editManagerSummarizer.js";
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 import {
 	SchemaFactory,
+	identifySchema,
 	type TreeFieldFromImplicitField,
 	type TreeViewAlpha,
 	TreeViewConfiguration,
+	TreeViewConfigurationAlpha,
+	StagedSchemaUpgradePolicy,
 	type ValidateRecursiveSchema,
 	SchemaFactoryAlpha,
 	type ITree,
@@ -419,6 +422,21 @@ describe("SharedTree", () => {
 		}
 	});
 
+	it("exposes stored schema versions", () => {
+		const libraryId = "test";
+		const tree = treeTestFactory();
+		const view = tree.viewWith(
+			new TreeViewConfigurationAlpha({
+				schema: numberSchema,
+				schemaIdentity: identifySchema({ schemaVersion: { [libraryId]: 1 } }),
+			}),
+		);
+
+		assert.equal(tree.storedSchemaVersion, undefined);
+		view.initialize(1);
+		assert.deepEqual(tree.storedSchemaVersion, new Map([["test", 1]]));
+	});
+
 	it("can be connected to another tree", async () => {
 		const provider = await TestTreeProvider.create(2);
 		assert(provider.trees[0].isAttached());
@@ -656,7 +674,7 @@ describe("SharedTree", () => {
 				const containerRuntimeFactory = new MockContainerRuntimeFactory();
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-				const factory = new SharedTreeTestFactory(() => {});
+				const factory = SharedTreeTestFactory.build(() => {});
 
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
@@ -808,6 +826,130 @@ describe("SharedTree", () => {
 		assert(view2.compatibility.canView);
 		// Check content loaded
 		assert.deepEqual([...view2.root], ["A"]);
+	});
+
+	it("preserves newer document content through older-client upgrades, summary, and reload", async () => {
+		const factory = new SchemaFactoryAlpha("persistedTaskRollout");
+		class Reminder extends factory.object("Reminder", {
+			message: factory.string,
+		}) {}
+		const stagedPriority = factory.types([factory.number, factory.staged(factory.string)]);
+		const stagedHours = factory.stagedOptional(factory.number);
+		class Before extends factory.object("Task", {
+			title: factory.string,
+			priority: stagedPriority,
+			estimatedHours: stagedHours,
+			isApproved: factory.optional(factory.boolean),
+		}) {}
+
+		// Fully enable string priorities and optional effort estimates, retire approval, and add reminders in the later schema.
+		class After extends factory.object("Task", {
+			title: factory.string,
+			reminder: factory.optional(Reminder),
+			priority: [factory.number, factory.string],
+			estimatedHours: factory.optional(factory.number),
+		}) {}
+
+		// The older view restores approval while retaining the newer document's reminder definition and enabled staged upgrades.
+		class Expected extends factory.object("Task", {
+			title: factory.string,
+			reminder: factory.optional(Reminder),
+			priority: [factory.number, factory.string],
+			estimatedHours: factory.optional(factory.number),
+			isApproved: factory.optional(factory.boolean),
+		}) {}
+
+		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+		const [tree] = provider.trees;
+		const creator = tree.viewWith(
+			new TreeViewConfiguration({ schema: After, enableSchemaValidation }),
+		);
+		creator.initialize({
+			title: "Prepare release",
+			reminder: { message: "Ask the reviewer" },
+			priority: "high",
+		});
+		await provider.ensureSynchronized();
+		creator.dispose();
+
+		// Load the newer document with the older staged schema, then persist its composed upgrade.
+		const config = new TreeViewConfigurationAlpha({
+			schema: Before,
+			stagedUpgradePolicy: StagedSchemaUpgradePolicy.restrictive,
+			enableSchemaValidation,
+		});
+		const older = tree.viewWith(config);
+		assert.equal(older.compatibility.canView, false);
+		assert.equal(older.compatibility.canUpgrade, true);
+		older.upgradeSchema();
+		older.root.isApproved = true;
+		await provider.ensureSynchronized();
+		await provider.summarize();
+		await provider.ensureSynchronized();
+
+		// Load new clients from the summary, not merely new views on an existing checkout.
+		const loadedTree = await provider.createTree();
+		const loaded = loadedTree.viewWith(config);
+		expectSchemaEqual(loadedTree.kernel.checkout.storedSchema, toInitialSchema(Expected));
+		assert.equal(loaded.compatibility.canView, true);
+		assert.equal(loaded.root.priority, "high");
+		assert.equal(loaded.root.estimatedHours, undefined);
+		assert.equal(loaded.root.isApproved, true);
+		assert.equal("reminder" in loaded.root, false);
+		loaded.dispose();
+
+		// A view that declares reminders must recover the node and content that the older client's upgrade preserved.
+		const inspectingTree = await provider.createTree();
+		const inspecting = inspectingTree.viewWith(
+			new TreeViewConfiguration({ schema: Expected, enableSchemaValidation }),
+		);
+		assert.equal(inspecting.root.reminder?.message, "Ask the reviewer");
+
+		// Backport an optional `label` to the older client without changing its staged declarations.
+		// Reloading the newer document must not prevent that client from composing another upgrade.
+		class BeforeWithLabel extends factory.object("Task", {
+			title: factory.string,
+			priority: stagedPriority,
+			estimatedHours: stagedHours,
+			isApproved: factory.optional(factory.boolean),
+			label: factory.optional(factory.string),
+		}) {}
+
+		// Only `label` is new; all fields and types retained in the previous summary must survive again.
+		class ExpectedLater extends factory.object("Task", {
+			title: factory.string,
+			reminder: factory.optional(Reminder),
+			priority: [factory.number, factory.string],
+			estimatedHours: factory.optional(factory.number),
+			isApproved: factory.optional(factory.boolean),
+			label: factory.optional(factory.string),
+		}) {}
+		const patchedOlder = loadedTree.viewWith(
+			new TreeViewConfigurationAlpha({
+				schema: BeforeWithLabel,
+				stagedUpgradePolicy: StagedSchemaUpgradePolicy.restrictive,
+				enableSchemaValidation,
+			}),
+		);
+		assert.equal(patchedOlder.compatibility.canView, false);
+		assert.equal(patchedOlder.compatibility.canUpgrade, true);
+		patchedOlder.upgradeSchema();
+		patchedOlder.root.label = "Ready";
+		patchedOlder.root.priority = "urgent";
+		patchedOlder.root.estimatedHours = 4;
+		patchedOlder.root.estimatedHours = undefined;
+		await provider.ensureSynchronized();
+
+		expectSchemaEqual(loadedTree.kernel.checkout.storedSchema, toInitialSchema(ExpectedLater));
+		expectSchemaEqual(
+			inspectingTree.kernel.checkout.storedSchema,
+			toInitialSchema(ExpectedLater),
+		);
+		assert.equal(patchedOlder.compatibility.canView, true);
+		assert.equal(patchedOlder.root.label, "Ready");
+		assert.equal(inspecting.root.priority, "urgent");
+		assert.equal(inspecting.root.estimatedHours, undefined);
+		assert.equal(inspecting.root.reminder?.message, "Ask the reviewer");
 	});
 
 	it("can process ops after loading from summary", async () => {
@@ -1133,7 +1275,7 @@ describe("SharedTree", () => {
 		const provider = await TestTreeProvider.create(
 			1,
 			SummarizeType.onDemand,
-			new SharedTreeTestFactory(onCreate),
+			SharedTreeTestFactory.build(onCreate),
 		);
 		const tree1 = provider.trees[0];
 		const view1 = tree1.viewWith(
@@ -1173,7 +1315,7 @@ describe("SharedTree", () => {
 		const provider = await TestTreeProvider.create(
 			1,
 			SummarizeType.onDemand,
-			new SharedTreeTestFactory(onCreate),
+			SharedTreeTestFactory.build(onCreate),
 		);
 		const tree1 = provider.trees[0];
 		const view1 = tree1.viewWith(
@@ -1215,7 +1357,7 @@ describe("SharedTree", () => {
 		const provider = await TestTreeProvider.create(
 			1,
 			SummarizeType.onDemand,
-			new SharedTreeTestFactory(onCreate),
+			SharedTreeTestFactory.build(onCreate),
 		);
 		const tree1 = provider.trees[0];
 		const view1 = tree1.viewWith(
@@ -1715,7 +1857,7 @@ describe("SharedTree", () => {
 		const provider = await TestTreeProvider.create(
 			1,
 			undefined,
-			new SharedTreeTestFactory(onCreate),
+			SharedTreeTestFactory.build(onCreate),
 		);
 		const view = provider.trees[0].viewWith(
 			new TreeViewConfiguration({
@@ -3228,7 +3370,7 @@ describe("SharedTree", () => {
 		const provider = await TestTreeProvider.create(
 			1,
 			undefined,
-			new SharedTreeTestFactory(onCreate),
+			SharedTreeTestFactory.build(onCreate),
 		);
 		const [tree] = provider.trees;
 		assert.deepEqual(
@@ -3878,7 +4020,7 @@ describe("SharedTree", () => {
 					const provider = await TestTreeProvider.create(
 						1,
 						SummarizeType.onDemand,
-						new SharedTreeTestFactory(() => {}, undefined, internalOption),
+						SharedTreeTestFactory.build(() => {}, undefined, internalOption),
 					);
 					const tree1 = provider.trees[0];
 					const config = new TreeViewConfiguration({

@@ -3,13 +3,148 @@
     "type": "cycle",
     "from": "src/feature-libraries/flex-tree/lazyField.ts",
     "to": "src/feature-libraries/flex-tree/lazyNode.ts",
+    "unresolvedTo": "./lazyNode.js",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "no-circular"
     },
     "cycle": [
-      "src/feature-libraries/flex-tree/lazyNode.ts",
-      "src/feature-libraries/flex-tree/lazyField.ts"
+      {
+        "name": "src/feature-libraries/flex-tree/lazyNode.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/feature-libraries/flex-tree/lazyField.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/shared-tree/branchCheckout.ts",
+    "to": "src/shared-tree/treeCheckout.ts",
+    "unresolvedTo": "./treeCheckout.js",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      {
+        "name": "src/shared-tree/treeCheckout.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/shared-tree/schematizingTreeView.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/shared-tree/sharedTree.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/shared-tree/viewableTree.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/shared-tree/branchCheckout.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/shared-tree/schematizingTreeView.ts",
+    "to": "src/shared-tree/sharedTree.ts",
+    "unresolvedTo": "./sharedTree.js",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      {
+        "name": "src/shared-tree/sharedTree.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/shared-tree/treeCheckout.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/shared-tree/schematizingTreeView.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/shared-tree/schematizingTreeView.ts",
+    "to": "src/shared-tree/treeCheckout.ts",
+    "unresolvedTo": "./treeCheckout.js",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      {
+        "name": "src/shared-tree/treeCheckout.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/shared-tree/schematizingTreeView.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
     ]
   }
 ]

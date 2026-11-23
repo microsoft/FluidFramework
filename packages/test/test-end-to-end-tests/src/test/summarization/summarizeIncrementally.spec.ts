@@ -26,8 +26,6 @@ import {
 	type ITestContainerConfig,
 	ITestObjectProvider,
 	createSummarizer,
-	getContainerEntryPointBackCompat,
-	getDataStoreEntryPointBackCompat,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -132,7 +130,7 @@ describeCompat(
 				this.skip();
 			}
 			container = await provider.makeTestContainer();
-			dataObject1 = await getContainerEntryPointBackCompat(container);
+			dataObject1 = (await container.getEntryPoint()) as ITestDataObject;
 			containerRuntime = dataObject1._context.containerRuntime;
 			await waitForContainerConnection(container);
 
@@ -141,7 +139,7 @@ describeCompat(
 
 		it("can do incremental data store summary", async function () {
 			const dataStore2 = await containerRuntime.createDataStore(TestDataObjectType);
-			const dataObject2 = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore2);
+			const dataObject2 = (await dataStore2.entryPoint.get()) as ITestDataObject;
 			dataObject1._root.set("dataObject2", dataObject2.handle);
 
 			await provider.ensureSynchronized();
@@ -280,11 +278,11 @@ describeCompat(
 				runtimeOptions: { enableGroupedBatching: true },
 			};
 			const container = await provider.makeTestContainer(config);
-			const root = await getContainerEntryPointBackCompat<ITestDataObject>(container);
+			const root = (await container.getEntryPoint()) as ITestDataObject;
 			const runtime = root._context.containerRuntime as ContainerRuntime;
-			const unchangedStore = await getDataStoreEntryPointBackCompat<ITestDataObject>(
-				await runtime.createDataStore(TestDataObjectType),
-			);
+			const unchangedStore = (await (
+				await runtime.createDataStore(TestDataObjectType)
+			).entryPoint.get()) as ITestDataObject;
 			root._root.set("unchanged", unchangedStore.handle);
 			await provider.ensureSynchronized();
 			const first = await createSummarizer(provider, container, config);
@@ -293,10 +291,12 @@ describeCompat(
 
 			// Create detached stores first, then attach them together from the interactive client.
 			const newStores = await Promise.all(
-				Array.from({ length: 12 }, async () =>
-					getDataStoreEntryPointBackCompat<ITestDataObject>(
-						await runtime.createDataStore(TestDataObjectType),
-					),
+				Array.from(
+					{ length: 12 },
+					async () =>
+						(
+							await runtime.createDataStore(TestDataObjectType)
+						).entryPoint.get() as Promise<ITestDataObject>,
 				),
 			);
 			const attachSequenceNumbers: number[] = [];

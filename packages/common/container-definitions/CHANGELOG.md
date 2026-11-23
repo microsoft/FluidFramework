@@ -1,5 +1,9 @@
 # @fluidframework/container-definitions
 
+## 3.13.0
+
+Dependency updates only.
+
 ## 3.12.0
 
 Dependency updates only.
@@ -16,27 +20,27 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Container dirty state now accounts for outstanding attachment blob work ([#28459](https://github.com/microsoft/FluidFramework/pull/28459)) [b94b1f3ff60](https://github.com/microsoft/FluidFramework/commit/b94b1f3ff6015742da98385a88870926ff498663)
+#### Container dirty state now accounts for outstanding attachment blob work ([#28459](https://github.com/microsoft/FluidFramework/pull/28459)) [b94b1f3ff60](https://github.com/microsoft/FluidFramework/commit/b94b1f3ff6015742da98385a88870926ff498663)
 
-  [`IContainer.isDirty`](https://fluidframework.com/docs/api/container-definitions/icontainer-interface#isdirty-propertysignature) and [`IFluidContainer.isDirty`](https://fluidframework.com/docs/api/fluid-static/ifluidcontainer-interface#isdirty-propertysignature) now include outstanding attachment blob work, not just operations.
-  Previously, `saved` could fire during a blob upload, allowing hosts to dispose the container and lose the attachment.
-  Do not dispose a container while `isDirty` is `true`.
+[`IContainer.isDirty`](https://fluidframework.com/docs/api/container-definitions/icontainer-interface#isdirty-propertysignature) and [`IFluidContainer.isDirty`](https://fluidframework.com/docs/api/fluid-static/ifluidcontainer-interface#isdirty-propertysignature) now include outstanding attachment blob work, not just operations.
+Previously, `saved` could fire during a blob upload, allowing hosts to dispose the container and lose the attachment.
+Do not dispose a container while `isDirty` is `true`.
 
-  Blob work ends when sharing succeeds, fails, or is cancelled.
-  The `saved` event means no local work remains outstanding, not that every blob was shared successfully.
-  Failed or cancelled handles may remain unusable; observe the handle's `payloadShared` and `payloadShareFailed` events for individual outcomes.
+Blob work ends when sharing succeeds, fails, or is cancelled.
+The `saved` event means no local work remains outstanding, not that every blob was shared successfully.
+Failed or cancelled handles may remain unusable; observe the handle's `payloadShared` and `payloadShareFailed` events for individual outcomes.
 
-  ```ts
-  container.on("saved", () => container.dispose());
-  ```
+```ts
+container.on("saved", () => container.dispose());
+```
 
-  Helpers waiting for `saved` now also wait for blob sharing to end.
-  A stalled upload can keep them waiting indefinitely.
+Helpers waiting for `saved` now also wait for blob sharing to end.
+A stalled upload can keep them waiting indefinitely.
 
-  Blob coverage requires `@fluidframework/container-loader` from this release or later.
-  Older loaders retain operation-only tracking; service clients such as `@fluidframework/azure-client` include a matching loader.
-  Setting the runtime configuration flag `Fluid.ContainerRuntime.DisableBlobAwareDirtyState` to `true` restores operation-only dirty tracking.
-  With either fallback, `saved` can fire while blob work remains outstanding.
+Blob coverage requires `@fluidframework/container-loader` from this release or later.
+Older loaders retain operation-only tracking; service clients such as `@fluidframework/azure-client` include a matching loader.
+Setting the runtime configuration flag `Fluid.ContainerRuntime.DisableBlobAwareDirtyState` to `true` restores operation-only dirty tracking.
+With either fallback, `saved` can fire while blob work remains outstanding.
 
 ## 3.6.0
 
@@ -66,43 +70,43 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Correct dirty and saved event transition documentation ([#28141](https://github.com/microsoft/FluidFramework/pull/28141)) [99478406687](https://github.com/microsoft/FluidFramework/commit/99478406687e435f0f763f590ca67fe154d6923a)
+#### Correct dirty and saved event transition documentation ([#28141](https://github.com/microsoft/FluidFramework/pull/28141)) [99478406687](https://github.com/microsoft/FluidFramework/commit/99478406687e435f0f763f590ca67fe154d6923a)
 
-  The `IContainerEvents` documentation now correctly states that the `"dirty"` event represents `isDirty` changing from `false` to `true`, while the `"saved"` event represents it changing from `true` to `false`.
+The `IContainerEvents` documentation now correctly states that the `"dirty"` event represents `isDirty` changing from `false` to `true`, while the `"saved"` event represents it changing from `true` to `false`.
 
-- Removal of direct CommonJS support ([#28124](https://github.com/microsoft/FluidFramework/pull/28124)) [0f84e3b8878](https://github.com/microsoft/FluidFramework/commit/0f84e3b8878a5e75b2253976d98fd963bbd9db88)
+#### Removal of direct CommonJS support ([#28124](https://github.com/microsoft/FluidFramework/pull/28124)) [0f84e3b8878](https://github.com/microsoft/FluidFramework/commit/0f84e3b8878a5e75b2253976d98fd963bbd9db88)
 
-  Direct `require()` import is no longer directly supported.
-  Package is transpiled as ECMAScript Module.
+Direct `require()` import is no longer directly supported.
+Package is transpiled as ECMAScript Module.
 
-  See [Removal of direct CommonJS support in v3.0](https://github.com/microsoft/FluidFramework/issues/27444) for more information.
+See [Removal of direct CommonJS support in v3.0](https://github.com/microsoft/FluidFramework/issues/27444) for more information.
 
-- Require modern TypeScript module resolution ([#27970](https://github.com/microsoft/FluidFramework/pull/27970)) [325e2016ca9](https://github.com/microsoft/FluidFramework/commit/325e2016ca9978d4a1f7552c97ba34feac9df41f)
+#### Require modern TypeScript module resolution ([#27970](https://github.com/microsoft/FluidFramework/pull/27970)) [325e2016ca9](https://github.com/microsoft/FluidFramework/commit/325e2016ca9978d4a1f7552c97ba34feac9df41f)
 
-  Fluid Framework Client packages no longer include type declaration compatibility entrypoints for TypeScript's legacy Node10 resolution mode (`"moduleResolution": "node"` or `"node10"`).
-  Applications upgrading to Fluid Framework 3.0 must use one of the following supported configurations:
-  - `"module": "Node16"` with `"moduleResolution": "Node16"`
-  - `"module": "NodeNext"` with `"moduleResolution": "NodeNext"`
-  - `"module": "ESNext"` with `"moduleResolution": "Bundler"`
+Fluid Framework Client packages no longer include type declaration compatibility entrypoints for TypeScript's legacy Node10 resolution mode (`"moduleResolution": "node"` or `"node10"`).
+Applications upgrading to Fluid Framework 3.0 must use one of the following supported configurations:
+- `"module": "Node16"` with `"moduleResolution": "Node16"`
+- `"module": "NodeNext"` with `"moduleResolution": "NodeNext"`
+- `"module": "ESNext"` with `"moduleResolution": "Bundler"`
 
-  Existing public package entrypoints exposed through `package.json` exports, including `/alpha`, `/beta`, and `/legacy`, remain available under supported module resolution modes.
+Existing public package entrypoints exposed through `package.json` exports, including `/alpha`, `/beta`, and `/legacy`, remain available under supported module resolution modes.
 
-  See [Removal of Node10 resolutions in v3.0](https://github.com/microsoft/FluidFramework/issues/27457) for more information.
+See [Removal of Node10 resolutions in v3.0](https://github.com/microsoft/FluidFramework/issues/27457) for more information.
 
-- Client packages now target ES2022 ([#27846](https://github.com/microsoft/FluidFramework/pull/27846)) [91c78541bdd](https://github.com/microsoft/FluidFramework/commit/91c78541bddcbca5d6c5f357b023eeaee617d885)
+#### Client packages now target ES2022 ([#27846](https://github.com/microsoft/FluidFramework/pull/27846)) [91c78541bdd](https://github.com/microsoft/FluidFramework/commit/91c78541bddcbca5d6c5f357b023eeaee617d885)
 
-  The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
-  The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
-  All actively supported Node.js versions and evergreen browsers already meet this requirement.
+The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
+The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
+All actively supported Node.js versions and evergreen browsers already meet this requirement.
 
-  Note that Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the README for every client package.
+Note that Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the README for every client package.
 
-  It is possible this change could impact users of less up to date JavaScript runtimes.
-  Impacted users can use a tool like [babel](https://babeljs.io/) to transpile out unsupported language features.
+It is possible this change could impact users of less up to date JavaScript runtimes.
+Impacted users can use a tool like [babel](https://babeljs.io/) to transpile out unsupported language features.
 
-- Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
+#### Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
 
-  FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
+FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
 
 ## 2.116.0
 
@@ -132,16 +136,16 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Remove deprecated ILoaderOptions.enableOfflineLoad ([#27574](https://github.com/microsoft/FluidFramework/pull/27574)) [daf022b3f36](https://github.com/microsoft/FluidFramework/commit/daf022b3f36560cf52ce9586f95c5843dea99900)
+#### Remove deprecated ILoaderOptions.enableOfflineLoad ([#27574](https://github.com/microsoft/FluidFramework/pull/27574)) [daf022b3f36](https://github.com/microsoft/FluidFramework/commit/daf022b3f36560cf52ce9586f95c5843dea99900)
 
-  The `enableOfflineLoad` property has been removed from `ILoaderOptions` in `@fluidframework/container-definitions`.
-  This property was previously marked `@deprecated Do not use.`
+The `enableOfflineLoad` property has been removed from `ILoaderOptions` in `@fluidframework/container-definitions`.
+This property was previously marked `@deprecated Do not use.`
 
-  The legacy `Fluid.Container.enableOfflineLoad` config-provider feature gate has also been removed from `@fluidframework/container-loader`.
-  Offline load is now unconditionally enabled for interactive clients; it can still be controlled via the `Fluid.Container.enableOfflineFull` config.
+The legacy `Fluid.Container.enableOfflineLoad` config-provider feature gate has also been removed from `@fluidframework/container-loader`.
+Offline load is now unconditionally enabled for interactive clients; it can still be controlled via the `Fluid.Container.enableOfflineFull` config.
 
-  **Migration:** Remove any usage of `enableOfflineLoad` from `ILoaderOptions` objects.
-  No replacement is needed — offline load is on by default.
+**Migration:** Remove any usage of `enableOfflineLoad` from `ILoaderOptions` objects.
+No replacement is needed — offline load is on by default.
 
 ## 2.103.0
 
@@ -151,42 +155,42 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Add optional `getPendingLocalState` to `IContainer` ([#27269](https://github.com/microsoft/FluidFramework/pull/27269)) [1f12b8e36e](https://github.com/microsoft/FluidFramework/commit/1f12b8e36ec8e4a743a65905de8d5ccf5e9337a0)
+#### Add optional `getPendingLocalState` to `IContainer` ([#27269](https://github.com/microsoft/FluidFramework/pull/27269)) [1f12b8e36e](https://github.com/microsoft/FluidFramework/commit/1f12b8e36ec8e4a743a65905de8d5ccf5e9337a0)
 
-  `IContainer` now exposes `getPendingLocalState?(): Promise<string>`. The serialized blob can be passed back as `pendingLocalState` to `loadExistingContainer` (or `ILoader.resolve`) to rehydrate an attached container at the same position without data loss.
+`IContainer` now exposes `getPendingLocalState?(): Promise<string>`. The serialized blob can be passed back as `pendingLocalState` to `loadExistingContainer` (or `ILoader.resolve`) to rehydrate an attached container at the same position without data loss.
 
-  The member is optional during this minor release so external implementers of `IContainer` (test mocks, wrapper containers, partner runtimes) remain forward-compatible. A future breaking release will make it required.
+The member is optional during this minor release so external implementers of `IContainer` (test mocks, wrapper containers, partner runtimes) remain forward-compatible. A future breaking release will make it required.
 
-  The `ContainerAlpha` interface and `asLegacyAlpha` helper in `@fluidframework/container-loader` continue to expose this functionality at `@legacy @alpha` for callers that prefer the typed-required shape.
+The `ContainerAlpha` interface and `asLegacyAlpha` helper in `@fluidframework/container-loader` continue to expose this functionality at `@legacy @alpha` for callers that prefer the typed-required shape.
 
-  Lifecycle: misuse of this API can result in duplicate op submission and potential document corruption. The blob returned MUST be discarded if and when the container emits a `"connected"` event — any subsequent rehydrate from that blob would submit the same ops a second time. The container must also be neither closed nor disposed when calling; otherwise the call throws `UsageError`.
+Lifecycle: misuse of this API can result in duplicate op submission and potential document corruption. The blob returned MUST be discarded if and when the container emits a `"connected"` event — any subsequent rehydrate from that blob would submit the same ops a second time. The container must also be neither closed nor disposed when calling; otherwise the call throws `UsageError`.
 
-  Runtime behavior is unchanged.
+Runtime behavior is unchanged.
 
 ## 2.101.0
 
 ### Minor Changes
 
-- GC timers are now cancelled when a container closes, not just when it is disposed ([#27130](https://github.com/microsoft/FluidFramework/pull/27130)) [86c0fffbf49](https://github.com/microsoft/FluidFramework/commit/86c0fffbf499981af297f018c7b570802ebdbeeb)
+#### GC timers are now cancelled when a container closes, not just when it is disposed ([#27130](https://github.com/microsoft/FluidFramework/pull/27130)) [86c0fffbf49](https://github.com/microsoft/FluidFramework/commit/86c0fffbf499981af297f018c7b570802ebdbeeb)
 
-  Adds an optional `close()` hook to `IRuntime` that `Container` calls on close.
-  `ContainerRuntime` implements it by cancelling all GC timers (session expiry and unreferenced-node timers)
-  without clearing tracked state.
+Adds an optional `close()` hook to `IRuntime` that `Container` calls on close.
+`ContainerRuntime` implements it by cancelling all GC timers (session expiry and unreferenced-node timers)
+without clearing tracked state.
 
-  This prevents the timers from causing memory leaks after a `Container` is closed but not disposed.
-  In Node.js environments this also prevents the timers from keeping the event loop alive until `dispose()`.
-  This can reduce the need for Mocha's --exit in tests which create containers which are closed but not disposed.
+This prevents the timers from causing memory leaks after a `Container` is closed but not disposed.
+In Node.js environments this also prevents the timers from keeping the event loop alive until `dispose()`.
+This can reduce the need for Mocha's --exit in tests which create containers which are closed but not disposed.
 
-  Disposing of closed containers is still recommended, but it is now less critical for avoiding timer-related hangs after close.
-  Disposal still helps clean up resources and can reduce the size of memory leaks if references to the container are leaked.
+Disposing of closed containers is still recommended, but it is now less critical for avoiding timer-related hangs after close.
+Disposal still helps clean up resources and can reduce the size of memory leaks if references to the container are leaked.
 
 ## 2.100.0
 
 ### Minor Changes
 
-- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+#### Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
 
-  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
 
 ## 2.93.0
 
@@ -220,26 +224,26 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Added layerIncompatibilityError to FluidErrorTypes, ContainerErrorTypes, DriverErrorTypes and OdspErrorTypes ([#26068](https://github.com/microsoft/FluidFramework/pull/26068)) [a8532bdd903](https://github.com/microsoft/FluidFramework/commit/a8532bdd903626524f17d2ec650d8904046e5308)
+#### Added layerIncompatibilityError to FluidErrorTypes, ContainerErrorTypes, DriverErrorTypes and OdspErrorTypes ([#26068](https://github.com/microsoft/FluidFramework/pull/26068)) [a8532bdd903](https://github.com/microsoft/FluidFramework/commit/a8532bdd903626524f17d2ec650d8904046e5308)
 
-  The Fluid error type `layerIncompatibilityError` is added to `FluidErrorTypes` and is now @legacy @beta. It is also added to `ContainerErrorTypes`, `DriverErrorTypes` and `OdspErrorTypes` which extend `FluidErrorTypes`.
-  `layerIncompatibilityError` was added as @legacy @alpha in version 2.72.0.
-  The corresponding interface `ILayerIncompatibilityError` for errors of type `layerIncompatibilityError` is now also @legacy @beta.
+The Fluid error type `layerIncompatibilityError` is added to `FluidErrorTypes` and is now @legacy @beta. It is also added to `ContainerErrorTypes`, `DriverErrorTypes` and `OdspErrorTypes` which extend `FluidErrorTypes`.
+`layerIncompatibilityError` was added as @legacy @alpha in version 2.72.0.
+The corresponding interface `ILayerIncompatibilityError` for errors of type `layerIncompatibilityError` is now also @legacy @beta.
 
-  See [this issue](https://github.com/microsoft/FluidFramework/issues/25813) for more details.
+See [this issue](https://github.com/microsoft/FluidFramework/issues/25813) for more details.
 
 ## 2.74.0
 
 ### Minor Changes
 
-- Some keys in IFluidCodeDetailsConfig are now reserved for Fluid Framework use ([#25641](https://github.com/microsoft/FluidFramework/pull/25641)) [1eaf526c813](https://github.com/microsoft/FluidFramework/commit/1eaf526c813c8e36fc0ad52649b80e2b0c055853)
+#### Some keys in IFluidCodeDetailsConfig are now reserved for Fluid Framework use ([#25641](https://github.com/microsoft/FluidFramework/pull/25641)) [1eaf526c813](https://github.com/microsoft/FluidFramework/commit/1eaf526c813c8e36fc0ad52649b80e2b0c055853)
 
-  The keys of [`IFluidCodeDetailsConfig`](https://fluidframework.com/docs/api/container-definitions/ifluidcodedetailsconfig-interface)
-  (the [type of the `config` property on `IFluidCodeDetails`](https://fluidframework.com/docs/api/container-definitions/ifluidcodedetails-interface#config-propertysignature))
-  used to be entirely free for consumer use.
-  Going forward, keys with the `"FluidFramework."` prefix are reserved for Fluid Framework's internal use.
+The keys of [`IFluidCodeDetailsConfig`](https://fluidframework.com/docs/api/container-definitions/ifluidcodedetailsconfig-interface)
+(the [type of the `config` property on `IFluidCodeDetails`](https://fluidframework.com/docs/api/container-definitions/ifluidcodedetails-interface#config-propertysignature))
+used to be entirely free for consumer use.
+Going forward, keys with the `"FluidFramework."` prefix are reserved for Fluid Framework's internal use.
 
-  We do not expect this to affect any consumers.
+We do not expect this to affect any consumers.
 
 ## 2.73.0
 
@@ -249,10 +253,10 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Added a new Fluid error type layerIncompatibilityError ([#25784](https://github.com/microsoft/FluidFramework/pull/25784)) [01d568b4bc](https://github.com/microsoft/FluidFramework/commit/01d568b4bcbff38a0ee4b614bad1dfb0c400a360)
+#### Added a new Fluid error type layerIncompatibilityError ([#25784](https://github.com/microsoft/FluidFramework/pull/25784)) [01d568b4bc](https://github.com/microsoft/FluidFramework/commit/01d568b4bcbff38a0ee4b614bad1dfb0c400a360)
 
-  A new Fluid error type `layerIncompatibilityError` is added to `FluidErrorTypesAlpha` as @legacy @alpha. This will be moved to `FluidErrorTypes` as @legacy @beta in a future legacy breaking release.
-  It will also be added to `ContainerErrorTypes` since it extends `FluidErrorTypes`.
+A new Fluid error type `layerIncompatibilityError` is added to `FluidErrorTypesAlpha` as @legacy @alpha. This will be moved to `FluidErrorTypes` as @legacy @beta in a future legacy breaking release.
+It will also be added to `ContainerErrorTypes` since it extends `FluidErrorTypes`.
 
 ## 2.71.0
 
@@ -262,25 +266,25 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Deprecated properties have been removed from IRuntimeStorageService and IContainerStorageService ([#25708](https://github.com/microsoft/FluidFramework/pull/25708)) [82c936ed28](https://github.com/microsoft/FluidFramework/commit/82c936ed285c7e450d5e907a531ce71178f57819)
+#### Deprecated properties have been removed from IRuntimeStorageService and IContainerStorageService ([#25708](https://github.com/microsoft/FluidFramework/pull/25708)) [82c936ed28](https://github.com/microsoft/FluidFramework/commit/82c936ed285c7e450d5e907a531ce71178f57819)
 
-  The following deprecated properties have been removed from `IRuntimeStorageService`:
-  - `createBlob`
-  - `dispose`
-  - `disposed`
-  - `downloadSummary`
-  - `getSnapshot`
-  - `getSnapshotTree`
-  - `getVersions`
-  - `policies`
-  - `uploadSummaryWithContext`
+The following deprecated properties have been removed from `IRuntimeStorageService`:
+- `createBlob`
+- `dispose`
+- `disposed`
+- `downloadSummary`
+- `getSnapshot`
+- `getSnapshotTree`
+- `getVersions`
+- `policies`
+- `uploadSummaryWithContext`
 
-  The following deprecated properties have been removed from `IContainerStorageService`:
-  - `dispose`
-  - `disposed`
-  - `downloadSummary`
+The following deprecated properties have been removed from `IContainerStorageService`:
+- `dispose`
+- `disposed`
+- `downloadSummary`
 
-  Please see [this Github issue](https://github.com/microsoft/FluidFramework/issues/25069) for more details.
+Please see [this Github issue](https://github.com/microsoft/FluidFramework/issues/25069) for more details.
 
 ## 2.63.0
 
@@ -306,15 +310,15 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Introduced new interface "IContainerStorageService" to replace "IDocumentStorageService" between Loader and Runtime layers ([#25057](https://github.com/microsoft/FluidFramework/pull/25057)) [92012de557](https://github.com/microsoft/FluidFramework/commit/92012de5571d4d87cc14bae2f391431764558735)
+#### Introduced new interface "IContainerStorageService" to replace "IDocumentStorageService" between Loader and Runtime layers ([#25057](https://github.com/microsoft/FluidFramework/pull/25057)) [92012de557](https://github.com/microsoft/FluidFramework/commit/92012de5571d4d87cc14bae2f391431764558735)
 
-  Added an interface `IContainerStorageService` which will replace `IDocumentStorageService` in the `Runtime` layer. This is exposed by the `Loader` layer to the `Runtime` layer via `ContainerContext`. This will help remove `Runtime` layer's dependency on the `Driver` layer and replace it with the `Loader` layer that it already maintains. This new interface will only contain properties that are needed and used by the `Runtime` layer.
+Added an interface `IContainerStorageService` which will replace `IDocumentStorageService` in the `Runtime` layer. This is exposed by the `Loader` layer to the `Runtime` layer via `ContainerContext`. This will help remove `Runtime` layer's dependency on the `Driver` layer and replace it with the `Loader` layer that it already maintains. This new interface will only contain properties that are needed and used by the `Runtime` layer.
 
-  The following properties from `IContainerStorageService` are deprecated as they are not needed by the `DataStore` layer. These be removed in a future release:
-  - `policies` - The Runtime only needs `maximumCacheDurationMs` property from it which is added directly on `IContainerStorageService`.
-  - `downloadSummary`
-  - `disposed`
-  - `dispose`
+The following properties from `IContainerStorageService` are deprecated as they are not needed by the `DataStore` layer. These be removed in a future release:
+- `policies` - The Runtime only needs `maximumCacheDurationMs` property from it which is added directly on `IContainerStorageService`.
+- `downloadSummary`
+- `disposed`
+- `dispose`
 
 ## 2.51.0
 
@@ -340,11 +344,11 @@ Dependency updates only.
 
 ### Minor Changes
 
-- IContainer.getContainerPackageInfo has been removed ([#24525](https://github.com/microsoft/FluidFramework/pull/24525)) [15a541265b](https://github.com/microsoft/FluidFramework/commit/15a541265ba6293bf24e95308a5e667d5f7e9794)
+#### IContainer.getContainerPackageInfo has been removed ([#24525](https://github.com/microsoft/FluidFramework/pull/24525)) [15a541265b](https://github.com/microsoft/FluidFramework/commit/15a541265ba6293bf24e95308a5e667d5f7e9794)
 
-  `IContainer.getContainerPackageInfo()` was set to be removed in release 2.40.0. To access the package name `getContainerPackageInfo()` provided, use `IFluidCodeDetails.package` returned by `IContainer.getLoadedCodeDetails()`.
+`IContainer.getContainerPackageInfo()` was set to be removed in release 2.40.0. To access the package name `getContainerPackageInfo()` provided, use `IFluidCodeDetails.package` returned by `IContainer.getLoadedCodeDetails()`.
 
-  See [issue #23898](https://github.com/microsoft/FluidFramework/issues/23898) for more information.
+See [issue #23898](https://github.com/microsoft/FluidFramework/issues/23898) for more information.
 
 ## 2.33.0
 
@@ -362,12 +366,12 @@ Dependency updates only.
 
 ### Minor Changes
 
-- IContainer.getContainerPackageInfo() is now deprecated ([#23840](https://github.com/microsoft/FluidFramework/pull/23840)) [521be72619](https://github.com/microsoft/FluidFramework/commit/521be726198a1f88f4f8f06c0f273528a49d2957)
+#### IContainer.getContainerPackageInfo() is now deprecated ([#23840](https://github.com/microsoft/FluidFramework/pull/23840)) [521be72619](https://github.com/microsoft/FluidFramework/commit/521be726198a1f88f4f8f06c0f273528a49d2957)
 
-  The `IContainer.getContainerPackageInfo()` function is now deprecated. This API will be removed in version 2.40.0.
-  Use `IFluidCodeDetails.package` returned by `IContainer.getLoadedCodeDetails()` instead.
+The `IContainer.getContainerPackageInfo()` function is now deprecated. This API will be removed in version 2.40.0.
+Use `IFluidCodeDetails.package` returned by `IContainer.getLoadedCodeDetails()` instead.
 
-  See [issue #23898](https://github.com/microsoft/FluidFramework/issues/23898) for details.
+See [issue #23898](https://github.com/microsoft/FluidFramework/issues/23898) for details.
 
 ## 2.23.0
 
@@ -381,10 +385,10 @@ Dependency updates only.
 
 ### Minor Changes
 
-- The IContainerContext.supportedFeatures property is now deprecated ([#22877](https://github.com/microsoft/FluidFramework/pull/22877)) [4c06412bb3](https://github.com/microsoft/FluidFramework/commit/4c06412bb365d680430f83b87c456d132d9da1be)
+#### The IContainerContext.supportedFeatures property is now deprecated ([#22877](https://github.com/microsoft/FluidFramework/pull/22877)) [4c06412bb3](https://github.com/microsoft/FluidFramework/commit/4c06412bb365d680430f83b87c456d132d9da1be)
 
-  The `IContainerContext.supportedFeatures` optional property was used internally to communicate features supported by the
-  Loader layer to the Runtime layer. This has since been replaced with functionality that is not exposed externally.
+The `IContainerContext.supportedFeatures` optional property was used internally to communicate features supported by the
+Loader layer to the Runtime layer. This has since been replaced with functionality that is not exposed externally.
 
 ## 2.20.0
 
@@ -406,18 +410,18 @@ Dependency updates only.
 
 ### Minor Changes
 
-- The inbound and outbound properties have been removed from IDeltaManager ([#22282](https://github.com/microsoft/FluidFramework/pull/22282)) [45a57693f2](https://github.com/microsoft/FluidFramework/commit/45a57693f291e0dc5e91af7f29a9b9c8f82dfad5)
+#### The inbound and outbound properties have been removed from IDeltaManager ([#22282](https://github.com/microsoft/FluidFramework/pull/22282)) [45a57693f2](https://github.com/microsoft/FluidFramework/commit/45a57693f291e0dc5e91af7f29a9b9c8f82dfad5)
 
-  The inbound and outbound properties were [deprecated in version 2.0.0-rc.2.0.0](https://github.com/microsoft/FluidFramework/blob/main/RELEASE_NOTES/2.0.0-rc.2.0.0.md#container-definitions-deprecate-ideltamanagerinbound-and-ideltamanageroutbound) and have been removed from `IDeltaManager`.
+The inbound and outbound properties were [deprecated in version 2.0.0-rc.2.0.0](https://github.com/microsoft/FluidFramework/blob/main/RELEASE_NOTES/2.0.0-rc.2.0.0.md#container-definitions-deprecate-ideltamanagerinbound-and-ideltamanageroutbound) and have been removed from `IDeltaManager`.
 
-  `IDeltaManager.inbound` contained functionality that could break core runtime features such as summarization and processing batches if used improperly. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
+`IDeltaManager.inbound` contained functionality that could break core runtime features such as summarization and processing batches if used improperly. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
 
-  Similarly, `IDeltaManager.outbound` contained functionality that could break core runtime features such as generation of batches and chunking. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
+Similarly, `IDeltaManager.outbound` contained functionality that could break core runtime features such as generation of batches and chunking. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
 
-  #### Alternatives
-  - Alternatives to `IDeltaManager.inbound.on("op", ...)` are `IDeltaManager.on("op", ...)`
-  - Alternatives to calling `IDeltaManager.inbound.pause`, `IDeltaManager.outbound.pause` for `IContainer` disconnect use `IContainer.disconnect`.
-  - Alternatives to calling `IDeltaManager.inbound.resume`, `IDeltaManager.outbound.resume` for `IContainer` reconnect use `IContainer.connect`.
+##### Alternatives
+- Alternatives to `IDeltaManager.inbound.on("op", ...)` are `IDeltaManager.on("op", ...)`
+- Alternatives to calling `IDeltaManager.inbound.pause`, `IDeltaManager.outbound.pause` for `IContainer` disconnect use `IContainer.disconnect`.
+- Alternatives to calling `IDeltaManager.inbound.resume`, `IDeltaManager.outbound.resume` for `IContainer` reconnect use `IContainer.connect`.
 
 ## 2.5.0
 
@@ -443,233 +447,233 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+#### Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
 
-  Update package implementations to use TypeScript 5.4.5.
+Update package implementations to use TypeScript 5.4.5.
 
 ## 2.0.0-rc.4.0.0
 
 ### Major Changes
 
-- Audience & connection sequencing improvements [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+#### Audience & connection sequencing improvements [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
 
-  Here are breaking changes in Audience behavior:
-  1. IAudience no longer implements EventEmmiter. If you used addListener() or removeListener(), please replace with on() & off() respectively.
-  2. IAudience interface implements getSelf() method and "selfChanged" event.
-  3. IContainerContext.audience is no longer optional
-  4. "connected" events are now raised (various API surfaces - IContainer, IContainerRuntime, IFluidDataStoreRuntime, etc.) a bit later in reconnection sequence for "read" connections - only after client receives its own "join" signal and caught up on ops, which makes it symmetrical with "write" connections.
-  - If this change in behavior breaks some scenario, please let us know immediately, but you can revert that behavior using the following feature gates:
-    - "Fluid.Container.DisableCatchUpBeforeDeclaringConnected"
-    - "Fluid.Container.DisableJoinSignalWait"
+Here are breaking changes in Audience behavior:
+1. IAudience no longer implements EventEmmiter. If you used addListener() or removeListener(), please replace with on() & off() respectively.
+2. IAudience interface implements getSelf() method and "selfChanged" event.
+3. IContainerContext.audience is no longer optional
+4. "connected" events are now raised (various API surfaces - IContainer, IContainerRuntime, IFluidDataStoreRuntime, etc.) a bit later in reconnection sequence for "read" connections - only after client receives its own "join" signal and caught up on ops, which makes it symmetrical with "write" connections.
+- If this change in behavior breaks some scenario, please let us know immediately, but you can revert that behavior using the following feature gates:
+  - "Fluid.Container.DisableCatchUpBeforeDeclaringConnected"
+  - "Fluid.Container.DisableJoinSignalWait"
 
 ### Minor Changes
 
-- Type Erase IFluidDataStoreRuntime.deltaManager [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+#### Type Erase IFluidDataStoreRuntime.deltaManager [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
 
-  Make IFluidDataStoreRuntime.deltaManager have an opaque type.
-  Marks the following types which were reachable from it as alpha:
-  - IConnectionDetails
-  - IDeltaSender
-  - IDeltaManagerEvents
-  - IDeltaManager
-  - IDeltaQueueEvents
-  - IDeltaQueue
-  - ReadOnlyInfo
+Make IFluidDataStoreRuntime.deltaManager have an opaque type.
+Marks the following types which were reachable from it as alpha:
+- IConnectionDetails
+- IDeltaSender
+- IDeltaManagerEvents
+- IDeltaManager
+- IDeltaQueueEvents
+- IDeltaQueue
+- ReadOnlyInfo
 
-  As a temporary workaround, users needing access to the full delta manager API can use the `@alpha` `toDeltaManagerInternal` API to retrieve its members, but should migrate away from requiring access to those APIs.
+As a temporary workaround, users needing access to the full delta manager API can use the `@alpha` `toDeltaManagerInternal` API to retrieve its members, but should migrate away from requiring access to those APIs.
 
-  Implementing a custom `IFluidDataStoreRuntime` is not supported: this is now indicated by it being marked with `@sealed`.
+Implementing a custom `IFluidDataStoreRuntime` is not supported: this is now indicated by it being marked with `@sealed`.
 
 ## 2.0.0-rc.3.0.0
 
 ### Major Changes
 
-- container-definitions: IContainerContext.getSpecifiedCodeDetails() removed [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+#### container-definitions: IContainerContext.getSpecifiedCodeDetails() removed [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
 
-  IContainerContext.getSpecifiedCodeDetails() was deprecated in 0.42 and has now been removed.
+IContainerContext.getSpecifiedCodeDetails() was deprecated in 0.42 and has now been removed.
 
-- Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+#### Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
 
-  Fluid Framework packages have been updated to use the [package.json "exports"
-  field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
-  TypeScript types and implementation code.
+Fluid Framework packages have been updated to use the [package.json "exports"
+field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
+TypeScript types and implementation code.
 
-  This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-  - `"moduleResolution": "Node16"` with `"module": "Node16"`
-  - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
+This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
+- `"moduleResolution": "Node16"` with `"module": "Node16"`
+- `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 
-  We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
-  for use with modern versions of Node.js _and_ Bundlers.
-  [See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
-  regarding the module and moduleResolution options.
+We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
+for use with modern versions of Node.js _and_ Bundlers.
+[See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
+regarding the module and moduleResolution options.
 
-  **Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
-  to distinguish stable APIs from those that are in development.**
+**Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
+to distinguish stable APIs from those that are in development.**
 
 ## 2.0.0-rc.2.0.0
 
 ### Minor Changes
 
-- container-definitions: Deprecate IDeltaManager.inbound and IDeltaManager.outbound ([#19636](https://github.com/microsoft/FluidFramework/issues/19636)) [305c0f4346](https://github.com/microsoft/FluidFramework/commits/305c0f4346d08cba3d345d9698e35c0a1517b31a)
+#### container-definitions: Deprecate IDeltaManager.inbound and IDeltaManager.outbound ([#19636](https://github.com/microsoft/FluidFramework/issues/19636)) [305c0f4346](https://github.com/microsoft/FluidFramework/commits/305c0f4346d08cba3d345d9698e35c0a1517b31a)
 
-  `IDeltaManager.inbound` was deprecated because it was not very useful to the customer and there are pieces of
-  functionality that can break the core runtime if used improperly. For example, summarization and processing batches. Do
-  not use the apis on this if possible. Data loss/corruption may occur in these scenarios in which
-  `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` get called.
+`IDeltaManager.inbound` was deprecated because it was not very useful to the customer and there are pieces of
+functionality that can break the core runtime if used improperly. For example, summarization and processing batches. Do
+not use the apis on this if possible. Data loss/corruption may occur in these scenarios in which
+`IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` get called.
 
-  Deprecated `IDeltaManager.outbound` as it was not very useful to the customer and there are pieces of functionality
-  that can break the core runtime if used improperly. For example, generation of batches and chunking. Op batching and
-  chunking can be broken. Data loss/corruption may occur in these scenarios in which `IDeltaManger.inbound.pause()` or
-  `IDeltaManager.inbound.resume()` get called.
+Deprecated `IDeltaManager.outbound` as it was not very useful to the customer and there are pieces of functionality
+that can break the core runtime if used improperly. For example, generation of batches and chunking. Op batching and
+chunking can be broken. Data loss/corruption may occur in these scenarios in which `IDeltaManger.inbound.pause()` or
+`IDeltaManager.inbound.resume()` get called.
 
-  ### Alternatives
-  - Alternatives to `IDeltaManager.inbound.on("op", ...)` are `IDeltaManager.on("op", ...)`
-  - Alternatives to calling `IDeltaManager.inbound.pause`, `IDeltaManager.outbound.pause` for `IContainer` disconnect
-    use `IContainer.disconnect`.
-  - Alternatives to calling `IDeltaManager.inbound.resume`, `IDeltaManager.outbound.resume` for `IContainer` reconnect
-    use `IContainer.connect`.
+##### Alternatives
+- Alternatives to `IDeltaManager.inbound.on("op", ...)` are `IDeltaManager.on("op", ...)`
+- Alternatives to calling `IDeltaManager.inbound.pause`, `IDeltaManager.outbound.pause` for `IContainer` disconnect
+  use `IContainer.disconnect`.
+- Alternatives to calling `IDeltaManager.inbound.resume`, `IDeltaManager.outbound.resume` for `IContainer` reconnect
+  use `IContainer.connect`.
 
-- container-loader: Behavior change: IContainer.attach will be made retriable in the next release ([#19246](https://github.com/microsoft/FluidFramework/issues/19246)) [3d5dfb28d4](https://github.com/microsoft/FluidFramework/commits/3d5dfb28d47b55943c6a92ec50530e6fa86b0568)
+#### container-loader: Behavior change: IContainer.attach will be made retriable in the next release ([#19246](https://github.com/microsoft/FluidFramework/issues/19246)) [3d5dfb28d4](https://github.com/microsoft/FluidFramework/commits/3d5dfb28d47b55943c6a92ec50530e6fa86b0568)
 
-  The `attach` function on IContainer has been modified such that the container stay open on non-fatal errors. On failure of attach the developer should inspect IContainer.closed to see if the container has been closed. If not closed, the developer can retry calling attach.
+The `attach` function on IContainer has been modified such that the container stay open on non-fatal errors. On failure of attach the developer should inspect IContainer.closed to see if the container has been closed. If not closed, the developer can retry calling attach.
 
-  The functionality is currently behind a configuration `Fluid.Container.RetryOnAttachFailure` which can be set to `true` to enable the new functionality.
+The functionality is currently behind a configuration `Fluid.Container.RetryOnAttachFailure` which can be set to `true` to enable the new functionality.
 
-  In the next release we will default to the new behavior, and it will be possible to disable this behavior by setting `Fluid.Container.RetryOnAttachFailure` to `false`
+In the next release we will default to the new behavior, and it will be possible to disable this behavior by setting `Fluid.Container.RetryOnAttachFailure` to `false`
 
-- driver-definitions: Deprecate `ISnapshotContents` ([#19314](https://github.com/microsoft/FluidFramework/issues/19314)) [fc731b69de](https://github.com/microsoft/FluidFramework/commits/fc731b69deed4a2987e9b97d8918492d689bafbc)
+#### driver-definitions: Deprecate `ISnapshotContents` ([#19314](https://github.com/microsoft/FluidFramework/issues/19314)) [fc731b69de](https://github.com/microsoft/FluidFramework/commits/fc731b69deed4a2987e9b97d8918492d689bafbc)
 
-  `ISnapshotContents` is deprecated. It has been replaced with `ISnapshot`.
+`ISnapshotContents` is deprecated. It has been replaced with `ISnapshot`.
 
-- driver-definitions: repositoryUrl removed from IDocumentStorageService ([#19522](https://github.com/microsoft/FluidFramework/issues/19522)) [90eb3c9d33](https://github.com/microsoft/FluidFramework/commits/90eb3c9d33d80e24caa1393a50f414c5602f6aa3)
+#### driver-definitions: repositoryUrl removed from IDocumentStorageService ([#19522](https://github.com/microsoft/FluidFramework/issues/19522)) [90eb3c9d33](https://github.com/microsoft/FluidFramework/commits/90eb3c9d33d80e24caa1393a50f414c5602f6aa3)
 
-  The `repositoryUrl` member of `IDocumentStorageService` was unused and always equal to the empty string. It has been removed.
+The `repositoryUrl` member of `IDocumentStorageService` was unused and always equal to the empty string. It has been removed.
 
-- Deprecated error-related enums have been removed ([#19067](https://github.com/microsoft/FluidFramework/issues/19067)) [59793302e5](https://github.com/microsoft/FluidFramework/commits/59793302e56784cfb6ace0e6469345f3565b3312)
+#### Deprecated error-related enums have been removed ([#19067](https://github.com/microsoft/FluidFramework/issues/19067)) [59793302e5](https://github.com/microsoft/FluidFramework/commits/59793302e56784cfb6ace0e6469345f3565b3312)
 
-  Error-related enums `ContainerErrorType`, `DriverErrorType`, `OdspErrorType` and `RouterliciousErrorType` were previously
-  deprecated and are now removed. There are replacement object-based enumerations of `ContainerErrorTypes`,
-  `DriverErrorTypes`, `OdspErrorTypes` and `RouterliciousErrorTypes`. Refer to the release notes of [Fluid Framework version
-  2.0.0-internal.7.0.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.0.0-internal.7.0.0) for details
-  on the replacements.
+Error-related enums `ContainerErrorType`, `DriverErrorType`, `OdspErrorType` and `RouterliciousErrorType` were previously
+deprecated and are now removed. There are replacement object-based enumerations of `ContainerErrorTypes`,
+`DriverErrorTypes`, `OdspErrorTypes` and `RouterliciousErrorTypes`. Refer to the release notes of [Fluid Framework version
+2.0.0-internal.7.0.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.0.0-internal.7.0.0) for details
+on the replacements.
 
-- container-definitions: ILoaderOptions no longer accepts arbitrary key/value pairs ([#19306](https://github.com/microsoft/FluidFramework/issues/19306)) [741926e225](https://github.com/microsoft/FluidFramework/commits/741926e2253a161504ecc6a6451d8f15d7ac4ed6)
+#### container-definitions: ILoaderOptions no longer accepts arbitrary key/value pairs ([#19306](https://github.com/microsoft/FluidFramework/issues/19306)) [741926e225](https://github.com/microsoft/FluidFramework/commits/741926e2253a161504ecc6a6451d8f15d7ac4ed6)
 
-  ILoaderOptions has been narrowed to the specific set of supported loader options, and may no longer be used to pass arbitrary key/value pairs through to the runtime.
+ILoaderOptions has been narrowed to the specific set of supported loader options, and may no longer be used to pass arbitrary key/value pairs through to the runtime.
 
-- container-definitions: Added containerMetadata prop on IContainer interface ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
+#### container-definitions: Added containerMetadata prop on IContainer interface ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
 
-  Added `containerMetadata` prop on IContainer interface.
+Added `containerMetadata` prop on IContainer interface.
 
-- runtime-definitions: Moved ISignalEnvelope interface to core-interfaces ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
+#### runtime-definitions: Moved ISignalEnvelope interface to core-interfaces ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
 
-  The `ISignalEnvelope` interface has been moved to the @fluidframework/core-interfaces package.
+The `ISignalEnvelope` interface has been moved to the @fluidframework/core-interfaces package.
 
-- Updated @fluidframework/protocol-definitions [c2791deb24](https://github.com/microsoft/FluidFramework/commits/c2791deb249e8bd03cfe2b735785bba19e7bf838)
+#### Updated @fluidframework/protocol-definitions [c2791deb24](https://github.com/microsoft/FluidFramework/commits/c2791deb249e8bd03cfe2b735785bba19e7bf838)
 
-  The @fluidframework/protocol-definitions dependency has been upgraded to v3.2.0.
+The @fluidframework/protocol-definitions dependency has been upgraded to v3.2.0.
 
-  [See the full changelog.](https://github.com/microsoft/FluidFramework/blob/main/common/lib/protocol-definitions/CHANGELOG.md#320)
+[See the full changelog.](https://github.com/microsoft/FluidFramework/blob/main/common/lib/protocol-definitions/CHANGELOG.md#320)
 
-- Updated server dependencies [c2791deb24](https://github.com/microsoft/FluidFramework/commits/c2791deb249e8bd03cfe2b735785bba19e7bf838)
+#### Updated server dependencies [c2791deb24](https://github.com/microsoft/FluidFramework/commits/c2791deb249e8bd03cfe2b735785bba19e7bf838)
 
-  The following Fluid server dependencies have been updated to the latest version, 4.0.0.
-  [See the full changelog.](https://github.com/microsoft/FluidFramework/blob/main/server/routerlicious/RELEASE_NOTES/3.0.0.md)
-  - @fluidframework/gitresources
-  - @fluidframework/server-kafka-orderer
-  - @fluidframework/server-lambdas
-  - @fluidframework/server-lambdas-driver
-  - @fluidframework/server-local-server
-  - @fluidframework/server-memory-orderer
-  - @fluidframework/protocol-base
-  - @fluidframework/server-routerlicious
-  - @fluidframework/server-routerlicious-base
-  - @fluidframework/server-services
-  - @fluidframework/server-services-client
-  - @fluidframework/server-services-core
-  - @fluidframework/server-services-ordering-kafkanode
-  - @fluidframework/server-services-ordering-rdkafka
-  - @fluidframework/server-services-ordering-zookeeper
-  - @fluidframework/server-services-shared
-  - @fluidframework/server-services-telemetry
-  - @fluidframework/server-services-utils
-  - @fluidframework/server-test-utils
-  - tinylicious
+The following Fluid server dependencies have been updated to the latest version, 4.0.0.
+[See the full changelog.](https://github.com/microsoft/FluidFramework/blob/main/server/routerlicious/RELEASE_NOTES/3.0.0.md)
+- @fluidframework/gitresources
+- @fluidframework/server-kafka-orderer
+- @fluidframework/server-lambdas
+- @fluidframework/server-lambdas-driver
+- @fluidframework/server-local-server
+- @fluidframework/server-memory-orderer
+- @fluidframework/protocol-base
+- @fluidframework/server-routerlicious
+- @fluidframework/server-routerlicious-base
+- @fluidframework/server-services
+- @fluidframework/server-services-client
+- @fluidframework/server-services-core
+- @fluidframework/server-services-ordering-kafkanode
+- @fluidframework/server-services-ordering-rdkafka
+- @fluidframework/server-services-ordering-zookeeper
+- @fluidframework/server-services-shared
+- @fluidframework/server-services-telemetry
+- @fluidframework/server-services-utils
+- @fluidframework/server-test-utils
+- tinylicious
 
 ## 2.0.0-rc.1.0.0
 
 ### Minor Changes
 
-- Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
+#### Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
 
-  The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
-  - @fluidframework/gitresources
-  - @fluidframework/server-kafka-orderer
-  - @fluidframework/server-lambdas
-  - @fluidframework/server-lambdas-driver
-  - @fluidframework/server-local-server
-  - @fluidframework/server-memory-orderer
-  - @fluidframework/protocol-base
-  - @fluidframework/server-routerlicious
-  - @fluidframework/server-routerlicious-base
-  - @fluidframework/server-services
-  - @fluidframework/server-services-client
-  - @fluidframework/server-services-core
-  - @fluidframework/server-services-ordering-kafkanode
-  - @fluidframework/server-services-ordering-rdkafka
-  - @fluidframework/server-services-ordering-zookeeper
-  - @fluidframework/server-services-shared
-  - @fluidframework/server-services-telemetry
-  - @fluidframework/server-services-utils
-  - @fluidframework/server-test-utils
-  - tinylicious
+The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
+- @fluidframework/gitresources
+- @fluidframework/server-kafka-orderer
+- @fluidframework/server-lambdas
+- @fluidframework/server-lambdas-driver
+- @fluidframework/server-local-server
+- @fluidframework/server-memory-orderer
+- @fluidframework/protocol-base
+- @fluidframework/server-routerlicious
+- @fluidframework/server-routerlicious-base
+- @fluidframework/server-services
+- @fluidframework/server-services-client
+- @fluidframework/server-services-core
+- @fluidframework/server-services-ordering-kafkanode
+- @fluidframework/server-services-ordering-rdkafka
+- @fluidframework/server-services-ordering-zookeeper
+- @fluidframework/server-services-shared
+- @fluidframework/server-services-telemetry
+- @fluidframework/server-services-utils
+- @fluidframework/server-test-utils
+- tinylicious
 
-- Updated @fluidframework/protocol-definitions ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
+#### Updated @fluidframework/protocol-definitions ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
 
-  The @fluidframework/protocol-definitions dependency has been upgraded to v3.1.0. [See the full
-  changelog.](https://github.com/microsoft/FluidFramework/blob/main/common/lib/protocol-definitions/CHANGELOG.md#310)
+The @fluidframework/protocol-definitions dependency has been upgraded to v3.1.0. [See the full
+changelog.](https://github.com/microsoft/FluidFramework/blob/main/common/lib/protocol-definitions/CHANGELOG.md#310)
 
 ## 2.0.0-internal.8.0.0
 
 ### Major Changes
 
-- container-definitions: Removed request(...) and IFluidRouter from IContainer [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+#### container-definitions: Removed request(...) and IFluidRouter from IContainer [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
 
-  The `request(...)` method and `IFluidRouter` property have been removed from `IContainer`. Please use the
-  `IContainer.getEntryPoint()` method to get the container's entry point.
+The `request(...)` method and `IFluidRouter` property have been removed from `IContainer`. Please use the
+`IContainer.getEntryPoint()` method to get the container's entry point.
 
-  See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
+See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
 
-- container-loader: Removed request(...) and IFluidRouter from ILoader and Loader [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+#### container-loader: Removed request(...) and IFluidRouter from ILoader and Loader [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
 
-  The `request(...)` method and `IFluidRouter` property have been removed from `ILoader` and `Loader`. Instead, after
-  calling `ILoader.resolve(...)`, call the `getEntryPoint()` method on the returned `IContainer`.
+The `request(...)` method and `IFluidRouter` property have been removed from `ILoader` and `Loader`. Instead, after
+calling `ILoader.resolve(...)`, call the `getEntryPoint()` method on the returned `IContainer`.
 
-  See
-  [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md)
-  for more details.
+See
+[Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md)
+for more details.
 
-- container-runtime: Removed IPendingLocalState and IRuntime.notifyAttaching [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+#### container-runtime: Removed IPendingLocalState and IRuntime.notifyAttaching [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
 
-  The deprecated `IPendingLocalState` and `IRuntime.notifyAttaching` APIs are removed. There is no replacement as they are
-  not longer used.
+The deprecated `IPendingLocalState` and `IRuntime.notifyAttaching` APIs are removed. There is no replacement as they are
+not longer used.
 
-- container-runtime: Removed request pattern from ContainerRuntime, IRuntime, and IContainerRuntimeBase [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+#### container-runtime: Removed request pattern from ContainerRuntime, IRuntime, and IContainerRuntimeBase [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
 
-  The `request(...)` method and `IFluidRouter` property have been removed from the following places:
-  - `ContainerRuntime`
-  - `IRuntime`
-  - `IContainerRuntimeBase`
+The `request(...)` method and `IFluidRouter` property have been removed from the following places:
+- `ContainerRuntime`
+- `IRuntime`
+- `IContainerRuntimeBase`
 
-  Please use the `IRuntime.getEntryPoint()` method to get the runtime's entry point.
+Please use the `IRuntime.getEntryPoint()` method to get the runtime's entry point.
 
-  See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
+See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
 
-- container-definitions: Fix ISnapshotTreeWithBlobContents and mark internal [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+#### container-definitions: Fix ISnapshotTreeWithBlobContents and mark internal [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
 
-  `ISnapshotTreeWithBlobContents` is an internal type that should not be used externally. Additionally, the type didn't
-  match the usage, specifically in runtime-utils where an `any` cast was used to work around undefined blobContents. The
-  type has been updated to reflect that blobContents can be undefined.
+`ISnapshotTreeWithBlobContents` is an internal type that should not be used externally. Additionally, the type didn't
+match the usage, specifically in runtime-utils where an `any` cast was used to work around undefined blobContents. The
+type has been updated to reflect that blobContents can be undefined.
 
 ## 2.0.0-internal.7.4.0
 
@@ -691,85 +695,85 @@ Dependency updates only.
 
 ### Major Changes
 
-- odsp-driver: Load container in readonly mode when driver throws DriverErrorType.outOfStorage [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+#### odsp-driver: Load container in readonly mode when driver throws DriverErrorType.outOfStorage [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
-  Handle DriverErrorType.outOfStorage error from driver and load the container in readonly mode. Currently there is no
-  handling and when the join session throws this error, the container will get closed. With this we use NoDeltaStream
-  object as connection and load the container in read mode, so that it loads properly. We also notify the that the
-  container is "readonly" through the event on delta manager so that apps can listen to this and show any UX etc. The app
-  can listen to the event like this:
+Handle DriverErrorType.outOfStorage error from driver and load the container in readonly mode. Currently there is no
+handling and when the join session throws this error, the container will get closed. With this we use NoDeltaStream
+object as connection and load the container in read mode, so that it loads properly. We also notify the that the
+container is "readonly" through the event on delta manager so that apps can listen to this and show any UX etc. The app
+can listen to the event like this:
 
-  ```ts
-  container.deltaManager.on(
-    "readonly",
-    (
-      readonly?: boolean,
-      readonlyConnectionReason?: { text: string; error?: IErrorBase },
-    ) => {
-      // error?.errorType will be equal to DriverErrorType.outOfStorage in this case
-      // App logic
-    },
-  );
-  ```
+```ts
+container.deltaManager.on(
+  "readonly",
+  (
+    readonly?: boolean,
+    readonlyConnectionReason?: { text: string; error?: IErrorBase },
+  ) => {
+    // error?.errorType will be equal to DriverErrorType.outOfStorage in this case
+    // App logic
+  },
+);
+```
 
-- Dependencies on @fluidframework/protocol-definitions package updated to 3.0.0 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+#### Dependencies on @fluidframework/protocol-definitions package updated to 3.0.0 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
-  This included the following changes from the protocol-definitions release:
-  - Updating signal interfaces for some planned improvements. The intention is split the interface between signals
-    submitted by clients to the server and the resulting signals sent from the server to clients.
-    - A new optional type member is available on the ISignalMessage interface and a new ISentSignalMessage interface has
-      been added, which will be the typing for signals sent from the client to the server. Both extend a new
-      ISignalMessageBase interface that contains common members.
-  - The @fluidframework/common-definitions package dependency has been updated to version 1.0.0.
+This included the following changes from the protocol-definitions release:
+- Updating signal interfaces for some planned improvements. The intention is split the interface between signals
+  submitted by clients to the server and the resulting signals sent from the server to clients.
+  - A new optional type member is available on the ISignalMessage interface and a new ISentSignalMessage interface has
+    been added, which will be the typing for signals sent from the client to the server. Both extend a new
+    ISignalMessageBase interface that contains common members.
+- The @fluidframework/common-definitions package dependency has been updated to version 1.0.0.
 
-- container-definitions: IContainer's and IDataStore's IFluidRouter capabilities are deprecated [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+#### container-definitions: IContainer's and IDataStore's IFluidRouter capabilities are deprecated [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
-  `IFluidRouter` and `request({ url: "/" })` on `IContainer` and `IDataStore` are deprecated and will be removed in a future major release. Please migrate all usage to the appropriate `getEntryPoint()` or `entryPoint` APIs.
+`IFluidRouter` and `request({ url: "/" })` on `IContainer` and `IDataStore` are deprecated and will be removed in a future major release. Please migrate all usage to the appropriate `getEntryPoint()` or `entryPoint` APIs.
 
-  See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
+See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
 
-- Server upgrade: dependencies on Fluid server packages updated to 2.0.1 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+#### Server upgrade: dependencies on Fluid server packages updated to 2.0.1 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
-  Dependencies on the following Fluid server package have been updated to version 2.0.1:
-  - @fluidframework/gitresources: 2.0.1
-  - @fluidframework/server-kafka-orderer: 2.0.1
-  - @fluidframework/server-lambdas: 2.0.1
-  - @fluidframework/server-lambdas-driver: 2.0.1
-  - @fluidframework/server-local-server: 2.0.1
-  - @fluidframework/server-memory-orderer: 2.0.1
-  - @fluidframework/protocol-base: 2.0.1
-  - @fluidframework/server-routerlicious: 2.0.1
-  - @fluidframework/server-routerlicious-base: 2.0.1
-  - @fluidframework/server-services: 2.0.1
-  - @fluidframework/server-services-client: 2.0.1
-  - @fluidframework/server-services-core: 2.0.1
-  - @fluidframework/server-services-ordering-kafkanode: 2.0.1
-  - @fluidframework/server-services-ordering-rdkafka: 2.0.1
-  - @fluidframework/server-services-ordering-zookeeper: 2.0.1
-  - @fluidframework/server-services-shared: 2.0.1
-  - @fluidframework/server-services-telemetry: 2.0.1
-  - @fluidframework/server-services-utils: 2.0.1
-  - @fluidframework/server-test-utils: 2.0.1
-  - tinylicious: 2.0.1
+Dependencies on the following Fluid server package have been updated to version 2.0.1:
+- @fluidframework/gitresources: 2.0.1
+- @fluidframework/server-kafka-orderer: 2.0.1
+- @fluidframework/server-lambdas: 2.0.1
+- @fluidframework/server-lambdas-driver: 2.0.1
+- @fluidframework/server-local-server: 2.0.1
+- @fluidframework/server-memory-orderer: 2.0.1
+- @fluidframework/protocol-base: 2.0.1
+- @fluidframework/server-routerlicious: 2.0.1
+- @fluidframework/server-routerlicious-base: 2.0.1
+- @fluidframework/server-services: 2.0.1
+- @fluidframework/server-services-client: 2.0.1
+- @fluidframework/server-services-core: 2.0.1
+- @fluidframework/server-services-ordering-kafkanode: 2.0.1
+- @fluidframework/server-services-ordering-rdkafka: 2.0.1
+- @fluidframework/server-services-ordering-zookeeper: 2.0.1
+- @fluidframework/server-services-shared: 2.0.1
+- @fluidframework/server-services-telemetry: 2.0.1
+- @fluidframework/server-services-utils: 2.0.1
+- @fluidframework/server-test-utils: 2.0.1
+- tinylicious: 2.0.1
 
-- test-utils: provideEntryPoint is required [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+#### test-utils: provideEntryPoint is required [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
-  The optional `provideEntryPoint` method has become required on a number of constructors. A value will need to be provided to the following classes:
-  - `BaseContainerRuntimeFactory`
-  - `RuntimeFactory`
-  - `ContainerRuntime` (constructor and `loadRuntime`)
-  - `FluidDataStoreRuntime`
+The optional `provideEntryPoint` method has become required on a number of constructors. A value will need to be provided to the following classes:
+- `BaseContainerRuntimeFactory`
+- `RuntimeFactory`
+- `ContainerRuntime` (constructor and `loadRuntime`)
+- `FluidDataStoreRuntime`
 
-  See [testContainerRuntimeFactoryWithDefaultDataStore.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/test/test-utils/src/testContainerRuntimeFactoryWithDefaultDataStore.ts) for an example implemtation of `provideEntryPoint` for ContainerRuntime.
-  See [pureDataObjectFactory.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/framework/aqueduct/src/data-object-factories/pureDataObjectFactory.ts#L83) for an example implementation of `provideEntryPoint` for DataStoreRuntime.
+See [testContainerRuntimeFactoryWithDefaultDataStore.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/test/test-utils/src/testContainerRuntimeFactoryWithDefaultDataStore.ts) for an example implemtation of `provideEntryPoint` for ContainerRuntime.
+See [pureDataObjectFactory.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/framework/aqueduct/src/data-object-factories/pureDataObjectFactory.ts#L83) for an example implementation of `provideEntryPoint` for DataStoreRuntime.
 
-  Subsequently, various `entryPoint` and `getEntryPoint()` endpoints have become required. Please see [containerRuntime.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/runtime/container-runtime/src/containerRuntime.ts) for example implementations of these APIs.
+Subsequently, various `entryPoint` and `getEntryPoint()` endpoints have become required. Please see [containerRuntime.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/runtime/container-runtime/src/containerRuntime.ts) for example implementations of these APIs.
 
-  For more details, see [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md)
+For more details, see [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md)
 
-- Minimum TypeScript version now 5.1.6 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+#### Minimum TypeScript version now 5.1.6 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
-  The minimum supported TypeScript version for Fluid 2.0 clients is now 5.1.6.
+The minimum supported TypeScript version for Fluid 2.0 clients is now 5.1.6.
 
 ## 2.0.0-internal.6.4.0
 
@@ -783,38 +787,38 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Temporarily restore id property on IContainerContext ([#16846](https://github.com/microsoft/FluidFramework/issues/16846)) [9825a692dd](https://github.com/microsoft/FluidFramework/commits/9825a692dd27eded214e3978a7fd6028b05e6fab)
+#### Temporarily restore id property on IContainerContext ([#16846](https://github.com/microsoft/FluidFramework/issues/16846)) [9825a692dd](https://github.com/microsoft/FluidFramework/commits/9825a692dd27eded214e3978a7fd6028b05e6fab)
 
-  The `id` property on `IContainerContext` has been temporarily restored to ease the transition to `2.0.0-internal.6.x`.
-  It will be removed again in `2.0.0-internal.7.0.0`.
+The `id` property on `IContainerContext` has been temporarily restored to ease the transition to `2.0.0-internal.6.x`.
+It will be removed again in `2.0.0-internal.7.0.0`.
 
-  The original deprecation announcement can be found [here](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.0.0-internal.5.2.0).
+The original deprecation announcement can be found [here](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.0.0-internal.5.2.0).
 
-- Remove use of @fluidframework/common-definitions ([#16638](https://github.com/microsoft/FluidFramework/issues/16638)) [a8c81509c9](https://github.com/microsoft/FluidFramework/commits/a8c81509c9bf09cfb2092ebcf7265205f9eb6dbf)
+#### Remove use of @fluidframework/common-definitions ([#16638](https://github.com/microsoft/FluidFramework/issues/16638)) [a8c81509c9](https://github.com/microsoft/FluidFramework/commits/a8c81509c9bf09cfb2092ebcf7265205f9eb6dbf)
 
-  The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
-  imported from the **@fluidframework/core-interfaces** package:
-  - interface IDisposable
-  - interface IErrorEvent
-  - interface IErrorEvent
-  - interface IEvent
-  - interface IEventProvider
-  - interface ILoggingError
-  - interface ITaggedTelemetryPropertyType
-  - interface ITelemetryBaseEvent
-  - interface ITelemetryBaseLogger
-  - interface ITelemetryErrorEvent
-  - interface ITelemetryGenericEvent
-  - interface ITelemetryLogger
-  - interface ITelemetryPerformanceEvent
-  - interface ITelemetryProperties
-  - type ExtendEventProvider
-  - type IEventThisPlaceHolder
-  - type IEventTransformer
-  - type ReplaceIEventThisPlaceHolder
-  - type ReplaceIEventThisPlaceHolder
-  - type TelemetryEventCategory
-  - type TelemetryEventPropertyType
+The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
+imported from the **@fluidframework/core-interfaces** package:
+- interface IDisposable
+- interface IErrorEvent
+- interface IErrorEvent
+- interface IEvent
+- interface IEventProvider
+- interface ILoggingError
+- interface ITaggedTelemetryPropertyType
+- interface ITelemetryBaseEvent
+- interface ITelemetryBaseLogger
+- interface ITelemetryErrorEvent
+- interface ITelemetryGenericEvent
+- interface ITelemetryLogger
+- interface ITelemetryPerformanceEvent
+- interface ITelemetryProperties
+- type ExtendEventProvider
+- type IEventThisPlaceHolder
+- type IEventTransformer
+- type ReplaceIEventThisPlaceHolder
+- type ReplaceIEventThisPlaceHolder
+- type TelemetryEventCategory
+- type TelemetryEventPropertyType
 
 ## 2.0.0-internal.6.1.0
 
@@ -824,214 +828,214 @@ Dependency updates only.
 
 ### Major Changes
 
-- Removed IContainerContext.existing [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+#### Removed IContainerContext.existing [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
 
-  The recommended means of checking for existing changed to the instantiateRuntime param in 2021, and the IContainerContext.existing member was formally deprecated in 2.0.0-internal.2.0.0. This member is now removed.
+The recommended means of checking for existing changed to the instantiateRuntime param in 2021, and the IContainerContext.existing member was formally deprecated in 2.0.0-internal.2.0.0. This member is now removed.
 
-- Remove closeAndGetPendingLocalState from IContainer [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+#### Remove closeAndGetPendingLocalState from IContainer [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
 
-  This change removes the deprecated and experimental method closeAndGetPendingLocalState from IContainer. It continues to
-  exist on IContainerExperimental.
+This change removes the deprecated and experimental method closeAndGetPendingLocalState from IContainer. It continues to
+exist on IContainerExperimental.
 
-  IContainerExperimental is an interface that is easily casted to, which enables partners to access experimental features for testing and evaluation.
-  Moving the experimental method off IContainer will reduce exposure and churn on that production interface as we iterate
-  on and finalize our experimental features.
+IContainerExperimental is an interface that is easily casted to, which enables partners to access experimental features for testing and evaluation.
+Moving the experimental method off IContainer will reduce exposure and churn on that production interface as we iterate
+on and finalize our experimental features.
 
-  Experimental features should not be used in production environments.
+Experimental features should not be used in production environments.
 
-- allSentOpsAckd and processTime events removed from IDeltaManagerEvents [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+#### allSentOpsAckd and processTime events removed from IDeltaManagerEvents [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
 
-  The "allSentOpsAckd" and "processTime" events on the IDeltaManagerEvents interface were deprecated in 2.0.0-internal.2.2.0 and have now been removed.
+The "allSentOpsAckd" and "processTime" events on the IDeltaManagerEvents interface were deprecated in 2.0.0-internal.2.2.0 and have now been removed.
 
-- IConnectionDetailsInternal and IDeltaHandlerStrategy removed [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+#### IConnectionDetailsInternal and IDeltaHandlerStrategy removed [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
 
-  IConnectionDetailsInternal and IDeltaHandlerStrategy from the @fluidframework/container-definitions package were deprecated in 2.0.0-internal.5.2.0 and have now been removed.
+IConnectionDetailsInternal and IDeltaHandlerStrategy from the @fluidframework/container-definitions package were deprecated in 2.0.0-internal.5.2.0 and have now been removed.
 
-- Request APIs deprecated from many places [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+#### Request APIs deprecated from many places [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
 
-  The `request` API (associated with the `IFluidRouter` interface) has been deprecated on a number of classes and interfaces. The following are impacted:
-  - `IRuntime` and `ContainerRuntime`
-  - `IFluidDataStoreRuntime` and `FluidDataStoreRuntime`
-  - `IFluidDataStoreChannel`
-  - `MockFluidDataStoreRuntime`
-  - `TestFluidObject`
+The `request` API (associated with the `IFluidRouter` interface) has been deprecated on a number of classes and interfaces. The following are impacted:
+- `IRuntime` and `ContainerRuntime`
+- `IFluidDataStoreRuntime` and `FluidDataStoreRuntime`
+- `IFluidDataStoreChannel`
+- `MockFluidDataStoreRuntime`
+- `TestFluidObject`
 
-  Please migrate usage to the corresponding `entryPoint` or `getEntryPoint()` of the object. The value for these "entryPoint" related APIs is determined from factories (for `IRuntime` and `IFluidDataStoreRuntime`) via the `initializeEntryPoint` method. If no method is passed to the factory, the corresponding `entryPoint` and `getEntryPoint()` will be undefined.
+Please migrate usage to the corresponding `entryPoint` or `getEntryPoint()` of the object. The value for these "entryPoint" related APIs is determined from factories (for `IRuntime` and `IFluidDataStoreRuntime`) via the `initializeEntryPoint` method. If no method is passed to the factory, the corresponding `entryPoint` and `getEntryPoint()` will be undefined.
 
-  For an example implementation of `initializeEntryPoint`, see [pureDataObjectFactory.ts](https://github.com/microsoft/FluidFramework/blob/next/packages/framework/aqueduct/src/data-object-factories/pureDataObjectFactory.ts#L84).
+For an example implementation of `initializeEntryPoint`, see [pureDataObjectFactory.ts](https://github.com/microsoft/FluidFramework/blob/next/packages/framework/aqueduct/src/data-object-factories/pureDataObjectFactory.ts#L84).
 
-  More information of the migration off the request pattern, and current status of its removal, is documented in [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md).
+More information of the migration off the request pattern, and current status of its removal, is documented in [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md).
 
-- IContainer's and IDataStore's IFluidRouter capabilities are deprecated. [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
-  - The `request` function taking an arbitrary URL and headers is deprecated
-  - However, an overload taking only `{ url: "/" }` is not, for back-compat purposes during the migration
-    from the request pattern to using entryPoint.
+#### IContainer's and IDataStore's IFluidRouter capabilities are deprecated. [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+- The `request` function taking an arbitrary URL and headers is deprecated
+- However, an overload taking only `{ url: "/" }` is not, for back-compat purposes during the migration
+  from the request pattern to using entryPoint.
 
-  ### About requesting "/" and using entryPoint
+##### About requesting "/" and using entryPoint
 
-  Requesting "/" is an idiom some consumers of Fluid Framework have used in their own `requestHandler`s
-  (passed to `ContainerRuntime.loadRuntime` and `FluidDataStoreRuntime`'s constructor).
-  The ability to access the "root" or "entry point" of a Container / DataStore will presently be provided by
-  `IContainer.getEntryPoint` and `IDataStore.entryPoint`. However these are still optional, so a temporary workaround is needed.
+Requesting "/" is an idiom some consumers of Fluid Framework have used in their own `requestHandler`s
+(passed to `ContainerRuntime.loadRuntime` and `FluidDataStoreRuntime`'s constructor).
+The ability to access the "root" or "entry point" of a Container / DataStore will presently be provided by
+`IContainer.getEntryPoint` and `IDataStore.entryPoint`. However these are still optional, so a temporary workaround is needed.
 
-  See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md)
-  for more info on this transition from request to entryPoint.
+See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md)
+for more info on this transition from request to entryPoint.
 
-  ### Present Replacement for requesting an arbitrary URL
+##### Present Replacement for requesting an arbitrary URL
 
-  Suppose you have these variables:
+Suppose you have these variables:
 
-  ```ts
-  const container: IContainer = ...;
-  const dataStore: IDataStore = ...;
-  ```
+```ts
+const container: IContainer = ...;
+const dataStore: IDataStore = ...;
+```
 
-  Before:
+Before:
 
-  ```ts
-  container.request({ url, headers });
-  dataStore.request({ url, headers });
-  ```
+```ts
+container.request({ url, headers });
+dataStore.request({ url, headers });
+```
 
-  After:
+After:
 
-  ```ts
-  // Assume there is an interface like this in the app's Container implementation
-  interface CustomUrlRouter {
-  	doRequestRouting(request: { url: string; headers: Record<string, any>; }): any;
-  }
+```ts
+// Assume there is an interface like this in the app's Container implementation
+interface CustomUrlRouter {
+	doRequestRouting(request: { url: string; headers: Record<string, any>; }): any;
+}
 
-  // Prerequisite: Pass a requestHandler to ContainerRuntime.loadRuntime that routes "/"
-  // to some root object implementing CustomUrlRouter
-  const containerRouter: CustomUrlRouter = await container.request({ "/" });
-  containerRouter.doRequestRouting({ url, headers });
+// Prerequisite: Pass a requestHandler to ContainerRuntime.loadRuntime that routes "/"
+// to some root object implementing CustomUrlRouter
+const containerRouter: CustomUrlRouter = await container.request({ "/" });
+containerRouter.doRequestRouting({ url, headers });
 
-  // Prerequisite: Pass a requestHandler to FluidDataStoreRuntime's constructor that routes "/"
-  // to some root object implementing CustomUrlRouter
-  const dataStoreRouter: CustomUrlRouter = await dataStore.request({ "/" });
-  dataStoreRouter.doRequestRouting({ url, headers });
-  ```
+// Prerequisite: Pass a requestHandler to FluidDataStoreRuntime's constructor that routes "/"
+// to some root object implementing CustomUrlRouter
+const dataStoreRouter: CustomUrlRouter = await dataStore.request({ "/" });
+dataStoreRouter.doRequestRouting({ url, headers });
+```
 
-  ### Looking ahead to using entryPoint
+##### Looking ahead to using entryPoint
 
-  In the next major release, `getEntryPoint` and `entryPoint` should be mandatory and available for use.
-  Then you may replace each call `request({ url: "/" })` with a call to get the entryPoint using these functions/properties.
+In the next major release, `getEntryPoint` and `entryPoint` should be mandatory and available for use.
+Then you may replace each call `request({ url: "/" })` with a call to get the entryPoint using these functions/properties.
 
-- Loader container caching off by default [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+#### Loader container caching off by default [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
 
-  Loader container caching will now be off by default and the ability to control it is deprecated. Loader caching is deprecated and will be removed in a future release, as well as all caching functionality of containers. Please try not to rely on caching and inform us if you cannot do so.
+Loader container caching will now be off by default and the ability to control it is deprecated. Loader caching is deprecated and will be removed in a future release, as well as all caching functionality of containers. Please try not to rely on caching and inform us if you cannot do so.
 
-  If you run into trouble with this behavior, please report it ASAP to the FluidFramework team and use the following options (available in this release only) to unblock you:
-  - set `ILoaderProps.options.cache` to `true` when constructing a `Loader` object (see the `ILoaderOptions` interface)
-  - set `[LoaderHeader.cache]` header to `true` when requesting a container
+If you run into trouble with this behavior, please report it ASAP to the FluidFramework team and use the following options (available in this release only) to unblock you:
+- set `ILoaderProps.options.cache` to `true` when constructing a `Loader` object (see the `ILoaderOptions` interface)
+- set `[LoaderHeader.cache]` header to `true` when requesting a container
 
-- contextChanged event on IContainerEvents removed [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+#### contextChanged event on IContainerEvents removed [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
 
-  The contextChanged event on IContainerEvents was deprecated in 2.0.0-internal.2.2.0 and has now been removed.
+The contextChanged event on IContainerEvents was deprecated in 2.0.0-internal.2.2.0 and has now been removed.
 
-- ICodeAllowList interface removed [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+#### ICodeAllowList interface removed [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
 
-  The ICodeAllowList interface was deprecated in 2.0.0-internal.3.2.0 and has now been removed.
+The ICodeAllowList interface was deprecated in 2.0.0-internal.3.2.0 and has now been removed.
 
-- getPendingLocalState and closeAndGetPendingLocalState are now async [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+#### getPendingLocalState and closeAndGetPendingLocalState are now async [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
 
-  getPendingLocalState and closeAndGetPendingLocalState are now async to allow uploading blobs to attach to a DDS (in closing scenario). There is a new parameter in those methods at the container/runtime layer "notifyImminentClosure" which is true only when closing and ensures uploading blobs fast resolve and get attached. Once we apply stashed ops to new container, blob will try to reupload and we will know where to place its references.
+getPendingLocalState and closeAndGetPendingLocalState are now async to allow uploading blobs to attach to a DDS (in closing scenario). There is a new parameter in those methods at the container/runtime layer "notifyImminentClosure" which is true only when closing and ensures uploading blobs fast resolve and get attached. Once we apply stashed ops to new container, blob will try to reupload and we will know where to place its references.
 
-- Upgraded typescript transpilation target to ES2020 [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+#### Upgraded typescript transpilation target to ES2020 [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
 
-  Upgraded typescript transpilation target to ES2020. This is done in order to decrease the bundle sizes of Fluid Framework packages. This has provided size improvements across the board for ex. Loader, Driver, Runtime etc. Reduced bundle sizes helps to load lesser code in apps and hence also helps to improve the perf.If any app wants to target any older versions of browsers with which this target version is not compatible, then they can use packages like babel to transpile to a older target.
+Upgraded typescript transpilation target to ES2020. This is done in order to decrease the bundle sizes of Fluid Framework packages. This has provided size improvements across the board for ex. Loader, Driver, Runtime etc. Reduced bundle sizes helps to load lesser code in apps and hence also helps to improve the perf.If any app wants to target any older versions of browsers with which this target version is not compatible, then they can use packages like babel to transpile to a older target.
 
-- `Loader.resolve()` throws if `LoaderHeader.sequenceNumber` and `IContainerLoadMode.opsBeforeReturn` do not match [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+#### `Loader.resolve()` throws if `LoaderHeader.sequenceNumber` and `IContainerLoadMode.opsBeforeReturn` do not match [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
 
-  Calling `Loader.resolve()` will now throw an error if `LoaderHeader.sequenceNumber` is defined but `IContainerLoadMode.opsBeforeReturn` is not set to "sequenceNumber". Vice versa, `Loader.resolve()` will also throw an error if `IContainerLoadMode.opsBeforeReturn` is set to "sequenceNumber" but `LoaderHeader.sequenceNumber` is not defined.
+Calling `Loader.resolve()` will now throw an error if `LoaderHeader.sequenceNumber` is defined but `IContainerLoadMode.opsBeforeReturn` is not set to "sequenceNumber". Vice versa, `Loader.resolve()` will also throw an error if `IContainerLoadMode.opsBeforeReturn` is set to "sequenceNumber" but `LoaderHeader.sequenceNumber` is not defined.
 
-- IDeltaManager members disposed and dispose() removed [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+#### IDeltaManager members disposed and dispose() removed [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
 
-  IDeltaManager members disposed and dispose() were deprecated in 2.0.0-internal.5.3.0 and have now been removed.
+IDeltaManager members disposed and dispose() were deprecated in 2.0.0-internal.5.3.0 and have now been removed.
 
-- Request APIs deprecated on ILoader [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+#### Request APIs deprecated on ILoader [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
 
-  The `request` API (associated with the `IFluidRouter` interface) has been deprecated on `ILoader` and `Loader`.
-  Please migrate all usage to using the `IContainer.request(...)` method if using a dynamic request URL, or to the `IContainer.getEntryPoint()` method if trying to obtain the application-specified root object.
+The `request` API (associated with the `IFluidRouter` interface) has been deprecated on `ILoader` and `Loader`.
+Please migrate all usage to using the `IContainer.request(...)` method if using a dynamic request URL, or to the `IContainer.getEntryPoint()` method if trying to obtain the application-specified root object.
 
-  **Note:** The `IContainer.request(...)` method will be deprecated in an upcoming release, so do not rely on this method for a long-term solution (the APIs around `entryPoint` and `getEntryPoint()` will become required and available for usage in its place).
+**Note:** The `IContainer.request(...)` method will be deprecated in an upcoming release, so do not rely on this method for a long-term solution (the APIs around `entryPoint` and `getEntryPoint()` will become required and available for usage in its place).
 
-  After calling `ILoader.resolve(...)`, call the `request(...)` method on the returned `IContainer` with a corresponding request URL. For converting a request URL from `Loader` to `Container`, use the `IUrlResolver` passed into the `Loader`'s constructor.
-  The following is an example of what this change may look like:
+After calling `ILoader.resolve(...)`, call the `request(...)` method on the returned `IContainer` with a corresponding request URL. For converting a request URL from `Loader` to `Container`, use the `IUrlResolver` passed into the `Loader`'s constructor.
+The following is an example of what this change may look like:
 
-  ```
-  // OLD
-  const request: IRequest;
-  const urlResolver = new YourUrlResolver();
-  const loader = new Loader({ urlResolver, ... });
+```
+// OLD
+const request: IRequest;
+const urlResolver = new YourUrlResolver();
+const loader = new Loader({ urlResolver, ... });
 
-  await loader.resolve(request);
-  const response = loader.request(request);
-  ```
+await loader.resolve(request);
+const response = loader.request(request);
+```
 
-  ```
-  // NEW
-  const request: IRequest;
-  const urlResolver = new YourUrlResolver();
-  const loader = new Loader({ urlResolver, ... });
+```
+// NEW
+const request: IRequest;
+const urlResolver = new YourUrlResolver();
+const loader = new Loader({ urlResolver, ... });
 
-  const container = await loader.resolve(request);
-  const resolvedUrl: IRequest = urlResolver.resolve(request);
+const container = await loader.resolve(request);
+const resolvedUrl: IRequest = urlResolver.resolve(request);
 
-  // Parse the `resolvedUrl.url` property as necessary before passing to `container.request(...)`
-  // For an example, see the `Loader.resolveCore(...)` method
-  const parsedResolvedUrl = // implement parse logic here
-  const response = container.request(parsedResolvedUrl);
-  ```
+// Parse the `resolvedUrl.url` property as necessary before passing to `container.request(...)`
+// For an example, see the `Loader.resolveCore(...)` method
+const parsedResolvedUrl = // implement parse logic here
+const response = container.request(parsedResolvedUrl);
+```
 
-  Status on removal of the request pattern is tracked in [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md)
+Status on removal of the request pattern is tracked in [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md)
 
-- IContainerContext members removed [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+#### IContainerContext members removed [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
 
-  IContainerContext members disposed, dispose(), serviceConfiguration, and id were deprecated in 2.0.0-internal.5.2.0 and have now been removed.
+IContainerContext members disposed, dispose(), serviceConfiguration, and id were deprecated in 2.0.0-internal.5.2.0 and have now been removed.
 
 ## 2.0.0-internal.5.4.0
 
 ### Minor Changes
 
-- `ILoaderOptions.cache` has been deprecated ([#16383](https://github.com/microsoft/FluidFramework/issues/16383)) [ef9b00f1bf](https://github.com/microsoft/FluidFramework/commits/ef9b00f1bf538861ecc616c7c9e1d73707ab89fb)
+#### `ILoaderOptions.cache` has been deprecated ([#16383](https://github.com/microsoft/FluidFramework/issues/16383)) [ef9b00f1bf](https://github.com/microsoft/FluidFramework/commits/ef9b00f1bf538861ecc616c7c9e1d73707ab89fb)
 
-  `ILoaderOptions.cache` has been deprecated and will be removed in a future release, as well as all caching functionality of containers. Cache support will be removed soon, please try not to rely on caching, and inform us if you cannot do so.
+`ILoaderOptions.cache` has been deprecated and will be removed in a future release, as well as all caching functionality of containers. Cache support will be removed soon, please try not to rely on caching, and inform us if you cannot do so.
 
 ## 2.0.0-internal.5.3.0
 
 ### Minor Changes
 
-- Move closeAndGetPendingLocalState to IContainerExperimental ([#16302](https://github.com/microsoft/FluidFramework/issues/16302)) [93151af787](https://github.com/microsoft/FluidFramework/commits/93151af787b76e547cf3460df47f81832131db8c)
+#### Move closeAndGetPendingLocalState to IContainerExperimental ([#16302](https://github.com/microsoft/FluidFramework/issues/16302)) [93151af787](https://github.com/microsoft/FluidFramework/commits/93151af787b76e547cf3460df47f81832131db8c)
 
-  This change deprecates the experimental method closeAndGetPendingLocalState on IContainer and moves it to IContainerExperimental.
-  IContainerExperimental is an interface that is easily casted to, which enables partners to access experimental features for testing and evaluation.
-  Moving the experimental method off IContainer will reduce exposure and churn on that production interface as we iterate on and finalize our experimental features.
-  Experimental features should not be used in production environments.
+This change deprecates the experimental method closeAndGetPendingLocalState on IContainer and moves it to IContainerExperimental.
+IContainerExperimental is an interface that is easily casted to, which enables partners to access experimental features for testing and evaluation.
+Moving the experimental method off IContainer will reduce exposure and churn on that production interface as we iterate on and finalize our experimental features.
+Experimental features should not be used in production environments.
 
-- IDeltaManager members disposed and dispose() deprecated ([#16224](https://github.com/microsoft/FluidFramework/issues/16224)) [85b30b686a](https://github.com/microsoft/FluidFramework/commits/85b30b686a47563baf00ded97986610f1f3e77ed)
+#### IDeltaManager members disposed and dispose() deprecated ([#16224](https://github.com/microsoft/FluidFramework/issues/16224)) [85b30b686a](https://github.com/microsoft/FluidFramework/commits/85b30b686a47563baf00ded97986610f1f3e77ed)
 
-  Directly calling dispose() on the IDeltaManager puts the system in an inconsistent state, and inspecting the disposed state of the IDeltaManager is not recommended (instead, prefer to inspect either the IContainer.disposed, IContainerRuntime.disposed, or IFluidDataStoreRuntime.disposed depending on your scenario). These members have been deprecated from the interface and will be removed in an upcoming release.
+Directly calling dispose() on the IDeltaManager puts the system in an inconsistent state, and inspecting the disposed state of the IDeltaManager is not recommended (instead, prefer to inspect either the IContainer.disposed, IContainerRuntime.disposed, or IFluidDataStoreRuntime.disposed depending on your scenario). These members have been deprecated from the interface and will be removed in an upcoming release.
 
 ## 2.0.0-internal.5.2.0
 
 ### Minor Changes
 
-- IContainerContext members deprecated ([#16180](https://github.com/microsoft/FluidFramework/issues/16180)) [bf6a26cfe6](https://github.com/microsoft/FluidFramework/commits/bf6a26cfe6ac58386f2c9af260603a15b03ba84f)
+#### IContainerContext members deprecated ([#16180](https://github.com/microsoft/FluidFramework/issues/16180)) [bf6a26cfe6](https://github.com/microsoft/FluidFramework/commits/bf6a26cfe6ac58386f2c9af260603a15b03ba84f)
 
-  IContainerContext members disposed, dispose(), serviceConfiguration, and id have been deprecated and will be removed in an upcoming release.
+IContainerContext members disposed, dispose(), serviceConfiguration, and id have been deprecated and will be removed in an upcoming release.
 
-  disposed - The disposed state on the IContainerContext is not meaningful to the runtime.
+disposed - The disposed state on the IContainerContext is not meaningful to the runtime.
 
-  dispose() - The runtime is not permitted to dispose the IContainerContext, this results in an inconsistent system state.
+dispose() - The runtime is not permitted to dispose the IContainerContext, this results in an inconsistent system state.
 
-  serviceConfiguration - This property is redundant, and is unused by the runtime. The same information can be found via `deltaManager.serviceConfiguration` on this object if it is necessary.
+serviceConfiguration - This property is redundant, and is unused by the runtime. The same information can be found via `deltaManager.serviceConfiguration` on this object if it is necessary.
 
-  id - The docId is already logged by the IContainerContext.taggedLogger for telemetry purposes, so this is generally unnecessary for telemetry. If the id is needed for other purposes it should be passed to the consumer explicitly.
+id - The docId is already logged by the IContainerContext.taggedLogger for telemetry purposes, so this is generally unnecessary for telemetry. If the id is needed for other purposes it should be passed to the consumer explicitly.
 
-- IConnectionDetailsInternal and IDeltaHandlerStrategy deprecated ([#16081](https://github.com/microsoft/FluidFramework/issues/16081)) [279dcd5563](https://github.com/microsoft/FluidFramework/commits/279dcd55635b650494cf2347f21cf0e2b979413a)
+#### IConnectionDetailsInternal and IDeltaHandlerStrategy deprecated ([#16081](https://github.com/microsoft/FluidFramework/issues/16081)) [279dcd5563](https://github.com/microsoft/FluidFramework/commits/279dcd55635b650494cf2347f21cf0e2b979413a)
 
-  The IConnectionDetailsInternal and IDeltaHandlerStrategy interfaces from the @fluidframework/container-definitions package have been deprecated and will be removed in a future release. These are internal-only interfaces and should not be used.
+The IConnectionDetailsInternal and IDeltaHandlerStrategy interfaces from the @fluidframework/container-definitions package have been deprecated and will be removed in a future release. These are internal-only interfaces and should not be used.
 
 ## 2.0.0-internal.5.1.0
 
@@ -1041,16 +1045,16 @@ Dependency updates only.
 
 ### Major Changes
 
-- Calling `IContainer.close(...)` will no longer dispose the container runtime, document service, or document storage service. [8b242fdc79](https://github.com/microsoft/FluidFramework/commits/8b242fdc796714cf1da9ad3f90d02efb122af0c2)
+#### Calling `IContainer.close(...)` will no longer dispose the container runtime, document service, or document storage service. [8b242fdc79](https://github.com/microsoft/FluidFramework/commits/8b242fdc796714cf1da9ad3f90d02efb122af0c2)
 
-  If the container is not expected to be used after the `close(...)` call, replace it instead with a
-  `IContainer.dispose(...)` call (this should be the most common case). Using `IContainer.dispose(...)` will no longer
-  switch the container to "readonly" mode and relevant code should instead listen to the Container's "disposed" event.
+If the container is not expected to be used after the `close(...)` call, replace it instead with a
+`IContainer.dispose(...)` call (this should be the most common case). Using `IContainer.dispose(...)` will no longer
+switch the container to "readonly" mode and relevant code should instead listen to the Container's "disposed" event.
 
-  If you intend to pass your own critical error to the container, use `IContainer.close(...)`. Once you are done using the
-  container, call `IContainer.dispose(...)`.
+If you intend to pass your own critical error to the container, use `IContainer.close(...)`. Once you are done using the
+container, call `IContainer.dispose(...)`.
 
-  See the [Closure](packages/loader/container-loader/README.md#Closure) section of Loader README.md for more details.
+See the [Closure](packages/loader/container-loader/README.md#Closure) section of Loader README.md for more details.
 
 ## 2.0.0-internal.4.4.0
 

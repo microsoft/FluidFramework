@@ -98,10 +98,16 @@ Enable NodeJs's [corepack](https://github.com/nodejs/corepack/blob/main/README.m
 corepack enable
 ```
 
+> [!WARNING]
+> Corepack cannot currently download an uncached pnpm version from `publicPackages` because Azure Artifacts does not support its single-version metadata endpoint.
+> `corepack enable` can succeed while the next `pnpm` command fails.
+> If direct npmjs access is blocked, use the [npm-based pnpm bootstrap workaround](./docs/content/Contributing/Dependencies.md#known-limitation-corepack-bootstrap).
+
 > [!NOTE]
-> **Microsoft developers:** due to internal policy, the public npm registry (`registry.npmjs.org`) is blocked on managed devices.
-> Refer to our internal team onboarding guidance for details on how to contribute, either by getting an exception or by using
-> the helper script at `scripts/set-dev-registry.cjs` appropriately.
+> Dependencies come from the public Azure Artifacts `publicPackages` feed.
+> Existing saved packages can be downloaded without credentials.
+> Maintainers need to authenticate to save new packages from npmjs.
+> See [Dependency setup and changes](./docs/content/Contributing/Dependencies.md) for authentication, troubleshooting, and the maintainer-assisted workflow for external contributors.
 
 Run the following to build the client packages:
 

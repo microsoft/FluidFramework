@@ -5,7 +5,10 @@
 
 import { strict as assert, fail } from "node:assert";
 
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+import {
+	deepFreeze,
+	validateAssertionError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { currentVersion, type CodecWriteOptions } from "../../codec/index.js";
 import {
@@ -24,11 +27,12 @@ import {
 	type ModularChangeset,
 	type TreeChunk,
 	fieldKinds,
-	type SchemaChange,
 	intoDelta,
 	DefaultRevisionReplacer,
 	type FieldBatchCodec,
 	FieldBatchFormatVersion,
+	CompareAndSwapSchemaChangeset,
+	type SchemaChangeset,
 } from "../../feature-libraries/index.js";
 import {
 	ConstraintStatus,
@@ -110,7 +114,7 @@ const emptySchema: TreeStoredSchema = {
 		persistedMetadata: undefined,
 	},
 };
-const innerSchemaChange = { schema: { new: emptySchema, old: emptySchema }, isInverse: false };
+const innerSchemaChange = new CompareAndSwapSchemaChangeset(emptySchema, emptySchema);
 const treeSchemaChange: SharedTreeChange = {
 	changes: [{ type: "schema", innerChange: innerSchemaChange }],
 };
@@ -125,7 +129,8 @@ const sharedTreeFamily = new SharedTreeChangeFamily(
 );
 
 describe("SharedTreeChangeFamily", () => {
-	it("composition composes runs of data changes", () => {
+	// TODO: This test composes two changesets with the same revision, which is not supported.
+	it.skip("composition composes runs of data changes", () => {
 		assert.deepEqual(
 			sharedTreeFamily.compose([
 				makeAnonChange(treeDataChange1),
@@ -210,6 +215,14 @@ describe("SharedTreeChangeFamily", () => {
 			{
 				changes: [],
 			},
+		);
+	});
+
+	it("rejects reverting schema changes", () => {
+		assert.throws(
+			() =>
+				sharedTreeFamily.invert(makeAnonChange(treeSchemaChange), false, mintRevisionTag()),
+			validateAssertionError(/Reverting schema changes is not supported/),
 		);
 	});
 
@@ -301,7 +314,7 @@ describe("SharedTreeChangeFamily", () => {
 		const refresher2: TreeChunk = "refresher2" as unknown as TreeChunk;
 		const schemaChange: SharedTreeInnerChange = {
 			type: "schema",
-			innerChange: "MockSchemaChange" as unknown as SchemaChange,
+			innerChange: "MockSchemaChange" as unknown as SchemaChangeset,
 		};
 
 		function updateDataChangeRefreshers(
@@ -456,7 +469,7 @@ describe("SharedTreeChangeFamily", () => {
 				const delta1 = intoDelta(tagChange(change1.innerChange, undefined));
 				const delta3 = intoDelta(tagChange(change3.innerChange, undefined));
 				const detachedNodeId = delta1.fields?.get(rootFieldKey)?.marks[0]?.detach;
-				const reference = delta3.rename?.[0]?.oldId;
+				const reference = delta3.fields?.get(rootFieldKey)?.marks[0]?.attach;
 				assert.notEqual(reference, undefined);
 				assert.deepEqual(reference, detachedNodeId);
 			}

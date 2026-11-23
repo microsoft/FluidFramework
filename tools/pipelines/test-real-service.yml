@@ -181,10 +181,9 @@ stages:
         - name: Cross-Client
           flags: --compatVersion=CROSS_CLIENT
         # Assumes Non-compat and N-1 scenarios are covered
-        # Tests N-2 to LTS+1 back compat for loader
-        # Tests N-2 to LTS+3 back compat for loader + driver
-        - name: N-2ToLTS+1-back-compat
-          flags: --compatVersion=V2_INT_3 --tenantIndex=3
+        # Tests stable release bands from N-2 down to OCV, plus exact OCV, for loader and loader + driver.
+        - name: Full-back-compat-and-OCV
+          flags: --compatVersion=FULL --compatVersion=OCV --tenantIndex=3
 
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
