@@ -16,7 +16,10 @@ import {
 	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import { getKeyForCacheEntry } from "@fluidframework/driver-utils/internal";
-import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
+import type {
+	IOdspResolvedUrl,
+	OdspResourceTokenFetchOptions,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";
@@ -184,6 +187,133 @@ describe("Tests for prefetching snapshot", () => {
 				.catch(() => {});
 			snapshotPrefetchResultCache.remove(snapshotPrefetchCacheKey);
 		});
+
+		for (const [name, useFactory, factoryOptIn, prefetchOptIn, method] of [
+			["standalone default", false, undefined, undefined, "POST"],
+			["factory default", true, undefined, undefined, "POST"],
+			["factory enabled", true, true, undefined, "GET"],
+			["standalone enabled", false, undefined, true, "GET"],
+			["explicitly disabled", true, true, false, "POST"],
+		] as const) {
+			it(`preserves the selected token method during prefetch: ${name}`, async () => {
+				const calls: OdspResourceTokenFetchOptions[] = [];
+				const getStorageToken = async (
+					options: OdspResourceTokenFetchOptions,
+				): Promise<string> => {
+					calls.push(options);
+					assert.equal(options.request?.method, method);
+					return "token";
+				};
+				const factory = useFactory
+					? new OdspDocumentServiceFactory(getStorageToken, undefined, localCache, {
+							...GetHostStoragePolicyInternal(),
+							...(factoryOptIn === undefined
+								? {}
+								: { useEffectiveMethodForTokenFetch: factoryOptIn }),
+						})
+					: undefined;
+				const result = await mockFetchSingle(
+					async () =>
+						prefetchLatestSnapshot(
+							resolved,
+							getStorageToken,
+							localCache,
+							true,
+							mockLogger,
+							undefined,
+							false,
+							undefined,
+							undefined,
+							factory,
+							prefetchOptIn,
+						),
+					async (_headers, url) => {
+						assert.equal(calls.length, 1);
+						assert.deepEqual(calls[0].request, { url, method });
+						assert(typeof url === "string");
+						assert.equal(new URL(url).searchParams.get("ump"), "1");
+						return createResponse(
+							{ "x-fluid-epoch": "epoch1", "content-type": "application/json" },
+							odspSnapshot,
+							200,
+						);
+					},
+				);
+				assert.equal(result, true);
+				factory?.snapshotPrefetchResultCache.remove(snapshotPrefetchCacheKey);
+			});
+		}
+
+		for (const useEffectiveMethodForTokenFetch of [false, true]) {
+			it(`passes factory token-fetch policy to snapshot loading and ops: ${useEffectiveMethodForTokenFetch}`, async () => {
+				const method = useEffectiveMethodForTokenFetch ? "GET" : "POST";
+				const calls: OdspResourceTokenFetchOptions[] = [];
+				const getStorageToken = async (
+					options: OdspResourceTokenFetchOptions,
+				): Promise<string> => {
+					calls.push(options);
+					assert.equal(options.request?.method, method);
+					return "token";
+				};
+				const factory = new OdspDocumentServiceFactory(
+					getStorageToken,
+					undefined,
+					localCache,
+					{
+						...GetHostStoragePolicyInternal(),
+						useEffectiveMethodForTokenFetch,
+						concurrentSnapshotFetch: false,
+					},
+				);
+				const documentService = await factory.createDocumentService(resolved, mockLogger);
+				const storage = await documentService.connectToStorage();
+				await mockFetchSingle(
+					async () => storage.getVersions(null, 1),
+					async (_headers, url) => {
+						assert.equal(calls.length, 1);
+						assert.deepEqual(calls[0].request, { url, method });
+						return createResponse(
+							{ "x-fluid-epoch": "epoch1", "content-type": "application/json" },
+							odspSnapshot,
+							200,
+						);
+					},
+				);
+				const deltaStorage = await documentService.connectToDeltaStorage();
+				await mockFetchSingle(
+					async () => {
+						const stream = deltaStorage.fetchMessages(2, 3);
+						const result = await stream.read();
+						assert.equal(result.done, false);
+						assert.equal(result.value?.[0].sequenceNumber, 2);
+						const end = await stream.read();
+						assert.equal(end.done, true);
+					},
+					async (_headers, url) => {
+						assert.equal(calls.length, 2);
+						assert.deepEqual(calls[1].request, { url, method });
+						return createResponse(
+							{ "x-fluid-epoch": "epoch1", "content-type": "application/json" },
+							{
+								value: [
+									{
+										clientId: "test-client",
+										clientSequenceNumber: 1,
+										contents: null,
+										minimumSequenceNumber: 1,
+										referenceSequenceNumber: 1,
+										sequenceNumber: 2,
+										timestamp: Date.now(),
+										type: "noop",
+									},
+								],
+							},
+							200,
+						);
+					},
+				);
+			});
+		}
 
 		it("prefetch applies the factory's immutable request header copy", async () => {
 			const mutableHeaders = { "X-Agent-Id": "original-agent" };

@@ -29,6 +29,7 @@ export interface HostStoragePolicy {
     sessionOptions?: ICollabSessionOptions;
     // (undocumented)
     snapshotOptions?: ISnapshotOptions;
+    useEffectiveMethodForTokenFetch?: boolean;
 }
 
 // @beta @deprecated @legacy
