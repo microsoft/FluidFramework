@@ -164,7 +164,7 @@ If you keep a view open, stop using the old root on `schemaChanged`.
 Schedule a new open after the notification returns, dispose the old view, and handle the new result before you resume editing.
 This keeps the decision to write the shared schema at an explicit call site.
 
-## Implementation and verification
+## Implementation
 
 Implement `openView` in the [common viewable-tree implementation](../../src/shared-tree/viewableTree.ts) so a SharedTree and an independent tree follow the same rules.
 Create one view on the existing checkout and use its [compatibility and upgrade implementation](../../src/shared-tree/schematizingTreeView.ts).
@@ -172,20 +172,75 @@ Give ownership of that view to either the ready view or the initializer, never b
 For an incompatible result or an exception during open, dispose the temporary view; do not dispose the caller's tree.
 This design requires no new stored format, compatibility algorithm, or event.
 
-Use the [viewable-tree tests](../../src/test/shared-tree/viewableTree.spec.ts) to exercise both kinds of tree:
-
-- Verify each row of the decision table, including an uninitialized tree configured with an optional root and an initialized tree with an empty optional root.
-- Initialize with valid content and verify that the returned root contains it without a second open. Dispose the consumed initializer and verify the ready view still works.
-- Dispose an unused initializer and verify that the tree remains uninitialized. Test invalid content, repeated initialization, and initialization after disposal.
-- Obtain an initializer, apply another client's initialization, then call the stale initializer. Verify that it throws and leaves the other client's content unchanged.
-- For an already viewable document with a permitted upgrade, verify that opening does not change the stored schema or emit a schema edit.
-- For a required upgrade, verify that the root is usable on return, existing content is intact, and a second open does not write again.
-- For an incompatible document, verify that both diagnostic lists remain usable after cleanup and that a different, compatible view can still open the tree.
-- Verify that an unexpected exception propagates and does not leave the temporary view open.
-- Use two clients to verify that a later schema change notifies the first client without causing a second schema write, and that an explicit reopen reports the new state.
-- Add type tests that narrow on `kind` and access the root, initializer method, or diagnostic lists directly. For the note schema, verify that both initialization and root assignment accept a `{ title: string }` object and that reading the root returns a `Note`.
-- Verify that only the initializer exposes `initialize`, only the ready view exposes `root`, and neither exposes `upgradeSchema` or `compatibility`.
-
 Document the implemented contract on the declarations with `@alpha` TSDoc, including the shared write, the open-time guarantee, ownership, and supported `@throws` cases.
 Regenerate the entry points and API reports rather than editing generated files.
 Once the feature ships, add examples to the [creation and loading guide](../../../../../website/docs/data-structures/tree/recommended-init-flow.mdx) that show when to initialize and when to report an unexpectedly empty document.
+
+## Test requirements
+
+The following requirements define when the feature is ready to ship.
+Give each distinct runtime scenario its own named Mocha `it` block and fresh setup so it can run and fail independently.
+Use nested `describe` blocks when a shared context makes related tests easier to read.
+For example, under `describe("openView")`, group O4a and O4b in `describe("when the document is already viewable")`, with a separate `it` for each upgrade condition.
+When cases share setup, use a helper or generate one `it` per input; do not loop over the inputs inside one test.
+Keep assertions together when they establish one outcome, such as returning a ready view *without writing*.
+Run the single-tree behavior tests against both a SharedTree and an independent tree, as in the [viewable-tree tests](../../src/test/shared-tree/viewableTree.spec.ts).
+Use connected SharedTree clients for requirements that depend on delivery of a shared edit.
+
+### Opening a tree
+
+Each test must check both the returned `kind` and the effect on the document.
+For a no-write case, check that the stored schema and content remain unchanged **and** that opening submits no edit.
+Comparing the root alone would not detect an unwanted schema upgrade.
+
+| Requirement | Starting state and action | Required result |
+| --- | --- | --- |
+| O1a. Uninitialized required root | Open a new tree with a required root. | Return `"uninitialized"` without writing. |
+| O1b. Uninitialized optional root | Open a new tree with an optional root. | Return `"uninitialized"` without installing a schema, even though the root permits empty content. |
+| O2. Empty initialized tree | Initialize an optional root with `undefined`, dispose the view, and reopen it. | Return `"ready"` with `root === undefined`. Do not initialize again or write a schema edit. |
+| O3a. Matching schema | Open a document with a matching schema. | Return `"ready"` without writing. |
+| O3b. Undeclared optional field | Open a document with a populated optional field that the view tolerates but does not declare. | Return `"ready"` without writing. Preserve the field and its value. |
+| O4a. Upgrade permitted but unnecessary | Open a viewable document where an explicit upgrade would change the stored schema. | Return `"ready"` without applying the available change. |
+| O4b. Upgrade not permitted | Open a viewable document where `canUpgrade` is false. | Return `"ready"` without writing. |
+| O5a. Upgrade required | Store the number `5` under a number-only root. Open with a view that permits numbers and strings. | Return `"ready"` with `root === 5`. The same view must now accept a string write. |
+| O5b. Reopen after an upgrade | Open a document that needed O5a's upgrade, dispose the ready view, and reopen with the same configuration. | The second open must return `"ready"` without writing another schema edit. |
+| O6. Incompatible document | Store `5` under a root that permits numbers and strings. Open with a number-only view. | Return `"incompatible"` without throwing or writing, even though the current value is a number. The result must describe the schema mismatch, not the current value. |
+| O7a. Enable a staged change | Open a document that needs an upgrade with the staged change enabled. | Match the stored schema and content produced by an explicit upgrade with the same policy. |
+| O7b. Leave a staged change disabled | Open a document that needs an unrelated upgrade with the staged change disabled. | Match the explicit upgrade under the disabled policy; do not enable the staged change. |
+| O7c. Retain an enabled change | Open a document that already permits the staged change but needs an unrelated upgrade. Disable that change in the view's policy. | Preserve the previously enabled change and existing content when applying the required upgrade. |
+
+### Initialization and ownership
+
+- **I1a. Successful initialization.** Calling `initialize({ title: "Draft" })` must return a `"ready"` view with `root.title === "Draft"` that can be edited without a second open.
+- **I1b. Repeated initialization.** After successful initialization, the initializer must report `disposed` and reject a second call to `initialize`.
+- **I1c. Ownership transfer.** Disposing the consumed initializer must leave the returned view usable.
+- **I2a. Abandoned initialization.** Disposing an unused initializer must leave the document uninitialized. A fresh open must return a usable initializer.
+- **I2b. Initialization after disposal.** Calling `initialize` on an initializer disposed before use must throw without writing.
+- **I3a. Invalid initial content.** With schema validation enabled, content that the root schema rejects must cause `initialize` to throw rather than return an incompatible result.
+- **I3b. Cleanup after invalid input.** After initialization fails validation, a fresh open must allow valid initialization without requiring the caller to release the failed initializer.
+- **I4. Ready-view disposal.** Disposing a ready view must release the view, not the tree. A new open must return a usable view of the same content.
+
+### Diagnostics and other failures
+
+- **F1. Diagnostic details.** For O6, both `viewIncompatibilities` and `upgradeIncompatibilities` must be nonempty and match the corresponding structured diagnostics from `viewWith` on the same starting schema. Check the mismatch and its location, not the wording of a message.
+- **F2. Diagnostic lifetime.** After an incompatible open, immediately open the tree with a compatible configuration and change its stored schema. Both lists on the original result must still describe the failed open, even if the caller first reads them after the change. No caller disposal of the incompatible result is required.
+- **F3. Unexpected failure.** Cause the upgrade operation to throw a known exception after the temporary view is created. `openView` must propagate that exception and release the temporary view. It must not return `"incompatible"` or dispose the caller's tree.
+
+### Collaboration and existing callers
+
+- **C1. Create, attach, and load.** Initialize a detached tree, attach its container, and load it by identifier from another client. The loading client must receive `"ready"` with the creator's content and must not submit an initialization or upgrade edit.
+- **C2. Stale initializer.** Obtain an initializer on client A, initialize on client B, then deliver B's change to A before A calls `initialize`. A's call must throw a `UsageError`, release its initializer, and submit no edit. Reopening on A must show B's content. This case tests an *observed* change, not a guarantee against simultaneous initialization.
+- **C3a. Remote invalidation.** Start A with a ready number-only view and deliver B's upgrade from O5a. A must receive `schemaChanged` before `rootChanged` and lose access to its old root without submitting a schema edit.
+- **C3b. Reopen with the old schema.** After receiving B's upgrade and disposing the invalidated view, A must get `"incompatible"` when it reopens with its number-only configuration.
+- **C3c. Reopen with the new schema.** After receiving B's upgrade and disposing the invalidated view, A must get `"ready"` without another write when it reopens with B's configuration.
+- **C4. Existing `viewWith` callers.** On the same upgradeable starting document as O5a, `viewWith` must still return a view with `canView === false` and `canUpgrade === true`. It must not write until the caller explicitly invokes `upgradeSchema()`.
+- **C5. Older runtime with a compatible view.** After the new client upgrades a shared document, load it with a supported earlier runtime using `viewWith`, a compatible view schema, and a storage format both runtimes support. The older client must be able to read the existing value and synchronize an edit with the new client. Use real runtimes for this test: [schema snapshots](../../../../../website/docs/data-structures/tree/schema-evolution/index.mdx) compare declarations using only the currently installed runtime.
+
+### TypeScript and release surface
+
+Use focused compile-time tests for each result variant, accessor, and entry point below.
+For example, a test for the type of a root read must not depend on a test for assignment to the root.
+
+- **T1. Result narrowing.** An exhaustive `switch` on `kind` must type-check without a cast. Only `"ready"` exposes `root`, `schema`, and view events; only `"uninitialized"` exposes `initialize`; only `"incompatible"` exposes the two diagnostic lists. Both live handles must support disposal. Neither may expose `compatibility` or `upgradeSchema` through its declared type.
+- **T2. Root and input types.** With the note configuration, both `initialize({ title: "Draft" })` and `view.root = { title: "Draft" }` must compile. A read of `view.root` must have type `Note`, not the insertable object type. A numeric `title` must fail to type-check in both write positions.
+- **T3. Alpha boundary.** The four named types must be importable from `@fluidframework/tree/alpha`. The method must be callable through `asAlpha(tree)` but must not appear on the stable tree interface. Existing stable `viewWith` calls must retain their return type.
