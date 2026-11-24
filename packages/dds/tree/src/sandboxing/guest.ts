@@ -15,16 +15,15 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { DiscriminatedUnionDispatcher, type ICodecOptions } from "../codec/index.js";
-import type { ForestOptions, ViewContent } from "../shared-tree/index.js";
+import {
+	createViewableTreeAlpha,
+	exportSimpleSchema,
+	type ForestOptions,
+	type ViewContent,
+} from "../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- The sandbox Guest requires its independent tree's checkout.
 import { createIndependentTreeCheckout } from "../shared-tree/independentView.js";
-import type {
-	ImplicitFieldSchema,
-	TreeView,
-	TreeViewAlpha,
-	TreeViewConfiguration,
-	ViewableTree,
-} from "../simple-tree/index.js";
+import type { ViewableTree } from "../simple-tree/index.js";
 
 import {
 	type GuestToHostMessage,
@@ -223,17 +222,9 @@ export class GuestImplementation implements Sandboxing.Guest {
 			this.logger,
 		);
 		this.#synchronization = synchronization;
-		this.viewableTree = {
-			viewWith<TRoot extends ImplicitFieldSchema>(
-				config: TreeViewConfiguration<TRoot>,
-			): TreeView<TRoot> {
-				const view: TreeViewAlpha<TRoot> = synchronization.checkout.viewWithInternal(
-					config,
-					false,
-				);
-				return view as TreeView<TRoot>;
-			},
-		};
+		this.viewableTree = createViewableTreeAlpha(synchronization.checkout, () =>
+			exportSimpleSchema(synchronization.checkout.storedSchema),
+		);
 		this.initialized.resolver();
 	}
 

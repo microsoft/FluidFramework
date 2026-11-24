@@ -31,7 +31,7 @@ export type {
 	ViewableTree,
 	ViewableTreeAlpha,
 	OpenTreeViewResult,
-	ReadyTreeView,
+	ReadyTreeResult,
 	UninitializedTreeResult,
 	IncompatibleTreeResult,
 	TreeViewEvents,

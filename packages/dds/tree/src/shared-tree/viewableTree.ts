@@ -4,15 +4,13 @@
  */
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import type {
 	ImplicitFieldSchema,
 	InsertableContent,
-	InsertableTreeFieldFromImplicitField,
 	OpenTreeViewResult,
-	ReadyTreeView,
 	SimpleTreeSchema,
-	TreeFieldFromImplicitField,
 	TreeView,
 	TreeViewAlpha,
 	TreeViewConfiguration,
@@ -64,60 +62,30 @@ export function createViewableTreeAlpha(
 						return result;
 					}
 					view.upgradeSchema();
+					assert(
+						view.compatibility.canView,
+						"A permitted schema upgrade must make the view usable",
+					);
 				}
-				return createReadyView(view);
+				return { kind: "ready", view };
 			} catch (error) {
-				view.dispose();
+				if (!view.disposed) {
+					view.dispose();
+				}
 				throw error;
 			}
 		},
 		viewWith<TRoot extends ImplicitFieldSchema>(
 			config: TreeViewConfiguration<TRoot>,
 		): TreeView<TRoot> {
-			const view: TreeViewAlpha<TRoot> = checkout.viewWith(config);
+			// The caller owns the view, not the checkout (including a sandbox guest's branch).
+			const view: TreeViewAlpha<TRoot> = checkout.viewWithInternal(config, false);
 			return view as TreeView<TRoot>;
 		},
 		exportVerbose(): VerboseTree | undefined {
 			return checkout.exportVerbose();
 		},
 		exportSimpleSchema,
-	};
-}
-
-/**
- * Wraps an existing view as a {@link ReadyTreeView}.
- *
- * @remarks
- * The wrapper forwards root access and events to the source view without exposing schema management.
- * It does not check compatibility or upgrade the stored schema.
- *
- * @typeParam TRoot - The view schema for the root field.
- * @param source - A live view whose schema already permits reading and editing the tree.
- * @returns A ready view that owns the source view. Disposing it also disposes the source view.
- */
-function createReadyView<TRoot extends ImplicitFieldSchema>(
-	source: SchematizingSimpleTreeView<TRoot>,
-): ReadyTreeView<TRoot> {
-	// TRoot is a known schema, so the public read and insertable types apply to both root accessors.
-	const view = source as TreeView<TRoot>;
-	return {
-		kind: "ready",
-		schema: view.schema,
-		events: view.events,
-		get root(): TreeFieldFromImplicitField<TRoot> {
-			return view.root;
-		},
-		set root(content: InsertableTreeFieldFromImplicitField<TRoot>) {
-			view.root = content;
-		},
-		get disposed() {
-			return view.disposed;
-		},
-		dispose(error) {
-			if (!view.disposed) {
-				view.dispose(error);
-			}
-		},
 	};
 }
 
@@ -159,9 +127,11 @@ function createInitializer<TRoot extends ImplicitFieldSchema>(
 			owned = undefined;
 			try {
 				current.initializeForOpen(content as InsertableContent | undefined);
-				return createReadyView(current);
+				return current;
 			} catch (error) {
-				current.dispose();
+				if (!current.disposed) {
+					current.dispose();
+				}
 				throw error;
 			}
 		},

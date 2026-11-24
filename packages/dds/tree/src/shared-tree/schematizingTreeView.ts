@@ -388,6 +388,12 @@ export class SchematizingSimpleTreeView<
 			},
 		);
 
+		// Reading initial content can run application getters. Recheck before entering the
+		// breaking edit scope in case the checkout observed an initialization during preparation.
+		if (!canInitialize(this.checkout)) {
+			throw new UsageError("Tree cannot be initialized more than once.");
+		}
+
 		this.runSchemaEdit(() => {
 			assert(this.pendingHydration === undefined, 0xc74 /* pendingHydration already set */);
 			this.pendingHydration = hydrate;
@@ -439,12 +445,14 @@ export class SchematizingSimpleTreeView<
 			);
 		}
 		if (
+			this.compatibility.canView &&
 			isAdditiveSchemaUpgrade &&
 			allowsRepoSuperset(defaultSchemaPolicy, newSchema, storedSchema) &&
 			compareSchemaVersions(storedSchema.schemaVersion, newSchema.schemaVersion) ===
 				SchemaVersionComparison.Equal
 		) {
-			// No-op
+			// Equivalent sets of possible documents need not have the same view compatibility.
+			// Skip the edit only when the current schema already supports the view.
 			return;
 		}
 
@@ -696,6 +704,10 @@ export class SchematizingSimpleTreeView<
 	 */
 	public readonly dispose = (): void => {
 		if (this.disposed) {
+			// Disposing a fork also closes its views. Do not accept operations on the disposed branch.
+			if (this.checkout.disposed) {
+				throw new UsageError("Cannot dispose a view of an already disposed branch.");
+			}
 			return;
 		}
 		this.disposed = true;

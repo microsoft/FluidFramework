@@ -78,7 +78,7 @@ export {
 	type ViewableTree,
 	type ViewableTreeAlpha,
 	type OpenTreeViewResult,
-	type ReadyTreeView,
+	type ReadyTreeResult,
 	type UninitializedTreeResult,
 	type IncompatibleTreeResult,
 	type ITree,

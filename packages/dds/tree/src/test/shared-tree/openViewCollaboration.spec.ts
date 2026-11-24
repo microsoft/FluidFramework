@@ -27,7 +27,7 @@ import type { ITree as PreviousTree } from "@fluidframework/tree-previous";
 
 import { asAlpha } from "../../api.js";
 import {
-	type ReadyTreeView,
+	type TreeViewAlpha,
 	SchemaFactory,
 	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
@@ -133,7 +133,6 @@ describe("openView collaboration", () => {
 		const initializer = asAlpha(creator).openView(numberOnly);
 		assert.equal(initializer.kind, "uninitialized");
 		const initialized = initializer.initialize(5);
-		assert.equal(initialized.kind, "ready");
 		initialized.dispose();
 
 		// Attach the initialized document so a second client can load it by ID.
@@ -143,8 +142,9 @@ describe("openView collaboration", () => {
 		const reader = await getTree(await provider.loadTestContainer());
 		const before = reader.contentSnapshot();
 		const localEdits = countLocalEdits(reader);
-		const loaded = asAlpha(reader).openView(numberOnly);
-		assert.equal(loaded.kind, "ready");
+		const loadedResult = asAlpha(reader).openView(numberOnly);
+		assert.equal(loadedResult.kind, "ready");
+		const loaded = loadedResult.view;
 		assert.equal(loaded.root, 5);
 
 		// Allow any edit from the reader to be sequenced before checking that it made none.
@@ -172,8 +172,9 @@ describe("openView collaboration", () => {
 		assert.equal(initializer.disposed, true);
 
 		// Reopen on A and verify that B's value survived with no edit from A.
-		const reopened = asAlpha(a).openView(numberOnly);
-		assert.equal(reopened.kind, "ready");
+		const reopenedResult = asAlpha(a).openView(numberOnly);
+		assert.equal(reopenedResult.kind, "ready");
+		const reopened = reopenedResult.view;
 		assert.equal(reopened.root, 5);
 		await provider.ensureSynchronized();
 		assert.equal(localEdits(), 0);
@@ -189,7 +190,7 @@ describe("openView collaboration", () => {
 		 */
 		async function deliverUpgrade(): Promise<{
 			a: ISharedTree;
-			view: ReadyTreeView<typeof SchemaFactory.number>;
+			view: TreeViewAlpha<typeof SchemaFactory.number>;
 			events: string[];
 			localEdits: () => number;
 		}> {
@@ -197,9 +198,10 @@ describe("openView collaboration", () => {
 			const a = await createNumberTree();
 			const b = await getTree(await provider.loadTestContainer());
 
-			const view = asAlpha(a).openView(numberOnly);
+			const result = asAlpha(a).openView(numberOnly);
 
-			assert.equal(view.kind, "ready");
+			assert.equal(result.kind, "ready");
+			const { view } = result;
 			assert.equal(view.root, 5);
 
 			// Start observing A before B can change the schema.
@@ -210,8 +212,9 @@ describe("openView collaboration", () => {
 			const localEdits = countLocalEdits(a);
 
 			// B opens with the wider schema, then its upgrade is delivered to A.
-			const upgraded = asAlpha(b).openView(numberOrString);
-			assert.equal(upgraded.kind, "ready");
+			const upgradedResult = asAlpha(b).openView(numberOrString);
+			assert.equal(upgradedResult.kind, "ready");
+			const upgraded = upgradedResult.view;
 			assert.equal(upgraded.root, 5);
 
 			await provider.ensureSynchronized();
@@ -253,8 +256,9 @@ describe("openView collaboration", () => {
 
 			// Reopen using B's schema and read the value B preserved.
 			const before = a.contentSnapshot();
-			const reopened = asAlpha(a).openView(numberOrString);
-			assert.equal(reopened.kind, "ready");
+			const reopenedResult = asAlpha(a).openView(numberOrString);
+			assert.equal(reopenedResult.kind, "ready");
+			const reopened = reopenedResult.view;
 			assert.equal(reopened.root, 5);
 
 			// Check that A used the shared upgrade instead of sending its own.
@@ -298,8 +302,9 @@ describe("openView collaboration", () => {
 	it("the previous SharedTree reads the upgraded document and sends a compatible edit", async () => {
 		// Publish the current client's schema upgrade before the previous client loads the document.
 		const tree = await createNumberTree();
-		const upgraded = asAlpha(tree).openView(numberOrString);
-		assert.equal(upgraded.kind, "ready");
+		const upgradedResult = asAlpha(tree).openView(numberOrString);
+		assert.equal(upgradedResult.kind, "ready");
+		const upgraded = upgradedResult.view;
 		assert.equal(upgraded.root, 5);
 		await provider.ensureSynchronized();
 

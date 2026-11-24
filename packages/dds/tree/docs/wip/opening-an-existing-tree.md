@@ -51,7 +51,7 @@ async function createNote(title: string): Promise<string> {
 				}
 			}
 			case "ready":
-				result.dispose();
+				result.view.dispose();
 				throw new Error("Expected a new note, but the tree is already initialized.");
 			case "incompatible":
 				throw new Error("Cannot create the note with this schema.", { cause: result });
@@ -75,7 +75,7 @@ async function loadNote(documentId: string) {
 		const result = asAlpha(container.initialObjects.tree).openView(config);
 		switch (result.kind) {
 			case "ready":
-				return { container, view: result };
+				return { container, view: result.view };
 			case "uninitialized":
 				result.dispose();
 				throw new Error("The saved note has not been initialized.");
@@ -99,8 +99,8 @@ Check the following conditions in order, using the same compatibility rules and 
 | First matching condition | Result | Effect on the document |
 | --- | --- | --- |
 | `canInitialize` is `true`. | Return the initializer with `kind: "uninitialized"`. | None. Only an explicit call to `initialize(content)` sets the schema and content. |
-| `canView` is `true`. | Return the view with `kind: "ready"`. | None, even if `canUpgrade` is also `true`. |
-| `canUpgrade` is `true`. | Apply the upgrade, then return the view with `kind: "ready"`. | Write the stored schema through the existing upgrade operation. |
+| `canView` is `true`. | Return `{ kind: "ready", view }`. | None, even if `canUpgrade` is also `true`. |
+| `canUpgrade` is `true`. | Apply the upgrade, then return `{ kind: "ready", view }`. | Write the stored schema through the existing upgrade operation. |
 | None of the above. | Return the diagnostics with `kind: "incompatible"`. | None. |
 
 Check `canInitialize` first because an optional root can permit an upgrade on an uninitialized tree.
@@ -125,18 +125,19 @@ openView<TRoot extends ImplicitFieldSchema>(
 
 Export four types from `@fluidframework/tree/alpha`: the result union and one type for each outcome.
 The read-only `kind` property identifies the outcome on the object itself.
-After checking it, you can use `result.root`, call `result.initialize(content)`, or inspect `result.viewIncompatibilities` and `result.upgradeIncompatibilities`.
+After checking it, you can use `result.view.root`, call `result.initialize(content)`, or inspect `result.viewIncompatibilities` and `result.upgradeIncompatibilities`.
 
 | Type | Shape or contract |
 | --- | --- |
-| `OpenTreeViewResult<TRoot>` | `ReadyTreeView<TRoot> \| UninitializedTreeResult<TRoot> \| IncompatibleTreeResult`. |
-| `ReadyTreeView<TRoot>` | `kind: "ready"` and the public `TreeView<TRoot>` members for root access, schema, events, and disposal. No `initialize`, `upgradeSchema`, or `compatibility`. |
-| `UninitializedTreeResult<TRoot>` | `kind: "uninitialized"`, the existing [`IDisposable`](../../../../common/core-interfaces/src/disposable.ts) contract, and `initialize(content: InsertableTreeFieldFromImplicitField<TRoot>): ReadyTreeView<TRoot>`. No root or upgrade controls. |
+| `OpenTreeViewResult<TRoot>` | `ReadyTreeResult<TRoot> \| UninitializedTreeResult<TRoot> \| IncompatibleTreeResult`. |
+| `ReadyTreeResult<TRoot>` | `kind: "ready"` and `readonly view: TreeViewAlpha<TRoot>`. The caller owns `view`. |
+| `UninitializedTreeResult<TRoot>` | `kind: "uninitialized"`, the existing [`IDisposable`](../../../../common/core-interfaces/src/disposable.ts) contract, and `initialize(content: InsertableTreeFieldFromImplicitField<TRoot>): TreeViewAlpha<TRoot>`. No root or upgrade controls on the initializer. |
 | `IncompatibleTreeResult` | `kind: "incompatible"` and two read-only properties: `viewIncompatibilities: readonly SchemaViewIncompatibility[]` and `upgradeIncompatibilities: readonly SchemaUpgradeIncompatibility[]`. Both lists are nonempty. No live handle. |
 
-Preserve the separate [`TreeView` root accessors](../../src/simple-tree/api/tree.ts) rather than deriving the ready view with `Omit`: the getter returns `TreeFieldFromImplicitField<TRoot>`, but the setter accepts `InsertableTreeFieldFromImplicitField<TRoot>`.
-For example, you can assign `{ title: "Draft" }` to the note root and read back a typed `Note`.
-The initializer accepts that same insertable type and returns the ready view instead of the `void` returned by `TreeView.initialize`.
+Both paths give the caller the actual [`TreeViewAlpha`](../../src/simple-tree/api/tree.ts), not a narrowed interface.
+On a successful open, use `result.view`. On initialization, use the view returned by `result.initialize(content)` directly.
+The existing root accessors and view-level helpers work unchanged: for example, you can assign `{ title: "Draft" }` to the root, read back a typed `Note`, or pass the view to `Tree.runTransaction`.
+The view still exposes `compatibility` and `upgradeSchema`, but callers do not need either to begin editing.
 
 For an incompatible result, reuse the [existing diagnostic entry types](../../src/simple-tree/api/tree.ts) and capture both lists before releasing the view.
 The existing `CompatibilityResult` describes whether a single operation is permitted; it does not distinguish a ready view from an initializer or explain both failures together.
@@ -211,7 +212,7 @@ Comparing the root alone would not detect an unwanted schema upgrade.
 
 ### Initialization and ownership
 
-- **I1a. Successful initialization.** Calling `initialize({ title: "Draft" })` must return a `"ready"` view with `root.title === "Draft"` that can be edited without a second open.
+- **I1a. Successful initialization.** Calling `initialize({ title: "Draft" })` must return a `TreeViewAlpha` with `root.title === "Draft"` that can be edited without a second open.
 - **I1b. Repeated initialization.** After successful initialization, the initializer must report `disposed` and reject a second call to `initialize`.
 - **I1c. Ownership transfer.** Disposing the consumed initializer must leave the returned view usable.
 - **I2a. Abandoned initialization.** Disposing an unused initializer must leave the document uninitialized. A fresh open must return a usable initializer.
@@ -241,6 +242,6 @@ Comparing the root alone would not detect an unwanted schema upgrade.
 Use focused compile-time tests for each result variant, accessor, and entry point below.
 For example, a test for the type of a root read must not depend on a test for assignment to the root.
 
-- **T1. Result narrowing.** An exhaustive `switch` on `kind` must type-check without a cast. Only `"ready"` exposes `root`, `schema`, and view events; only `"uninitialized"` exposes `initialize`; only `"incompatible"` exposes the two diagnostic lists. Both live handles must support disposal. Neither may expose `compatibility` or `upgradeSchema` through its declared type.
+- **T1. Result narrowing.** An exhaustive `switch` on `kind` must type-check without a cast. Only `"ready"` carries a `TreeViewAlpha` in `view`; only `"uninitialized"` exposes `initialize` directly; only `"incompatible"` exposes the two diagnostic lists. Both the view and the initializer must support disposal. Initialization must return the same full view type as the ready result's `view`.
 - **T2. Root and input types.** With the note configuration, both `initialize({ title: "Draft" })` and `view.root = { title: "Draft" }` must compile. A read of `view.root` must have type `Note`, not the insertable object type. A numeric `title` must fail to type-check in both write positions.
 - **T3. Alpha boundary.** The four named types must be importable from `@fluidframework/tree/alpha`. The method must be callable through `asAlpha(tree)` but must not appear on the stable tree interface. Existing stable `viewWith` calls must retain their return type.

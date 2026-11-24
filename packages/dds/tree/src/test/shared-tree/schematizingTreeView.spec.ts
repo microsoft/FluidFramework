@@ -13,7 +13,12 @@ import {
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { asAlpha, asBeta } from "../../api.js";
-import { CommitKind, type RevertibleAlpha, type TransactionLabels } from "../../core/index.js";
+import {
+	CommitKind,
+	TreeStoredSchemaRepository,
+	type RevertibleAlpha,
+	type TransactionLabels,
+} from "../../core/index.js";
 import {
 	jsonableTreeFromFieldCursor,
 	MockNodeIdentifierManager,
@@ -424,7 +429,7 @@ describe("SchematizingSimpleTreeView", () => {
 	describe("initialize", () => {
 		it("Initialize document", () => {
 			const emptyContent = {
-				schema: emptySchema,
+				schema: new TreeStoredSchemaRepository(),
 				initialTree: undefined,
 			};
 			const checkout = checkoutWithContent(emptyContent);
@@ -448,7 +453,7 @@ describe("SchematizingSimpleTreeView", () => {
 		});
 		{
 			const emptyContent = {
-				schema: emptySchema,
+				schema: new TreeStoredSchemaRepository(),
 				initialTree: undefined,
 			};
 			class SimpleTestObject extends schema.object("TestObject", {
@@ -540,7 +545,7 @@ describe("SchematizingSimpleTreeView", () => {
 					) {}
 
 					const emptyContent = {
-						schema: emptySchema,
+						schema: new TreeStoredSchemaRepository(),
 						initialTree: undefined,
 					};
 					const checkout = checkoutWithContent(emptyContent);

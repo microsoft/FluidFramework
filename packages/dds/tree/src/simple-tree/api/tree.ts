@@ -144,9 +144,10 @@ export interface ViewableTreeAlpha extends ViewableTree {
 	 * @param config - The schema and behavior configuration for the view.
 	 *
 	 * @returns
-	 * A ready view, an initializer, or diagnostics if neither viewing nor upgrading is possible.
+	 * A result containing a ready view, an initializer, or diagnostics if neither viewing nor upgrading is possible.
 	 *
-	 * The caller owns the ready view or initializer and must dispose it when you no longer need it.
+	 * If `kind` is `"ready"`, you own `result.view`. If `kind` is `"uninitialized"`, you own the initializer.
+	 * Dispose the view or initializer when you no longer need it.
 	 *
 	 * A mismatch between the view schema and the stored schema that prevents both viewing and upgrading
 	 * returns an {@link IncompatibleTreeResult} rather than throwing.
@@ -982,39 +983,29 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
  * @sealed @alpha
  */
 export type OpenTreeViewResult<TRoot extends ImplicitFieldSchema> =
-	| ReadyTreeView<TRoot>
+	| ReadyTreeResult<TRoot>
 	| UninitializedTreeResult<TRoot>
 	| IncompatibleTreeResult;
 
 /**
- * An editable view of a tree that was compatible when opened or initialized.
+ * The result of successfully opening an initialized tree.
  * @remarks
- * A subsequent schema change may invalidate the root. Listen for {@link TreeViewEvents.schemaChanged},
+ * You can use the view immediately without checking compatibility or upgrading its schema.
+ * A subsequent schema change may invalidate its root. Listen for {@link TreeViewEvents.schemaChanged},
  * then dispose the old view and reopen the tree before resuming edits.
  * No further upgrade happens automatically.
  * @sealed @alpha
  */
-export interface ReadyTreeView<in out TRoot extends ImplicitFieldSchema> extends IDisposable {
+export interface ReadyTreeResult<in out TRoot extends ImplicitFieldSchema> {
 	/**
 	 * Identifies a ready view.
 	 */
 	readonly kind: "ready";
 
 	/**
-	 * The root field of the tree.
+	 * The editable view. Dispose it when you no longer need it.
 	 */
-	get root(): TreeFieldFromImplicitField<TRoot>;
-	set root(content: InsertableTreeFieldFromImplicitField<TRoot>);
-
-	/**
-	 * The view schema used to open this tree.
-	 */
-	readonly schema: TRoot;
-
-	/**
-	 * Events for the view, including changes that invalidate the root.
-	 */
-	readonly events: Listenable<TreeViewEvents>;
+	readonly view: TreeViewAlpha<TRoot>;
 }
 
 /**
@@ -1039,7 +1030,7 @@ export interface UninitializedTreeResult<in out TRoot extends ImplicitFieldSchem
 	 * @throws A `UsageError` if the initializer has been consumed or disposed, or if the tree is no longer uninitialized.
 	 * Invalid initial content also causes initialization to fail.
 	 */
-	initialize(content: InsertableTreeFieldFromImplicitField<TRoot>): ReadyTreeView<TRoot>;
+	initialize(content: InsertableTreeFieldFromImplicitField<TRoot>): TreeViewAlpha<TRoot>;
 }
 
 /**

@@ -18,7 +18,8 @@ import {
 	asAlpha,
 	type IncompatibleTreeResult,
 	type OpenTreeViewResult,
-	type ReadyTreeView,
+	type ReadyTreeResult,
+	type TreeViewAlpha,
 	type UninitializedTreeResult,
 } from "@fluidframework/tree/alpha";
 
@@ -63,7 +64,7 @@ function checkNarrowing(result: OpenTreeViewResult<typeof Note>): void {
 	switch (result.kind) {
 		case "ready": {
 			type _ready = requireTrue<
-				areSafelyAssignable<typeof result, ReadyTreeView<typeof Note>>
+				areSafelyAssignable<typeof result, ReadyTreeResult<typeof Note>>
 			>;
 			return;
 		}
@@ -84,28 +85,17 @@ function checkNarrowing(result: OpenTreeViewResult<typeof Note>): void {
 }
 
 /**
- * Checks the root accessors and the absence of initialization and compatibility controls on a ready view.
+ * Checks that opening returns the full alpha view with its distinct root read and write types.
  *
  * @remarks
  * Reading the root must yield a `Note`, but assigning to it must also accept a plain object with a string title.
  *
- * @param view - The ready result for the note schema.
+ * @param result - The ready result for the note schema.
  */
-function checkReadyView(view: ReadyTreeView<typeof Note>): void {
+function checkReadyView(result: ReadyTreeResult<typeof Note>): void {
+	const { view } = result;
+	type _fullView = requireTrue<areSafelyAssignable<typeof view, TreeViewAlpha<typeof Note>>>;
 	type _read = requireTrue<areSafelyAssignable<typeof view.root, Note>>;
-	type _noControls = requireTrue<
-		areSafelyAssignable<
-			Extract<
-				keyof typeof view,
-				| "initialize"
-				| "compatibility"
-				| "upgradeSchema"
-				| "viewIncompatibilities"
-				| "upgradeIncompatibilities"
-			>,
-			never
-		>
-	>;
 	view.root = { title: "Draft" };
 
 	// @ts-expect-error -- The setter accepts insertable content for Note, not arbitrary objects.
@@ -134,7 +124,7 @@ function checkInitializer(initializer: UninitializedTreeResult<typeof Note>): vo
 		>
 	>;
 	const view = initializer.initialize({ title: "Draft" });
-	type _ready = requireTrue<areSafelyAssignable<typeof view, ReadyTreeView<typeof Note>>>;
+	type _ready = requireTrue<areSafelyAssignable<typeof view, TreeViewAlpha<typeof Note>>>;
 
 	// @ts-expect-error -- A number cannot initialize the string title.
 	initializer.initialize({ title: 42 });

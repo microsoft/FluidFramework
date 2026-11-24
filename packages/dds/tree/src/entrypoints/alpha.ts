@@ -282,7 +282,7 @@ export {
   PlainText,
   ReadSchema,
   ReadableField,
-  ReadyTreeView,
+  ReadyTreeResult,
   RebaseValidation,
   RebaseValidationLevel,
   RecordNodeCustomizableSchema,

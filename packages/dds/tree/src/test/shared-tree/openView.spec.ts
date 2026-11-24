@@ -13,6 +13,9 @@ import {
 	asAlpha,
 	asBeta,
 	createIndependentTreeAlpha,
+	createIdentifierIndex,
+	createTreeIndex,
+	Tree,
 	SchemaFactoryAlpha,
 	StagedSchemaUpgradePolicy,
 	TreeViewConfiguration,
@@ -26,6 +29,7 @@ import {
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 import { toUpgradeSchema } from "../../simple-tree/index.js";
 import { spyOnMethod, TestTreeProviderLite } from "../utils.js";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 const factory = new SchemaFactoryAlpha("test");
 
@@ -120,10 +124,29 @@ describe("openView", () => {
 			});
 
 			describe("when the document is already viewable", () => {
+				it("reopens an initialized optional root with no node definitions", () => {
+					const empty = new TreeViewConfiguration({ schema: factory.optional([]) });
+					seedTree(tree, empty, undefined);
+					const result = openWithoutWriting(empty);
+					assert.equal(result.kind, "ready");
+					assert.equal(result.view.root, undefined);
+					result.view.dispose();
+				});
+
+				it("does not offer a second initialization for an empty set of allowed types", () => {
+					const staged = factory.types([factory.staged(factory.number)]);
+					const empty = new TreeViewConfigurationAlpha({ schema: factory.optional(staged) });
+					seedTree(tree, empty, undefined);
+
+					// A required number cannot read this empty root or replace its stored optional field.
+					assert.equal(openWithoutWriting(numberConfig).kind, "incompatible");
+				});
+
 				it("replaces the root with insertable content and reads it as the configured node", () => {
 					seedTree(tree, noteConfig, { title: "Draft" });
-					const view = tree.openView(noteConfig);
-					assert.equal(view.kind, "ready");
+					const result = tree.openView(noteConfig);
+					assert.equal(result.kind, "ready");
+					const { view } = result;
 					assert.equal(view.schema, Note);
 
 					// The setter accepts a plain object, but the getter must return a hydrated Note.
@@ -137,16 +160,16 @@ describe("openView", () => {
 					seedTree(tree, optionalConfig, undefined);
 					const result = openWithoutWriting(optionalConfig);
 					assert.equal(result.kind, "ready");
-					assert.equal(result.root, undefined);
-					result.dispose();
+					assert.equal(result.view.root, undefined);
+					result.view.dispose();
 				});
 
 				it("opens a matching schema", () => {
 					seedTree(tree, numberConfig, 5);
 					const result = openWithoutWriting(numberConfig);
 					assert.equal(result.kind, "ready");
-					assert.equal(result.root, 5);
-					result.dispose();
+					assert.equal(result.view.root, 5);
+					result.view.dispose();
 				});
 
 				// Both schemas describe the same node type. Hiding a field from the view must not erase it from storage.
@@ -162,7 +185,7 @@ describe("openView", () => {
 					seedTree(tree, new TreeViewConfiguration({ schema: Stored }), { extra: 7 });
 					const result = openWithoutWriting(new TreeViewConfiguration({ schema: Viewed }));
 					assert.equal(result.kind, "ready");
-					result.dispose();
+					result.view.dispose();
 				});
 
 				// An explicit upgrade on a second tree proves that skipping the upgrade is observable.
@@ -188,7 +211,7 @@ describe("openView", () => {
 					// Open the original with the same policy and verify that it skips the upgrade.
 					const result = openWithoutWriting(config);
 					assert.equal(result.kind, "ready");
-					result.dispose();
+					result.view.dispose();
 				});
 
 				// An unused node definition blocks an upgrade but does not prevent the view from reading the root.
@@ -214,34 +237,56 @@ describe("openView", () => {
 					// Open with that same configuration without touching the stored definition.
 					const result = openWithoutWriting(numberConfig);
 					assert.equal(result.kind, "ready");
-					result.dispose();
+					result.view.dispose();
 				});
 			});
 
 			describe("when viewing requires an upgrade", () => {
+				it("updates an uninhabitable node definition required by the new view", () => {
+					// Neither version of Pending can occur while its only required type is disabled.
+					const required = factory.required(factory.types([factory.staged(factory.string)]));
+					class Before extends factory.objectAlpha("Pending", { required }) {}
+					class After extends factory.objectAlpha("Pending", {
+						required,
+						added: factory.optional(factory.number),
+					}) {}
+					seedTree(tree, new TreeViewConfiguration({ schema: [factory.number, Before] }), 42);
+
+					// The possible documents are unchanged, but viewing still requires the new field definition.
+					const result = tree.openView(
+						new TreeViewConfiguration({ schema: [factory.number, After] }),
+					);
+					assert.equal(result.kind, "ready");
+					const { view } = result;
+					assert.equal(view.root, 42);
+					view.dispose();
+				});
+
 				it("preserves the number and permits writing a string through the returned view", () => {
 					// Open the number-only document with a schema that also accepts strings.
 					seedTree(tree, numberConfig, 5);
 					const result = tree.openView(unionConfig);
 					assert.equal(result.kind, "ready");
-					assert.equal(result.root, 5);
+					assert.equal(result.view.root, 5);
 
 					// Exercise the new permission through the same view, without reopening.
-					result.root = "new";
-					assert.equal(result.root, "new");
-					result.dispose();
+					result.view.root = "new";
+					assert.equal(result.view.root, "new");
+					result.view.dispose();
 				});
 
 				it("does not write on a second open", () => {
 					// The first open upgrades the document; disposing it closes only the view.
 					seedTree(tree, numberConfig, 5);
-					const first = tree.openView(unionConfig);
-					assert.equal(first.kind, "ready");
+					const firstResult = tree.openView(unionConfig);
+					assert.equal(firstResult.kind, "ready");
+					const first = firstResult.view;
 					first.dispose();
 
 					// The second open must reuse the upgraded schema without another edit.
-					const next = openWithoutWriting(unionConfig);
-					assert.equal(next.kind, "ready");
+					const nextResult = openWithoutWriting(unionConfig);
+					assert.equal(nextResult.kind, "ready");
+					const next = nextResult.view;
 					next.dispose();
 				});
 
@@ -281,11 +326,57 @@ describe("openView", () => {
 						const result = tree.openView(config);
 						assert.equal(result.kind, "ready");
 						assert.deepEqual(tree.exportSimpleSchema(), control.exportSimpleSchema());
-						assert.equal(result.root, manual.root);
-						result.dispose();
+						assert.equal(result.view.root, manual.root);
+						result.view.dispose();
 						manual.dispose();
 					});
 				}
+			});
+
+			describe("ready view helpers", () => {
+				it("runs a view transaction on an empty optional root", () => {
+					seedTree(tree, optionalConfig, undefined);
+					const result = tree.openView(optionalConfig);
+					assert.equal(result.kind, "ready");
+					const { view } = result;
+					Tree.runTransaction(view, (root) => {
+						assert.equal(root, undefined);
+						view.root = 42;
+						return Tree.runTransaction.rollback;
+					});
+					assert.equal(view.root, undefined);
+					view.dispose();
+				});
+
+				it("indexes a ready view by a selected field", () => {
+					seedTree(tree, noteConfig, { title: "Draft" });
+					const result = tree.openView(noteConfig);
+					assert.equal(result.kind, "ready");
+					const { view } = result;
+					const index = createTreeIndex(
+						view,
+						() => "title",
+						(nodes) => nodes[0],
+						(key): key is string => typeof key === "string",
+						[Note],
+					);
+					assert.equal(index.get("Draft"), view.root);
+					view.root.title = "Updated";
+					assert.equal(index.get("Updated"), view.root);
+					index.dispose();
+					view.dispose();
+				});
+
+				it("indexes identifiers on the view returned by initialization", () => {
+					class Identified extends factory.object("Identified", { id: factory.identifier }) {}
+					const init = tree.openView(new TreeViewConfiguration({ schema: Identified }));
+					assert.equal(init.kind, "uninitialized");
+					const view = init.initialize({});
+					const index = createIdentifierIndex(view);
+					assert.equal(index.get(view.root.id), view.root);
+					index.dispose();
+					view.dispose();
+				});
 			});
 
 			describe("when initialization is available", () => {
@@ -300,7 +391,6 @@ describe("openView", () => {
 
 				it("returns an immediately editable ready view", () => {
 					const view = getInitializer().initialize({ title: "Draft" });
-					assert.equal(view.kind, "ready");
 					assert.equal(view.root.title, "Draft");
 					view.root.title = "Updated";
 					assert.equal(view.root.title, "Updated");
@@ -372,8 +462,9 @@ describe("openView", () => {
 					getInitializer().initialize({ title: "Keep" }).dispose();
 
 					// Reopen the same tree and read its persisted title.
-					const next = tree.openView(noteConfig);
-					assert.equal(next.kind, "ready");
+					const nextResult = tree.openView(noteConfig);
+					assert.equal(nextResult.kind, "ready");
+					const next = nextResult.view;
 					assert.equal(next.root.title, "Keep");
 					next.dispose();
 				});
@@ -478,4 +569,32 @@ describe("openView", () => {
 			});
 		});
 	}
+
+	it("rejects initialization observed while reading the caller's initial content", () => {
+		const provider = new TestTreeProviderLite(2);
+		const [local, remote] = provider.trees;
+		const initializer = asAlpha(local).openView(noteConfig);
+		assert.equal(initializer.kind, "uninitialized");
+		seedTree(asAlpha(remote), noteConfig, { title: "Remote" });
+
+		// Deliver the pending edit from the getter, after the first freshness check but before the schema edit.
+		const content = {
+			get title(): string {
+				provider.synchronizeMessages();
+				return "Local";
+			},
+		};
+		assert.throws(
+			() => initializer.initialize(content),
+			validateUsageError(/initialized more than once/),
+		);
+		assert(initializer.disposed);
+
+		// A recoverable rejection leaves both the checkout and the other client's note intact.
+		const reopenedResult = asAlpha(local).openView(noteConfig);
+		assert.equal(reopenedResult.kind, "ready");
+		const reopened = reopenedResult.view;
+		assert.equal(reopened.root.title, "Remote");
+		reopened.dispose();
+	});
 });

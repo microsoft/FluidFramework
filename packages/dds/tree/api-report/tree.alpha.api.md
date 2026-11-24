@@ -1177,7 +1177,7 @@ export interface ObservationResults<TResult> {
 }
 
 // @alpha @sealed
-export type OpenTreeViewResult<TRoot extends ImplicitFieldSchema> = ReadyTreeView<TRoot> | UninitializedTreeResult<TRoot> | IncompatibleTreeResult;
+export type OpenTreeViewResult<TRoot extends ImplicitFieldSchema> = ReadyTreeResult<TRoot> | UninitializedTreeResult<TRoot> | IncompatibleTreeResult;
 
 // @alpha
 export function persistedToSimpleSchema(persisted: JsonCompatible, options: ICodecOptions): SimpleTreeSchema;
@@ -1236,12 +1236,9 @@ TSchema
 ] extends [ImplicitFieldSchema] ? TSchema : ImplicitFieldSchema;
 
 // @alpha @sealed
-export interface ReadyTreeView<in out TRoot extends ImplicitFieldSchema> extends IDisposable {
-    readonly events: Listenable<TreeViewEvents>;
+export interface ReadyTreeResult<in out TRoot extends ImplicitFieldSchema> {
     readonly kind: "ready";
-    get root(): TreeFieldFromImplicitField<TRoot>;
-    set root(content: InsertableTreeFieldFromImplicitField<TRoot>);
-    readonly schema: TRoot;
+    readonly view: TreeViewAlpha<TRoot>;
 }
 
 // @alpha
@@ -2637,7 +2634,7 @@ export type Unhydrated<T> = T;
 
 // @alpha @sealed
 export interface UninitializedTreeResult<in out TRoot extends ImplicitFieldSchema> extends IDisposable {
-    initialize(content: InsertableTreeFieldFromImplicitField<TRoot>): ReadyTreeView<TRoot>;
+    initialize(content: InsertableTreeFieldFromImplicitField<TRoot>): TreeViewAlpha<TRoot>;
     readonly kind: "uninitialized";
 }
 

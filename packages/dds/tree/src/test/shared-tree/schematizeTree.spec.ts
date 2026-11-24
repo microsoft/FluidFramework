@@ -204,8 +204,11 @@ describe("schematizeTree", () => {
 		// TODO: Test schema validation of initial tree (once we have a utility for it)
 	});
 
-	function mockCheckout(InputSchema: ImplicitFieldSchema, isEmpty: boolean): ITreeCheckout {
-		const storedSchema = new TreeStoredSchemaRepository(toInitialSchema(InputSchema));
+	function mockCheckout(
+		schemaData: TreeStoredSchema | undefined,
+		isEmpty: boolean,
+	): ITreeCheckout {
+		const storedSchema = new TreeStoredSchemaRepository(schemaData);
 		const checkout: ITreeCheckout = {
 			disposed: false,
 			breaker: new Breakable("mockCheckout"),
@@ -283,11 +286,17 @@ describe("schematizeTree", () => {
 	}
 
 	describe("canInitialize", () => {
-		it("incompatible upgrade errors and does not modify schema", () => {
-			assert(canInitialize(mockCheckout(emptySchema, true)));
-			assert(!canInitialize(mockCheckout(emptySchema, false)));
-			assert(!canInitialize(mockCheckout(schema, true)));
-			assert(!canInitialize(mockCheckout(schema, false)));
+		it("accepts an empty forest with pristine stored schema", () => {
+			assert(canInitialize(mockCheckout(undefined, true)));
+		});
+		it("rejects a forest that already has content", () => {
+			assert(!canInitialize(mockCheckout(undefined, false)));
+		});
+		it("rejects an initialized optional root with no node definitions", () => {
+			assert(!canInitialize(mockCheckout(toInitialSchema(emptySchema), true)));
+		});
+		it("rejects a stored schema with a node definition", () => {
+			assert(!canInitialize(mockCheckout(toInitialSchema(schema), true)));
 		});
 	});
 });
