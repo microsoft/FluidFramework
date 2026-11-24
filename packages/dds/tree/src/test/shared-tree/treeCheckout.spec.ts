@@ -1744,7 +1744,7 @@ describe("sharedTreeView", () => {
 
 			// The replacement now owns the checkout's only view slot.
 			const replacement = tree.viewWith(config);
-			first.dispose();
+			first.dispose(); // Dispose the original view again - this should not affect the replacement
 
 			// A third view must be rejected normally, without breaking the active view.
 			assert.throws(() => tree.viewWith(config), validateUsageError(/second tree view/));
