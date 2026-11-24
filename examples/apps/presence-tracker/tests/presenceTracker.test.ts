@@ -264,8 +264,7 @@ test.describe("presence-tracker", () => {
 			);
 		});
 
-		// TODO: AB#28502: presence-tracker example multi-client test should not be skipped
-		test.skip("First client shows two clients connected in UI", async () => {
+		async function expectFirstClientShowsTwoClientsConnectedInUI(): Promise<void> {
 			await waitForAttendeeState(
 				page,
 				{
@@ -276,36 +275,25 @@ test.describe("presence-tracker", () => {
 			);
 
 			// Get the client list from the first browser instance; it should show two connected.
-			const elementHandle = await page.waitForFunction(() =>
-				document.getElementById("focus-div"),
-			);
-			const clientListHtml = await page.evaluate(
-				(element) => element?.innerHTML?.trim(),
-				elementHandle,
-			);
+			const clientList = page.locator("#focus-div");
 			// Assert that there is a single <br> tag and no other HTML tags in the text, which indicates that two clients are
 			// connected.
-			expect(clientListHtml).toMatch(/^[^<]+<br>[^<]+$/);
+			await expect.poll(() => clientList.innerHTML()).toMatch(/^[^<]+<br>[^<]+$/);
+			const clientListHtml = (await clientList.innerHTML()).trim();
 			// Expect that first page's session id is listed.
 			expect(clientListHtml).toMatch(session1id);
 			// Expect that page2's session id is listed.
 			expect(clientListHtml).toMatch(session2id);
-		});
+		}
 
-		// TODO: AB#28502: presence-tracker example multi-client test should not be skipped
-		// This test should not be enabled without the prior test being enabled as it
-		// may have false positives. It has also been demonstrated to fail occasionally.
-		// Occasional failures are likely due to same issue impact the prior "in UI" test.
-		test.skip("First client shows one client connected in UI when second client leaves", async () => {
+		test(
+			"First client shows two clients connected in UI",
+			expectFirstClientShowsTwoClientsConnectedInUI,
+		);
+
+		test("First client shows one client connected in UI when second client leaves", async () => {
 			// Setup
-			await waitForAttendeeState(
-				page,
-				{
-					[session1id]: "Connected",
-					[session2id]: "Connected",
-				},
-				"failed waiting for app to observe two connected attendees",
-			);
+			await expectFirstClientShowsTwoClientsConnectedInUI();
 
 			// Act
 
@@ -327,14 +315,9 @@ test.describe("presence-tracker", () => {
 			);
 
 			// Get the client list from the first browser; it should have a single element.
-			const elementHandle = await page.waitForFunction(() =>
-				document.getElementById("focus-div"),
-			);
-			const clientListHtml = await page.evaluate(
-				(element) => element?.innerHTML?.trim(),
-				elementHandle,
-			);
-			expect(clientListHtml).toMatch(/^[^<]+$/);
+			const clientList = page.locator("#focus-div");
+			await expect.poll(() => clientList.innerHTML()).toMatch(/^[^<]+$/);
+			const clientListHtml = (await clientList.innerHTML()).trim();
 			// Expect that first page's session id is listed.
 			expect(clientListHtml).toMatch(session1id);
 		});
