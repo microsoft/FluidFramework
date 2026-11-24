@@ -250,8 +250,8 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
 	// Add summary comment (if any)
 	addSection(LayoutUtilities.createSummarySection(apiItem, config));
 
-	// Add system notice (if any) that supersedes deprecation and import notices
-	if (!addSection(createTagNotice(apiItem, "@system", true, systemNotice))) {
+	// An explicit system tag supersedes deprecation and import notices, but is not inherited by descendants.
+	if (!addSection(createTagNotice(apiItem, "@system", false, systemNotice))) {
 		// If no system notice:
 
 		// Add deprecation notice (if any)
