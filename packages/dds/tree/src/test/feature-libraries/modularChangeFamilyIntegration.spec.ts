@@ -18,7 +18,6 @@ import {
 	type RevisionTag,
 	type TaggedChange,
 	makeAnonChange,
-	offsetChangeAtomId,
 	revisionMetadataSourceFromInfo,
 	tagChange,
 	tagRollbackInverse,
