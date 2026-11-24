@@ -627,9 +627,10 @@ export function chunkRange(
 							subChunk.referenceAdded();
 							output.push(subChunk);
 						}
+					} else {
+						chunk.referenceAdded();
+						output.push(chunk);
 					}
-					chunk.referenceAdded();
-					output.push(chunk);
 					remaining -= chunkLength;
 					reusedChunk = true;
 					let seek = chunkLength;

@@ -13,6 +13,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 import {
 	CursorLocationType,
+	cursorChunk,
 	EmptyKey,
 	type FieldKey,
 	type JsonableTree,
@@ -295,6 +296,12 @@ describe("chunkTree", () => {
 			]);
 			const cursor = sequence.cursor();
 			assert(cursor.firstNode());
+			// Expose the whole sequence, not just the leaf selected by ChunkCursor.
+			Object.defineProperties(cursor, {
+				[cursorChunk]: { value: sequence },
+				chunkStart: { value: 0 },
+				chunkLength: { value: sequence.topLevelLength },
+			});
 
 			const chunks = chunkRange(
 				cursor,
@@ -307,7 +314,10 @@ describe("chunkTree", () => {
 				chunks.reduce((length, chunk) => length + chunk.topLevelLength, 0),
 				sequence.topLevelLength,
 			);
-			assertChunkCursorEquals(new SequenceChunk(chunks), numberSequenceField(2));
+			const result = new SequenceChunk(chunks);
+			assertChunkCursorEquals(result, numberSequenceField(2));
+			result.referenceRemoved();
+			sequence.referenceRemoved();
 		});
 
 		it("single basic chunk", () => {
