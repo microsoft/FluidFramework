@@ -24,6 +24,7 @@ import {
 } from "../../../feature-libraries/index.js";
 import { FieldKinds } from "../../../feature-libraries/index.js";
 import {
+	exportVerboseFiltered,
 	SchematizingSimpleTreeView,
 	TreeAlpha,
 	TreeBeta,
@@ -69,6 +70,7 @@ import {
 	type TransactionVoidResult,
 	treeNodeApi as Tree,
 	type TreeChangeEvents,
+	type TreeFieldFilter,
 	type TreeLeafValue,
 	type TreeNode,
 	type TreeView,
@@ -88,7 +90,10 @@ import {
 import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
 import { ajvValidator } from "../../codec/index.js";
 import {
+	AllowsUnknownOptionalFields,
+	HasMinimalValueField,
 	hasUnknownOptionalFieldsDocument,
+	Minimal,
 	testDocumentIndependentView,
 	testDocuments,
 	testSimpleTrees,
@@ -4432,6 +4437,104 @@ describe("treeNodeApi", () => {
 						),
 					);
 				});
+			});
+		});
+
+		describe("filter", () => {
+			it("filters known fields", () => {
+				class FilterChild extends schema.object("FilterChild", {
+					a: schema.number,
+					b: schema.number,
+				}) {}
+				class FilterList extends schema.array("FilterList", FilterChild) {}
+				class FilterParent extends schema.object("FilterParent", {
+					keep: schema.string,
+					child: FilterChild,
+					list: FilterList,
+				}) {}
+				const root = hydrate(FilterParent, {
+					keep: "a",
+					child: { a: 1, b: 2 },
+					list: [{ a: 3, b: 4 }],
+				});
+				const filter: TreeFieldFilter = (parentSchemaIdentifier, storedKey) => {
+					switch (storedKey) {
+						// Use this filter for the fields of the nodes in these fields.
+						case "child":
+						case "list": {
+							return filter;
+						}
+						// The field of an array node: include all elements, with all of their content.
+						case "": {
+							return parentSchemaIdentifier === FilterList.identifier;
+						}
+						// Read `root` while the export is in the fields of other nodes.
+						default: {
+							return storedKey === root.keep;
+						}
+					}
+				};
+				assert.deepEqual(exportVerboseFiltered(root, {}, filter), {
+					type: FilterParent.identifier,
+					fields: {
+						child: { type: FilterChild.identifier, fields: { a: 1 } },
+						list: {
+							type: FilterList.identifier,
+							fields: [{ type: FilterChild.identifier, fields: { a: 3, b: 4 } }],
+						},
+					},
+				});
+				// An omitted array field gives an empty array of elements.
+				assert.deepEqual(
+					exportVerboseFiltered(root.list, {}, () => false),
+					{
+						type: FilterList.identifier,
+						fields: [],
+					},
+				);
+			});
+
+			it("filters unknown optional fields", () => {
+				const view = testDocumentIndependentView(hasUnknownOptionalFieldsDocument);
+				const root = view.root as AllowsUnknownOptionalFields;
+				const unknownFields = view.unknownFieldSchemas?.get(AllowsUnknownOptionalFields);
+
+				// Include one unknown optional field, with all of its content.
+				const includeRecursive: TreeFieldFilter = (parentSchemaIdentifier, storedKey) =>
+					storedKey === "recursive";
+				assert.deepEqual(
+					exportVerboseFiltered(
+						root,
+						{ keys: KeyEncodingOptions.allStoredKeys },
+						includeRecursive,
+					),
+					{
+						type: AllowsUnknownOptionalFields.identifier,
+						fields: {
+							recursive: {
+								type: AllowsUnknownOptionalFields.identifier,
+								fields: { leaf: "nested leaf" },
+							},
+						},
+					},
+				);
+
+				// Include each unknown optional field, but not the fields of the node in it.
+				// The value of a leaf node is always included.
+				const omitContent: TreeFieldFilter = (parentSchemaIdentifier, storedKey) =>
+					unknownFields?.has(storedKey) === true ? () => false : false;
+				assert.deepEqual(
+					exportVerboseFiltered(root, { keys: KeyEncodingOptions.allStoredKeys }, omitContent),
+					{
+						type: AllowsUnknownOptionalFields.identifier,
+						fields: {
+							recursive: { type: AllowsUnknownOptionalFields.identifier, fields: {} },
+							minimal: { type: Minimal.identifier, fields: {} },
+							hasMinimalValueField: { type: HasMinimalValueField.identifier, fields: {} },
+							leaf: "leaf",
+						},
+					},
+				);
 			});
 		});
 	});

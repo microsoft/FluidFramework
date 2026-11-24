@@ -46,6 +46,7 @@ import {
 	type HandleConverter,
 	type SchemalessParseOptions,
 	type TreeEncodingOptions,
+	type TreeFieldFilter,
 } from "./customTree.js";
 
 /**
@@ -285,11 +286,13 @@ function verboseTreeAdapter(options: SchemalessParseOptions): CursorAdapter<Verb
 
 /**
  * Used to read a node cursor as a VerboseTree.
+ * @param filter - Selects which fields to include. If `undefined`, all fields are included.
  */
 export function verboseFromCursor(
 	reader: ITreeCursor,
 	context: Context,
 	options: TreeEncodingOptions,
+	filter?: TreeFieldFilter,
 ): VerboseTree {
 	const config: Required<TreeEncodingOptions> = {
 		keys: KeyEncodingOptions.usePropertyKeys,
@@ -299,7 +302,7 @@ export function verboseFromCursor(
 	const storedSchemaMap = context.flexContext.schema.nodeSchema;
 	const schemaMap = context.schema;
 
-	return verboseFromCursorInner(reader, config, storedSchemaMap, schemaMap);
+	return verboseFromCursorInner(reader, config, storedSchemaMap, schemaMap, filter);
 }
 
 function verboseFromCursorInner(
@@ -307,6 +310,7 @@ function verboseFromCursorInner(
 	options: Required<TreeEncodingOptions>,
 	storedSchema: ReadonlyMap<string, TreeNodeStoredSchema>,
 	schema: ReadonlyMap<string, TreeNodeSchema>,
+	filter?: TreeFieldFilter,
 ): VerboseTree {
 	const fields = customFromCursor(
 		reader,
@@ -314,6 +318,7 @@ function verboseFromCursorInner(
 		storedSchema,
 		schema,
 		verboseFromCursorInner,
+		filter,
 	);
 	const nodeSchema =
 		storedSchema.get(reader.type) ?? fail(0xb3c /* missing schema for type in cursor */);

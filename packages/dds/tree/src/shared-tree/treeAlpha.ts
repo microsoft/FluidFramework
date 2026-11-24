@@ -76,6 +76,7 @@ import {
 	isTreeNode,
 	toInitialSchema,
 	type TreeParsingOptions,
+	type TreeFieldFilter,
 	type NodeChangedData,
 	type TreeChangeEventsBeta,
 	type ConciseTree,
@@ -1172,4 +1173,31 @@ function borrowFieldCursorFromTreeNodeOrValue(
 	// TODO: avoid copy: borrow cursor from field instead.
 	const mapTree = mapTreeFromCursor(cursor);
 	return cursorForMapTreeField([mapTree]);
+}
+
+/**
+ * Like {@link TreeAlpha.exportVerbose}, but exports only the fields that `filter` selects.
+ * @remarks
+ * To export unknown optional fields, use {@link KeyEncodingOptions.allStoredKeys}.
+ */
+export function exportVerboseFiltered(
+	node: TreeNode,
+	options: TreeEncodingOptions,
+	filter: TreeFieldFilter,
+): VerboseTree {
+	const kernel = getKernel(node);
+	const innerNode = kernel.getInnerNode();
+	if (!innerNode.isHydrated()) {
+		return verboseFromCursor(innerNode.borrowCursor(), kernel.context, options, filter);
+	}
+	// For a hydrated node, the borrowed cursor is the cursor of the node.
+	// The filter can read the node, which moves that cursor, so use a separate cursor.
+	const forest = innerNode.context.checkout.forest;
+	const filterCursor = forest.allocateCursor("exportVerboseFiltered");
+	forest.moveCursorToPath(innerNode.anchorNode, filterCursor);
+	try {
+		return verboseFromCursor(filterCursor, kernel.context, options, filter);
+	} finally {
+		filterCursor.free();
+	}
 }

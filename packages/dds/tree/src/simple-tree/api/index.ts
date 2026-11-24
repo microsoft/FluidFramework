@@ -194,6 +194,7 @@ export {
 	type HandleConverter,
 	KeyEncodingOptions,
 	type TreeParsingOptions,
+	type TreeFieldFilter,
 } from "./customTree.js";
 
 export {
