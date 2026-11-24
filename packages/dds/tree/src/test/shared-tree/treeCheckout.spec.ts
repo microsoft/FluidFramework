@@ -25,6 +25,7 @@ import {
 	type NormalizedFieldUpPath,
 	LeafNodeStoredSchema,
 	type TreeNodeSchemaIdentifier,
+	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	ValueSchema,
 } from "../../core/index.js";
@@ -35,11 +36,14 @@ import {
 } from "../../shared-tree-core/index.js";
 import {
 	Tree,
+	CheckoutBase,
 	TreeCheckout,
+	BranchCheckout,
 	type TreeCheckoutOptions,
 	type ITreeCheckout,
 	createTreeCheckout,
 	type SharedTreeChange,
+	forkAsBranchCheckout,
 	ForestTypeOptimized,
 } from "../../shared-tree/index.js";
 import {
@@ -108,13 +112,14 @@ function parseCodeArtifactDetails(details: unknown): Record<string, unknown> {
 
 const checkoutForks: {
 	name: string;
-	forkCheckout: (checkout: TreeCheckout) => TreeCheckout;
+	forkCheckout: (checkout: CheckoutBase) => CheckoutBase;
 }[] = [
 	{ name: "fork()", forkCheckout: (checkout) => checkout.fork() },
 	{
 		name: "forkWith()",
 		forkCheckout: (checkout) => checkout.forkWith((options) => new TreeCheckout(options)),
 	},
+	{ name: "BranchCheckout", forkCheckout: forkAsBranchCheckout },
 ];
 
 describe("sharedTreeView", () => {
@@ -133,6 +138,30 @@ describe("sharedTreeView", () => {
 			new RetainedCheckout(options);
 		const config = new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation });
 
+		it("constructs independent subclass forks that can be merged back", () => {
+			const view = getView(config);
+			view.initialize(["parent"]);
+			const checkout = view.checkout.forkWith(retainedCheckoutFactory);
+			const fork = checkout.fork();
+			const branchView = checkout.viewWith(config);
+			const forkView = fork.viewWith(config);
+			forkView.root.insertAtEnd("child");
+			assert.deepEqual([...branchView.root], ["parent"]);
+			assert.deepEqual([...view.root], ["parent"]);
+			forkView.dispose();
+			assert.equal(fork.disposed, false);
+			const nextForkView = fork.viewWith(config);
+			assert.deepEqual([...nextForkView.root], ["parent", "child"]);
+			nextForkView.dispose();
+			checkout.merge(fork);
+			assert.equal(fork.disposed, true);
+			assert.deepEqual([...branchView.root], ["parent", "child"]);
+			view.merge(branchView);
+			assert.deepEqual([...view.root], ["parent", "child"]);
+			assert.equal(checkout.disposed, true);
+			view.dispose();
+		});
+
 		it("can dispose and recreate a view without disposing its retained checkout", () => {
 			const view = getView(config);
 			view.initialize([]);
@@ -150,6 +179,90 @@ describe("sharedTreeView", () => {
 			assert.equal(nestedFork.disposed, false);
 			nestedFork.dispose();
 			checkout.dispose();
+			view.dispose();
+		});
+
+		it("disposes the retained checkout owned by a forked view", () => {
+			const view = getView(config);
+			view.initialize([]);
+			const checkout = view.checkout.forkWith(retainedCheckoutFactory);
+			const branchView = checkout.viewWith(config);
+			const forkView = branchView.fork();
+			assert(forkView.checkout instanceof RetainedCheckout);
+			assert.equal(forkView.checkout.disposed, false);
+			forkView.dispose();
+			assert.equal(forkView.checkout.disposed, true);
+			assert.equal(checkout.disposed, false);
+			branchView.dispose();
+			checkout.dispose();
+			view.dispose();
+		});
+
+		for (const throughView of [false, true]) {
+			it(`remains usable after a subclass rejects rewind through the ${throughView ? "view" : "checkout"}`, () => {
+				const error = new Error("Rewind rejected before mutation");
+				class RewindRejectingCheckout extends RetainedCheckout {
+					public override rewindTo(): void {
+						throw error;
+					}
+				}
+
+				const view = getView(config);
+				view.initialize(["parent"]);
+				const checkout = view.checkout.forkWith(
+					(options) => new RewindRejectingCheckout(options),
+				);
+				const branchView = checkout.viewWith(config);
+				const revision = branchView.branchHistory.getHead()?.revision;
+				assert(revision !== undefined);
+				const head = checkout.mainBranch.getHead();
+
+				assert.throws(() => (throughView ? branchView : checkout).rewindTo(revision), error);
+				assert.equal(checkout.mainBranch.getHead(), head);
+				assert.deepEqual([...branchView.root], ["parent"]);
+				branchView.root.insertAtEnd("child");
+				view.merge(branchView);
+				assert.deepEqual([...view.root], ["parent", "child"]);
+				assert.equal(checkout.disposed, true);
+				view.dispose();
+			});
+		}
+
+		it("rejects subclass forks during pending transactions", () => {
+			const view = getView(config);
+			view.initialize([]);
+			view.runTransaction(() => {
+				assert.throws(
+					() => view.checkout.forkWith(retainedCheckoutFactory),
+					validateUsageError("A view cannot be forked while it has a pending transaction."),
+				);
+			});
+			view.dispose();
+		});
+
+		it("rejects subclass forks after disposal", () => {
+			const view = getView(config);
+			view.initialize([]);
+			const checkout = view.checkout.forkWith(retainedCheckoutFactory);
+			checkout.dispose();
+			assert.throws(
+				() => checkout.fork(),
+				validateUsageError(
+					"The parent branch has already been disposed and can no longer create new branches.",
+				),
+			);
+			view.dispose();
+		});
+
+		it("rejects subclass forks when the parent is broken", () => {
+			const view = getView(config);
+			view.initialize([]);
+			assert.throws(() => view.checkout.breaker.break(new Error("broken parent")));
+			assert.throws(
+				() => view.checkout.forkWith(retainedCheckoutFactory),
+				validateUsageError(/broken parent/),
+			);
+			view.checkout.breaker.clearError();
 			view.dispose();
 		});
 	});
@@ -309,13 +422,11 @@ describe("sharedTreeView", () => {
 				"subtree",
 				"change",
 				"subtree",
-				"change",
 				"after",
 				"editStart",
 				"subtree",
 				"change",
 				"subtree",
-				"change",
 				"after",
 				"unsubscribe",
 				"editStart",
@@ -355,13 +466,11 @@ describe("sharedTreeView", () => {
 				"subtree-rootFieldKey-0",
 				"change-rootFieldKey-0",
 				"subtree-rootFieldKey-0",
-				"change-rootFieldKey-0",
 				"after",
 				"editStart",
 				"subtree-rootFieldKey-0",
 				"change-rootFieldKey-0",
 				"subtree-rootFieldKey-0",
-				"change-rootFieldKey-0",
 				"after",
 				"unsubscribe",
 				"editStart",
@@ -1384,6 +1493,166 @@ describe("sharedTreeView", () => {
 		});
 	});
 
+	describe("rewindTo", () => {
+		const config = new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation });
+
+		for (const throughView of [false, true]) {
+			it(`remains usable after rejecting a sibling revision through the ${throughView ? "view" : "checkout"}`, () => {
+				const view = getView(config);
+				view.initialize(["parent"]);
+				const sibling = view.fork();
+				const fork = view.fork();
+				sibling.root.insertAtEnd("sibling");
+				const revision = sibling.branchHistory.getHead()?.revision;
+				assert(revision !== undefined);
+				const checkout = fork.checkout;
+				assert(checkout instanceof TreeCheckout);
+				const head = checkout.mainBranch.getHead();
+
+				assert.throws(
+					() => (throughView ? fork : checkout).rewindTo(revision),
+					validateUsageError(`No commit found with revision: ${revision}`),
+				);
+				assert.equal(fork.checkout.mainBranch.getHead(), head);
+				assert.deepEqual([...fork.root], ["parent"]);
+				fork.root.insertAtEnd("child");
+				view.merge(fork, false);
+				assert.deepEqual([...view.root], ["parent", "child"]);
+				fork.dispose();
+				assert.equal(fork.checkout.disposed, true);
+				sibling.dispose();
+				view.dispose();
+			});
+
+			for (const rejection of [
+				"unrecognized revision",
+				"transaction",
+				"shared branch",
+				"edit lock",
+			]) {
+				it(`remains usable after rejecting rewind for ${rejection} through the ${throughView ? "view" : "checkout"}`, () => {
+					const view = getView(config);
+					view.initialize(["parent"]);
+					const fork = rejection === "shared branch" ? view : view.fork();
+					const head = fork.checkout.mainBranch.getHead();
+					const revision = fork.branchHistory.getHead()?.revision;
+					assert(revision !== undefined);
+					const checkout = fork.checkout;
+					assert(checkout instanceof TreeCheckout);
+					const target = throughView ? fork : checkout;
+
+					switch (rejection) {
+						case "unrecognized revision": {
+							const unknownRevision = "00000000-0000-4000-8000-000000000000";
+							assert.throws(
+								() => target.rewindTo(unknownRevision),
+								validateUsageError(`Unrecognized revision id: ${unknownRevision}`),
+							);
+							break;
+						}
+						case "transaction": {
+							fork.runTransaction(() => {
+								assert.throws(
+									() => target.rewindTo(revision),
+									validateUsageError("Rewinding is not supported during transactions."),
+								);
+							});
+							break;
+						}
+						case "shared branch": {
+							assert.throws(
+								() => target.rewindTo(revision),
+								validateUsageError(
+									"Cannot switch a view away from a shared branch. Consider forking first.",
+								),
+							);
+							break;
+						}
+						case "edit lock": {
+							const unsubscribe = Tree.on(fork.root, "nodeChanged", () => {
+								assert.throws(
+									() => target.rewindTo(revision),
+									validateUsageError(
+										"Switching branches is forbidden during a change event callback",
+									),
+								);
+							});
+							fork.root.insertAtEnd("trigger");
+							unsubscribe();
+							fork.root.removeAt(1);
+							break;
+						}
+						default: {
+							assert.fail("Unexpected rejection case.");
+						}
+					}
+
+					if (rejection !== "edit lock") {
+						assert.equal(fork.checkout.mainBranch.getHead(), head);
+					}
+					assert.deepEqual([...fork.root], ["parent"]);
+					fork.root.insertAtEnd("child");
+					if (fork !== view) {
+						view.merge(fork, false);
+						fork.dispose();
+					}
+					assert.deepEqual([...view.root], ["parent", "child"]);
+					view.dispose();
+				});
+			}
+		}
+
+		it("breaks the checkout when branch switching throws", () => {
+			const view = getView(config);
+			view.initialize(["parent"]);
+			const fork = view.fork();
+			const revision = fork.branchHistory.getHead()?.revision;
+			assert(revision !== undefined);
+			fork.root.insertAtEnd("child");
+			const error = new Error("Rewind event failure");
+			fork.checkout.events.on("afterBatch", () => {
+				throw error;
+			});
+
+			const checkout = fork.checkout;
+			assert(checkout instanceof TreeCheckout);
+			assert.throws(() => checkout.rewindTo(revision), error);
+			assert.throws(() => fork.root, validateUsageError(/invalid state/));
+			assert.deepEqual([...view.root], ["parent"]);
+			view.dispose();
+		});
+
+		for (const rewindCount of [0, 1, 2]) {
+			it(`lets history be trimmed after a fork rewound ${rewindCount} times is disposed`, () => {
+				const provider = new TestTreeProviderLite(1);
+				const view = provider.trees[0].kernel.viewWith(config);
+				view.initialize([]);
+				view.root.insertAtEnd("A");
+				provider.synchronizeMessages();
+				const revisionA = view.branchHistory.getHead()?.revision;
+				assert(revisionA !== undefined);
+				view.root.insertAtEnd("B");
+				provider.synchronizeMessages();
+
+				const fork = view.fork();
+				for (let i = 0; i < rewindCount; i++) {
+					fork.rewindTo(revisionA);
+				}
+				view.root.insertAtEnd("C");
+				provider.synchronizeMessages();
+				fork.root.insertAtEnd("D");
+				view.merge(fork);
+				provider.synchronizeMessages();
+				assert.deepEqual([...view.root].sort(), ["A", "B", "C", "D"]);
+
+				view.root.insertAtEnd("E");
+				provider.synchronizeMessages();
+				assert.equal(view.branchHistory.length, 1);
+				view.dispose();
+			});
+		}
+	});
+
 	describe("history", () => {
 		it("exposes historical information for the current branch", () => {
 			const provider = new TestTreeProviderLite(1);
@@ -1406,6 +1675,7 @@ describe("sharedTreeView", () => {
 			assert.notEqual(commitAfterEdits, undefined);
 			assert.notEqual(commitAfterEdits?.revision, commitBeforeFork?.revision);
 
+			assert(fork.checkout instanceof TreeCheckout);
 			fork.checkout.switchBranch(checkout.mainBranch);
 
 			const headCommitAfterSwitch = fork.branchHistory.getHead();
@@ -1441,6 +1711,14 @@ describe("sharedTreeView", () => {
 			const treeBranch = forkCheckout(tree);
 			const viewBranch = treeBranch.viewWith(view.config);
 			viewBranch.dispose();
+			// For checkouts that are 1:1 with their view (plain `TreeCheckout` forks), disposing the view
+			// also disposes the underlying branch. `BranchCheckout` opts out of this contract via
+			// `disposesWithView` so a single branch can back multiple views over its lifetime; in that
+			// case, the branch must be disposed explicitly.
+			if (treeBranch instanceof BranchCheckout) {
+				assert.equal(treeBranch.disposed, false);
+				treeBranch.dispose();
+			}
 			assert.equal(treeBranch.disposed, true);
 		});
 
@@ -1556,7 +1834,7 @@ describe("sharedTreeView", () => {
 			const newSchema = sf.optional([sf.string, Added]);
 			const provider = new TestTreeProviderLite(
 				2,
-				new SharedTreeTestFactory(() => {}, undefined, { forest: ForestTypeOptimized }),
+				SharedTreeTestFactory.build(() => {}, undefined, { forest: ForestTypeOptimized }),
 			);
 			const [a, b] = provider.trees;
 			const aView = a.kernel.viewWith(new TreeViewConfiguration({ schema: oldSchema }));
@@ -1570,9 +1848,9 @@ describe("sharedTreeView", () => {
 			provider.synchronizeMessages();
 
 			// Only B's root rebases over A's edit. The independent fork retains its upgraded schema.
-			assert.equal(bView.compatibility.isEquivalent, false);
+			assert.equal(bView.compatibility.canView, false);
 			expectSchemaEqual(bView.checkout.storedSchema, toUpgradeSchema(oldSchema));
-			assert.equal(fork.compatibility.isEquivalent, true);
+			assert.equal(fork.compatibility.canView, true);
 			expectSchemaEqual(fork.checkout.storedSchema, toUpgradeSchema(newSchema));
 			assert.equal(fork.checkout.transaction.size, 0);
 			fork.root = new Added({ value: "fork data" });
@@ -2059,6 +2337,44 @@ describe("sharedTreeView", () => {
 				newRootAllowedTypeCount: oldSchema.rootFieldSchema.types.size,
 			});
 		});
+
+		it("does not classify a version-only schema change as initialization", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				SharedTreeTestFactory.build(() => {}, undefined, {
+					allowPossiblyIncompatibleWriteVersionOverrides: true,
+					writeVersionOverrides: new Map([["Schema", "schemaVersion"]]),
+				}),
+			);
+			const [tree] = provider.trees;
+			const view = tree.kernel.viewWith(
+				new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation }),
+			);
+			view.initialize([]);
+			const schema: TreeStoredSchema = {
+				rootFieldSchema: {
+					kind: FieldKinds.optional.identifier,
+					types: new Set(),
+					persistedMetadata: undefined,
+				},
+				nodeSchema: new Map(),
+			};
+			view.checkout.updateSchema(schema, true);
+			view.checkout.updateSchema({
+				rootFieldSchema: schema.rootFieldSchema,
+				nodeSchema: schema.nodeSchema,
+				schemaVersion: new Map([["com.fluidframework.test", 1]]),
+			});
+
+			const schemaChangeEvents = provider.logger
+				.events()
+				.filter((event) =>
+					event.eventName.endsWith(TreeCheckout.schemaChangeTelemetryEventName),
+				);
+			const versionChangeEvent = schemaChangeEvents.at(-1);
+			assert(versionChangeEvent !== undefined, "Expected schema change telemetry.");
+			assert.equal(parseCodeArtifactDetails(versionChangeEvent.details).changeKind, "upgrade");
+		});
 	});
 
 	describe("throws an error if it is in the middle of an edit when a user attempts to", () => {
@@ -2116,7 +2432,10 @@ describe("sharedTreeView", () => {
 
 		it("switch branches", () => {
 			expectErrorDuringEdit({
-				duringEdit: (view) => view.checkout.switchBranch(view.checkout.mainBranch),
+				duringEdit: (view) => {
+					assert(view.checkout instanceof TreeCheckout);
+					view.checkout.switchBranch(view.checkout.mainBranch);
+				},
 				error: "Switching branches is forbidden during a change event callback",
 			});
 		});
@@ -2397,7 +2716,7 @@ describe("sharedTreeView", () => {
 			assert.equal(view1Revertibles.length, 1);
 			view1.runTransaction(() => {
 				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
-				// TODO AD#57584: Use such an operation here when one is available
+				// TODO: AB#57584: Use such an operation here when one is available
 				view1.root.insertAtEnd({ id: "B" });
 				view1.root.insertAtEnd({ id: "C" });
 			});
@@ -2434,7 +2753,7 @@ describe("sharedTreeView", () => {
 			assert.equal(view1Revertibles.length, 1);
 			view1.runTransaction(() => {
 				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
-				// TODO AD#57584: Use such an operation here when one is available
+				// TODO: AB#57584: Use such an operation here when one is available
 				view1.root.insertAtEnd({ id: "B" });
 				view1.root.insertAtEnd({ id: "C" });
 			});
@@ -2496,7 +2815,7 @@ describe("sharedTreeView", () => {
 			assert.equal(view1Revertibles.length, 1);
 			await view1.runTransactionAsync(async () => {
 				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
-				// TODO AD#57584: Use such an operation here when one is available
+				// TODO: AB#57584: Use such an operation here when one is available
 				view1.root.insertAtEnd({ id: "B" });
 				view1.root.insertAtEnd({ id: "C" });
 			});
@@ -2533,7 +2852,7 @@ describe("sharedTreeView", () => {
 			assert.equal(view1Revertibles.length, 1);
 			await view1.runTransactionAsync(async () => {
 				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
-				// TODO AD#57584: Use such an operation here when one is available
+				// TODO: AB#57584: Use such an operation here when one is available
 				view1.root.insertAtEnd({ id: "B" });
 				view1.root.insertAtEnd({ id: "C" });
 			});
@@ -2684,7 +3003,7 @@ describe("sharedTreeView", () => {
 			fork.root.insertAtEnd({ id: "A" });
 
 			// This hides the commit that inserted "A".
-			fork.checkout.mainBranch.setHead(view1.checkout.mainBranch.getHead());
+			fork.checkout.mainBranch.setHead(view1.checkout.mainBranch.getHead(), -1);
 
 			fork.root.removeAt(0);
 
@@ -2792,9 +3111,9 @@ const rootArray = defaultSf.array(defaultSf.string);
 
 interface CheckoutViewTestArgs<TRootSchema extends ImplicitFieldSchema> {
 	view: SchematizingSimpleTreeView<TRootSchema>;
-	tree: TreeCheckout;
+	tree: CheckoutBase;
 	logger: IMockLoggerExt;
-	forkCheckout: (checkout: TreeCheckout) => TreeCheckout;
+	forkCheckout: (checkout: CheckoutBase) => CheckoutBase;
 }
 
 /**
@@ -2838,10 +3157,10 @@ function itView<
 	function callWithView(
 		makeViewFromConfig: (config: TreeViewConfiguration<TRootSchema>) => {
 			view: SchematizingSimpleTreeView<TRootSchema>;
-			tree: TreeCheckout;
+			tree: CheckoutBase;
 			logger: IMockLoggerExt;
 		},
-		forkCheckout: (checkout: TreeCheckout) => TreeCheckout,
+		forkCheckout: (checkout: CheckoutBase) => CheckoutBase,
 	): void {
 		if (options.initialContent) {
 			const { logger } = new TestTreeProviderLite();
@@ -2857,7 +3176,7 @@ function itView<
 			const { view, tree, logger } = (
 				makeViewFromConfig as unknown as (config: TreeViewConfiguration<typeof rootArray>) => {
 					view: SchematizingSimpleTreeView<typeof rootArray>;
-					tree: TreeCheckout;
+					tree: CheckoutBase;
 					logger: IMockLoggerExt;
 				}
 			)(
@@ -2879,10 +3198,10 @@ function itView<
 
 	function makeReferenceView(
 		config: TreeViewConfiguration<TRootSchema>,
-		forkCheckout?: (checkout: TreeCheckout) => TreeCheckout,
+		forkCheckout?: (checkout: CheckoutBase) => CheckoutBase,
 	): {
 		view: SchematizingSimpleTreeView<TRootSchema>;
-		tree: TreeCheckout;
+		tree: CheckoutBase;
 		logger: IMockLoggerExt;
 	} {
 		const logger = createMockLoggerExt();

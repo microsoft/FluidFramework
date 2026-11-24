@@ -84,7 +84,7 @@ export interface ContainerRuntimeLoaderParams {
 	registry: IFluidDataStoreRegistry;
 	provideEntryPoint: (runtime: IContainerRuntimeBase) => Promise<FluidObject>;
 	existing: boolean;
-	minVersionForCollab: OldestSupportedClientVersion;
+	oldestSupportedClient: OldestSupportedClientVersion;
 	/**
 	 * The type string of the root data store to create. Only set when `existing` is false.
 	 */
@@ -121,7 +121,7 @@ export type ContainerRuntimeLoader = (
  */
 export function makeCodeLoader<T>(
 	registry: DataStoreRegistry<T>,
-	minVersionForCollab: OldestSupportedClientVersion,
+	oldestSupportedClient: OldestSupportedClientVersion,
 	loadRuntime: ContainerRuntimeLoader,
 	root?: DataStoreKind<T>,
 ): ICodeDetailsLoader {
@@ -146,7 +146,7 @@ export function makeCodeLoader<T>(
 				registry: convertRegistry(registry),
 				provideEntryPoint,
 				existing,
-				minVersionForCollab,
+				oldestSupportedClient,
 				newContainerRootType: root?.type,
 			});
 		},

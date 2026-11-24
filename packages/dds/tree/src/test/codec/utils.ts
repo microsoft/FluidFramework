@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { Static, TSchema } from "@sinclair/typebox";
+import type { Static, TSchema } from "typebox";
 
 import {
 	type IJsonCodec,
@@ -68,7 +68,7 @@ export function makeValueCodec<Schema extends TSchema, TContext>(
 	return withSchemaValidation(
 		schema,
 		{
-			encode: (x: Static<Schema>) => x as JsonCompatibleReadOnly,
+			encode: (x: Static<Schema>) => x,
 			decode: (x: JsonCompatibleReadOnly) => x as Static<Schema>,
 		},
 		validator,

@@ -82,3 +82,13 @@ The format of summaries (and snapshots) is described in [summary and snapshot fo
 
 [container-runtime]: https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/src/containerRuntime.ts
 [summary-protocol]: https://github.com/microsoft/FluidFramework/blob/main/common/lib/protocol-definitions/src/summary.ts
+
+## Current election implementation
+
+This section describes the current implementation, rather than all versions covered by the conceptual overview above.
+
+The parent is the oldest eligible interactive quorum member, including when loading a snapshot. An incumbent summarizer remains elected until it leaves quorum, even when its parent leaves and a new parent is elected.
+
+When election state is written to a snapshot, it retains the client and parent identity fields for older readers. Current readers derive the parent from quorum and restore the summary-progress baseline. They retain a recorded summarizer still in quorum; a recorded interactive or ineligible client selects the derived parent. If the recorded client is absent, they recover to an existing summarizer, or the parent if none exists.
+
+The timeout-driven succession mechanism that could elect a younger parent was removed in [PR #12942](https://github.com/microsoft/FluidFramework/pull/12942) in November 2022. An old snapshot can still record such a parent, but catch-up is expected to process those historical sessions' departures and converge on the oldest remaining eligible client. Deriving the parent directly from quorum removes the need to reconstruct that obsolete succession state. Overlapping summary attempts are already handled by summary acceptance checks and the existing nack/retry flow.

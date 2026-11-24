@@ -27,7 +27,9 @@ export const summarizerRequestUrl = "_summarizer";
  *
  * 4. "submit" - the summarize op was submitted, and the result contains the op client sequence number.
  *
- * @legacy @alpha
+ * "unknown" indicates that the stage reached by the summary process could not be determined.
+ *
+ * @legacy @beta
  */
 export type SummaryStage = "base" | "generate" | "upload" | "submit" | "unknown";
 
@@ -72,7 +74,8 @@ export interface SummarizeOnDemandResults {
 
 /**
  * Results from an on-demand summary request.
- * @legacy @alpha
+ * @sealed
+ * @legacy @beta
  */
 export interface OnDemandSummaryResults {
 	/**
@@ -89,7 +92,11 @@ export interface OnDemandSummaryResults {
 		 */
 		readonly stage?: SummaryStage;
 		/**
-		 * Handle of the complete summary.
+		 * Identifies the broadcast summary proposal.
+		 * It is not guaranteed to identify an acknowledged snapshot that can be loaded with
+		 * {@link @fluidframework/container-definitions#LoaderHeader.version}.
+		 * Use the `version` returned by {@link loadAndSummarize}
+		 * when an acknowledged snapshot version is required.
 		 */
 		readonly handle?: string;
 	};
@@ -101,8 +108,27 @@ export interface OnDemandSummaryResults {
 }
 
 /**
+ * An acknowledged summary that can be loaded as a snapshot.
+ * @sealed
+ * @legacy @beta
+ */
+export interface AcknowledgedSummary {
+	/**
+	 * Snapshot version from the service ACK, suitable for
+	 * {@link @fluidframework/container-definitions#LoaderHeader.version}.
+	 */
+	readonly version: string;
+	/**
+	 * Reference sequence number of the acknowledged summary's proposal.
+	 * Identifies the document state captured by the summary.
+	 */
+	readonly referenceSequenceNumber: number;
+}
+
+/**
  * Outcome from {@link loadSummarizerContainerAndMakeSummary}.
- * @legacy @alpha
+ * @sealed
+ * @legacy @beta
  */
 export type LoadSummarizerSummaryResult =
 	| {

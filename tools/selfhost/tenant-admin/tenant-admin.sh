@@ -184,7 +184,11 @@ k create configmap "$CONFIGMAP_NAME" \
 # mutation.azure-workload-identity.io ... 502". Labelling unconditionally would take out `list`,
 # `get`, `create` and `delete`, none of which touch Key Vault.
 WORKLOAD_SA=""
+VAULT_DNS_SUFFIX=""
 if [ "${#KV_ARGS[@]}" -gt 0 ]; then
+  . "$SELFHOST_ROOT/azure-cloud.sh"
+  load_azure_cloud
+  VAULT_DNS_SUFFIX="$AZURE_KEYVAULT_DNS_SUFFIX"
   WORKLOAD_SA="fluid-workload-identity"
   if ! k get serviceaccount "$WORKLOAD_SA" >/dev/null 2>&1; then
     echo "ERROR: ServiceAccount '$WORKLOAD_SA' not found in namespace '$NAMESPACE', so the Pod" >&2
@@ -199,13 +203,14 @@ fi
 # the container's stdout/stderr log stream. Using a completed Pod plus `kubectl logs` here would
 # copy every create/get-key/rotate result into the node log and any cluster log collector.
 overrides="$(jq -n --arg name "$POD_NAME" --arg image "$IMAGE" --arg cm "$CONFIGMAP_NAME" \
-  --arg sa "$WORKLOAD_SA" '{
+  --arg sa "$WORKLOAD_SA" --arg vaultDnsSuffix "$VAULT_DNS_SUFFIX" '{
   spec: ({
     restartPolicy: "Never",
     terminationGracePeriodSeconds: 1,
     containers: [{
       name: $name,
       image: $image,
+      env: [{name: "AZURE_KEYVAULT_DNS_SUFFIX", value: $vaultDnsSuffix}],
       command: ["sh", "-c", "sleep 900"],
       volumeMounts: [{ name: "tenant-admin", mountPath: "/opt/tenant-admin", readOnly: true }]
     }],

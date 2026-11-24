@@ -32,9 +32,24 @@ case "$TARGET_PLATFORM" in
   *) fail "unsupported TARGET_PLATFORM '$TARGET_PLATFORM'. Select linux/amd64 or linux/arm64 before generating the release." ;;
 esac
 export FLUID_REF RELEASE_ID RELEASE_ROOT TARGET_PLATFORM
-if [ -n "${FLUID_DIR:-}" ]; then
-  export FLUID_DIR
+case "$RELEASE_ID" in
+  ""|"."|".."|*"/"*|*"\\"*) fail "invalid release id '$RELEASE_ID'." ;;
+esac
+if [ -n "${ACR_LOGIN_SERVER:-}" ]; then
+  command -v docker >/dev/null 2>&1 || fail "docker is required to build images."
+  docker buildx version >/dev/null 2>&1 || fail "docker buildx is required."
+  validate_fluid_directory
 fi
+
+# Publish only complete bundles. A failed invocation owns only this private staging directory.
+mkdir -p "$RELEASE_ROOT"
+RELEASE_ROOT="$(cd "$RELEASE_ROOT" && pwd -P)"
+FINAL_RELEASE_ROOT="$RELEASE_ROOT"
+[ ! -e "$FINAL_RELEASE_ROOT/$RELEASE_ID" ] || fail "release '$RELEASE_ID' already exists; choose a new id or use --skip-build."
+STAGING_ROOT="$(mktemp -d "$FINAL_RELEASE_ROOT/.release-$RELEASE_ID.XXXXXX")"
+trap 'rm -rf -- "$STAGING_ROOT"' EXIT
+RELEASE_ROOT="$STAGING_ROOT"
+export RELEASE_ROOT
 
 echo "=== Generating release '$RELEASE_ID' from '$FLUID_REF' for '$TARGET_PLATFORM' ==="
 
@@ -50,6 +65,7 @@ if [ -z "${ACR_LOGIN_SERVER:-}" ] && [ -t 0 ]; then
   printf '\nNo ACR is configured (ACR_LOGIN_SERVER is unset); built images would stay pending-build.\n' >&2
   read -r -p "Create/reuse an ACR now so the images can be built and pinned? [y/N] " reply
   if [[ "$reply" =~ ^[Yy]$ ]]; then
+    validate_fluid_directory
     command -v jq >/dev/null 2>&1 || fail "jq is required to read the ACR name from the deploy parameters file."
     parameters_file="${PARAMETERS_FILE:-$(cd "$SCRIPT_DIR/.." && pwd)/azure/deploy.parameters.json}"
     acr_name=""
@@ -92,5 +108,8 @@ echo
 echo ">>> 3. Validate pinned rendered images"
 "$SCRIPT_DIR/validate-pinned-images.sh" "$RELEASE_ID"
 
+[ ! -e "$FINAL_RELEASE_ROOT/$RELEASE_ID" ] || fail "release '$RELEASE_ID' was created by another invocation; refusing to overwrite it."
+mv "$STAGING_ROOT/$RELEASE_ID" "$FINAL_RELEASE_ROOT/"
 echo
 echo "=== Release '$RELEASE_ID' generated ==="
+echo "Bundle: $FINAL_RELEASE_ROOT/$RELEASE_ID"

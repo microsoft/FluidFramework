@@ -13,7 +13,9 @@ import {
 	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
 
-import type { JsonableTree } from "../../../../core/index.js";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
+import type { FieldKey, JsonableTree } from "../../../../core/index.js";
 import {
 	Counter,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -32,8 +34,11 @@ import {
 	SpecialField,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { NodeShapeBasedEncoder } from "../../../../feature-libraries/chunked-forest/codec/nodeEncoder.js";
+import {
+	NodeShapeBasedEncoder,
+	SpecializedNodeShapeEncoder,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/nodeEncoder.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
 import { FieldBatchFormatVersion } from "../../../../feature-libraries/index.js";
@@ -273,6 +278,104 @@ describe("nodeShape", () => {
 					assert.deepEqual(buffer, [unknownUuid], `isSummary=${isSummary}`);
 				}
 			});
+		});
+	});
+
+	describe("SpecializedNodeShapeEncoder", () => {
+		const specializedFieldBatchVersion = brand<FieldBatchFormatVersion>(
+			FieldBatchFormatVersion.vTextExperimental,
+		);
+
+		function makeContext(): EncoderContext {
+			return new EncoderContext(
+				() => fail(),
+				() => fail(),
+				fieldKinds,
+				testIdCompressor,
+				undefined /* incrementalEncoder */,
+				specializedFieldBatchVersion,
+				false /* isSummary */,
+			);
+		}
+
+		// Shape which encodes a leaf to just its value.
+		const leafValue = new NodeShapeBasedEncoder(brand("leaf"), true, [], undefined);
+		// Shape which encodes a leaf with the value 5 to nothing.
+		const leafConstant = new NodeShapeBasedEncoder(brand("leaf"), [5], [], undefined);
+
+		it("replaces a field of the base shape", () => {
+			const base = new NodeShapeBasedEncoder(
+				brand("node"),
+				false,
+				[{ key: brand("a"), encoder: asFieldEncoder(leafValue) }],
+				undefined,
+			);
+			const shape = new SpecializedNodeShapeEncoder(base, [
+				{ key: brand("a"), encoder: asFieldEncoder(leafConstant) },
+			]);
+			const tree: JsonableTree = {
+				type: brand("node"),
+				fields: { a: [{ type: brand("leaf"), value: 5 }] },
+			};
+
+			assert.deepEqual(checkNodeEncode(base, makeContext(), tree), [5]);
+			assert.deepEqual(checkNodeEncode(shape, makeContext(), tree), []);
+		});
+
+		it("adds a field that is not in the base shape", () => {
+			const base = new NodeShapeBasedEncoder(
+				brand("node"),
+				false,
+				[{ key: brand("a"), encoder: asFieldEncoder(leafValue) }],
+				undefined,
+			);
+			const shape = new SpecializedNodeShapeEncoder(base, [
+				{ key: brand("b"), encoder: asFieldEncoder(leafValue) },
+			]);
+			const tree: JsonableTree = {
+				type: brand("node"),
+				fields: {
+					a: [{ type: brand("leaf"), value: 1 }],
+					b: [{ type: brand("leaf"), value: 2 }],
+				},
+			};
+
+			assert.deepEqual(checkNodeEncode(shape, makeContext(), tree), [1, 2]);
+		});
+
+		it("asserts on duplicate keys in fieldOverrides", () => {
+			const base = new NodeShapeBasedEncoder(brand("node"), false, [], undefined);
+			const key = brand<FieldKey>("a");
+			assert.throws(
+				() =>
+					new SpecializedNodeShapeEncoder(base, [
+						{ key, encoder: asFieldEncoder(leafValue) },
+						{ key, encoder: asFieldEncoder(leafConstant) },
+					]),
+				validateAssertionError(
+					"duplicate field key in SpecializedNodeShapeEncoder fieldOverrides",
+				),
+			);
+		});
+
+		it("asserts when encoding in a format without specialized shapes", () => {
+			const base = new NodeShapeBasedEncoder(brand("node"), false, [], undefined);
+			const shape = new SpecializedNodeShapeEncoder(base, []);
+			const context = new EncoderContext(
+				() => fail(),
+				() => fail(),
+				fieldKinds,
+				testIdCompressor,
+				undefined /* incrementalEncoder */,
+				brand(FieldBatchFormatVersion.v2),
+				false /* isSummary */,
+			);
+			assert.throws(
+				() => checkNodeEncode(shape, context, { type: brand("node") }),
+				validateAssertionError(
+					"SpecializedNodeShapeEncoder requires a format that supports specialized shapes",
+				),
+			);
 		});
 	});
 });

@@ -75,17 +75,23 @@ export {
 	type NodeChangeInverter,
 	type NodeChangeRebaser,
 	type NodeChangePruner,
-	type CrossFieldManager,
-	CrossFieldTarget,
+	type ComposeNodeManager,
+	type InvertNodeManager,
+	type RebaseNodeManager,
+	NodeMoveType,
 	FlexFieldKind,
 	type FullSchemaPolicy,
 	allowsRepoSuperset,
+	type StoredSchemaUpgradeIncompatibility,
+	type SchemaIncompatibilityLocation,
+	SchemaComparisonMode,
+	compareSchemaVersions,
+	SchemaVersionComparison,
 	type GenericChangeset,
 	genericFieldKind,
 	type HasFieldChanges,
 	type NodeExistsConstraint,
 	ModularChangeFamily,
-	type RelevantRemovedRootsFromChild,
 	EncodedModularChangesetV1,
 	EncodedModularChangesetV2,
 	updateRefreshers,
@@ -99,6 +105,7 @@ export {
 	DefaultRevisionReplacer,
 	ModularChangeFormatVersion,
 	minimizeModularChangeset,
+	isModularChangesetValid,
 } from "./modular-schema/index.js";
 
 export { mapRootChanges } from "./deltaUtils.js";
@@ -203,11 +210,12 @@ export { valueSchemaAllows } from "./valueUtilities.js";
 
 export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer.js";
 
+export { makeSchemaChangeCodec, EncodedSchemaChange } from "./schema-edits/index.js";
+
 export {
-	type SchemaChange,
-	makeSchemaChangeCodec,
-	EncodedSchemaChange,
-} from "./schema-edits/index.js";
+	type SchemaChangeset,
+	CompareAndSwapSchemaChangeset,
+} from "./schema-change-family/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";
 

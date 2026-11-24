@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/client-utils",
-	"version": "3.7.0",
+	"version": "3.15.0",
 	"description": "Not intended for use outside the Fluid Framework.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -129,13 +129,13 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
-		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@3.5.0",
+		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@3.13.0",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@microsoft/api-extractor": "7.58.1",
+		"@microsoft/api-extractor": "7.60.1",
 		"@playwright/test": "^1.62.1",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
@@ -254,9 +254,9 @@
 		}
 	},
 	"fluidCompatMetadata": {
-		"generation": 11,
-		"releaseDate": "2026-10-19",
-		"releasePkgVersion": "3.6.0"
+		"generation": 12,
+		"releaseDate": "2026-11-23",
+		"releasePkgVersion": "3.14.0"
 	},
 	"typeValidation": {
 		"broken": {},

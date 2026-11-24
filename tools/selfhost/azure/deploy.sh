@@ -58,18 +58,23 @@ SELFHOST_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 usage() {
   cat >&2 <<'EOF'
-Usage: azure/deploy.sh [--mode full|deploy-only] <release-id> [path/to/deploy.parameters.json]
+Usage: azure/deploy.sh [--mode full|deploy-only] [--skip-preflight] <release-id> [path/to/deploy.parameters.json]
 
   --mode full     new deployment: create Azure infrastructure and deploy the release (default)
                   aliases: --new, --full
   --mode deploy-only
                   deploy only the release bundle onto existing Azure/AKS infrastructure
+  --skip-preflight skip Azure preflight checks; local validation still runs
+  Redis migration: use azure/migrate-redis.sh (maintenance window required)
   -h, --help      show this help
 EOF
 }
 
 # Deployment mode
 MODE=full
+SKIP_PREFLIGHT=false
+REDIS_SOURCE_PARAMS=""
+CONFIRM_REDIS_MIGRATION=false
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -77,6 +82,9 @@ while [[ $# -gt 0 ]]; do
     --mode=*)                     MODE="${1#*=}"; shift ;;
     --new|--full)                 MODE=full; shift ;;
     --deploy-only)                 MODE=deploy-only; shift ;;
+    --skip-preflight)              SKIP_PREFLIGHT=true; shift ;;
+    --redis-source-parameters)     REDIS_SOURCE_PARAMS="${2:-}"; shift 2 ;;
+    --confirm-redis-migration)     CONFIRM_REDIS_MIGRATION=true; shift ;;
     -h|--help)                    usage; exit 0 ;;
     --)                           shift; while [[ $# -gt 0 ]]; do POSITIONAL+=("$1"); shift; done ;;
     -*)                           echo "ERROR: unknown option '$1'" >&2; usage; exit 1 ;;
@@ -88,7 +96,8 @@ set -- ${POSITIONAL[@]+"${POSITIONAL[@]}"}
 case "$MODE" in
   full|new)                          MODE=full ;;
   deploy-only)                      MODE=deploy-only ;;
-  *) echo "ERROR: invalid --mode '$MODE' (expected 'full' or 'deploy-only')" >&2; usage; exit 1 ;;
+  migrate-redis)                    MODE=migrate-redis ;;
+  *) echo "ERROR: invalid --mode '$MODE' (expected 'full', 'deploy-only', or 'migrate-redis')" >&2; usage; exit 1 ;;
 esac
 
 RELEASE_ID="${1:-}"
@@ -103,6 +112,15 @@ fi
 if [[ ! -f "$PARAMS_FILE" ]]; then
   echo "ERROR: parameters file not found: $PARAMS_FILE" >&2
   echo "Copy azure/deploy.parameters.example.json to azure/deploy.parameters.json and fill it in." >&2
+  exit 1
+fi
+if [[ "$MODE" == migrate-redis ]]; then
+  [[ "$CONFIRM_REDIS_MIGRATION" == true && -f "$REDIS_SOURCE_PARAMS" ]] || {
+    echo "ERROR: use azure/migrate-redis.sh with source/target parameters and --yes to acknowledge downtime." >&2
+    exit 1
+  }
+elif [[ -n "$REDIS_SOURCE_PARAMS" || "$CONFIRM_REDIS_MIGRATION" == true ]]; then
+  echo "ERROR: Redis migration flags require azure/migrate-redis.sh." >&2
   exit 1
 fi
 
@@ -152,7 +170,7 @@ ensure_role_assignment() {
   LAST_CREATED_ROLE_ID=""
   role_def_id="$(az role definition list --name "$role_name" --query '[0].name' -o tsv)"
   existing="$(az rest --method get \
-    --url "https://management.azure.com${scope}/providers/Microsoft.Authorization/roleAssignments?api-version=2022-04-01" \
+    --url "$AZURE_RESOURCE_MANAGER${scope}/providers/Microsoft.Authorization/roleAssignments?api-version=2022-04-01" \
     --query "value[?properties.principalId=='$principal_object_id' && contains(properties.roleDefinitionId, '$role_def_id') && properties.scope=='$scope'].id | [0]" -o tsv 2>/dev/null)"
   if [[ -n "$existing" ]]; then
     log "Role '$role_name' already granted to $principal_object_id at this scope, skipping"
@@ -181,7 +199,7 @@ cleanup_temporary_role_assignments() {
     [[ -n "$id" ]] || continue
     log "Removing temporary Key Vault role assignment"
     az rest --method delete \
-      --url "https://management.azure.com${id}?api-version=2022-04-01" >/dev/null 2>&1 || true
+      --url "$AZURE_RESOURCE_MANAGER${id}?api-version=2022-04-01" >/dev/null 2>&1 || true
   done
 }
 
@@ -193,6 +211,14 @@ cleanup_sensitive_temp_files() {
 }
 
 cleanup_deployment_state() {
+  local status=$?
+  if [[ "$status" != 0 && "${REDIS_MIGRATION_STOPPED:-false}" == true ]]; then
+    echo "ERROR: Redis migration failed after workloads were stopped. Both caches are retained." >&2
+    # Do not let a partial cutover run against two independent Pub/Sub backends.
+    stop_redis_workloads ||
+      echo "ERROR: could not stop every workload and wait for its pods; do so manually before recovery." >&2
+    echo "Migration state and recovery instructions: $DEPLOY_DIR/redis-migration-recovery.txt" >&2
+  fi
   cleanup_sensitive_temp_files || true
   restore_keyvault_public_access || true
   cleanup_temporary_role_assignments
@@ -204,7 +230,7 @@ trap cleanup_deployment_state EXIT
 # Access policy as above, but ARM token issuance is unaffected.
 current_principal_object_id() {
   local token payload
-  token="$(az account get-access-token --resource https://management.azure.com --query accessToken -o tsv)"
+  token="$(az account get-access-token --query accessToken -o tsv)"
   payload="$(cut -d '.' -f2 <<<"$token" | tr '_-' '/+')"
   case $(( ${#payload} % 4 )) in
     2) payload+="==" ;;
@@ -288,6 +314,10 @@ if [[ ${#missing[@]} -gt 0 ]]; then
   exit 1
 fi
 log "All required tools found: ${REQUIRED_TOOLS[*]}"
+. "$SELFHOST_ROOT/azure-cloud.sh"
+load_azure_cloud
+. "$SELFHOST_ROOT/azure/redis-helpers.sh"
+load_redis_config "$PARAMS_FILE"
 
 # Azure Managed Redis commands are supplied by an az CLI extension. Install it visibly up front
 # so the CLI's default dynamic-install prompt cannot be hidden by a later stderr redirect and
@@ -303,12 +333,14 @@ ensure_az_extension() {
     }
   fi
 }
-ensure_az_extension redisenterprise
-az redisenterprise create --help 2>/dev/null | grep --fixed-strings -- '--access-keys-authentication' >/dev/null || {
-  echo "ERROR: the redisenterprise az CLI extension is too old. Upgrade it and rerun:" >&2
-  echo "  az extension update --name redisenterprise" >&2
-  exit 1
-}
+if [[ "$REDIS_SERVICE" == managed ]]; then
+  ensure_az_extension redisenterprise
+  az redisenterprise create --help 2>/dev/null | grep --fixed-strings -- '--access-keys-authentication' >/dev/null || {
+    echo "ERROR: the redisenterprise az CLI extension is too old. Upgrade it and rerun:" >&2
+    echo "  az extension update --name redisenterprise" >&2
+    exit 1
+  }
+fi
 export AZURE_EXTENSION_USE_DYNAMIC_INSTALL=yes_without_prompt
 
 # ---------------------------------------------------------------------------
@@ -317,8 +349,11 @@ export AZURE_EXTENSION_USE_DYNAMIC_INSTALL=yes_without_prompt
 # chart/values rendering errors before any phase below creates, modifies,
 # or deletes anything. Aborts here on failure rather than partway through a real deploy.
 # ---------------------------------------------------------------------------
-banner "Running preflight checks (azure/preflight-check.sh)"
-if ! bash "$SELFHOST_ROOT/azure/preflight-check.sh" "$PARAMS_FILE"; then
+if [[ "$MODE" == migrate-redis ]]; then
+  log "Redis migration runs a dedicated provider pre-check before creating the target cache."
+elif [[ "$SKIP_PREFLIGHT" == true ]]; then
+  log "WARNING: --skip-preflight bypasses Azure capacity, zone, name, and Helm checks."
+elif ! bash "$SELFHOST_ROOT/azure/preflight-check.sh" "$PARAMS_FILE"; then
   echo "ERROR: preflight checks failed -- fix the issues above before deploying" >&2
   exit 1
 fi
@@ -338,7 +373,8 @@ elif [[ "$FLUID_REPO_DIR" == "~" ]]; then
   FLUID_REPO_DIR="$HOME"
 fi
 ACR="$(jqr '.deployAcr.name')"
-BUSYBOX_IMAGE="$ACR.azurecr.io/busybox@$BUSYBOX_DIGEST"
+ACR_LOGIN_SERVER="$ACR$AZURE_ACR_SUFFIX"
+BUSYBOX_IMAGE="$ACR_LOGIN_SERVER/busybox@$BUSYBOX_DIGEST"
 AKS="$(jqr '.aks.name')"
 AKS_LOC="$(jqr '.aks.location')"; AKS_LOC="${AKS_LOC:-$RG_LOC}"
 AKS_K8S_VERSION="$(jqr '.aks.kubernetesVersion')"; AKS_K8S_VERSION="${AKS_K8S_VERSION:-1.35}"
@@ -418,16 +454,11 @@ COSMOS_RU_SCRIBE_DELTAS="$(jqr '.cosmos.throughput.scribeDeltas')"; COSMOS_RU_SC
 COSMOS_RU_TENANTS="$(jqr '.cosmos.throughput.tenants')"; COSMOS_RU_TENANTS="${COSMOS_RU_TENANTS:-4000}"
 COSMOS_RU_NODES="$(jqr '.cosmos.throughput.nodes')"; COSMOS_RU_NODES="${COSMOS_RU_NODES:-4000}"
 COSMOS_RU_RESERVATIONS="$(jqr '.cosmos.throughput.reservations')"; COSMOS_RU_RESERVATIONS="${COSMOS_RU_RESERVATIONS:-4000}"
-REDIS="$(jqr '.redis.clusterName')"
-REDIS_LOC="$(jqr '.redis.location')"; REDIS_LOC="${REDIS_LOC:-$RG_LOC}"
 # Balanced_B5 is the current Azure Managed Redis mapping for the previous Premium P1 baseline:
 # 6 GB advertised / approximately 4.8 GB usable, with substantially higher throughput. The
 # database remains non-clustered because Fluid constructs a standalone Redis client rather than
 # a Redis Cluster client. HA defaults to Enabled in the example parameters and can be disabled
 # explicitly where the selected region or SKU cannot provide it.
-REDIS_SKU="$(jqr '.redis.sku')"; REDIS_SKU="${REDIS_SKU:-Balanced_B5}"
-REDIS_HIGH_AVAILABILITY="$(jqr '.redis.highAvailability')"
-REDIS_PORT=10000
 STORAGE="$(jqr '.storage.accountName')"
 
 # Standard_ZRS (Zone-Redundant Storage) by default -- falls back to Standard_LRS if create
@@ -476,9 +507,6 @@ KAFKA_TUNING_ENV_JSON="$(jq -nc \
   '[{name:"kafka__lib__consumerGlobalAdditionalConfig",value:$consumer},
     {name:"kafka__lib__producerGlobalAdditionalConfig",value:$producer},
     {name:"kafka__lib__rdkafkaConsumeLoopTimeoutDelay",value:"0"}]')"
-# Broker endpoint handed to the chart as <KAFKA_ENDPOINT>. Event Hubs' Kafka head is always
-# port 9093 with TLS.
-KAFKA_ENDPOINT="${EVENTHUBS_NAMESPACE}.servicebus.windows.net:9093"
 AFD="$(jqr '.frontDoor.profileName')"
 # Azure's own default when left unset. 240 is the documented maximum for this setting.
 AFD_RESPONSE_TIMEOUT_SECONDS="$(jqr '.frontDoor.responseTimeoutSeconds')"; AFD_RESPONSE_TIMEOUT_SECONDS="${AFD_RESPONSE_TIMEOUT_SECONDS:-30}"
@@ -542,8 +570,8 @@ done
 # every kubectl/helm call in the rest of this script to the target cluster explicitly instead
 # of trusting ambient current-context, so a drifted context fails loudly rather than silently
 # mutating the wrong cluster.
-kubectl() { command kubectl --context "$AKS" "$@"; }
-helm() { command helm --kube-context "$AKS" "$@"; }
+kubectl() { command kubectl --context "$AKS" --namespace "$WORKLOAD_SA_NAMESPACE" "$@"; }
+helm() { command helm --kube-context "$AKS" --namespace "$WORKLOAD_SA_NAMESPACE" "$@"; }
 
 TEMP_BASE="${TMPDIR:-/tmp}"
 [[ -d "$TEMP_BASE" ]] || { echo "ERROR: temporary directory does not exist: $TEMP_BASE" >&2; exit 1; }
@@ -809,7 +837,7 @@ phase0_network_allow_frontdoor() {
 # Creates a Private Endpoint + Private DNS Zone (idempotent) for one PaaS resource into
 # pe-subnet, and links the zone to $VNET so AKS pods resolve the private IP instead of the
 # public one. $1=resource id, $2=group id (e.g. vault/MongoDB/redisCache/file/namespace),
-# $3=short name (used to build the PE/zone/link names), $4=private DNS zone name.
+# $3=short name (used to build the PE/zone/link names).
 #
 # NOTE: the private endpoint itself is created at $AKS_LOC, NOT $RG_LOC -- same reason as the
 # VNet region fix in phase0_network(): `az network private-endpoint create` requires the
@@ -817,9 +845,54 @@ phase0_network_allow_frontdoor() {
 # this wrong surfaces as a confusing "(InvalidResourceReference)"/"(NotFound) Resource ... not
 # found" error for the VNet itself rather than a clear region-mismatch message.
 create_private_endpoint() {
-  local resource_id="$1" group_id="$2" short_name="$3" zone_name="$4"
+  local resource_id="$1" group_id="$2" short_name="$3"
   local pe_name="pe-$short_name" zone_link_name="link-$short_name"
-  local vnet_id existing_zone_link
+  local vnet_id existing_zone_link endpoints endpoint pe_state resources zone_name
+  pe_name="${pe_name:0:64}"
+  pe_name="${pe_name%-}"
+
+  # The provider supplies the zone for this resource and cloud, including AMR versus Redis Enterprise.
+  if [[ "$group_id" == redisEnterprise ]]; then
+    resources="$(az rest --method get \
+      --url "$AZURE_RESOURCE_MANAGER$resource_id/privateLinkResources?api-version=2025-07-01" \
+      --query value -o json)" || return 1
+  else
+    resources="$(az network private-link-resource list --id "$resource_id" -o json)" || return 1
+  fi
+  zone_name="$(jq -er --arg group "$group_id" '
+    [.[] | (.properties // .) | select(.groupId == $group) | .requiredZoneNames[]] | unique |
+    if length == 1 and (.[0] | type == "string" and length > 0) then .[0]
+    else error("Expected one private DNS zone for the requested group") end
+  ' <<<"$resources")" || {
+    echo "ERROR: could not resolve private DNS for $resource_id ($group_id)." >&2
+    return 1
+  }
+
+  endpoints="$(az network private-endpoint list -g "$RG" -o json)"
+  endpoint="$(jq -c --arg name "$pe_name" '
+    if type == "array" then [.[] | select(.name == $name)][0]
+    else error("Expected a private endpoint list") end
+  ' <<<"$endpoints")"
+  pe_state=""
+  if [[ "$endpoint" != null ]]; then
+    if ! jq -e --arg resource "$resource_id" --arg subnet "$PE_SUBNET_ID" --arg group "$group_id" '
+      (.subnet.id | ascii_downcase) == ($subnet | ascii_downcase) and
+      (.privateLinkServiceConnections | length) == 1 and
+      (.privateLinkServiceConnections[0].privateLinkServiceId | ascii_downcase) == ($resource | ascii_downcase) and
+      .privateLinkServiceConnections[0].groupIds == [$group] and
+      ((.manualPrivateLinkServiceConnections // []) | length) == 0
+    ' <<<"$endpoint" >/dev/null; then
+      echo "ERROR: private endpoint $pe_name does not match the requested resource, group, and subnet; refusing to modify it." >&2
+      return 1
+    fi
+    pe_state="$(jq -r '.provisioningState' <<<"$endpoint")"
+    case "$pe_state" in
+      Succeeded) log "Private endpoint $pe_name already exists, skipping create" ;;
+      Failed) log "Retrying provisioning of failed private endpoint $pe_name without deleting it" ;;
+      Creating|Updating) log "Waiting for existing private endpoint $pe_name ($pe_state)" ;;
+      *) echo "ERROR: private endpoint $pe_name is in state '$pe_state'; resolve it before retrying." >&2; return 1 ;;
+    esac
+  fi
 
   if ! az network private-dns zone show -g "$RG" -n "$zone_name" >/dev/null 2>&1; then
     az network private-dns zone create -g "$RG" -n "$zone_name"
@@ -834,13 +907,12 @@ create_private_endpoint() {
       -v "$VNET" -e false
   fi
 
-  if az network private-endpoint show -g "$RG" -n "$pe_name" >/dev/null 2>&1; then
-    log "Private endpoint $pe_name already exists, skipping create"
-  else
+  if [[ "$endpoint" == null || "$pe_state" == Failed ]]; then
     az network private-endpoint create -g "$RG" -n "$pe_name" -l "$AKS_LOC" \
       --subnet "$PE_SUBNET_ID" --private-connection-resource-id "$resource_id" \
       --group-id "$group_id" --connection-name "${pe_name}-conn"
   fi
+  az network private-endpoint wait -g "$RG" -n "$pe_name" --created --interval 10 --timeout 600
 
   # Same-subscription/tenant private endpoints auto-approve when the requester already has
   # sufficient RBAC on the target resource -- check and surface it rather than assume, since a
@@ -852,7 +924,10 @@ create_private_endpoint() {
     || { echo "ERROR: private endpoint $pe_name connection status is '$pe_status', not Approved" >&2; exit 1; }
 
   az network private-endpoint dns-zone-group create -g "$RG" --endpoint-name "$pe_name" \
-    --name default --private-dns-zone "$zone_name" --zone-name "$short_name" >/dev/null 2>&1 || true
+    --name default --private-dns-zone "$zone_name" --zone-name "$short_name" >/dev/null || {
+    echo "ERROR: could not configure private DNS for $pe_name; fix the reported error and rerun." >&2
+    return 1
+  }
   log "Private endpoint $pe_name -> $zone_name VERIFY passed ($pe_status)"
 }
 
@@ -861,6 +936,12 @@ create_private_endpoint() {
 # ===========================================================================
 phase1_images() {
   banner "Phase 1: Import release images"
+  local dockerhub_auth_args=() auth_args=()
+  if [[ -n "${DOCKERHUB_USERNAME:-}" || -n "${DOCKERHUB_TOKEN:-}" ]]; then
+    [[ -n "${DOCKERHUB_USERNAME:-}" && -n "${DOCKERHUB_TOKEN:-}" ]] \
+      || fail "set both DOCKERHUB_USERNAME and DOCKERHUB_TOKEN for authenticated Docker Hub imports."
+    dockerhub_auth_args=(--username "$DOCKERHUB_USERNAME" --password "$DOCKERHUB_TOKEN")
+  fi
   az acr login -n "$ACR"
   local name repository digest src repo ref target_tag target_repo base without_tag
 
@@ -871,7 +952,13 @@ phase1_images() {
     if az acr repository show --name "$ACR" --image "$repo:$IMAGE_TAG" >/dev/null 2>&1; then
       log "$repo:$IMAGE_TAG already in ACR, skipping import"
     else
-      az acr import --name "$ACR" --source "$src" --image "$repo:$IMAGE_TAG" --force
+      auth_args=()
+      case "$src" in
+        docker.io/*|registry.hub.docker.com/*|index.docker.io/*)
+          auth_args=(${dockerhub_auth_args[@]+"${dockerhub_auth_args[@]}"});;
+      esac
+      az acr import --name "$ACR" --source "$src" --image "$repo:$IMAGE_TAG" --force \
+        ${auth_args[@]+"${auth_args[@]}"}
     fi
   done < <(jq -r '.builtImages[]? | select(.status == "pinned") | [.name, .repository, .digest] | @tsv' "$IMAGES_FILE")
 
@@ -897,7 +984,13 @@ phase1_images() {
     if az acr repository show --name "$ACR" --image "$target_repo@$digest" >/dev/null 2>&1; then
       log "$target_repo@$digest already in ACR, skipping import"
     else
-      az acr import --name "$ACR" --source "$src" --image "$target_repo:$target_tag" --force
+      auth_args=()
+      case "$src" in
+        docker.io/*|registry.hub.docker.com/*|index.docker.io/*)
+          auth_args=(${dockerhub_auth_args[@]+"${dockerhub_auth_args[@]}"});;
+      esac
+      az acr import --name "$ACR" --source "$src" --image "$target_repo:$target_tag" --force \
+        ${auth_args[@]+"${auth_args[@]}"}
     fi
   done < <(jq -r '.dependencyImages[]? | select(.status == "pinned") | [.name, (.tag // ""), .digest] | @tsv' "$IMAGES_FILE")
 
@@ -1153,7 +1246,7 @@ phase8_keyvault() {
   if [[ "$(az keyvault show -g "$RG" -n "$KV" --query properties.publicNetworkAccess -o tsv)" != "Enabled" ]]; then
     az keyvault update -g "$RG" -n "$KV" --public-network-access Enabled
   fi
-  create_private_endpoint "$kv_id" vault "$KV" privatelink.vaultcore.azure.net
+  create_private_endpoint "$kv_id" vault "$KV"
 
   log "Phase 8 (Key Vault) VERIFY passed — workload identity has Key Vault Secrets User; CSI add-on identity (clientId=$CSI_IDENTITY_CLIENT_ID) is unused by design"
 }
@@ -1243,7 +1336,7 @@ phase8_cosmos() {
   if [[ "$(az cosmosdb show -n "$COSMOS" -g "$RG" --query publicNetworkAccess -o tsv)" != "Disabled" ]]; then
     az cosmosdb update -n "$COSMOS" -g "$RG" --public-network-access Disabled
   fi
-  create_private_endpoint "$cosmos_id" MongoDB "$COSMOS" privatelink.mongo.cosmos.azure.com
+  create_private_endpoint "$cosmos_id" MongoDB "$COSMOS"
 
   if [[ "$(az cosmosdb show -n "$COSMOS" -g "$RG" --query capacityMode -o tsv)" == "Provisioned" ]]; then
     phase8_cosmos_throughput
@@ -1345,13 +1438,13 @@ phase8_cosmos_throughput() {
 # ===========================================================================
 # Phase 8 Task 4 — Azure Managed Redis
 # ===========================================================================
-phase8_redis() {
+provision_managed_redis() {
   banner "Phase 8: Azure Managed Redis"
   # Fluid's RedisClientConnectionManager is password-based, so access-key authentication stays
   # enabled and the key follows the existing Key Vault + CSI path. Entra ID remains the preferred
   # Azure authentication model, but adopting it requires token refresh support in the Fluid
   # server client and is deliberately not approximated in deployment configuration.
-  local existing_state cluster_ha cluster_public database_state database_auth database_protocol database_clustering database_port
+  local existing_state cluster_ha cluster_public database_state database_auth database_protocol database_clustering database_port database_eviction attempt
   existing_state="$(az redisenterprise show -n "$REDIS" -g "$RG" --query provisioningState -o tsv 2>/dev/null || true)"
   if [[ -z "$existing_state" ]]; then
     az redisenterprise create -n "$REDIS" -g "$RG" -l "$REDIS_LOC" \
@@ -1364,6 +1457,9 @@ phase8_redis() {
       --clustering-policy NoCluster \
       --eviction-policy VolatileLRU \
       --port "$REDIS_PORT"
+  elif [[ "$existing_state" == Creating || "$existing_state" == Updating ]]; then
+    log "Waiting for existing Azure Managed Redis $REDIS ($existing_state)"
+    az redisenterprise wait -n "$REDIS" -g "$RG" --created --interval 30 --timeout 1800
   elif [[ "$existing_state" != "Succeeded" ]]; then
     echo "ERROR: Azure Managed Redis $REDIS exists in provisioning state '$existing_state'." >&2
     echo "Resolve or delete the failed resource explicitly, then rerun; deploy.sh will not destroy it automatically." >&2
@@ -1385,11 +1481,32 @@ phase8_redis() {
     }
   fi
 
-  database_state="$(az redisenterprise database show --cluster-name "$REDIS" -g "$RG" --query provisioningState -o tsv 2>/dev/null || true)"
+  for attempt in {1..60}; do
+    database_state="$(az redisenterprise database list --cluster-name "$REDIS" -g "$RG" \
+      --query "[?name=='default'] | [0].provisioningState" -o tsv)"
+    [[ "$database_state" == Creating || "$database_state" == Updating ]] || break
+    log "Waiting for existing AMR database ($database_state, attempt $attempt/60)"
+    sleep 10
+  done
+  if [[ "$database_state" == Creating || "$database_state" == Updating ]]; then
+    echo "ERROR: timed out waiting for the AMR database; inspect its provisioning state and rerun after it succeeds." >&2
+    return 1
+  fi
+  if [[ -z "$database_state" ]]; then
+    az redisenterprise database create --cluster-name "$REDIS" -g "$RG" \
+      --access-keys-authentication Enabled --client-protocol Encrypted \
+      --clustering-policy NoCluster --eviction-policy VolatileLRU --port "$REDIS_PORT"
+    database_state="$(az redisenterprise database show --cluster-name "$REDIS" -g "$RG" --query provisioningState -o tsv)"
+  fi
+  if [[ "$database_state" != Succeeded ]]; then
+    echo "ERROR: AMR database is in provisioning state '$database_state'; resolve it explicitly before rerunning." >&2
+    return 1
+  fi
   database_auth="$(az redisenterprise database show --cluster-name "$REDIS" -g "$RG" --query accessKeysAuthentication -o tsv 2>/dev/null || true)"
   database_protocol="$(az redisenterprise database show --cluster-name "$REDIS" -g "$RG" --query clientProtocol -o tsv 2>/dev/null || true)"
   database_clustering="$(az redisenterprise database show --cluster-name "$REDIS" -g "$RG" --query clusteringPolicy -o tsv 2>/dev/null || true)"
   database_port="$(az redisenterprise database show --cluster-name "$REDIS" -g "$RG" --query port -o tsv 2>/dev/null || true)"
+  database_eviction="$(az redisenterprise database show --cluster-name "$REDIS" -g "$RG" --query evictionPolicy -o tsv)"
   if [[ "$database_auth" != "Enabled" || "$database_protocol" != "Encrypted" ]]; then
     az redisenterprise database update --cluster-name "$REDIS" -g "$RG" \
       --access-keys-authentication Enabled --client-protocol Encrypted >/dev/null
@@ -1398,29 +1515,63 @@ phase8_redis() {
   fi
   [[ "$database_state" == "Succeeded" && "$database_auth" == "Enabled" \
       && "$database_protocol" == "Encrypted" && "$database_clustering" == "NoCluster" \
-      && "$database_port" == "$REDIS_PORT" ]] || {
+      && "$database_port" == "$REDIS_PORT" && "$database_eviction" == VolatileLRU ]] || {
     echo "ERROR: Azure Managed Redis $REDIS/default is incompatible with Fluid." >&2
-    echo "Expected Succeeded/Enabled/Encrypted/NoCluster/$REDIS_PORT; got $database_state/$database_auth/$database_protocol/$database_clustering/$database_port." >&2
+    echo "Expected Succeeded/Enabled/Encrypted/NoCluster/$REDIS_PORT/VolatileLRU; got $database_state/$database_auth/$database_protocol/$database_clustering/$database_port/$database_eviction." >&2
     echo "These database creation settings cannot all be changed in place; create a compatible instance." >&2
     exit 1
   }
 
-  REDIS_HOSTNAME="$(az redisenterprise show -n "$REDIS" -g "$RG" --query hostName -o tsv)"
-  local redis_key redis_id
-  redis_key="$(az redisenterprise database list-keys --cluster-name "$REDIS" -g "$RG" --query primaryKey -o tsv)"
-  # ALL 8 app workloads get the Redis access key the same way: Key Vault + CSI mount via the one
-  # workload identity (see phase4_secrets_infra / phase5_helm). No plain Kubernetes Secret is
-  # created for it anywhere.
-  keyvault_secret_set_with_retry "$KV" redis-password "$redis_key"
-  az keyvault secret show --vault-name "$KV" --name redis-password --query id -o tsv >/dev/null
-
+  resolve_redis_hostname
+  local redis_id
   redis_id="$(az redisenterprise show -n "$REDIS" -g "$RG" --query id -o tsv)"
   [[ "$(az redisenterprise show -n "$REDIS" -g "$RG" --query highAvailability -o tsv)" == "$REDIS_HIGH_AVAILABILITY" \
       && "$(az redisenterprise show -n "$REDIS" -g "$RG" --query publicNetworkAccess -o tsv)" == "Disabled" ]] \
     || { echo "ERROR: Azure Managed Redis $REDIS does not have highAvailability=$REDIS_HIGH_AVAILABILITY with public access disabled" >&2; exit 1; }
-  create_private_endpoint "$redis_id" redisEnterprise "$REDIS" privatelink.redis.azure.net
-  unset redis_key
+  create_private_endpoint "$redis_id" "$REDIS_PE_GROUP" "$REDIS"
   log "Phase 8 (Azure Managed Redis) VERIFY passed — highAvailability=$REDIS_HIGH_AVAILABILITY, access-key auth over TLS, public access disabled, and only the AKS VNet private endpoint can reach $REDIS"
+}
+
+provision_redis_cache() {
+  banner "Phase 8: Azure Cache for Redis (temporary fallback)"
+  log "WARNING: Azure Cache for Redis retires September 30, 2028; creation eligibility depends on the customer's tenant and cloud."
+  local caches cache template="$DEPLOY_DIR/redis-cache-template.json" redis_id
+  caches="$(az redis list -g "$RG" -o json)"
+  cache="$(jq -c --arg name "$REDIS" '[.[] | select(.name == $name)][0] // empty' <<<"$caches")"
+  if [[ -z "$cache" ]]; then
+    write_redis_template "$template"
+    # ARM sets publicNetworkAccess at creation; older az redis create versions cannot.
+    az deployment group create --resource-group "$RG" --name selfhost-redis-cache \
+      --mode Incremental --template-file "$template" --only-show-errors -o none
+  else
+    log "Azure Cache for Redis $REDIS already exists, verifying configuration"
+  fi
+  cache="$(az redis show -n "$REDIS" -g "$RG" -o json)"
+  if ! jq -e --arg sku "$REDIS_SKU" --argjson capacity "$REDIS_CAPACITY" '
+      .provisioningState == "Succeeded" and .sku.name == $sku and .sku.capacity == $capacity and
+      .minimumTlsVersion == "1.2" and .enableNonSslPort == false and
+      .publicNetworkAccess == "Disabled" and (.disableAccessKeyAuthentication != true) and
+      ((.redisConfiguration.authnotrequired // "no") == "no") and
+      ((.shardCount // 0) == 0) and .sslPort == 6380 and
+      (.redisConfiguration.maxmemoryPolicy // .redisConfiguration["maxmemory-policy"]) == "volatile-lru"
+    ' <<<"$cache" >/dev/null; then
+    echo "ERROR: Azure Cache for Redis $REDIS is not Succeeded/$REDIS_SKU/$REDIS_CAPACITY, non-clustered, key-authenticated, TLS 1.2 on 6380, private-only, with volatile-lru eviction. Correct it explicitly before rerunning." >&2
+    return 1
+  fi
+  resolve_redis_hostname
+  redis_id="$(jq -r '.id // empty' <<<"$cache")"
+  [[ -n "$redis_id" ]] || { echo "ERROR: Azure Cache for Redis returned no resource ID." >&2; return 1; }
+  create_private_endpoint "$redis_id" "$REDIS_PE_GROUP" "$REDIS"
+  log "Phase 8 (Azure Cache for Redis) VERIFY passed -- TLS 1.2, access keys, non-clustered, private endpoint only"
+}
+
+phase8_redis() {
+  if [[ "$REDIS_SERVICE" == cache ]]; then
+    provision_redis_cache
+  else
+    provision_managed_redis
+  fi
+  publish_redis_secret
 }
 
 # ===========================================================================
@@ -1489,7 +1640,7 @@ phase8_storage() {
   if [[ "$(az storage account show -g "$RG" -n "$STORAGE" --query publicNetworkAccess -o tsv)" != "Disabled" ]]; then
     az storage account update -g "$RG" -n "$STORAGE" --public-network-access Disabled
   fi
-  create_private_endpoint "$storage_id" file "$STORAGE" privatelink.file.core.windows.net
+  create_private_endpoint "$storage_id" file "$STORAGE"
   # The Azure File CSI driver's PROVISIONING path (dynamic PVC -> file share create/read via
   # ARM) runs under the AKS cluster's own control-plane identity, a DIFFERENT identity from the
   # kubelet identity granted above. AKS's auto-grant for this role only covers storage accounts
@@ -1573,7 +1724,7 @@ phase3_eventhubs() {
   if [[ "$(az eventhubs namespace show -g "$RG" -n "$EVENTHUBS_NAMESPACE" --query publicNetworkAccess -o tsv)" != "Disabled" ]]; then
     az eventhubs namespace update -g "$RG" -n "$EVENTHUBS_NAMESPACE" --public-network-access Disabled >/dev/null
   fi
-  create_private_endpoint "$eh_id" namespace "$EVENTHUBS_NAMESPACE" privatelink.servicebus.windows.net
+  create_private_endpoint "$eh_id" namespace "$EVENTHUBS_NAMESPACE"
 
   for hub in rawdeltas deltas; do
     [[ "$(az eventhubs eventhub show -g "$RG" --namespace-name "$EVENTHUBS_NAMESPACE" -n "$hub" --query partitionCount -o tsv 2>/dev/null)" == "$EVENTHUBS_PARTITIONS" ]] \
@@ -1607,6 +1758,7 @@ EOF
 
   sed -e "s|<WORKLOAD_IDENTITY_CLIENT_ID>|$WORKLOAD_IDENTITY_CLIENT_ID|g" -e "s|<KV>|$KV|g" \
       -e "s|<AZURE_TENANT_ID>|$AZURE_TENANT_ID|g" \
+      -e "s|<AZURE_CLOUD_NAME>|$AZURE_CSI_CLOUD_NAME|g" \
       "$SELFHOST_ROOT/azure/secretproviderclass.yaml" > "$DEPLOY_DIR/secretproviderclass.yaml"
   grep -q '<[A-Z_]*>' "$DEPLOY_DIR/secretproviderclass.yaml" \
     && { echo "ERROR: unsubstituted placeholder left in the rendered SecretProviderClass:" >&2
@@ -1624,13 +1776,31 @@ EOF
 # Phase 4 — In-cluster backends (gitrest/historian; mongo is Cosmos DB, redis is Azure Cache,
 # both managed and provisioned in phase8, not in-cluster)
 # ===========================================================================
+resume_stopped_deployment() {
+  local deployment="$1" desired="$2" replicas
+  replicas="$(kubectl get deployment "$deployment" -o jsonpath='{.spec.replicas}')" || return 1
+  if [[ ! "$replicas" =~ ^[0-9]+$ ]]; then
+    echo "ERROR: could not read replica count for $deployment." >&2
+    return 1
+  fi
+  # Apply/Helm may preserve an out-of-band zero, and HPA does not reactivate it.
+  if [[ "$replicas" == 0 ]]; then
+    kubectl scale deployment "$deployment" --replicas="$desired"
+  fi
+}
+
 phase4_backends() {
   banner "Phase 4: In-cluster backends"
-  sed -e "s|<ACR>|$ACR|g" -e "s|<IMAGE_TAG>|$IMAGE_TAG|g" -e "s|<RG>|$RG|g" -e "s|<STORAGE>|$STORAGE|g" \
+  sed -e "s|<ACR>.azurecr.io|$ACR_LOGIN_SERVER|g" -e "s|<ACR>|$ACR|g" \
+      -e "s|<IMAGE_TAG>|$IMAGE_TAG|g" -e "s|<RG>|$RG|g" -e "s|<STORAGE>|$STORAGE|g" \
       -e "s|<REDIS_HOSTNAME>|$REDIS_HOSTNAME|g" -e "s|<GITREST_STORAGE_QUOTA>|$GITREST_STORAGE_QUOTA|g" \
+      -e "s|<REDIS_PORT>|$REDIS_PORT|g" \
+      -e "s|__port, value: \"10000\"|__port, value: \"$REDIS_PORT\"|g" \
       -e "s|<HISTORIAN_REPLICAS>|$HISTORIAN_REPLICAS|g" \
   "$RELEASE_DEPLOYMENT_DIR/azure/backends.yaml" > "$DEPLOY_DIR/backends.yaml"
   kubectl apply -f "$DEPLOY_DIR/backends.yaml"
+  resume_stopped_deployment gitrest 1
+  resume_stopped_deployment historian "$HISTORIAN_REPLICAS"
   kubectl wait --for=condition=available deploy/gitrest deploy/historian --timeout=300s
   [[ "$(kubectl get pvc gitrest-data -o jsonpath='{.status.phase}')" == "Bound" ]] \
     || { echo "ERROR: gitrest-data PVC not Bound" >&2; exit 1; }
@@ -1643,6 +1813,16 @@ phase4_backends() {
 # ===========================================================================
 phase5_helm() {
   banner "Phase 5: Deploy Routerlicious (Helm)"
+  local servicebus_endpoint kafka_host
+  servicebus_endpoint="$(az eventhubs namespace show -g "$RG" -n "$EVENTHUBS_NAMESPACE" \
+    --query serviceBusEndpoint -o tsv)"
+  if ! kafka_host="$(jq -ner --arg endpoint "$servicebus_endpoint" '
+      $endpoint | capture("^https://(?<host>[A-Za-z0-9.-]+)(:[0-9]+)?/?$").host
+    ')"; then
+    echo "ERROR: Event Hubs namespace '$EVENTHUBS_NAMESPACE' returned an invalid service endpoint." >&2
+    return 1
+  fi
+  KAFKA_ENDPOINT="$kafka_host:9093"
   # ServiceAccount + SecretProviderClass are applied by phase4_secrets_infra (it runs before
   # phase4_backends, since gitrest/historian need both too) -- not rendered/applied here.
 
@@ -1806,8 +1986,10 @@ phase5_helm() {
     log "Patched fluid-configmap.yaml chart template with eventHubConnString"
   fi
 
-  sed -e "s|<ACR>|$ACR|g" -e "s|<IMAGE_TAG>|$IMAGE_TAG|g" \
+  sed -e "s|<ACR>.azurecr.io|$ACR_LOGIN_SERVER|g" -e "s|<ACR>|$ACR|g" -e "s|<IMAGE_TAG>|$IMAGE_TAG|g" \
       -e "s|<REDIS_HOSTNAME>|$REDIS_HOSTNAME|g" \
+      -e "s|<REDIS_PORT>|$REDIS_PORT|g" \
+      -e "s|^  port: 10000$|  port: $REDIS_PORT|g" \
       -e "s|<KAFKA_ENDPOINT>|$KAFKA_ENDPOINT|g" \
       -e "s|<ALFRED_EXTERNAL_URL>|$ext_alfred|g" \
       -e "s|<NEXUS_EXTERNAL_URL>|$ext_nexus|g" \
@@ -2044,6 +2226,9 @@ phase5_helm() {
   kubectl scale deployment fluid-scribe --replicas="$SCRIBE_REPLICAS"
   kubectl scale deployment fluid-scriptorium --replicas="$SCRIPTORIUM_REPLICAS"
 
+  resume_stopped_deployment fluid-alfred "$ALFRED_REPLICAS"
+  resume_stopped_deployment fluid-nexus "$NEXUS_REPLICAS"
+  resume_stopped_deployment fluid-riddler "$RIDDLER_REPLICAS"
   kubectl wait --for=condition=available deploy/fluid-alfred deploy/fluid-nexus deploy/fluid-deli \
     deploy/fluid-scriptorium deploy/fluid-scribe deploy/fluid-riddler --timeout=300s
   log "Phase 5 VERIFY passed"
@@ -2324,20 +2509,24 @@ initialize_deploy_only_mode() {
   [[ "$(kubectl get nodes --no-headers | grep -c Ready)" -ge 1 ]] \
     || { echo "ERROR: no Ready nodes in $AKS" >&2; exit 1; }
 
-  WORKLOAD_IDENTITY_CLIENT_ID="$(az identity show -g "$RG" -n "$WORKLOAD_IDENTITY" --query clientId -o tsv 2>/dev/null || true)"
+  WORKLOAD_IDENTITY_CLIENT_ID="$(az identity show -g "$RG" -n "$WORKLOAD_IDENTITY" --query clientId -o tsv)"
+  WORKLOAD_IDENTITY_OBJECT_ID="$(az identity show -g "$RG" -n "$WORKLOAD_IDENTITY" --query principalId -o tsv)"
   AZURE_TENANT_ID="$(az account show --query tenantId -o tsv)"
-  REDIS_HOSTNAME="$(az redisenterprise show -n "$REDIS" -g "$RG" --query hostName -o tsv 2>/dev/null || true)"
-  [[ -n "$WORKLOAD_IDENTITY_CLIENT_ID" ]] \
-    || { echo "ERROR: could not resolve workload identity '$WORKLOAD_IDENTITY' clientId in $RG — is the infrastructure fully deployed?" >&2; exit 1; }
+  resolve_redis_hostname
+  [[ -n "$WORKLOAD_IDENTITY_CLIENT_ID" && -n "$WORKLOAD_IDENTITY_OBJECT_ID" ]] \
+    || { echo "ERROR: could not resolve workload identity '$WORKLOAD_IDENTITY' clientId and principalId in $RG — is the infrastructure fully deployed?" >&2; exit 1; }
   [[ -n "$REDIS_HOSTNAME" ]] \
-    || { echo "ERROR: could not resolve Azure Managed Redis '$REDIS' hostname in $RG — is the infrastructure fully deployed?" >&2; exit 1; }
+    || { echo "ERROR: could not resolve $REDIS_LABEL '$REDIS' hostname in $RG -- is the infrastructure fully deployed?" >&2; exit 1; }
   log "Resolved existing infra — WORKLOAD_IDENTITY_CLIENT_ID=$WORKLOAD_IDENTITY_CLIENT_ID REDIS_HOSTNAME=$REDIS_HOSTNAME"
 }
 
 # ===========================================================================
 # Main
 # ===========================================================================
-if [[ "$MODE" == "deploy-only" ]]; then
+if [[ "$MODE" == migrate-redis ]]; then
+  . "$SELFHOST_ROOT/azure/migrate-redis.sh"
+  migrate_redis
+elif [[ "$MODE" == "deploy-only" ]]; then
   log "Mode: deploy-only — skipping infrastructure phases, deploying release '$RELEASE_ID' onto existing infrastructure"
   # Deploy-only mode re-applies whatever changes between runs: the release bundle's own
   # manifests AND the config-driven values from deploy.parameters.json. The one-time setup phases below are
@@ -2351,8 +2540,7 @@ if [[ "$MODE" == "deploy-only" ]]; then
   #                               namespace, hubs and Key Vault secret already exist, and
   #                               re-running it would try to write to a Key Vault that
   #                               phase8_keyvault_lockdown has since closed to this workstation.
-  #                               KAFKA_ENDPOINT is derived from config at startup, so the chart
-  #                               still gets it without this phase.
+  #                               phase5_helm reads the namespace's Kafka endpoint directly.
   # publish_frontdoor_hostnames re-publishes the real Front Door hostnames into the chart's
   # discovery values without changing any Front Door configuration.
   initialize_deploy_only_mode
@@ -2396,7 +2584,7 @@ log "alfred:     https://$(az afd endpoint show -g "$RG" --profile-name "$AFD" -
 log "nexus:      wss://$(az afd endpoint show -g "$RG" --profile-name "$AFD" --endpoint-name "nexus-${AFD}" --query hostName -o tsv)"
 log "historian:  https://$(az afd endpoint show -g "$RG" --profile-name "$AFD" --endpoint-name "historian-${AFD}" --query hostName -o tsv)"
 log ""
-log "Identity + network posture: Key Vault, Cosmos DB, Azure Managed Redis, the Storage"
+log "Identity + network posture: Key Vault, Cosmos DB, $REDIS_LABEL, the Storage"
 log "Account, and the Event Hubs namespace all have public network access disabled and are only"
 log "reachable from the $VNET VNet (private endpoints). Event Hubs uses a shared-access-key"
 log "connection string held in Key Vault. All 8 app workloads authenticate as the one"

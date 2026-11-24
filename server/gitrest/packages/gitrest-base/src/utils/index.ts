@@ -47,6 +47,7 @@ export {
 	getLumberjackBasePropertiesFromRepoManagerParams,
 	getRepoManagerFromWriteAPI,
 	getRepoManagerParamsFromRequest,
+	getRepositoryRoot,
 	getRepoPath,
 	getRequestPathCategory,
 	getSoftDeletedMarkerPath,
@@ -58,6 +59,7 @@ export {
 	sizeof,
 	validateBlobContent,
 	validateBlobEncoding,
+	validateGitSha,
 } from "./helpers";
 export {
 	IsomorphicGitManagerFactory,

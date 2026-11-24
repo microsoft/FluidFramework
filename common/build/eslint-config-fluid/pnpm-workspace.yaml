@@ -9,17 +9,18 @@ packages:
   - "."
 
 # Supply chain security settings - see /DEV.md for documentation
-# Use minimumReleaseAge at 10080 when updating dependencies to ensure that
-# each package has been published for at least 7 days (10080 minutes) before
-# it is consumed to match repository policies regarding npmjs registry.
+# publicPackages applies its own package-age protections. Do not add a second delay
+# based on the time a package was saved to the feed.
 # Use `pnpm install-no-frozen`.
 minimumReleaseAge: 0
 minimumReleaseAgeExclude:
   - "@fluid-internal/*"
   - "@fluidframework/*"
+registry: https://pkgs.dev.azure.com/fluidframework/public/_packaging/publicPackages/npm/registry/
 resolutionMode: highest
 blockExoticSubdeps: true
-trustPolicy: no-downgrade
+# publicPackages does not preserve trust metadata. See /DEV.md.
+trustPolicy: off
 # List of packages known to be safe but for whatever reason were published at a date after another version of the same
 # package (including later major versions) which had better provenance information.
 # ALWAYS REVIEW CAREFULLY BEFORE ADDING SOMETHING TO THIS LIST.
@@ -38,6 +39,9 @@ strictPeerDependencies: true
 updateNotifier: false
 
 overrides:
+  # concurrently pins vulnerable shell-quote (CVE-2026-13311).
+  concurrently@10.0.3>shell-quote: ^1.11.0
+
   # @typescript-eslint/eslint-utils need to be 5.58 or later for TypeScript 6 support.
   #   As of 2026-08-05 @rushstack/eslint-plugin (v0.23.2), does not have a version using v8.58 or later.
   "@rushstack/eslint-plugin>@typescript-eslint/utils@<8.58.0": ~8.58.0

@@ -15,7 +15,8 @@ engineStrict: true
 frozenLockfile: true
 # Minimum age, in minutes, of dependencies before they can be installed.
 # See /DEV.md and https://pnpm.io/settings#minimumreleaseage more information.
-minimumReleaseAge: 1440
+minimumReleaseAge: 0
+registry: https://pkgs.dev.azure.com/fluidframework/public/_packaging/publicPackages/npm/registry/
 resolutionMode: highest
 strictDepBuilds: true
 strictPeerDependencies: true
@@ -24,6 +25,9 @@ strictPeerDependencies: true
 trustPolicy: off
 
 overrides:
+  # concurrently pins vulnerable shell-quote (CVE-2026-13311).
+  concurrently@10.0.3>shell-quote: ^1.11.0
+
   # Resolve known security vulnerabilities in transitive dependencies.
   # js-yaml: CVE-2026-59869 (quadratic CPU DoS via merge-key chains).
   js-yaml@>=3 <4: 3.15.0

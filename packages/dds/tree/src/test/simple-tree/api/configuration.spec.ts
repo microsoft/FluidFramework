@@ -12,6 +12,8 @@ import {
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { createIndependentTreeViewAlpha } from "../../../shared-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Inspect analysis reuse without adding public APIs.
+import { getTreeNodeSchemaPrivateData } from "../../../simple-tree/core/index.js";
 import {
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
@@ -20,13 +22,165 @@ import {
 } from "../../../simple-tree/api/configuration.js";
 import {
 	type TreeNodeSchema,
+	type IdentifySchemaOptions,
+	identifySchema,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 } from "../../../simple-tree/index.js";
+import {
+	getRootSchemaDerivedData,
+	hasCachedSchemaComponentForTesting,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/treeSchema.js";
 
 const schema = new SchemaFactory("com.example");
+const testLibraryId = "test";
 
+// Component analysis itself is covered in ../treeSchema.spec.ts; these tests cover configuration validation and reuse.
 describe("simple-tree configuration", () => {
+	it("reuses completed analysis while revalidating each configuration", () => {
+		const sf = new SchemaFactoryAlpha("validationAndComponentDiscovery");
+		class Leaf extends sf.object("Leaf", { value: sf.number }) {}
+		class A extends sf.objectRecursive("A", {
+			child: sf.optionalRecursive([() => B]),
+			leaf: Leaf,
+		}) {}
+		class B extends sf.objectRecursive("B", {
+			child: sf.optionalRecursive([() => A]),
+		}) {}
+		const reads = new Map<TreeNodeSchema, number>();
+		for (const node of [A, B, Leaf]) {
+			const data = getTreeNodeSchemaPrivateData(node);
+			const types = data.childAllowedTypes;
+			Object.defineProperty(data, "childAllowedTypes", {
+				get() {
+					reads.set(node, (reads.get(node) ?? 0) + 1);
+					return types;
+				},
+			});
+		}
+		const config = new TreeViewConfigurationAlpha({ schema: A });
+		assert.equal(hasCachedSchemaComponentForTesting(A), true);
+		const components = getRootSchemaDerivedData(A).components;
+		const readsAfterFirst = new Map(reads);
+		const strict = new TreeViewConfigurationAlpha({ schema: A, preventAmbiguity: true });
+		for (const node of [A, B, Leaf]) {
+			assert.equal(reads.get(node), (readsAfterFirst.get(node) ?? assert.fail()) + 1);
+		}
+		assert.strictEqual(config.definitions, strict.definitions);
+		assert.strictEqual(components, getRootSchemaDerivedData(A).components);
+	});
+
+	it("finishes configuration validation before populating component caches", () => {
+		const sf = new SchemaFactoryAlpha("validationBeforeComponents");
+		class A extends sf.array("A", sf.number) {}
+		class B extends sf.array("B", sf.number) {}
+		class Root extends sf.object("Root", { value: [A, B] }) {}
+		assert.throws(
+			() => new TreeViewConfigurationAlpha({ schema: Root, preventAmbiguity: true }),
+			validateUsageError(/Ambiguous schema/),
+		);
+		for (const node of [Root, A, B]) {
+			assert.equal(hasCachedSchemaComponentForTesting(node), false);
+		}
+		new TreeViewConfigurationAlpha({ schema: Root, preventAmbiguity: false });
+		for (const node of [Root, A, B]) {
+			assert.equal(hasCachedSchemaComponentForTesting(node), true);
+		}
+		assert.throws(
+			() => new TreeViewConfigurationAlpha({ schema: Root, preventAmbiguity: true }),
+			validateUsageError(/Ambiguous schema/),
+		);
+	});
+
+	it("reports duplicate allowed types before evaluating later fields", () => {
+		const sf = new SchemaFactoryAlpha("validationOrder");
+		let laterEvaluations = 0;
+		class Root extends sf.objectRecursive("Root", {
+			duplicate: sf.optional([sf.number, sf.number]),
+			later: sf.optionalRecursive([
+				() => {
+					laterEvaluations++;
+					throw new Error("later evaluation");
+				},
+			]),
+		}) {}
+		for (let i = 0; i < 2; i++) {
+			assert.throws(
+				() => new TreeViewConfigurationAlpha({ schema: Root }),
+				validateUsageError(/Duplicate schema in allowed types/),
+			);
+			assert.equal(laterEvaluations, 0);
+			assert.equal(hasCachedSchemaComponentForTesting(Root), false);
+		}
+	});
+
+	for (const strictFirst of [false, true]) {
+		it(`preserves ambiguity-before-identifier validation phases (${strictFirst} first)`, () => {
+			const sf = new SchemaFactoryAlpha("validationPhases");
+			class A extends sf.array("Duplicate", sf.number) {}
+			class B extends sf.array("Duplicate", sf.number) {}
+			for (const preventAmbiguity of [strictFirst, !strictFirst]) {
+				assert.throws(
+					() => new TreeViewConfigurationAlpha({ schema: [A, B], preventAmbiguity }),
+					validateUsageError(
+						preventAmbiguity ? /Ambiguous schema/ : /Multiple schema encountered/,
+					),
+				);
+			}
+		});
+	}
+
+	for (const strictFirst of [false, true]) {
+		it(`validates cached unions with preventAmbiguity=${strictFirst} first`, () => {
+			const sf = new SchemaFactoryAlpha("cachedValidation");
+			class A extends sf.array("A", sf.number) {}
+			class B extends sf.array("B", sf.number) {}
+			const root = [A, B] as const;
+			getRootSchemaDerivedData(root);
+			for (const preventAmbiguity of [strictFirst, !strictFirst]) {
+				const create = () => new TreeViewConfiguration({ schema: root, preventAmbiguity });
+				if (preventAmbiguity) {
+					assert.throws(create, validateUsageError(/Ambiguous schema/));
+				} else {
+					create();
+				}
+			}
+			const duplicate = [A, A] as const;
+			getRootSchemaDerivedData(duplicate);
+			assert.throws(
+				() => new TreeViewConfiguration({ schema: duplicate }),
+				validateUsageError(/Duplicate schema in allowed types/),
+			);
+			class Parent extends sf.object("Parent", {
+				ambiguous: root,
+				invalid: duplicate,
+			}) {}
+			getRootSchemaDerivedData(Parent);
+			assert.throws(
+				() => new TreeViewConfiguration({ schema: Parent, preventAmbiguity: true }),
+				validateUsageError(/Duplicate schema in allowed types/),
+			);
+		});
+	}
+
+	it("supports construction before configurations and shares only reachable definitions", () => {
+		const sf = new SchemaFactoryAlpha("beforeConfiguration");
+		class Child extends sf.object("Child", {}) {}
+		const child = new Child({});
+		class A extends sf.object("A", { child: Child }) {}
+		class B extends sf.object("B", { child: Child }) {}
+		for (const root of [A, B]) {
+			const config = new TreeViewConfigurationAlpha({ schema: root });
+			assert.strictEqual(
+				config.definitions,
+				getRootSchemaDerivedData(root).treeSchema.definitions,
+			);
+			new root({ child: root === A ? child : new Child({}) });
+		}
+		assert.equal(getRootSchemaDerivedData(Child).treeSchema.definitions.size, 1);
+	});
+
 	it("preventAmbiguity", () => {
 		const config = new TreeViewConfiguration({
 			schema: [schema.array(schema.string), schema.array(schema.number)],
@@ -268,5 +422,85 @@ describe("simple-tree configuration", () => {
 	it("creates TreeViewConfigurationAlpha", () => {
 		const config = new TreeViewConfiguration({ schema: [] });
 		assert(config instanceof TreeViewConfigurationAlpha);
+	});
+
+	it("validates schema versions", () => {
+		assert.throws(
+			() =>
+				new TreeViewConfigurationAlpha({
+					schema: [],
+					schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: -1 } }),
+				}),
+			/non-negative safe integer/,
+		);
+		assert.throws(
+			() =>
+				new TreeViewConfigurationAlpha({
+					schema: [],
+					schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: 1.5 } }),
+				}),
+			/non-negative safe integer/,
+		);
+	});
+
+	it("accepts zero as a schema version", () => {
+		const config = new TreeViewConfigurationAlpha({
+			schema: [],
+			schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: 0 } }),
+		});
+
+		assert.equal(config.schemaVersion?.get(testLibraryId), 0);
+		assert.equal(config.schemaIdentity?.schemaVersion?.get(testLibraryId), 0);
+	});
+
+	it("normalizes a single version using the schemaVersion identifier", () => {
+		const options: IdentifySchemaOptions = { schemaVersion: 1 };
+		const identity = identifySchema(options);
+		const config = new TreeViewConfigurationAlpha({ schema: [], schemaIdentity: identity });
+		assert.deepEqual(identity.schemaVersion, new Map([["schemaVersion", 1]]));
+		assert.equal(config.schemaVersion, identity.schemaVersion);
+	});
+
+	it("copies application versions into a map on the frozen schema identity", () => {
+		const versions = { [testLibraryId]: 1 };
+		const identity = identifySchema({ schemaVersion: versions });
+		versions[testLibraryId] = 2;
+
+		assert.deepEqual(identity.schemaVersion, new Map([["test", 1]]));
+		assert(Object.isFrozen(identity));
+		assert.equal(Object.isFrozen(versions), false);
+		const config = new TreeViewConfigurationAlpha({ schema: [], schemaIdentity: identity });
+		assert.equal(config.schemaVersion, identity.schemaVersion);
+	});
+
+	it("normalizes empty records and object prototype names into map entries", () => {
+		const empty = identifySchema({ schemaVersion: {} });
+		assert.deepEqual(empty.schemaVersion, new Map());
+		const versions = Object.fromEntries([
+			["__proto__", 0],
+			["constructor", 1],
+			["toString", 2],
+		]);
+		const identity = identifySchema({ schemaVersion: versions });
+		assert.deepEqual(identity.schemaVersion, new Map(Object.entries(versions)));
+	});
+
+	it("preserves identities without application versions", () => {
+		const identity = identifySchema();
+		const config = new TreeViewConfigurationAlpha({ schema: [], schemaIdentity: identity });
+		assert.equal(identity.schemaVersion, undefined);
+		assert.equal(config.schemaVersion, undefined);
+	});
+
+	it("rejects positive integers larger than Number.MAX_SAFE_INTEGER", () => {
+		const version = Number.MAX_SAFE_INTEGER + 1;
+		assert.throws(
+			() =>
+				new TreeViewConfigurationAlpha({
+					schema: [],
+					schemaIdentity: identifySchema({ schemaVersion: { [testLibraryId]: version } }),
+				}),
+			/non-negative safe integer/,
+		);
 	});
 });

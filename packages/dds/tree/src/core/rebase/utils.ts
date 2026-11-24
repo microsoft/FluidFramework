@@ -18,6 +18,8 @@ import {
 	tagRollbackInverse,
 } from "./changeRebaser.js";
 import { type GraphCommit, type RevisionTag, mintCommit } from "./types.js";
+import { cheapRebaseValidation } from "./rebaseValidation.js";
+import type { ChangeFamily, ChangeFamilyEditor } from "../change-family/index.js";
 
 /**
  * Contains information about how the commit graph changed as the result of rebasing a source branch onto another target branch.
@@ -116,7 +118,7 @@ interface RebaseChangeResult<TChange> {
  * A "branch" is defined as a "head" commit and all ancestors of that commit, i.e. one linked list in a graph of commits.
  *
  * The source and target branch must share an ancestor.
- * @param changeRebaser - the change rebaser responsible for rebasing the changes in the commits of each branch
+ * @param changeFamily - the change family responsible for rebasing the changes in the commits of each branch
  * @param sourceHead - the head of the source branch, which will be rebased onto `targetHead`
  * @param targetHead - the commit to rebase the source branch onto
  * @returns a {@link BranchRebaseResult}
@@ -136,9 +138,9 @@ interface RebaseChangeResult<TChange> {
  * //
  * ```
  */
-export function rebaseBranch<TChange>(
+export function rebaseBranch<TChange, TEditor extends ChangeFamilyEditor = ChangeFamilyEditor>(
 	mintRevisionTag: () => RevisionTag,
-	changeRebaser: ChangeRebaser<TChange>,
+	changeFamily: ChangeFamily<TEditor, TChange>,
 	sourceHead: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
 ): BranchRebaseResult<TChange>;
@@ -149,7 +151,7 @@ export function rebaseBranch<TChange>(
  * A "branch" is defined as a "head" commit and all ancestors of that commit, i.e. one linked list in a graph of commits.
  *
  * The source and target branch must share an ancestor.
- * @param changeRebaser - the change rebaser responsible for rebasing the changes in the commits of each branch
+ * @param changeFamily - the change family responsible for rebasing the changes in the commits of each branch
  * @param sourceHead - the head of the source branch, which will be rebased onto `newBase`
  * @param targetCommit - the commit on the target branch to rebase the source branch onto.
  * @param targetHead - the head of the branch that `newBase` belongs to. Must be `newBase` or a descendent of `newBase`.
@@ -177,16 +179,16 @@ export function rebaseBranch<TChange>(
  * //               (F') <- Branch Y'
  * ```
  */
-export function rebaseBranch<TChange>(
+export function rebaseBranch<TChange, TEditor extends ChangeFamilyEditor = ChangeFamilyEditor>(
 	mintRevisionTag: () => RevisionTag,
-	changeRebaser: ChangeRebaser<TChange>,
+	changeFamily: ChangeFamily<TEditor, TChange>,
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
 ): BranchRebaseResult<TChange>;
-export function rebaseBranch<TChange>(
+export function rebaseBranch<TChange, TEditor extends ChangeFamilyEditor = ChangeFamilyEditor>(
 	mintRevisionTag: () => RevisionTag,
-	changeRebaser: ChangeRebaser<TChange>,
+	changeFamily: ChangeFamily<TEditor, TChange>,
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
 	targetHead = targetCommit,
@@ -286,6 +288,7 @@ export function rebaseBranch<TChange>(
 		};
 	}
 
+	const changeRebaser = changeFamily.rebaser;
 	// For each source commit, rebase backwards over the inverses of any commits already rebased, and then
 	// rebase forwards over the rest of the commits up to the new base before advancing the new base.
 	let newHead = newBase;
@@ -328,7 +331,13 @@ export function rebaseBranch<TChange>(
 			},
 		},
 		"sourceChange",
-		() => changeRebaser.compose(editsToCompose),
+		() => {
+			const composed = changeRebaser.compose(editsToCompose);
+			cheapRebaseValidation("Malformed rebase net change", () =>
+				changeFamily.validator(composed),
+			);
+			return composed;
+		},
 	);
 }
 
@@ -342,8 +351,8 @@ export function rebaseBranch<TChange>(
  *
  * @remarks inverses will be cached.
  */
-export function rebaseChange<TChange>(
-	changeRebaser: ChangeRebaser<TChange>,
+export function rebaseChange<TChange, TEditor extends ChangeFamilyEditor = ChangeFamilyEditor>(
+	changeFamily: ChangeFamily<TEditor, TChange>,
 	change: TaggedChange<TChange>,
 	sourceHead: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
@@ -358,7 +367,7 @@ export function rebaseChange<TChange>(
 	);
 
 	const inverses = sourcePath.map((commit) =>
-		rollbackFromCommit(changeRebaser, commit, mintRevisionTag, true),
+		rollbackFromCommit(changeFamily.rebaser, commit, mintRevisionTag, true),
 	);
 	inverses.reverse();
 
@@ -368,13 +377,17 @@ export function rebaseChange<TChange>(
 		countDropped: 0,
 	};
 
+	const rebased = rebaseChangeOverChanges(
+		changeFamily.rebaser,
+		change,
+		[...inverses, ...targetPath],
+		ignoreNoChangeViolation,
+	);
+	cheapRebaseValidation("Malformed rebase change result", () =>
+		changeFamily.validator(rebased),
+	);
 	return {
-		change: rebaseChangeOverChanges(
-			changeRebaser,
-			change,
-			[...inverses, ...targetPath],
-			ignoreNoChangeViolation,
-		),
+		change: rebased,
 		telemetryProperties,
 	};
 }
@@ -382,23 +395,45 @@ export function rebaseChange<TChange>(
 export function revisionMetadataSourceFromInfo(
 	revInfos: readonly RevisionInfo[],
 ): RevisionMetadataSource {
-	const getIndex = (revision: RevisionTag): number | undefined => {
-		const index = revInfos.findIndex((revInfo) => revInfo.revision === revision);
-		return index >= 0 ? index : undefined;
+	const compareRevisions = (revision1: RevisionTag, revision2: RevisionTag): number => {
+		const index1 = getIndex(revision1);
+		const index2 = getIndex(revision2);
+
+		if (index1 !== undefined) {
+			return index2 === undefined ? -1 : index2 - index1;
+		}
+
+		return index2 === undefined ? 0 : 1;
 	};
+
 	const tryGetInfo = (revision: RevisionTag | undefined): RevisionInfo | undefined => {
 		if (revision === undefined) {
 			return undefined;
 		}
-		const index = getIndex(revision);
-		return index === undefined ? undefined : revInfos[index];
+		return revInfos.find((info) => info.revision === revision);
 	};
 
 	const hasRollback = (revision: RevisionTag): boolean => {
 		return revInfos.some((info) => info.rollbackOf === revision);
 	};
 
-	return { getIndex, tryGetInfo, hasRollback };
+	const getIndex = (revision: RevisionTag): number | undefined => {
+		const index = revInfos.findIndex((revInfo) => revInfo.revision === revision);
+		if (index >= 0) {
+			return index;
+		}
+
+		const rollbackIndex = revInfos.findIndex((revInfo) => revInfo.rollbackOf === revision);
+		if (rollbackIndex >= 0) {
+			// This change is the forward revision of a rollback included in revInfos, so it comes after
+			// all revisions in revInfos. Earlier rollbacks have later forward revisions.
+			return 2 * revInfos.length - rollbackIndex;
+		}
+
+		return undefined;
+	};
+
+	return { compareRevisions, tryGetInfo, hasRollback };
 }
 
 export function rebaseChangeOverChanges<TChange>(

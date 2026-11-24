@@ -26,7 +26,14 @@ The scope of the inventory can be limited to a resource group, subscription, or 
 node inventory.mjs --resource-group <resource-group>
 node inventory.mjs --subscription <subscription-id-or-name>
 node inventory.mjs --tenant-id <frs-tenant-id>
+node inventory.mjs --tenant-ids '["<frs-tenant-id-1>","<frs-tenant-id-2>"]'
 ```
+
+`--tenant-ids` accepts a non-empty JSON array, not a comma-separated string.
+Do not combine it with `--tenant-id`.
+All selected tenants are collected into one inventory, even when their resources are in different resource groups in the selected subscription.
+Use `--resource-group` as an additional restriction only when all selected tenants are in that group.
+If any requested tenant is not found in the selected scope, the command fails without overwriting the existing inventory.
 
 Use a different `document-inventory.json` output location:
 

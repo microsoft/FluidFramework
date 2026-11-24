@@ -26,6 +26,9 @@ import {
 
 /**
  * Interface for summary op messages with typed contents.
+ * @deprecated This summary collection message wrapper will become internal.
+ * There is no supported replacement for this implementation type.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export interface ISummaryOpMessage extends ISequencedDocumentMessage {
@@ -35,6 +38,9 @@ export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 
 /**
  * Interface for summary ack messages with typed contents.
+ * @deprecated This summary collection message wrapper will become internal.
+ * There is no supported replacement for this implementation type.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export interface ISummaryAckMessage extends ISequencedDocumentMessage {
@@ -44,6 +50,9 @@ export interface ISummaryAckMessage extends ISequencedDocumentMessage {
 
 /**
  * Interface for summary nack messages with typed contents.
+ * @deprecated This summary collection message wrapper will become internal.
+ * There is no supported replacement for this implementation type.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export interface ISummaryNackMessage extends ISequencedDocumentMessage {
@@ -54,6 +63,9 @@ export interface ISummaryNackMessage extends ISequencedDocumentMessage {
 /**
  * A single summary which can be tracked as it goes through its life cycle.
  * The life cycle is: Local to Broadcast to Acked/Nacked.
+ * @deprecated This summary collection tracking interface will become internal.
+ * There is no supported replacement for tracking individual summaries through their life cycle.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export interface ISummary {
@@ -65,6 +77,9 @@ export interface ISummary {
 
 /**
  * A single summary which has already been acked by the server.
+ * @deprecated This summary collection acknowledgement type will become internal.
+ * There is no supported replacement for this implementation type.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export interface IAckedSummary {
@@ -152,6 +167,9 @@ class Summary implements ISummary {
 
 /**
  * Watches summaries created by a specific client.
+ * @deprecated This summary collection watcher will become internal.
+ * There is no supported replacement for watching summaries created by a specific client.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export interface IClientSummaryWatcher extends IDisposable {
@@ -220,6 +238,9 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
 	}
 }
 /**
+ * @deprecated This summary collection event type will become internal.
+ * There is no supported replacement for these implementation-level events.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export type OpActionEventName =
@@ -229,11 +250,17 @@ export type OpActionEventName =
 	| "default";
 
 /**
+ * @deprecated This summary collection listener type will become internal.
+ * There is no supported replacement for these implementation-level events.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 
 /**
+ * @deprecated This summary collection event interface will become internal.
+ * There is no supported replacement for these implementation-level events.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export interface ISummaryCollectionOpEvents extends IEvent {
@@ -244,6 +271,9 @@ export interface ISummaryCollectionOpEvents extends IEvent {
  * Data structure that looks at the op stream to track summaries as they
  * are broadcast, acked and nacked.
  * It provides functionality for watching specific summaries.
+ * @deprecated This summary tracking implementation will become internal.
+ * There is no supported replacement for collecting and watching summary operations and acknowledgements.
+ * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/88250 | AB#88250} for tracking.
  * @legacy @beta
  */
 export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {

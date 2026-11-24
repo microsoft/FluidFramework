@@ -26,7 +26,7 @@ import type {
 } from "../simpleSchema.js";
 import type { TreeSchema } from "../treeSchema.js";
 
-import { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
+import { SchemaFactoryAlpha } from "./schemaFactory.js";
 
 const factory = new SchemaFactoryAlpha(undefined);
 
@@ -67,6 +67,8 @@ export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): TreeSc
 	return {
 		root,
 		definitions,
+		// Application versions are preserved without changing unversioned output.
+		...(simple.schemaVersion === undefined ? {} : { schemaVersion: simple.schemaVersion }),
 	};
 }
 

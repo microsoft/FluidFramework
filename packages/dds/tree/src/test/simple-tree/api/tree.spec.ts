@@ -640,7 +640,7 @@ describe("simple-tree tree", () => {
 			assert(revision1 !== undefined, "revision should be defined");
 			fork.root = 2;
 
-			const branchBeforeRewind = fork.checkout.mainBranch;
+			const original = fork.fork();
 
 			fork.rewindTo(revision1);
 
@@ -650,9 +650,8 @@ describe("simple-tree tree", () => {
 			fork.root = 44;
 
 			// Verify
-			fork.checkout.switchBranch(branchBeforeRewind);
-			assert.equal(fork.branchHistory.length, 2);
-			assert.equal(fork.root, 2);
+			assert.equal(original.branchHistory.length, 2);
+			assert.equal(original.root, 2);
 		});
 	});
 
@@ -773,11 +772,11 @@ describe("simple-tree tree", () => {
 			upgradedViewA.upgradeSchema();
 			const schemaRevision = upgradedViewA.branchHistory.getHead()?.revision;
 			assert(schemaRevision !== undefined, "revision should be defined");
-			assert.equal(upgradedViewA.compatibility.isEquivalent, true);
+			assert.equal(upgradedViewA.compatibility.canView, true);
 			upgradedViewA.root = "upgraded";
 			provider.synchronizeMessages();
 			assert.equal(upgradedViewA.root, "upgraded");
-			assert.equal(viewB.compatibility.isEquivalent, true);
+			assert.equal(viewB.compatibility.canView, true);
 			assert.equal(viewB.root, "upgraded");
 			assert.equal(commit.revertTo, undefined);
 			assert.throws(() => revertTo(), validateUsageError(/branch has changed/));
@@ -788,7 +787,7 @@ describe("simple-tree tree", () => {
 				),
 			);
 			provider.synchronizeMessages();
-			assert.equal(viewB.compatibility.isEquivalent, true);
+			assert.equal(viewB.compatibility.canView, true);
 			assert.equal(viewB.root, "upgraded");
 		});
 

@@ -1,5 +1,29 @@
 # @fluidframework/core-interfaces
 
+## 3.14.0
+
+Dependency updates only.
+
+## 3.13.0
+
+Dependency updates only.
+
+## 3.12.0
+
+Dependency updates only.
+
+## 3.11.0
+
+Dependency updates only.
+
+## 3.10.0
+
+Dependency updates only.
+
+## 3.7.0
+
+Dependency updates only.
+
 ## 3.6.0
 
 Dependency updates only.
@@ -28,122 +52,122 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Removal of direct CommonJS support ([#28124](https://github.com/microsoft/FluidFramework/pull/28124)) [0f84e3b8878](https://github.com/microsoft/FluidFramework/commit/0f84e3b8878a5e75b2253976d98fd963bbd9db88)
+#### Removal of direct CommonJS support ([#28124](https://github.com/microsoft/FluidFramework/pull/28124)) [0f84e3b8878](https://github.com/microsoft/FluidFramework/commit/0f84e3b8878a5e75b2253976d98fd963bbd9db88)
 
-  Direct `require()` import is no longer directly supported.
-  Package is transpiled as ECMAScript Module.
+Direct `require()` import is no longer directly supported.
+Package is transpiled as ECMAScript Module.
 
-  See [Removal of direct CommonJS support in v3.0](https://github.com/microsoft/FluidFramework/issues/27444) for more information.
+See [Removal of direct CommonJS support in v3.0](https://github.com/microsoft/FluidFramework/issues/27444) for more information.
 
-- Require modern TypeScript module resolution ([#27970](https://github.com/microsoft/FluidFramework/pull/27970)) [325e2016ca9](https://github.com/microsoft/FluidFramework/commit/325e2016ca9978d4a1f7552c97ba34feac9df41f)
+#### Require modern TypeScript module resolution ([#27970](https://github.com/microsoft/FluidFramework/pull/27970)) [325e2016ca9](https://github.com/microsoft/FluidFramework/commit/325e2016ca9978d4a1f7552c97ba34feac9df41f)
 
-  Fluid Framework Client packages no longer include type declaration compatibility entrypoints for TypeScript's legacy Node10 resolution mode (`"moduleResolution": "node"` or `"node10"`).
-  Applications upgrading to Fluid Framework 3.0 must use one of the following supported configurations:
-  - `"module": "Node16"` with `"moduleResolution": "Node16"`
-  - `"module": "NodeNext"` with `"moduleResolution": "NodeNext"`
-  - `"module": "ESNext"` with `"moduleResolution": "Bundler"`
+Fluid Framework Client packages no longer include type declaration compatibility entrypoints for TypeScript's legacy Node10 resolution mode (`"moduleResolution": "node"` or `"node10"`).
+Applications upgrading to Fluid Framework 3.0 must use one of the following supported configurations:
+- `"module": "Node16"` with `"moduleResolution": "Node16"`
+- `"module": "NodeNext"` with `"moduleResolution": "NodeNext"`
+- `"module": "ESNext"` with `"moduleResolution": "Bundler"`
 
-  Existing public package entrypoints exposed through `package.json` exports, including `/alpha`, `/beta`, and `/legacy`, remain available under supported module resolution modes.
+Existing public package entrypoints exposed through `package.json` exports, including `/alpha`, `/beta`, and `/legacy`, remain available under supported module resolution modes.
 
-  See [Removal of Node10 resolutions in v3.0](https://github.com/microsoft/FluidFramework/issues/27457) for more information.
+See [Removal of Node10 resolutions in v3.0](https://github.com/microsoft/FluidFramework/issues/27457) for more information.
 
-- Deprecated log level aliases have been removed ([#27983](https://github.com/microsoft/FluidFramework/pull/27983)) [5cfbf099792](https://github.com/microsoft/FluidFramework/commit/5cfbf099792473eb49ff811032b7f83a120fdbee)
+#### Deprecated log level aliases have been removed ([#27983](https://github.com/microsoft/FluidFramework/pull/27983)) [5cfbf099792](https://github.com/microsoft/FluidFramework/commit/5cfbf099792473eb49ff811032b7f83a120fdbee)
 
-  The deprecated [`LogLevel`](https://fluidframework.com/docs/api/fluid-framework/loglevelconst-interface) values `default` and `error` have been removed.
-  They were aliases for existing numeric levels, and the semantically clearer `LogLevel.info` (`20`) and `LogLevel.essential` (`30`) should be used instead.
+The deprecated [`LogLevel`](https://fluidframework.com/docs/api/fluid-framework/loglevelconst-interface) values `default` and `error` have been removed.
+They were aliases for existing numeric levels, and the semantically clearer `LogLevel.info` (`20`) and `LogLevel.essential` (`30`) should be used instead.
 
-  #### Migration
+##### Migration
 
-  The replacement for `LogLevel.default` depends on how the value is used:
-  - For an event's `logLevel` (for example the `logLevel` argument to [`ITelemetryBaseLogger.send`](https://fluidframework.com/docs/api/core-interfaces/itelemetrybaselogger-interface#send-methodsignature)), use `LogLevel.essential`.
-  - For a logger's `minLogLevel` threshold, use `LogLevel.info`.
+The replacement for `LogLevel.default` depends on how the value is used:
+- For an event's `logLevel` (for example the `logLevel` argument to [`ITelemetryBaseLogger.send`](https://fluidframework.com/docs/api/core-interfaces/itelemetrybaselogger-interface#send-methodsignature)), use `LogLevel.essential`.
+- For a logger's `minLogLevel` threshold, use `LogLevel.info`.
 
-  The replacement for `LogLevel.error` is always `LogLevel.essential`.
+The replacement for `LogLevel.error` is always `LogLevel.essential`.
 
-  ```typescript
-  // Before
-  // ...
-  logger.send(event, LogLevel.default);
-  logger.send(errorEvent, LogLevel.error);
-  logger.minLogLevel = LogLevel.default;
-  // ...
+```typescript
+// Before
+// ...
+logger.send(event, LogLevel.default);
+logger.send(errorEvent, LogLevel.error);
+logger.minLogLevel = LogLevel.default;
+// ...
 
-  // After
-  // ...
-  logger.send(event, LogLevel.essential);
-  logger.send(errorEvent, LogLevel.essential);
-  logger.minLogLevel = LogLevel.info;
-  // ...
-  ```
+// After
+// ...
+logger.send(event, LogLevel.essential);
+logger.send(errorEvent, LogLevel.essential);
+logger.minLogLevel = LogLevel.info;
+// ...
+```
 
-  See [issue #26969](https://github.com/microsoft/FluidFramework/issues/26969) for removal tracking.
+See [issue #26969](https://github.com/microsoft/FluidFramework/issues/26969) for removal tracking.
 
-- Require a log level for every telemetry event ([#27982](https://github.com/microsoft/FluidFramework/pull/27982)) [f2410e1380d](https://github.com/microsoft/FluidFramework/commit/f2410e1380db9e22717cbb4d87055d94480e3f1b)
+#### Require a log level for every telemetry event ([#27982](https://github.com/microsoft/FluidFramework/pull/27982)) [f2410e1380d](https://github.com/microsoft/FluidFramework/commit/f2410e1380db9e22717cbb4d87055d94480e3f1b)
 
-  The `logLevel` parameter of `ITelemetryBaseLogger.send` and the inherited `ITelemetryLoggerExt.send` is now required.
-  Callers must select a `LogLevel` for every event they log.
+The `logLevel` parameter of `ITelemetryBaseLogger.send` and the inherited `ITelemetryLoggerExt.send` is now required.
+Callers must select a `LogLevel` for every event they log.
 
-  Explicitly specifying a level makes logging intent part of every call site, which enables consistent filtering and sampling of telemetry.
+Explicitly specifying a level makes logging intent part of every call site, which enables consistent filtering and sampling of telemetry.
 
-  #### Migration for callers
+##### Migration for callers
 
-  Pass a `LogLevel` for every event.
-  To preserve the behavior of a call that previously omitted the level, use `LogLevel.essential`:
+Pass a `LogLevel` for every event.
+To preserve the behavior of a call that previously omitted the level, use `LogLevel.essential`:
 
-  ```typescript
-  import { LogLevel } from "@fluidframework/core-interfaces";
+```typescript
+import { LogLevel } from "@fluidframework/core-interfaces";
 
-  // Before
-  logger.send({ category: "generic", eventName: "ExampleEvent" });
+// Before
+logger.send({ category: "generic", eventName: "ExampleEvent" });
 
-  // After
-  logger.send(
-    { category: "generic", eventName: "ExampleEvent" },
-    LogLevel.essential,
-  );
-  ```
+// After
+logger.send(
+  { category: "generic", eventName: "ExampleEvent" },
+  LogLevel.essential,
+);
+```
 
-  #### Migration for logger implementations
+##### Migration for logger implementations
 
-  This is a compile-time requirement on callers only; nothing about how events are dispatched at runtime has changed.
+This is a compile-time requirement on callers only; nothing about how events are dispatched at runtime has changed.
 
-  Logger implementations should keep declaring `logLevel` as optional and treat an omitted level as `LogLevel.essential`:
+Logger implementations should keep declaring `logLevel` as optional and treat an omitted level as `LogLevel.essential`:
 
-  ```typescript
-  import {
-    LogLevel,
-    type ITelemetryBaseEvent,
-    type ITelemetryBaseLogger,
-  } from "@fluidframework/core-interfaces";
+```typescript
+import {
+  LogLevel,
+  type ITelemetryBaseEvent,
+  type ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 
-  class MyLogger implements ITelemetryBaseLogger {
-    public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
-      const level = logLevel ?? LogLevel.essential;
-      // ...
-    }
+class MyLogger implements ITelemetryBaseLogger {
+  public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+    const level = logLevel ?? LogLevel.essential;
+    // ...
   }
-  ```
+}
+```
 
-  Fluid supports running with a mix of package versions, so code compiled before `logLevel` became required still calls `send(event)` with a single argument, and will for as long as those versions are supported.
-  An implementation that assumes `logLevel` is always defined can therefore silently drop those events or handle them at the wrong level.
+Fluid supports running with a mix of package versions, so code compiled before `logLevel` became required still calls `send(event)` with a single argument, and will for as long as those versions are supported.
+An implementation that assumes `logLevel` is always defined can therefore silently drop those events or handle them at the wrong level.
 
-  This layer-compatibility guidance can be retired only after the compatibility window for callers that may omit `logLevel` has closed in a future coordinated breaking change.
-  See the `ITelemetryBaseLogger` API documentation and [microsoft/FluidFramework#27595](https://github.com/microsoft/FluidFramework/issues/27595) for more information.
+This layer-compatibility guidance can be retired only after the compatibility window for callers that may omit `logLevel` has closed in a future coordinated breaking change.
+See the `ITelemetryBaseLogger` API documentation and [microsoft/FluidFramework#27595](https://github.com/microsoft/FluidFramework/issues/27595) for more information.
 
-- Client packages now target ES2022 ([#27846](https://github.com/microsoft/FluidFramework/pull/27846)) [91c78541bdd](https://github.com/microsoft/FluidFramework/commit/91c78541bddcbca5d6c5f357b023eeaee617d885)
+#### Client packages now target ES2022 ([#27846](https://github.com/microsoft/FluidFramework/pull/27846)) [91c78541bdd](https://github.com/microsoft/FluidFramework/commit/91c78541bddcbca5d6c5f357b023eeaee617d885)
 
-  The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
-  The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
-  All actively supported Node.js versions and evergreen browsers already meet this requirement.
+The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
+The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
+All actively supported Node.js versions and evergreen browsers already meet this requirement.
 
-  Note that Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the README for every client package.
+Note that Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the README for every client package.
 
-  It is possible this change could impact users of less up to date JavaScript runtimes.
-  Impacted users can use a tool like [babel](https://babeljs.io/) to transpile out unsupported language features.
+It is possible this change could impact users of less up to date JavaScript runtimes.
+Impacted users can use a tool like [babel](https://babeljs.io/) to transpile out unsupported language features.
 
-- Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
+#### Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
 
-  FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
+FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
 
 ## 2.116.0
 
@@ -157,17 +181,17 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Add FluidReadonlyArray type independent of TypeScript lib ([#27747](https://github.com/microsoft/FluidFramework/pull/27747)) [040d35bc29](https://github.com/microsoft/FluidFramework/commit/040d35bc29901d58e9e778f5f2e75ba581a80dc0)
+#### Add FluidReadonlyArray type independent of TypeScript lib ([#27747](https://github.com/microsoft/FluidFramework/pull/27747)) [040d35bc29](https://github.com/microsoft/FluidFramework/commit/040d35bc29901d58e9e778f5f2e75ba581a80dc0)
 
-  `FluidReadonlyArray<T>` provides an equivalent of the built-in `ReadonlyArray` type that is independent of TypeScript [`lib`](https://www.typescriptlang.org/tsconfig/#lib), following the same pattern as `FluidReadonlyMap` and `FluidMap`.
-  The interface includes stable methods through ES2023 (`at()`, `findLast()`, `findLastIndex()`) but excludes newer copy-on-write methods (`toReversed()`, `toSorted()`, `toSpliced()`, `with()`) that Fluid Framework implementations don't yet support.
-  This ensures these types remain safe to implement without `lib` changes breaking them.
+`FluidReadonlyArray<T>` provides an equivalent of the built-in `ReadonlyArray` type that is independent of TypeScript [`lib`](https://www.typescriptlang.org/tsconfig/#lib), following the same pattern as `FluidReadonlyMap` and `FluidMap`.
+The interface includes stable methods through ES2023 (`at()`, `findLast()`, `findLastIndex()`) but excludes newer copy-on-write methods (`toReversed()`, `toSorted()`, `toSpliced()`, `with()`) that Fluid Framework implementations don't yet support.
+This ensures these types remain safe to implement without `lib` changes breaking them.
 
-- Promote Fluid container type interfaces to public ([#27746](https://github.com/microsoft/FluidFramework/pull/27746)) [33e014ac63](https://github.com/microsoft/FluidFramework/commit/33e014ac636d43a5f90b1ce1f64b95e60aaf2bca)
+#### Promote Fluid container type interfaces to public ([#27746](https://github.com/microsoft/FluidFramework/pull/27746)) [33e014ac63](https://github.com/microsoft/FluidFramework/commit/33e014ac636d43a5f90b1ce1f64b95e60aaf2bca)
 
-  `FluidIterable`, `FluidIterableIterator`, `FluidReadonlyMap`, `FluidMap`, and `FluidReadonlyArray` are promoted from `@beta` to `@public`.
-  These sealed interfaces provide equivalents of the built-in `Iterable`, `IterableIterator`, `ReadonlyMap`, `Map`, and `ReadonlyArray` types that are independent of TypeScript [`lib`](https://www.typescriptlang.org/tsconfig/#lib).
-  They can now be used in public API surfaces.
+`FluidIterable`, `FluidIterableIterator`, `FluidReadonlyMap`, `FluidMap`, and `FluidReadonlyArray` are promoted from `@beta` to `@public`.
+These sealed interfaces provide equivalents of the built-in `Iterable`, `IterableIterator`, `ReadonlyMap`, `Map`, and `ReadonlyArray` types that are independent of TypeScript [`lib`](https://www.typescriptlang.org/tsconfig/#lib).
+They can now be used in public API surfaces.
 
 ## 2.113.0
 
@@ -177,20 +201,20 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Start sharing local handle payloads before attachment ([#27704](https://github.com/microsoft/FluidFramework/pull/27704)) [2c4d5aaf8a](https://github.com/microsoft/FluidFramework/commit/2c4d5aaf8a31dfe9bccd19096d3717cd041489fc)
+#### Start sharing local handle payloads before attachment ([#27704](https://github.com/microsoft/FluidFramework/pull/27704)) [2c4d5aaf8a](https://github.com/microsoft/FluidFramework/commit/2c4d5aaf8a31dfe9bccd19096d3717cd041489fc)
 
-  Locally created Fluid handles can now expose an optional `sharePayload()` method that starts
-  sharing their payload without attaching the handle to the Fluid object graph. Blob handles
-  implement this method, allowing applications to begin uploading a blob before serializing its
-  handle into a DDS.
+Locally created Fluid handles can now expose an optional `sharePayload()` method that starts
+sharing their payload without attaching the handle to the Fluid object graph. Blob handles
+implement this method, allowing applications to begin uploading a blob before serializing its
+handle into a DDS.
 
-  ```typescript
-  const handle = await runtime.uploadBlob(bytes);
+```typescript
+const handle = await runtime.uploadBlob(bytes);
 
-  if (isLocalFluidHandle(handle) && handle.sharePayload !== undefined) {
-    handle.sharePayload();
-  }
-  ```
+if (isLocalFluidHandle(handle) && handle.sharePayload !== undefined) {
+  handle.sharePayload();
+}
+```
 
 ## 2.111.0
 
@@ -200,11 +224,11 @@ Dependency updates only.
 
 ### Minor Changes
 
-- ITelemetryBaseLogger.minLogLevel may be undefined ([#27546](https://github.com/microsoft/FluidFramework/pull/27546)) [6afb933be51](https://github.com/microsoft/FluidFramework/commit/6afb933be5119722134d3e9c4ca61dfaf8024d8a)
+#### ITelemetryBaseLogger.minLogLevel may be undefined ([#27546](https://github.com/microsoft/FluidFramework/pull/27546)) [6afb933be51](https://github.com/microsoft/FluidFramework/commit/6afb933be5119722134d3e9c4ca61dfaf8024d8a)
 
-  Typing for `ITelemetryBaseLogger.minLogLevel` is updated to reflect that in some implementations `minLogLevel` is present but evaluates to `undefined`.
-  When building with `excactOptionalPropertyTypes:false` as suggested in [compatibility requirements](https://github.com/microsoft/FluidFramework/blob/68732d93a6cc8be2df966b9bb40f58bdd9fad69b/packages/common/core-interfaces/README.md#supported-tools), there is no apparent type change.
-  If a type error is experienced, make sure to check for `undefined` or use `?? LogLevel.info` when reading.
+Typing for `ITelemetryBaseLogger.minLogLevel` is updated to reflect that in some implementations `minLogLevel` is present but evaluates to `undefined`.
+When building with `excactOptionalPropertyTypes:false` as suggested in [compatibility requirements](https://github.com/microsoft/FluidFramework/blob/68732d93a6cc8be2df966b9bb40f58bdd9fad69b/packages/common/core-interfaces/README.md#supported-tools), there is no apparent type change.
+If a type error is experienced, make sure to check for `undefined` or use `?? LogLevel.info` when reading.
 
 ## 2.103.0
 
@@ -218,52 +242,52 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Deprecate LogLevel.default and LogLevel.error ([#27207](https://github.com/microsoft/FluidFramework/pull/27207)) [77ef3355fdf](https://github.com/microsoft/FluidFramework/commit/77ef3355fdf9611524cad86f00b1ce8ba3263861)
+#### Deprecate LogLevel.default and LogLevel.error ([#27207](https://github.com/microsoft/FluidFramework/pull/27207)) [77ef3355fdf](https://github.com/microsoft/FluidFramework/commit/77ef3355fdf9611524cad86f00b1ce8ba3263861)
 
-  `LogLevel.default` and `LogLevel.error` in `@fluidframework/core-interfaces` are deprecated in favor of the semantically clearer `LogLevel.info` and `LogLevel.essential`.
+`LogLevel.default` and `LogLevel.error` in `@fluidframework/core-interfaces` are deprecated in favor of the semantically clearer `LogLevel.info` and `LogLevel.essential`.
 
-  #### Migration
+##### Migration
 
-  The recommended replacement for `LogLevel.default` depends on how the value is used:
-  - For an **event's default `logLevel`** (e.g. the `logLevel` argument to `ITelemetryBaseLogger.send`), the recommendation is `LogLevel.essential`.
-  - For a logger's **default `minLogLevel`** (the threshold that filters events), `LogLevel.info` is the recommendation.
+The recommended replacement for `LogLevel.default` depends on how the value is used:
+- For an **event's default `logLevel`** (e.g. the `logLevel` argument to `ITelemetryBaseLogger.send`), the recommendation is `LogLevel.essential`.
+- For a logger's **default `minLogLevel`** (the threshold that filters events), `LogLevel.info` is the recommendation.
 
-  The replacement for `LogLevel.error` should always be `LogLevel.essential`.
+The replacement for `LogLevel.error` should always be `LogLevel.essential`.
 
-  See [issue #26969](https://github.com/microsoft/FluidFramework/issues/26969) for full guidance and removal tracking (planned for v3.0).
+See [issue #26969](https://github.com/microsoft/FluidFramework/issues/26969) for full guidance and removal tracking (planned for v3.0).
 
 ## 2.100.0
 
 ### Minor Changes
 
-- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+#### Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
 
-  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
 
 ## 2.93.0
 
 ### Minor Changes
 
-- Add Fluid-controlled map and iterator interfaces ([#26951](https://github.com/microsoft/FluidFramework/pull/26951)) [4735742f15](https://github.com/microsoft/FluidFramework/commit/4735742f15718419e974ead1d5e2e809863d3723)
+#### Add Fluid-controlled map and iterator interfaces ([#26951](https://github.com/microsoft/FluidFramework/pull/26951)) [4735742f15](https://github.com/microsoft/FluidFramework/commit/4735742f15718419e974ead1d5e2e809863d3723)
 
-  `TreeIndex` now extends `FluidReadonlyMap` instead of the built-in `ReadonlyMap`, and `TreeMapNodeAlpha` which extends `FluidReadonlyMap` instead of the built-in `ReadonlyMap` has been added.
-  This works to uncouple Fluid's public API surface to the TypeScript standard library's map types, preventing future breakage when those types change.
+`TreeIndex` now extends `FluidReadonlyMap` instead of the built-in `ReadonlyMap`, and `TreeMapNodeAlpha` which extends `FluidReadonlyMap` instead of the built-in `ReadonlyMap` has been added.
+This works to uncouple Fluid's public API surface to the TypeScript standard library's map types, preventing future breakage when those types change.
 
-- Promote tree index APIs from alpha to beta ([#26993](https://github.com/microsoft/FluidFramework/pull/26993)) [37f2f17c118](https://github.com/microsoft/FluidFramework/commit/37f2f17c118baea142b0e842f5b262255d8bb12c)
+#### Promote tree index APIs from alpha to beta ([#26993](https://github.com/microsoft/FluidFramework/pull/26993)) [37f2f17c118](https://github.com/microsoft/FluidFramework/commit/37f2f17c118baea142b0e842f5b262255d8bb12c)
 
-  The following APIs have been promoted from `@alpha` to `@beta`:
-  - `TreeIndex`
-  - `TreeIndexKey`
-  - `TreeIndexNodes`
-  - `createTreeIndex`
-  - `IdentifierIndex`
-  - `createIdentifierIndex`
+The following APIs have been promoted from `@alpha` to `@beta`:
+- `TreeIndex`
+- `TreeIndexKey`
+- `TreeIndexNodes`
+- `createTreeIndex`
+- `IdentifierIndex`
+- `createIdentifierIndex`
 
-  Additionally, the following `@fluidframework/core-interfaces` types have been promoted from `@alpha` to `@beta`:
-  - `FluidReadonlyMap`
-  - `FluidIterable`
-  - `FluidIterableIterator`
-  - `FluidMap`
+Additionally, the following `@fluidframework/core-interfaces` types have been promoted from `@alpha` to `@beta`:
+- `FluidReadonlyMap`
+- `FluidIterable`
+- `FluidIterableIterator`
+- `FluidMap`
 
 ## 2.92.0
 
@@ -293,13 +317,13 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Added layerIncompatibilityError to FluidErrorTypes, ContainerErrorTypes, DriverErrorTypes and OdspErrorTypes ([#26068](https://github.com/microsoft/FluidFramework/pull/26068)) [a8532bdd903](https://github.com/microsoft/FluidFramework/commit/a8532bdd903626524f17d2ec650d8904046e5308)
+#### Added layerIncompatibilityError to FluidErrorTypes, ContainerErrorTypes, DriverErrorTypes and OdspErrorTypes ([#26068](https://github.com/microsoft/FluidFramework/pull/26068)) [a8532bdd903](https://github.com/microsoft/FluidFramework/commit/a8532bdd903626524f17d2ec650d8904046e5308)
 
-  The Fluid error type `layerIncompatibilityError` is added to `FluidErrorTypes` and is now @legacy @beta. It is also added to `ContainerErrorTypes`, `DriverErrorTypes` and `OdspErrorTypes` which extend `FluidErrorTypes`.
-  `layerIncompatibilityError` was added as @legacy @alpha in version 2.72.0.
-  The corresponding interface `ILayerIncompatibilityError` for errors of type `layerIncompatibilityError` is now also @legacy @beta.
+The Fluid error type `layerIncompatibilityError` is added to `FluidErrorTypes` and is now @legacy @beta. It is also added to `ContainerErrorTypes`, `DriverErrorTypes` and `OdspErrorTypes` which extend `FluidErrorTypes`.
+`layerIncompatibilityError` was added as @legacy @alpha in version 2.72.0.
+The corresponding interface `ILayerIncompatibilityError` for errors of type `layerIncompatibilityError` is now also @legacy @beta.
 
-  See [this issue](https://github.com/microsoft/FluidFramework/issues/25813) for more details.
+See [this issue](https://github.com/microsoft/FluidFramework/issues/25813) for more details.
 
 ## 2.74.0
 
@@ -313,10 +337,10 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Added a new Fluid error type layerIncompatibilityError ([#25784](https://github.com/microsoft/FluidFramework/pull/25784)) [01d568b4bc](https://github.com/microsoft/FluidFramework/commit/01d568b4bcbff38a0ee4b614bad1dfb0c400a360)
+#### Added a new Fluid error type layerIncompatibilityError ([#25784](https://github.com/microsoft/FluidFramework/pull/25784)) [01d568b4bc](https://github.com/microsoft/FluidFramework/commit/01d568b4bcbff38a0ee4b614bad1dfb0c400a360)
 
-  A new Fluid error type `layerIncompatibilityError` is added to `FluidErrorTypesAlpha` as @legacy @alpha. This will be moved to `FluidErrorTypes` as @legacy @beta in a future legacy breaking release.
-  It will also be added to `ContainerErrorTypes` since it extends `FluidErrorTypes`.
+A new Fluid error type `layerIncompatibilityError` is added to `FluidErrorTypesAlpha` as @legacy @alpha. This will be moved to `FluidErrorTypes` as @legacy @beta in a future legacy breaking release.
+It will also be added to `ContainerErrorTypes` since it extends `FluidErrorTypes`.
 
 ## 2.71.0
 
@@ -358,9 +382,9 @@ Dependency updates only.
 
 ### Minor Changes
 
-- IFluidHandleInternal.bind (deprecated) has been removed ([#24974](https://github.com/microsoft/FluidFramework/pull/24974)) [07e183795f](https://github.com/microsoft/FluidFramework/commit/07e183795fa8118fae717c118ab7a7945ac1ad57)
+#### IFluidHandleInternal.bind (deprecated) has been removed ([#24974](https://github.com/microsoft/FluidFramework/pull/24974)) [07e183795f](https://github.com/microsoft/FluidFramework/commit/07e183795fa8118fae717c118ab7a7945ac1ad57)
 
-  `IFluidHandleInternal.bind` was deprecated in 2.40 and has now been removed. See [release notes entry](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.40.0#user-content-ifluidhandleinternalbind-has-been-deprecated-24553) for more details.
+`IFluidHandleInternal.bind` was deprecated in 2.40 and has now been removed. See [release notes entry](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.40.0#user-content-ifluidhandleinternalbind-has-been-deprecated-24553) for more details.
 
 ## 2.43.0
 
@@ -378,15 +402,15 @@ Dependency updates only.
 
 ### Minor Changes
 
-- IFluidHandleInternal.bind has been deprecated ([#24553](https://github.com/microsoft/FluidFramework/pull/24553)) [8a4362a7ed](https://github.com/microsoft/FluidFramework/commit/8a4362a7edef3a97fee13c9d23bea49448ba2a6a)
+#### IFluidHandleInternal.bind has been deprecated ([#24553](https://github.com/microsoft/FluidFramework/pull/24553)) [8a4362a7ed](https://github.com/microsoft/FluidFramework/commit/8a4362a7edef3a97fee13c9d23bea49448ba2a6a)
 
-  Handle binding is an internal concept used to make sure objects attach to the Container graph when their handle is stored in a DDS which is itself attached.
-  The source of the "bind" operation has been assumed to be any handle, but only one implementation is actually supported (`SharedObjectHandle`, not exported itself).
+Handle binding is an internal concept used to make sure objects attach to the Container graph when their handle is stored in a DDS which is itself attached.
+The source of the "bind" operation has been assumed to be any handle, but only one implementation is actually supported (`SharedObjectHandle`, not exported itself).
 
-  So the `bind` function is now deprecated on the `IFluidHandleInterface`, moving instead to internal types supporting the one valid implementation.
-  It's also deprecated on the various exported handle implementations that don't support it (each is either no-op, pass-through, or throwing).
+So the `bind` function is now deprecated on the `IFluidHandleInterface`, moving instead to internal types supporting the one valid implementation.
+It's also deprecated on the various exported handle implementations that don't support it (each is either no-op, pass-through, or throwing).
 
-  No replacement is offered, this API was never meant to be called from outside of the Fluid Framework.
+No replacement is offered, this API was never meant to be called from outside of the Fluid Framework.
 
 ## 2.33.0
 
@@ -432,12 +456,12 @@ Dependency updates only.
 
 ### Minor Changes
 
-- The events library has been moved from the tree package ([#23141](https://github.com/microsoft/FluidFramework/pull/23141)) [cae07b5c8c](https://github.com/microsoft/FluidFramework/commit/cae07b5c8c7904184b5fbf8c677f302da19cc697)
+#### The events library has been moved from the tree package ([#23141](https://github.com/microsoft/FluidFramework/pull/23141)) [cae07b5c8c](https://github.com/microsoft/FluidFramework/commit/cae07b5c8c7904184b5fbf8c677f302da19cc697)
 
-  In previous releases, the `@fluidframework/tree` package contained an internal events library. The events-related types and interfaces have been moved to
-  `@fluidframework/core-interfaces`, while the implementation has been relocated to `@fluid-internal/client-utils`. There are
-  no changes to how the events library is used; the relocation simply organizes the library into more appropriate
-  packages. This change should have no impact on developers using the Fluid Framework.
+In previous releases, the `@fluidframework/tree` package contained an internal events library. The events-related types and interfaces have been moved to
+`@fluidframework/core-interfaces`, while the implementation has been relocated to `@fluid-internal/client-utils`. There are
+no changes to how the events library is used; the relocation simply organizes the library into more appropriate
+packages. This change should have no impact on developers using the Fluid Framework.
 
 ## 2.10.0
 
@@ -467,130 +491,130 @@ Dependency updates only.
 
 ### Minor Changes
 
-- fluid-framework: Type Erase ISharedObjectKind ([#21081](https://github.com/microsoft/FluidFramework/pull/21081)) [78f228e370](https://github.com/microsoft/FluidFramework/commit/78f228e37055bd4d9a8f02b3a1eefebf4da9c59c)
+#### fluid-framework: Type Erase ISharedObjectKind ([#21081](https://github.com/microsoft/FluidFramework/pull/21081)) [78f228e370](https://github.com/microsoft/FluidFramework/commit/78f228e37055bd4d9a8f02b3a1eefebf4da9c59c)
 
-  A new type, `SharedObjectKind` is added as a type erased version of `ISharedObjectKind` and `DataObjectClass`.
+A new type, `SharedObjectKind` is added as a type erased version of `ISharedObjectKind` and `DataObjectClass`.
 
-  This type fills the role of both `ISharedObjectKind` and `DataObjectClass` in the `@public` "declarative API" exposed in the `fluid-framework` package.
+This type fills the role of both `ISharedObjectKind` and `DataObjectClass` in the `@public` "declarative API" exposed in the `fluid-framework` package.
 
-  This allows several types referenced by `ISharedObjectKind` to be made `@alpha` as they should only need to be used by legacy code and users of the unstable/alpha/legacy "encapsulated API".
+This allows several types referenced by `ISharedObjectKind` to be made `@alpha` as they should only need to be used by legacy code and users of the unstable/alpha/legacy "encapsulated API".
 
-  Access to these now less public types should not be required for users of the `@public` "declarative API" exposed in the `fluid-framework` package, but can still be accessed for those who need them under the `/legacy` import paths.
-  The full list of such types is:
-  - `SharedTree` as exported from `@fluidframwork/tree`: It is still exported as `@public` from `fluid-framework` as `SharedObjectKind`.
-  - `ISharedObjectKind`: See new `SharedObjectKind` type for use in `@public` APIs.
-    `ISharedObject`
-  - `IChannel`
-  - `IChannelAttributes`
-  - `IChannelFactory`
-  - `IExperimentalIncrementalSummaryContext`
-  - `IGarbageCollectionData`
-  - `ISummaryStats`
-  - `ISummaryTreeWithStats`
-  - `ITelemetryContext`
-  - `IDeltaManagerErased`
-  - `IFluidDataStoreRuntimeEvents`
-  - `IFluidHandleContext`
-  - `IProvideFluidHandleContext`
+Access to these now less public types should not be required for users of the `@public` "declarative API" exposed in the `fluid-framework` package, but can still be accessed for those who need them under the `/legacy` import paths.
+The full list of such types is:
+- `SharedTree` as exported from `@fluidframwork/tree`: It is still exported as `@public` from `fluid-framework` as `SharedObjectKind`.
+- `ISharedObjectKind`: See new `SharedObjectKind` type for use in `@public` APIs.
+  `ISharedObject`
+- `IChannel`
+- `IChannelAttributes`
+- `IChannelFactory`
+- `IExperimentalIncrementalSummaryContext`
+- `IGarbageCollectionData`
+- `ISummaryStats`
+- `ISummaryTreeWithStats`
+- `ITelemetryContext`
+- `IDeltaManagerErased`
+- `IFluidDataStoreRuntimeEvents`
+- `IFluidHandleContext`
+- `IProvideFluidHandleContext`
 
-  Removed APIs:
-  - `DataObjectClass`: Usages replaced with `SharedObjectKind`.
-  - `LoadableObjectClass`: Replaced with `SharedObjectKind`.
-  - `LoadableObjectClassRecord`: Replaced with `Record<string, SharedObjectKind>`.
-  -
+Removed APIs:
+- `DataObjectClass`: Usages replaced with `SharedObjectKind`.
+- `LoadableObjectClass`: Replaced with `SharedObjectKind`.
+- `LoadableObjectClassRecord`: Replaced with `Record<string, SharedObjectKind>`.
+-
 
-- Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+#### Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
 
-  Update package implementations to use TypeScript 5.4.5.
+Update package implementations to use TypeScript 5.4.5.
 
-- core-interfaces, tree: Unify `IDisposable` interfaces ([#21184](https://github.com/microsoft/FluidFramework/pull/21184)) [cfcb827851](https://github.com/microsoft/FluidFramework/commit/cfcb827851ffc81486db6c718380150189fb95c5)
+#### core-interfaces, tree: Unify `IDisposable` interfaces ([#21184](https://github.com/microsoft/FluidFramework/pull/21184)) [cfcb827851](https://github.com/microsoft/FluidFramework/commit/cfcb827851ffc81486db6c718380150189fb95c5)
 
-  Public APIs in `@fluidframework/tree` now use `IDisposable` from `@fluidframework/core-interfaces` replacing `disposeSymbol` with "dispose".
+Public APIs in `@fluidframework/tree` now use `IDisposable` from `@fluidframework/core-interfaces` replacing `disposeSymbol` with "dispose".
 
-  `IDisposable` in `@fluidframework/core-interfaces` is now `@sealed` indicating that third parties should not implement it to reserve the ability for Fluid Framework to extend it to include `Symbol.dispose` as a future non-breaking change.
+`IDisposable` in `@fluidframework/core-interfaces` is now `@sealed` indicating that third parties should not implement it to reserve the ability for Fluid Framework to extend it to include `Symbol.dispose` as a future non-breaking change.
 
 ## 2.0.0-rc.4.0.0
 
 ### Minor Changes
 
-- Deprecated members of IFluidHandle are split off into new IFluidHandleInternal interface [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+#### Deprecated members of IFluidHandle are split off into new IFluidHandleInternal interface [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
 
-  Split IFluidHandle into two interfaces, `IFluidHandle` and `IFluidHandleInternal`.
-  Code depending on the previously deprecated members of IFluidHandle can access them by using `toFluidHandleInternal` from `@fluidframework/runtime-utils/legacy`.
+Split IFluidHandle into two interfaces, `IFluidHandle` and `IFluidHandleInternal`.
+Code depending on the previously deprecated members of IFluidHandle can access them by using `toFluidHandleInternal` from `@fluidframework/runtime-utils/legacy`.
 
-  External implementation of the `IFluidHandle` interface are not supported: this change makes the typing better convey this using the `ErasedType` pattern.
-  Any existing and previously working, and now broken, external implementations of `IFluidHandle` should still work at runtime, but will need some unsafe type casts to compile.
-  Such handle implementation may break in the future and thus should be replaced with use of handles produced by the Fluid Framework client packages.
+External implementation of the `IFluidHandle` interface are not supported: this change makes the typing better convey this using the `ErasedType` pattern.
+Any existing and previously working, and now broken, external implementations of `IFluidHandle` should still work at runtime, but will need some unsafe type casts to compile.
+Such handle implementation may break in the future and thus should be replaced with use of handles produced by the Fluid Framework client packages.
 
 ## 2.0.0-rc.3.0.0
 
 ### Major Changes
 
-- core-interfaces: Code details and package API surface removed [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+#### core-interfaces: Code details and package API surface removed [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
 
-  The code details and package API surface was deprecated in @fluidframework/core-interfaces in 0.53 and has now been removed. Please import them from @fluidframework/container-definitions instead. These include:
-  - IFluidCodeDetails
-  - IFluidCodeDetailsComparer
-  - IFluidCodeDetailsConfig
-  - IFluidPackage
-  - IFluidPackageEnvironment
-  - IProvideFluidCodeDetailsComparer
-  - isFluidCodeDetails
-  - isFluidPackage
+The code details and package API surface was deprecated in @fluidframework/core-interfaces in 0.53 and has now been removed. Please import them from @fluidframework/container-definitions instead. These include:
+- IFluidCodeDetails
+- IFluidCodeDetailsComparer
+- IFluidCodeDetailsConfig
+- IFluidPackage
+- IFluidPackageEnvironment
+- IProvideFluidCodeDetailsComparer
+- isFluidCodeDetails
+- isFluidPackage
 
-- Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+#### Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
 
-  Fluid Framework packages have been updated to use the [package.json "exports"
-  field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
-  TypeScript types and implementation code.
+Fluid Framework packages have been updated to use the [package.json "exports"
+field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
+TypeScript types and implementation code.
 
-  This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-  - `"moduleResolution": "Node16"` with `"module": "Node16"`
-  - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
+This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
+- `"moduleResolution": "Node16"` with `"module": "Node16"`
+- `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 
-  We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
-  for use with modern versions of Node.js _and_ Bundlers.
-  [See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
-  regarding the module and moduleResolution options.
+We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
+for use with modern versions of Node.js _and_ Bundlers.
+[See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
+regarding the module and moduleResolution options.
 
-  **Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
-  to distinguish stable APIs from those that are in development.**
+**Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
+to distinguish stable APIs from those that are in development.**
 
 ## 2.0.0-rc.2.0.0
 
 ### Minor Changes
 
-- core-interfaces: Removed ITelemetryProperties, TelemetryEventCategory, TelemetryEventPropertyType, and ITaggedTelemetryPropertyType ([#19752](https://github.com/microsoft/FluidFramework/issues/19752)) [615a7712e6](https://github.com/microsoft/FluidFramework/commits/615a7712e67885c6cda69ddd907cb5cc708eef18)
+#### core-interfaces: Removed ITelemetryProperties, TelemetryEventCategory, TelemetryEventPropertyType, and ITaggedTelemetryPropertyType ([#19752](https://github.com/microsoft/FluidFramework/issues/19752)) [615a7712e6](https://github.com/microsoft/FluidFramework/commits/615a7712e67885c6cda69ddd907cb5cc708eef18)
 
-  The `ITelemetryProperties` interface was deprecated and has been removed.
-  Use the identical `ITelemetryBaseProperties` instead.
+The `ITelemetryProperties` interface was deprecated and has been removed.
+Use the identical `ITelemetryBaseProperties` instead.
 
-  The `TelemetryEventCategory` type was deprecated and has been removed from `@fluidframework/core-interfaces`, since
-  it had moved to `@fluidframework/telemetry-utils` in the past.
+The `TelemetryEventCategory` type was deprecated and has been removed from `@fluidframework/core-interfaces`, since
+it had moved to `@fluidframework/telemetry-utils` in the past.
 
-  The `TelemetryEventPropertyType` type alias was deprecated and has been removed.
-  Use the identical `TelemetryBaseEventPropertyType` instead.
+The `TelemetryEventPropertyType` type alias was deprecated and has been removed.
+Use the identical `TelemetryBaseEventPropertyType` instead.
 
-  The `ITaggedTelemetryPropertyType` interface was deprecated and has been removed.
-  Use `Tagged<TelemetryBaseEventPropertyType>` instead.
+The `ITaggedTelemetryPropertyType` interface was deprecated and has been removed.
+Use `Tagged<TelemetryBaseEventPropertyType>` instead.
 
-- container-definitions: Added containerMetadata prop on IContainer interface ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
+#### container-definitions: Added containerMetadata prop on IContainer interface ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
 
-  Added `containerMetadata` prop on IContainer interface.
+Added `containerMetadata` prop on IContainer interface.
 
-- runtime-definitions: Moved ISignalEnvelope interface to core-interfaces ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
+#### runtime-definitions: Moved ISignalEnvelope interface to core-interfaces ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
 
-  The `ISignalEnvelope` interface has been moved to the @fluidframework/core-interfaces package.
+The `ISignalEnvelope` interface has been moved to the @fluidframework/core-interfaces package.
 
-- core-interfaces: Removed deprecated telemetry event types ([#19740](https://github.com/microsoft/FluidFramework/issues/19740)) [0ff130a50e](https://github.com/microsoft/FluidFramework/commits/0ff130a50e9bcccb119673ac985ea27fa38de463)
+#### core-interfaces: Removed deprecated telemetry event types ([#19740](https://github.com/microsoft/FluidFramework/issues/19740)) [0ff130a50e](https://github.com/microsoft/FluidFramework/commits/0ff130a50e9bcccb119673ac985ea27fa38de463)
 
-  The deprecated `ITelemetryErrorEvent`, `ITelemetryGenericEvent`, and `ITelemetryPerformanceEvent` interfaces,
-  which represented different kinds of telemetry events, were not intended for consumers of Fluid Framework and have thus
-  been removed.
-  `ITelemetryBaseEvent` is the only telemetry event interface that should be used in/by consuming code.
+The deprecated `ITelemetryErrorEvent`, `ITelemetryGenericEvent`, and `ITelemetryPerformanceEvent` interfaces,
+which represented different kinds of telemetry events, were not intended for consumers of Fluid Framework and have thus
+been removed.
+`ITelemetryBaseEvent` is the only telemetry event interface that should be used in/by consuming code.
 
-  `ITelemetryLogger` was not intended for consumers of Fluid Framework and has been removed.
-  Consumers should use the simpler `ITelemetryBaseLogger` instead.
+`ITelemetryLogger` was not intended for consumers of Fluid Framework and has been removed.
+Consumers should use the simpler `ITelemetryBaseLogger` instead.
 
 ## 2.0.0-rc.1.0.0
 
@@ -600,27 +624,27 @@ Dependency updates only.
 
 ### Major Changes
 
-- container-runtime-definitions: Removed getRootDataStore [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+#### container-runtime-definitions: Removed getRootDataStore [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
 
-  The `getRootDataStore` method has been removed from `IContainerRuntime` and `ContainerRuntime`. Please migrate all usage to the new `getAliasedDataStoreEntryPoint` method. This method returns the data store's entry point which is its `IFluidHandle`.
+The `getRootDataStore` method has been removed from `IContainerRuntime` and `ContainerRuntime`. Please migrate all usage to the new `getAliasedDataStoreEntryPoint` method. This method returns the data store's entry point which is its `IFluidHandle`.
 
-  See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
+See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
 
-- core-interfaces: Removed IFluidRouter and IProvideFluidRouter [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+#### core-interfaces: Removed IFluidRouter and IProvideFluidRouter [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
 
-  The `IFluidRouter` and `IProvideFluidRouter` interfaces have been removed. Please migrate all usage to the new `entryPoint` pattern.
+The `IFluidRouter` and `IProvideFluidRouter` interfaces have been removed. Please migrate all usage to the new `entryPoint` pattern.
 
-  See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
+See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
 
 ## 2.0.0-internal.7.4.0
 
 ### Minor Changes
 
-- telemetry-utils: Deprecate ConfigTypes and IConfigProviderBase ([#18597](https://github.com/microsoft/FluidFramework/issues/18597)) [39b9ff57c0](https://github.com/microsoft/FluidFramework/commits/39b9ff57c0184b72f0e3f9425922dda944995265)
+#### telemetry-utils: Deprecate ConfigTypes and IConfigProviderBase ([#18597](https://github.com/microsoft/FluidFramework/issues/18597)) [39b9ff57c0](https://github.com/microsoft/FluidFramework/commits/39b9ff57c0184b72f0e3f9425922dda944995265)
 
-  The types `ConfigTypes` and `IConfigProviderBase` have been deprecated in the @fluidframework/telemetry-utils package.
-  The types can now be found in the @fluidframework/core-interfaces package. Please replace any uses with the types from
-  @fluidframework/core-interfaces.
+The types `ConfigTypes` and `IConfigProviderBase` have been deprecated in the @fluidframework/telemetry-utils package.
+The types can now be found in the @fluidframework/core-interfaces package. Please replace any uses with the types from
+@fluidframework/core-interfaces.
 
 ## 2.0.0-internal.7.3.0
 
@@ -638,30 +662,30 @@ Dependency updates only.
 
 ### Major Changes
 
-- test-utils: provideEntryPoint is required [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+#### test-utils: provideEntryPoint is required [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
-  The optional `provideEntryPoint` method has become required on a number of constructors. A value will need to be provided to the following classes:
-  - `BaseContainerRuntimeFactory`
-  - `RuntimeFactory`
-  - `ContainerRuntime` (constructor and `loadRuntime`)
-  - `FluidDataStoreRuntime`
+The optional `provideEntryPoint` method has become required on a number of constructors. A value will need to be provided to the following classes:
+- `BaseContainerRuntimeFactory`
+- `RuntimeFactory`
+- `ContainerRuntime` (constructor and `loadRuntime`)
+- `FluidDataStoreRuntime`
 
-  See [testContainerRuntimeFactoryWithDefaultDataStore.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/test/test-utils/src/testContainerRuntimeFactoryWithDefaultDataStore.ts) for an example implemtation of `provideEntryPoint` for ContainerRuntime.
-  See [pureDataObjectFactory.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/framework/aqueduct/src/data-object-factories/pureDataObjectFactory.ts#L83) for an example implementation of `provideEntryPoint` for DataStoreRuntime.
+See [testContainerRuntimeFactoryWithDefaultDataStore.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/test/test-utils/src/testContainerRuntimeFactoryWithDefaultDataStore.ts) for an example implemtation of `provideEntryPoint` for ContainerRuntime.
+See [pureDataObjectFactory.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/framework/aqueduct/src/data-object-factories/pureDataObjectFactory.ts#L83) for an example implementation of `provideEntryPoint` for DataStoreRuntime.
 
-  Subsequently, various `entryPoint` and `getEntryPoint()` endpoints have become required. Please see [containerRuntime.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/runtime/container-runtime/src/containerRuntime.ts) for example implementations of these APIs.
+Subsequently, various `entryPoint` and `getEntryPoint()` endpoints have become required. Please see [containerRuntime.ts](https://github.com/microsoft/FluidFramework/tree/main/packages/runtime/container-runtime/src/containerRuntime.ts) for example implementations of these APIs.
 
-  For more details, see [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md)
+For more details, see [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md)
 
-- DEPRECATED: core-interfaces: IFluidRouter and IProvideFluidRouter deprecated [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+#### DEPRECATED: core-interfaces: IFluidRouter and IProvideFluidRouter deprecated [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
-  `IFluidRouter` and `IProvideFluidRouter` have been deprecated. Please remove all usages of these interfaces and migrate to the new `entryPoint` pattern.
+`IFluidRouter` and `IProvideFluidRouter` have been deprecated. Please remove all usages of these interfaces and migrate to the new `entryPoint` pattern.
 
-  See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
+See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
 
-- Minimum TypeScript version now 5.1.6 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+#### Minimum TypeScript version now 5.1.6 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
-  The minimum supported TypeScript version for Fluid 2.0 clients is now 5.1.6.
+The minimum supported TypeScript version for Fluid 2.0 clients is now 5.1.6.
 
 ## 2.0.0-internal.6.4.0
 
@@ -671,56 +695,56 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Cleaning up duplicate or misnamed telemetry types ([#17149](https://github.com/microsoft/FluidFramework/issues/17149)) [f9236942fa](https://github.com/microsoft/FluidFramework/commits/f9236942faf03cde860bfcbc7c28f8fbd81d3868)
+#### Cleaning up duplicate or misnamed telemetry types ([#17149](https://github.com/microsoft/FluidFramework/issues/17149)) [f9236942fa](https://github.com/microsoft/FluidFramework/commits/f9236942faf03cde860bfcbc7c28f8fbd81d3868)
 
-  We have two sets of telemetry-related interfaces:
-  - The "Base" ones
-    - These have a very bare API surface
-    - They are used on public API surfaces to transmit logs across layers
-  - The internal ones
-    - These have a richer API surface (multiple log functions with different categories,
-      support for logging flat arrays and objects)
-    - They are used for instrumenting our code, and then normalize and pass off the logs via the Base interface
+We have two sets of telemetry-related interfaces:
+- The "Base" ones
+  - These have a very bare API surface
+  - They are used on public API surfaces to transmit logs across layers
+- The internal ones
+  - These have a richer API surface (multiple log functions with different categories,
+    support for logging flat arrays and objects)
+  - They are used for instrumenting our code, and then normalize and pass off the logs via the Base interface
 
-  There are two problems with the given state of the world:
-  1. The "Base" ones were not named consistently, so the distinction was not as apparent as it could be
-  2. The internal ones were copied to `@fluidframework/telemetry-utils` and futher extended, but the original duplicates remain.
+There are two problems with the given state of the world:
+1. The "Base" ones were not named consistently, so the distinction was not as apparent as it could be
+2. The internal ones were copied to `@fluidframework/telemetry-utils` and futher extended, but the original duplicates remain.
 
-  This change addresses these by adding "Base" to the name of each base type, and deprecating the old duplicate internal types.
+This change addresses these by adding "Base" to the name of each base type, and deprecating the old duplicate internal types.
 
-  Additionally, the following types were adjusted:
-  - `TelemetryEventCategory` is moving from `@fluidframework/core-interfaces` to `@fluidframework/telemetry-utils`
-  - Several types modeling "tagged" telemetry properties are deprecated in favor of a generic type `Tagged<V>`
+Additionally, the following types were adjusted:
+- `TelemetryEventCategory` is moving from `@fluidframework/core-interfaces` to `@fluidframework/telemetry-utils`
+- Several types modeling "tagged" telemetry properties are deprecated in favor of a generic type `Tagged<V>`
 
 ## 2.0.0-internal.6.2.0
 
 ### Minor Changes
 
-- Remove use of @fluidframework/common-definitions ([#16638](https://github.com/microsoft/FluidFramework/issues/16638)) [a8c81509c9](https://github.com/microsoft/FluidFramework/commits/a8c81509c9bf09cfb2092ebcf7265205f9eb6dbf)
+#### Remove use of @fluidframework/common-definitions ([#16638](https://github.com/microsoft/FluidFramework/issues/16638)) [a8c81509c9](https://github.com/microsoft/FluidFramework/commits/a8c81509c9bf09cfb2092ebcf7265205f9eb6dbf)
 
-  The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
-  imported from the **@fluidframework/core-interfaces** package:
-  - interface IDisposable
-  - interface IErrorEvent
-  - interface IErrorEvent
-  - interface IEvent
-  - interface IEventProvider
-  - interface ILoggingError
-  - interface ITaggedTelemetryPropertyType
-  - interface ITelemetryBaseEvent
-  - interface ITelemetryBaseLogger
-  - interface ITelemetryErrorEvent
-  - interface ITelemetryGenericEvent
-  - interface ITelemetryLogger
-  - interface ITelemetryPerformanceEvent
-  - interface ITelemetryProperties
-  - type ExtendEventProvider
-  - type IEventThisPlaceHolder
-  - type IEventTransformer
-  - type ReplaceIEventThisPlaceHolder
-  - type ReplaceIEventThisPlaceHolder
-  - type TelemetryEventCategory
-  - type TelemetryEventPropertyType
+The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
+imported from the **@fluidframework/core-interfaces** package:
+- interface IDisposable
+- interface IErrorEvent
+- interface IErrorEvent
+- interface IEvent
+- interface IEventProvider
+- interface ILoggingError
+- interface ITaggedTelemetryPropertyType
+- interface ITelemetryBaseEvent
+- interface ITelemetryBaseLogger
+- interface ITelemetryErrorEvent
+- interface ITelemetryGenericEvent
+- interface ITelemetryLogger
+- interface ITelemetryPerformanceEvent
+- interface ITelemetryProperties
+- type ExtendEventProvider
+- type IEventThisPlaceHolder
+- type IEventTransformer
+- type ReplaceIEventThisPlaceHolder
+- type ReplaceIEventThisPlaceHolder
+- type TelemetryEventCategory
+- type TelemetryEventPropertyType
 
 ## 2.0.0-internal.6.1.0
 
@@ -730,9 +754,9 @@ Dependency updates only.
 
 ### Major Changes
 
-- Upgraded typescript transpilation target to ES2020 [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+#### Upgraded typescript transpilation target to ES2020 [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
 
-  Upgraded typescript transpilation target to ES2020. This is done in order to decrease the bundle sizes of Fluid Framework packages. This has provided size improvements across the board for ex. Loader, Driver, Runtime etc. Reduced bundle sizes helps to load lesser code in apps and hence also helps to improve the perf.If any app wants to target any older versions of browsers with which this target version is not compatible, then they can use packages like babel to transpile to a older target.
+Upgraded typescript transpilation target to ES2020. This is done in order to decrease the bundle sizes of Fluid Framework packages. This has provided size improvements across the board for ex. Loader, Driver, Runtime etc. Reduced bundle sizes helps to load lesser code in apps and hence also helps to improve the perf.If any app wants to target any older versions of browsers with which this target version is not compatible, then they can use packages like babel to transpile to a older target.
 
 ## 2.0.0-internal.5.4.0
 

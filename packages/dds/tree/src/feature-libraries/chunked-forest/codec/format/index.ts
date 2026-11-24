@@ -26,6 +26,7 @@ export {
 	EncodedFieldBatchV2,
 	EncodedFieldBatchVTextExperimental,
 	supportsIncrementalEncoding,
+	supportsSpecializedNodeShapes,
 	type EncodedFieldBatchAnyVersion,
 	type EncodedFieldBatchV1AndV2,
 	type EncodedChunkShape,

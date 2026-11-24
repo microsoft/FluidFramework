@@ -19,7 +19,6 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	createSummarizer,
-	getContainerEntryPointBackCompat,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
@@ -56,11 +55,11 @@ describeCompat("SharedString", "FullCompat", (getTestObjectProvider, apis) => {
 
 	beforeEach("setupSharedStrings", async () => {
 		const container1 = await provider.makeTestContainer(createContainerConfig);
-		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
 		const container2 = await provider.loadTestContainer(loadContainerConfig);
-		const dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 	});
 
@@ -94,8 +93,7 @@ describeCompat("SharedString", "FullCompat", (getTestObjectProvider, apis) => {
 
 		// Create a initialize a new container with the same id.
 		const newContainer = await provider.loadTestContainer(loadContainerConfig);
-		const newComponent =
-			await getContainerEntryPointBackCompat<ITestFluidObject>(newContainer);
+		const newComponent = (await newContainer.getEntryPoint()) as ITestFluidObject;
 		const newSharedString = await newComponent.getSharedObject<SharedString>(stringId);
 
 		// Wait for the ops to to be submitted and processed across the containers.

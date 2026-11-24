@@ -112,3 +112,12 @@ html[data-theme="dark"] {
 main a {
 	text-decoration: underline;
 }
+
+// Escape suppresses hover until the pointer reenters. Keyboard state can still reopen the menu.
+.version-dropdown-wrapper[data-dismissed="true"] .dropdown:not(.dropdown--show) .dropdown__menu {
+	opacity: 0;
+	pointer-events: none;
+	// Hide links immediately so that Tab cannot enter the menu during its closing transition.
+	transition: none;
+	visibility: hidden;
+}

@@ -46,6 +46,7 @@ import {
 	type HandleConverter,
 	type SchemalessParseOptions,
 	type TreeEncodingOptions,
+	type TreeFieldFilter,
 } from "./customTree.js";
 
 /**
@@ -133,7 +134,7 @@ export function applySchemaToParserOptions(
 						encode: (type, key: FieldKey): string => {
 							// translate stored key into property key.
 							const simpleNodeSchema =
-								context.schema.get(brand(type)) ?? fail(0xb39 /* missing schema */);
+								context.schema.get(type) ?? fail(0xb39 /* missing schema */);
 							if (isObjectNodeSchema(simpleNodeSchema)) {
 								const propertyKey = simpleNodeSchema.storedKeyToPropertyKey.get(key);
 								if (propertyKey !== undefined) {
@@ -154,8 +155,7 @@ export function applySchemaToParserOptions(
 							return key;
 						},
 						parse: (type, inputKey): FieldKey => {
-							const simpleNodeSchema =
-								context.schema.get(brand(type)) ?? unknownTypeError(type);
+							const simpleNodeSchema = context.schema.get(type) ?? unknownTypeError(type);
 							if (isObjectNodeSchema(simpleNodeSchema)) {
 								const info = simpleNodeSchema.flexKeyMap.get(inputKey);
 								if (info === undefined) {
@@ -286,11 +286,13 @@ function verboseTreeAdapter(options: SchemalessParseOptions): CursorAdapter<Verb
 
 /**
  * Used to read a node cursor as a VerboseTree.
+ * @param filter - Selects which fields to include. If `undefined`, all fields are included.
  */
 export function verboseFromCursor(
 	reader: ITreeCursor,
 	context: Context,
 	options: TreeEncodingOptions,
+	filter?: TreeFieldFilter,
 ): VerboseTree {
 	const config: Required<TreeEncodingOptions> = {
 		keys: KeyEncodingOptions.usePropertyKeys,
@@ -300,7 +302,7 @@ export function verboseFromCursor(
 	const storedSchemaMap = context.flexContext.schema.nodeSchema;
 	const schemaMap = context.schema;
 
-	return verboseFromCursorInner(reader, config, storedSchemaMap, schemaMap);
+	return verboseFromCursorInner(reader, config, storedSchemaMap, schemaMap, filter);
 }
 
 function verboseFromCursorInner(
@@ -308,6 +310,7 @@ function verboseFromCursorInner(
 	options: Required<TreeEncodingOptions>,
 	storedSchema: ReadonlyMap<string, TreeNodeStoredSchema>,
 	schema: ReadonlyMap<string, TreeNodeSchema>,
+	filter?: TreeFieldFilter,
 ): VerboseTree {
 	const fields = customFromCursor(
 		reader,
@@ -315,6 +318,7 @@ function verboseFromCursorInner(
 		storedSchema,
 		schema,
 		verboseFromCursorInner,
+		filter,
 	);
 	const nodeSchema =
 		storedSchema.get(reader.type) ?? fail(0xb3c /* missing schema for type in cursor */);

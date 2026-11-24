@@ -16,8 +16,11 @@ import type {
 	TreeNodeSchemaClass,
 } from "../core/index.js";
 
-import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
-import { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
+import {
+	type SchemaFactory,
+	SchemaFactoryBeta,
+	type ScopedSchemaName,
+} from "./schemaFactory.js";
 
 /*
  * This file does two things:
@@ -42,7 +45,11 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 	factory: SchemaFactory<TScope, TName>,
 	name: TName,
 ) {
-	class SingletonSchema extends factory.object(name, {}) {
+	class SingletonSchema extends new SchemaFactoryBeta<TScope, TName>(factory.scope).object(
+		name,
+		{},
+		{ allowUnknownOptionalFields: false },
+	) {
 		public constructor(data?: InternalTreeNode | Record<string, never>) {
 			super(data ?? {});
 		}
@@ -265,7 +272,14 @@ export function enumFromStrings<
 			: never;
 	};
 
-	type SchemaArray = UnionToTuple<MembersUnion extends unknown ? TOut[MembersUnion] : never>;
+	// Maps the Members tuple element by element, preserving its order.
+	// Avoid computing this from the union of members (for example with UnionToTuple):
+	// that recursion costs time roughly quadratic in the number of members when type-checking uses of the schema.
+	type SchemaArray = {
+		-readonly [Position in keyof Members]: ReturnType<
+			typeof singletonSchema<TScope, Members[Position] & string>
+		>;
+	};
 	const schemaArray: TreeNodeSchema[] = [];
 
 	const out = factoryOut as typeof factoryOut & TOut & { readonly schema: SchemaArray };

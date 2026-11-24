@@ -5,15 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import {
-	describeCompat,
-	describeInstallVersions,
-	getVersionedTestObjectProvider,
-} from "@fluid-private/test-version-utils";
-// TODO:AB#6558: describeInstallVersions doesn't support dynamically providing package APIs. Until
-// that gap is closed, this file deliberately uses direct aqueduct imports because the shared
-// TestDataObject/createContainer helpers are reused by both describeCompat (which has `apis`) and
-// describeInstallVersions (which does not).
+import { describeCompat } from "@fluid-private/test-version-utils";
 /* eslint-disable @typescript-eslint/no-restricted-imports */
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
@@ -31,8 +23,6 @@ import {
 	ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
-import { pkgVersion } from "../packageVersion.js";
-
 describe("entryPoint compat", () => {
 	let provider: ITestObjectProvider;
 
@@ -47,7 +37,7 @@ describe("entryPoint compat", () => {
 
 	async function getDefaultFluidObject(runtime: IContainerRuntime): Promise<FluidObject> {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return (await runtime.getAliasedDataStoreEntryPoint?.("default"))!.get();
+		return (await runtime.getAliasedDataStoreEntryPoint("default"))!.get();
 	}
 
 	async function createContainer(): Promise<IContainer> {
@@ -72,41 +62,8 @@ describe("entryPoint compat", () => {
 
 		it("entryPoint pattern", async () => {
 			const container = await createContainer();
-			const entryPoint = await container.getEntryPoint?.();
+			const entryPoint = await container.getEntryPoint();
 			assert.notStrictEqual(entryPoint, undefined, "entryPoint was undefined");
-		});
-	});
-
-	const loaderWithRequest = "2.0.0-internal.7.0.0";
-	describeInstallVersions({
-		requestAbsoluteVersions: [loaderWithRequest],
-	})("loader compat", (_) => {
-		beforeEach("getVersionedTestObjectProvider", async () => {
-			provider = await getVersionedTestObjectProvider(
-				pkgVersion, // base version
-				loaderWithRequest,
-			);
-		});
-
-		afterEach(() => {
-			provider.reset();
-		});
-
-		it("request pattern works", async () => {
-			const container = await createContainer();
-			const requestResult = await (container as any).request({ url: "/" });
-
-			assert.strictEqual(requestResult.status, 200, requestResult.value);
-			assert.notStrictEqual(requestResult.value, undefined, "requestResult was undefined");
-		});
-
-		it("request pattern works when entryPoint is available", async () => {
-			const container = await createContainer();
-			const requestResult = await (container as any).request({ url: "/" });
-
-			// Verify request pattern still works for older loaders (even with entryPoint available)
-			assert.strictEqual(requestResult.status, 200, requestResult.value);
-			assert.notStrictEqual(requestResult.value, undefined, "requestResult was undefined");
 		});
 	});
 });

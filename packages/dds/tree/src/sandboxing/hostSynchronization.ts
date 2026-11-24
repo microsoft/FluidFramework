@@ -21,7 +21,7 @@ import {
 	makeSerializedChangeCodec,
 	type SerializedChangeCodec,
 	type SharedTreeChange,
-	type TreeCheckout,
+	type CheckoutBase,
 } from "../shared-tree/index.js";
 import { brand } from "../util/index.js";
 
@@ -59,7 +59,7 @@ export type GuestBranchInitialization = Omit<
 /** A Host update awaiting the Guest's acknowledgment. */
 interface PendingHostUpdate {
 	/** The exact Host main-branch state sent in the update. */
-	readonly branch: TreeCheckout["mainBranch"];
+	readonly branch: CheckoutBase["mainBranch"];
 	/** The finalized-history boundary sent in the update. */
 	readonly trunkRevision: RevisionTag;
 }
@@ -72,7 +72,7 @@ interface PendingHostUpdate {
  */
 export class HostSynchronization {
 	/** The checkout for the Guest's authoring branch, advanced by Guest changes and acknowledged Host updates. */
-	public readonly localCheckout: TreeCheckout;
+	public readonly localCheckout: CheckoutBase;
 	/** Host updates awaiting ordered acknowledgments, with the exact branch state sent for each update. */
 	private readonly pendingUpdates = new Map<HostUpdateId, PendingHostUpdate>();
 	/**
@@ -106,7 +106,7 @@ export class HostSynchronization {
 
 	public constructor(
 		/** The Host's main checkout to synchronize with the Guest. */
-		private readonly mainCheckout: TreeCheckout,
+		private readonly mainCheckout: CheckoutBase,
 		/**
 		 * Sends a synchronization protocol message to the Guest.
 		 */

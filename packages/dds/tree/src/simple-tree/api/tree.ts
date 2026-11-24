@@ -15,10 +15,12 @@ import type {
 	RevertibleAlphaFactory,
 	RevertibleFactory,
 	RevertToOptionsAlpha,
+	SchemaVersions,
 } from "../../core/index.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
 import type { TreeStatus } from "../../feature-libraries/index.js";
 import type {
+	TreeBranchHandleAlpha,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports -- This is referenced by doc comments.
 	TreeAlpha,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
@@ -30,6 +32,7 @@ import type {
 } from "../../util/index.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
 import type { SchemaUpgrade, Unhydrated } from "../core/index.js";
+import type { TreeNodeSchema } from "../core/index.js";
 import type {
 	ImplicitFieldSchema,
 	InsertableField,
@@ -38,7 +41,11 @@ import type {
 	ReadSchema,
 	TreeFieldFromImplicitField,
 } from "../fieldSchema.js";
-import type { SimpleTreeSchema } from "../simpleSchema.js";
+import type {
+	SchemaType,
+	SimpleObjectFieldSchema,
+	SimpleTreeSchema,
+} from "../simpleSchema.js";
 import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
 import type { TreeViewConfiguration } from "./configuration.js";
@@ -62,6 +69,8 @@ import type { VerboseTree } from "./verboseTree.js";
  *
  * @remarks
  * For experimental APIs that access tree content and stored schema without a view schema, see {@link ViewableTreeAlpha}.
+ *
+ * @see {@link (asAlpha:2)} to access alpha APIs on this tree
  *
  * @privateRemarks
  * Use {@link createViewableTreeAlpha} to implement this interface.
@@ -101,18 +110,53 @@ export interface ViewableTree {
 
 /**
  * Channel for a Fluid Tree DDS.
+ *
  * @remarks
  * Allows storing and collaboratively editing schema-aware hierarchial data.
+ *
+ * @see {@link ITreeAlpha} for additional alpha APIs
+ * @see {@link (asAlpha:1)} to access alpha APIs on this tree
+ *
  * @sealed @public
  */
 export interface ITree extends ViewableTree, IFluidLoadable {}
 
 /**
  * A {@link ViewableTree} with experimental APIs.
+ *
+ * @see {@link (asAlpha:2)} to access these APIs on an existing {@link ViewableTree}
+ *
  * @sealed
  * @alpha
  */
 export interface ViewableTreeAlpha extends ViewableTree {
+	/**
+	 * Contains the application-defined versions in the document's stored schema.
+	 *
+	 * @remarks
+	 * This reads the document's current versions rather than the versions configured for a particular view.
+	 * These {@link SchemaVersions} can change when a {@link TreeViewAlpha} initializes or upgrades the stored schema.
+	 */
+	readonly storedSchemaVersion: SchemaVersions | undefined;
+
+	/**
+	 * Creates an independent branch from this tree's current state.
+	 *
+	 * @remarks
+	 * Each call creates a new branch.
+	 * Changes to the new branch do not affect this tree until you {@link UntypedTreeView.merge | merge} them into a view of this tree.
+	 * Use {@link TreeBranchHandleAlpha.viewWith | viewWith} to create a view that can read and edit the new branch.
+	 * Use {@link TreeBranchHandleAlpha.fork | fork} to create child branches.
+	 *
+	 * You own the returned branch.
+	 * Dispose the branch when you no longer need it.
+	 * If you dispose a view of the source tree or the new branch, the new branch remains available.
+	 *
+	 * @returns A new, independent branch that you own.
+	 * @throws A `UsageError` if this tree's branch has a pending transaction or is disposed.
+	 */
+	forkBranch(): TreeBranchHandleAlpha;
+
 	/**
 	 * Exports root in the same format as {@link (TreeAlpha:interface).(exportVerbose:1)} using stored keys.
 	 * @remarks
@@ -130,6 +174,12 @@ export interface ViewableTreeAlpha extends ViewableTree {
 
 /**
  * {@link ITree} extended with some alpha APIs.
+ *
+ * @remarks
+ * This object represents the tree's main branch.
+ *
+ * @see {@link (asAlpha:1)} to access these APIs on an existing {@link ITree}
+ *
  * @sealed @alpha
  */
 export interface ITreeAlpha extends ITree, ViewableTreeAlpha {
@@ -272,19 +322,34 @@ export interface UntypedTreeView extends IDisposable, TreeContextBeta {
 	>;
 
 	/**
-	 * Fork a new branch off of this branch which is based off of this branch's current state.
-	 * @remarks Any changes to the tree on the new view will not apply to this view until the new view is e.g. {@link UntypedTreeView.merge | merged} back into this view.
-	 * The view should be disposed when no longer needed, either {@link UntypedTreeView.dispose | explicitly} or {@link UntypedTreeView.merge | implicitly when merging} into another view.
+	 * Creates a view of a new branch based on this branch's current state.
+	 *
+	 * @remarks
+	 * Changes through the returned view do not affect this branch until you {@link UntypedTreeView.merge | merge} them back.
+	 * The returned view owns its branch: disposing the view also disposes that branch.
+	 *
+	 * @returns A view that owns the new branch.
+	 * @throws A `UsageError` if this branch has a pending transaction or is disposed.
 	 */
 	fork(): UntypedTreeView;
 
 	/**
-	 * Apply all the new changes on the given view to this view.
-	 * @param view - A view created by {@link UntypedTreeView.fork}.
-	 * @param disposeMerged - Whether or not to dispose `view` after the merge completes.
-	 * Defaults to true.
-	 * The {@link UntypedTreeView | main view} cannot be disposed - attempting to do so will have no effect.
-	 * @remarks All ongoing transactions (if any) in `view` will be committed before the merge.
+	 * Applies all new changes from the provided view's branch to this view's branch.
+	 * @param view - A view of a branch that shares a common ancestor with this view's branch.
+	 * For example, use a view from {@link UntypedTreeView.fork} or {@link TreeBranchHandleAlpha.viewWith}.
+	 * The provided branch does not need to be a direct fork of this view's branch.
+	 * @param disposeMerged - If true, dispose the provided view and its branch after a successful merge, unless that branch is shared.
+	 * The default is true.
+	 * Pass false to keep the provided view and its branch available.
+	 *
+	 * @remarks
+	 * The disposal policy also applies when the provided view was created through {@link TreeBranchHandleAlpha.viewWith}:
+	 * a successful merge disposes its branch and view unless `disposeMerged` is false.
+	 * Shared branches, including the main branch, are not disposed by a merge.
+	 * The merge does not dispose this view or the branch it views.
+	 *
+	 * @throws A `UsageError` if either branch has a pending transaction or is disposed.
+	 * @throws An error if the branches do not share a common ancestor.
 	 */
 	merge(view: UntypedTreeView, disposeMerged?: boolean): void;
 
@@ -292,7 +357,8 @@ export interface UntypedTreeView extends IDisposable, TreeContextBeta {
 	 * Advance this view forward such that all new changes on the target view become part of this view.
 	 * @param view - The view to rebase onto.
 	 * @remarks After rebasing, this view will be "ahead" of the target view, that is, its unique changes will have been recreated as if they happened after all changes on the target view.
-	 * This method may only be called on views produced via {@link UntypedTreeView.fork | fork} - attempting to rebase the main view will throw.
+	 * This method can be called on views from {@link UntypedTreeView.fork | fork} or {@link TreeBranchHandleAlpha.viewWith}.
+	 * Shared branches, including the main branch, cannot be rebased onto another branch.
 	 *
 	 * Rebasing long-lived branches is important to avoid consuming memory unnecessarily.
 	 * In particular, the SharedTree retains all sequenced changes made to the tree since the "most-behind" branch was created or last rebased.
@@ -313,14 +379,6 @@ export interface UntypedTreeView extends IDisposable, TreeContextBeta {
 	 */
 	dispose(error?: Error): void;
 }
-
-/**
- * Compatibility alias for {@link UntypedTreeView}.
- *
- * @deprecated Use {@link UntypedTreeView} instead.
- * @beta
- */
-export type TreeBranch = UntypedTreeView;
 
 /**
  * Provides additional APIs that may be used to interact with a tree node.
@@ -449,6 +507,29 @@ export interface TreeContextAlpha extends TreeContextBeta {
 	 * @deprecated Use {@link TreeContextAlpha.isView | isView()} instead.
 	 */
 	isBranch(): this is UntypedTreeViewAlpha;
+
+	/**
+	 * The schema of the {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown fields} of each object node schema in the view schema of this context.
+	 *
+	 * @remarks
+	 * Each key is an object node schema in the view schema that has unknown fields.
+	 * Each value maps the {@link SimpleObjectFieldSchema.storedKey | stored key} of each of those fields to its schema.
+	 *
+	 * This is `undefined` if this context has no view schema, for example the context of an {@link Unhydrated | unhydrated} node.
+	 *
+	 * The value can change when the stored schema changes, for example when another client upgrades the schema.
+	 * To be notified of these changes, listen to {@link TreeViewEvents.schemaChanged} on the {@link TreeViewAlpha | view}, then read this property again.
+	 * Reading this property is not tracked by {@link (TreeAlpha:interface).trackObservations} or {@link (TreeAlpha:interface).trackObservationsOnce},
+	 * so a stored schema change does not invalidate their results.
+	 *
+	 * To read the content of these fields, use {@link (TreeAlpha:interface).(exportVerbose:1)} with {@link KeyEncodingOptions.allStoredKeys}.
+	 */
+	readonly unknownFieldSchemas:
+		| ReadonlyMap<
+				TreeNodeSchema,
+				ReadonlyMap<string, SimpleObjectFieldSchema<SchemaType.Stored>>
+		  >
+		| undefined;
 }
 
 /**
@@ -537,6 +618,7 @@ export interface TreeBranchHistory {
 	 * - A branch that contains commits not already on this branch is merged into this branch.
 	 * - The branch is rebased onto another branch that contains commits not already on this branch.
 	 * This number shrinks when past commits are trimmed from the history.
+	 * Reading this property after the branch is disposed throws an error.
 	 */
 	readonly length: number;
 
@@ -599,16 +681,22 @@ export interface UntypedTreeViewAlpha
 	fork(): UntypedTreeViewAlpha;
 
 	/**
-	 * Switches this view to a new underlying branch with the given commit as the head, updating the view state accordingly.
+	 * Switches this view to a new branch with the specified commit as its head.
 	 *
 	 * @param revision - The {@link TreeBranchCommitMetadata.revision | revision} to rewind to.
 	 * Can be obtained by navigating the commits on the {@link UntypedTreeViewAlpha.branchHistory | branch history}.
 	 *
 	 * @remarks
-	 * Unlike {@link UntypedTreeViewAlpha.revertTo | revertTo}, this does not apply a change to the underlying branch.
-	 * The original underlying branch will be disposed.
-	 * Consider {@link UntypedTreeViewAlpha.fork | forking} before rewinding.
-	 * Not valid to invoke on the main branch or a {@link (ITreeAlpha:interface).createSharedBranch | shared branch}.
+	 * Unlike {@link UntypedTreeViewAlpha.revertTo | revertTo}, this method does not apply a change to the current branch.
+	 * Instead, it disposes the current branch.
+	 * Use {@link UntypedTreeViewAlpha.fork | fork} first to keep a copy of the current state.
+	 * Do not call this method on the main branch or a {@link (ITreeAlpha:interface).createSharedBranch | shared branch}.
+	 * Do not call it on a view whose branch cannot be replaced.
+	 * This restriction includes views created through {@link TreeBranchHandleAlpha.viewWith} and forks of those views.
+	 * Use {@link TreeBranchCommitMetadata.revertTo} to restore earlier content without replacing the branch.
+	 *
+	 * @throws A `UsageError` if this view's branch cannot be replaced, is shared, has a pending transaction, or is disposed.
+	 * @throws A `UsageError` if a revision with the given UUID cannot be found in this branch's history.
 	 */
 	rewindTo(revision: CommitRevision): void;
 
@@ -711,14 +799,6 @@ export interface UntypedTreeViewAlpha
 }
 
 /**
- * Compatibility alias for {@link UntypedTreeViewAlpha}.
- *
- * @deprecated Use {@link UntypedTreeViewAlpha} instead.
- * @alpha
- */
-export type TreeBranchAlpha = UntypedTreeViewAlpha;
-
-/**
  * An editable view of a (version control style) branch of a shared tree based on some schema.
  *
  * @remarks
@@ -738,7 +818,9 @@ export type TreeBranchAlpha = UntypedTreeViewAlpha;
  * Thus this design was chosen at the risk of apps blindly accessing `root` then breaking unexpectedly when the document is incompatible.
  *
  * @see {@link TreeViewAlpha}
- * @see {@link (asAlpha:1)}
+ * @see {@link TreeViewBeta}
+ * @see {@link (asAlpha:3)} to access alpha APIs on this view
+ * @see {@link asBeta} to access beta APIs on this view
  *
  * @sealed @public
  */
@@ -770,18 +852,20 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 
 	/**
 	 * When {@link SchemaCompatibilityStatus.canUpgrade} is true,
-	 * this can be used to modify the stored schema to make it match the view schema.
+	 * this can be used to modify the stored schema to make it compatible with the view.
 	 * @remarks
-	 * This will update the {@link TreeView.compatibility}, allowing access to `root`.
-	 * Beware that this may impact other clients' ability to view the document: see {@link SchemaCompatibilityStatus.canView} for more information.
+	 * An upgrade makes the schema changes needed by this view while preserving content permitted by the existing stored schema.
+	 * For example, it can add an allowed type or make a required field optional, but cannot remove an allowed type that existing content may use.
+	 * Preserving content does not guarantee that other application versions can read newly allowed values, so check their compatibility before deploying the change.
 	 *
-	 * It is an error to call this when {@link SchemaCompatibilityStatus.canUpgrade} is false.
-	 * {@link SchemaCompatibilityStatus.canUpgrade} being true does not mean that an upgrade is required, nor that an upgrade will have any effect.
+	 * When the stored schema is upgraded, {@link SchemaCompatibilityStatus.canView} becomes `true`, and {@link TreeView.root} becomes available.
+	 *
+	 * Use {@link SchemaCompatibilityStatus.canUpgrade} to check whether calling this method is permitted; calling it when that flag is `false` is an error.
 	 *
 	 * When using {@link TreeViewConfigurationAlpha} with a {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy},
-	 * staged schema upgrades matching the configured policy are included in the derived stored schema.
-	 * Set {@link (StagedSchemaUpgradePolicy:interface).includeAlreadyEnabledUpgrades} to `true` to
-	 * also include staged upgrades that are already enabled in the document.
+	 * the configured policy selects which staged upgrades to enable.
+	 * Already-enabled upgrades are preserved even if the policy does not select their tokens, allowing a flag-off client to make other compatible upgrades.
+	 * This preservation is local to each field: if fields share a token but only one has the change enabled, the others remain unchanged unless the policy enables that token.
 	 *
 	 * @example Enabling a staged allowed type for documents, selected by a feature flag
 	 *
@@ -823,7 +907,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 * - update only a specific change (add an optional field, or apply a staged upgrade)
 	 * - update persistedMetadata or not
 	 *
-	 * As persisted metadata becomes more supported, how it interacts with isEquivalent and upgradeSchema should be clarified:
+	 * As persisted metadata becomes more supported, how it interacts with `upgradeSchema` should be clarified:
 	 * for now the docs are being left somewhat vague to allow flexibility in this area.
 	 */
 	upgradeSchema(): void;
@@ -854,124 +938,523 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 }
 
 /**
- * A discrepancy that prevents a view schema from providing read/write access to a tree, based on that tree's existing stored schema.
+ * A schema difference that prevents the view from reading or writing a document.
  *
  * @remarks
- * The `mismatch` property discriminates the different discrepancy shapes.
- * These entries explain {@link SchemaCompatibilityStatus.canView}, not whether the stored schema can be upgraded.
- * They compare schema constraints, not the document's current content nor the resulting stored schema generated for an upgrade.
- * Staging annotations can provide context within an entry without themselves preventing access.
+ * These entries explain why {@link SchemaCompatibilityStatusBeta.view} does not permit access to the document.
+ * They compare the view schema with the document's current stored schema.
+ * They do not check the document's content or a proposed upgrade.
+ *
+ * Use `mismatch` to identify the failed schema requirement and the fields that describe it.
+ * Some entries also describe staged schema changes: `stagedView` lists staged node types, and `viewIsStagedOptional` marks a staged optional field.
+ * These details describe the schema change, but `view` and `stored` show the difference that prevents access.
  *
  * @sealed @beta
  */
 export type SchemaDiscrepancy =
+	| SchemaAllowedTypesDiscrepancy
+	| SchemaFieldKindDiscrepancy
+	| SchemaValueSchemaDiscrepancy
+	| SchemaNodeKindDiscrepancy;
+
+/**
+ * The location of a field described by a schema discrepancy or upgrade incompatibility.
+ *
+ * @remarks
+ * `"root"` identifies the document's root field.
+ * Otherwise, the location identifies a field within a node schema.
+ *
+ * @sealed @beta
+ */
+export type SchemaDiscrepancyFieldLocation =
+	| "root"
 	| {
 			/**
-			 * Indicates that a field allows different node types in the view and stored schemas.
-			 */
-			readonly mismatch: "allowedTypes";
-			/**
-			 * The field with the discrepancy.
-			 *
-			 * `"root"` identifies the root field. Otherwise, `nodeType` identifies the containing
-			 * node schema and `fieldKey` identifies its field. `fieldKey` is undefined for a map
-			 * node's implicit field.
-			 */
-			readonly location:
-				| "root"
-				| {
-						readonly nodeType: string;
-						readonly fieldKey: string | undefined;
-				  };
-			/**
-			 * Non-staged node type identifiers allowed by the view schema but not the stored schema.
-			 */
-			readonly view: readonly string[];
-			/**
-			 * Staged node type identifiers allowed by the view schema but not the stored schema.
-			 *
-			 * @remarks These types provide rollout context but do not cause the discrepancy.
-			 */
-			readonly stagedView?: readonly string[];
-			/**
-			 * Node type identifiers allowed by the stored schema but not the view schema.
-			 */
-			readonly stored: readonly string[];
-			/**
-			 * Whether the view field is a staged optional field.
-			 *
-			 * @remarks Omitted when false.
-			 */
-			readonly viewIsStagedOptional?: true;
-	  }
-	| {
-			/**
-			 * Indicates that a field has different field kinds in the view and stored schemas.
-			 */
-			readonly mismatch: "fieldKind";
-			/**
-			 * The field with the discrepancy.
-			 *
-			 * `"root"` identifies the root field. Otherwise, `nodeType` identifies the containing
-			 * node schema and `fieldKey` identifies its field. `fieldKey` is undefined for a map
-			 * node's implicit field.
-			 */
-			readonly location:
-				| "root"
-				| {
-						readonly nodeType: string;
-						readonly fieldKey: string | undefined;
-				  };
-			/**
-			 * The field kind required by the view schema.
-			 */
-			readonly view: string;
-			/**
-			 * The field kind recorded in the stored schema.
-			 */
-			readonly stored: string;
-			/**
-			 * Whether the view field is a staged optional field.
-			 *
-			 * @remarks Omitted when false.
-			 */
-			readonly viewIsStagedOptional?: true;
-	  }
-	| {
-			/**
-			 * Indicates that a leaf node accepts different value types in the view and stored schemas.
-			 */
-			readonly mismatch: "valueSchema";
-			/**
-			 * The identifier of the leaf node schema with the discrepancy.
+			 * The identifier of the node schema that contains the field.
 			 */
 			readonly nodeType: string;
 			/**
-			 * The value schema required by the view, or undefined when it does not constrain values.
+			 * The stored field key, or undefined for a map's implicit field.
+			 * An array's elements use the empty string as their stored field key.
 			 */
-			readonly view: string | undefined;
+			readonly fieldKey: string | undefined;
+	  };
+
+/**
+ * A human-readable explanation of a schema requirement that prevents viewing or upgrading.
+ *
+ * @remarks
+ * Use this text for logging and debugging.
+ * The text can change between releases.
+ * To handle an incompatibility programmatically, check `mismatch` and its associated fields instead of parsing the explanation.
+ * The explanation describes the failed requirement, but cannot determine which fix is appropriate for your application.
+ *
+ * Stored schemas represent arrays as objects with a single sequence field at the empty stored key.
+ * The explanation identifies this array structure and describes that field as array elements.
+ * Other stored object structures are not identified as arrays.
+ * If an upgrade between an array and an object would remove a field, the explanation describes what the proposed schema can no longer represent.
+ *
+ * @beta
+ */
+export type SchemaIncompatibilityReason = string;
+
+/* eslint-disable @typescript-eslint/consistent-type-definitions -- Object aliases preserve the original inline variants' index-signature assignability. */
+
+/**
+ * Indicates that a field allows different node types in the view and stored schemas.
+ *
+ * @remarks
+ * This compares node type identifiers, not the structure of nodes that share an identifier.
+ * For example, {@link SchemaStatics.number | SchemaFactory.number} and {@link SchemaStatics.string | SchemaFactory.string} have different identifiers.
+ * Changing a field from one to the other changes its allowed types.
+ * The `view` array lists types allowed only by the view, and `stored` lists types allowed only by the stored schema.
+ * @sealed @beta
+ */
+export type SchemaAllowedTypesDiscrepancy = {
+	readonly mismatch: "allowedTypes";
+	/**
+	 * The field with the discrepancy.
+	 */
+	readonly location: SchemaDiscrepancyFieldLocation;
+	/**
+	 * Non-staged node type identifiers allowed by the view schema but not the stored schema.
+	 */
+	readonly view: readonly string[];
+	/**
+	 * Staged node type identifiers allowed by the view schema but not the stored schema.
+	 *
+	 * @remarks
+	 * Staging permits these types to be absent from the stored schema, so their absence does not block viewing.
+	 * They are included here to distinguish these permitted differences from the blocking differences in `view` and `stored`.
+	 */
+	readonly stagedView?: readonly string[];
+	/**
+	 * Node type identifiers allowed by the stored schema but not the view schema.
+	 */
+	readonly stored: readonly string[];
+	/**
+	 * Whether the view field is a staged optional field.
+	 *
+	 * @remarks Omitted when false.
+	 */
+	readonly viewIsStagedOptional?: true;
+};
+
+/**
+ * A difference between the view and stored field kinds that prevents viewing.
+ *
+ * @remarks
+ * A field's kind specifies how many children it permits, not which node types those children can have.
+ * For example, a {@link SchemaStatics.required | required field} must have exactly one child.
+ * An {@link SchemaStatics.optional | optional field} can have zero or one child.
+ * If you change between these field kinds, you change whether a child can be absent.
+ *
+ * A staged optional field in the view is compatible with a required field in the stored schema.
+ * This transition does not produce a field-kind discrepancy.
+ * Differences in allowed node types can still prevent viewing and are reported separately.
+ * Whether an upgrade is permitted is checked separately and reported through {@link SchemaUpgradeIncompatibility}.
+ * @sealed @beta
+ */
+export type SchemaFieldKindDiscrepancy = {
+	readonly mismatch: "fieldKind";
+	/**
+	 * The field with the discrepancy.
+	 */
+	readonly location: SchemaDiscrepancyFieldLocation;
+	/**
+	 * The field kind required by the view schema.
+	 */
+	readonly view: string;
+	/**
+	 * The field kind recorded in the stored schema.
+	 */
+	readonly stored: string;
+	/**
+	 * Whether the view field is a staged optional field.
+	 *
+	 * @remarks Omitted when false.
+	 */
+	readonly viewIsStagedOptional?: true;
+};
+
+/**
+ * Indicates that a leaf node accepts different value types in the view and stored schemas.
+ *
+ * @remarks
+ * A leaf holds a primitive value or a Fluid handle, not child nodes.
+ * Its value schema specifies which values it accepts.
+ * This mismatch occurs when the same node type identifier requires different value types in the view and stored schema.
+ * For example, the view requires `"Number"`, but the stored schema permits `"String"`.
+ * In contrast, {@link SchemaStatics.number | SchemaFactory.number} and {@link SchemaStatics.string | SchemaFactory.string} have different node identifiers.
+ * If you change a field between them, you get an `"allowedTypes"` mismatch instead.
+ * @sealed @beta
+ */
+export type SchemaValueSchemaDiscrepancy = {
+	readonly mismatch: "valueSchema";
+	/**
+	 * The identifier of the leaf node schema with the discrepancy.
+	 */
+	readonly nodeType: string;
+	/**
+	 * The value schema required by the view, or undefined if no value schema is specified.
+	 *
+	 * @remarks
+	 * Current leaf schemas specify a concrete value type, such as `"Number"` or `"String"`.
+	 */
+	readonly view: string | undefined;
+	/**
+	 * The value schema recorded in the stored schema, or undefined if no value schema is specified.
+	 *
+	 * @remarks
+	 * Current leaf schemas specify a concrete value type, such as `"Number"` or `"String"`.
+	 */
+	readonly stored: string | undefined;
+};
+
+/**
+ * Indicates that a node is represented by different node kinds in the view and stored schemas.
+ *
+ * @remarks
+ * Node kinds describe a node's structure, such as an object, map, array, or leaf.
+ * The view must support the stored node's structure.
+ * For example, a view that expects an object cannot use a map with the same identifier.
+ * This mismatch also occurs if the view expects an array but the stored schema does not support the required array structure.
+ * @sealed @beta
+ */
+export type SchemaNodeKindDiscrepancy = {
+	readonly mismatch: "nodeKind";
+	/**
+	 * The identifier of the node schema with the discrepancy.
+	 */
+	readonly nodeType: string;
+	/**
+	 * The node kind required by the view schema.
+	 */
+	readonly view: string;
+	/**
+	 * The node kind recorded in the stored schema.
+	 */
+	readonly stored: string;
+};
+
+/* eslint-enable @typescript-eslint/consistent-type-definitions -- End of shape-preserving discrepancy aliases. */
+
+/**
+ * A schema requirement that prevents an upgrade to the proposed stored schema.
+ *
+ * @remarks
+ * Before an upgrade, the view uses its staged-upgrade policy to create a candidate stored schema.
+ * The candidate is the stored schema that the upgrade would apply.
+ * It must satisfy the stored-schema upgrade rules and let the view read and write the document.
+ * These entries explain which check the candidate fails.
+ *
+ * If the candidate does not meet a stored-schema upgrade rule, the entry describes the schema difference that caused the failure.
+ * For example, an upgrade must not remove an allowed node type.
+ *
+ * The view also rejects a candidate that meets those rules but does not let the view read or write the document.
+ * No upgrade takes place, and the stored schema remains unchanged.
+ * In this case, `viewIncompatibleAfterUpgrade` lists the viewing incompatibilities with the rejected candidate, not the document's current stored schema.
+ *
+ * @sealed @beta
+ */
+export type SchemaUpgradeIncompatibility =
+	| SchemaUpgradeAllowedTypesIncompatibility
+	| SchemaUpgradeFieldKindIncompatibility
+	| SchemaUpgradeValueSchemaIncompatibility
+	| SchemaUpgradeNodeKindIncompatibility
+	| SchemaUpgradeMissingNodeSchemaIncompatibility
+	| SchemaUpgradeUnsatisfiedNodeSchemaIncompatibility
+	| SchemaUpgradeVersionIncompatibility
+	| SchemaUpgradeViewIncompatibility;
+
+/* eslint-disable @typescript-eslint/consistent-type-definitions -- Object aliases preserve the original inline variants' index-signature assignability. */
+
+/**
+ * A field's proposed allowed types do not include all its stored allowed types.
+ *
+ * @remarks
+ * An upgrade must continue to allow the stored field's node types.
+ * The `stored` list identifies the types that the proposed schema no longer allows.
+ * Removing these types blocks the upgrade.
+ * The `proposed` list identifies types that the proposed schema adds, to show both sides of the change.
+ * Those additions are permitted; this entry is reported because the change also removes the types listed in `stored`.
+ * Types that both schemas allow do not appear in either list.
+ *
+ * For example, suppose a field allows numbers and strings, but the proposed schema allows numbers and booleans.
+ * The `stored` list contains the string node type identifier, and `proposed` contains the boolean node type identifier.
+ * Neither list contains the number node type identifier because both schemas allow it.
+ * If the proposed schema allows only numbers instead, `stored` still lists the string identifier, but `proposed` is empty.
+ * In both cases, removing support for strings blocks the upgrade.
+ * These lists contain node type identifiers, not primitive values or node definitions.
+ * @sealed @beta
+ */
+export type SchemaUpgradeAllowedTypesIncompatibility = {
+	readonly mismatch: "allowedTypes";
+	/**
+	 * Explains which allowed types the proposed schema removes.
+	 */
+	readonly reason: SchemaIncompatibilityReason;
+	/**
+	 * The field with the incompatibility.
+	 */
+	readonly location: SchemaDiscrepancyFieldLocation;
+	/**
+	 * Node type identifiers allowed only by the proposed schema.
+	 * Empty if the proposed schema adds no allowed node types.
+	 */
+	readonly proposed: readonly string[];
+	/**
+	 * Node type identifiers allowed only by the stored schema.
+	 * Removing these types prevents the upgrade.
+	 */
+	readonly stored: readonly string[];
+};
+
+/**
+ * The transition from the stored field kind to the proposed kind is not permitted.
+ *
+ * @remarks
+ * Because field kinds determine how many children a field permits, changing the kind can exclude previously allowed content.
+ * For example, changing an optional field (zero or one child) to a required field (exactly one child) would stop accepting an absent child.
+ * Accepting the same content is not the only requirement: upgrade rules also restrict some transitions
+ * to prevent clients from repeatedly upgrading back and forth.
+ * @sealed @beta
+ */
+export type SchemaUpgradeFieldKindIncompatibility = {
+	readonly mismatch: "fieldKind";
+	/**
+	 * Explains why the field-kind transition is not permitted.
+	 */
+	readonly reason: SchemaIncompatibilityReason;
+	/**
+	 * The field with the incompatibility.
+	 */
+	readonly location: SchemaDiscrepancyFieldLocation;
+	/**
+	 * The proposed field kind.
+	 */
+	readonly proposed: string;
+	/**
+	 * The stored field kind.
+	 */
+	readonly stored: string;
+};
+
+/**
+ * A leaf node's proposed value schema is incompatible with its stored value schema.
+ *
+ * @remarks
+ * A leaf holds a primitive value or a Fluid handle, not child nodes.
+ * For example, suppose a node type identifier allows string values in the stored schema.
+ * An upgrade cannot reuse that identifier for number values because this would reject the stored string values.
+ * In contrast, {@link SchemaStatics.number | SchemaFactory.number} and {@link SchemaStatics.string | SchemaFactory.string} have different node identifiers.
+ * If you change a field between them, you get an `"allowedTypes"` mismatch instead.
+ * @sealed @beta
+ */
+export type SchemaUpgradeValueSchemaIncompatibility = {
+	readonly mismatch: "valueSchema";
+	/**
+	 * Explains why the proposed leaf value schema is incompatible with the stored value schema.
+	 */
+	readonly reason: SchemaIncompatibilityReason;
+	/**
+	 * The leaf node schema identifier.
+	 */
+	readonly nodeType: string;
+	/**
+	 * The proposed value schema, or undefined if no value schema is specified.
+	 *
+	 * @remarks
+	 * Current leaf schemas specify a concrete value type, such as `"Number"` or `"String"`.
+	 */
+	readonly proposed: string | undefined;
+	/**
+	 * The stored value schema, or undefined if no value schema is specified.
+	 *
+	 * @remarks
+	 * Current leaf schemas specify a concrete value type, such as `"Number"` or `"String"`.
+	 */
+	readonly stored: string | undefined;
+};
+
+/**
+ * The proposed node kind is incompatible with the stored node kind.
+ *
+ * @remarks
+ * Stored nodes use an `"Object"`, `"Map"`, or `"Leaf"` representation, with arrays using the object representation.
+ * Changing that representation can stop accepting previously allowed structures;
+ * for example, changing a stored map to an object under the same identifier is not permitted.
+ * Some object-to-map upgrades are permitted, however, so a representation change alone does not imply a failure.
+ * This mismatch reports a blocked structural change, rather than a difference in field presence or primitive value types.
+ * @sealed @beta
+ */
+export type SchemaUpgradeNodeKindIncompatibility = {
+	readonly mismatch: "nodeKind";
+	/**
+	 * Explains why the node-kind transition is not permitted.
+	 */
+	readonly reason: SchemaIncompatibilityReason;
+	/**
+	 * The node schema identifier.
+	 */
+	readonly nodeType: string;
+	/**
+	 * The proposed node kind.
+	 */
+	readonly proposed: string;
+	/**
+	 * The stored node kind.
+	 */
+	readonly stored: string;
+};
+
+/**
+ * A constructible stored node definition is absent from the proposed schema.
+ *
+ * @remarks
+ * Upgrading must preserve stored node types even when they are unreachable from the document root,
+ * since detached content may use them.
+ * @sealed @beta
+ */
+export type SchemaUpgradeMissingNodeSchemaIncompatibility = {
+	readonly mismatch: "missingNodeSchema";
+	/**
+	 * Identifies the stored node definition missing from the proposed schema.
+	 */
+	readonly reason: SchemaIncompatibilityReason;
+	/**
+	 * The missing stored node schema identifier.
+	 */
+	readonly nodeType: string;
+};
+
+/**
+ * The proposed node definition has requirements that cannot be satisfied under the upgrade rules.
+ *
+ * @remarks
+ * The upgrade comparison checks whether the proposed node can be constructed,
+ * resolving its allowed child types against the existing stored definitions.
+ * For example, a required field cannot be filled if it allows no types or none of its allowed types can be constructed this way.
+ * This failure therefore describes an unsatisfied schema requirement, not invalid document content.
+ * @sealed @beta
+ */
+export type SchemaUpgradeUnsatisfiedNodeSchemaIncompatibility = {
+	readonly mismatch: "nodeSchemaCannotBeSatisfied";
+	/**
+	 * Identifies the unsatisfied field or map requirement.
+	 */
+	readonly reason: SchemaIncompatibilityReason;
+	/**
+	 * The stored node schema identifier.
+	 */
+	readonly nodeType: string;
+};
+
+/**
+ * The upgrade candidate meets the stored-schema upgrade rules, but the view cannot use it, so no upgrade takes place.
+ *
+ * @remarks
+ * The nested incompatibilities explain why the view cannot use the candidate, not why it cannot use the current stored schema.
+ *
+ * @example
+ * For example, suppose a task's stored schema allows its priority to be a number or a string.
+ * The view adds an optional notes field but allows only numbers for priority.
+ * The candidate adds notes and keeps both priority types, so it still allows all content permitted by the stored schema.
+ * However, the view does not support string priorities, so the view rejects the upgrade.
+ * No upgrade takes place, and the stored schema remains unchanged.
+ * @sealed @beta
+ */
+export type SchemaUpgradeViewIncompatibility = {
+	readonly mismatch: "viewIncompatibleAfterUpgrade";
+	/**
+	 * Explains why the upgrade would not enable viewing.
+	 */
+	readonly reason: SchemaIncompatibilityReason;
+	/**
+	 * The nonempty list of viewing incompatibilities with the proposed stored schema.
+	 */
+	readonly incompatibilities: readonly SchemaViewIncompatibility[];
+};
+
+/**
+ * The proposed schema decreases or removes an application-defined schema version.
+ *
+ * @remarks
+ * An upgrade must retain each stored library identifier and must not decrease its version.
+ * A version increase or a new identifier does not permit another version to decrease or disappear.
+ * An absent version map differs from an empty map: an upgrade cannot remove even an empty stored map.
+ * @sealed @beta
+ */
+export type SchemaUpgradeVersionIncompatibility = {
+	readonly mismatch: "schemaVersion";
+	/**
+	 * Explains why the proposed versions prevent the upgrade.
+	 */
+	readonly reason: SchemaIncompatibilityReason;
+	/**
+	 * All proposed library identifiers and versions, or undefined if the proposed schema has no version map.
+	 */
+	readonly proposed: Readonly<Record<string, number>> | undefined;
+	/**
+	 * All stored library identifiers and versions, or undefined if the stored schema has no version map.
+	 */
+	readonly stored: Readonly<Record<string, number>> | undefined;
+};
+
+/* eslint-enable @typescript-eslint/consistent-type-definitions -- End of shape-preserving incompatibility aliases. */
+
+/**
+ * An incompatibility that prevents a view from providing read/write access to a document.
+ *
+ * @remarks
+ * To help you diagnose the failure, this combines the structured details from {@link SchemaDiscrepancy} with a human-readable reason.
+ * See {@link SchemaIncompatibilityReason} for guidance on using the reason.
+ *
+ * @sealed @beta
+ */
+export type SchemaViewIncompatibility = SchemaDiscrepancy & {
+	/**
+	 * Explains the failed schema requirement and its location.
+	 */
+	readonly reason: SchemaIncompatibilityReason;
+};
+
+/**
+ * Whether a schema operation is permitted, including its blocking incompatibilities when it is not.
+ *
+ * @typeParam TIncompatibility - The incompatibilities that can prevent the operation.
+ * @remarks
+ * Check `isCompatible` to determine whether you can perform the operation.
+ * If it is false, `incompatibilities` explains what prevents it; successful results have no such property.
+ *
+ * Each result describes the schema and configuration at the time compatibility was checked.
+ * Retaining a result therefore preserves that assessment even if the document schema subsequently changes.
+ *
+ * @sealed @beta
+ */
+export type CompatibilityResult<TIncompatibility> =
+	| {
 			/**
-			 * The value schema recorded in the stored schema, or undefined when it does not constrain values.
+			 * The operation is permitted.
 			 */
-			readonly stored: string | undefined;
+			readonly isCompatible: true;
 	  }
 	| {
 			/**
-			 * Indicates that a node is represented by different node kinds in the view and stored schemas.
+			 * The operation is blocked by schema incompatibilities.
 			 */
-			readonly mismatch: "nodeKind";
+			readonly isCompatible: false;
 			/**
-			 * The identifier of the node schema with the discrepancy.
+			 * The nonempty list of incompatibilities that prevent the operation.
+			 *
+			 * @remarks
+			 * Each entry describes a failed schema requirement rather than an issue with the document's current content.
+			 * To identify the affected schema location, entries can include application-defined schema identifiers and stored field keys.
+			 *
+			 * The list can be computed lazily on first access, but is cached for this result
+			 * and still describes the schema at the time of the check.
 			 */
-			readonly nodeType: string;
-			/**
-			 * The node kind required by the view schema.
-			 */
-			readonly view: string;
-			/**
-			 * The node kind recorded in the stored schema.
-			 */
-			readonly stored: string;
+			readonly incompatibilities: readonly TIncompatibility[];
 	  };
 
 /**
@@ -981,24 +1464,20 @@ export type SchemaDiscrepancy =
  */
 export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus {
 	/**
-	 * Differences that prevent a view schema from providing read/write access to a tree, based on that tree's stored schema.
+	 * Whether the view schema permits read/write access to the document, and any incompatibilities that prevent access.
 	 *
 	 * @remarks
-	 * This property is `undefined` when {@link SchemaCompatibilityStatus.canView} is true and present
-	 * when `canView` is false.
-	 * When present, the list is nonempty and explains why accessing {@link TreeView.root} throws.
+	 * Check `isCompatible` before accessing {@link TreeView.root}, since root access throws when viewing is blocked.
+	 * In that case, the nonempty `incompatibilities` list explains the failed schema requirements.
+	 * An entry may also include staging context to help you interpret the failure, even when that context does not itself block access.
 	 *
-	 * It does not report all schema differences nor discrepancies that would prevent
-	 * {@link SchemaCompatibilityStatus.canUpgrade} or {@link SchemaCompatibilityStatus.isEquivalent}.
+	 * Because this result concerns viewing, it does not list every schema difference or determine whether an upgrade is permitted.
+	 * To check whether upgrading is an option, use {@link SchemaCompatibilityStatusBeta.upgrade}.
 	 *
-	 * Entries may include non-blocking staging context in addition to the constraint that prevents viewing.
-	 *
-	 * This data may include application-defined schema identifiers and field keys.
-	 *
-	 * @example Interpreting an allowed-types discrepancy
+	 * @example Interpreting an allowed-types incompatibility
 	 *
 	 * If a document's stored schema allows `string` for `Todo.title`, but the view schema expects
-	 * `number`, the discrepancy identifies the field and the type permitted by each schema:
+	 * `number`, the incompatibility identifies the field and the type permitted by each schema:
 	 *
 	 * ```typescript
 	 * const sf = new SchemaFactory("com.example");
@@ -1007,22 +1486,55 @@ export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus
 	 * }) {}
 	 *
 	 * const view = asBeta(tree.viewWith(new TreeViewConfiguration({ schema: Todo })));
-	 * if (!view.compatibility.canView) {
+	 * if (!view.compatibility.view.isCompatible) {
 	 * 	// [{
 	 * 	//   mismatch: "allowedTypes",
 	 * 	//   location: { nodeType: "com.example.Todo", fieldKey: "title" },
 	 * 	//   view: ["com.fluidframework.leaf.number"],
 	 * 	//   stored: ["com.fluidframework.leaf.string"],
+	 * 	//   reason: 'Cannot view field "title" of node type "com.example.Todo": ...',
 	 * 	// }]
-	 * 	console.error(view.compatibility.discrepancies);
+	 * 	console.error(view.compatibility.view.incompatibilities);
 	 * }
 	 * ```
+	 */
+	readonly view: CompatibilityResult<SchemaViewIncompatibility>;
+
+	/**
+	 * Whether the proposed stored schema is a permitted upgrade, and any incompatibilities that prevent upgrading.
+	 *
+	 * @remarks
+	 * Check `isCompatible` before calling {@link TreeView.upgradeSchema}.
+	 * A true result permits the call, but does not mean an upgrade is needed;
+	 * a false result includes a nonempty `incompatibilities` list explaining what prevents the upgrade.
+	 *
+	 * The check applies the view's effective staged-upgrade policy to generate the proposed stored schema.
+	 * It then checks all existing stored node definitions, including those unreachable from the document root,
+	 * because detached content can still use them.
+	 *
+	 * Upgrade permission is independent of permission to view the current document, so either operation can be permitted without the other.
+	 * When viewing is already possible, upgrade failure details are deferred until you first access them.
+	 * Once computed, they are cached for this result and continue to describe the schema snapshot used for the check.
+	 */
+	readonly upgrade: CompatibilityResult<SchemaUpgradeIncompatibility>;
+
+	/**
+	 * Incompatibilities that prevent viewing, or undefined when viewing is permitted.
+	 *
+	 * @remarks
+	 * When {@link SchemaCompatibilityStatus.canView} is false, this is the same nonempty list
+	 * exposed by {@link SchemaCompatibilityStatusBeta.view} as `incompatibilities`.
 	 */
 	readonly discrepancies: readonly SchemaDiscrepancy[] | undefined;
 }
 
 /**
  * {@link TreeView} with additional beta APIs.
+ *
+ * @see {@link TreeViewAlpha} for additional alpha APIs
+ * @see {@link asBeta} to access these APIs on an existing {@link TreeView}
+ * @see {@link (asAlpha:3)} to access alpha APIs on this view
+ *
  * @sealed @beta
  */
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
@@ -1040,7 +1552,33 @@ export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
 }
 
 /**
+ * The configured and stored application-defined schema versions available through a {@link TreeViewAlpha}.
+ *
+ * @remarks
+ * Comparing these maps helps identify differences between the application configuration and the document.
+ * The configured versions remain fixed for a view, while the stored versions follow changes to the document's schema.
+ * {@link SchemaVersions} describes the meaning of absent and empty maps and the rules for upgrading them.
+ *
+ * @sealed @alpha
+ */
+export interface TreeViewSchemaVersions {
+	/**
+	 * Versions from the view's configuration, used when initializing or upgrading the document.
+	 */
+	readonly view: SchemaVersions | undefined;
+	/**
+	 * Versions currently stored in the document.
+	 */
+	readonly stored: SchemaVersions | undefined;
+}
+
+/**
  * {@link TreeView} with proposed changes to the schema aware typing to allow use with `UnsafeUnknownSchema`.
+ *
+ * @see {@link TreeViewBeta} for beta APIs
+ * @see {@link (asAlpha:3)} to access these APIs on an existing {@link TreeView}
+ * @see {@link asBeta} to access beta APIs on a {@link TreeView}
+ *
  * @sealed @alpha
  */
 export interface TreeViewAlpha<
@@ -1050,6 +1588,15 @@ export interface TreeViewAlpha<
 			"root" | "initialize" | "fork" | "runTransaction" | "runTransactionAsync" | "isView"
 		>,
 		UntypedTreeViewAlpha {
+	/**
+	 * Contains the configured and stored application-defined schema versions.
+	 *
+	 * @remarks
+	 * {@link TreeViewSchemaVersions} describes how these maps relate to the view and document.
+	 * The {@link TreeViewEvents.schemaChanged} event reports updates to the stored schema.
+	 */
+	readonly schemaVersion: TreeViewSchemaVersions;
+
 	get root(): ReadableField<TSchema>;
 
 	set root(newRoot: InsertableField<TSchema>);
@@ -1110,26 +1657,36 @@ export interface SchemaCompatibilityStatus {
 	 *
 	 * @remarks
 	 *
-	 * This is true only when {@link SchemaCompatibilityStatus.canView} is true and the existing and proposed stored schemas each satisfy the schema upgrade rules relative to the other.
+	 * This is true only when {@link SchemaCompatibilityStatus.canView} is true and the existing and generated stored schemas each satisfy the schema upgrade rules relative to the other.
 	 * Thus, a `true` value also implies that {@link SchemaCompatibilityStatus.canUpgrade} is true.
 	 *
 	 * Equivalence does not require the schemas to be identical.
 	 * Differences that do not affect schema compatibility, such as {@link NodeSchemaOptionsAlpha.persistedMetadata}, do not affect this flag.
 	 *
-	 * This check compares the existing stored schema with the stored schema that would
-	 * be generated from the current view schema with its corresponding configuration.
-	 * This includes {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy}.
-	 * This policy determines which staged changes are included, including whether to
-	 * retain upgrades already enabled in the document.
+	 * The generated schema depends only on the view and its {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy}, as when initializing a new document.
+	 * It does not retain staged upgrades already enabled in the existing document.
+	 * A view whose policy excludes an already-enabled staged type can therefore report `false` even though {@link TreeView.upgradeSchema} would preserve that type and make no change.
 	 *
 	 * Allowing unknown optional fields through {@link ObjectSchemaOptions.allowUnknownOptionalFields} can permit viewing without equivalence:
-	 * fields present in the stored schema but absent from the proposed stored schema can still prevent equivalence.
+	 * fields present in the stored schema but absent from the generated stored schema can still prevent equivalence.
 	 *
 	 * When true, {@link TreeView.upgradeSchema} makes no change to the stored schema.
 	 *
 	 * A `false` value does not by itself mean that viewing or upgrading will throw.
 	 * Check {@link SchemaCompatibilityStatus.canView} before accessing {@link TreeView.root},
 	 * and {@link SchemaCompatibilityStatus.canUpgrade} before calling {@link TreeView.upgradeSchema}.
+	 *
+	 * @deprecated
+	 * This property isn't needed as a part of application flows for loading a document.
+	 * Use {@link SchemaCompatibilityStatus.canView} to determine if a document can be viewed as-is.
+	 * Use {@link SchemaCompatibilityStatus.canUpgrade} to determine if the stored schema can be upgraded to support the view, when the document is not viewable as-is.
+	 *
+	 * When diagnosing schema incompatibility issues, use the `incompatibilities` on
+	 * {@link SchemaCompatibilityStatusBeta.view} and {@link SchemaCompatibilityStatusBeta.upgrade}.
+	 *
+	 * No direct replacement APIs are intended for this property.
+	 * It will be removed in a version 4.0.0.
+	 * See {@link https://github.com/microsoft/FluidFramework/issues/28660} for more details.
 	 */
 	readonly isEquivalent: boolean;
 
@@ -1139,14 +1696,16 @@ export interface SchemaCompatibilityStatus {
 	 * @remarks
 	 * If false, accessing {@link TreeView.root} throws.
 	 *
-	 * If the view schema does not opt into supporting any additional cases, then `canView` is only true when `isEquivalent` is also true.
-	 * The view schema can however opt into supporting additional cases, and thus can also view documents with stored schema which would be equivalent, except for the following discrepancies:
+	 * A view does not need to declare exactly the same schema as the document to provide read/write access.
+	 * It can tolerate additional stored content when its declarations provide the appropriate compatibility support:
 	 *
-	 * - An object node with {@link ObjectSchemaOptions.allowUnknownOptionalFields} to set to true that has additional optional fields in the stored schema beyond those mentioned in its view schema.
+	 * - {@link ObjectSchemaOptions.allowUnknownOptionalFields} lets an object view tolerate additional optional fields without exposing them as properties.
 	 *
-	 * - An additional type allowed at a location in the stored schema where it is {@link SchemaStaticsBeta.staged | staged} in the view schema.
+	 * - A {@link SchemaStaticsBeta.staged | staged allowed type} lets the view read and write that type where the stored schema already permits it.
 	 *
-	 * In these cases `canUpgrade` and `isEquivalent` will be false.
+	 * - A {@link SchemaStaticsAlpha.stagedOptional | staged-optional field} lets the view handle missing content where the stored field is already optional.
+	 *
+	 * These allowances determine whether the current document can be used; they do not by themselves determine {@link SchemaCompatibilityStatus.canUpgrade}.
 	 *
 	 * When the set of documents allowed by the view schema is a strict superset of those allowed by the stored schema,
 	 * `canView` is false because writes to the document using the view schema could make the document violate its stored schema.
@@ -1166,27 +1725,22 @@ export interface SchemaCompatibilityStatus {
 	readonly canView: boolean;
 
 	/**
-	 * Whether the document's stored schema can be upgraded to be compatible with the view schema.
-	 * That is, whether the existing stored schema can be modified to allow all documents permitted by the view schema while adhering to the schema upgrade rules.
+	 * Whether the stored schema and the view's requested additions can be composed into a safe upgrade target that the view can read and edit.
 	 *
 	 * @remarks
-	 * If false, calling {@link TreeView.upgradeSchema} throws a `UsageError`.
+	 * Use this flag when deciding whether to call {@link TreeView.upgradeSchema}; calling it when the flag is `false` throws a `UsageError`.
 	 *
-	 * When true, it is valid to call {@link TreeView.upgradeSchema}.
-	 * This does not mean that an upgrade is needed or that the call will change the stored schema.
-	 * It also does not imply that {@link SchemaCompatibilityStatus.canView} is already true or that other clients can view the document after the upgrade.
+	 * A `true` result permits the call but does not mean an upgrade is needed: the view may already work with the stored schema, or the requested upgrade may be a no-op.
+	 * If {@link SchemaCompatibilityStatus.canView} is `false`, you must apply the permitted upgrade before accessing the document through this view.
 	 *
-	 * This check compares the existing stored schema with the stored schema that would
-	 * be generated from the current view schema with its corresponding configuration.
-	 * This includes {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy}.
-	 * This policy determines which staged upgrades are enabled, including whether to
-	 * retain upgrades already enabled in the document.
+	 * To determine whether the upgrade is safe, this check considers a target built from the existing stored schema and the view's requested additions.
+	 * The {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy} chooses which staged upgrades to enable.
+	 * The target also retains existing allowed types and supported optionality at their stored locations, independently of that policy.
 	 *
-	 * When adding optional fields to schema which previously were marked with {@link ObjectSchemaOptions.allowUnknownOptionalFields}
-	 * the schema upgrade (assuming no other changes are included) will allow the previous version to view.
-	 * Even this case must still must be done with caution however as only clients with the newly added field will be able to do future upgrades.
-	 * Thus if a version of an application is shipped that adds an unknown optional field, all future versions should include it, even if its no longer used,
-	 * to ensure that documents containing it can still be upgraded.
+	 * Object views that allow {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields} can also omit stored optional fields without preventing later upgrades.
+	 * The target retains those fields and the node definitions they require, rather than deleting content the reduced view cannot see.
+	 *
+	 * The target is accepted only if it satisfies the stored-schema upgrade rules and gives the requesting view read/write access.
 	 */
 	readonly canUpgrade: boolean;
 

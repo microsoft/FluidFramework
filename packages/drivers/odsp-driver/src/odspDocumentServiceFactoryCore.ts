@@ -48,12 +48,15 @@ import {
 import {
 	type IExistingFileInfo,
 	type INewFileInfo,
+	type NewFileLocation,
 	createOdspLogger,
 	getJoinSessionCacheKey,
 	getOdspResolvedUrl,
 	isNewFileInfo,
 	toInstrumentedOdspStorageTokenFetcher,
 	toInstrumentedOdspTokenFetcher,
+	tryGetNewFileParentFolderId,
+	tryGetNewFilePath,
 } from "./odspUtils.js";
 import { copyRequestHeaders } from "./requestHeaders.js";
 
@@ -108,6 +111,11 @@ export interface IOdspPointInTimeDocumentServiceImplementationProps {
 	/** Host-owned attribution metadata for ODSP requests. */
 	readonly requestHeaders?: Readonly<Record<string, string>>;
 	/**
+	 * When true, a claims challenge fails the request instead of a token refresh and retry.
+	 * See {@link @fluidframework/odsp-driver-definitions#HostStoragePolicy.propagateClaimsChallenges}.
+	 */
+	readonly propagateClaimsChallenges?: boolean;
+	/**
 	 * Creates an ODSP document service for a resolved URL.
 	 *
 	 * @param resolvedUrl - The resolved URL for the document or file version to load.
@@ -146,6 +154,11 @@ export class OdspDocumentServiceFactoryCore
 	private readonly socketReferenceKeyPrefix?: string;
 	private readonly hostPolicy: HostStoragePolicy;
 	public readonly requestHeaders?: Readonly<Record<string, string>>;
+	/**
+	 * The value of {@link @fluidframework/odsp-driver-definitions#HostStoragePolicy.propagateClaimsChallenges}
+	 * that was given to this factory.
+	 */
+	public readonly propagateClaimsChallenges?: boolean;
 
 	public get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents> {
 		return this.nonPersistentCache.snapshotPrefetchResultCache;
@@ -197,16 +210,13 @@ export class OdspDocumentServiceFactoryCore
 		} else if (odspResolvedUrl.fileName) {
 			const [, queryString] = odspResolvedUrl.url.split("?");
 			const searchParams = new URLSearchParams(queryString);
-			const filePath = searchParams.get("path");
-			if (filePath === undefined || filePath === null) {
-				throw new Error("File path should be provided!!");
-			}
+			const location = getNewFileLocation(searchParams);
 			createShareLinkParam = getSharingLinkParams(this.hostPolicy, searchParams);
 			fileInfo = {
 				type: "New",
 				driveId: odspResolvedUrl.driveId,
 				siteUrl: odspResolvedUrl.siteUrl,
-				filePath,
+				...location,
 				filename: odspResolvedUrl.fileName,
 				createLinkType: createShareLinkParam,
 			};
@@ -244,6 +254,7 @@ export class OdspDocumentServiceFactoryCore
 			{
 				eventName: "CreateNew",
 				isWithSummaryUpload: true,
+				isWithParentFolderId: fileInfo.type === "New" && fileInfo.parentFolderId !== undefined,
 				createShareLinkParam: createShareLinkParam
 					? JSON.stringify(createShareLinkParam)
 					: undefined,
@@ -255,6 +266,7 @@ export class OdspDocumentServiceFactoryCore
 					odspLogger,
 					resolvedUrlData,
 					this.getStorageToken,
+					this.hostPolicy.propagateClaimsChallenges,
 				);
 				const _odspResolvedUrl = await useCreateNewModule(odspLogger, async (module) => {
 					return isNewFileInfo(fileInfo)
@@ -320,6 +332,7 @@ export class OdspDocumentServiceFactoryCore
 			this.requestHeaders === undefined
 				? hostPolicy
 				: { ...hostPolicy, hostProvidedRequestHeaders: this.requestHeaders };
+		this.propagateClaimsChallenges = this.hostPolicy.propagateClaimsChallenges;
 		if (this.hostPolicy.isolateSocketCache === true || this.requestHeaders !== undefined) {
 			// create the key to separate the socket reuse cache
 			this.socketReferenceKeyPrefix = uuid();
@@ -414,6 +427,7 @@ export class OdspDocumentServiceFactoryCore
 			extLogger,
 			resolvedUrlData,
 			this.getStorageToken,
+			this.hostPolicy.propagateClaimsChallenges,
 		);
 
 		const webSocketTokenFetcher =
@@ -427,6 +441,7 @@ export class OdspDocumentServiceFactoryCore
 							this.getWebsocketToken!,
 							false /* throwOnNullToken */,
 							true /* returnPlainToken */,
+							this.hostPolicy.propagateClaimsChallenges,
 						)(options, "GetWebsocketToken");
 
 		return OdspDocumentService.create(
@@ -441,6 +456,32 @@ export class OdspDocumentServiceFactoryCore
 			clientIsSummarizer,
 		);
 	}
+}
+
+/**
+ * Gets the location of the folder in which to create a new file from the query parameters of a create-new request URL.
+ * @throws An `Error` if the parameters don't identify exactly one folder by either its path or a non-empty item ID.
+ */
+function getNewFileLocation(searchParams: URLSearchParams): NewFileLocation {
+	const filePath = tryGetNewFilePath(searchParams);
+	const parentFolderId = tryGetNewFileParentFolderId(searchParams);
+	if (parentFolderId === undefined) {
+		if (filePath === undefined) {
+			throw new Error(
+				"Either a file path or a parent folder ID must be provided to create a new file",
+			);
+		}
+		return { filePath };
+	}
+	if (filePath !== undefined) {
+		throw new Error(
+			"Only one of a file path or a parent folder ID can be provided to create a new file",
+		);
+	}
+	if (parentFolderId === "") {
+		throw new Error("The parent folder ID for a new file must not be empty");
+	}
+	return { parentFolderId };
 }
 
 /**

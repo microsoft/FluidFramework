@@ -152,13 +152,15 @@ stages:
             buildDirectory: $(FluidFrameworkDirectory)
             installDependenciesDescription: Install FluidFramework dependencies
             installPnpm: true
-            primaryRegistry: $(ado-feeds-ff-download-only)
             # The compat-workspaces lockfile is committed to the FluidFramework repo and changes
             # whenever legacy package versions are added or removed. Including it in the pnpm store
             # cache key ensures a cache miss whenever the set of compat packages changes.
             # The ff_pipeline_host lockfile is included so the cache key also invalidates when the
             # internal tooling dependencies change.
             additionalLockFilePaths: '$(FluidFrameworkDirectory)/packages/test/test-version-utils/compat-workspaces/full/pnpm-lock.yaml | $(FFPipelineHostDirectory)/pnpm-lock.yaml'
+
+        # Internal tooling needs packages that are not published to npmjs.
+        - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
 
         # Install ff_pipeline_host dependencies (provides telemetry-generator and tenant-setup/cleanup)
         - template: /tools/pipelines/templates/include-install.yml@self
@@ -170,7 +172,6 @@ stages:
             # steps can remain version agnostic and then this install can be restored to take
             # place before FluidFramework install.
             installPnpm: false
-            primaryRegistry: $(ado-feeds-ff-download-only)
 
         # Build the workspace so compiled test code is available for benchmarks
         - task: Bash@3

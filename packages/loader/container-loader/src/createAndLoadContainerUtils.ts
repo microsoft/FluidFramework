@@ -43,13 +43,13 @@ import {
 import { v4 as uuid } from "uuid";
 
 import {
-	captureReferencedAttachmentBlobs,
+	captureAttachmentBlobs,
+	excludedAttachmentBlobLocalIds,
 	extractBlobAttachReferences,
 	inlineAttachmentBlobsByReference,
 	parseGcSnapshotData,
-	readReferencedSnapshotBlobs,
+	readStructuralSnapshotBlobs,
 	snapshotHasLoadingGroups,
-	unreferencedAttachmentBlobLocalIds,
 	type IBlobAttachReference,
 	type IGcSnapshotData,
 } from "./captureReferencedContents.js";
@@ -62,6 +62,7 @@ import { pkgVersion } from "./packageVersion.js";
 import type { ProtocolHandlerBuilder } from "./protocol.js";
 import type { IPendingContainerState } from "./serializedStateManager.js";
 import type {
+	AcknowledgedSummary,
 	LoadSummarizerSummaryResult,
 	OnDemandSummaryResults,
 	SummarizeOnDemandResults,
@@ -75,6 +76,9 @@ import {
 interface OnDemandSummarizeResultsPromises {
 	readonly summarySubmitted: Promise<SummarizeOnDemandResults["summarySubmitted"]>;
 	readonly summaryOpBroadcasted: Promise<SummarizeOnDemandResults["summaryOpBroadcasted"]>;
+	readonly receivedSummaryAckOrNack: Promise<
+		SummarizeOnDemandResults["receivedSummaryAckOrNack"]
+	>;
 }
 
 interface OnDemandSummarizeOptions {
@@ -227,7 +231,8 @@ export interface ILoadExistingContainerProps
 
 /**
  * Props used to load summarizer container.
- * @legacy @alpha
+ * @input
+ * @legacy @beta
  */
 export type ILoadSummarizerContainerProps = Omit<
 	ILoadExistingContainerProps,
@@ -494,7 +499,8 @@ export async function loadFrozenContainerFromPendingState(
 
 /**
  * Properties for {@link captureFullContainerState}.
- * @legacy @alpha
+ * @input
+ * @legacy @beta
  */
 export interface ICaptureFullContainerStateProps {
 	/**
@@ -535,9 +541,8 @@ export interface ICaptureFullContainerStateProps {
  * format produced by a live container's pending-state serialization, and can
  * be handed to {@link loadExistingContainer} as `pendingLocalState`.
  *
- * By default, the output is a self-contained view of the container's referenced
- * graph: the latest snapshot, inlined contents of every blob reachable through
- * referenced subtrees, inlined contents of every referenced attachment blob
+ * By default, the output contains the latest snapshot, inlined contents of every
+ * structural snapshot blob, inlined contents of every eligible attachment blob
  * keyed by storage id, and all ops with sequence numbers after the base
  * snapshot's sequence number through the point observed when the delta stream
  * connects. The same DeltaManager catch-up path used by container loading
@@ -549,24 +554,35 @@ export interface ICaptureFullContainerStateProps {
  * omitted. Reference-only state requires live storage during load and cannot be
  * used with the fully offline form of {@link loadFrozenContainerFromPendingState}.
  *
- * Reachability respects GC. Snapshot subtrees flagged `unreferenced: true`
- * are skipped (their contents are not inlined). Attachment blobs that GC has
- * marked unreferenced, tombstoned, or deleted are skipped. When the snapshot
- * has no GC tree (GC disabled or pre-GC document), no filtering is applied.
+ * In `"inline"` mode, structural contents include unreferenced data stores and
+ * their DDSs that are still present in the snapshot. Saved or future ops can
+ * reference these stores again, so their contents must be retained just as they
+ * are in a live session.
+ * The snapshot's `unreferenced` flags remain metadata, not capture filters.
+ * Unreferenced attachment blobs are also retained, since referencing their
+ * owning data store again does not produce a new BlobAttach op.
+ * Tombstoned or deleted attachment blobs are generally excluded, but their
+ * contents may still be captured when the same blob remains reachable another
+ * way, so do not rely on capture to remove them.
+ * When the snapshot has no GC tree (GC disabled or pre-GC document), attachment
+ * filtering is not applied.
  *
  * Blob reads on load hit the `ContainerStorageAdapter` cache populated from
  * the captured `snapshotBlobs` map, so a frozen loader can serve the full
- * referenced graph without a live storage service.
+ * captured contents without a live storage service.
  *
  * `pendingRuntimeState` is `undefined` — no runtime is instantiated — so the
  * output cannot carry DDS-level in-flight changes. It is intended for state
  * relay, inspection, and durable-state snapshot use cases.
  *
  * Containers that declare loading groups are not yet supported: the function
- * throws `UsageError` if any referenced subtree carries a `groupId`. Group
- * snapshots would need a separate prefetch + serialization path; until there
+ * throws `UsageError` if any subtree carries a `groupId`, including unreferenced subtrees.
+ * Group snapshots would need a separate prefetch + serialization path; until there
  * is a known consumer and end-to-end coverage, the capture refuses rather
  * than silently producing pending state that omits group data.
+ *
+ * @param input - Driver services, request, and options for capturing the container state.
+ * @returns The serialized pending container state.
  *
  * @privateRemarks
  * Note: if a new snapshot lands between the snapshot fetch and delta catch-up,
@@ -579,7 +595,7 @@ export interface ICaptureFullContainerStateProps {
  * monitoring context to gate or attribute. If a future change introduces
  * config-gated behavior or runtime-attributed telemetry, add the wiring
  * back together with that change.
- * @legacy @alpha
+ * @legacy @beta
  */
 export async function captureFullContainerState({
 	urlResolver,
@@ -689,8 +705,8 @@ export async function captureFullContainerState({
 		if (blobCaptureMode === "inline") {
 			gcData = await parseGcSnapshotData(baseSnapshot, storage);
 			[snapshotBlobs, attachmentBlobContents] = await Promise.all([
-				readReferencedSnapshotBlobs(snapshot, storage), // utf8 encoded
-				captureReferencedAttachmentBlobs(baseSnapshot, storage, gcData), // base64 encoded
+				readStructuralSnapshotBlobs(snapshot, storage), // utf8 encoded
+				captureAttachmentBlobs(baseSnapshot, storage, gcData), // base64 encoded
 			]);
 		}
 
@@ -712,7 +728,7 @@ export async function captureFullContainerState({
 		if (blobCaptureMode === "inline") {
 			for (const op of savedOps) {
 				// Blobs uploaded after the base snapshot are not in its
-				// `.blobs` redirect table, so `captureReferencedAttachmentBlobs`
+				// `.blobs` redirect table, so `captureAttachmentBlobs`
 				// did not see them. The wire-format BlobAttach op carries
 				// `(localId, storageId)` in its metadata; collect those here so
 				// we can backfill the bytes before sealing the artifact.
@@ -724,7 +740,7 @@ export async function captureFullContainerState({
 			const added = await inlineAttachmentBlobsByReference(
 				postSnapshotBlobReferences,
 				storage,
-				unreferencedAttachmentBlobLocalIds(gcData),
+				excludedAttachmentBlobLocalIds(gcData),
 				attachmentBlobContents,
 			);
 			Object.assign(attachmentBlobContents, added);
@@ -762,10 +778,135 @@ async function waitForCatchUp(
 }
 
 /**
- * Loads a summarizer container with the required headers, triggers an on-demand summary, and then closes it.
- * Returns success/failure and an optional error for host-side handling.
+ * Loads a summarizer container, creates a summary, waits for service acknowledgement, and disposes the container.
  *
- * @legacy @alpha
+ * @remarks
+ * The runtime handles summary retries and times out if the service ACK does not arrive.
+ * An attempt fails if the container disconnects, closes, or is disposed.
+ * The loader retries every failed attempt once with a fresh container, regardless of error retryability.
+ * This gives transient conditions another opportunity to resolve; it does not guarantee recovery.
+ * Both returned values identify the same successful attempt.
+ *
+ * @param loadSummarizerContainerProps - Services and properties necessary for loading the summarizer container.
+ * @returns The acknowledged snapshot version and the reference sequence number of its summary proposal.
+ * @throws If summarization fails after retries or times out.
+ * @legacy @beta
+ */
+export async function loadAndSummarize(
+	loadSummarizerContainerProps: ILoadSummarizerContainerProps,
+): Promise<AcknowledgedSummary> {
+	try {
+		return await loadAndSummarizeOnce(loadSummarizerContainerProps);
+	} catch {
+		// During catch-up, the runtime may discover a newer summary and dispose the container.
+		// A second load may pick up the newer snapshot. Retry once on any failure, including
+		// load failures and errors marked non-retryable, following the approach in PR #25977.
+		// https://github.com/microsoft/FluidFramework/pull/25977
+		return loadAndSummarizeOnce(loadSummarizerContainerProps);
+	}
+}
+
+async function loadAndSummarizeOnce(
+	loadSummarizerContainerProps: ILoadSummarizerContainerProps,
+): Promise<AcknowledgedSummary> {
+	const { logger, configProvider, request: originalRequest } = loadSummarizerContainerProps;
+	const subMc = mixinMonitoringContext(
+		mixinDebugLogger("fluid:telemetry", logger, {
+			all: { loaderId: uuid(), loaderVersion: pkgVersion },
+		}),
+		sessionStorageConfigProvider.value,
+		configProvider,
+	);
+	const mc = createChildMonitoringContext({
+		logger: subMc.logger,
+		namespace: "SummarizerOnDemand",
+	});
+	return PerformanceEvent.timedExecAsync(
+		mc.logger,
+		{ eventName: "SummarizerOnDemandAcknowledgedSummary" },
+		async () => {
+			const container = await loadExistingContainer({
+				...loadSummarizerContainerProps,
+				request: {
+					...originalRequest,
+					headers: {
+						...originalRequest.headers,
+						[LoaderHeader.cache]: false,
+						[LoaderHeader.clientDetails]: {
+							capabilities: { interactive: false },
+							type: "summarizer",
+						},
+						[DriverHeader.summarizingClient]: true,
+						[LoaderHeader.reconnect]: false,
+					},
+				},
+			});
+			const failureMonitor = createContainerFailureMonitor(container);
+			return Promise.race([
+				summarizeAndWaitForAcknowledgement(
+					container,
+					mc.config.getBoolean("Fluid.Summarizer.FullTree.OnDemand") === true,
+				),
+				failureMonitor.failure,
+			]).finally(() => {
+				failureMonitor.dispose();
+				container.dispose();
+			});
+		},
+		{ start: true, end: true, cancel: "generic" },
+	);
+}
+
+async function summarizeAndWaitForAcknowledgement(
+	container: IContainer,
+	fullTree: boolean,
+): Promise<AcknowledgedSummary> {
+	const entryPoint = (await container.getEntryPoint()) as FluidObject<SummarizerLike>;
+	// The failure race may have disposed the container while entry-point resolution was pending.
+	if (container.closed) {
+		throw new GenericError("Container terminated before summary generation");
+	}
+	const summarizer = entryPoint?.ISummarizer;
+	if (summarizer === undefined) {
+		throw new GenericError("Summarizer entry point not available");
+	}
+	const results = summarizer.summarizeOnDemand({
+		reason: "summaryOnRequest",
+		retryOnFailure: true,
+		fullTree,
+	});
+	const submitted = await results.summarySubmitted;
+	if (!submitted.success) {
+		throw normalizeError(submitted.error);
+	}
+	const broadcast = await results.summaryOpBroadcasted;
+	if (!broadcast.success) {
+		throw normalizeError(broadcast.error);
+	}
+	const acknowledgement = await results.receivedSummaryAckOrNack;
+	if (!acknowledgement.success) {
+		throw normalizeError(acknowledgement.error);
+	}
+	return {
+		version: acknowledgement.data.summaryAckOp.contents.handle,
+		referenceSequenceNumber: broadcast.data.summarizeOp.referenceSequenceNumber,
+	};
+}
+
+/**
+ * Loads a summarizer container with the required headers, triggers an on-demand summary, and then closes it.
+ *
+ * @remarks
+ * Success requires submission and broadcast. The loader does not explicitly wait for the service ACK,
+ * although the runtime may wait for it as part of its retry behavior.
+ * To obtain an acknowledged snapshot version, use {@link loadAndSummarize}.
+ * The returned `summaryResults.summaryInfo.handle` identifies the broadcast summary proposal.
+ * It is not guaranteed to identify an acknowledged snapshot that can be loaded with
+ * {@link @fluidframework/container-definitions#LoaderHeader.version}.
+ *
+ * @param loadSummarizerContainerProps - Services and properties necessary for loading the summarizer container.
+ * @returns A result indicating success with summary details, or failure with an error for host-side handling.
+ * @legacy @beta
  */
 export async function loadSummarizerContainerAndMakeSummary(
 	loadSummarizerContainerProps: ILoadSummarizerContainerProps,
@@ -774,11 +915,10 @@ export async function loadSummarizerContainerAndMakeSummary(
 		loadSummarizerContainerProps,
 	);
 	if (!result.success) {
-		/**
-		 * We retry once as there is potential for a race condition when loading a snapshot.
-		 * If the newest snapshot is not ready when creating the container but becomes available upon catching up, the container
-		 * will be closed so it can load from the new snapshot.
-		 */
+		// During catch-up, the runtime may discover a newer summary and dispose the container.
+		// A second load may pick up the newer snapshot. Retry once on any failure result,
+		// including errors marked non-retryable.
+		// https://github.com/microsoft/FluidFramework/pull/25977
 		result = await loadSummarizerContainerAndMakeSummaryInternal(loadSummarizerContainerProps);
 	}
 	return result;
@@ -831,9 +971,6 @@ async function loadSummarizerContainerAndMakeSummaryInternal(
 			let summarySubmitted: SummarizeOnDemandResults["summarySubmitted"];
 			let summaryOpBroadcasted: SummarizeOnDemandResults["summaryOpBroadcasted"];
 			try {
-				if (container.getEntryPoint === undefined) {
-					throw new GenericError("container.getEntryPoint() is undefined");
-				}
 				const fluidObject = (await container.getEntryPoint()) as FluidObject<SummarizerLike>;
 				const summarizer = fluidObject?.ISummarizer;
 				if (summarizer === undefined) {
@@ -906,4 +1043,49 @@ async function loadSummarizerContainerAndMakeSummaryInternal(
 		},
 		{ start: true, end: true, cancel: "generic" },
 	);
+}
+
+/**
+ * Monitors container termination, rejecting on failure until disposed.
+ */
+function createContainerFailureMonitor(container: IContainer): {
+	readonly failure: Promise<never>;
+	dispose(): void;
+} {
+	let onTermination: (error?: unknown) => void;
+	let onDisconnected: () => void;
+	let settled = false;
+	const failure = new Promise<never>((_resolve, reject) => {
+		onTermination = (error) => {
+			if (settled) {
+				return;
+			}
+			settled = true;
+			reject(
+				error === undefined
+					? new GenericError("Container terminated without error")
+					: normalizeError(error),
+			);
+		};
+		onDisconnected = () => {
+			// Closing a connected container disconnects before emitting the terminal error.
+			// Let that same-turn close/dispose event take precedence over this fallback.
+			queueMicrotask(() => onTermination());
+		};
+		container.on("closed", onTermination);
+		container.on("disposed", onTermination);
+		container.on("disconnected", onDisconnected);
+		if (container.closed || container.disposed === true) {
+			onTermination();
+		}
+	});
+	return {
+		failure,
+		dispose: () => {
+			settled = true;
+			container.off("closed", onTermination);
+			container.off("disposed", onTermination);
+			container.off("disconnected", onDisconnected);
+		},
+	};
 }

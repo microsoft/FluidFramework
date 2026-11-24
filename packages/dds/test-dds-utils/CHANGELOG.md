@@ -1,5 +1,29 @@
 # @fluid-private/test-dds-utils
 
+## 3.14.0
+
+Dependency updates only.
+
+## 3.13.0
+
+Dependency updates only.
+
+## 3.12.0
+
+Dependency updates only.
+
+## 3.11.0
+
+Dependency updates only.
+
+## 3.10.0
+
+Dependency updates only.
+
+## 3.7.0
+
+Dependency updates only.
+
 ## 3.6.0
 
 Dependency updates only.
@@ -28,16 +52,16 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Removal of direct CommonJS support ([#28124](https://github.com/microsoft/FluidFramework/pull/28124)) [0f84e3b8878](https://github.com/microsoft/FluidFramework/commit/0f84e3b8878a5e75b2253976d98fd963bbd9db88)
+#### Removal of direct CommonJS support ([#28124](https://github.com/microsoft/FluidFramework/pull/28124)) [0f84e3b8878](https://github.com/microsoft/FluidFramework/commit/0f84e3b8878a5e75b2253976d98fd963bbd9db88)
 
-  Direct `require()` import is no longer directly supported.
-  Package is transpiled as ECMAScript Module.
+Direct `require()` import is no longer directly supported.
+Package is transpiled as ECMAScript Module.
 
-  See [Removal of direct CommonJS support in v3.0](https://github.com/microsoft/FluidFramework/issues/27444) for more information.
+See [Removal of direct CommonJS support in v3.0](https://github.com/microsoft/FluidFramework/issues/27444) for more information.
 
-- Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
+#### Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
 
-  FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
+FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
 
 ## 2.116.0
 
@@ -83,9 +107,9 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+#### Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
 
-  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
 
 ## 2.93.0
 
@@ -187,15 +211,15 @@ Dependency updates only.
 
 ### Minor Changes
 
-- IFluidHandleInternal.bind has been deprecated ([#24553](https://github.com/microsoft/FluidFramework/pull/24553)) [8a4362a7ed](https://github.com/microsoft/FluidFramework/commit/8a4362a7edef3a97fee13c9d23bea49448ba2a6a)
+#### IFluidHandleInternal.bind has been deprecated ([#24553](https://github.com/microsoft/FluidFramework/pull/24553)) [8a4362a7ed](https://github.com/microsoft/FluidFramework/commit/8a4362a7edef3a97fee13c9d23bea49448ba2a6a)
 
-  Handle binding is an internal concept used to make sure objects attach to the Container graph when their handle is stored in a DDS which is itself attached.
-  The source of the "bind" operation has been assumed to be any handle, but only one implementation is actually supported (`SharedObjectHandle`, not exported itself).
+Handle binding is an internal concept used to make sure objects attach to the Container graph when their handle is stored in a DDS which is itself attached.
+The source of the "bind" operation has been assumed to be any handle, but only one implementation is actually supported (`SharedObjectHandle`, not exported itself).
 
-  So the `bind` function is now deprecated on the `IFluidHandleInterface`, moving instead to internal types supporting the one valid implementation.
-  It's also deprecated on the various exported handle implementations that don't support it (each is either no-op, pass-through, or throwing).
+So the `bind` function is now deprecated on the `IFluidHandleInterface`, moving instead to internal types supporting the one valid implementation.
+It's also deprecated on the various exported handle implementations that don't support it (each is either no-op, pass-through, or throwing).
 
-  No replacement is offered, this API was never meant to be called from outside of the Fluid Framework.
+No replacement is offered, this API was never meant to be called from outside of the Fluid Framework.
 
 ## 2.33.0
 
@@ -269,9 +293,9 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+#### Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
 
-  Update package implementations to use TypeScript 5.4.5.
+Update package implementations to use TypeScript 5.4.5.
 
 ## 2.0.0-rc.4.0.0
 
@@ -301,10 +325,10 @@ Dependency updates only.
 
 ### Minor Changes
 
-- @fluid-internal/test-dds-utils renamed to @fluid-private/test-dds-utils ([#17703](https://github.com/microsoft/FluidFramework/issues/17703)) [5bd40df610](https://github.com/microsoft/FluidFramework/commits/5bd40df61030395879ee8dd212d693f927dbb794)
+#### @fluid-internal/test-dds-utils renamed to @fluid-private/test-dds-utils ([#17703](https://github.com/microsoft/FluidFramework/issues/17703)) [5bd40df610](https://github.com/microsoft/FluidFramework/commits/5bd40df61030395879ee8dd212d693f927dbb794)
 
-  The @fluid-internal/test-dds-utils has been renamed to @fluid-private/test-dds-utils. This package is intended for use
-  within the Fluid Framework repo and is not published externally.
+The @fluid-internal/test-dds-utils has been renamed to @fluid-private/test-dds-utils. This package is intended for use
+within the Fluid Framework repo and is not published externally.
 
 ## 2.0.0-internal.7.2.0
 

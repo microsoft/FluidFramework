@@ -1080,6 +1080,41 @@ for (const createBlobPayloadPending of [false, true]) {
 				);
 			});
 
+			it("Honors an abort raised while the blob is being counted", async () => {
+				const { mockBlobStorage, blobManager } = createTestMaterial({
+					createBlobPayloadPending,
+				});
+				// Block storage so a missed abort cannot settle later.
+				mockBlobStorage.pause();
+				const outstandingWorkTransitions = recordOutstandingBlobWork(blobManager);
+
+				// Simulate a host aborting from the synchronous dirty notification.
+				const ac = new AbortController();
+				blobManager.events.on("outstandingBlobWorkChanged", () => {
+					if (blobManager.hasOutstandingBlobWork) {
+						ac.abort("abort test");
+					}
+				});
+
+				const createP = blobManager.createBlob(textToBlob("hello"), ac.signal);
+				if (createBlobPayloadPending) {
+					const handle = await createP;
+					// Attach can fail synchronously, so subscribe first.
+					const sharedP = waitHandlePayloadShared(handle);
+					attachHandle(handle);
+					await assert.rejects(sharedP, { message: "uploadBlob aborted" });
+				} else {
+					await assert.rejects(createP, { message: "uploadBlob aborted" });
+				}
+
+				assert.strictEqual(blobManager.unsharedBlobCount, 0);
+				assert.deepStrictEqual(
+					outstandingWorkTransitions,
+					[true, false],
+					"The blob must stop counting rather than stay outstanding behind a lost abort",
+				);
+			});
+
 			it("Stops counting an upload that is aborted in flight", async () => {
 				const { mockBlobStorage, blobManager } = createTestMaterial({
 					createBlobPayloadPending,

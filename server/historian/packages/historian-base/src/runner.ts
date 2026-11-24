@@ -25,6 +25,8 @@ import type {
 	ITenantService,
 	ISimplifiedCustomDataRetriever,
 	IPostEphemeralContainerChecker,
+	IDocumentAccessAuthorizer,
+	ITrustedCreateContextResolver,
 } from "./services";
 
 export class HistorianRunner implements IRunner {
@@ -48,6 +50,8 @@ export class HistorianRunner implements IRunner {
 		private readonly readinessCheck?: IReadinessCheck,
 		private readonly simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 		private readonly PostEphemeralContainerChecker?: IPostEphemeralContainerChecker,
+		private readonly documentAccessAuthorizer?: IDocumentAccessAuthorizer,
+		private readonly trustedCreateContextResolver?: ITrustedCreateContextResolver,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -69,6 +73,8 @@ export class HistorianRunner implements IRunner {
 			this.readinessCheck,
 			this.simplifiedCustomDataRetriever,
 			this.PostEphemeralContainerChecker,
+			this.documentAccessAuthorizer,
+			this.trustedCreateContextResolver,
 		);
 		historian.set("port", this.port);
 

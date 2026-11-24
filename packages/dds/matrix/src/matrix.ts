@@ -34,11 +34,13 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ObjectStoragePartition,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 	SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils/internal";
 import {
 	type IFluidSerializer,
 	type ISharedObjectEvents,
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	SharedObject,
 } from "@fluidframework/shared-object-base/internal";
 import {
@@ -252,6 +254,7 @@ interface PendingCellChanges<T> {
 // TODO: if possible, transition SharedMatrix to not use `any`.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class SharedMatrix<T = any>
+	// eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 	extends SharedObject<ISharedMatrixEvents<T> & ISharedObjectEvents>
 	implements ISharedMatrix<T>
 {
@@ -690,6 +693,7 @@ export class SharedMatrix<T = any>
 	}
 
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const builder = new SummaryTreeBuilder();
 		builder.addWithStats(
 			SnapshotPath.rows,

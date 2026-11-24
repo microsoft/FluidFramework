@@ -81,6 +81,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 	}
 
 	public async create(params: IRepoManagerParams): Promise<IRepositoryManager> {
+		helpers.validateDocumentStorageProof(params);
 		const onRepoNotExists = async (
 			fileSystemManager: IFileSystemManager,
 			repoPath: string,
@@ -111,6 +112,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 	}
 
 	public async open(params: IRepoManagerParams): Promise<IRepositoryManager> {
+		helpers.validateDocumentStorageProof(params);
 		const onRepoNotExists = (
 			fileSystemManager: IFileSystemManager,
 			repoPath: string,
@@ -148,10 +150,9 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 		if (!params.storageRoutingId?.tenantId || !params.storageRoutingId?.documentId) {
 			throw new NetworkError(400, `Invalid ${Constants.StorageRoutingIdHeader} header`);
 		}
-		const repoPath = helpers.getRepoPath(
-			params.storageRoutingId.tenantId,
-			params.storageRoutingId.documentId,
-			this.storageDirectoryConfig.useRepoOwner ? params.repoOwner : undefined,
+		const repoPath = helpers.getRepositoryRoot(
+			params,
+			this.storageDirectoryConfig.useRepoOwner,
 		);
 		const directoryPath = helpers.getGitDirectory(
 			repoPath,
@@ -180,6 +181,12 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 		) => Promise<void> | never,
 		repoOperationType: RepoOperationType,
 	): Promise<IRepositoryManager> {
+		if (params.fileSystemManagerParams?.physicalContainerName !== undefined) {
+			throw new NetworkError(
+				400,
+				"Physical-container routing requires repo-per-document mode.",
+			);
+		}
 		const repoPath = helpers.getRepoPath(
 			params.repoName,
 			undefined,
@@ -217,11 +224,10 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 		const lumberjackBaseProperties =
 			helpers.getLumberjackBasePropertiesFromRepoManagerParams(params);
 
-		const fileSystemManagerFactory =
-			!params.isEphemeralContainer ||
-			!this.fileSystemManagerFactories.ephemeralFileSystemManagerFactory
-				? this.fileSystemManagerFactories.defaultFileSystemManagerFactory
-				: this.fileSystemManagerFactories.ephemeralFileSystemManagerFactory;
+		const fileSystemManagerFactory = helpers.getFilesystemManagerFactory(
+			this.fileSystemManagerFactories,
+			params.isEphemeralContainer === true,
+		);
 
 		const fileSystemManager = fileSystemManagerFactory.create({
 			...params.fileSystemManagerParams,

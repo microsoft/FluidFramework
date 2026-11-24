@@ -236,7 +236,6 @@ import {
 	type ITestFluidObject,
 	type ITestObjectProvider,
 	createSummarizer,
-	getContainerEntryPointBackCompat,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -266,7 +265,7 @@ describeCompat("Summarization smoke test", "NoCompat", (getTestObjectProvider) =
 	it("round-trips a change through a summary", async () => {
 		// 1. Create an interactive container with auto-summaries disabled.
 		const container = await provider.makeTestContainer(testContainerConfig);
-		const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		await waitForContainerConnection(container);
 
 		// 2. Create a dedicated summarizer. Pass no config so createSummarizer applies its default
@@ -282,7 +281,7 @@ describeCompat("Summarization smoke test", "NoCompat", (getTestObjectProvider) =
 		const loaded = await provider.loadTestContainer(testContainerConfig, {
 			[LoaderHeader.version]: summaryVersion,
 		});
-		const loadedObject = await getContainerEntryPointBackCompat<ITestFluidObject>(loaded);
+		const loadedObject = (await loaded.getEntryPoint()) as ITestFluidObject;
 		assert.strictEqual(loadedObject.root.get("key"), "value");
 
 		// 5. Hand off to a new summarizer loaded from that summary.

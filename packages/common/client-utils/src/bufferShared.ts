@@ -77,11 +77,14 @@ export function AnyUint8ArrayToArrayBuffer(array: Uint8Array): ArrayBuffer {
 	) {
 		return array.buffer;
 	}
-	// .slice is used to ensure underlying buffer is:
+	// Copy into a new `Uint8Array` so that the result's underlying buffer is:
 	//  1. ArrayBuffer
 	//  2. the complete data (no offset, full length)
-	// Cloning specified per https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray/slice
-	// and ECMAScript https://tc39.es/ecma262/multipage/indexed-collections.html#sec-%typedarray%.prototype.slice.
-	// eslint-disable-next-line unicorn/prefer-spread -- spread is not the same as slice for `Uint8Array`
-	return array.slice().buffer;
+	// Constructing from a typed array always allocates a fresh `ArrayBuffer` of exactly
+	// `array.byteLength` bytes. See ECMAScript https://tc39.es/ecma262/multipage/indexed-collections.html#sec-initializetypedarrayfromtypedarray.
+	//
+	// `array.slice()` must not be used here: Node.js `Buffer` extends Uint8Array and overrides `slice` to
+	// return a view over the same memory (like `subarray`) rather than a copy, so `.buffer` of the result
+	// would be the entire (possibly pooled) backing buffer, including bytes outside the input view.
+	return new Uint8Array(array).buffer;
 }

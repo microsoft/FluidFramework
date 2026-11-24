@@ -7,39 +7,27 @@ import { strict as assert } from "assert";
 // eslint-disable-next-line import-x/no-nodejs-modules
 import * as crypto from "crypto";
 
-import {
-	describeCompat,
-	describeInstallVersions,
-	getVersionedTestObjectProvider,
-} from "@fluid-private/test-version-utils";
+import { describeCompat, type CompatApis } from "@fluid-private/test-version-utils";
 import {
 	CompressionAlgorithms,
 	type IContainerRuntimeOptions,
 	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
-// SharedMap is used as a fallback for the describeInstallVersions path which does not provide `apis`.
-// For describeCompat callers, the compat-version-aware factory is read from apis.dds.SharedMap below.
-// TODO:AB#6558: Once describeInstallVersions supports `apis`, this fallback can be removed.
-// eslint-disable-next-line @typescript-eslint/no-restricted-imports
-import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
-import { pkgVersion } from "../packageVersion.js";
-
-const compressionSuite = (getProvider, apis?): void => {
+const compressionSuite = (getProvider: () => ITestObjectProvider, apis: CompatApis): void => {
 	// In cross-client compat, the local (creating) and remote (loading) clients may be different
 	// versions. Use the create-side factory for makeTestContainer and the load-side factory for
-	// loadTestContainer. Both fall back to the directly-imported SharedMap when apis is not
-	// available (describeInstallVersions path). (Outside cross-client compat ddsForLoading matches dds.)
-	const SharedMapForCreate = apis?.dds.SharedMap ?? SharedMap;
-	const SharedMapForLoad = apis?.ddsForLoading.SharedMap ?? SharedMap;
+	// loadTestContainer. Outside cross-client compat ddsForLoading matches dds.
+	const SharedMapForCreate = apis.dds.SharedMap;
+	const SharedMapForLoad = apis.ddsForLoading.SharedMap;
 	describe("Compression", () => {
 		let provider: ITestObjectProvider;
 		let localDataObject: ITestFluidObject;
@@ -52,8 +40,8 @@ const compressionSuite = (getProvider, apis?): void => {
 			},
 		};
 
-		beforeEach("createLocalAndRemoteMaps", async () => {
-			provider = await getProvider();
+		beforeEach("getTestObjectProvider", () => {
+			provider = getProvider();
 		});
 
 		async function setupContainers(
@@ -71,13 +59,11 @@ const compressionSuite = (getProvider, apis?): void => {
 				registry: [["mapKey", SharedMapForLoad.getFactory()]],
 			};
 			const localContainer = await provider.makeTestContainer(createContainerConfig);
-			localDataObject =
-				await getContainerEntryPointBackCompat<ITestFluidObject>(localContainer);
+			localDataObject = (await localContainer.getEntryPoint()) as ITestFluidObject;
 			localMap = await localDataObject.getSharedObject<ISharedMap>("mapKey");
 
 			const remoteContainer = await provider.loadTestContainer(loadContainerConfig);
-			const remoteDataObject =
-				await getContainerEntryPointBackCompat<ITestFluidObject>(remoteContainer);
+			const remoteDataObject = (await remoteContainer.getEntryPoint()) as ITestFluidObject;
 			remoteMap = await remoteDataObject.getSharedObject<ISharedMap>("mapKey");
 		}
 
@@ -164,38 +150,7 @@ const compressionSuite = (getProvider, apis?): void => {
 };
 
 describeCompat("Op Compression", "FullCompat", (getTestObjectProvider, apis) =>
-	compressionSuite(async () => getTestObjectProvider(), apis),
-);
-
-const loaderWithoutCompressionField = "2.0.0-internal.1.4.6";
-describeInstallVersions(
-	{
-		requestAbsoluteVersions: [loaderWithoutCompressionField],
-	},
-	/* timeoutMs: 3 minutes */ 180000,
-)("Op Compression self-healing with old loader", (getProvider) =>
-	compressionSuite(async () => {
-		const provider = getProvider();
-		// Ensure support for endpoint names for r11s driver. ODSP might need similar help at some point if we have
-		// scenarios that run into issues otherwise.
-		const driverConfig =
-			provider.driver.endpointName !== undefined
-				? {
-						r11s: { r11sEndpointName: provider.driver.endpointName },
-					}
-				: undefined;
-		return getVersionedTestObjectProvider(
-			pkgVersion, // base version
-			loaderWithoutCompressionField, // loader version
-			{
-				type: provider.driver.type,
-				version: pkgVersion,
-				config: driverConfig,
-			}, // driver version
-			pkgVersion, // runtime version
-			pkgVersion, // datastore runtime version
-		);
-	}),
+	compressionSuite(getTestObjectProvider, apis),
 );
 
 const generateRandomStringOfSize = (sizeInBytes: number): string =>

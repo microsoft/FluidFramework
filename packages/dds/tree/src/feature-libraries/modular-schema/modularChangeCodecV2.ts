@@ -9,11 +9,13 @@ import {
 	type JsonCodecPart,
 	withSchemaValidation,
 } from "../../codec/index.js";
-import type {
-	ChangeEncodingContext,
-	ChangeDecodingContext,
-	RevisionTag,
-	RevisionTagSchema,
+import {
+	type ChangeEncodingContext,
+	type ChangeDecodingContext,
+	type RevisionTag,
+	type RevisionTagSchema,
+	cheapRebaseValidation,
+	strictRebaseValidation,
 } from "../../core/index.js";
 import type { FieldBatchCodec } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
@@ -24,8 +26,10 @@ import {
 	decodeChange,
 	getFieldChangesetCodecs,
 } from "./modularChangeCodecV1.js";
+import { areDeltaEquivalent } from "./modularChangeDelta.js";
 import { EncodedModularChangesetV2 } from "./modularChangeFormatV2.js";
 import type { ModularChangeset } from "./modularChangeTypes.js";
+import { fieldKindsFromConfiguration, isChangesetValid } from "./modularChangeUtils.js";
 
 type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,
@@ -54,15 +58,26 @@ export function makeModularChangeCodecV2(
 
 	const modularChangeCodec: ModularChangeCodec = {
 		encode: (change, context) => {
+			strictRebaseValidation("Malformed V2 encode input", () =>
+				isChangesetValid(change, fieldKindsFromConfiguration(fieldKinds)),
+			);
 			const encoded = encodeChange(
 				change,
 				context,
+				fieldKinds,
 				fieldChangesetCodecs,
 				revisionTagCodec,
 				fieldsCodec,
 				chunkCompressionStrategy,
 			) as EncodedModularChangesetV2;
 			encoded.noChangeConstraint = change.noChangeConstraint;
+			cheapRebaseValidation("V2 encode output", (): true | string => {
+				const decoded = modularChangeCodec.decode(encoded, context);
+				return (
+					areDeltaEquivalent(change, decoded, fieldKindsFromConfiguration(fieldKinds)) ||
+					"does not match decode output"
+				);
+			});
 			return encoded;
 		},
 
@@ -79,6 +94,9 @@ export function makeModularChangeCodecV2(
 			if (encodedChange.noChangeConstraint !== undefined) {
 				decoded.noChangeConstraint = encodedChange.noChangeConstraint;
 			}
+			cheapRebaseValidation("Malformed V2 decode output", () =>
+				isChangesetValid(decoded, fieldKindsFromConfiguration(fieldKinds)),
+			);
 			return decoded;
 		},
 	};

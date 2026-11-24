@@ -15,8 +15,28 @@ debugAssert(() =>
 		"This should be removed in production 3",
 	),
 );
+
+/**
+ * A free function which uses the given `prefix` in a debugAssert predicate
+ */
+function testConstantRouting(prefix: string): void {
+	debugAssert(() => prefixPredicate(prefix, () => "This should be removed in production 4"));
+}
+
+// Tests that the prefix argument is removed in production builds when `testConstantRouting` is called from outside a class
+testConstantRouting("This should be removed in production 5");
+
+class TestClass {
+	public testMethod(): void {
+		// Tests that the prefix argument is removed in production builds when `testConstantRouting` is called from inside a class
+		testConstantRouting("This should be removed in production 6");
+	}
+}
+const testInstance = new TestClass();
+testInstance.testMethod();
+
 assert(true, "This should be kept 1");
-assert(true, "This should be kept 2", () => "This should be removed in production 4");
+assert(true, "This should be kept 2", () => "This should be removed in production 7");
 // To ensure the bundle being inspected actually contains the correct content,
 // use a different string constant in a way that will not be removed so it can be checked for in the bundle.
 throw new Error("This should be kept 3");

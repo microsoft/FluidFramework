@@ -21,6 +21,7 @@ import {
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeArrayNode,
+	textLocationArray,
 } from "../simple-tree/index.js";
 import { TreeBeta } from "../shared-tree/index.js";
 import type {
@@ -35,8 +36,6 @@ import type {
 // This prevents them from getting inline imports generated, cleaning up the d.ts file and API reports.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports, import-x/no-duplicates
 import type { NodeKind, TreeNodeSchema } from "../simple-tree/index.js";
-
-import { textLocationArray } from "./textLocationAdapter.js";
 
 /**
  * Enables expensive debug assertions for formatted text.
@@ -64,9 +63,13 @@ export function expensiveInternalValidationAssert(condition: () => true | string
 const sf = new SchemaFactoryAlpha("com.fluidframework.text");
 
 class TextNode
-	extends sf.object("Text", {
-		content: SchemaFactory.required([() => StringArray], { key: EmptyKey }),
-	})
+	extends sf.object(
+		"Text",
+		{
+			content: SchemaFactory.required([() => StringArray], { key: EmptyKey }),
+		},
+		{ allowUnknownOptionalFields: false },
+	)
 	implements PlainText.Members, IExposedMethods
 {
 	/**

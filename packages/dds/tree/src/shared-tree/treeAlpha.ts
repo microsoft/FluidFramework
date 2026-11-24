@@ -75,14 +75,19 @@ import {
 	isObjectNodeSchema,
 	isTreeNode,
 	toInitialSchema,
-	type TreeParsingOptions,
+	type TreeImportOptions,
+	KeyEncodingOptions,
+	getUnhydratedContextWithStoredSchema,
+	getUnhydratedContext,
+	type TreeFieldFilter,
 	type NodeChangedData,
 	type TreeChangeEventsBeta,
 	type ConciseTree,
 	contentSchemaSymbol,
 	type TreeContextAlpha,
 	type TreeNodeSchema,
-	getUnhydratedContext,
+	toStoredSchema,
+	toUnhydratedSchema,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 
@@ -220,9 +225,11 @@ export interface TreeIdentifierUtils {
  * @remarks
  * Use via the {@link (TreeAlpha:variable)} singleton.
  *
- * The unhydrated node creation APIs in this interface do not support {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields}.
+ * The unhydrated node creation APIs in this interface do not support {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields},
+ * except {@link (TreeAlpha:interface).importVerbose} with a view (see {@link TreeImportOptions}).
  * This is because unknown optional fields still must have a schema: its just that the schema may come from the document's stored schema.
- * Unhydrated nodes created via this interface are not associated with any document, so there is nowhere for them to get schema for unknown optional fields.
+ * Unhydrated nodes created via this interface are not associated with any document, so there is nowhere for them to get schema for unknown optional fields,
+ * unless the caller provides a view of a document.
  * Note that {@link (TreeBeta:interface).clone} can create an unhydrated node with unknown optional fields, as it uses the source node's stored schema (if any).
  *
  * Export APIs in this interface include {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields}
@@ -231,7 +238,8 @@ export interface TreeIdentifierUtils {
  * @privateRemarks
  * TODO:
  * There should be a way to provide a source for defaulted identifiers for unhydrated node creation, either via these APIs or some way to add them to its output later.
- * If an option were added to these APIs, it could also be used to enable unknown optional fields.
+ * The `view` property of {@link TreeImportOptions} could supply this source.
+ * It could also enable unknown optional fields in the other creation APIs.
  *
  * @sealed @alpha
  */
@@ -307,17 +315,27 @@ export interface TreeAlpha {
 	 * Construct tree content compatible with a field defined by the provided `schema`.
 	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
 	 * @param data - The data used to construct the field content. See {@link (TreeAlpha:interface).(exportVerbose:1)}.
+	 * @param options - Options for the import.
+	 * If you do not specify options, the data must use property keys ({@link KeyEncodingOptions.usePropertyKeys}), and the import does not use a view.
 	 * @remarks
-	 * This currently does not support input containing
-	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields| unknown optional fields} but does support
-	 * {@link SchemaStaticsBeta.staged | staged} allowed types.
+	 * This supports input containing
+	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields| unknown optional fields} only with a view (see {@link TreeImportOptions}).
+	 *
+	 * It also supports {@link SchemaStaticsBeta.staged | staged} allowed types.
+	 * With a view, staged allowed types are supported only if the stored schema of the document includes them.
+	 *
 	 * Non-empty default values for fields are currently not supported (must be provided in the input).
 	 * The content will be validated against the schema and an error will be thrown if out of schema.
+	 *
+	 * If you have the node that you want to copy, use {@link (TreeBeta:interface).clone} instead of an export and an import.
+	 * `clone` copies the persisted data of the node directly.
+	 * It keeps unknown optional fields without a view.
+	 * It also does not export the node to data and import that data again, so it does less work.
 	 */
 	importVerbose<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		data: VerboseTree | undefined,
-		options?: TreeParsingOptions,
+		options?: TreeImportOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
 	/**
@@ -437,6 +455,20 @@ export interface TreeAlpha {
 	children(
 		node: TreeNode,
 	): Iterable<[propertyKey: string | number, child: TreeNode | TreeLeafValue]>;
+
+	/**
+	 * Checks if the node has content in any {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields}.
+	 *
+	 * @remarks
+	 * Unknown optional fields are optional fields that are in the stored schema but not in the view schema.
+	 * This function checks only the fields of `node`, not the fields of its descendants.
+	 *
+	 * To read the content of these fields, use {@link (TreeAlpha:interface).(exportVerbose:1)} with {@link KeyEncodingOptions.allStoredKeys}.
+	 *
+	 * @param node - The node to check.
+	 * @returns `true` if at least one unknown optional field of `node` has content.
+	 */
+	hasUnknownChildren(node: TreeNode): boolean;
 
 	/**
 	 * Track observations of any TreeNode content.
@@ -869,8 +901,18 @@ export const TreeAlpha: TreeAlpha = {
 	importVerbose<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		data: VerboseTree | undefined,
-		options?: TreeParsingOptions,
+		options?: TreeImportOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
+		const view = options?.view;
+		// The type of TreeImportOptions prevents these cases.
+		if (options?.keys === KeyEncodingOptions.allStoredKeys) {
+			assert(view !== undefined, "Importing with `allStoredKeys` requires a view.");
+		} else {
+			assert(
+				view === undefined,
+				"A view can be used only when importing with `allStoredKeys`.",
+			);
+		}
 		const config: TreeEncodingOptions = { ...options };
 		// Create a config which is standalone, and thus can be used without having to refer back to the schema.
 		const schemalessConfig = applySchemaToParserOptions(schema, config);
@@ -882,10 +924,31 @@ export const TreeAlpha: TreeAlpha = {
 			return undefined as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 		}
 		const cursor = cursorFromVerbose(data, schemalessConfig);
+		let context: Parameters<typeof createFromCursor>[3];
+		if (view !== undefined) {
+			// Use the stored schema of the view's document.
+			assert(view instanceof SchematizingSimpleTreeView, "Unexpected view implementation");
+			if (!view.compatibility.canView) {
+				throw new UsageError(
+					"Cannot import with a view that cannot view its document. See `TreeView.compatibility`.",
+				);
+			}
+			context = getUnhydratedContextWithStoredSchema(schema, view.checkout.storedSchema);
+			// The new nodes use the stored schema of the view's document, which is only known to be compatible with the view schema of the view.
+			const viewDefinitions = getUnhydratedContext(view.schema).schema;
+			for (const [schemaIdentifier, definition] of context.schema) {
+				if (viewDefinitions.get(schemaIdentifier) !== definition) {
+					throw new UsageError(
+						`The schema ${JSON.stringify(schemaIdentifier)} is not the same object as the schema with this identifier in the view. Use the same schema objects as the view.`,
+					);
+				}
+			}
+		}
 		return createFromCursor(
 			schema,
 			cursor,
-			getUnhydratedContext(schema).flexContext.schema.rootFieldSchema,
+			toStoredSchema(schema, toUnhydratedSchema).rootFieldSchema,
+			context,
 		);
 	},
 
@@ -975,7 +1038,9 @@ export const TreeAlpha: TreeAlpha = {
 	): TreeNode | TreeLeafValue | undefined => {
 		const flexNode = getInnerNode(node);
 		debugAssert(
-			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
+			() =>
+				!flexNode.context.isDisposed() ||
+				"getInnerNode should have thrown if the provided node was disposed.",
 		);
 
 		const schema = treeNodeApi.schema(node);
@@ -989,10 +1054,7 @@ export const TreeAlpha: TreeAlpha = {
 					return undefined;
 				}
 
-				const index =
-					typeof propertyKey === "number"
-						? propertyKey
-						: asIndex(propertyKey, Number.POSITIVE_INFINITY);
+				const index = typeof propertyKey === "number" ? propertyKey : asIndex(propertyKey);
 
 				// If the key is not a valid index, then there is no corresponding child.
 				if (index === undefined) {
@@ -1046,7 +1108,9 @@ export const TreeAlpha: TreeAlpha = {
 	children(node: TreeNode): [propertyKey: string | number, child: TreeNode | TreeLeafValue][] {
 		const flexNode = getInnerNode(node);
 		debugAssert(
-			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
+			() =>
+				!flexNode.context.isDisposed() ||
+				"getInnerNode should have thrown if the provided node was disposed.",
 		);
 
 		const schema = treeNodeApi.schema(node);
@@ -1060,8 +1124,7 @@ export const TreeAlpha: TreeAlpha = {
 				}
 
 				for (let index = 0; index < sequence.length; index++) {
-					const childFlexTree = sequence.at(index);
-					assert(childFlexTree !== undefined, 0xbc4 /* Sequence child was undefined. */);
+					const childFlexTree = sequence.atIndex(index);
 					const childTree = getOrCreateNodeFromInnerUnboxedNode(childFlexTree);
 					result.push([index, childTree]);
 				}
@@ -1103,6 +1166,29 @@ export const TreeAlpha: TreeAlpha = {
 		return result;
 	},
 
+	hasUnknownChildren(node: TreeNode): boolean {
+		const flexNode = getInnerNode(node);
+		debugAssert(
+			() =>
+				!flexNode.context.isDisposed() ||
+				"getInnerNode should have thrown if the provided node was disposed.",
+		);
+
+		const schema = treeNodeApi.schema(node);
+		if (!isObjectNodeSchema(schema) || !schema.allowUnknownOptionalFields) {
+			return false;
+		}
+
+		// `fields` contains only fields that have content, and also contains unknown fields.
+		for (const [storedKey] of flexNode.fields) {
+			// A stored key with no property key is an unknown optional field.
+			if (!schema.storedKeyToPropertyKey.has(storedKey)) {
+				return true;
+			}
+		}
+		return false;
+	},
+
 	tagContentSchema<TSchema extends TreeNodeSchema, TNode extends InsertableField<TSchema>>(
 		schema: TSchema,
 		node: TNode,
@@ -1134,4 +1220,31 @@ function borrowFieldCursorFromTreeNodeOrValue(
 	// TODO: avoid copy: borrow cursor from field instead.
 	const mapTree = mapTreeFromCursor(cursor);
 	return cursorForMapTreeField([mapTree]);
+}
+
+/**
+ * Like {@link TreeAlpha.exportVerbose}, but exports only the fields that `filter` selects.
+ * @remarks
+ * To export unknown optional fields, use {@link KeyEncodingOptions.allStoredKeys}.
+ */
+export function exportVerboseFiltered(
+	node: TreeNode,
+	options: TreeEncodingOptions,
+	filter: TreeFieldFilter,
+): VerboseTree {
+	const kernel = getKernel(node);
+	const innerNode = kernel.getInnerNode();
+	if (!innerNode.isHydrated()) {
+		return verboseFromCursor(innerNode.borrowCursor(), kernel.context, options, filter);
+	}
+	// For a hydrated node, the borrowed cursor is the cursor of the node.
+	// The filter can read the node, which moves that cursor, so use a separate cursor.
+	const forest = innerNode.context.checkout.forest;
+	const filterCursor = forest.allocateCursor("exportVerboseFiltered");
+	forest.moveCursorToPath(innerNode.anchorNode, filterCursor);
+	try {
+		return verboseFromCursor(filterCursor, kernel.context, options, filter);
+	} finally {
+		filterCursor.free();
+	}
 }

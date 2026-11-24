@@ -9,11 +9,22 @@ Use `trademark` to generate the Microsoft trademark notice from the shared templ
 | `includeHeading` | boolean | `true`  | Include the `Trademark` heading. | When enabled, the transform determines the depth from the marker position and adjusts template headings relative to it. See [Generated headings](../../README.md#generated-headings). |
 | `headingLevel`   | integer | Inferred | Set the context heading level from 1 through 6. | This value overrides the inferred depth. The transform adjusts template headings relative to this value.                                                             |
 
-## Example
+## Examples
+
+### Markdown
 
 The following marker generates the trademark notice without its section heading:
 
 ```markdown
 <!-- markdown-magic:begin {"transform":"trademark","includeHeading":false,"headingLevel":2} -->
 <!-- markdown-magic:end -->
+```
+
+### MDX
+
+For an MDX document, use MDX comments:
+
+```mdx
+{/* markdown-magic:begin {"transform":"trademark","includeHeading":false,"headingLevel":2} */}
+{/* markdown-magic:end */}
 ```

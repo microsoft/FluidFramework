@@ -46,17 +46,9 @@ UPCOMING.md
 # artifacts or bundleAnalysis folders. See scripts/pack-build-output.sh for more details.
 build_output_archive
 
-# Claude Code
-# Local settings contain author-specific information and should not be shared.
-**/.claude/**/*.local.*
+# Prevent legacy Claude configuration from being committed.
+**/.claude*
 CLAUDE.local.md
-# Session-specific task tracking
-**/.claude/todos/
-# Git worktrees created by Claude Code
-**/.claude/worktrees/
 
 # Output from benchmarks
 **/benchmark*Output.json
-
-# npm configuration: Currently only used by CI to redirect to an alternative registry.
-.npmrc

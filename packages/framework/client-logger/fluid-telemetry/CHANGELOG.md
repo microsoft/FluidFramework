@@ -1,5 +1,36 @@
 # @fluidframework/fluid-telemetry
 
+## 3.14.0
+
+Dependency updates only.
+
+## 3.13.0
+
+Dependency updates only.
+
+## 3.12.0
+
+Dependency updates only.
+
+## 3.11.0
+
+Dependency updates only.
+
+## 3.10.0
+
+Dependency updates only.
+
+## 3.7.0
+
+### Minor Changes
+
+#### Containers passed to startTelemetry are no longer kept in memory after they are disposed ([#28515](https://github.com/microsoft/FluidFramework/pull/28515)) [917bf636d85](https://github.com/microsoft/FluidFramework/commit/917bf636d853e548dbf2ac23d4cbea5b6ea048ed)
+
+Previously, `startTelemetry` started a heartbeat timer that was never stopped.
+That timer kept the container, along with its telemetry producer and consumers, in memory for the lifetime of the process, even after the container was disposed.
+In Node.js, it also stopped the process from exiting.
+The heartbeat timer now stops when the container is disposed.
+
 ## 3.6.0
 
 Dependency updates only.
@@ -28,39 +59,39 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Removal of direct CommonJS support ([#28124](https://github.com/microsoft/FluidFramework/pull/28124)) [0f84e3b8878](https://github.com/microsoft/FluidFramework/commit/0f84e3b8878a5e75b2253976d98fd963bbd9db88)
+#### Removal of direct CommonJS support ([#28124](https://github.com/microsoft/FluidFramework/pull/28124)) [0f84e3b8878](https://github.com/microsoft/FluidFramework/commit/0f84e3b8878a5e75b2253976d98fd963bbd9db88)
 
-  Direct `require()` import is no longer directly supported.
-  Package is transpiled as ECMAScript Module.
+Direct `require()` import is no longer directly supported.
+Package is transpiled as ECMAScript Module.
 
-  See [Removal of direct CommonJS support in v3.0](https://github.com/microsoft/FluidFramework/issues/27444) for more information.
+See [Removal of direct CommonJS support in v3.0](https://github.com/microsoft/FluidFramework/issues/27444) for more information.
 
-- Require modern TypeScript module resolution ([#27970](https://github.com/microsoft/FluidFramework/pull/27970)) [325e2016ca9](https://github.com/microsoft/FluidFramework/commit/325e2016ca9978d4a1f7552c97ba34feac9df41f)
+#### Require modern TypeScript module resolution ([#27970](https://github.com/microsoft/FluidFramework/pull/27970)) [325e2016ca9](https://github.com/microsoft/FluidFramework/commit/325e2016ca9978d4a1f7552c97ba34feac9df41f)
 
-  Fluid Framework Client packages no longer include type declaration compatibility entrypoints for TypeScript's legacy Node10 resolution mode (`"moduleResolution": "node"` or `"node10"`).
-  Applications upgrading to Fluid Framework 3.0 must use one of the following supported configurations:
-  - `"module": "Node16"` with `"moduleResolution": "Node16"`
-  - `"module": "NodeNext"` with `"moduleResolution": "NodeNext"`
-  - `"module": "ESNext"` with `"moduleResolution": "Bundler"`
+Fluid Framework Client packages no longer include type declaration compatibility entrypoints for TypeScript's legacy Node10 resolution mode (`"moduleResolution": "node"` or `"node10"`).
+Applications upgrading to Fluid Framework 3.0 must use one of the following supported configurations:
+- `"module": "Node16"` with `"moduleResolution": "Node16"`
+- `"module": "NodeNext"` with `"moduleResolution": "NodeNext"`
+- `"module": "ESNext"` with `"moduleResolution": "Bundler"`
 
-  Existing public package entrypoints exposed through `package.json` exports, including `/alpha`, `/beta`, and `/legacy`, remain available under supported module resolution modes.
+Existing public package entrypoints exposed through `package.json` exports, including `/alpha`, `/beta`, and `/legacy`, remain available under supported module resolution modes.
 
-  See [Removal of Node10 resolutions in v3.0](https://github.com/microsoft/FluidFramework/issues/27457) for more information.
+See [Removal of Node10 resolutions in v3.0](https://github.com/microsoft/FluidFramework/issues/27457) for more information.
 
-- Client packages now target ES2022 ([#27846](https://github.com/microsoft/FluidFramework/pull/27846)) [91c78541bdd](https://github.com/microsoft/FluidFramework/commit/91c78541bddcbca5d6c5f357b023eeaee617d885)
+#### Client packages now target ES2022 ([#27846](https://github.com/microsoft/FluidFramework/pull/27846)) [91c78541bdd](https://github.com/microsoft/FluidFramework/commit/91c78541bddcbca5d6c5f357b023eeaee617d885)
 
-  The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
-  The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
-  All actively supported Node.js versions and evergreen browsers already meet this requirement.
+The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
+The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
+All actively supported Node.js versions and evergreen browsers already meet this requirement.
 
-  Note that Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the README for every client package.
+Note that Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the README for every client package.
 
-  It is possible this change could impact users of less up to date JavaScript runtimes.
-  Impacted users can use a tool like [babel](https://babeljs.io/) to transpile out unsupported language features.
+It is possible this change could impact users of less up to date JavaScript runtimes.
+Impacted users can use a tool like [babel](https://babeljs.io/) to transpile out unsupported language features.
 
-- Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
+#### Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
 
-  FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
+FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
 
 ## 2.116.0
 
@@ -106,9 +137,9 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+#### Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
 
-  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
 
 ## 2.93.0
 
@@ -282,33 +313,33 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Updated server dependencies ([#21514](https://github.com/microsoft/FluidFramework/pull/21514)) [9629f1d93a](https://github.com/microsoft/FluidFramework/commit/9629f1d93a7e412c0cb2f65cc21da0c95ff8981d)
+#### Updated server dependencies ([#21514](https://github.com/microsoft/FluidFramework/pull/21514)) [9629f1d93a](https://github.com/microsoft/FluidFramework/commit/9629f1d93a7e412c0cb2f65cc21da0c95ff8981d)
 
-  The following Fluid server dependencies have been updated to the latest version, 5.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/blob/main/server/routerlicious/RELEASE_NOTES/5.0.0.md)
-  - @fluidframework/gitresources
-  - @fluidframework/server-kafka-orderer
-  - @fluidframework/server-lambdas
-  - @fluidframework/server-lambdas-driver
-  - @fluidframework/server-local-server
-  - @fluidframework/server-memory-orderer
-  - @fluidframework/protocol-base
-  - @fluidframework/server-routerlicious
-  - @fluidframework/server-routerlicious-base
-  - @fluidframework/server-services
-  - @fluidframework/server-services-client
-  - @fluidframework/server-services-core
-  - @fluidframework/server-services-ordering-kafkanode
-  - @fluidframework/server-services-ordering-rdkafka
-  - @fluidframework/server-services-ordering-zookeeper
-  - @fluidframework/server-services-shared
-  - @fluidframework/server-services-telemetry
-  - @fluidframework/server-services-utils
-  - @fluidframework/server-test-utils
-  - tinylicious
+The following Fluid server dependencies have been updated to the latest version, 5.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/blob/main/server/routerlicious/RELEASE_NOTES/5.0.0.md)
+- @fluidframework/gitresources
+- @fluidframework/server-kafka-orderer
+- @fluidframework/server-lambdas
+- @fluidframework/server-lambdas-driver
+- @fluidframework/server-local-server
+- @fluidframework/server-memory-orderer
+- @fluidframework/protocol-base
+- @fluidframework/server-routerlicious
+- @fluidframework/server-routerlicious-base
+- @fluidframework/server-services
+- @fluidframework/server-services-client
+- @fluidframework/server-services-core
+- @fluidframework/server-services-ordering-kafkanode
+- @fluidframework/server-services-ordering-rdkafka
+- @fluidframework/server-services-ordering-zookeeper
+- @fluidframework/server-services-shared
+- @fluidframework/server-services-telemetry
+- @fluidframework/server-services-utils
+- @fluidframework/server-test-utils
+- tinylicious
 
-- Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+#### Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
 
-  Update package implementations to use TypeScript 5.4.5.
+Update package implementations to use TypeScript 5.4.5.
 
 ## 2.0.0-rc.4.0.0
 
@@ -318,28 +349,28 @@ Dependency updates only.
 
 ### Major Changes
 
-- New package: @fluidframework/fluid-telemetry [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+#### New package: @fluidframework/fluid-telemetry [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
 
-  Before deploying your application at scale, it is critical to have the holistic telemetry in place to monitor its usage
-  and look for issues and optimizations. To make this easier, we are providing a fluid-telemetry package that comes with
-  Typed telemetry events that you can funnel to your any analytics tool of your choice. If you decide to use Azure App
-  Insights to view this data, we also provide helper packages and dashboard queries to get you started quickly. You can
-  learn more at <https://aka.ms/fluid/telemetry>.
+Before deploying your application at scale, it is critical to have the holistic telemetry in place to monitor its usage
+and look for issues and optimizations. To make this easier, we are providing a fluid-telemetry package that comes with
+Typed telemetry events that you can funnel to your any analytics tool of your choice. If you decide to use Azure App
+Insights to view this data, we also provide helper packages and dashboard queries to get you started quickly. You can
+learn more at <https://aka.ms/fluid/telemetry>.
 
-- Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+#### Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
 
-  Fluid Framework packages have been updated to use the [package.json "exports"
-  field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
-  TypeScript types and implementation code.
+Fluid Framework packages have been updated to use the [package.json "exports"
+field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
+TypeScript types and implementation code.
 
-  This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-  - `"moduleResolution": "Node16"` with `"module": "Node16"`
-  - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
+This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
+- `"moduleResolution": "Node16"` with `"module": "Node16"`
+- `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 
-  We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
-  for use with modern versions of Node.js _and_ Bundlers.
-  [See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
-  regarding the module and moduleResolution options.
+We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
+for use with modern versions of Node.js _and_ Bundlers.
+[See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
+regarding the module and moduleResolution options.
 
-  **Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
-  to distinguish stable APIs from those that are in development.**
+**Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
+to distinguish stable APIs from those that are in development.**

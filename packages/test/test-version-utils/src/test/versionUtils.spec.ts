@@ -13,7 +13,6 @@ import {
 	getRequestedVersion,
 	readVersionsManifest,
 	resolveRangeViaManifest,
-	versionHasMovedSparsedMatrix,
 } from "../versionUtils.js";
 
 /**
@@ -60,6 +59,7 @@ describe("versionUtils", () => {
 			adjustPublicMajor,
 			expectedVersion,
 		): Mocha.Test {
+			// These integration tests include package-manager startup and a live registry request.
 			return it(`${baseVersion}, ${requested}, ${adjustPublicMajor}, ${expectedVersion}`, () => {
 				checkRequestedVersionSatisfies(
 					baseVersion,
@@ -67,7 +67,7 @@ describe("versionUtils", () => {
 					adjustPublicMajor,
 					expectedVersion,
 				);
-			});
+			}).timeout(30000);
 		}
 
 		describe("bumping public releases (adjustPublicMajor = false)", () => {
@@ -218,6 +218,27 @@ describe("versionUtils", () => {
 		});
 	});
 
+	describe("3.x compatibility ranges", () => {
+		for (const [baseVersion, requested, expected] of [
+			["3.0.0", -1, ">=2.110.0-0 <2.120.0-0"],
+			["3.9.0", -1, ">=2.110.0-0 <2.120.0-0"],
+			["3.10.0", -1, ">=3.0.0-0 <3.10.0-0"],
+			["3.10.0-12345", -1, ">=3.0.0-0 <3.10.0-0"],
+			["3.19.2", -1, ">=3.0.0-0 <3.10.0-0"],
+			["3.10.0", -2, ">=2.110.0-0 <2.120.0-0"],
+			["3.10.0", -3, ">=2.100.0-0 <2.110.0-0"],
+			["3.10.0", -14, ">=2.0.0-rc.5.0.0 <2.0.0-rc.6.0.0"],
+		] as const) {
+			it(`${baseVersion}, ${requested} resolves to ${expected}`, () => {
+				assert.strictEqual(calculateRequestedRange(baseVersion, requested), expected);
+			});
+		}
+
+		it("preserves public-major adjustment", () => {
+			assert.strictEqual(calculateRequestedRange("3.10.0", -1, true), "^2.0.0-0");
+		});
+	});
+
 	describe("manifest-backed resolution", () => {
 		it("returns exact versions directly when resolving via manifest", () => {
 			const exactVersion = "9.9.9";
@@ -245,30 +266,6 @@ describe("versionUtils", () => {
 
 			assert.ok(expected, `Expected at least one manifest version satisfying ${range}`);
 			assert.strictEqual(getRequestedVersion({ baseVersion, requested: -1 }), expected);
-		});
-	});
-
-	describe("versionHasMovedSparsedMatrix", () => {
-		it("older version", () => {
-			for (const version of ["0.59.0", "1.4.0", "2.0.0-internal.1.4.0"]) {
-				assert.strictEqual(versionHasMovedSparsedMatrix(version), false);
-			}
-		});
-
-		it("equal version version", () => {
-			assert.strictEqual(versionHasMovedSparsedMatrix("2.0.0"), true);
-			assert.strictEqual(versionHasMovedSparsedMatrix("2.0.0-internal.2.0.0"), true);
-		});
-
-		it("newer version", () => {
-			for (const version of [
-				"2.0.0-internal.2.0.1",
-				"2.1.0-internal.1.4.0",
-				"2.0.1",
-				"3.0.0",
-			]) {
-				assert.strictEqual(versionHasMovedSparsedMatrix(version), true);
-			}
 		});
 	});
 });

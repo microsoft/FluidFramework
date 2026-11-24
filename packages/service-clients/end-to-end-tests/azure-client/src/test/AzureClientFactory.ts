@@ -61,10 +61,10 @@ export function createAzureClient(
 	scopes?: ScopeType[],
 	createContainerRuntimeFactory?: ({
 		schema,
-		minVersionForCollaboration,
+		oldestSupportedClient,
 	}: {
 		schema: ContainerSchema;
-		minVersionForCollaboration: OldestSupportedClientVersion;
+		oldestSupportedClient: OldestSupportedClientVersion;
 	}) => IRuntimeFactory,
 ): AzureClient {
 	const args = process.argv.slice(2);

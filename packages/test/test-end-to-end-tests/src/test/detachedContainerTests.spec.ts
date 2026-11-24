@@ -42,8 +42,6 @@ import {
 	SupportedExportInterfaces,
 	TestFluidObjectFactory,
 	toIDeltaManagerFull,
-	getContainerEntryPointBackCompat,
-	getDataStoreEntryPointBackCompat,
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -66,7 +64,7 @@ const createFluidObject = async (
 	type: string,
 ): Promise<ITestFluidObject> => {
 	const dataStore = await dataStoreContext.containerRuntime.createDataStore(type);
-	return getDataStoreEntryPointBackCompat<ITestFluidObject>(dataStore);
+	return dataStore.entryPoint.get() as Promise<ITestFluidObject>;
 };
 
 describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis) => {
@@ -174,7 +172,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 	it("DataStores in detached container", async () => {
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 		// Get the root dataStore from the detached container.
-		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 
 		// Create a sub dataStore of type TestFluidObject and verify that it is attached.
 		const subDataStore = await createFluidObject(dataStore.context, "default");
@@ -193,7 +191,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 	it("DataStores in attached container", async () => {
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 		// Get the root dataStore from the detached container.
-		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 
 		// Create a sub dataStore of type TestFluidObject.
 		const testDataStore = await createFluidObject(dataStore.context, "default");
@@ -220,7 +218,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 
 	it("can create DDS in detached container and attach / update it", async function () {
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-		const dsClient1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+		const dsClient1 = (await container.getEntryPoint()) as ITestFluidObject;
 
 		// Create a DDS after the root data store is created and loaded.
 		const mapClient1 = SharedMap.create(dsClient1.runtime);
@@ -237,7 +235,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		const url: any = await container.getAbsoluteUrl("");
 		// Load a second container and validate it can load the DDS.
 		const container2 = await loader.resolve({ url });
-		const dsClient2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		const dsClient2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const mapClient2 = await dsClient2.root.get<IFluidHandle<ISharedMap>>("map")?.get();
 		assert(mapClient2 !== undefined, "Map is not available in the second client");
 
@@ -263,7 +261,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 	it("Load attached container and check for dataStores", async () => {
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 		// Get the root dataStore from the detached container.
-		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 
 		// Create a sub dataStore of type TestFluidObject.
 		const subDataStore1 = await createFluidObject(dataStore.context, "default");
@@ -280,7 +278,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		const container2 = await loader2.resolve({ url: requestUrl2 });
 
 		// Get the sub dataStore and assert that it is attached.
-		const entryPoint2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		const entryPoint2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const subDataStore2Handle: IFluidHandle<ITestFluidObject> | undefined =
 			entryPoint2.root.get("attachKey");
 		assert(subDataStore2Handle !== undefined, "handle should exist");
@@ -313,7 +311,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Get the root dataStore from the detached container.
-		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const testChannel1 = await dataStore.getSharedObject<SharedString>(sharedStringId);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
@@ -372,7 +370,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Get the root dataStore from the detached container.
-		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const testChannel1 = await dataStore.getSharedObject<ISharedMap>(sharedMapId);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
@@ -424,7 +422,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Get the root dataStore from the detached container.
-		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
 			if (runtimeMessage === false) {
@@ -476,7 +474,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Get the root dataStore from the detached container.
-		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 
 		const containerP = container.attach(request);
 		if (container.attachState === AttachState.Detached) {
@@ -486,7 +484,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		const newDataStore = await dataStore.context.containerRuntime.createDataStore([
 			testDataStoreType,
 		]);
-		const comp2 = await getDataStoreEntryPointBackCompat<ITestFluidObject>(newDataStore);
+		const comp2 = (await newDataStore.entryPoint.get()) as ITestFluidObject;
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
 			if (runtimeMessage === false) {
@@ -539,7 +537,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Get the root dataStore from the detached container.
-		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const testChannel1 =
 			await dataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
 
@@ -602,7 +600,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Get the root dataStore from the detached container.
-		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const testChannel1 = await dataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
@@ -653,7 +651,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Get the root dataStore from the detached container.
-		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const testChannel1 = await dataStore.getSharedObject<ISharedCell>(sharedCellId);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
@@ -704,7 +702,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Get the root dataStore from the detached container.
-		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const testChannel1 = await dataStore.getSharedObject<ConsensusQueue>(cocId);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
@@ -760,7 +758,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Get the root dataStore from the detached container.
-		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const testChannel1 = await dataStore.getSharedObject<SparseMatrix>(sparseMatrixId);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
@@ -809,7 +807,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Get the root dataStore from the detached container.
-		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const testChannel1 = await dataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {

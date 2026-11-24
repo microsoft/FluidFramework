@@ -1,0 +1,49 @@
+{
+  "version": "text",
+  "identifiers": [],
+  "shapes": [
+    {
+      "c": {
+        "type": "com.fluidframework.text.Text",
+        "value": false,
+        "fields": [
+          [
+            "",
+            1
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.text.StringArray",
+        "value": false,
+        "fields": [
+          [
+            "",
+            2
+          ]
+        ]
+      }
+    },
+    {
+      "a": 3
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.leaf.string",
+        "value": true
+      }
+    }
+  ],
+  "data": [
+    [
+      0,
+      [
+        "H",
+        "i",
+        "🌍"
+      ]
+    ]
+  ]
+}

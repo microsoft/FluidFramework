@@ -25,7 +25,8 @@ export {
 	type RevisionTag,
 	RevisionTagSchema,
 	type EncodedRevisionTag,
-	type EncodedChangeAtomId,
+	EncodedChangeAtomId,
+	ChangesetLocalIdSchema,
 	type EncodedStableId,
 	type ChangesetLocalId,
 	type ChangeAtomId,
@@ -72,3 +73,9 @@ export {
 	isAncestor,
 	diffHistories,
 } from "./utils.js";
+export {
+	cheapRebaseValidation,
+	strictRebaseValidation,
+	RebaseValidation,
+	RebaseValidationLevel,
+} from "./rebaseValidation.js";

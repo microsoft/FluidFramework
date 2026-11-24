@@ -43,8 +43,9 @@ import {
 	type TreeArrayNode,
 	type TreeLocationResolver,
 	type TreeLocationResolution,
+	isTextLocationNode,
+	textLocationArray,
 } from "../simple-tree/index.js";
-import { isTextLocationNode, textLocationArray } from "../text/index.js";
 import { brand, isReadonlyArray } from "../util/index.js";
 
 import {
@@ -53,7 +54,7 @@ import {
 	type TrackedLocation,
 } from "./locationReplay.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import type { TreeCheckout } from "./treeCheckout.js";
+import type { CheckoutBase } from "./treeCheckout.js";
 import {
 	capturedTreeLocationSchema,
 	capturedTreeLocationEnvelopeSchema,
@@ -129,7 +130,7 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 	>;
 
 	public constructor(
-		private readonly checkout: TreeCheckout,
+		private readonly checkout: CheckoutBase,
 		private readonly idCompressor: IIdCompressor,
 		jsonValidator: FormatValidator,
 		private readonly rebaser: ChangeRebaser<SharedTreeChange>,

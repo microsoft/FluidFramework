@@ -22,7 +22,7 @@ _ensure_agency() {
 }
 
 # Agent launcher functions. Extra args (e.g. --mcp 'kusto ...') are inserted
-# before the -- separator so they reach agency, not Claude/Copilot directly.
+# before the -- separator so they reach agency, not Copilot directly.
 dev() {
 	_ensure_agency || return 1
 	agency copilot --profile nori --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' "$@" -- -i "/yolo auto"

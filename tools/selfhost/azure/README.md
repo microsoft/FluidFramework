@@ -11,7 +11,7 @@ You own every resource it creates, in your own resource group.
 | Snapshot storage (gitrest, historian) | AKS + Azure Files |
 | Ordering / message log | Azure Event Hubs, over the Kafka protocol |
 | Document database | Azure Cosmos DB for MongoDB |
-| Cache | Azure Managed Redis |
+| Cache | Azure Managed Redis (default), or Azure Cache for Redis as an explicit fallback |
 | Secrets | Azure Key Vault |
 | Container images | Azure Container Registry |
 | Public HTTPS endpoints | Azure Front Door |
@@ -50,6 +50,9 @@ tool check and then fails partway through the image build:
 docker buildx version
 ```
 
+Optionally, set `DOCKERHUB_USERNAME` (your Docker Hub username) and `DOCKERHUB_TOKEN` (your read-only access token) in your environment to reduce unauthenticated Docker Hub throttling during deployment.
+See [Docker Hub access tokens](https://docs.docker.com/security/access-tokens/) for token information.
+
 Run everything from **Bash** — Git Bash, WSL, macOS, or Linux. Zsh and PowerShell will not work.
 
 **Run every command in this guide from the `tools/selfhost` directory**, not the FluidFramework repository root:
@@ -84,10 +87,12 @@ git clone https://github.com/microsoft/FluidFramework.git ~/FluidFramework
 Use a checkout you are happy to have moved to an arbitrary commit — the deployment checks out a
 specific pinned revision in this directory. Do not point it at a clone you are actively working in.
 
-**4. Have a release bundle.** A release bundle pins exactly which source revision and which image
+**4. Select a release.** A release bundle pins exactly which source revision and which image
 digests get deployed, so the same bundle always produces the same deployment. It lives in
 `release-artifacts/<release-id>/`. See [`release/README.md`](../release/README.md) to create one.
-The deployment refuses to run without a bundle, and refuses one whose images are not all pinned.
+The recommended [combined command](../release/README.md#recommended-path) builds this bundle and deploys it for you.
+Only the standalone `azure/deploy.sh` path requires a pre-existing bundle.
+The deployment refuses bundles whose images are not all pinned.
 
 ### Things that commonly go wrong
 
@@ -131,7 +136,10 @@ to re-checking.
 
 **Regional capacity is not guaranteed.** Azure Managed Redis Balanced SKUs, and the VM size for
 your AKS nodes, can both fail with `AllocationFailed` in a region that is temporarily full. This
-is unrelated to your quota. If it happens, try another region, or a different VM size.
+is unrelated to your quota.
+Preflight checks availability before creating resources, but does not reserve capacity.
+If allocation still fails, try another `redis.location` or `redis.sku`, or select the
+[Azure Cache for Redis fallback](#azure-cache-for-redis-fallback).
 
 **Check your network range before you deploy.** The default VNet is `10.20.0.0/16`. If you intend
 to peer this deployment with an existing network, make sure that range does not overlap, because
@@ -180,7 +188,7 @@ anything is created, so you find out immediately rather than halfway through.
 | `deployAcr.name` | 5–50 | lowercase letters and numbers only |
 | `keyVault.name` | 3–24 | letters, numbers, hyphens |
 | `cosmos.clusterName` | 3–40 | lowercase letters, numbers, hyphens |
-| `redis.clusterName` | 1–63 | letters, numbers, hyphens |
+| `redis.clusterName` | 1–60 for Managed Redis; 1–63 for Azure Cache | letters, numbers, hyphens |
 | `storage.accountName` | 3–24 | lowercase letters and numbers only |
 | `kafka.eventHubs.namespaceName` | 6–50 | letters, numbers, hyphens |
 | `frontDoor.profileName` | 1–260 | letters, numbers, hyphens |
@@ -203,7 +211,106 @@ mind later means deleting and rebuilding it. Preflight checks your region for zo
 anything else is provisioned, precisely because this mistake is expensive to undo.
 
 If you must use a region without zones, set `kafka.eventHubs.zoneRedundant` to `false`,
-`aks.availabilityZones` to `[]`, and `redis.highAvailability` to `Disabled`.
+`aks.availabilityZones` to `[]`, and, for Managed Redis, `redis.highAvailability` to `Disabled`.
+
+### Azure Cache for Redis fallback
+
+`redis.useDeprecated` is a boolean that defaults to `false`: `false` or an omitted setting uses Azure Managed Redis, while `true` uses the deprecated Azure Cache for Redis.
+If its creation fails because of regional availability, capacity, or subscription restrictions, first try another `redis.sku` or `redis.location`.
+The cache region can differ from the AKS region, but consider latency and data-residency requirements before doing so.
+Provider validation does not reserve capacity or guarantee a subsequent creation will succeed.
+
+To explicitly select Azure Cache for Redis instead, replace the `redis` block in your deployment parameters:
+
+```json
+{
+  "redis": {
+    "useDeprecated": true,
+    "clusterName": "my-fluid-redis",
+    "location": "",
+    "sku": "Premium",
+    "capacity": 1
+  }
+}
+```
+
+An empty `location` uses the top-level deployment region.
+Supported fallback sizes are `Premium` with capacity `1`–`5` (P1–P5), or `Standard` with capacity `0`–`6` (C0–C6).
+Basic, Enterprise, and clustered caches are not supported by this option.
+`redis.highAvailability` applies only to Managed Redis; Standard and Premium use their service-managed replication.
+The deployment uses a private endpoint, disables public and non-TLS access from creation, stores the access key in Key Vault, and configures **all** consumers for TLS port `6380` instead of AMR's `10000`.
+It never silently switches services after a failed allocation.
+Use the same selected parameters for subsequent deployments.
+
+**This is a temporary bridge.**
+Azure Cache for Redis retires on **September 30, 2028**.
+Check regional capacity and availability of the other Azure services required by this deployment before relying on this fallback.
+
+### Migrating the fallback to Azure Managed Redis
+
+Use `azure/migrate-redis.sh` when AMR capacity becomes available.
+Keep the existing Azure Cache parameters unchanged for recovery, and create a second file that differs **only** in its `redis` block:
+
+```bash
+jq '.redis = {
+  useDeprecated: false,
+  clusterName: "my-fluid-amr",
+  location: "southcentralus",
+  sku: "Balanced_B5",
+  highAvailability: "Enabled"
+}' azure/deploy.parameters.json > azure/deploy.parameters.amr.json
+
+bash azure/migrate-redis.sh <currently-deployed-release-id> \
+  azure/deploy.parameters.json azure/deploy.parameters.amr.json --yes
+```
+
+The migration command takes these arguments:
+
+| Argument | Purpose |
+| --- | --- |
+| `<currently-deployed-release-id>` | The ID of the release already running on AKS, corresponding to the local `release-artifacts/<currently-deployed-release-id>/` directory. This is not the source Git tag, container image tag, or Azure resource name. |
+| `azure/deploy.parameters.json` | The existing deployment configuration using Azure Cache for Redis (`redis.useDeprecated: true`). Keep this file unchanged so it can also be used for recovery or rollback. Pass your actual file path if you deployed with a custom parameters file. |
+| `azure/deploy.parameters.amr.json` | The target configuration using Azure Managed Redis (`redis.useDeprecated: false`). It must match the source configuration outside the `redis` block and specify a new cache name and the desired AMR region/SKU. |
+| `--yes` | Required confirmation that you have scheduled a maintenance window and accept downtime. |
+
+Keep the existing release bundle available locally.
+The script uses its pinned source, image metadata, and deployment manifests to verify the running workload image references and redeploy the same application release with the new Redis connections.
+Both digest-pinned references and the corresponding per-image release tags are accepted, but images from another release or deployment registry are rejected.
+It also includes that release ID in its recovery commands; it does not build a new release as part of migration.
+For example, if the deployed bundle is `release-artifacts/r0.1.0/`, pass `r0.1.0`.
+
+Choose an available region/SKU and a **new** cache name.
+Run from `tools/selfhost` with the same prerequisites and permissions as deployment.
+The migration verifies the current workload images match that release, performs AMR provider-level region/SKU validation **before creating AMR**, provisions its private endpoint, and tests TLS/authentication/PING from AKS.
+Preflight success is not a capacity reservation.
+
+**Schedule a maintenance window and prevent concurrent deployments or autoscaler maintenance.**
+`--yes` acknowledges downtime and a **cold-cache cutover**: no Redis keys are copied.
+Cache contents and other Redis-only state, including connectivity-usage lists, do not transfer; archive any state you need beforehand.
+Documents, operations, and snapshots in Cosmos DB, Event Hubs, and Azure Files remain in place.
+The script stops all eight workloads and waits for their old pods to disappear before changing the Key Vault key.
+It then updates all backend and Routerlicious endpoints/ports, restarts the consumers, and checks workload and Front Door health.
+The outage lasts through workload startup and health checks.
+
+After success, use `azure/deploy.parameters.amr.json` for **every** future deployment, including combined release/deploy commands.
+Validate document reads/writes, live collaboration, reconnects, and service logs before **manually deleting the old Azure Cache for Redis**.
+Neither cache is deleted by the script.
+
+If a failure occurs after stopping workloads, the script attempts to leave all eight deployments at zero replicas to prevent split Pub/Sub state.
+It prints the location of `redis-migration-recovery.txt`, which contains the source/target parameter paths and exact full-deployment commands to finish the cutover or roll back.
+Before recovery, confirm all eight deployments have zero replicas and their pods have disappeared; resolve any cleanup stop/wait errors manually first.
+Use **full** deployment mode for recovery; deploy-only does not restore the cache key.
+If preparation fails before stopping workloads, the original connection remains unchanged, but a newly created AMR may remain billable.
+To retry a preparation failure, rerun the same migration command with the same release and parameter files.
+The script reuses a target AMR that matches the requested region, SKU, high availability, and disabled public access, then verifies its database settings.
+It waits for in-progress provisioning, creates a missing database, retries provisioning of a failed private endpoint, and repairs missing private DNS configuration.
+It does not delete either cache or the private endpoint.
+An existing private endpoint must match the target resource, connection group, and subnet before it can be reused or retried.
+If Azure still rejects provisioning, the script stops before changing the original connection; correct the reported problem before retrying.
+Failed AMR clusters and incompatible existing resources require explicit repair or a different target name.
+Before stopping workloads, the script saves a cutover marker on the target AMR.
+If that marker exists, rerunning migration is refused; use the recovery instructions instead.
+Keep both parameter files and both caches until you have validated the chosen recovery path.
 
 ### Sizing and cost
 
@@ -261,18 +368,9 @@ You can leave these alone. Every one has a working default:
 
 ## Step 2 — Check your configuration before deploying
 
-Two checks, both cheap. Run them in this order.
-
-**Validate the scripts — no Azure account needed, runs in seconds:**
-
-```bash
-bash azure/test/deploy.test.sh
-```
-
-Expect `Total: 63 passed, 0 failed`. This runs the real deployment logic against stub tools, so
-nothing reaches Azure and nothing costs anything. Run it after editing any file in this directory.
-
-**Validate your parameters against Azure — read-only, creates nothing:**
+The deployment runs preflight automatically.
+To check your parameters before starting a build or deployment, run this optional command.
+It does not create Azure resources.
 
 ```bash
 bash azure/preflight-check.sh azure/deploy.parameters.json
@@ -280,9 +378,8 @@ bash azure/preflight-check.sh azure/deploy.parameters.json
 
 This confirms you are signed in, your subscription has enough vCPU quota for your node settings,
 every globally-unique name is actually available, and your region supports Availability Zones.
-
-The deployment runs this automatically and refuses to start if it fails — but running it yourself
-while you are still editing the file is much faster than discovering a name collision mid-deploy.
+It also checks Redis capacity when the target resource group exists.
+Resolve any reported failures before deploying.
 
 ## Step 3 — Deploy
 
@@ -294,6 +391,16 @@ There are two ways. They create identical resources in the identical order.
 | **[Step by step](#step-by-step)** | You want to inspect each resource as it appears, or a phase failed and you want to re-run just that one. |
 
 ### All at once
+
+For a new release, build and deploy together:
+
+```bash
+./release/create-and-deploy-release.sh <reviewed-tag-or-full-sha> <release-id>
+```
+
+This defaults its build checkout to `fluidRepoDir`.
+It creates and logs into both ACRs as needed; see [registry authentication](../release/README.md#registry-authentication) for upstream Docker Hub credentials.
+For a completed release bundle, the standalone deployment command is:
 
 ```bash
 ./azure/deploy.sh <release-id>
@@ -318,6 +425,8 @@ finishes it prints your three public endpoints.
 
 **If it fails partway, just run it again.** Every phase checks whether its resource already
 exists before creating it, so re-running skips completed work and resumes where it stopped.
+When using the combined command, add `--skip-build` and pass the existing release ID to avoid rebuilding a completed bundle.
+Both commands accept `--skip-preflight` for deliberate retries after validation; this bypasses Azure checks with a warning but keeps local validation.
 
 ### Step by step
 
@@ -363,7 +472,7 @@ The remaining phases, in order:
   phase8_workload_identity       # the managed identity pods use for Key Vault
   phase8_keyvault                # Key Vault
   phase8_cosmos                  # Cosmos DB for MongoDB
-  phase8_redis                   # Azure Managed Redis
+  phase8_redis                   # Selected Redis service (Managed Redis by default)
   phase8_storage                 # Storage account for snapshots
 
   phase3_eventhubs               # Event Hubs namespace, hubs, private endpoint
@@ -491,7 +600,7 @@ continue to let AKS create and own its generated `MC_...` node resource group.
 | Event Hubs (broker) | `deploy.sh` `phase3_eventhubs` | Managed PaaS, zone-redundant, private endpoint |
 | gitrest + historian | `backends.yaml` (in-cluster) | gitrest → **Azure Files PV** |
 | MongoDB (ops/metadata) | Cosmos DB for MongoDB (managed, `phase8_cosmos`) | Cosmos-managed storage, outside the AKS node resource group |
-| Redis | Azure Managed Redis (managed, `phase8_redis`) | Cache-managed storage, outside the AKS node resource group |
+| Redis | Selected managed Redis service (`phase8_redis`) | Cache-managed storage, outside the AKS node resource group |
 | Client token minting | Trusted customer backend required for production; unfinished Azure Function prototype included for reference | protected tenant key |
 
 ### Azure resource ownership
@@ -722,7 +831,7 @@ so `preflight-check.sh` checks the region for Availability Zone support before p
 ### Phase 4 — In-cluster backends (gitrest on Azure Files PV)
 
 **Requires Phase 8 to have already run** — this phase's manifest references the Storage
-Account (`$STORAGE`) and Azure Managed Redis hostname Phase 8 creates; see "Phase execution order"
+Account (`$STORAGE`) and selected Redis hostname Phase 8 creates; see "Phase execution order"
 above. Without Phase 8 having run first, `$STORAGE` and `$REDIS_HOSTNAME` below are undefined.
 
 **Creates:** Azure Files StorageClass (referencing the Phase 8 Storage Account directly by
@@ -733,14 +842,17 @@ in-cluster resource created here.
 Render deployment copies outside the Git checkout so live values are not committed:
 
 ```bash
-REDIS_HOSTNAME=$(az redisenterprise show --name "$REDIS" --resource-group "$RG" --query hostName -o tsv)
+REDIS_CLI=redisenterprise; REDIS_PORT=10000  # For redis.useDeprecated=true: REDIS_CLI=redis; REDIS_PORT=6380
+REDIS_HOSTNAME=$(az "$REDIS_CLI" show --name "$REDIS" --resource-group "$RG" --query hostName -o tsv)
 DEPLOY_DIR="$(mktemp -d "${TMPDIR:-/tmp}/selfhost-fluid-${AKS}.XXXXXX")"
 chmod 700 "$DEPLOY_DIR"
 sed -e "s|<ACR>|$ACR|g" -e "s|<IMAGE_TAG>|$IMAGE_TAG|g" \
     -e "s|<RG>|$RG|g" -e "s|<STORAGE>|$STORAGE|g" \
     -e "s|<REDIS_HOSTNAME>|$REDIS_HOSTNAME|g" \
+    -e "s|<REDIS_PORT>|$REDIS_PORT|g" \
   azure/backends.yaml > "$DEPLOY_DIR/backends.yaml"
 sed -e "s|<ACR>|$ACR|g" -e "s|<IMAGE_TAG>|$IMAGE_TAG|g" \
+    -e "s|<REDIS_HOSTNAME>|$REDIS_HOSTNAME|g" -e "s|<REDIS_PORT>|$REDIS_PORT|g" \
   azure/routerlicious-values.yaml > "$DEPLOY_DIR/routerlicious-values.yaml"
 
 kubectl apply -f "$DEPLOY_DIR/backends.yaml"
@@ -1225,6 +1337,10 @@ prints `Succeeded`, the second returns a non-empty URI).
 az cosmosdb show -n "$COSMOS" -g "$RG" --query provisioningState -o tsv
 az keyvault secret show --vault-name "$KV" --name cosmos-connection-string --query id -o tsv
 ```
+
+The following manual steps describe Managed Redis.
+For Azure Cache for Redis, use `deploy.sh` with the [fallback configuration](#azure-cache-for-redis-fallback); it selects the correct ARM template, private DNS zone, endpoint group, and consumer ports.
+Use the [migration script](#migrating-the-fallback-to-azure-managed-redis) rather than changing a running deployment's selector in place.
 
 Step 1 — Confirm the current CLI command group for Azure Managed Redis
 

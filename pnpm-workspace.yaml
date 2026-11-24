@@ -60,10 +60,8 @@ linkWorkspacePackages: true
 
 # Minimum age, in minutes, of dependencies before they can be installed.
 # See /DEV.md and https://pnpm.io/settings#minimumreleaseage more information.
-# Use minimumReleaseAge at 10080 when updating dependencies to ensure that
-# each package has been published for at least 7 days (10080 minutes) before
-# it is consumed. Do that to match repository policies regarding npmjs registry.
-# `pnpm install-no-frozen` can be used to use policy correctly.
+# publicPackages applies its own package-age protections. Do not add a second delay
+# based on the time a package was saved to the feed.
 minimumReleaseAge: 0
 minimumReleaseAgeExclude:
   # Exclude our own FF scopes so we can install versions we just shipped
@@ -76,6 +74,10 @@ minimumReleaseAgeExclude:
   # Temporary exceptions go here as needed.
 
 overrides:
+  # concurrently and jsonpath pin vulnerable versions (CVE-2026-13311 and CVE-2026-27601).
+  concurrently@10.0.3>shell-quote: ^1.11.0
+  jsonpath@1.2.1>underscore: ^1.13.8
+
   # Resolve known security vulnerabilities in transitive dependencies.
   "@babel/core@>=7 <8": ^7.29.6
   # brace-expansion CVE-2026-13149 (algorithmic complexity DoS) and CVE-2026-14257
@@ -87,9 +89,9 @@ overrides:
   # ip-address CVE-2026-69192 (Address4 decodes leading-zero octets as decimal while
   # resolvers decode them as octal, allowing SSRF/trust-boundary bypass). Fixed in 10.3.1.
   ip-address@>=9 <10: ^10.3.1
-  # js-yaml CVE-2026-59869 (quadratic CPU DoS via merge-key chains). Fixed in 3.15.0 and 4.3.0.
+  # js-yaml: fix CVE-2026-59869 and GHSA-5p4m-2wfm-xmqj (merge-key and ordered-map CPU DoS).
   # Exact pins ensure vulnerable transitive versions are not selected.
-  js-yaml@>=3 <4: 3.15.0
+  js-yaml@>=3 <4: 3.15.2
   js-yaml@>=4 <5: 4.3.2
   keyv@>=4 <5: ^5.5.3
   launch-editor@>=2 <3: ^2.14.1
@@ -219,8 +221,8 @@ overrides:
   # No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support).
   serialize-javascript@>=6 <7: ^7.0.4
 
-  # Resolve a known security vulnerability.
-  simple-git: ^3.36.0
+  # Resolve simple-git and argv-parser vulnerabilities (CVE-2026-102828 and CVE-2026-102829).
+  simple-git: ^4.0.2
 
   # codemirror and marked overrides are because simplemde uses * versions, and the fully up-to-date
   # versions of its deps do not work. packageExtensions was tried to fix this, but did not work.
@@ -276,7 +278,7 @@ packages:
   - "!**/compat-workspaces/**"
 
 patchedDependencies:
-  '@microsoft/api-extractor@7.58.1': patches/@microsoft__api-extractor@7.58.1.patch
+  '@microsoft/api-extractor@7.60.1': patches/@microsoft__api-extractor@7.60.1.patch
 
 peerDependencyRules:
   # The react-split-pane package used by devtools-view has a peer dependency on React 16, but it doesn't
@@ -301,14 +303,10 @@ peerDependencyRules:
 publicHoistPattern:
   - '@arethetypeswrong/cli'
 
-# No `registry` is set here on purpose. pnpm resolves the built-in default (registry.npmjs.org),
-# which keeps external/OSS contributions working out of the box, and also keeps lockfile updates
-# pointed at the public registry.
-# NOTE: a `registry` value in pnpm-workspace.yaml takes precedence over a project-level `.npmrc`,
-# so setting it here (even to registry.npmjs.org) would silently defeat the per-developer override
-# below. Leave it unset instead.
-# Developers who must use an npmjs mirror or team-managed feed can make use of
-# `node ./scripts/set-dev-registry.cjs <registry-url>`.
+# Keep this registry aligned with the root `.npmrc`, which npm uses to bootstrap pnpm.
+# pnpm-workspace.yaml takes precedence over a project-level `.npmrc`.
+# See docs/content/Contributing/Dependencies.md for authentication and contributor guidance.
+registry: https://pkgs.dev.azure.com/fluidframework/public/_packaging/publicPackages/npm/registry/
 
 resolutionMode: highest
 

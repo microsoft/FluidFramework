@@ -9,9 +9,11 @@ packages:
 
 # Supply chain security settings - see /DEV.md for documentation
 minimumReleaseAge: 0
+registry: https://pkgs.dev.azure.com/fluidframework/public/_packaging/publicPackages/npm/registry/
 resolutionMode: highest
 blockExoticSubdeps: true
-trustPolicy: no-downgrade
+# publicPackages does not preserve trust metadata. See /DEV.md.
+trustPolicy: off
 # List of packages known to be safe but for whatever reason were published at a date after another version of the same
 # package (including later major versions) which had better provenance information.
 # ALWAYS REVIEW CAREFULLY BEFORE ADDING SOMETHING TO THIS LIST.
@@ -46,6 +48,9 @@ strictPeerDependencies: true
 updateNotifier: false
 
 overrides:
+  # concurrently pins vulnerable shell-quote (CVE-2026-13311).
+  concurrently@10.0.3>shell-quote: ^1.11.0
+
   # Resolve known security vulnerabilities in transitive dependencies.
   brace-expansion@>=1 <2: ^1.1.17
   brace-expansion@>=2 <3: ^2.1.3

@@ -162,12 +162,16 @@ export function configuredSharedTreeBetaLegacy(
 }
 
 /**
- * {@link configuredSharedTreeBeta} but including the alpha {@link SharedTreeOptions}.
+ * {@link configuredSharedTreeBeta} but including the alpha {@link SharedTreeOptions} and
+ * {@link @fluidframework/shared-object-base#SharedObjectKindAlpha} capabilities.
+ *
+ * @param options - Configuration options for the SharedTree kind.
+ * @returns A configured SharedTree kind with experimental capabilities.
  * @alpha
  */
 export function configuredSharedTreeAlpha(
 	options: SharedTreeOptions,
-): SharedObjectKind<ITree> {
+): SharedObjectKindAlpha<ITree> {
 	return configuredSharedTree(options);
 }
 
@@ -225,12 +229,15 @@ export function resolveOptions(options: SharedTreeOptions): SharedTreeOptionsInt
 }
 
 function resolveFormatOptions(options: SharedTreeOptions): SharedTreeOptionsInternal {
-	const enableSharedBranches = options.enableSharedBranches ?? false;
-
-	if (enableSharedBranches) {
+	if (options.enableSharedBranches === true && options.enableDetachedRootEditing === true) {
+		throw new UsageError("enableDetachRootEditing cannot be used with enableSharedBranches.");
+	}
+	if (options.enableSharedBranches === true) {
 		return sharedBranchesOptions;
 	}
-
+	if (options.enableDetachedRootEditing === true) {
+		return detachRootEditingOptions;
+	}
 	return {};
 }
 
@@ -239,6 +246,14 @@ const sharedBranchesOptions: SharedTreeOptionsInternal = {
 		[editManagerCodecName, EditManagerFormatVersion.vSharedBranches],
 		[messageCodecName, MessageFormatVersion.vSharedBranches],
 		[detachedFieldIndexCodecBuilder.name, DetachedFieldIndexFormatVersion.v2],
+	]),
+	allowPossiblyIncompatibleWriteVersionOverrides: true,
+};
+
+const detachRootEditingOptions: SharedTreeOptionsInternal = {
+	writeVersionOverrides: new Map<string, FormatVersion>([
+		[editManagerCodecName, EditManagerFormatVersion.vDetachedRoots],
+		[messageCodecName, MessageFormatVersion.vDetachedRoots],
 	]),
 	allowPossiblyIncompatibleWriteVersionOverrides: true,
 };

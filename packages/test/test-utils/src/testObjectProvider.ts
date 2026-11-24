@@ -280,6 +280,18 @@ export interface ITestContainerConfig {
 	 * {@link https://github.com/microsoft/FluidFramework/issues/27851} is completed.
 	 */
 	minVersionForCollab?: OldestSupportedClientVersion | undefined;
+
+	/**
+	 * Oldest Fluid Framework client version that must be able to process documents written by the runtime.
+	 *
+	 * @remarks
+	 * Test factories use this setting to select compatible runtime features and write formats.
+	 * If this property is absent, they accept {@link ITestContainerConfig.minVersionForCollab} for compatibility with older test configurations.
+	 *
+	 * If neither property supplies a version, the factory supplied to the test provider selects the default.
+	 * Compatibility test factories select the older of the runtime versions used for creation and loading, so both runtimes can process the document.
+	 */
+	oldestSupportedClient?: OldestSupportedClientVersion | undefined;
 }
 
 /**
