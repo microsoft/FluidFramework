@@ -33,6 +33,8 @@ import {
 } from "../leafNodeSchema.js";
 import { isObjectNodeSchema } from "../node-kinds/index.js";
 
+import type { UntypedTreeViewAlpha } from "./tree.js";
+
 /**
  * Options for how to interpret or encode a tree when schema information is available.
  * @beta
@@ -58,6 +60,37 @@ export interface TreeEncodingOptions<TKeyOptions = KeyEncodingOptions> {
 export type TreeParsingOptions = TreeEncodingOptions<
 	KeyEncodingOptions.usePropertyKeys | KeyEncodingOptions.knownStoredKeys
 >;
+
+/**
+ * Options for importing a tree.
+ * @remarks
+ * To import with {@link KeyEncodingOptions.allStoredKeys}, also provide `view`: a view of the document that the tree is for.
+ * The tree must then agree with the stored schema of this document, and can be inserted into that document.
+ * The tree can then contain the {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields} that this stored schema allows.
+ *
+ * The view must be able to view its document (see {@link SchemaCompatibilityStatus.canView}).
+ * The import must use the same schema objects as the view.
+ * Each node schema in the schema that you give to the import must come from the {@link TreeViewConfiguration} of the view.
+ * If you give a different schema object that has the same identifier, the import throws an error.
+ * This occurs also if the two schema objects define the same schema.
+ *
+ * To get the view of a node in a document, use `TreeAlpha.context(node)` and check {@link TreeContextAlpha.isView | isView()}.
+ * @alpha
+ * @input
+ */
+export type TreeImportOptions =
+	| (TreeParsingOptions & {
+			/**
+			 * Allowed only with {@link KeyEncodingOptions.allStoredKeys}.
+			 */
+			readonly view?: never;
+	  })
+	| (Required<TreeEncodingOptions<KeyEncodingOptions.allStoredKeys>> & {
+			/**
+			 * A view of the document that the tree is for.
+			 */
+			readonly view: UntypedTreeViewAlpha;
+	  });
 
 /**
  * Decides if an export includes a field of a node. It can also give a filter for the content of that field.
@@ -102,7 +135,8 @@ export enum KeyEncodingOptions {
 	/**
 	 * Use stored keys, and include {@link ObjectSchemaOptions.allowUnknownOptionalFields|Unknown optional fields}.
 	 * @remarks
-	 * Currently only supported for export.
+	 * Supported for import and export.
+	 * For import, also provide a view (see {@link TreeImportOptions}).
 	 */
 	allStoredKeys = "allStoredKeys",
 	/**
