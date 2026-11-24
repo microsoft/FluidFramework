@@ -1050,9 +1050,6 @@ Subsequent references within each block use inline code.
 /**
  * Creates a copy of a {@link Bar} without modifying the original `Bar`.
  *
- * @remarks
- * The returned {@link Bar} is independent of the original `Bar`.
- *
  * @returns The copy of the input {@link Bar}. 
  */
 export declare function cloneBar(source: Bar): Bar;
