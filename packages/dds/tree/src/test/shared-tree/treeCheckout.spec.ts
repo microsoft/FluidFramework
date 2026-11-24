@@ -1735,6 +1735,24 @@ describe("sharedTreeView", () => {
 			},
 		);
 
+		it("disposing a stale view again leaves its replacement active", () => {
+			const tree = new TestTreeProviderLite().trees[0];
+			const config = new TreeViewConfiguration({ schema: SchemaFactory.number });
+			const first = tree.viewWith(config);
+			first.initialize(1);
+			first.dispose();
+
+			// The replacement now owns the checkout's only view slot.
+			const replacement = tree.viewWith(config);
+			first.dispose();
+
+			// A third view must be rejected normally, without breaking the active view.
+			assert.throws(() => tree.viewWith(config), validateUsageError(/second tree view/));
+			replacement.root = 2;
+			assert.equal(replacement.root, 2);
+			replacement.dispose();
+		});
+
 		it("views should not be double-disposed on schema upgrade", () => {
 			const provider = new TestTreeProviderLite(1);
 

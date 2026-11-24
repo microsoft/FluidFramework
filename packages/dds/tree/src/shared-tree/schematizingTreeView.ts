@@ -681,6 +681,13 @@ export class SchematizingSimpleTreeView<
 	}
 
 	public dispose(): void {
+		if (this.disposed) {
+			// Disposing a fork also closes its views. Preserve the error for operations on a disposed branch.
+			if (this.checkout.disposed) {
+				throw new UsageError("Cannot dispose a view of an already disposed branch.");
+			}
+			return;
+		}
 		this.disposed = true;
 		this.checkout.disposeLocations();
 		this.disposeFlexView();
