@@ -100,6 +100,9 @@ pnpm view @fluidframework/container-loader@<VERSION> version --registry=https://
 Confirm the GitHub tag and npm result both match the version published by the selected candidate build. Checking a generic releases page or npm search is insufficient because an older release can make those checks appear successful.
 
 Once confirmed, remind the user to announce the release in the Fluid Framework "General" Teams channel with a link to the GitHub release. (Never auto-announce in either mode.)
+Also remind the release on-call engineer (OCE) to bump the Fluid Framework version in the partner repository.
+This is a human action.
+Do not identify the partner repository or include an internal documentation link in the reminder.
 
 ## Step 7: Bump Release Branch to Next Patch
 
@@ -144,6 +147,7 @@ For the first release of a new minor (X.X0.0), this PR can optionally be combine
 > **Phase complete.**
 > - Patch bump PR created: [link]
 > - Release `<VERSION>` was verified on GitHub and public npm before the patch bump.
+> - **Human action:** The release OCE must bump the Fluid Framework version in the partner repository.
 > - **Next step:** Announce it in Teams and prepare type test updates without waiting until the next day.
 
 After publication is verified, proceed to [type test updates](type-test-updates.md).

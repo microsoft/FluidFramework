@@ -39,6 +39,9 @@ Open four PRs (can be opened in parallel, but merge order matters):
 
 Then create the release branch from the commit before the version bump.
 
+After you create the release-prep PRs, apply the [temporary client release hold](#temporary-client-release-hold).
+Apply the hold before the release-prep PRs merge.
+
 ## Step 1: Tag Untagged Asserts
 
 ```bash
@@ -158,12 +161,52 @@ If the bump doesn't cross a compatibility checkpoint and the newly released vers
 
 Create branch `release-prep/<VERSION>/4-bump-<NEXT_VERSION>`, commit, push to upstream, and create a PR. **This PR must merge LAST.**
 
+### Temporary client release hold
+
+After you create the release-prep PRs, use the prompt below.
+Replace `<VERSION>` with the client version for this release, not the next development version.
+This prompt applies temporary reviews to other PRs, not the release-prep PRs.
+
+> For the client `<VERSION>` release hold, refresh open PRs targeting `microsoft/FluidFramework:main`.
+> Inspect their current diffs.
+> Include PRs that change a client `.changeset/*.md` file
+> or `packages/runtime/test-runtime-utils/src/assertionShortCodesMap.ts`;
+> exclude Routerlicious-only and release-prep PRs.
+>
+> Limit the hold to PRs whose head was **verifiably pushed to GitHub in the last 14 days**.
+> Use a server-recorded push time.
+> If no reliable push time is available, include a PR only if it was **opened in the last 14 days**.
+> Do not treat PR `updated_at` or a commit’s date as its push time.
+> List older PRs with unknown push times separately; do not hold them.
+>
+> For each eligible PR that I did not author and that does not already have this hold,
+> submit a **Request changes** review:
+> “Temporary client `<VERSION>` release hold to prevent merge conflicts; not code-review feedback.
+> `[release-hold:client:<VERSION>]`”
+> Record each review ID.
+> After the version-bump PR merges, dismiss only these temporary reviews.
+> Report self-authored PRs separately for another eligible reviewer.
+
+Use the authenticated reviewer's identity for "I" in this prompt.
+Record each PR number, head SHA, eligibility evidence, and submitted review ID in the release report.
+For push evidence, record the server source and timestamp.
+For the fallback, record the PR creation time.
+Keep this record available across sessions so cleanup can use the exact review IDs.
+Report self-authored PRs and older PRs with unknown push times separately from the PRs with holds.
+Do not treat an unavailable push time as proof of recent activity.
+
+After the version-bump PR merges, dismiss only the temporary reviews recorded for this release.
+Verify each review ID and its `[release-hold:client:<VERSION>]` marker before dismissal.
+Do not dismiss code-review feedback or a hold from another release.
+If you cannot submit or dismiss a review, report the PR, review ID if available, and required human action.
+
 ## Step 5: Create the Release Branch
 
 **CI note:** This step requires elevated permissions to create `release/` branches. In CI, skip this step and report it as a required human action.
 
 ### Pre-checks
 - Verify all four PRs are merged
+- Dismiss the recorded temporary reviews after you verify that the version-bump PR merged.
 - Check again for release-blocking issues:
 
 ```bash
@@ -178,6 +221,11 @@ If blockers are found, **stop and report them**. Do not create the release branc
 > **Phase complete.** Created the following PRs (merge in this order, version bump last):
 > 1. [list PRs]
 >
+> **Temporary release hold:** [held PRs, review IDs, and eligibility evidence]
+> **Another reviewer required:** [self-authored PRs]
+> **Not held:** [older PRs with unknown push times]
+>
+> After the version-bump PR merges, dismiss only the recorded temporary reviews for this release.
 > After all PRs are merged, re-invoke to create the release branch and continue with release execution.
 
 If the user has indicated that PRs are already merged (e.g., re-invoked after merging), proceed with branch creation.

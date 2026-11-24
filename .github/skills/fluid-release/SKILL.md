@@ -141,6 +141,11 @@ These steps require human action and should be clearly reported in CI workflow l
 3. **Queue the ADO release build** (Step 6) — choose the "release" option in ADO
 4. **Approve manual publishing recovery, if needed** (Step 6) — normal publishing auto-triggers; a manually queued recovery run requires the publication approval gate
 5. **Announce the release** in the Fluid Framework "General" Teams channel
+6. **Update the partner repository version.**
+   The release on-call engineer (OCE) must bump the Fluid Framework version in the partner repository
+   after publication verification.
+   Keep this as a human action.
+   Do not include the partner repository name or an internal documentation link in public release instructions or reports.
 
 ## Key Context
 
@@ -231,6 +236,7 @@ Use the `build:` conventional commit prefix for all release PR titles (e.g., `bu
 | Announcing releases | Remind user | Remind user (never auto-announce) |
 | ADO release build queuing | Instruct user | Instruct user |
 | ADO publish run | Monitor auto-triggered run; manual recovery requires human approval | Monitor auto-triggered run; manual recovery requires human approval |
+| Partner repository version bump | Remind the release OCE | Remind the release OCE. Never update automatically. |
 
 ### Autonomous Mode: Phase Completion Reports
 
@@ -238,6 +244,8 @@ At the end of each autonomous phase, provide a summary:
 
 1. **What was done** — list all PRs created, branches pushed, commands run
 2. **What to do next** — specific manual steps needed (e.g., queue ADO build, merge PRs in order)
+   After publication verification,
+   remind the release OCE to bump the Fluid Framework version in the partner repository.
 3. **When to continue** — timing guidance for the next phase (e.g., "after PRs merge" or "after publication is verified; prepare type test updates without waiting for feed propagation")
 
 ### Autonomous Mode: Fallback to Issues
