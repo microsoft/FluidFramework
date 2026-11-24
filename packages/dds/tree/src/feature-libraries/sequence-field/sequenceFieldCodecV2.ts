@@ -641,18 +641,6 @@ function encodeSplitMark(
 		if (nodeId !== undefined) {
 			encodedMark.changes = context.encodeNode(nodeId);
 		}
-		// if (
-		// 	isNoopMark(mark) &&
-		// 	context.rootRenames.getFirst(mark.cellId, mark.count).value !== undefined
-		// ) {
-		// 	// Encode root renames for roots whose corresponding (empty) cells are unchanged.
-		// 	encodedMark.effect = encodeRename(
-		// 		{ ...mark, type: "Rename", idOverride: mark.cellId },
-		// 		context,
-		// 		changeAtomIdCodec,
-		// 		encodeRevision,
-		// 	);
-		// }
 		assert(
 			!isNoopMark(mark) ||
 				context.rootRenames.getFirst(mark.cellId, mark.count).value === undefined,

@@ -109,7 +109,7 @@ function invertMark(
 				};
 				return [withNodeChange(inverse, mark.changes)];
 			} else {
-				return invertRename(mark.idOverride, mark.changes, mark.count, crossFieldManager);
+				return invertRename(mark.idOverride, mark.count, crossFieldManager);
 			}
 		}
 		case "Detach": {
@@ -209,7 +209,6 @@ function invertInsertSegment(
 
 function invertRename(
 	idOverride: ChangeAtomId,
-	child: NodeId | undefined,
 	count: number,
 	crossFieldManager: InvertNodeManager,
 ): Mark[] {
@@ -224,7 +223,7 @@ function invertRename(
 		const countProcessed = rootRenameEntry.length;
 
 		if (rootRenameEntry.value === undefined) {
-			invertedMarks.push(invertNodeChangeOrSkip(countProcessed, child, nextIdOverride));
+			invertedMarks.push(invertNodeChangeOrSkip(countProcessed, undefined, nextIdOverride));
 		} else {
 			invertedMarks.push({
 				type: "Rename",
