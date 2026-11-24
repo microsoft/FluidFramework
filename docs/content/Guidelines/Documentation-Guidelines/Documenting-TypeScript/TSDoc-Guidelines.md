@@ -1053,7 +1053,7 @@ Subsequent references within each block use inline code.
  * @remarks
  * The returned {@link Bar} is independent of the original `Bar`.
  *
- * @param source - The {@link Bar} to copy.
+ * @returns The copy of the input {@link Bar}. 
  */
 export declare function cloneBar(source: Bar): Bar;
 ```
