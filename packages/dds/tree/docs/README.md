@@ -19,3 +19,7 @@ List of technical/design documents (to be organized into appropriate sections at
 -   [Undo](./main/undo.md)
 -   [V1 Undo](./main/v1-undo.md)
 -   [Detached Trees](./main/detached-trees.md)
+
+## Proposals
+
+-   [Open or initialize a SharedTree with a view schema](./wip/opening-an-existing-tree.md)
