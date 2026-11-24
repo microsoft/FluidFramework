@@ -120,6 +120,19 @@ describe("openView", () => {
 			});
 
 			describe("when the document is already viewable", () => {
+				it("replaces the root with insertable content and reads it as the configured node", () => {
+					seedTree(tree, noteConfig, { title: "Draft" });
+					const view = tree.openView(noteConfig);
+					assert.equal(view.kind, "ready");
+					assert.equal(view.schema, Note);
+
+					// The setter accepts a plain object, but the getter must return a hydrated Note.
+					view.root = { title: "Final" };
+					assert(view.root instanceof Note);
+					assert.equal(view.root.title, "Final");
+					view.dispose();
+				});
+
 				it("opens an empty initialized optional root", () => {
 					seedTree(tree, optionalConfig, undefined);
 					const result = openWithoutWriting(optionalConfig);
@@ -439,6 +452,29 @@ describe("openView", () => {
 				const original = tree.viewWith(numberConfig);
 				assert.equal(original.root, 5);
 				original.dispose();
+			});
+
+			it("preserves the original exception when an upgrade breaks the checkout", () => {
+				seedTree(tree, numberConfig, 5);
+				const { breaker } = getCheckout(tree);
+				const failure = new Error("fatal upgrade failure");
+				const restore = spyOnMethod(SchematizingSimpleTreeView, "upgradeSchema", () =>
+					breaker.break(failure),
+				);
+				try {
+					assert.throws(
+						() => tree.openView(unionConfig),
+						(error) => error === failure,
+					);
+					assert.throws(() => breaker.use());
+				} finally {
+					restore();
+				}
+
+				// The simulated upgrade failed before changing the tree, so it is safe for this test to clear the error.
+				// Only one view can be open at a time: opening another confirms that the failed open disposed its view.
+				breaker.clearError();
+				tree.viewWith(numberConfig).dispose();
 			});
 		});
 	}

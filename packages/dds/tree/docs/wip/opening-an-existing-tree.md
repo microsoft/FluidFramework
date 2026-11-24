@@ -1,6 +1,6 @@
 # Open or initialize a SharedTree with a view schema
 
-**Status: Proposed alpha feature.** The names and examples below describe a design, not a released API.
+**Status: Implemented as an alpha feature.** This document records the design and its acceptance requirements.
 
 When you load a Fluid container, you can retrieve its SharedTree without knowing whether your application can edit the document.
 The document has a *stored schema*, which describes the data it permits.
@@ -8,7 +8,7 @@ Your application supplies a *view schema*, which describes the data it expects t
 Today, [`viewWith`](../../src/simple-tree/api/tree.ts) returns a view even when these schemas are incompatible and access to `root` would throw.
 You must check compatibility and decide whether to upgrade before you can use the root.
 
-This proposal adds `openView`, which tells you what you can do with the tree now.
+The alpha alternative, `openView`, tells you what you can do with the tree now.
 For an initialized tree, it returns a ready view, applying a permitted schema upgrade only if it needs one to provide access.
 For an uninitialized tree, it returns an initializer instead of choosing initial content for you.
 If the document supports neither viewing nor upgrading, you get a compatibility error instead of a view.
@@ -113,9 +113,9 @@ After the upgrade, a number-only client might no longer be able to use the docum
 Opening opts into that write; it does not authorize a data migration or force an upgrade that SharedTree would otherwise reject.
 If the app needs to coordinate this change across versions, follow the [schema evolution guidance](../../../../../website/docs/data-structures/tree/schema-evolution/index.mdx).
 
-## Proposed types and errors
+## Types and errors
 
-Add the following method to [`ViewableTreeAlpha`](../../src/simple-tree/api/tree.ts), so callers can discover it alongside `viewWith`:
+[`ViewableTreeAlpha`](../../src/simple-tree/api/tree.ts) exposes the following method alongside `viewWith`:
 
 ```typescript
 openView<TRoot extends ImplicitFieldSchema>(
@@ -127,7 +127,7 @@ Export four types from `@fluidframework/tree/alpha`: the result union and one ty
 The read-only `kind` property identifies the outcome on the object itself.
 After checking it, you can use `result.root`, call `result.initialize(content)`, or inspect `result.viewIncompatibilities` and `result.upgradeIncompatibilities`.
 
-| Proposed type | Shape or contract |
+| Type | Shape or contract |
 | --- | --- |
 | `OpenTreeViewResult<TRoot>` | `ReadyTreeView<TRoot> \| UninitializedTreeResult<TRoot> \| IncompatibleTreeResult`. |
 | `ReadyTreeView<TRoot>` | `kind: "ready"` and the public `TreeView<TRoot>` members for root access, schema, events, and disposal. No `initialize`, `upgradeSchema`, or `compatibility`. |
@@ -174,7 +174,7 @@ This design requires no new stored format, compatibility algorithm, or event.
 
 Document the implemented contract on the declarations with `@alpha` TSDoc, including the shared write, the open-time guarantee, ownership, and supported `@throws` cases.
 Regenerate the entry points and API reports rather than editing generated files.
-Once the feature ships, add examples to the [creation and loading guide](../../../../../website/docs/data-structures/tree/recommended-init-flow.mdx) that show when to initialize and when to report an unexpectedly empty document.
+The [creation and loading guide](../../../../../website/docs/data-structures/tree/recommended-init-flow.mdx) shows when to initialize and when to report an unexpectedly uninitialized document.
 
 ## Test requirements
 

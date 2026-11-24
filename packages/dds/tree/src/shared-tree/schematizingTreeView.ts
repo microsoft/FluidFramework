@@ -333,6 +333,18 @@ export class SchematizingSimpleTreeView<
 	}
 
 	public initialize(content: InsertableField<TRootSchema>): void {
+		this.initializeForOpen(content as InsertableContent | undefined);
+	}
+
+	/**
+	 * Initializes the view without breaking the checkout on invalid initial content or a stale initializer.
+	 *
+	 * @remarks
+	 * Only the mutation needs a breaking scope here. The existing `TreeView.initialize` method
+	 * retains its own breaking scope, including input validation.
+	 */
+	@throwIfBroken
+	public initializeForOpen(content: InsertableContent | undefined): void {
 		this.ensureUndisposed();
 
 		const compatibility = this.compatibility;
@@ -346,44 +358,39 @@ export class SchematizingSimpleTreeView<
 			this.viewSchema.schemaVersion,
 		);
 		const schemaHash = this.computeSchemaHash(schema);
-		this.runSchemaEdit(() => {
-			// This has to be the contextless version, since when "initialize" is called (right after this),
-			// it will do a schema change which would dispose of the current context (see inside `update`).
-			// Thus using the current context (if any) would hydrate nodes then
-			// immediately dispose them instead of having them actually be useable after initialize.
-			// For this to work,
-			// the hydration must be deferred until after the content is inserted into the tree and the final schema change is done (for required roots),
-			// but before any user event could could run.
-			const mapTree = prepareForInsertionContextless(
-				content as InsertableContent | undefined,
-				this.rootFieldSchema,
-				{
-					schema,
-					policy: defaultSchemaPolicy,
-				},
-				this,
-				schema.rootFieldSchema,
-				(batches, doHydration) => {
-					assert(
-						this.pendingHydration === undefined,
-						0xc74 /* pendingHydration already set */,
-					);
-					this.pendingHydration = () => {
-						assert(
-							batches.length <= 1,
-							0xc75 /* initialize should at most one hydration batch */,
-						);
-						for (const batch of batches) {
-							doHydration(batch, {
-								parent: undefined,
-								parentField: rootFieldKey,
-								parentIndex: 0,
-							});
-						}
-					};
-				},
-			);
 
+		// Initial schema edits replace the context. Prepare content without it, and hydrate nodes
+		// only after the final schema is installed, before exposing the root to event listeners.
+		let hydrate: (() => void) | undefined;
+		const mapTree = prepareForInsertionContextless(
+			content,
+			this.rootFieldSchema,
+			{
+				schema,
+				policy: defaultSchemaPolicy,
+			},
+			this,
+			schema.rootFieldSchema,
+			(batches, doHydration) => {
+				hydrate = () => {
+					assert(
+						batches.length <= 1,
+						0xc75 /* initialize should at most one hydration batch */,
+					);
+					for (const batch of batches) {
+						doHydration(batch, {
+							parent: undefined,
+							parentField: rootFieldKey,
+							parentIndex: 0,
+						});
+					}
+				};
+			},
+		);
+
+		this.runSchemaEdit(() => {
+			assert(this.pendingHydration === undefined, 0xc74 /* pendingHydration already set */);
+			this.pendingHydration = hydrate;
 			this.runTransaction(() => {
 				initialize(
 					this.checkout,
@@ -550,7 +557,7 @@ export class SchematizingSimpleTreeView<
 	 * If implicit initialization (or some other edit) is desired, it should be done outside of this method.
 	 */
 	private update(): void {
-		this.disposeFlexView();
+		this.#disposeFlexView();
 
 		this.currentUnknownFieldSchemas = undefined;
 		const compatibility = this.computeCompatibility();
@@ -646,7 +653,7 @@ export class SchematizingSimpleTreeView<
 		this.events.emit("rootChanged");
 	}
 
-	private disposeFlexView(): void {
+	#disposeFlexView(): void {
 		const anchors = this.checkout.forest.anchors;
 		if (this.flexTreeContext !== undefined) {
 			// Cleanup any TreeNodes cached in the AnchorSet when disposing the flex-tree which they wrap.
@@ -680,10 +687,20 @@ export class SchematizingSimpleTreeView<
 		return this.currentCompatibility;
 	}
 
-	public dispose(): void {
+	/**
+	 * Releases the resources owned by this view.
+	 *
+	 * @privateRemarks
+	 * Keep this as an instance field so `breakingClass` does not wrap it.
+	 * A failed open must be able to release its view without clearing the breaker or masking the original error.
+	 */
+	public readonly dispose = (): void => {
+		if (this.disposed) {
+			return;
+		}
 		this.disposed = true;
 		this.checkout.disposeLocations();
-		this.disposeFlexView();
+		this.#disposeFlexView();
 		for (const unregister of this.unregisterCallbacks) {
 			unregister();
 		}
@@ -699,7 +716,7 @@ export class SchematizingSimpleTreeView<
 			// other callers.
 			this.checkout.dispose();
 		}
-	}
+	};
 
 	private get flexRoot(): FlexTreeOptionalField | FlexTreeRequiredField {
 		this.breaker.use();
