@@ -13,7 +13,12 @@ import {
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { asAlpha, asBeta } from "../../api.js";
-import { CommitKind, type RevertibleAlpha, type TransactionLabels } from "../../core/index.js";
+import {
+	CommitKind,
+	TreeStoredSchemaRepository,
+	type RevertibleAlpha,
+	type TransactionLabels,
+} from "../../core/index.js";
 import {
 	jsonableTreeFromFieldCursor,
 	MockNodeIdentifierManager,
@@ -422,9 +427,40 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	describe("initialize", () => {
+		it("does not offer initialization after reopening an empty optional root", () => {
+			const tree = createIndependentTreeAlpha();
+			const emptyConfig = new TreeViewConfiguration({ schema: schema.optional([]) });
+			const initial = tree.viewWith(emptyConfig);
+			initial.initialize(undefined);
+			initial.dispose();
+
+			// There are no nodes, but the optional root field is stored schema.
+			const reopened = tree.viewWith(emptyConfig);
+			assert.equal(reopened.compatibility.canView, true);
+			assert.equal(reopened.compatibility.canInitialize, false);
+			assert.equal(reopened.root, undefined);
+			reopened.dispose();
+		});
+
+		it("rejects replacing an initialized empty root through a different view schema", () => {
+			const tree = createIndependentTreeAlpha();
+			const initial = tree.viewWith(
+				new TreeViewConfiguration({ schema: schema.optional([]) }),
+			);
+			initial.initialize(undefined);
+			initial.dispose();
+
+			// The absence of node definitions does not permit a second view to replace the document.
+			const replacement = tree.viewWith(config);
+			assert.throws(
+				() => replacement.initialize(5),
+				validateUsageError(/initialized more than once/),
+			);
+		});
+
 		it("Initialize document", () => {
 			const emptyContent = {
-				schema: emptySchema,
+				schema: new TreeStoredSchemaRepository(),
 				initialTree: undefined,
 			};
 			const checkout = checkoutWithContent(emptyContent);
@@ -448,7 +484,7 @@ describe("SchematizingSimpleTreeView", () => {
 		});
 		{
 			const emptyContent = {
-				schema: emptySchema,
+				schema: new TreeStoredSchemaRepository(),
 				initialTree: undefined,
 			};
 			class SimpleTestObject extends schema.object("TestObject", {
@@ -540,7 +576,7 @@ describe("SchematizingSimpleTreeView", () => {
 					) {}
 
 					const emptyContent = {
-						schema: emptySchema,
+						schema: new TreeStoredSchemaRepository(),
 						initialTree: undefined,
 					};
 					const checkout = checkoutWithContent(emptyContent);
