@@ -475,13 +475,6 @@ class InvertNodeManagerI implements InvertNodeManager {
 		const inputRootId = inputRootIdEntry.value;
 		countProcessed = inputRootIdEntry.length;
 
-		const detachEntry = getFirstFieldForDetach(this.table.change, inputRootId, countProcessed);
-		countProcessed = detachEntry.length;
-
-		if (detachEntry.value === undefined) {
-			return { value: undefined, length: countProcessed };
-		}
-
 		const attachEntry = getFirstFieldForAttach(this.table.change, rootId, countProcessed);
 		countProcessed = attachEntry.length;
 
