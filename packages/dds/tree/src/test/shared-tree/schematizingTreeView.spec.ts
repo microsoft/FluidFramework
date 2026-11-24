@@ -983,6 +983,35 @@ describe("SchematizingSimpleTreeView", () => {
 		// Schema for tree that must always be empty.
 		const emptyViewSchema = builder.optional([]);
 
+		it("makes an incompatible view usable even when the allowed documents do not change", () => {
+			// The required field cannot be populated until strings are enabled, so neither version
+			// of Pending can occur. The stored document uses the other permitted root type.
+			const required = schema.required(schema.types([schema.staged(schema.string)]));
+			class Before extends schema.objectAlpha("Pending", { required }) {}
+			class After extends schema.objectAlpha("Pending", {
+				required,
+				added: schema.optional(schema.number),
+			}) {}
+			const tree = createIndependentTreeAlpha();
+			const initial = tree.viewWith(
+				new TreeViewConfiguration({ schema: [schema.number, Before] }),
+			);
+			initial.initialize(42);
+			initial.dispose();
+
+			// The new view still needs the definition of Pending.added in the stored schema.
+			const view = tree.viewWith(
+				new TreeViewConfiguration({ schema: [schema.number, After] }),
+			);
+			assert.equal(view.compatibility.canView, false);
+			assert.equal(view.compatibility.canUpgrade, true);
+
+			view.upgradeSchema();
+			assert.equal(view.compatibility.canView, true);
+			assert.equal(view.root, 42);
+			view.dispose();
+		});
+
 		it("compatible empty schema", () => {
 			const view = testDocumentIndependentView({
 				ambiguous: false,

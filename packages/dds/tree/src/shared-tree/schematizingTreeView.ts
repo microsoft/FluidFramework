@@ -432,12 +432,14 @@ export class SchematizingSimpleTreeView<
 			);
 		}
 		if (
+			this.compatibility.canView &&
 			isAdditiveSchemaUpgrade &&
 			allowsRepoSuperset(defaultSchemaPolicy, newSchema, storedSchema) &&
 			compareSchemaVersions(storedSchema.schemaVersion, newSchema.schemaVersion) ===
 				SchemaVersionComparison.Equal
 		) {
-			// No-op
+			// Equivalent sets of possible documents need not have the same view compatibility.
+			// Skip the edit only when the current schema already supports the view.
 			return;
 		}
 
