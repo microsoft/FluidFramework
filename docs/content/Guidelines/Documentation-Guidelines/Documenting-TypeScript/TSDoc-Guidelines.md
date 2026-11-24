@@ -1050,7 +1050,7 @@ Subsequent references within each block use inline code.
 /**
  * Creates a copy of a {@link Bar} without modifying the original `Bar`.
  *
- * @returns The copy of the input {@link Bar}. 
+ * @returns The copy of the input {@link Bar}.
  */
 export declare function cloneBar(source: Bar): Bar;
 ```
@@ -1103,7 +1103,7 @@ export interface Logger {
  * {@inheritDoc Logger.log}
  */
 export function log(logger: Logger, data: unknown): void {
-    logger.log(data);
+	logger.log(data);
 }
 ```
 
