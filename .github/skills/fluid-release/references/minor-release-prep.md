@@ -167,11 +167,25 @@ After you create the release-prep PRs, use the prompt below.
 Replace `<VERSION>` with the client version for this release, not the next development version.
 This prompt applies temporary reviews to other PRs, not the release-prep PRs.
 
-> For the client `<VERSION>` release hold, refresh open PRs targeting `microsoft/FluidFramework:main`. Inspect their current diffs. Include PRs that change a client `.changeset/*.md` file or `packages/runtime/test-runtime-utils/src/assertionShortCodesMap.ts`; exclude Routerlicious-only and release-prep PRs.
+> For the client `<VERSION>` release hold, refresh open PRs targeting `microsoft/FluidFramework:main`.
+> Inspect their current diffs.
+> Include PRs that change a client `.changeset/*.md` file
+> or `packages/runtime/test-runtime-utils/src/assertionShortCodesMap.ts`;
+> exclude Routerlicious-only and release-prep PRs.
 >
-> Limit the hold to PRs whose head was **verifiably pushed to GitHub in the last 14 days**. Use a server-recorded push time. If no reliable push time is available, include a PR only if it was **opened in the last 14 days**. Do not treat PR `updated_at` or a commit’s date as its push time. List older PRs with unknown push times separately; do not hold them.
+> Limit the hold to PRs whose head was **verifiably pushed to GitHub in the last 14 days**.
+> Use a server-recorded push time.
+> If no reliable push time is available, include a PR only if it was **opened in the last 14 days**.
+> Do not treat PR `updated_at` or a commit’s date as its push time.
+> List older PRs with unknown push times separately; do not hold them.
 >
-> For each eligible PR that I did not author and that does not already have this hold, submit a **Request changes** review: “Temporary client `<VERSION>` release hold to prevent merge conflicts; not code-review feedback. `[release-hold:client:<VERSION>]`” Record each review ID. After the version-bump PR merges, dismiss only these temporary reviews. Report self-authored PRs separately for another eligible reviewer.
+> For each eligible PR that I did not author and that does not already have this hold,
+> submit a **Request changes** review:
+> “Temporary client `<VERSION>` release hold to prevent merge conflicts; not code-review feedback.
+> `[release-hold:client:<VERSION>]`”
+> Record each review ID.
+> After the version-bump PR merges, dismiss only these temporary reviews.
+> Report self-authored PRs separately for another eligible reviewer.
 
 Use the authenticated reviewer's identity for "I" in this prompt.
 Record each PR number, head SHA, eligibility evidence, and submitted review ID in the release report.

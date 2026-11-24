@@ -5,30 +5,24 @@ Run and publish the release build, then bump the release branch to the next patc
 ## Autonomous Mode Notes
 
 In autonomous mode, run all commands without pausing.
-The user must still queue the ADO release build.
-The successful build automatically triggers **Publish - client packages**.
-Monitor that publish run.
-Before you create the patch bump PR, verify the exact version on GitHub and public npm.
+The user must still queue the ADO release build; the publish pipeline starts automatically after that build succeeds.
+Monitor both runs and create the patch bump PR automatically only after publication is verified.
 
 If any step fails, fall back to opening a GitHub issue describing what was completed, what failed, and the remaining steps with exact commands. Label with `release-blocking`.
 
 ## CI Note
 
-In CI, this phase has two parts:
+In CI, this phase is split into two parts separated by human actions:
+- **Step 6 (human):** A human creates the release branch if needed and queues the ADO release build. Monitor the automatically triggered publish run after the build succeeds.
+- **Step 7 (automatable):** CI creates the patch bump PR after the publish run succeeds and the exact GitHub/npm release is verified.
 
-- **Step 6:** A human creates the release branch if needed and queues the ADO release build.
-  The successful build automatically triggers publication.
-  Monitor the publish run and verify the exact GitHub and public npm version.
-- **Step 7:** CI creates the patch bump PR only after the publish run succeeds and exact-version verification passes.
-
-Use the auto-detection logic in SKILL.md to identify the current step.
+CI should auto-detect which step is needed (see SKILL.md auto-detection logic).
 
 ## Step 6: Run and Publish the Release Build
 
-**CI note:** A human queues the ADO release build, not a separate publish run.
-Inspect both runs to identify the current checkpoint.
-If ADO state cannot be queried, report that a human must inspect it.
-Do not infer publication state from tag absence alone.
+**CI note:** This step requires a human to queue only the ADO build.
+Inspect ADO run state to determine whether to request a build or monitor its downstream publish run.
+If ADO state cannot be queried, report that a human must identify the current checkpoint; do not infer it from tag absence alone.
 If the live pipeline differs from these instructions, report the discrepancy and investigate before proceeding.
 
 ### Switch to the release branch
@@ -68,84 +62,42 @@ For a normal public release, select the release branch, set **Release Build** to
 
 **Autonomous mode:** After running `flub release`, report:
 
-> **Action required:** Queue [Build - client packages](https://dev.azure.com/fluidframework/internal/_build?definitionId=12) for the release branch.
-> Choose "release" for the "Release Build" parameter.
-> Leave the other parameters at their defaults.
-> After the build succeeds, monitor the automatically triggered publish run as described below.
+> **Action required:** Queue [Build - client packages](https://dev.azure.com/fluidframework/internal/_build?definitionId=12) for the release branch and choose the "release" option for the "Release Build" parameter. Leave the other parameters at their defaults. After it succeeds, monitor the automatically triggered publish pipeline as described below.
 
-### Monitor automatic publication of the candidate
+### Publish the successful candidate build
 
-A successful **Build - client packages** run in the `internal` project automatically triggers [Publish - client packages](https://dev.azure.com/fluidframework/internal/_build?definitionId=219).
-The trigger includes `main`, `lts`, `release/client/*`, and `test/*` branches.
-For this release, use the successful build from `release/client/<MAJOR>.<MINOR>`.
-Do not queue a separate publish run as the normal release step.
+After the release build succeeds, [Publish - client packages](https://dev.azure.com/fluidframework/internal/_build?definitionId=219) starts automatically.
+Do not queue a second publish run.
 
-The build produces packed packages and `pack/publish-metadata.json` for the separate publisher.
-The publish definition is `devOps/pipelines/publish-client.yml` in the ADO repository `ff_publishing`.
-Its `candidate` pipeline resource provides the automatic trigger.
+1. Find the downstream publish run and verify that its `candidate` pipeline resource is the successful release build from the previous step.
+2. Verify that the candidate used the expected `release/client/<MAJOR>.<MINOR>` branch and release commit.
+3. Confirm that the **Publish to public npmjs.org through ESRP Release API** stage runs and succeeds, rather than being skipped.
+4. Wait for the publish run to succeed before verifying the release or starting the patch bump.
 
-Public npm eligibility comes from the candidate metadata and source branch, not a manual publish parameter:
+The publish pipeline reads its destinations from the candidate's recorded metadata.
 
-- The candidate must use an allowed branch.
-  For this release, verify the expected release branch and commit.
-- `publishOverride: skip` disables publication.
-  The normal release uses `publishOverride: default`.
-- `publishAsPartOfBuild` must be `false` so that the separate publisher owns publication.
-- Public npm publication requires `release: release` or `release: prerelease`.
-  This release requires `release: release` and the exact expected version.
-  Ordinary builds can publish to internal feeds without public publication.
-  Test branches publish only to the test feed, even with release metadata.
-
-The `prepare_publish` stage validates these inputs and emits `publishToPublic: true` for an eligible public candidate.
-The `publish_npm_public` stage uses that output to decide whether to run.
-Its display name is **Publish to public npmjs.org through ESRP Release API**.
-Automatic runs do not require the manual queue approval gate.
-Automatic triggering alone does not prove that public publication ran or succeeded.
-
-1. Record the successful build ID, release branch, source commit, and expected version.
-2. Open the publish pipeline's runs and identify the automatic run for that build.
-   Inspect its `candidate` resource and match the upstream build ID, source branch, and source commit.
-   Do not match only the run title or the publish run's own branch and commit.
-   Those source fields describe `ff_publishing`, not the release candidate.
-3. Inspect `prepare_publish` and its `ReadMetadata` output.
-   Verify the exact version, `release: release`, and `publishToPublic: true`.
-4. Monitor the run until it completes.
-   Require both the publish run and `publish_npm_public` stage to succeed.
-   A skipped public stage is not public publication, even if the overall run succeeds.
-5. If no matching run appears, report the build ID and missing automatic trigger, then stop for investigation.
-   If the run fails, is canceled, or skips public publication, report its URL and checkpoint, then stop.
-   Do not assume publication succeeded or queue a replacement without separate confirmation.
+If the publish run is missing or fails, investigate the trigger or failed stage before taking further action.
+For a failed public npm stage, retry that stage when appropriate rather than starting a duplicate publish run.
+Manual queueing is only a recovery action when retrying the existing run is not possible.
+It requires human confirmation of the candidate and destinations at the **Approve publication** gate; never bypass that gate.
 
 **Autonomous mode:** After the release build succeeds, report:
 
-> **Build complete:** Release build `<BUILD_ID>` succeeded.
-> **Publication checkpoint:** Monitor its automatically triggered [Publish - client packages](https://dev.azure.com/fluidframework/internal/_build?definitionId=219) run.
-> Match the `candidate` to that exact build and require the public stage to succeed.
-> If no matching run appears, stop and report the missing run.
-> After publication succeeds, verify the exact GitHub and public npm version before the patch bump.
+> **Publication in progress:** Monitor [Publish - client packages](https://dev.azure.com/fluidframework/internal/_build?definitionId=219) run `<PUBLISH_RUN_ID>`, which selected release build `<BUILD_ID>` as its candidate. After the public npm stage and publish run succeed, verify GitHub and npm publication before the patch bump.
 
-Report the matching run's actual state.
-Do not report publication as in progress unless you verify that state.
-
-For a failed public npm stage, retry that stage when appropriate instead of starting a duplicate publish run.
-Manual queuing is only a recovery action when a retry of the existing run is not possible.
-It requires human confirmation of the candidate and destinations at the **Approve publication** gate.
-Never bypass that gate.
+Use this message only after confirming the matching run exists and is in progress.
+Otherwise, report its actual state and any required investigation.
 
 ### Verify the release
 
-After the publish run and its public stage succeed, verify the exact version:
+After the publish pipeline succeeds, verify the exact version:
 
 ```bash
 gh release view client_v<VERSION> --repo microsoft/FluidFramework
 pnpm view @fluidframework/container-loader@<VERSION> version --registry=https://registry.npmjs.org/
 ```
 
-Confirm the GitHub release is published, not a draft, and its tag matches `client_v<VERSION>`.
-Confirm the npm result matches the exact version from the candidate metadata.
-Checking a generic releases page or npm search is insufficient because an older release can make those checks appear successful.
-If either exact version is unavailable, wait for propagation and investigate if it remains unavailable.
-Do not start the patch bump until both checks pass.
+Confirm the GitHub tag and npm result both match the version published by the selected candidate build. Checking a generic releases page or npm search is insufficient because an older release can make those checks appear successful.
 
 Once confirmed, remind the user to announce the release in the Fluid Framework "General" Teams channel with a link to the GitHub release. (Never auto-announce in either mode.)
 Also remind the release on-call engineer (OCE) to bump the Fluid Framework version in the partner repository.
@@ -156,9 +108,8 @@ Do not identify the partner repository or include an internal documentation link
 
 Do not start Step 7 until all of the following are true:
 
-- The **Publish - client packages** run succeeded with the exact expected candidate, version, and `publishToPublic: true`.
-- The `publish_npm_public` stage succeeded, not skipped.
-- The exact `client_v<VERSION>` GitHub release is published, not a draft.
+- The **Publish - client packages** run and its public npm stage succeeded with the expected candidate.
+- The exact `client_v<VERSION>` GitHub release exists.
 - The exact `<VERSION>` package is available from the public npm registry.
 
 Then either:
