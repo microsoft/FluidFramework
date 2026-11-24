@@ -1043,7 +1043,7 @@ export declare function createIndex(): Map<string, number>;
 
 ###### Repeated references within and across comment blocks
 
-In this example, the summary, `@remarks`, and `@param` blocks each link to `Bar` on first reference.
+In this example, the summary and `@returns` blocks each link to `Bar` on first reference.
 Subsequent references within each block use inline code.
 
 ```typescript
