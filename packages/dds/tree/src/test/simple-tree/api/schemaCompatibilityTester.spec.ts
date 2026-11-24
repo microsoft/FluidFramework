@@ -957,7 +957,7 @@ describe("checkSchemaCompatibility", () => {
 							view: [],
 							stored: [factory.string.identifier],
 							reason:
-								'Cannot view field "" of node type ".diagnostics.Items": the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
+								'Cannot view array elements of node type ".diagnostics.Items" (stored key ""): the stored schema allows node types ["com.fluidframework.leaf.string"] that the view does not allow.',
 						},
 					],
 				},
@@ -1070,6 +1070,129 @@ describe("checkSchemaCompatibility", () => {
 				compatibility.upgrade.incompatibilities[0]?.reason,
 				`Cannot upgrade node type ${JSON.stringify(View.identifier)}: changing the stored node representation from Map to Object is not permitted.`,
 			);
+		});
+
+		// A leaf's value kind determines its description, even when it has a custom identifier.
+		// Other nodes use their schema identifier because they have no leaf value.
+		class CustomElement extends factory.object("diagnostics.CustomElement", {}) {}
+		for (const [type, description] of [
+			[factory.number, "numbers"],
+			[factory.string, "strings"],
+			[factory.boolean, "booleans"],
+			[factory.null, "null"],
+			[factory.handle, "Fluid handles"],
+			[new LeafNodeSchema("diagnostics.CustomString", ValueSchema.String), "strings"],
+			[CustomElement, 'nodes of type ".diagnostics.CustomElement"'],
+		] as const) {
+			it(`explains array and object field differences in both directions for ${type.identifier}`, () => {
+				// Reuse the node identifier and child type so only the child's location changes:
+				// the array stores elements under the empty key, while the object uses field "x".
+				class ArrayNode extends factory.array("diagnostics.ArrayObject", type) {}
+				class ObjectNode extends factory.object("diagnostics.ArrayObject", {
+					x: factory.optional(type),
+				}) {}
+				const node = JSON.stringify(ArrayNode.identifier);
+				for (const [stored, view, fieldKey, reason] of [
+					[
+						ArrayNode,
+						ObjectNode,
+						"",
+						`Cannot upgrade node type ${node}: the stored array allows ${description} as elements, but the proposed object has no array elements.`,
+					],
+					[
+						ObjectNode,
+						ArrayNode,
+						"x",
+						`Cannot upgrade node type ${node}: the stored object allows ${description} in field "x", but the proposed array has no field "x".`,
+					],
+				] as const) {
+					const result = expectCompatibility(
+						{ view, stored: toUpgradeSchema(stored) },
+						{ canView: false, canUpgrade: false },
+					);
+					assert(!result.view.isCompatible);
+					assert(!result.upgrade.isCompatible);
+					// The proposed schema omits the stored field. This explains both failures below:
+					// it no longer allows the child type at that key, and it forbids the field itself.
+					assertIncompatibilities(result.upgrade.incompatibilities, [
+						{
+							mismatch: "allowedTypes",
+							location: { nodeType: view.identifier, fieldKey },
+							proposed: [],
+							stored: [type.identifier],
+						},
+						{
+							mismatch: "fieldKind",
+							location: { nodeType: view.identifier, fieldKey },
+							proposed: "Forbidden",
+							stored: fieldKey === "" ? "Sequence" : "Optional",
+						},
+					]);
+					assert.equal(result.upgrade.incompatibilities[0]?.reason, reason);
+					if (fieldKey === "") {
+						assert.equal(
+							result.view.incompatibilities[1]?.reason,
+							`Cannot view array elements of node type ${node} (stored key ""): the view permits no children, but the stored schema permits zero or more children.`,
+						);
+					}
+				}
+			});
+		}
+
+		it("explains array structure while preserving node-kind details", () => {
+			class ArrayNode extends factory.array("diagnostics.ArrayMap", factory.number) {}
+			class MapNode extends factory.map("diagnostics.ArrayMap", factory.number) {}
+			const upgrade = expectCompatibility(
+				{ view: ArrayNode, stored: toUpgradeSchema(MapNode) },
+				{ canView: false, canUpgrade: false },
+			).upgrade;
+			assert(!upgrade.isCompatible);
+			// Arrays are stored as objects, so the structured kind stays "Object".
+			// Only the reason distinguishes an array from other stored objects.
+			assertIncompatibilities(upgrade.incompatibilities, [
+				{
+					mismatch: "nodeKind",
+					nodeType: ArrayNode.identifier,
+					proposed: "Object",
+					stored: "Map",
+				},
+			]);
+			assert.equal(
+				upgrade.incompatibilities[0]?.reason,
+				`Cannot upgrade node type ${JSON.stringify(ArrayNode.identifier)}: changing the stored node representation from Map to Object (array structure) is not permitted.`,
+			);
+			const view = expectCompatibility(
+				{ view: MapNode, stored: toUpgradeSchema(ArrayNode) },
+				{ canView: false, canUpgrade: false },
+			).view;
+			assert(!view.isCompatible);
+			assert.equal(
+				view.incompatibilities[0]?.reason,
+				`Cannot view node type ${JSON.stringify(MapNode.identifier)}: the stored node structure does not match the view's Map definition (stored representation: Object (array structure)).`,
+			);
+		});
+
+		it("does not mistake an empty object key for array structure or block a valid upgrade", () => {
+			class OptionalObject extends factory.object("diagnostics.EmptyKey", {
+				"": factory.optional(factory.number),
+			}) {}
+			class RequiredObject extends factory.object("diagnostics.EmptyKey", {
+				"": factory.number,
+			}) {}
+			class ArrayNode extends factory.array("diagnostics.EmptyKey", factory.number) {}
+			const stored = toUpgradeSchema(OptionalObject);
+			const result = expectCompatibility(
+				{ view: RequiredObject, stored },
+				{ canView: false, canUpgrade: false },
+			);
+			assert(!result.upgrade.isCompatible);
+			assert.equal(
+				result.upgrade.incompatibilities[0]?.reason,
+				`Cannot upgrade field "" of node type ${JSON.stringify(RequiredObject.identifier)}: changing from zero or one child to exactly one child is not permitted by the schema upgrade rules.`,
+			);
+			// Unlike field "x", this field already uses the array's element key.
+			// A sequence of numbers still allows both cases the optional field permits: no child or one number.
+			expectCompatibility({ view: ArrayNode, stored }, { canView: false, canUpgrade: true });
 		});
 
 		it("reports missing stored node definitions even when unreachable from the root", () => {

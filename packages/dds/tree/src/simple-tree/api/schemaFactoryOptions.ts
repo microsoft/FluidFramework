@@ -57,6 +57,7 @@ export interface ObjectSchemaOptions {
 	 * When transferring data through import and export APIs, check both sides of the operation for the same copying limitation.
 	 * The {@link (TreeAlpha:interface).exportVerbose | exportVerbose} API with stored keys preserves unknown optional fields,
 	 * but {@link Unhydrated} nodes produced by {@link TreeNode} constructors, insertable content, and {@link (TreeAlpha:interface).importVerbose | importVerbose} do not.
+	 * The exception is `importVerbose` with a view (see {@link TreeImportOptions}), which uses the stored schema of a document.
 	 * Exporting those fields therefore does not guarantee that importing the result will preserve them.
 	 * To detect whether a node contains unknown-field data that an operation could lose, use {@link (TreeAlpha:interface).hasUnknownChildren}.
 	 *

@@ -334,6 +334,7 @@ export {
   TreeDataStoreOptions,
   TreeGapCaptureOptions,
   TreeIdentifierUtils,
+  TreeImportOptions,
   TreeLocation,
   TreeLocationResolution,
   TreeLocationResolver,

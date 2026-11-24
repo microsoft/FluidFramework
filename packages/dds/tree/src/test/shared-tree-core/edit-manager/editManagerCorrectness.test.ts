@@ -1480,10 +1480,10 @@ export function testCorrectness(): void {
 		});
 
 		describe("compactHistory", () => {
-			// Example notation: BASE <-- A <-- B <-- C (HEAD); arrows point to parents.
-			// A, B, C name revisions with intentions [1], [2], [3], not new composed revision IDs.
-			// B[1, 2] means the original B survives with both changes; A leaves the trunk and its indexes.
-			// The survivor keeps its revision and sequence ID. BASE is never composed away.
+			// Example notation: A <-- B <-- C <-- HEAD; arrows point toward older commits.
+			// HEAD marks the newest commit, not an additional commit. The trunk base is omitted.
+			// A+B denotes one combined commit containing A's and B's changes, keeping B's revision.
+			// The survivor keeps its object and sequence ID; the trunk base is never composed away.
 			// Custom metadata is undefined unless the example explicitly supplies a metadata tree.
 
 			function setupRetainedHistory(count: number, msn: number): TestEditManager {
@@ -1529,8 +1529,8 @@ export function testCorrectness(): void {
 			describe("history compaction", () => {
 				for (const count of [0, 1]) {
 					it(`leaves ${count} retained commits unchanged without offering a pair`, () => {
-						// Before/after: BASE (HEAD), or BASE <-- A[1] (HEAD).
-						// There is no pair of retained revisions: BASE cannot be absorbed into A.
+						// Before/after: no retained commits, or A <-- HEAD.
+						// There is no pair of retained commits; the trunk base cannot be absorbed into A.
 						// No policy call, removed revision, change rewrite, or metadata wrapper is needed.
 
 						// Setup
@@ -1548,9 +1548,9 @@ export function testCorrectness(): void {
 				}
 
 				it("leaves history unchanged when the policy rejects every pair", () => {
-					// Before: BASE <-- A[1] <-- B[2] <-- C[3] (HEAD).
+					// Before: A <-- B <-- C <-- HEAD.
 					// Reject (A, B), then (B, C).
-					// After:  BASE <-- A[1] <-- B[2] <-- C[3] (HEAD).
+					// After:  A <-- B <-- C <-- HEAD.
 					// A, B, and C keep their objects, changes, parents, and undefined custom metadata.
 
 					// Setup
@@ -1568,11 +1568,11 @@ export function testCorrectness(): void {
 				});
 
 				it("composes oldest first while retaining the survivor and the trunk base", () => {
-					// Before: BASE <-- A[1] <-- B[2] <-- C[3] (HEAD).
-					// (A, B): BASE <-- B[1, 2] <-- C[3] (HEAD); A leaves the trunk and indexes.
-					// (B, C): BASE <-- C[1, 2, 3] (HEAD); B leaves the trunk and indexes.
-					// The second policy call sees B's composed [1, 2], not its original [2].
-					// C keeps its object, revision, and sequence ID; C.parent becomes BASE.
+					// Before: A <-- B <-- C <-- HEAD.
+					// First merge: A+B <-- C <-- HEAD; A's separate commit leaves the trunk and indexes.
+					// Second merge: A+B+C <-- HEAD; B's separate commit leaves the trunk and indexes.
+					// The second policy call sees A+B's combined changes, not B's original change.
+					// The combined commit keeps C's object, revision, and sequence ID, with the original trunk base as parent.
 					// All custom metadata stays undefined; another pass has no pair to offer.
 
 					// Setup
@@ -1611,10 +1611,10 @@ export function testCorrectness(): void {
 				});
 
 				it("continues after a rejected pair without removing the rejected predecessor", () => {
-					// Before: BASE <-- A[1] <-- B[2] <-- C[3] <-- D[4] (HEAD).
-					// Reject (A, B); approve (B, C), then (C[2, 3], D).
-					// After:  BASE <-- A[1] <-- D[2, 3, 4] (HEAD).
-					// A stays unchanged; B and C are removed; D keeps its revision with parent A.
+					// Before: A <-- B <-- C <-- D <-- HEAD.
+					// Reject (A, B); approve (B, C), then (B+C, D).
+					// After:  A <-- B+C+D <-- HEAD.
+					// A stays unchanged; B+C+D keeps D's revision with parent A.
 					// A's edit is not absorbed later in this pass. Custom metadata remains undefined.
 
 					// Setup
@@ -1631,10 +1631,10 @@ export function testCorrectness(): void {
 				});
 
 				it("compacts acknowledged local commits", () => {
-					// Before: BASE <-- A[1] <-- B[2] <-- C[3] (trunk and local HEAD).
+					// Before: A <-- B <-- C <-- HEAD; trunk and local heads both point to C.
 					// A, B, and C are local-authored but acknowledged at sequence numbers 1, 2, and 3.
-					// After:  BASE <-- C[1, 2, 3] (trunk and local HEAD).
-					// A and B are removed; C keeps its revision and sequence ID, with undefined metadata.
+					// After:  A+B+C <-- HEAD; both heads point to the combined commit.
+					// A+B+C keeps C's revision and sequence ID, with undefined metadata.
 					// No unsequenced local commits remain; authorship does not prevent compaction.
 
 					// Setup
@@ -1667,10 +1667,10 @@ export function testCorrectness(): void {
 				});
 
 				it("compacts commits sharing a sequence number within a batch", () => {
-					// Before: BASE <-- A[1] <-- B[2] <-- C[3] (HEAD).
+					// Before: A <-- B <-- C <-- HEAD.
 					// A, B, and C share sequence number 1, with batch indexes 0, 1, and 2.
 					// At minimum sequence number 1, all three are eligible.
-					// After:  BASE <-- C[1, 2, 3] (HEAD).
+					// After:  A+B+C <-- HEAD; the combined commit keeps C's revision.
 					// Remove A/B and their sequence-ID entries, not C's entry for the same sequence number.
 					// C retains batch index 2 and undefined custom metadata.
 
@@ -1697,10 +1697,10 @@ export function testCorrectness(): void {
 				});
 
 				it("does not compact commits above the collaboration bound", () => {
-					// Before: BASE <-- A[1] <-- B[2] <-- C[3] <-- D[4] (HEAD).
+					// Before: A <-- B <-- C <-- D <-- HEAD.
 					// Sequence numbers are 1, 2, 3, 4; minimum sequence number 2 makes only A/B eligible.
-					// After:  BASE <-- B[1, 2] <-- C[3] <-- D[4] (HEAD).
-					// A is removed; B keeps revision B/sequence number 2 and now points to BASE.
+					// After:  A+B <-- C <-- D <-- HEAD.
+					// A+B keeps B's revision and sequence number 2, with the original trunk base as parent.
 					// C/D keep their original objects and changes. All custom metadata stays undefined.
 
 					// Setup
@@ -1719,10 +1719,9 @@ export function testCorrectness(): void {
 				});
 
 				it("keeps registered fork bases and newer commits unchanged", () => {
-					// Before: BASE <-- A[1] <-- B[2] <-- C[3] <-- D[4] <-- E[5] (main HEAD).
-					//                                  ^ fork HEAD/base
-					// After:  BASE <-- B[1, 2] <-- C[3] <-- D[4] <-- E[5] (main HEAD).
-					// A is removed; B survives. The fork still points to the same C object/change.
+					// Before: A <-- B <-- C <-- D <-- E <-- HEAD; the fork points to C.
+					// After:  A+B <-- C <-- D <-- E <-- HEAD.
+					// A+B keeps B's revision. The fork still points to the same C object/change.
 					// Even with minimum sequence number 5, C/D/E cannot be composed while the fork exists.
 					// Custom metadata stays undefined, including on the protected revisions.
 
@@ -1746,10 +1745,10 @@ export function testCorrectness(): void {
 				});
 
 				it("does not offer unsequenced local edits to the policy", () => {
-					// Before: BASE <-- A[1] <-- B[2] <-- C[3] (trunk HEAD) <-- D[4] (local HEAD).
+					// Before: A <-- B <-- C <-- D <-- HEAD; the trunk head is C, the local head is D.
 					// D is unsequenced: neither argument to the policy may be D.
-					// After:  BASE <-- C[1, 2, 3] (trunk HEAD) <-- D[4] (local HEAD).
-					// Remove A/B; keep C's revision and D's object, change, and parent C.
+					// After:  A+B+C <-- D <-- HEAD; the trunk head is the combined commit.
+					// A+B+C keeps C's revision; D keeps its object, change, and parent.
 					// Custom metadata remains undefined; the full local state still includes all four edits.
 
 					// Setup
@@ -1774,10 +1773,10 @@ export function testCorrectness(): void {
 				});
 
 				it("allows previously protected history after its fork is disposed", () => {
-					// Before: BASE <-- A[1] <-- B[2] (main HEAD and fork HEAD/base).
+					// Before: A <-- B <-- HEAD; main and fork heads both point to B.
 					// While the fork exists, B is protected: no pair is offered and A/B stay unchanged.
-					// Dispose the fork; then (A, B) produces BASE <-- B[1, 2] (main HEAD).
-					// A is removed; B keeps its revision with parent BASE and undefined custom metadata.
+					// After disposing the fork and compacting: A+B <-- HEAD.
+					// A+B keeps B's revision, the original trunk base as parent, and undefined custom metadata.
 
 					// Setup
 					const manager = setupRetainedHistory(2, 2);
@@ -1802,10 +1801,10 @@ export function testCorrectness(): void {
 							for (const approve of [false, true]) {
 								it(`retainHistory=${retention}, ${retainedByMsn} collaboration-protected commits, policy ${approve ? "approves" : "rejects"}`, () => {
 									// Example for retention=4 and retainedByMsn=2:
-									// Before trimming: BASE <-- A[1] <-- B[2] <-- C[3] <-- D[4] <-- E[5] <-- F[6] (HEAD).
-									// Before compaction: BASE <-- C[3] <-- D[4] <-- E[5] <-- F[6] (HEAD).
+									// Before trimming: A <-- B <-- C <-- D <-- E <-- F <-- HEAD.
+									// Before compaction: C <-- D <-- E <-- F <-- HEAD.
 									// A/B have already left retained history; E/F are collaboration-protected.
-									// Approve: BASE <-- D[3, 4] <-- E[5] <-- F[6] (HEAD); C is removed, D survives.
+									// Approve: C+D <-- E <-- F <-- HEAD; C+D keeps D's revision.
 									// Reject: C/D/E/F stay separate. All custom metadata remains undefined.
 									// With false/0 retention, only correctness-needed history remains: no pair is offered.
 
@@ -1843,9 +1842,9 @@ export function testCorrectness(): void {
 				});
 
 				describe("known bugs (fixes deferred)", () => {
-					it.skip("updates a warmed history count when commits are removed", () => {
-						// Before: BASE <-- A[1] <-- B[2] <-- C[3] <-- D[4] (HEAD); cached count = 4.
-						// After:  BASE <-- D[1, 2, 3, 4] (HEAD); A/B/C are removed, D's revision survives.
+					it.skip("updates a cached history count when commits are removed", () => {
+						// Before: A <-- B <-- C <-- D <-- HEAD; cached count = 4.
+						// After:  A+B+C+D <-- HEAD; the combined commit keeps D's revision.
 						// Required: invalidate the branch count cache so the next read returns 1, not 4.
 						// Custom metadata stays undefined; it is the history cache that is stale.
 
@@ -1862,12 +1861,12 @@ export function testCorrectness(): void {
 						assert.equal(main.getCommitCount(), 1);
 					});
 
-					it.skip("invalidates the surviving commit's cached inverse", () => {
-						// Before: BASE <-- A[1] <-- B[2] <-- C[3] <-- D[4] (main HEAD).
-						//                  ^ divergent fork adds X[99]; a temporary fork rebases onto X.
-						// That rebase caches D's inverse [-4]; both forks are disposed before compaction.
-						// After: BASE <-- D[1, 2, 3, 4] (HEAD), still revision D with undefined metadata.
-						// Required: discard D's cached inverse; rollback to BASE must undo [-4, -3, -2, -1].
+					it.skip("rolls back all combined changes when an inverse was cached before compaction", () => {
+						// Before: A <-- B <-- C <-- D <-- HEAD.
+						// A divergent fork from A adds X; a temporary fork rebases onto X.
+						// That rebase caches an inverse for D alone; both forks are disposed before compaction.
+						// After: A+B+C+D <-- HEAD, keeping D's revision with undefined metadata.
+						// Required: discard D's cached inverse; rollback to before A must undo D, C, B, and A.
 
 						// Setup
 						const { manager, family } = testChangeEditManagerFactory({
@@ -1899,37 +1898,15 @@ export function testCorrectness(): void {
 						assert.deepEqual(rollback.intentions, [-4, -3, -2, -1]);
 					});
 
-					it.skip("does not replay an idle peer's earlier edit after compaction", () => {
-						// Before: BASE <-- A[1, peer2] <-- B[2, peer1] <-- C[3, peer1] <-- D[4, peer1] (HEAD).
-						// Compact: BASE <-- D[1, 2, 3, 4] (HEAD); A/B/C leave the trunk.
-						// Receive E[5] from idle peer2: BASE <-- D[1, 2, 3, 4] <-- E[5] (HEAD).
-						// Required: peer2's tracked history must not replay A, whose edit already lives in D.
-						// Authorship/session bookkeeping is distinct from custom metadata, which is undefined here.
-
-						// Setup
-						const { manager } = testChangeEditManagerFactory({ historyRetention: true });
-						sequencePeerCommits(manager, 1, 1, 1, peer2);
-						sequencePeerCommits(manager, 3, 2, 2, peer1);
-						manager.advanceMinimumSequenceNumber(brand(4));
-
-						// Act
-						manager.compactHistory(() => true);
-						sequencePeerCommits(manager, 1, 5, 5, peer2);
-
-						// Verify
-						checkChangeList(manager, [1, 2, 3, 4, 5]);
-						assert.deepEqual(trunkIntentions(manager), [[1, 2, 3, 4], [5]]);
-					});
 				});
 			});
 
 			describe("metadata compaction", () => {
 				it("replaces pair metadata when the policy supplies a metadata tree", () => {
-					// Before: BASE <-- A[1, M_A] <-- B[2, M_B] (HEAD).
-					// M_A = { metadata: { label: "before" }, children: [] }; M_B uses label "after".
-					// Policy returns M = { metadata: { label: "composed" }, children: [] }.
-					// After: BASE <-- B[1, 2, M] (HEAD); remove A, retain revision B.
-					// B.customMetadata is exactly M, not a wrapper around M_A/M_B; neither old label survives.
+					// Before: A <-- B <-- HEAD; A's metadata label is "before", B's is "after".
+					// Policy returns { metadata: { label: "composed" }, children: [] }.
+					// After: A+B <-- HEAD; the combined commit keeps B's revision.
+					// Its metadata is exactly the policy's tree; neither old label survives.
 
 					// Setup
 					const manager = setupHistoryWithMetadata([
@@ -1950,10 +1927,10 @@ export function testCorrectness(): void {
 				});
 
 				it("combines existing metadata as children in commit order", () => {
-					// Before: BASE <-- A[1, M_A] <-- B[2, M_B] (HEAD).
-					// M_A.metadata = { label: "before", keep: true }; M_B.metadata = { label: "after" }.
-					// Policy returns true: BASE <-- B[1, 2, M_AB] (HEAD); A leaves the graph.
-					// M_AB = { metadata: undefined, children: [M_A, M_B] } preserves both authored trees.
+					// Before: A <-- B <-- HEAD.
+					// A's metadata is { label: "before", keep: true }; B's is { label: "after" }.
+					// Policy returns true: A+B <-- HEAD; the combined commit keeps B's revision.
+					// Its metadata has an undefined root value and both original trees as children, A then B.
 					// Flattening gives { label: "after", keep: true }: B wins conflicts, A supplies missing keys.
 					// Removing revision A from the graph does not discard its metadata subtree.
 
@@ -1977,11 +1954,11 @@ export function testCorrectness(): void {
 
 				for (const position of ["neither", "older", "newer"] as const) {
 					it(`handles metadata on ${position === "neither" ? "neither commit" : `only the ${position} commit`}`, () => {
-						// Before: BASE <-- A[1, M_A] <-- B[2, M_B] (HEAD).
-						// After:  BASE <-- B[1, 2, M] (HEAD); A is removed in all three cases.
-						// older:  (M_A, M_B) = (M, undefined); B inherits A's exact metadata tree.
-						// newer:  (M_A, M_B) = (undefined, M); B keeps its exact metadata tree.
-						// neither: both are undefined; B stays undefined, with no empty wrapper.
+						// Before: A <-- B <-- HEAD.
+						// After:  A+B <-- HEAD; the combined commit keeps B's revision in all three cases.
+						// older: only A has metadata; A+B inherits A's exact metadata tree.
+						// newer: only B has metadata; A+B keeps B's exact metadata tree.
+						// neither: both are undefined; A+B has undefined metadata, with no empty wrapper.
 
 						// Setup
 						const metadata: CustomMetadataTree = { metadata: { label: "kept" }, children: [] };
@@ -2005,10 +1982,10 @@ export function testCorrectness(): void {
 
 				describe("known bugs (fixes deferred)", () => {
 					it.skip("rejects unencodable metadata before mutating history", () => {
-						// Before: BASE <-- A[1] <-- B[2] (HEAD); both custom metadata fields are undefined.
-						// Policy returns M = 10,000 nested wrappers around { label: "nested" }.
-						// Required after encoding rejects M: BASE <-- A[1] <-- B[2] (HEAD), unchanged.
-						// A must not be removed, B must not absorb [1], and neither may acquire M.
+						// Before: A <-- B <-- HEAD; both custom metadata fields are undefined.
+						// Policy returns 10,000 nested metadata wrappers around { label: "nested" }.
+						// Required after encoding rejects the metadata: A <-- B <-- HEAD, unchanged.
+						// A must not be removed, B must not absorb A's change, and neither may acquire the metadata.
 
 						// Setup
 						const manager = setupRetainedHistory(2, 2);

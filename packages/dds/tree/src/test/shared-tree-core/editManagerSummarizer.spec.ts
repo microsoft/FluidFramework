@@ -23,7 +23,7 @@ import {
 	DependentFormatVersion,
 	FluidClientVersion,
 } from "../../codec/index.js";
-import { type CustomMetadataTree, RevisionTagCodec } from "../../core/index.js";
+import { RevisionTagCodec } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	EditManagerFormatVersion,
@@ -48,8 +48,7 @@ import {
 	TreeViewConfiguration,
 	toInitialSchema,
 } from "../../simple-tree/index.js";
-import { brand } from "../../util/index.js";
-import { testChangeFamilyFactory, TestChange } from "../testChange.js";
+import { testChangeFamilyFactory, type TestChange } from "../testChange.js";
 import {
 	expectSchemaEqual,
 	SharedTreeTestFactory,
@@ -89,55 +88,6 @@ function createEditManagerSummarizer(options?: {
 }
 
 describe("EditManagerSummarizer", () => {
-	// Skipped until synthetic metadata grouping is flattened during compaction.
-	it.skip("serializes thousands of compacted metadata trees without changing authored subtrees", () => {
-		// Before: BASE <-- R0[M0] <-- R1[M1] <-- ... <-- R3999[M3999] (HEAD); arrows point to parents.
-		// Each change is empty; Mi = { metadata: undefined, children: [{ metadata: { index: i }, children: [] }] }.
-		// All 4,000 revisions are eligible at minimum sequence number 4,000.
-		// Required after compaction: BASE <-- R3999[M] (HEAD); remove R0..R3998, retain revision R3999.
-		// M = { metadata: undefined, children: [M0, M1, ..., M3999] }, preserving every authored Mi subtree.
-		// Only synthetic compaction wrappers should flatten; Mi's own transaction wrapper must remain.
-		// The draft instead nests wrappers as W(...W(W(M0, M1), M2)..., M3999), overflowing serialization.
-
-		// Setup
-		const { summarizer, editManager } = createEditManagerSummarizer({
-			minVersionForCollab: FluidClientVersion.v2_117,
-		});
-		editManager.setHistoryRetention(true);
-		const metadata: CustomMetadataTree[] = [];
-		const count = 4000;
-		for (let index = 0; index < count; index++) {
-			const tree: CustomMetadataTree = {
-				metadata: undefined,
-				children: [{ metadata: { index }, children: [] }],
-			};
-			metadata.push(tree);
-			editManager.addSequencedChanges(
-				[
-					{
-						change: TestChange.emptyChange,
-						revision: testIdCompressor.generateCompressedId(),
-						customMetadata: tree,
-					},
-				],
-				testIdCompressor.localSessionId,
-				brand(index + 1),
-				brand(index),
-				"main",
-			);
-		}
-		editManager.advanceMinimumSequenceNumber(brand(count));
-		assert.doesNotThrow(() => summarizer.summarize({ stringify: JSON.stringify }));
-
-		// Act
-		const removed = editManager.compactHistory(() => true);
-
-		// Verify
-		assert.equal(removed, count - 1);
-		assert.doesNotThrow(() => summarizer.summarize({ stringify: JSON.stringify }));
-		assert.deepEqual(editManager.getTrunkHead("main").customMetadata?.children, metadata);
-	});
-
 	// B's data edit uses a type added by an earlier schema commit.
 	// Both commits lose a rebase, but the summary still needs to preserve B's original history.
 	// Minimized from topLevel.fuzz.spec.ts, Batch rebasing seed 41.

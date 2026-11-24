@@ -1,5 +1,14 @@
 # @fluidframework/container-runtime
 
+## 3.14.0
+
+### Minor Changes
+
+#### Prevent data store ID collisions after restoring a detached container ([#28725](https://github.com/microsoft/FluidFramework/pull/28725)) [cd9cb0c474](https://github.com/microsoft/FluidFramework/commit/cd9cb0c474ff004847e667207fd2776612557574)
+
+Creating data stores after you serialize and rehydrate a detached container no longer fails when unbound data stores were omitted from the snapshot.
+New detached data store IDs avoid existing data stores and aliases, preserving their contents when you attach and reload the container.
+
 ## 3.13.0
 
 ### Minor Changes

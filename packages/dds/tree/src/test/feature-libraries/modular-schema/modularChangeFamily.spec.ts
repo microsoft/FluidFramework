@@ -903,30 +903,6 @@ describe("ModularChangeFamily", () => {
 		const valueInverse1: ValueChangeset = { old: 1, new: 0 };
 		const valueInverse2: ValueChangeset = { old: 2, new: 1 };
 
-		// Skipped until rollback supports a compacted change's multiple revision namespaces.
-		it.skip("rolls back a compacted commit under its surviving graph revision", () => {
-			// Model: BASE <-- R1 <-- R2 (HEAD) becomes BASE <-- R2 (HEAD); arrows point to parents.
-			// This test constructs the composed payload directly: graph tag R2, change.revisions = [R1, R2].
-			// R1 is no longer a graph commit, but its namespace remains in the change's revision metadata.
-			// Required rollback at R3: revisions = [{ revision: R3, rollbackOf: R2 }], targeting the survivor.
-			// Invert the field changes too; the extra R1 namespace must not cause rejection or be the rollback target.
-			// These are change revision records, not CustomMetadataTree data; no custom metadata is supplied.
-
-			// Setup
-			const change: ModularChangeset = {
-				...rootChange1a,
-				revisions: [{ revision: tag1 }, { revision: tag2 }],
-			};
-			const singleRevisionRollback = family.invert(tagChange(rootChange1a, tag1), true, tag3);
-
-			// Act
-			const rollback = family.invert(tagChange(change, tag2), true, tag3);
-
-			// Verify
-			assert.deepEqual(rollback.revisions, [{ revision: tag3, rollbackOf: tag2 }]);
-			assert.deepEqual(rollback.fieldChanges, singleRevisionRollback.fieldChanges);
-		});
-
 		it("specific", () => {
 			const revisionForInvert = mintRevisionTag();
 			const expectedInverse: ModularChangeset = {

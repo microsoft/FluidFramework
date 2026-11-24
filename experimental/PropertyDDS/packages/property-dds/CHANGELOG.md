@@ -1,5 +1,9 @@
 # @fluid-experimental/property-dds
 
+## 3.14.0
+
+Dependency updates only.
+
 ## 3.13.0
 
 Dependency updates only.

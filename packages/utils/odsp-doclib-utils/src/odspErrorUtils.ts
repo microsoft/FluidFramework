@@ -281,7 +281,14 @@ export function createOdspNetworkError(
 				const tenantId = response?.headers
 					? parseAuthErrorTenant(response.headers)
 					: undefined;
-				error = new AuthorizationError(errorMessage, claims, tenantId, driverProps);
+				const wwwAuthenticate = response?.headers?.get("www-authenticate") ?? undefined;
+				error = new AuthorizationError(
+					errorMessage,
+					claims,
+					tenantId,
+					driverProps,
+					wwwAuthenticate,
+				);
 			}
 			break;
 		}

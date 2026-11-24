@@ -75,18 +75,20 @@ function setupDeletedHistory() {
 
 // These executable regressions remain skipped until their correctness fixes are included.
 describe("History compaction known bugs (fixes deferred)", () => {
-	// Arrows point to parents: I <-- A <-- B <-- ... <-- HEAD.
-	// I denotes initialization history; A/B/C denote the explicitly authored edits in each example.
+	// Example: A <-- B <-- C <-- ... <-- HEAD; arrows point toward older commits.
+	// Initialization history is omitted; A/B/C denote the explicitly authored edits in each example.
+	// HEAD marks the newest commit, not an additional commit.
 	// The suffix contains collaboration-advancing edits with no custom metadata, so sameGroup rejects it.
-	// M_g = { metadata: { group: g }, children: [] }; W(X, Y) = { metadata: undefined, children: [X, Y] }.
-	// Absorbing A into B keeps graph revision B, but composed changes may still refer to A's namespace.
+	// A+B denotes one combined commit keeping B's revision, with both original metadata trees as children.
+	// Its composed change may still refer to A's revision namespace.
 	// "Required" describes the deferred fix, not behavior guaranteed by this draft implementation.
 
-	it.skip("collects repair roots when their surviving history is trimmed", () => {
-		// Before: I <-- A[delete "a", M_deletions] <-- B[delete "b", M_deletions] <-- ... <-- HEAD.
-		// After:  I <-- B[delete "a" and "b", W(M_deletions, M_deletions)] <-- ... <-- HEAD.
-		// A leaves the graph; B keeps its revision. Both removed nodes are still needed as repair data.
-		// Required: when later collaboration trims B, collect both roots, including the one created by A.
+	it.skip("frees deleted-node data when the combined commit is removed from retained history", () => {
+		// Before: A <-- B <-- ... <-- HEAD.
+		// A deletes "a"; B deletes "b"; both have metadata { group: "deletions" }.
+		// After:  A+B <-- ... <-- HEAD.
+		// A+B keeps B's revision. Both removed nodes are still needed as repair data.
+		// Required: when later collaboration trims A+B, collect both roots, including the one created by A.
 		// The uncompacted peer must also collect its roots when its corresponding history is trimmed.
 
 		// Setup
@@ -102,13 +104,14 @@ describe("History compaction known bugs (fixes deferred)", () => {
 		assert.deepEqual(peer.kernel.checkout.getRemovedRoots(), []);
 	});
 
-	it.skip("preserves repair cleanup ownership across transaction abort", () => {
-		// Before: I <-- A[delete "a", M_deletions] <-- B[delete "b", M_deletions] <-- ... <-- T (local HEAD).
+	it.skip("still frees deleted-node data after compaction followed by a transaction abort", () => {
+		// Before: A <-- B <-- ... <-- T <-- HEAD.
+		// A deletes "a"; B deletes "b"; both have metadata { group: "deletions" }.
 		// T inserts "transaction edit" in an open transaction; T has no custom metadata.
-		// Compact: I <-- B[delete "a" and "b", W(M_deletions, M_deletions)] <-- ... <-- T (local HEAD).
-		// Abort removes T, not the already-sequenced deletions; B still survives and A is still absent.
+		// Compact: A+B <-- ... <-- T <-- HEAD.
+		// Abort removes T, not the already-sequenced deletions; A+B still survives under B's revision.
 		// Required: restoring transaction state must not restore repair cleanup ownership to removed A.
-		// Once B leaves retained history, both "a" and "b" must leave repair storage.
+		// Once A+B leaves retained history, both "a" and "b" must leave repair storage.
 
 		// Setup
 		const { tree, peer, view, advanceCollaboration } = setupDeletedHistory();
@@ -128,11 +131,12 @@ describe("History compaction known bugs (fixes deferred)", () => {
 		assert.deepEqual(peer.kernel.checkout.getRemovedRoots(), []);
 	});
 
-	it.skip("rejects a stale captured restore callback without changing content", () => {
-		// Before: I <-- A[insert "edit 0", M_edits] <-- B[insert "edit 1", M_edits] <-- ... <-- HEAD.
+	it.skip("rejects a restore callback saved before compaction and leaves document content unchanged", () => {
+		// Before: A <-- B <-- ... <-- HEAD.
+		// A inserts "edit 0"; B inserts "edit 1"; both have metadata { group: "edits" }.
 		// Capture revertTo from the oldest retained initialization commit, before A/B.
-		// After:  I <-- B[both inserts, W(M_edits, M_edits)] <-- ... <-- HEAD.
-		// B keeps its revision; A is removed, so the captured history path is stale.
+		// After:  A+B <-- ... <-- HEAD.
+		// A+B keeps B's revision; A's separate commit is removed, so the captured history path is stale.
 		// Required: calling that callback throws UsageError before undoing either insert or any later edit.
 
 		// Setup
@@ -164,10 +168,11 @@ describe("History compaction known bugs (fixes deferred)", () => {
 		assert.deepEqual([...view.root], content);
 	});
 
-	it.skip("encodes multiple revision namespaces in a compacted summary", async () => {
-		// Before: I <-- A[insert "edit 0", M_edits] <-- B[insert "edit 1", M_edits] <-- ... <-- HEAD.
-		// After:  I <-- B[both inserts, W(M_edits, M_edits)] <-- ... <-- HEAD.
-		// The graph has only B for this pair, but its composed change carries namespaces A and B.
+	it.skip("can summarize the tree after combining two insert commits", async () => {
+		// Before: A <-- B <-- ... <-- HEAD.
+		// A inserts "edit 0"; B inserts "edit 1"; both have metadata { group: "edits" }.
+		// After:  A+B <-- ... <-- HEAD.
+		// A+B keeps B's graph revision, but its composed change carries namespaces A and B.
 		// Required: summary encoding accepts both namespaces under graph revision B and its combined metadata.
 		// The successful pre-compaction summary distinguishes this from an unrelated serialization failure.
 
@@ -190,12 +195,13 @@ describe("History compaction known bugs (fixes deferred)", () => {
 		await assert.doesNotReject(summary);
 	});
 
-	it.skip("rejects older-compatible compaction without mutating or breaking the tree", () => {
-		// Before: I <-- A[insert "edit 0", M_edits] <-- B[insert "edit 1", M_edits] <-- ... <-- HEAD.
-		// Readers as old as v2_117 are allowed, so this request must not produce a multi-namespace B.
-		// Required after rejection: the same chain, revision count, and separate M_edits trees.
+	it.skip("rejects compaction when configured to support older clients and allows further edits", () => {
+		// Before: A <-- B <-- ... <-- HEAD.
+		// A inserts "edit 0"; B inserts "edit 1"; both have metadata { group: "edits" }.
+		// Readers as old as v2_117 are allowed, so this request must not produce A+B with multiple namespaces.
+		// Required after rejection: the same chain, revision count, and separate metadata trees.
 		// No policy call or partial A-into-B mutation is allowed.
-		// A subsequent S[insert "still usable"] must extend HEAD normally and synchronize successfully.
+		// A subsequent commit inserting "still usable" must extend history normally and synchronize successfully.
 
 		// Setup
 		const { tree, view, provider, advanceCollaboration } = setupTree(
@@ -231,12 +237,13 @@ describe("History compaction known bugs (fixes deferred)", () => {
 		assert.equal(view.root.at(-1), "still usable");
 	});
 
-	it.skip("isolates composition failures and does not retry the failed pair", () => {
-		// Before: I <-- A["edit 0", M_edits] <-- B["edit 1", M_edits] <-- C["edit 2", M_edits] <-- ... <-- HEAD.
-		// First merge: I <-- B[edits 0+1, W(M_edits, M_edits)] <-- C["edit 2", M_edits] <-- ... <-- HEAD.
-		// Composing B into C throws before C can absorb B's change or metadata.
-		// Required: keep that intermediate chain (A removed, B/C retained), return 1, and suppress the error.
-		// A second pass must not retry (B, C): return 0, leaving C's revision/change/metadata unchanged.
+	it.skip("keeps successful merges without throwing when a later merge fails and skips that pair on the next call", () => {
+		// Before: A <-- B <-- C <-- ... <-- HEAD.
+		// A/B/C insert "edit 0", "edit 1", and "edit 2"; all have metadata { group: "edits" }.
+		// First merge: A+B <-- C <-- ... <-- HEAD.
+		// Composing A+B into C throws before C can absorb the combined change or metadata.
+		// Required: keep that intermediate chain, return 1, and suppress the error.
+		// A second pass must not retry (A+B, C): return 0, leaving C's revision/change/metadata unchanged.
 
 		// Setup
 		const { tree, view, advanceCollaboration } = setupTree();

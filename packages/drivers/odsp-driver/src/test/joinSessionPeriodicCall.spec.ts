@@ -6,7 +6,12 @@
 import { strict as assert } from "node:assert";
 
 import type { IClient } from "@fluidframework/driver-definitions";
-import type { ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions/internal";
+import type { IAuthorizationError } from "@fluidframework/driver-definitions/internal";
+import {
+	type ISocketStorageDiscovery,
+	OdspErrorTypes,
+	type OdspResourceTokenFetchOptions,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { type SinonFakeTimers, type SinonStub, stub, useFakeTimers } from "sinon";
 
@@ -20,6 +25,13 @@ import type { OdspDocumentService } from "../odspDocumentService.js";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { fetchJoinSession } from "../vroom.js";
+
+import {
+	createClaimsChallengeHeader,
+	createResponse,
+	mockFetchMultiple,
+	mockFetchOk,
+} from "./mockFetch.js";
 
 describe("joinSessions Tests", () => {
 	let clock: SinonFakeTimers;
@@ -195,6 +207,108 @@ describe("joinSessions Tests", () => {
 			[{ eventName: "OdspDriver:DuplicateJoinSessionRefresh" }],
 			"No duplicate join session should be there",
 		);
+	});
+
+	describe("Claims challenge on join session refresh", () => {
+		const claims = '{"access_token":{"nbf":{"essential":true,"value":"1597959090"}}}';
+		const wwwAuthenticate = createClaimsChallengeHeader(claims);
+
+		/**
+		 * Connects to the delta stream, then lets the scheduled join session refresh run.
+		 * Each join session request in the refresh gets a claims challenge.
+		 * @param requestCount - The number of join session requests that the refresh is expected to make.
+		 */
+		async function refreshWithClaimsChallenge(
+			propagateClaimsChallenges: boolean,
+			requestCount: number,
+		): Promise<{
+			refreshTokenFetches: OdspResourceTokenFetchOptions[];
+			disposeErrors: unknown[];
+		}> {
+			const tokenFetches: OdspResourceTokenFetchOptions[] = [];
+			const factory = new OdspDocumentServiceFactory(
+				async (options) => {
+					tokenFetches.push(options);
+					return "token";
+				},
+				async (_options) => "token",
+				new LocalPersistentCache(2000),
+				{ snapshotOptions: { timeout: 2000 }, propagateClaimsChallenges },
+			);
+			const resolvedUrl = await resolver.resolve({
+				url: createOdspUrl({ driveId, itemId, siteUrl, dataStorePath: "/" }),
+			});
+			const documentService = await factory.createDocumentService(resolvedUrl, logger);
+			const refreshSessionDurationSeconds = 100;
+
+			const disposeErrors: unknown[] = [];
+			const connection = deltaConnection as {
+				dispose: (error?: Error) => void;
+				disposed: boolean;
+			};
+			connection.dispose = (error?: Error): void => {
+				disposeErrors.push(error);
+				connection.disposed = true;
+			};
+			const createDeltaConnectionStub = stub(
+				odspDocumentDeltaConnection.OdspDocumentDeltaConnection,
+				"create",
+			).callsFake(async () => deltaConnection as OdspDocumentDeltaConnection);
+			// Join the session with a mocked network request, not a stub of fetchJoinSession.
+			// A successful request ends the wait that the epoch tracker adds after a 401 from join session
+			// (JoinSessionSyncWait), as in a real session.
+			await mockFetchOk(async () => documentService.connectToDeltaStream(client), {
+				...joinSessionResponse,
+				refreshSessionDurationSeconds,
+			});
+			createDeltaConnectionStub.restore();
+
+			// The refresh runs before the session expires, so advancing the clock by the session duration runs it.
+			// The refresh calls the real fetchJoinSession, and nothing is scheduled after it fails.
+			tokenFetches.length = 0;
+			await mockFetchMultiple(
+				async () => tickClock(refreshSessionDurationSeconds * 1000),
+				Array.from(
+					{ length: requestCount },
+					() => async () =>
+						createResponse({ "www-authenticate": wwwAuthenticate }, undefined, 401),
+				),
+			);
+			return { refreshTokenFetches: tokenFetches, disposeErrors };
+		}
+
+		it("ends the connection with the challenge when propagateClaimsChallenges is on", async () => {
+			const { refreshTokenFetches, disposeErrors } = await refreshWithClaimsChallenge(
+				true /* propagateClaimsChallenges */,
+				1 /* requestCount */,
+			);
+
+			assert.deepStrictEqual(
+				refreshTokenFetches.map((options) => options.claims),
+				[undefined],
+				"the host should not be asked for a token with the claims",
+			);
+			assert.strictEqual(disposeErrors.length, 1, "the connection should be disposed");
+			const error = disposeErrors[0] as IAuthorizationError;
+			assert.strictEqual(error.errorType, OdspErrorTypes.authorizationError);
+			assert.strictEqual(error.claims, claims);
+			assert.strictEqual(error.wwwAuthenticate, wwwAuthenticate);
+			assert.strictEqual(error.canRetry, false);
+		});
+
+		it("keeps the connection when propagateClaimsChallenges is off", async () => {
+			const { refreshTokenFetches, disposeErrors } = await refreshWithClaimsChallenge(
+				false /* propagateClaimsChallenges */,
+				2 /* requestCount */,
+			);
+
+			assert.deepStrictEqual(
+				refreshTokenFetches.map((options) => options.claims),
+				[undefined, claims],
+				"the host should be asked for a token with the claims",
+			);
+			assert.strictEqual(disposeErrors.length, 0, "the connection should not be disposed");
+		});
 	});
 
 	afterEach(() => {

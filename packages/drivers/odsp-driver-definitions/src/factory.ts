@@ -186,4 +186,26 @@ export interface HostStoragePolicy {
 	 * as false. This is if the host wants to do some A/B testing.
 	 */
 	avoidPrefetchSnapshotCache?: boolean;
+
+	/**
+	 * Controls how the driver handles a claims challenge from the service.
+	 *
+	 * @remarks
+	 * A claims challenge is a 401 or 403 response with a `WWW-Authenticate` header that contains `error="insufficient_claims"` and a `claims` value.
+	 * For more information, see {@link https://learn.microsoft.com/entra/identity-platform/claims-challenge | Claims challenges}.
+	 *
+	 * By default, the driver gets a new token one time, with the decoded claims in {@link TokenFetchOptions.claims}, and retries the request.
+	 *
+	 * Set this policy to `true` when the host cannot satisfy the challenge itself, for example, a service that makes requests for another client.
+	 * The driver then does not retry the request or give the claims to the token fetcher.
+	 * The operation fails with the original {@link @fluidframework/driver-definitions#IAuthorizationError}, which has `claims` and `wwwAuthenticate` set.
+	 * The host can get this error from a load or from the container's `closed` event.
+	 * To identify a claims challenge, check for a non-empty `claims` value, because `wwwAuthenticate` is set whenever the response has the header.
+	 * After the challenge is satisfied, the token fetcher must return the new token, even when {@link TokenFetchOptions.refresh} is `false`.
+	 *
+	 * This policy also applies to `prefetchLatestSnapshot` when the factory is given to it, but not to `OdspDriverUrlResolverForShareLink`.
+	 *
+	 * @defaultValue `false`
+	 */
+	propagateClaimsChallenges?: boolean;
 }
