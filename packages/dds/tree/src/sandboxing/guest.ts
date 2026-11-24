@@ -16,14 +16,20 @@ import {
 
 import { DiscriminatedUnionDispatcher, type ICodecOptions } from "../codec/index.js";
 import {
-	createViewableTreeAlpha,
-	exportSimpleSchema,
+	openCheckoutView,
 	type ForestOptions,
 	type ViewContent,
 } from "../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- The sandbox Guest requires its independent tree's checkout.
 import { createIndependentTreeCheckout } from "../shared-tree/independentView.js";
-import type { ViewableTree } from "../simple-tree/index.js";
+import type {
+	ImplicitFieldSchema,
+	TreeView,
+	TreeViewAlpha,
+	TreeViewConfiguration,
+	ViewableTree,
+	ViewableTreeAlpha,
+} from "../simple-tree/index.js";
 
 import {
 	type GuestToHostMessage,
@@ -61,7 +67,7 @@ export class GuestImplementation implements Sandboxing.Guest {
 
 	private readonly logger: TelemetryLoggerExt;
 	#synchronization: GuestSynchronization | undefined;
-	private viewableTree: ViewableTree | undefined;
+	private viewableTree: Pick<ViewableTreeAlpha, "viewWith" | "openView"> | undefined;
 	private readonly initialized = makePromiseWithResolvers();
 	private disposed = false;
 
@@ -222,9 +228,18 @@ export class GuestImplementation implements Sandboxing.Guest {
 			this.logger,
 		);
 		this.#synchronization = synchronization;
-		this.viewableTree = createViewableTreeAlpha(synchronization.checkout, () =>
-			exportSimpleSchema(synchronization.checkout.storedSchema),
-		);
+		this.viewableTree = {
+			viewWith<TRoot extends ImplicitFieldSchema>(
+				config: TreeViewConfiguration<TRoot>,
+			): TreeView<TRoot> {
+				const view: TreeViewAlpha<TRoot> = synchronization.checkout.viewWithInternal(
+					config,
+					false,
+				);
+				return view as TreeView<TRoot>;
+			},
+			openView: (config) => openCheckoutView(synchronization.checkout, config),
+		};
 		this.initialized.resolver();
 	}
 

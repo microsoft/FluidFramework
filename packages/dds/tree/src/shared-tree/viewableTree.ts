@@ -37,49 +37,11 @@ export function createViewableTreeAlpha(
 		forkBranch(): TreeBranchHandleAlpha {
 			return forkAsBranchCheckout(checkout);
 		},
-		openView<TRoot extends ImplicitFieldSchema>(
-			config: TreeViewConfiguration<TRoot>,
-		): OpenTreeViewResult<TRoot> {
-			const view = checkout.viewWithInternal<TRoot>(config, false);
-			try {
-				const status = view.compatibility;
-
-				// If the view can be initialized (i.e., the tree is uninitialized), return an initializer to the caller.
-				if (status.canInitialize) {
-					return createInitializer(view);
-				}
-
-				// A permitted upgrade is not necessarily required.
-				// Don't apply an upgrade unless it is required to access the tree.
-				if (!status.view.isCompatible) {
-					if (!status.upgrade.isCompatible) {
-						const result = {
-							kind: "incompatible",
-							viewIncompatibilities: status.view.incompatibilities,
-							upgradeIncompatibilities: status.upgrade.incompatibilities,
-						} as const;
-						view.dispose();
-						return result;
-					}
-					view.upgradeSchema();
-					assert(
-						view.compatibility.canView,
-						"A permitted schema upgrade must make the view usable",
-					);
-				}
-				return { kind: "ready", view };
-			} catch (error) {
-				if (!view.disposed) {
-					view.dispose();
-				}
-				throw error;
-			}
-		},
+		openView: (config) => openCheckoutView(checkout, config),
 		viewWith<TRoot extends ImplicitFieldSchema>(
 			config: TreeViewConfiguration<TRoot>,
 		): TreeView<TRoot> {
-			// The caller owns the view, not the checkout (including a sandbox guest's branch).
-			const view: TreeViewAlpha<TRoot> = checkout.viewWithInternal(config, false);
+			const view: TreeViewAlpha<TRoot> = checkout.viewWith(config);
 			return view as TreeView<TRoot>;
 		},
 		exportVerbose(): VerboseTree | undefined {
@@ -87,6 +49,50 @@ export function createViewableTreeAlpha(
 		},
 		exportSimpleSchema,
 	};
+}
+
+/**
+ * Opens a schema-aware view without transferring ownership of the checkout.
+ *
+ * @param checkout - The checkout that supplies the document's schema and content.
+ * @param config - The schema and behavior configuration for the view.
+ * @returns The result of {@link ViewableTreeAlpha.openView} for this checkout.
+ */
+export function openCheckoutView<TRoot extends ImplicitFieldSchema>(
+	checkout: CheckoutBase,
+	config: TreeViewConfiguration<TRoot>,
+): OpenTreeViewResult<TRoot> {
+	const view = checkout.viewWithInternal<TRoot>(config, false);
+	try {
+		const status = view.compatibility;
+		if (status.canInitialize) {
+			return createInitializer(view);
+		}
+
+		// A permitted upgrade is not necessarily required. Do not write if the existing schema works.
+		if (!status.view.isCompatible) {
+			if (!status.upgrade.isCompatible) {
+				const result = {
+					kind: "incompatible",
+					viewIncompatibilities: status.view.incompatibilities,
+					upgradeIncompatibilities: status.upgrade.incompatibilities,
+				} as const;
+				view.dispose();
+				return result;
+			}
+			view.upgradeSchema();
+			assert(
+				view.compatibility.canView,
+				"A permitted schema upgrade must make the view usable",
+			);
+		}
+		return { kind: "ready", view };
+	} catch (error) {
+		if (!view.disposed) {
+			view.dispose();
+		}
+		throw error;
+	}
 }
 
 /**
