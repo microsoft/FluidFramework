@@ -30,6 +30,9 @@ export function createViewableTreeAlpha(
 		forkBranch(): TreeBranchHandleAlpha {
 			return forkAsBranchCheckout(checkout);
 		},
+		openView() {
+			throw new Error("openView is not implemented.");
+		},
 		viewWith<TRoot extends ImplicitFieldSchema>(
 			config: TreeViewConfiguration<TRoot>,
 		): TreeView<TRoot> {

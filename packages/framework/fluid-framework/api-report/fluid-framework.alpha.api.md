@@ -1181,6 +1181,13 @@ export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 // @alpha
 export function importCompatibilitySchemaSnapshot(config: JsonCompatibleReadOnly): TreeViewConfigurationAlpha;
 
+// @alpha @sealed
+export interface IncompatibleTreeResult {
+    readonly kind: "incompatible";
+    readonly upgradeIncompatibilities: readonly SchemaUpgradeIncompatibility[];
+    readonly viewIncompatibilities: readonly SchemaViewIncompatibility[];
+}
+
 // @alpha
 export type IncrementalEncodingPolicy = (nodeIdentifier: string | undefined, fieldKey?: string) => boolean;
 
@@ -1723,6 +1730,9 @@ export type OldestSupportedServiceClientVersion = `${2 | 3}.${bigint}.0`;
 // @beta
 export function onAssertionFailure(handler: (error: Error) => void): () => void;
 
+// @alpha @sealed
+export type OpenTreeViewResult<TRoot extends ImplicitFieldSchema> = ReadyTreeView<TRoot> | UninitializedTreeResult<TRoot> | IncompatibleTreeResult;
+
 // @alpha
 export function persistedToSimpleSchema(persisted: JsonCompatible, options: ICodecOptions): SimpleTreeSchema;
 
@@ -1778,6 +1788,15 @@ export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue> extends Flu
 export type ReadSchema<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> = [
 TSchema
 ] extends [ImplicitFieldSchema] ? TSchema : ImplicitFieldSchema;
+
+// @alpha @sealed
+export interface ReadyTreeView<in out TRoot extends ImplicitFieldSchema> extends IDisposable {
+    readonly events: Listenable<TreeViewEvents>;
+    readonly kind: "ready";
+    get root(): TreeFieldFromImplicitField<TRoot>;
+    set root(content: InsertableTreeFieldFromImplicitField<TRoot>);
+    readonly schema: TRoot;
+}
 
 // @alpha
 export interface RebaseValidation {
@@ -3242,6 +3261,12 @@ export type Unenforced<_DesiredExtendsConstraint> = unknown;
 // @public
 export type Unhydrated<T> = T;
 
+// @alpha @sealed
+export interface UninitializedTreeResult<in out TRoot extends ImplicitFieldSchema> extends IDisposable {
+    initialize(content: InsertableTreeFieldFromImplicitField<TRoot>): ReadyTreeView<TRoot>;
+    readonly kind: "uninitialized";
+}
+
 // @public @system
 export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (k: infer U) => unknown ? U : never;
 
@@ -3353,6 +3378,7 @@ export interface ViewableTreeAlpha extends ViewableTree {
     exportSimpleSchema(): SimpleTreeSchema;
     exportVerbose(): VerboseTree | undefined;
     forkBranch(): TreeBranchHandleAlpha;
+    openView<TRoot extends ImplicitFieldSchema>(config: TreeViewConfiguration<TRoot>): OpenTreeViewResult<TRoot>;
     readonly storedSchemaVersion: SchemaVersions | undefined;
 }
 
