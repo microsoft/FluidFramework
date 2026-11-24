@@ -14,6 +14,7 @@ import {
 	type DeltaFieldChanges,
 	type DeltaFieldMap,
 	type DeltaMark,
+	type DeltaRoot,
 	type DeltaVisitor,
 	type DetachedField,
 	EmptyKey,
@@ -35,6 +36,7 @@ import {
 	mapCursorField,
 	moveToDetachedField,
 	rootFieldKey,
+	visitDelta,
 } from "../core/index.js";
 import {
 	cursorForJsonableTreeField,
@@ -408,6 +410,115 @@ export function testForest(config: ForestTestConfiguration): void {
 		const detachedCursor = forest.allocateCursor();
 		moveToDetachedField(forest, detachedCursor, detachedField);
 		assert.equal(detachedCursor.getFieldLength(), 0);
+	});
+
+	// TODO: AB#89314: This test validates current behavior, but that behavior likely needs to change
+	// to support correct handling of any changes that resurrect content previously made part of a cycle
+	// (which can happen via undo/redo or from other concurrent edits).
+	it("discards a disconnected cycle without losing escaped or unrelated nodes", () => {
+		const forest = factory(new TreeStoredSchemaRepository(jsonSequenceRootSchema));
+		initializeForest(forest, fieldJsonCursor([["escaped", "stay"], "outside"]));
+		const cyclePath: UpPath = {
+			parent: undefined,
+			parentField: rootFieldKey,
+			parentIndex: 0,
+		};
+		const escaped = forest.anchors.track({
+			parent: cyclePath,
+			parentField: EmptyKey,
+			parentIndex: 0,
+		});
+		const cycleAnchor = forest.anchors.track(cyclePath);
+		const cycleChild = forest.anchors.track({
+			parent: cyclePath,
+			parentField: EmptyKey,
+			parentIndex: 1,
+		});
+		const cycleNode = forest.anchors.locate(cycleAnchor);
+		assert(cycleNode !== undefined);
+		let destroyed = false;
+		cycleNode.events.on("afterDestroy", () => {
+			destroyed = true;
+		});
+		const outside = forest.anchors.track({
+			parent: undefined,
+			parentField: rootFieldKey,
+			parentIndex: 1,
+		});
+		const cycleId = { minor: 42 };
+		const escapedId = { minor: 44 };
+		const unrelatedId = { minor: 45 };
+		const index = makeDetachedFieldIndex();
+		applyTestDelta(new Map(), forest, {
+			build: [{ id: unrelatedId, trees: chunkFromJsonTrees(["detached"]) }],
+			detachedFieldIndex: index,
+		});
+		const unrelatedPath: UpPath = {
+			parent: undefined,
+			parentField: index.toFieldKey(index.getEntry(unrelatedId)),
+			parentIndex: 0,
+		};
+		const unrelated = forest.anchors.track(unrelatedPath);
+		const delta: DeltaRoot = {
+			build: [{ id: { minor: 43 }, trees: chunkFromJsonTrees(["incoming"]) }],
+			fields: new Map([
+				[
+					rootFieldKey,
+					{
+						marks: [
+							{
+								count: 1,
+								detach: cycleId,
+								fields: new Map([
+									[
+										EmptyKey,
+										{
+											marks: [
+												{ count: 1, detach: escapedId },
+												{ count: 2, attach: cycleId },
+												{ count: 1 },
+											],
+										},
+									],
+								]),
+							},
+							{ count: 1 },
+							{ count: 1, attach: escapedId },
+						],
+					},
+				],
+			]),
+		};
+		const visitor = combineVisitors([
+			forest.acquireVisitor(),
+			forest.anchors.acquireVisitor(),
+		]);
+		visitDelta(delta, visitor, index, undefined);
+		visitor.free();
+		const readField = (field: FieldKey): JsonCompatible[] => {
+			const cursor = forest.getCursorAboveDetachedFields();
+			cursor.enterField(field);
+			return mapCursorField(cursor, cursorToJsonObject);
+		};
+		assert.deepEqual(readField(rootFieldKey), ["outside", "escaped"]);
+		expectEqualPaths(forest.anchors.locate(outside), {
+			parent: undefined,
+			parentField: rootFieldKey,
+			parentIndex: 0,
+		});
+		expectEqualPaths(forest.anchors.locate(escaped), {
+			parent: undefined,
+			parentField: rootFieldKey,
+			parentIndex: 1,
+		});
+		assert.equal(destroyed, true);
+		assert.equal(forest.anchors.locate(cycleAnchor), undefined);
+		assert.equal(forest.anchors.locate(cycleChild), undefined);
+		const entries = [...index.entries()];
+		assert.equal(entries.length, 1);
+		assert.deepEqual(entries[0].id, unrelatedId);
+		assert.deepEqual(readField(index.toFieldKey(entries[0].root)), ["detached"]);
+		expectEqualPaths(forest.anchors.locate(unrelated), unrelatedPath);
 	});
 
 	/**

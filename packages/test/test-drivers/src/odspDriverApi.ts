@@ -81,6 +81,7 @@ export const generateOdspHostStoragePolicy = (seed: number): HostStoragePolicy[]
 		enableSingleRequestForShareLinkWithCreate: [false],
 		avoidPrefetchSnapshotCache: booleanCases,
 		hostProvidedRequestHeaders: [undefined],
+		propagateClaimsChallenges: [undefined],
 	};
 	return generatePairwiseOptions<HostStoragePolicy>(odspHostPolicyMatrix, seed);
 };

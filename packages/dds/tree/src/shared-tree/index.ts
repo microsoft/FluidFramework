@@ -62,6 +62,7 @@ export {
 	TreeAlpha,
 	type TreeIdentifierUtils,
 	type ObservationResults,
+	exportVerboseFiltered,
 } from "./treeAlpha.js";
 
 export {

@@ -1,5 +1,9 @@
 # @fluidframework/react
 
+## 3.14.0
+
+Dependency updates only.
+
 ## 3.13.0
 
 Dependency updates only.
@@ -48,24 +52,24 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Collaborative text editors can track selections across edits ([#27907](https://github.com/microsoft/FluidFramework/pull/27907)) [23c83239ac5](https://github.com/microsoft/FluidFramework/commit/23c83239ac5a45068470fa2497f17d439ad7f81a)
+#### Collaborative text editors can track selections across edits ([#27907](https://github.com/microsoft/FluidFramework/pull/27907)) [23c83239ac5](https://github.com/microsoft/FluidFramework/commit/23c83239ac5a45068470fa2497f17d439ad7f81a)
 
-  [useTreeSynchronizedString](https://fluidframework.com/docs/api/react#usetreesynchronizedstring-function) now returns [SynchronizedString.setSelection](https://fluidframework.com/docs/api/react/synchronizedstring-interface#setselection-propertysignature), allowing text editors to seed and update the selection range tracked by those anchors. The plain text React editor uses this API to preserve textarea selections across collaborative edits without duplicating per-delta cursor adjustment logic.
+[useTreeSynchronizedString](https://fluidframework.com/docs/api/react#usetreesynchronizedstring-function) now returns [SynchronizedString.setSelection](https://fluidframework.com/docs/api/react/synchronizedstring-interface#setselection-propertysignature), allowing text editors to seed and update the selection range tracked by those anchors. The plain text React editor uses this API to preserve textarea selections across collaborative edits without duplicating per-delta cursor adjustment logic.
 
-- Client packages now target ES2022 ([#27846](https://github.com/microsoft/FluidFramework/pull/27846)) [91c78541bdd](https://github.com/microsoft/FluidFramework/commit/91c78541bddcbca5d6c5f357b023eeaee617d885)
+#### Client packages now target ES2022 ([#27846](https://github.com/microsoft/FluidFramework/pull/27846)) [91c78541bdd](https://github.com/microsoft/FluidFramework/commit/91c78541bddcbca5d6c5f357b023eeaee617d885)
 
-  The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
-  The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
-  All actively supported Node.js versions and evergreen browsers already meet this requirement.
+The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
+The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
+All actively supported Node.js versions and evergreen browsers already meet this requirement.
 
-  Note that Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the README for every client package.
+Note that Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the README for every client package.
 
-  It is possible this change could impact users of less up to date JavaScript runtimes.
-  Impacted users can use a tool like [babel](https://babeljs.io/) to transpile out unsupported language features.
+It is possible this change could impact users of less up to date JavaScript runtimes.
+Impacted users can use a tool like [babel](https://babeljs.io/) to transpile out unsupported language features.
 
-- Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
+#### Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
 
-  FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
+FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
 
 ## 2.116.0
 
@@ -111,9 +115,9 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+#### Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
 
-  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
 
 ## 2.93.0
 
@@ -131,10 +135,10 @@ Dependency updates only.
 
 ### Minor Changes
 
-- @fluidframework/react no longer supports CommonJS ([#26575](https://github.com/microsoft/FluidFramework/pull/26575)) [995c1e44aad](https://github.com/microsoft/FluidFramework/commit/995c1e44aad7368e4e59ac4ff3a7237280506cde)
+#### @fluidframework/react no longer supports CommonJS ([#26575](https://github.com/microsoft/FluidFramework/pull/26575)) [995c1e44aad](https://github.com/microsoft/FluidFramework/commit/995c1e44aad7368e4e59ac4ff3a7237280506cde)
 
-  CommonJS support has been removed from `@fluidframework/react`.
-  This package currently only has alpha APIs, so this opportunity was taken to simplify and modernize it while we still can.
+CommonJS support has been removed from `@fluidframework/react`.
+This package currently only has alpha APIs, so this opportunity was taken to simplify and modernize it while we still can.
 
 ## 2.83.0
 
@@ -180,148 +184,148 @@ Dependency updates only.
 
 ### Minor Changes
 
-- The exports of @fluid-experimental/tree-react-api have been moved to the new @fluidframework/react package and placed under its /alpha exports ([#25542](https://github.com/microsoft/FluidFramework/pull/25542)) [b388c7b7f1](https://github.com/microsoft/FluidFramework/commit/b388c7b7f18ba446f707b7eaea3caaf2c5bbaab5)
+#### The exports of @fluid-experimental/tree-react-api have been moved to the new @fluidframework/react package and placed under its /alpha exports ([#25542](https://github.com/microsoft/FluidFramework/pull/25542)) [b388c7b7f1](https://github.com/microsoft/FluidFramework/commit/b388c7b7f18ba446f707b7eaea3caaf2c5bbaab5)
 
-  `@fluid-experimental/tree-react-api` has been adjusted to align with Fluid Framework's [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
-  It has been renamed to `@fluidframework/react` and all existing APIs are now available under `@fluidframework/react/alpha`.
+`@fluid-experimental/tree-react-api` has been adjusted to align with Fluid Framework's [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
+It has been renamed to `@fluidframework/react` and all existing APIs are now available under `@fluidframework/react/alpha`.
 
-  Since this package was under `@fluid-experimental`, previously it implicitly made no guarantees.
-  Now all the APIs are `@alpha`, which also amounts to making no guarantees but makes it possible to promote APIs to `@beta` in the future to offer some stability.
+Since this package was under `@fluid-experimental`, previously it implicitly made no guarantees.
+Now all the APIs are `@alpha`, which also amounts to making no guarantees but makes it possible to promote APIs to `@beta` in the future to offer some stability.
 
-  To accommodate this change, all users of this package will need to adjust:
-  - Package dependencies from `"@fluid-experimental/tree-react-api"` to `"@fluidframework/react"`.
-  - Imports from `"@fluid-experimental/tree-react-api"` to `"@fluidframework/react/alpha"`.
+To accommodate this change, all users of this package will need to adjust:
+- Package dependencies from `"@fluid-experimental/tree-react-api"` to `"@fluidframework/react"`.
+- Imports from `"@fluid-experimental/tree-react-api"` to `"@fluidframework/react/alpha"`.
 
-- Added APIs for tracking observations of SharedTree content for automatic invalidation ([#25459](https://github.com/microsoft/FluidFramework/pull/25459)) [21d45d5948](https://github.com/microsoft/FluidFramework/commit/21d45d5948b961a82c77ed5154fc42e456d85ee4)
+#### Added APIs for tracking observations of SharedTree content for automatic invalidation ([#25459](https://github.com/microsoft/FluidFramework/pull/25459)) [21d45d5948](https://github.com/microsoft/FluidFramework/commit/21d45d5948b961a82c77ed5154fc42e456d85ee4)
 
-  `TreeAlpha.trackObservations` and `TreeAlpha.trackObservationsOnce` have been added.
-  These provide a way to run some operation which reads content from [TreeNodes](https://fluidframework.com/docs/api/tree/treenode-class), then run a call back when anything observed by that operation changes.
+`TreeAlpha.trackObservations` and `TreeAlpha.trackObservationsOnce` have been added.
+These provide a way to run some operation which reads content from [TreeNodes](https://fluidframework.com/docs/api/tree/treenode-class), then run a call back when anything observed by that operation changes.
 
-  This functionality has also been exposed in the form of React hooks and React higher order components via the `@fluid-experimental/tree-react-api` package.
-  It is now possible to use these utilities to implement React applications which pass TreeNodes in their props and get all necessary invalidation from tree changes handled automatically.
-  The recommended pattern for doing this is to use `treeDataObject` or `TreeViewComponent` at the root, then `withTreeObservations` or `withMemoizedTreeObservations` for any sub-components which read from TreeNodes.
-  Alternatively more localized changes can be made by using `PropNode` to type erase TreeNodes passed in props, then use one of the `usePropTreeNode` or `usePropTreeRecord` hooks to read from them.
+This functionality has also been exposed in the form of React hooks and React higher order components via the `@fluid-experimental/tree-react-api` package.
+It is now possible to use these utilities to implement React applications which pass TreeNodes in their props and get all necessary invalidation from tree changes handled automatically.
+The recommended pattern for doing this is to use `treeDataObject` or `TreeViewComponent` at the root, then `withTreeObservations` or `withMemoizedTreeObservations` for any sub-components which read from TreeNodes.
+Alternatively more localized changes can be made by using `PropNode` to type erase TreeNodes passed in props, then use one of the `usePropTreeNode` or `usePropTreeRecord` hooks to read from them.
 
-  These APIs work with both hydrated and [un-hydrated](https://fluidframework.com/docs/api/tree/unhydrated-typealias) TreeNodes.
+These APIs work with both hydrated and [un-hydrated](https://fluidframework.com/docs/api/tree/unhydrated-typealias) TreeNodes.
 
-  #### React Support
+##### React Support
 
-  Here is a simple example of a React components which has an invalidation bug due to reading a mutable field from a TreeNode that was provided in a prop:
+Here is a simple example of a React components which has an invalidation bug due to reading a mutable field from a TreeNode that was provided in a prop:
 
-  ```typescript
-  const builder = new SchemaFactory("example");
-  class Item extends builder.object("Item", { text: SchemaFactory.string }) {}
-  const ItemComponentBug = ({ item }: { item: Item }): JSX.Element => (
-  	<span>{item.text}</span> // Reading `text`, a mutable value from a React prop, causes an invalidation bug.
-  );
-  ```
+```typescript
+const builder = new SchemaFactory("example");
+class Item extends builder.object("Item", { text: SchemaFactory.string }) {}
+const ItemComponentBug = ({ item }: { item: Item }): JSX.Element => (
+	<span>{item.text}</span> // Reading `text`, a mutable value from a React prop, causes an invalidation bug.
+);
+```
 
-  This bug can now easily be fixed using `withTreeObservations` or `withMemoizedTreeObservations`:
+This bug can now easily be fixed using `withTreeObservations` or `withMemoizedTreeObservations`:
 
-  ```typescript
-  const ItemComponent = withTreeObservations(
-  	({ item }: { item: Item }): JSX.Element => <span>{item.text}</span>,
-  );
-  ```
+```typescript
+const ItemComponent = withTreeObservations(
+	({ item }: { item: Item }): JSX.Element => <span>{item.text}</span>,
+);
+```
 
-  For components which take in TreeNodes, but merely forward them and do not read their properties, they can use `PropTreeNode` as shown:
+For components which take in TreeNodes, but merely forward them and do not read their properties, they can use `PropTreeNode` as shown:
 
-  ```typescript
-  const ItemParentComponent = ({ item }: { item: PropTreeNode<Item> }): JSX.Element => (
-  	<ItemComponent item={item} />
-  );
-  ```
+```typescript
+const ItemParentComponent = ({ item }: { item: PropTreeNode<Item> }): JSX.Element => (
+	<ItemComponent item={item} />
+);
+```
 
-  If such a component reads from the TreeNode, it gets a compile error instead of an invalidation bug.
-  In this case the invalidation bug would be that if `item.text` is modified, the component would not re-render.
+If such a component reads from the TreeNode, it gets a compile error instead of an invalidation bug.
+In this case the invalidation bug would be that if `item.text` is modified, the component would not re-render.
 
-  ```typescript
-  const InvalidItemParentComponent = ({
-  	item,
-  }: { item: PropTreeNode<Item> }): JSX.Element => (
-  	// @ts-expect-error PropTreeNode turns this invalidation bug into a compile error
-  	<span>{item.text}</span>
-  );
-  ```
+```typescript
+const InvalidItemParentComponent = ({
+	item,
+}: { item: PropTreeNode<Item> }): JSX.Element => (
+	// @ts-expect-error PropTreeNode turns this invalidation bug into a compile error
+	<span>{item.text}</span>
+);
+```
 
-  To provide access to TreeNode content in only part of a component the `usePropTreeNode` or `usePropTreeRecord` hooks can be used.
+To provide access to TreeNode content in only part of a component the `usePropTreeNode` or `usePropTreeRecord` hooks can be used.
 
-  #### TreeAlpha.trackObservationsOnce Examples
+##### TreeAlpha.trackObservationsOnce Examples
 
-  Here is a rather minimal example of how `TreeAlpha.trackObservationsOnce` can be used:
+Here is a rather minimal example of how `TreeAlpha.trackObservationsOnce` can be used:
 
-  ```typescript
-  cachedFoo ??= TreeAlpha.trackObservationsOnce(
-    () => {
-      cachedFoo = undefined;
-    },
-    () => nodeA.someChild.bar + nodeB.someChild.baz,
-  ).result;
-  ```
+```typescript
+cachedFoo ??= TreeAlpha.trackObservationsOnce(
+  () => {
+    cachedFoo = undefined;
+  },
+  () => nodeA.someChild.bar + nodeB.someChild.baz,
+).result;
+```
 
-  That is equivalent to doing the following:
+That is equivalent to doing the following:
 
-  ```typescript
-  if (cachedFoo === undefined) {
-    cachedFoo = nodeA.someChild.bar + nodeB.someChild.baz;
-    const invalidate = (): void => {
-      cachedFoo = undefined;
-      for (const u of unsubscribe) {
-        u();
-      }
-    };
-    const unsubscribe: (() => void)[] = [
-      TreeBeta.on(nodeA, "nodeChanged", (data) => {
-        if (data.changedProperties.has("someChild")) {
-          invalidate();
-        }
-      }),
-      TreeBeta.on(nodeB, "nodeChanged", (data) => {
-        if (data.changedProperties.has("someChild")) {
-          invalidate();
-        }
-      }),
-      TreeBeta.on(nodeA.someChild, "nodeChanged", (data) => {
-        if (data.changedProperties.has("bar")) {
-          invalidate();
-        }
-      }),
-      TreeBeta.on(nodeB.someChild, "nodeChanged", (data) => {
-        if (data.changedProperties.has("baz")) {
-          invalidate();
-        }
-      }),
-    ];
-  }
-  ```
-
-  Here is more complete example showing how to use `TreeAlpha.trackObservationsOnce` invalidate a property derived from its tree fields.
-
-  ```typescript
-  const factory = new SchemaFactory("com.example");
-  class Vector extends factory.object("Vector", {
-    x: SchemaFactory.number,
-    y: SchemaFactory.number,
-  }) {
-    #length: number | undefined = undefined;
-    public length(): number {
-      if (this.#length === undefined) {
-        const result = TreeAlpha.trackObservationsOnce(
-          () => {
-            this.#length = undefined;
-          },
-          () => Math.hypot(this.x, this.y),
-        );
-        this.#length = result.result;
-      }
-      return this.#length;
+```typescript
+if (cachedFoo === undefined) {
+  cachedFoo = nodeA.someChild.bar + nodeB.someChild.baz;
+  const invalidate = (): void => {
+    cachedFoo = undefined;
+    for (const u of unsubscribe) {
+      u();
     }
+  };
+  const unsubscribe: (() => void)[] = [
+    TreeBeta.on(nodeA, "nodeChanged", (data) => {
+      if (data.changedProperties.has("someChild")) {
+        invalidate();
+      }
+    }),
+    TreeBeta.on(nodeB, "nodeChanged", (data) => {
+      if (data.changedProperties.has("someChild")) {
+        invalidate();
+      }
+    }),
+    TreeBeta.on(nodeA.someChild, "nodeChanged", (data) => {
+      if (data.changedProperties.has("bar")) {
+        invalidate();
+      }
+    }),
+    TreeBeta.on(nodeB.someChild, "nodeChanged", (data) => {
+      if (data.changedProperties.has("baz")) {
+        invalidate();
+      }
+    }),
+  ];
+}
+```
+
+Here is more complete example showing how to use `TreeAlpha.trackObservationsOnce` invalidate a property derived from its tree fields.
+
+```typescript
+const factory = new SchemaFactory("com.example");
+class Vector extends factory.object("Vector", {
+  x: SchemaFactory.number,
+  y: SchemaFactory.number,
+}) {
+  #length: number | undefined = undefined;
+  public length(): number {
+    if (this.#length === undefined) {
+      const result = TreeAlpha.trackObservationsOnce(
+        () => {
+          this.#length = undefined;
+        },
+        () => Math.hypot(this.x, this.y),
+      );
+      this.#length = result.result;
+    }
+    return this.#length;
   }
-  const vec = new Vector({ x: 3, y: 4 });
-  assert.equal(vec.length(), 5);
-  vec.x = 0;
-  assert.equal(vec.length(), 4);
-  ```
+}
+const vec = new Vector({ x: 3, y: 4 });
+assert.equal(vec.length(), 5);
+vec.x = 0;
+assert.equal(vec.length(), 4);
+```
 
 ## 2.61.0
 
@@ -359,10 +363,10 @@ Dependency updates only.
 
 ### Minor Changes
 
-- New experimental objectIdNumber API ([#21115](https://github.com/microsoft/FluidFramework/pull/21115)) [df2f139be8](https://github.com/microsoft/FluidFramework/commit/df2f139be8e8145d5eea313814cd6d35018cacee)
+#### New experimental objectIdNumber API ([#21115](https://github.com/microsoft/FluidFramework/pull/21115)) [df2f139be8](https://github.com/microsoft/FluidFramework/commit/df2f139be8e8145d5eea313814cd6d35018cacee)
 
-  A new `objectIdNumber` has been added, which is useful when you need an identifier which corresponds to an object identity.
-  For example: when specifying a React "key" that corresponds to a `TreeNode`.
+A new `objectIdNumber` has been added, which is useful when you need an identifier which corresponds to an object identity.
+For example: when specifying a React "key" that corresponds to a `TreeNode`.
 
 ## 2.40.0
 
@@ -380,14 +384,14 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Simplify experimental tree data object implementation ([#23943](https://github.com/microsoft/FluidFramework/pull/23943)) [00a56b79b3](https://github.com/microsoft/FluidFramework/commit/00a56b79b3ba517d56bbde4421fee0cdbfe8af95)
+#### Simplify experimental tree data object implementation ([#23943](https://github.com/microsoft/FluidFramework/pull/23943)) [00a56b79b3](https://github.com/microsoft/FluidFramework/commit/00a56b79b3ba517d56bbde4421fee0cdbfe8af95)
 
-  The experimental tree data object in `tree-react-api` has been simplified in a way that is incompatible with its previous version, which used `SharedDirectory` at the root.
-  The library now leverages a new data object that uses the `SharedTree` directly at the root.
-  In addition to breaking compatibility with existing documents, these changes include some related simplifications to the APIs which are also breaking:
-  - Removes the `key` property from the data object configuration.
-    This key was used to inform where the SharedTree was parented beneath the root SharedDirectory, so it no longer serves a purpose.
-  - Inlined the `ITreeDataObject` interface into `IReactTreeDataObject`.
+The experimental tree data object in `tree-react-api` has been simplified in a way that is incompatible with its previous version, which used `SharedDirectory` at the root.
+The library now leverages a new data object that uses the `SharedTree` directly at the root.
+In addition to breaking compatibility with existing documents, these changes include some related simplifications to the APIs which are also breaking:
+- Removes the `key` property from the data object configuration.
+  This key was used to inform where the SharedTree was parented beneath the root SharedDirectory, so it no longer serves a purpose.
+- Inlined the `ITreeDataObject` interface into `IReactTreeDataObject`.
 
 ## 2.30.0
 
@@ -449,8 +453,8 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+#### Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
 
-  Update package implementations to use TypeScript 5.4.5.
+Update package implementations to use TypeScript 5.4.5.
 
 ## 2.0.0-rc.4.0.0

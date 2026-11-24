@@ -1,14 +1,79 @@
 # @fluidframework/odsp-driver
 
+## 3.14.0
+
+### Minor Changes
+
+#### Claims challenges from OneDrive and SharePoint can be returned to the host instead of being retried ([#28751](https://github.com/microsoft/FluidFramework/pull/28751)) [7ebb8814dc](https://github.com/microsoft/FluidFramework/commit/7ebb8814dc5f9b4fa6e9d47089c725d8f7d721d4)
+
+A claims challenge is a 401 or 403 response with a `WWW-Authenticate` header that asks for a token with more claims.
+For more information, see [Claims challenges](https://learn.microsoft.com/entra/identity-platform/claims-challenge).
+By default, the driver gets a new token one time and retries the request.
+It gives the decoded claims to the host's token fetcher in [`TokenFetchOptions.claims`](https://fluidframework.com/docs/api/odsp-driver-definitions/tokenfetchoptions-interface#claims-propertysignature).
+
+Some hosts can't satisfy the challenge themselves.
+For example, a service that makes requests for another client must send the challenge to that client.
+These hosts can now set the new `propagateClaimsChallenges` property of [`HostStoragePolicy`](https://fluidframework.com/docs/api/odsp-driver-definitions/hoststoragepolicy-interface) to `true`.
+The driver then doesn't retry the request, and the operation fails with the original authorization error.
+The error has the decoded `claims`, and the raw header value in the new `wwwAuthenticate` property of [`IAuthorizationError`](https://fluidframework.com/docs/api/driver-definitions/iauthorizationerror-interface).
+
+```typescript
+import { DriverErrorTypes } from "@fluidframework/driver-definitions/legacy";
+import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver/legacy";
+
+const documentServiceFactory = new OdspDocumentServiceFactory(
+  getStorageToken,
+  getWebsocketToken,
+  persistedCache,
+  { propagateClaimsChallenges: true },
+);
+
+// ...
+
+if (error.errorType === DriverErrorTypes.authorizationError && error.claims) {
+  // Send error.wwwAuthenticate to the client, which can then get a token with the required claims.
+}
+```
+
+To identify a claims challenge, check for a non-empty `claims` value, as in the example.
+Don't check for `wwwAuthenticate`, because the driver sets it on every authorization error from a response that has the header, even when `propagateClaimsChallenges` isn't `true`.
+
+When `propagateClaimsChallenges` is `true`, the driver doesn't give the claims to the token fetcher.
+So when you load the document again after the challenge is satisfied, make sure that the token fetcher returns the new token, even when [`TokenFetchOptions.refresh`](https://fluidframework.com/docs/api/odsp-driver-definitions/tokenfetchoptions-interface#refresh-propertysignature) is `false`.
+
+As for other authorization errors, the driver clears its cached snapshot of the document when a snapshot request fails with the challenge.
+But a load can still succeed, because the driver can use a cached snapshot without waiting for the service.
+A later request, such as connecting to the delta stream or fetching ops, then gets the challenge, and the container closes with the error.
+
+While the container is connected, the driver also refreshes its join session with the service in the background.
+If a refresh gets the challenge, the driver ends the delta stream connection with the error, and the container reconnects.
+The container then closes with the error, unless the token fetcher returns a token that satisfies the challenge.
+If the container doesn't reconnect, for example because it was loaded with the [`LoaderHeader.reconnect`](https://fluidframework.com/docs/api/container-definitions/loaderheader-enum#reconnect-enummember) request header set to `false`, it closes without an error.
+The host then gets the challenge when it loads the container again.
+
+So check for a claims challenge in the error of the container's `closed` event as well as in load errors.
+
+`propagateClaimsChallenges` also applies to [`prefetchLatestSnapshot`](https://fluidframework.com/docs/api/odsp-driver/#prefetchlatestsnapshot-function) when the factory is passed in its `odspDocumentServiceFactory` parameter.
+It doesn't apply to [`OdspDriverUrlResolverForShareLink`](https://fluidframework.com/docs/api/odsp-driver/odspdriverurlresolverforsharelink-class).
+
+#### Failed snapshot prefetches and cache writes no longer cause unhandled promise rejections ([#28751](https://github.com/microsoft/FluidFramework/pull/28751)) [7ebb8814dc](https://github.com/microsoft/FluidFramework/commit/7ebb8814dc5f9b4fa6e9d47089c725d8f7d721d4)
+
+[`prefetchLatestSnapshot`](https://fluidframework.com/docs/api/odsp-driver/#prefetchlatestsnapshot-function) returns `false` when it can't fetch the snapshot.
+Before this fix, the failure could also cause an unhandled promise rejection, for example when the `odspDocumentServiceFactory` argument wasn't given.
+
+The driver writes each snapshot that it downloads to the host's persisted cache.
+Before this fix, if that write failed, the failure also caused an unhandled promise rejection.
+This could happen when loading a container or when prefetching a snapshot.
+
 ## 3.13.0
 
 ### Minor Changes
 
-- Keep unreferenced flags on the correct snapshot trees ([#28680](https://github.com/microsoft/FluidFramework/pull/28680)) [606251d1cbd](https://github.com/microsoft/FluidFramework/commit/606251d1cbd278a670b06d987f7797f0be176be0)
+#### Keep unreferenced flags on the correct snapshot trees ([#28680](https://github.com/microsoft/FluidFramework/pull/28680)) [606251d1cbd](https://github.com/microsoft/FluidFramework/commit/606251d1cbd278a670b06d987f7797f0be176be0)
 
-  Binary snapshot decoding assigns each unreferenced flag to the tree named by its record instead of that tree's parent.
-  This keeps snapshot metadata consistent with JSON decoding and corrects datastore reachability counts reported at load.
-  The change does not alter runtime garbage collection decisions.
+Binary snapshot decoding assigns each unreferenced flag to the tree named by its record instead of that tree's parent.
+This keeps snapshot metadata consistent with JSON decoding and corrects datastore reachability counts reported at load.
+The change does not alter runtime garbage collection decisions.
 
 ## 3.12.0
 
@@ -18,29 +83,29 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Cancel pending flush requests promptly when the connection disconnects ([#28623](https://github.com/microsoft/FluidFramework/pull/28623)) [a7801b2c836](https://github.com/microsoft/FluidFramework/commit/a7801b2c836ac2a9aa0e6ca6279422265a0f4aea)
+#### Cancel pending flush requests promptly when the connection disconnects ([#28623](https://github.com/microsoft/FluidFramework/pull/28623)) [a7801b2c836](https://github.com/microsoft/FluidFramework/commit/a7801b2c836ac2a9aa0e6ca6279422265a0f4aea)
 
-  Pending flush requests now reject with the connection's disconnect error when the connection is disposed or disconnected.
-  This prevents summary uploads waiting on a flush response from remaining pending after disconnection.
+Pending flush requests now reject with the connection's disconnect error when the connection is disposed or disconnected.
+This prevents summary uploads waiting on a flush response from remaining pending after disconnection.
 
-- New containers can be created in a OneDrive or SharePoint folder identified by its item ID ([#28634](https://github.com/microsoft/FluidFramework/pull/28634)) [0fe597f852e](https://github.com/microsoft/FluidFramework/commit/0fe597f852e23c7541a9e650adfe2b4d952aeb71)
+#### New containers can be created in a OneDrive or SharePoint folder identified by its item ID ([#28634](https://github.com/microsoft/FluidFramework/pull/28634)) [0fe597f852e](https://github.com/microsoft/FluidFramework/commit/0fe597f852e23c7541a9e650adfe2b4d952aeb71)
 
-  The new `createOdspCreateContainerRequestFromOptions` function takes an `OdspCreateContainerRequestOptions` object, which identifies the folder for the new file by either its path (`filePath`) or its item ID (`parentFolderId`).
-  Unlike a folder's path, its item ID doesn't change when the folder is renamed or moved.
+The new `createOdspCreateContainerRequestFromOptions` function takes an `OdspCreateContainerRequestOptions` object, which identifies the folder for the new file by either its path (`filePath`) or its item ID (`parentFolderId`).
+Unlike a folder's path, its item ID doesn't change when the folder is renamed or moved.
 
-  ```typescript
-  import { createOdspCreateContainerRequestFromOptions } from "@fluidframework/odsp-driver/legacy";
+```typescript
+import { createOdspCreateContainerRequestFromOptions } from "@fluidframework/odsp-driver/legacy";
 
-  const request = createOdspCreateContainerRequestFromOptions({
-    siteUrl,
-    driveId,
-    parentFolderId, // The folder's item ID, not its path
-    fileName: "Notes.fluid",
-  });
-  await container.attach(request);
-  ```
+const request = createOdspCreateContainerRequestFromOptions({
+  siteUrl,
+  driveId,
+  parentFolderId, // The folder's item ID, not its path
+  fileName: "Notes.fluid",
+});
+await container.attach(request);
+```
 
-  The existing [`createOdspCreateContainerRequest`](https://fluidframework.com/docs/api/odsp-driver/#createodspcreatecontainerrequest-function) function, which takes a folder path, is unchanged.
+The existing [`createOdspCreateContainerRequest`](https://fluidframework.com/docs/api/odsp-driver/#createodspcreatecontainerrequest-function) function, which takes a folder path, is unchanged.
 
 ## 3.10.0
 
@@ -50,14 +115,14 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Binary summary blob contents can no longer include neighboring bytes in Node.js when a Buffer is a view into a larger allocation ([#28485](https://github.com/microsoft/FluidFramework/pull/28485)) [c3f918bb7b2](https://github.com/microsoft/FluidFramework/commit/c3f918bb7b22e509086f01d5c877ef3c459a15dd)
+#### Binary summary blob contents can no longer include neighboring bytes in Node.js when a Buffer is a view into a larger allocation ([#28485](https://github.com/microsoft/FluidFramework/pull/28485)) [c3f918bb7b2](https://github.com/microsoft/FluidFramework/commit/c3f918bb7b22e509086f01d5c877ef3c459a15dd)
 
-  In Node.js, binary summary blob content provided as a `Buffer` which covered only part of its underlying memory could be converted into an `ArrayBuffer` containing the underlying memory rather than just the blob's bytes.
-  For example: a small pooled `Buffer` or the result of `subarray`.
-  This affected snapshots produced from detached container summaries and files created via the ODSP driver from a detached summary, and could result in extra or unrelated bytes being stored with a blob.
+In Node.js, binary summary blob content provided as a `Buffer` which covered only part of its underlying memory could be converted into an `ArrayBuffer` containing the underlying memory rather than just the blob's bytes.
+For example: a small pooled `Buffer` or the result of `subarray`.
+This affected snapshots produced from detached container summaries and files created via the ODSP driver from a detached summary, and could result in extra or unrelated bytes being stored with a blob.
 
-  Only the bytes belonging to the blob are now included.
-  Browser environments were not affected.
+Only the bytes belonging to the blob are now included.
+Browser environments were not affected.
 
 ## 3.6.0
 
@@ -83,105 +148,105 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Fix compact snapshot loading with pooled Node.js buffers ([#28203](https://github.com/microsoft/FluidFramework/pull/28203)) [64a22895a03](https://github.com/microsoft/FluidFramework/commit/64a22895a03e04990bdd719f7b7fb0683475235a)
+#### Fix compact snapshot loading with pooled Node.js buffers ([#28203](https://github.com/microsoft/FluidFramework/pull/28203)) [64a22895a03](https://github.com/microsoft/FluidFramework/commit/64a22895a03e04990bdd719f7b7fb0683475235a)
 
-  Compact snapshots can now be loaded when their binary data is represented by a `Uint8Array` view
-  with a non-zero `byteOffset`. This prevents container load failures in Node.js 24.18 and later,
-  where the larger buffer pool causes more file reads to return pooled buffer views.
+Compact snapshots can now be loaded when their binary data is represented by a `Uint8Array` view
+with a non-zero `byteOffset`. This prevents container load failures in Node.js 24.18 and later,
+where the larger buffer pool causes more file reads to return pooled buffer views.
 
 ## 3.0.0
 
 ### Minor Changes
 
-- Removal of direct CommonJS support ([#28124](https://github.com/microsoft/FluidFramework/pull/28124)) [0f84e3b8878](https://github.com/microsoft/FluidFramework/commit/0f84e3b8878a5e75b2253976d98fd963bbd9db88)
+#### Removal of direct CommonJS support ([#28124](https://github.com/microsoft/FluidFramework/pull/28124)) [0f84e3b8878](https://github.com/microsoft/FluidFramework/commit/0f84e3b8878a5e75b2253976d98fd963bbd9db88)
 
-  Direct `require()` import is no longer directly supported.
-  Package is transpiled as ECMAScript Module.
+Direct `require()` import is no longer directly supported.
+Package is transpiled as ECMAScript Module.
 
-  See [Removal of direct CommonJS support in v3.0](https://github.com/microsoft/FluidFramework/issues/27444) for more information.
+See [Removal of direct CommonJS support in v3.0](https://github.com/microsoft/FluidFramework/issues/27444) for more information.
 
-- New ILayerCompatSupportRequirements property on LocalDocumentServiceFactory and OdspDocumentServiceFactoryCore ([#27516](https://github.com/microsoft/FluidFramework/pull/27516)) [f8bcc56859f](https://github.com/microsoft/FluidFramework/commit/f8bcc56859fc51957d45453bcf59ce154a2e0c18)
+#### New ILayerCompatSupportRequirements property on LocalDocumentServiceFactory and OdspDocumentServiceFactoryCore ([#27516](https://github.com/microsoft/FluidFramework/pull/27516)) [f8bcc56859f](https://github.com/microsoft/FluidFramework/commit/f8bcc56859fc51957d45453bcf59ce154a2e0c18)
 
-  A new optional property, `ILayerCompatSupportRequirements`, has been added to [`LocalDocumentServiceFactory`](https://fluidframework.com/docs/api/local-driver/localdocumentservicefactory-class) and [`OdspDocumentServiceFactoryCore`](https://fluidframework.com/docs/api/odsp-driver/odspdocumentservicefactorycore-class).
+A new optional property, `ILayerCompatSupportRequirements`, has been added to [`LocalDocumentServiceFactory`](https://fluidframework.com/docs/api/local-driver/localdocumentservicefactory-class) and [`OdspDocumentServiceFactoryCore`](https://fluidframework.com/docs/api/odsp-driver/odspdocumentservicefactorycore-class).
 
-  The Driver layer uses this property to publish the requirements that the Loader layer must meet to be compatible with it. Because the Driver has no reference to the Loader, it cannot validate the Loader directly; instead the Loader reads these requirements and validates itself against them on the Driver's behalf. This enables the Loader / Driver compatibility check to run in both directions.
+The Driver layer uses this property to publish the requirements that the Loader layer must meet to be compatible with it. Because the Driver has no reference to the Loader, it cannot validate the Loader directly; instead the Loader reads these requirements and validates itself against them on the Driver's behalf. This enables the Loader / Driver compatibility check to run in both directions.
 
-- Make point-in-time support optional and consumer-supplied ([#28055](https://github.com/microsoft/FluidFramework/pull/28055)) [9a55f89f0ac](https://github.com/microsoft/FluidFramework/commit/9a55f89f0acb4afde7b189bab352b6140a668b92)
+#### Make point-in-time support optional and consumer-supplied ([#28055](https://github.com/microsoft/FluidFramework/pull/28055)) [9a55f89f0ac](https://github.com/microsoft/FluidFramework/commit/9a55f89f0acb4afde7b189bab352b6140a668b92)
 
-  Point-in-time loading is now an optional implementation supplied by the host. Consumers that do
-  not enable the feature no longer include its implementation in their dependency graph. Hosts can
-  control when the feature is loaded by dynamically importing its dedicated entrypoint:
+Point-in-time loading is now an optional implementation supplied by the host. Consumers that do
+not enable the feature no longer include its implementation in their dependency graph. Hosts can
+control when the feature is loaded by dynamically importing its dedicated entrypoint:
 
-  ```typescript
-  const factory = createOdspDocumentServiceFactory({
-    getStorageToken,
-    getWebsocketToken,
-    persistedCache,
-    hostPolicy,
-    pointInTimeDocumentServiceImplementation: async (props) => {
-      const { createPointInTimeDocumentService } = await import(
-        "@fluidframework/odsp-driver/legacy/point-in-time"
-      );
-      return createPointInTimeDocumentService(props);
-    },
-  });
-  ```
-
-  The legacy-beta `getOdspPointInTimeDocumentServiceFactory` helper is removed. Point-in-time
-  consumers should use `createOdspDocumentServiceFactory`, which accepts tokens, cache, host policy,
-  and optional feature implementations in one options object. Existing `OdspDocumentServiceFactory`
-  and `OdspDocumentServiceFactoryCore` constructor signatures remain unchanged.
-
-- Require modern TypeScript module resolution ([#27970](https://github.com/microsoft/FluidFramework/pull/27970)) [325e2016ca9](https://github.com/microsoft/FluidFramework/commit/325e2016ca9978d4a1f7552c97ba34feac9df41f)
-
-  Fluid Framework Client packages no longer include type declaration compatibility entrypoints for TypeScript's legacy Node10 resolution mode (`"moduleResolution": "node"` or `"node10"`).
-  Applications upgrading to Fluid Framework 3.0 must use one of the following supported configurations:
-  - `"module": "Node16"` with `"moduleResolution": "Node16"`
-  - `"module": "NodeNext"` with `"moduleResolution": "NodeNext"`
-  - `"module": "ESNext"` with `"moduleResolution": "Bundler"`
-
-  Existing public package entrypoints exposed through `package.json` exports, including `/alpha`, `/beta`, and `/legacy`, remain available under supported module resolution modes.
-
-  See [Removal of Node10 resolutions in v3.0](https://github.com/microsoft/FluidFramework/issues/27457) for more information.
-
-- Enable point-in-time loading on the standard ODSP document service factory ([#28007](https://github.com/microsoft/FluidFramework/pull/28007)) [1336342a572](https://github.com/microsoft/FluidFramework/commit/1336342a572d620d9390802c82a8f6d06727087b)
-
-  [`OdspDocumentServiceFactoryCore`](https://fluidframework.com/docs/api/odsp-driver/odspdocumentservicefactorycore-class)
-  now exposes the optional `createPointInTimeDocumentService` capability.
-  [`OdspDocumentServiceFactory`](https://fluidframework.com/docs/api/odsp-driver/odspdocumentservicefactory-class)
-  inherits this capability, so hosts can use the standard factory with
-  [`loadContainerToSequenceNumber`](https://fluidframework.com/docs/api/container-loader/loadcontainertosequencenumber-function)
-  for sequence-number-based document loading. Factories that do not support point-in-time loading
-  leave the capability undefined.
-
-  ```typescript
-  const factory = new OdspDocumentServiceFactory(
-    getStorageToken,
-    getWebsocketToken,
-  );
-
-  if (factory.createPointInTimeDocumentService !== undefined) {
-    const documentService = await factory.createPointInTimeDocumentService(
-      resolvedUrl,
-      targetSequenceNumber,
+```typescript
+const factory = createOdspDocumentServiceFactory({
+  getStorageToken,
+  getWebsocketToken,
+  persistedCache,
+  hostPolicy,
+  pointInTimeDocumentServiceImplementation: async (props) => {
+    const { createPointInTimeDocumentService } = await import(
+      "@fluidframework/odsp-driver/legacy/point-in-time"
     );
-  }
-  ```
+    return createPointInTimeDocumentService(props);
+  },
+});
+```
 
-- Client packages now target ES2022 ([#27846](https://github.com/microsoft/FluidFramework/pull/27846)) [91c78541bdd](https://github.com/microsoft/FluidFramework/commit/91c78541bddcbca5d6c5f357b023eeaee617d885)
+The legacy-beta `getOdspPointInTimeDocumentServiceFactory` helper is removed. Point-in-time
+consumers should use `createOdspDocumentServiceFactory`, which accepts tokens, cache, host policy,
+and optional feature implementations in one options object. Existing `OdspDocumentServiceFactory`
+and `OdspDocumentServiceFactoryCore` constructor signatures remain unchanged.
 
-  The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
-  The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
-  All actively supported Node.js versions and evergreen browsers already meet this requirement.
+#### Require modern TypeScript module resolution ([#27970](https://github.com/microsoft/FluidFramework/pull/27970)) [325e2016ca9](https://github.com/microsoft/FluidFramework/commit/325e2016ca9978d4a1f7552c97ba34feac9df41f)
 
-  Note that Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the README for every client package.
+Fluid Framework Client packages no longer include type declaration compatibility entrypoints for TypeScript's legacy Node10 resolution mode (`"moduleResolution": "node"` or `"node10"`).
+Applications upgrading to Fluid Framework 3.0 must use one of the following supported configurations:
+- `"module": "Node16"` with `"moduleResolution": "Node16"`
+- `"module": "NodeNext"` with `"moduleResolution": "NodeNext"`
+- `"module": "ESNext"` with `"moduleResolution": "Bundler"`
 
-  It is possible this change could impact users of less up to date JavaScript runtimes.
-  Impacted users can use a tool like [babel](https://babeljs.io/) to transpile out unsupported language features.
+Existing public package entrypoints exposed through `package.json` exports, including `/alpha`, `/beta`, and `/legacy`, remain available under supported module resolution modes.
 
-- Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
+See [Removal of Node10 resolutions in v3.0](https://github.com/microsoft/FluidFramework/issues/27457) for more information.
 
-  FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
+#### Enable point-in-time loading on the standard ODSP document service factory ([#28007](https://github.com/microsoft/FluidFramework/pull/28007)) [1336342a572](https://github.com/microsoft/FluidFramework/commit/1336342a572d620d9390802c82a8f6d06727087b)
+
+[`OdspDocumentServiceFactoryCore`](https://fluidframework.com/docs/api/odsp-driver/odspdocumentservicefactorycore-class)
+now exposes the optional `createPointInTimeDocumentService` capability.
+[`OdspDocumentServiceFactory`](https://fluidframework.com/docs/api/odsp-driver/odspdocumentservicefactory-class)
+inherits this capability, so hosts can use the standard factory with
+[`loadContainerToSequenceNumber`](https://fluidframework.com/docs/api/container-loader/loadcontainertosequencenumber-function)
+for sequence-number-based document loading. Factories that do not support point-in-time loading
+leave the capability undefined.
+
+```typescript
+const factory = new OdspDocumentServiceFactory(
+  getStorageToken,
+  getWebsocketToken,
+);
+
+if (factory.createPointInTimeDocumentService !== undefined) {
+  const documentService = await factory.createPointInTimeDocumentService(
+    resolvedUrl,
+    targetSequenceNumber,
+  );
+}
+```
+
+#### Client packages now target ES2022 ([#27846](https://github.com/microsoft/FluidFramework/pull/27846)) [91c78541bdd](https://github.com/microsoft/FluidFramework/commit/91c78541bddcbca5d6c5f357b023eeaee617d885)
+
+The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
+The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
+All actively supported Node.js versions and evergreen browsers already meet this requirement.
+
+Note that Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the README for every client package.
+
+It is possible this change could impact users of less up to date JavaScript runtimes.
+Impacted users can use a tool like [babel](https://babeljs.io/) to transpile out unsupported language features.
+
+#### Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
+
+FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
 
 ## 2.116.0
 
@@ -211,11 +276,11 @@ Dependency updates only.
 
 ### Minor Changes
 
-- OdspFluidDataStoreLocator optional properties may also be explicitly undefined ([#27551](https://github.com/microsoft/FluidFramework/pull/27551)) [6a323dbb4e6](https://github.com/microsoft/FluidFramework/commit/6a323dbb4e6ed4d985d03d37eb1f0347184d1764)
+#### OdspFluidDataStoreLocator optional properties may also be explicitly undefined ([#27551](https://github.com/microsoft/FluidFramework/pull/27551)) [6a323dbb4e6](https://github.com/microsoft/FluidFramework/commit/6a323dbb4e6ed4d985d03d37eb1f0347184d1764)
 
-  Typing for `OdspFluidDataStoreLocator` optional properties are updated to reflect that in some implementations those are present but evaluate to `undefined`.
-  When building with `excactOptionalPropertyTypes:false` as suggested in [compatibility requirements](https://github.com/microsoft/FluidFramework/blob/68732d93a6cc8be2df966b9bb40f58bdd9fad69b/packages/drivers/odsp-driver/README.md#supported-tools), there is no apparent type change.
-  If a type error is experienced, make sure to check for `undefined` when reading.
+Typing for `OdspFluidDataStoreLocator` optional properties are updated to reflect that in some implementations those are present but evaluate to `undefined`.
+When building with `excactOptionalPropertyTypes:false` as suggested in [compatibility requirements](https://github.com/microsoft/FluidFramework/blob/68732d93a6cc8be2df966b9bb40f58bdd9fad69b/packages/drivers/odsp-driver/README.md#supported-tools), there is no apparent type change.
+If a type error is experienced, make sure to check for `undefined` when reading.
 
 ## 2.103.0
 
@@ -229,17 +294,17 @@ Dependency updates only.
 
 ### Patch Changes
 
-- Remove fully-rolled-out `setSensitivityLabelHeaderPostFix` config gate ([#27261](https://github.com/microsoft/FluidFramework/pull/27261)) [69228c498d8](https://github.com/microsoft/FluidFramework/commit/69228c498d8ef491c565e64a1888e4c4ac71abd2)
+#### Remove fully-rolled-out `setSensitivityLabelHeaderPostFix` config gate ([#27261](https://github.com/microsoft/FluidFramework/pull/27261)) [69228c498d8](https://github.com/microsoft/FluidFramework/commit/69228c498d8ef491c565e64a1888e4c4ac71abd2)
 
-  The `Fluid.Driver.Odsp.setSensitivityLabelHeaderPostFix` config gate is fully rolled out, so it has been removed along with the now-dead conditional code path. The `Prefer: Return-Sensitivity-Labels` header is now always sent on join-session requests, matching the post-rollout production behavior. The `setSensitivityLabelHeader` property emitted on the `JoinSession` telemetry event has also been removed because it would always be `true`.
+The `Fluid.Driver.Odsp.setSensitivityLabelHeaderPostFix` config gate is fully rolled out, so it has been removed along with the now-dead conditional code path. The `Prefer: Return-Sensitivity-Labels` header is now always sent on join-session requests, matching the post-rollout production behavior. The `setSensitivityLabelHeader` property emitted on the `JoinSession` telemetry event has also been removed because it would always be `true`.
 
 ## 2.100.0
 
 ### Minor Changes
 
-- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+#### Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
 
-  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
 
 ## 2.93.0
 
@@ -301,15 +366,15 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Move IPersistedCache types to driver-definitions ([#25518](https://github.com/microsoft/FluidFramework/pull/25518)) [54fca68d91](https://github.com/microsoft/FluidFramework/commit/54fca68d91aeb40bdef14b1fe8b8f3c28168b6de)
+#### Move IPersistedCache types to driver-definitions ([#25518](https://github.com/microsoft/FluidFramework/pull/25518)) [54fca68d91](https://github.com/microsoft/FluidFramework/commit/54fca68d91aeb40bdef14b1fe8b8f3c28168b6de)
 
-  In an effort to decouple the driver web cache from the odsp driver a number of types have been moved from `@fluidframework/odsp-driver-definitions` to `@fluidframework/driver-definitions`. The moved types have been deprecated in `@fluidframework/odsp-driver-definitions`, and any usages should be moved to `@fluidframework/driver-definitions`.
+In an effort to decouple the driver web cache from the odsp driver a number of types have been moved from `@fluidframework/odsp-driver-definitions` to `@fluidframework/driver-definitions`. The moved types have been deprecated in `@fluidframework/odsp-driver-definitions`, and any usages should be moved to `@fluidframework/driver-definitions`.
 
-  The moved types are:
-  - `IEntry`
-  - `IFileEntry`
-  - `ICacheEntry`
-  - `IPersistedCache`
+The moved types are:
+- `IEntry`
+- `IFileEntry`
+- `ICacheEntry`
+- `IPersistedCache`
 
 ## 2.61.0
 
@@ -323,20 +388,20 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Fixed bug in parsing sensitivity label information from the ODSP join session response ([#25186](https://github.com/microsoft/FluidFramework/pull/25186)) [b74508fd4c9](https://github.com/microsoft/FluidFramework/commit/b74508fd4c9e5414cf457595e6c803e84d715b54)
+#### Fixed bug in parsing sensitivity label information from the ODSP join session response ([#25186](https://github.com/microsoft/FluidFramework/pull/25186)) [b74508fd4c9](https://github.com/microsoft/FluidFramework/commit/b74508fd4c9e5414cf457595e6c803e84d715b54)
 
-  Fixes parsing of sensitivity label information in the ODSP join session response. If there had been sensitivity label data present in the ODSP response, this data would have been double-parsed, leading to runtime errors. This issue was so far not hit in practice, because ODSP did not roll out sensitivity labels in the response yet. This bug fix gets odsp-driver ready for that rollout, which is planned to happen soon.
+Fixes parsing of sensitivity label information in the ODSP join session response. If there had been sensitivity label data present in the ODSP response, this data would have been double-parsed, leading to runtime errors. This issue was so far not hit in practice, because ODSP did not roll out sensitivity labels in the response yet. This bug fix gets odsp-driver ready for that rollout, which is planned to happen soon.
 
 ## 2.52.0
 
 ### Minor Changes
 
-- New ILayerCompatDetails property on LocalDocumentServiceFactory and OdspDocumentServiceFactoryCore ([#25120](https://github.com/microsoft/FluidFramework/pull/25120)) [02acccaa06](https://github.com/microsoft/FluidFramework/commit/02acccaa06bf377ceb044e3eac4ba6ebb89e3d4f)
+#### New ILayerCompatDetails property on LocalDocumentServiceFactory and OdspDocumentServiceFactoryCore ([#25120](https://github.com/microsoft/FluidFramework/pull/25120)) [02acccaa06](https://github.com/microsoft/FluidFramework/commit/02acccaa06bf377ceb044e3eac4ba6ebb89e3d4f)
 
-  A new optional property, `ILayerCompatDetails`, has been added to `LocalDocumentServiceFactory` and `OdspDocumentServiceFactoryCore`.
-  This property is used by `Container` in the Loader layer to validate that the Loader and Driver layers are compatible.
+A new optional property, `ILayerCompatDetails`, has been added to `LocalDocumentServiceFactory` and `OdspDocumentServiceFactoryCore`.
+This property is used by `Container` in the Loader layer to validate that the Loader and Driver layers are compatible.
 
-  Important: this property is intended for use by Fluid Framework code only. No code outside the Fluid Framework should use or depend on this property in any way.
+Important: this property is intended for use by Fluid Framework code only. No code outside the Fluid Framework should use or depend on this property in any way.
 
 ## 2.51.0
 
@@ -370,13 +435,13 @@ Dependency updates only.
 
 ### Minor Changes
 
-- The containerPackageInfo parameter in createOdspCreateContainerRequest() is now deprecated ([#23919](https://github.com/microsoft/FluidFramework/pull/23919)) [42b26b7f18](https://github.com/microsoft/FluidFramework/commit/42b26b7f18ede4471d4426c542345bc66b56e923)
+#### The containerPackageInfo parameter in createOdspCreateContainerRequest() is now deprecated ([#23919](https://github.com/microsoft/FluidFramework/pull/23919)) [42b26b7f18](https://github.com/microsoft/FluidFramework/commit/42b26b7f18ede4471d4426c542345bc66b56e923)
 
-  The `containerPackageInfo` parameter in `createOdspCreateContainerRequest()` is now deprecated and will be removed in version 2.40.0.
+The `containerPackageInfo` parameter in `createOdspCreateContainerRequest()` is now deprecated and will be removed in version 2.40.0.
 
-  The name of the containerPackage can no longer be sent through the request. Instead, it can be added in the constructor of `OdspDriverUrlResolverForShareLink`.
+The name of the containerPackage can no longer be sent through the request. Instead, it can be added in the constructor of `OdspDriverUrlResolverForShareLink`.
 
-  See [issue #23882](https://github.com/microsoft/FluidFramework/issues/23882) for more details.
+See [issue #23882](https://github.com/microsoft/FluidFramework/issues/23882) for more details.
 
 ## 2.31.0
 
@@ -394,13 +459,13 @@ Dependency updates only.
 
 ### Minor Changes
 
-- odsp-driver no longer depends on node-fetch ([#23796](https://github.com/microsoft/FluidFramework/pull/23796)) [b17276c186](https://github.com/microsoft/FluidFramework/commit/b17276c186043723486dfbd0714da0dcb5ca1e17)
+#### odsp-driver no longer depends on node-fetch ([#23796](https://github.com/microsoft/FluidFramework/pull/23796)) [b17276c186](https://github.com/microsoft/FluidFramework/commit/b17276c186043723486dfbd0714da0dcb5ca1e17)
 
-  The `@fluidframework/odsp-driver` package had a dependency on [node-fetch](https://www.npmjs.com/package/node-fetch) to provide consistent behavior of the [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) across Node.js and browsers.
-  Since v18 of Node.js, the Node-native Fetch API implementation no longer requires extra flags to be enabled, so the Fetch API is effectively now natively available on all browsers and Node.js.
-  This dependency removal should reduce Fluid Framework's contribution to application bundle sizes.
+The `@fluidframework/odsp-driver` package had a dependency on [node-fetch](https://www.npmjs.com/package/node-fetch) to provide consistent behavior of the [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) across Node.js and browsers.
+Since v18 of Node.js, the Node-native Fetch API implementation no longer requires extra flags to be enabled, so the Fetch API is effectively now natively available on all browsers and Node.js.
+This dependency removal should reduce Fluid Framework's contribution to application bundle sizes.
 
-  We expect this change to have no impact for Fluid Framework consumers. However, if you are running Fluid in a Node.js environment with the `--no-experimental-fetch` flag, this is no longer supported.
+We expect this change to have no impact for Fluid Framework consumers. However, if you are running Fluid in a Node.js environment with the `--no-experimental-fetch` flag, this is no longer supported.
 
 ## 2.21.0
 
@@ -450,9 +515,9 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+#### Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
 
-  Update package implementations to use TypeScript 5.4.5.
+Update package implementations to use TypeScript 5.4.5.
 
 ## 2.0.0-rc.4.0.0
 
@@ -462,106 +527,106 @@ Dependency updates only.
 
 ### Major Changes
 
-- Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+#### Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
 
-  Fluid Framework packages have been updated to use the [package.json "exports"
-  field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
-  TypeScript types and implementation code.
+Fluid Framework packages have been updated to use the [package.json "exports"
+field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
+TypeScript types and implementation code.
 
-  This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-  - `"moduleResolution": "Node16"` with `"module": "Node16"`
-  - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
+This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
+- `"moduleResolution": "Node16"` with `"module": "Node16"`
+- `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 
-  We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
-  for use with modern versions of Node.js _and_ Bundlers.
-  [See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
-  regarding the module and moduleResolution options.
+We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
+for use with modern versions of Node.js _and_ Bundlers.
+[See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
+regarding the module and moduleResolution options.
 
-  **Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
-  to distinguish stable APIs from those that are in development.**
+**Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
+to distinguish stable APIs from those that are in development.**
 
 ### Minor Changes
 
-- driver-definitions: update submitSignal content type to string [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+#### driver-definitions: update submitSignal content type to string [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
 
-  Change IDocumentDeltaConnection.submitSignal's content argument type to string which represents actual/known use.
+Change IDocumentDeltaConnection.submitSignal's content argument type to string which represents actual/known use.
 
 ## 2.0.0-rc.2.0.0
 
 ### Minor Changes
 
-- Resolved URLs no longer use non-standard protocols ([#19840](https://github.com/microsoft/FluidFramework/issues/19840)) [9d3d185183](https://github.com/microsoft/FluidFramework/commits/9d3d1851830d953792a6dfad60dde6f1c59480de)
+#### Resolved URLs no longer use non-standard protocols ([#19840](https://github.com/microsoft/FluidFramework/issues/19840)) [9d3d185183](https://github.com/microsoft/FluidFramework/commits/9d3d1851830d953792a6dfad60dde6f1c59480de)
 
-  Previously, `IResolvedUrl.url` could use a non-standard protocol like `fluid://`, `fluid-odsp://`, or `fluid-test://`. These have been replaced with `https://` to permit standards-compliant URL parsing.
+Previously, `IResolvedUrl.url` could use a non-standard protocol like `fluid://`, `fluid-odsp://`, or `fluid-test://`. These have been replaced with `https://` to permit standards-compliant URL parsing.
 
-- driver-definitions: Deprecate `ISnapshotContents` ([#19314](https://github.com/microsoft/FluidFramework/issues/19314)) [fc731b69de](https://github.com/microsoft/FluidFramework/commits/fc731b69deed4a2987e9b97d8918492d689bafbc)
+#### driver-definitions: Deprecate `ISnapshotContents` ([#19314](https://github.com/microsoft/FluidFramework/issues/19314)) [fc731b69de](https://github.com/microsoft/FluidFramework/commits/fc731b69deed4a2987e9b97d8918492d689bafbc)
 
-  `ISnapshotContents` is deprecated. It has been replaced with `ISnapshot`.
+`ISnapshotContents` is deprecated. It has been replaced with `ISnapshot`.
 
-- driver-definitions: repositoryUrl removed from IDocumentStorageService ([#19522](https://github.com/microsoft/FluidFramework/issues/19522)) [90eb3c9d33](https://github.com/microsoft/FluidFramework/commits/90eb3c9d33d80e24caa1393a50f414c5602f6aa3)
+#### driver-definitions: repositoryUrl removed from IDocumentStorageService ([#19522](https://github.com/microsoft/FluidFramework/issues/19522)) [90eb3c9d33](https://github.com/microsoft/FluidFramework/commits/90eb3c9d33d80e24caa1393a50f414c5602f6aa3)
 
-  The `repositoryUrl` member of `IDocumentStorageService` was unused and always equal to the empty string. It has been removed.
+The `repositoryUrl` member of `IDocumentStorageService` was unused and always equal to the empty string. It has been removed.
 
-- Deprecated error-related enums have been removed ([#19067](https://github.com/microsoft/FluidFramework/issues/19067)) [59793302e5](https://github.com/microsoft/FluidFramework/commits/59793302e56784cfb6ace0e6469345f3565b3312)
+#### Deprecated error-related enums have been removed ([#19067](https://github.com/microsoft/FluidFramework/issues/19067)) [59793302e5](https://github.com/microsoft/FluidFramework/commits/59793302e56784cfb6ace0e6469345f3565b3312)
 
-  Error-related enums `ContainerErrorType`, `DriverErrorType`, `OdspErrorType` and `RouterliciousErrorType` were previously
-  deprecated and are now removed. There are replacement object-based enumerations of `ContainerErrorTypes`,
-  `DriverErrorTypes`, `OdspErrorTypes` and `RouterliciousErrorTypes`. Refer to the release notes of [Fluid Framework version
-  2.0.0-internal.7.0.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.0.0-internal.7.0.0) for details
-  on the replacements.
+Error-related enums `ContainerErrorType`, `DriverErrorType`, `OdspErrorType` and `RouterliciousErrorType` were previously
+deprecated and are now removed. There are replacement object-based enumerations of `ContainerErrorTypes`,
+`DriverErrorTypes`, `OdspErrorTypes` and `RouterliciousErrorTypes`. Refer to the release notes of [Fluid Framework version
+2.0.0-internal.7.0.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.0.0-internal.7.0.0) for details
+on the replacements.
 
-- odsp-driver: Added a new method to odspDriverUrlResolverForShareLink class ([#19648](https://github.com/microsoft/FluidFramework/issues/19648)) [77d4071a9a](https://github.com/microsoft/FluidFramework/commits/77d4071a9af5d7217ce52a180776fb4b90754b86)
+#### odsp-driver: Added a new method to odspDriverUrlResolverForShareLink class ([#19648](https://github.com/microsoft/FluidFramework/issues/19648)) [77d4071a9a](https://github.com/microsoft/FluidFramework/commits/77d4071a9af5d7217ce52a180776fb4b90754b86)
 
-  Added a new method called `appendLocatorParams` to `odspDriverUrlResolverForShareLink` class which appends locator params to the base URL provided.
+Added a new method called `appendLocatorParams` to `odspDriverUrlResolverForShareLink` class which appends locator params to the base URL provided.
 
-- odsp-driver: createNavParam removed from odspDriverUrlResolverForShareLink ([#19620](https://github.com/microsoft/FluidFramework/issues/19620)) [93c82abb9c](https://github.com/microsoft/FluidFramework/commits/93c82abb9c9fe9d3264e54a579a10589cf7183d7)
+#### odsp-driver: createNavParam removed from odspDriverUrlResolverForShareLink ([#19620](https://github.com/microsoft/FluidFramework/issues/19620)) [93c82abb9c](https://github.com/microsoft/FluidFramework/commits/93c82abb9c9fe9d3264e54a579a10589cf7183d7)
 
-  Remove deprecated method: createNavParam from odsp-driver's odspDriverUrlResolverForShareLink.
+Remove deprecated method: createNavParam from odsp-driver's odspDriverUrlResolverForShareLink.
 
-- odsp-driver: Removed deprecated implementation of SingleRT feature ([#18690](https://github.com/microsoft/FluidFramework/issues/18690)) [430205cff1](https://github.com/microsoft/FluidFramework/commits/430205cff1ba8a1a7b13b4d42d12babaae596708)
+#### odsp-driver: Removed deprecated implementation of SingleRT feature ([#18690](https://github.com/microsoft/FluidFramework/issues/18690)) [430205cff1](https://github.com/microsoft/FluidFramework/commits/430205cff1ba8a1a7b13b4d42d12babaae596708)
 
-  Removed the deprecated logic of creating sharing-links with container attach (called SingleRT) which was enabled via enableShareLinkWithCreate flag in HostStoragePolicy. This change removes SharingLinkTypes interface definition, removes other deprecated properties from the odsp-driver's resolvedUrl object and also removes the enableShareLinkWithCreate flag. The newer version of SingleRT feature continues to exist, which can be enabled via enableSingleRequestForShareLinkWithCreate feature flag in HostStoragePolicy.
+Removed the deprecated logic of creating sharing-links with container attach (called SingleRT) which was enabled via enableShareLinkWithCreate flag in HostStoragePolicy. This change removes SharingLinkTypes interface definition, removes other deprecated properties from the odsp-driver's resolvedUrl object and also removes the enableShareLinkWithCreate flag. The newer version of SingleRT feature continues to exist, which can be enabled via enableSingleRequestForShareLinkWithCreate feature flag in HostStoragePolicy.
 
-- container-definitions: Added containerMetadata prop on IContainer interface ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
+#### container-definitions: Added containerMetadata prop on IContainer interface ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
 
-  Added `containerMetadata` prop on IContainer interface.
+Added `containerMetadata` prop on IContainer interface.
 
-- runtime-definitions: Moved ISignalEnvelope interface to core-interfaces ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
+#### runtime-definitions: Moved ISignalEnvelope interface to core-interfaces ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
 
-  The `ISignalEnvelope` interface has been moved to the @fluidframework/core-interfaces package.
+The `ISignalEnvelope` interface has been moved to the @fluidframework/core-interfaces package.
 
 ## 2.0.0-rc.1.0.0
 
 ### Minor Changes
 
-- Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
+#### Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
 
-  The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
-  - @fluidframework/gitresources
-  - @fluidframework/server-kafka-orderer
-  - @fluidframework/server-lambdas
-  - @fluidframework/server-lambdas-driver
-  - @fluidframework/server-local-server
-  - @fluidframework/server-memory-orderer
-  - @fluidframework/protocol-base
-  - @fluidframework/server-routerlicious
-  - @fluidframework/server-routerlicious-base
-  - @fluidframework/server-services
-  - @fluidframework/server-services-client
-  - @fluidframework/server-services-core
-  - @fluidframework/server-services-ordering-kafkanode
-  - @fluidframework/server-services-ordering-rdkafka
-  - @fluidframework/server-services-ordering-zookeeper
-  - @fluidframework/server-services-shared
-  - @fluidframework/server-services-telemetry
-  - @fluidframework/server-services-utils
-  - @fluidframework/server-test-utils
-  - tinylicious
+The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
+- @fluidframework/gitresources
+- @fluidframework/server-kafka-orderer
+- @fluidframework/server-lambdas
+- @fluidframework/server-lambdas-driver
+- @fluidframework/server-local-server
+- @fluidframework/server-memory-orderer
+- @fluidframework/protocol-base
+- @fluidframework/server-routerlicious
+- @fluidframework/server-routerlicious-base
+- @fluidframework/server-services
+- @fluidframework/server-services-client
+- @fluidframework/server-services-core
+- @fluidframework/server-services-ordering-kafkanode
+- @fluidframework/server-services-ordering-rdkafka
+- @fluidframework/server-services-ordering-zookeeper
+- @fluidframework/server-services-shared
+- @fluidframework/server-services-telemetry
+- @fluidframework/server-services-utils
+- @fluidframework/server-test-utils
+- tinylicious
 
-- Updated @fluidframework/protocol-definitions ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
+#### Updated @fluidframework/protocol-definitions ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
 
-  The @fluidframework/protocol-definitions dependency has been upgraded to v3.1.0. [See the full
-  changelog.](https://github.com/microsoft/FluidFramework/blob/main/common/lib/protocol-definitions/CHANGELOG.md#310)
+The @fluidframework/protocol-definitions dependency has been upgraded to v3.1.0. [See the full
+changelog.](https://github.com/microsoft/FluidFramework/blob/main/common/lib/protocol-definitions/CHANGELOG.md#310)
 
 ## 2.0.0-internal.8.0.0
 
@@ -587,60 +652,60 @@ Dependency updates only.
 
 ### Major Changes
 
-- Dependencies on @fluidframework/protocol-definitions package updated to 3.0.0 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+#### Dependencies on @fluidframework/protocol-definitions package updated to 3.0.0 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
-  This included the following changes from the protocol-definitions release:
-  - Updating signal interfaces for some planned improvements. The intention is split the interface between signals
-    submitted by clients to the server and the resulting signals sent from the server to clients.
-    - A new optional type member is available on the ISignalMessage interface and a new ISentSignalMessage interface has
-      been added, which will be the typing for signals sent from the client to the server. Both extend a new
-      ISignalMessageBase interface that contains common members.
-  - The @fluidframework/common-definitions package dependency has been updated to version 1.0.0.
+This included the following changes from the protocol-definitions release:
+- Updating signal interfaces for some planned improvements. The intention is split the interface between signals
+  submitted by clients to the server and the resulting signals sent from the server to clients.
+  - A new optional type member is available on the ISignalMessage interface and a new ISentSignalMessage interface has
+    been added, which will be the typing for signals sent from the client to the server. Both extend a new
+    ISignalMessageBase interface that contains common members.
+- The @fluidframework/common-definitions package dependency has been updated to version 1.0.0.
 
-- routerlicious-driver: remove dead blob aggregation concepts and code [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+#### routerlicious-driver: remove dead blob aggregation concepts and code [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
-  Dead concepts blob aggregation like `aggregateBlobsSmallerThanBytes` and `minBlobSize` have been removed.
+Dead concepts blob aggregation like `aggregateBlobsSmallerThanBytes` and `minBlobSize` have been removed.
 
-- Server upgrade: dependencies on Fluid server packages updated to 2.0.1 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+#### Server upgrade: dependencies on Fluid server packages updated to 2.0.1 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
-  Dependencies on the following Fluid server package have been updated to version 2.0.1:
-  - @fluidframework/gitresources: 2.0.1
-  - @fluidframework/server-kafka-orderer: 2.0.1
-  - @fluidframework/server-lambdas: 2.0.1
-  - @fluidframework/server-lambdas-driver: 2.0.1
-  - @fluidframework/server-local-server: 2.0.1
-  - @fluidframework/server-memory-orderer: 2.0.1
-  - @fluidframework/protocol-base: 2.0.1
-  - @fluidframework/server-routerlicious: 2.0.1
-  - @fluidframework/server-routerlicious-base: 2.0.1
-  - @fluidframework/server-services: 2.0.1
-  - @fluidframework/server-services-client: 2.0.1
-  - @fluidframework/server-services-core: 2.0.1
-  - @fluidframework/server-services-ordering-kafkanode: 2.0.1
-  - @fluidframework/server-services-ordering-rdkafka: 2.0.1
-  - @fluidframework/server-services-ordering-zookeeper: 2.0.1
-  - @fluidframework/server-services-shared: 2.0.1
-  - @fluidframework/server-services-telemetry: 2.0.1
-  - @fluidframework/server-services-utils: 2.0.1
-  - @fluidframework/server-test-utils: 2.0.1
-  - tinylicious: 2.0.1
+Dependencies on the following Fluid server package have been updated to version 2.0.1:
+- @fluidframework/gitresources: 2.0.1
+- @fluidframework/server-kafka-orderer: 2.0.1
+- @fluidframework/server-lambdas: 2.0.1
+- @fluidframework/server-lambdas-driver: 2.0.1
+- @fluidframework/server-local-server: 2.0.1
+- @fluidframework/server-memory-orderer: 2.0.1
+- @fluidframework/protocol-base: 2.0.1
+- @fluidframework/server-routerlicious: 2.0.1
+- @fluidframework/server-routerlicious-base: 2.0.1
+- @fluidframework/server-services: 2.0.1
+- @fluidframework/server-services-client: 2.0.1
+- @fluidframework/server-services-core: 2.0.1
+- @fluidframework/server-services-ordering-kafkanode: 2.0.1
+- @fluidframework/server-services-ordering-rdkafka: 2.0.1
+- @fluidframework/server-services-ordering-zookeeper: 2.0.1
+- @fluidframework/server-services-shared: 2.0.1
+- @fluidframework/server-services-telemetry: 2.0.1
+- @fluidframework/server-services-utils: 2.0.1
+- @fluidframework/server-test-utils: 2.0.1
+- tinylicious: 2.0.1
 
-- Minimum TypeScript version now 5.1.6 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
+#### Minimum TypeScript version now 5.1.6 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
-  The minimum supported TypeScript version for Fluid 2.0 clients is now 5.1.6.
+The minimum supported TypeScript version for Fluid 2.0 clients is now 5.1.6.
 
 ## 2.0.0-internal.6.4.0
 
 ### Minor Changes
 
-- Upcoming: The type of the logger property/param in various APIs will be changing ([#17350](https://github.com/microsoft/FluidFramework/issues/17350)) [27284bcda3](https://github.com/microsoft/FluidFramework/commits/27284bcda3d63cc4306cf76806f8a075db0db60f)
-  - @fluidframework/runtime-definitions
-    - `IFluidDataStoreRuntime.logger` will be re-typed as `ITelemetryBaseLogger`
-  - @fluidframework/odsp-driver
-    - `protected OdspDocumentServiceFactoryCore.createDocumentServiceCore`'s parameter `odspLogger` will be re-typed as `ITelemetryLoggerExt`
-    - `protected LocalOdspDocumentServiceFactory.createDocumentServiceCore`'s parameter `odspLogger` will be re-typed as `ITelemetryLoggerExt`
+#### Upcoming: The type of the logger property/param in various APIs will be changing ([#17350](https://github.com/microsoft/FluidFramework/issues/17350)) [27284bcda3](https://github.com/microsoft/FluidFramework/commits/27284bcda3d63cc4306cf76806f8a075db0db60f)
+- @fluidframework/runtime-definitions
+  - `IFluidDataStoreRuntime.logger` will be re-typed as `ITelemetryBaseLogger`
+- @fluidframework/odsp-driver
+  - `protected OdspDocumentServiceFactoryCore.createDocumentServiceCore`'s parameter `odspLogger` will be re-typed as `ITelemetryLoggerExt`
+  - `protected LocalOdspDocumentServiceFactory.createDocumentServiceCore`'s parameter `odspLogger` will be re-typed as `ITelemetryLoggerExt`
 
-  Additionally, several of @fluidframework/telemetry-utils's exports are being marked as internal and should not be consumed outside of other FF packages.
+Additionally, several of @fluidframework/telemetry-utils's exports are being marked as internal and should not be consumed outside of other FF packages.
 
 ## 2.0.0-internal.6.3.0
 
@@ -650,31 +715,31 @@ Dependency updates only.
 
 ### Minor Changes
 
-- Remove use of @fluidframework/common-definitions ([#16638](https://github.com/microsoft/FluidFramework/issues/16638)) [a8c81509c9](https://github.com/microsoft/FluidFramework/commits/a8c81509c9bf09cfb2092ebcf7265205f9eb6dbf)
+#### Remove use of @fluidframework/common-definitions ([#16638](https://github.com/microsoft/FluidFramework/issues/16638)) [a8c81509c9](https://github.com/microsoft/FluidFramework/commits/a8c81509c9bf09cfb2092ebcf7265205f9eb6dbf)
 
-  The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
-  imported from the **@fluidframework/core-interfaces** package:
-  - interface IDisposable
-  - interface IErrorEvent
-  - interface IErrorEvent
-  - interface IEvent
-  - interface IEventProvider
-  - interface ILoggingError
-  - interface ITaggedTelemetryPropertyType
-  - interface ITelemetryBaseEvent
-  - interface ITelemetryBaseLogger
-  - interface ITelemetryErrorEvent
-  - interface ITelemetryGenericEvent
-  - interface ITelemetryLogger
-  - interface ITelemetryPerformanceEvent
-  - interface ITelemetryProperties
-  - type ExtendEventProvider
-  - type IEventThisPlaceHolder
-  - type IEventTransformer
-  - type ReplaceIEventThisPlaceHolder
-  - type ReplaceIEventThisPlaceHolder
-  - type TelemetryEventCategory
-  - type TelemetryEventPropertyType
+The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
+imported from the **@fluidframework/core-interfaces** package:
+- interface IDisposable
+- interface IErrorEvent
+- interface IErrorEvent
+- interface IEvent
+- interface IEventProvider
+- interface ILoggingError
+- interface ITaggedTelemetryPropertyType
+- interface ITelemetryBaseEvent
+- interface ITelemetryBaseLogger
+- interface ITelemetryErrorEvent
+- interface ITelemetryGenericEvent
+- interface ITelemetryLogger
+- interface ITelemetryPerformanceEvent
+- interface ITelemetryProperties
+- type ExtendEventProvider
+- type IEventThisPlaceHolder
+- type IEventTransformer
+- type ReplaceIEventThisPlaceHolder
+- type ReplaceIEventThisPlaceHolder
+- type TelemetryEventCategory
+- type TelemetryEventPropertyType
 
 ## 2.0.0-internal.6.1.0
 
@@ -684,9 +749,9 @@ Dependency updates only.
 
 ### Major Changes
 
-- Upgraded typescript transpilation target to ES2020 [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
+#### Upgraded typescript transpilation target to ES2020 [8abce8cdb4](https://github.com/microsoft/FluidFramework/commits/8abce8cdb4e2832fb6405fb44e393bef03d5648a)
 
-  Upgraded typescript transpilation target to ES2020. This is done in order to decrease the bundle sizes of Fluid Framework packages. This has provided size improvements across the board for ex. Loader, Driver, Runtime etc. Reduced bundle sizes helps to load lesser code in apps and hence also helps to improve the perf.If any app wants to target any older versions of browsers with which this target version is not compatible, then they can use packages like babel to transpile to a older target.
+Upgraded typescript transpilation target to ES2020. This is done in order to decrease the bundle sizes of Fluid Framework packages. This has provided size improvements across the board for ex. Loader, Driver, Runtime etc. Reduced bundle sizes helps to load lesser code in apps and hence also helps to improve the perf.If any app wants to target any older versions of browsers with which this target version is not compatible, then they can use packages like babel to transpile to a older target.
 
 ## 2.0.0-internal.5.4.0
 
@@ -696,9 +761,9 @@ Dependency updates only.
 
 ### Minor Changes
 
-- New API getRelaySessionInfo in odsp-driver ([#16300](https://github.com/microsoft/FluidFramework/issues/16300)) [a25789cd37](https://github.com/microsoft/FluidFramework/commits/a25789cd37bf60ebc4a08e1a9f7eaa8c65f4eae2)
+#### New API getRelaySessionInfo in odsp-driver ([#16300](https://github.com/microsoft/FluidFramework/issues/16300)) [a25789cd37](https://github.com/microsoft/FluidFramework/commits/a25789cd37bf60ebc4a08e1a9f7eaa8c65f4eae2)
 
-  `OdspDocumentServiceFactory` and `OdspDocumentServiceFactoryCore` now provide a new API `getRelaySessionInfo` to surface relay session info from cache.
+`OdspDocumentServiceFactory` and `OdspDocumentServiceFactoryCore` now provide a new API `getRelaySessionInfo` to surface relay session info from cache.
 
 ## 2.0.0-internal.5.2.0
 

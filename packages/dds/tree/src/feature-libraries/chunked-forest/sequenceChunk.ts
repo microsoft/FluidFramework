@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { dummyRoot, type ChunkedCursor, type TreeChunk } from "../../core/index.js";
 import { ReferenceCountedBase } from "../../util/index.js";
 
 import { ChunkCursor, ChunkSequenceCursor, type CompositeChunk } from "./chunkCursor.js";
-import { getFieldLength } from "./chunkEditing.js";
+import { type EditableChunk, type ChunkEditCursor, getFieldLength } from "./chunkEditing.js";
 
 /**
  * A {@link CompositeChunk} representing the concatenation of its child {@link TreeChunk}s.
@@ -16,9 +18,17 @@ import { getFieldLength } from "./chunkEditing.js";
  * The sequence adds no nodes or fields to the tree.
  * @privateRemarks
  * Cursor integration tests are in chunkCursor.spec.ts, alongside shared traversal and mixed-format boundary cases.
+ * Editing integration and root-length preservation are covered in chunkEditTraversal.spec.ts.
  */
-export class SequenceChunk extends ReferenceCountedBase implements CompositeChunk {
+export class SequenceChunk
+	extends ReferenceCountedBase
+	implements CompositeChunk, EditableChunk
+{
 	public readonly topLevelLength: number;
+
+	public supportsRootEdits(): boolean {
+		return true;
+	}
 
 	/**
 	 * Creates a {@link SequenceChunk} with reference count 1.
@@ -49,9 +59,47 @@ export class SequenceChunk extends ReferenceCountedBase implements CompositeChun
 		return new ChunkSequenceCursor(this.subChunks, dummyRoot, this.topLevelLength);
 	}
 
+	public getEditCursor(): ChunkEditCursor {
+		assert(!this.isShared(), 0xe0f /* Editing requires exclusive chunk ownership */);
+		return new SequenceEditCursor(this);
+	}
+
 	protected onUnreferenced(): void {
 		for (const child of this.subChunks) {
 			child.referenceRemoved();
 		}
+	}
+}
+
+/**
+ * A {@link ChunkEditCursor} exposing an exclusive {@link SequenceChunk}'s child array.
+ * @remarks
+ * Generic edits preserve {@link SequenceChunk.topLevelLength}; {@link SequenceEditCursor.setFieldChunks} checks that invariant.
+ */
+class SequenceEditCursor extends ChunkSequenceCursor implements ChunkEditCursor {
+	/**
+	 * Starts at an exclusive sequence's root field.
+	 * @remarks
+	 * Retains {@link SequenceChunk.topLevelLength} as the adapter's fixed root length during editing.
+	 */
+	public constructor(
+		/** Borrowed exclusive sequence supplying {@link SequenceChunk.topLevelLength}. */
+		private readonly chunk: SequenceChunk,
+	) {
+		super(chunk.subChunks, dummyRoot, chunk.topLevelLength);
+	}
+	public override getFieldChunks(): TreeChunk[] {
+		return this.chunk.subChunks;
+	}
+	public setFieldChunks(chunks: TreeChunk[]): void {
+		assert(!this.chunk.isShared(), 0xe10 /* Editing requires exclusive chunk ownership */);
+		assert(
+			chunks === this.chunk.subChunks,
+			0xe11 /* Expected the sequence's own child array */,
+		);
+		assert(
+			getFieldLength(chunks) === this.chunk.topLevelLength,
+			0xe12 /* Sequence edits must preserve length */,
+		);
 	}
 }

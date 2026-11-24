@@ -33,6 +33,8 @@ import {
 } from "../leafNodeSchema.js";
 import { isObjectNodeSchema } from "../node-kinds/index.js";
 
+import type { UntypedTreeViewAlpha } from "./tree.js";
+
 /**
  * Options for how to interpret or encode a tree when schema information is available.
  * @beta
@@ -60,6 +62,64 @@ export type TreeParsingOptions = TreeEncodingOptions<
 >;
 
 /**
+ * Options for importing a tree.
+ * @remarks
+ * To import with {@link KeyEncodingOptions.allStoredKeys}, also provide `view`: a view of the document that the tree is for.
+ * The tree must then agree with the stored schema of this document, and can be inserted into that document.
+ * The tree can then contain the {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields} that this stored schema allows.
+ *
+ * The view must be able to view its document (see {@link SchemaCompatibilityStatus.canView}).
+ * The import must use the same schema objects as the view.
+ * Each node schema in the schema that you give to the import must come from the {@link TreeViewConfiguration} of the view.
+ * If you give a different schema object that has the same identifier, the import throws an error.
+ * This occurs also if the two schema objects define the same schema.
+ *
+ * To get the view of a node in a document, use `TreeAlpha.context(node)` and check {@link TreeContextAlpha.isView | isView()}.
+ * @alpha
+ * @input
+ */
+export type TreeImportOptions =
+	| (TreeParsingOptions & {
+			/**
+			 * Allowed only with {@link KeyEncodingOptions.allStoredKeys}.
+			 */
+			readonly view?: never;
+	  })
+	| (Required<TreeEncodingOptions<KeyEncodingOptions.allStoredKeys>> & {
+			/**
+			 * A view of the document that the tree is for.
+			 */
+			readonly view: UntypedTreeViewAlpha;
+	  });
+
+/**
+ * Decides if an export includes a field of a node. It can also give a filter for the content of that field.
+ * @param parentSchemaIdentifier - The {@link TreeNodeSchemaCore.identifier | identifier} of the schema of the node that has the field.
+ * Content in {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields} can have a schema that is not in the view schema.
+ * @param storedKey - The {@link SimpleObjectFieldSchema.storedKey | stored key} of the field.
+ * For map nodes and record nodes, this is the key of the entry.
+ * For array nodes, this is the empty string, and the field contains all the elements of the array.
+ * If the filter omits this field, the result has an empty array of elements.
+ * @returns `false` to omit the field.
+ * `true` to include the field with all of its content.
+ * Otherwise, the filter to use for the fields of the nodes in this field.
+ * A leaf node has no fields, so the result always includes the value of a leaf node in full.
+ * @remarks
+ * The export calls the filter one time for each field of each node that it visits.
+ * For an array node, the export calls the filter one time, for the field that contains all the elements.
+ *
+ * While the filter runs, it can read the tree, but it must not edit the tree.
+ *
+ * The filter uses stored keys, regardless of the {@link KeyEncodingOptions} used for the keys of the tree.
+ * With {@link KeyEncodingOptions.allStoredKeys}, this lets the filter also select unknown optional fields.
+ * The other key options omit unknown optional fields before the export calls the filter.
+ */
+export type TreeFieldFilter = (
+	parentSchemaIdentifier: string,
+	storedKey: string,
+) => TreeFieldFilter | boolean;
+
+/**
  * Options for how to encode keys in a tree.
  * @beta
  * @input
@@ -75,7 +135,8 @@ export enum KeyEncodingOptions {
 	/**
 	 * Use stored keys, and include {@link ObjectSchemaOptions.allowUnknownOptionalFields|Unknown optional fields}.
 	 * @remarks
-	 * Currently only supported for export.
+	 * Supported for import and export.
+	 * For import, also provide a view (see {@link TreeImportOptions}).
 	 */
 	allStoredKeys = "allStoredKeys",
 	/**
@@ -126,6 +187,7 @@ export type CustomTreeNode<TChild> = TChild[] | { [key: string]: TChild };
  * Must include even unknown optional fields.
  * @param schema - View schema used to derive the property keys for fields when `options` selects them via {@link TreeEncodingOptions.useStoredKeys}.
  * @param childHandler - Function to handle children of the cursor.
+ * @param filter - Selects which fields to include. If `undefined`, all fields are included.
  *
  * @remarks
  * This can handle unknown optional fields only because they are included in the `storedSchema` and `schema` is only needed when using property keys, which also skips unknown optional fields.
@@ -140,7 +202,9 @@ export function customFromCursor<TChild>(
 		options: Required<TreeEncodingOptions>,
 		storedSchema: ReadonlyMap<string, TreeNodeStoredSchema>,
 		schema: ReadonlyMap<string, TreeNodeSchema>,
+		filter?: TreeFieldFilter,
 	) => TChild,
+	filter?: TreeFieldFilter,
 ): CustomTree<TChild> {
 	const type = reader.type;
 	const value = reader.value;
@@ -175,20 +239,47 @@ export function customFromCursor<TChild>(
 						// Skip unknown optional fields when using property keys or only known stored keys.
 						return;
 					}
+					const childFilter = filterField(filter, type, storedKey);
+					if (childFilter === false) {
+						return;
+					}
 
 					reader.enterNode(0);
-					fields[key] = childHandler(reader, options, storedSchema, schema);
+					fields[key] = childHandler(reader, options, storedSchema, schema, childFilter);
 					reader.exitNode();
 				});
 				return fields;
 			} else {
+				const childFilter = filterField(filter, type, EmptyKey);
+				if (childFilter === false) {
+					return [];
+				}
 				const fields = inCursorField(reader, EmptyKey, () =>
-					mapCursorField(reader, () => childHandler(reader, options, storedSchema, schema)),
+					mapCursorField(reader, () =>
+						childHandler(reader, options, storedSchema, schema, childFilter),
+					),
 				);
 				return fields;
 			}
 		}
 	}
+}
+
+/**
+ * Applies `filter` to the field `storedKey` of a node.
+ * @returns `false` if the field is omitted.
+ * Otherwise, the filter for the content of the field, or `undefined` to include all of the content.
+ */
+function filterField(
+	filter: TreeFieldFilter | undefined,
+	parentSchemaIdentifier: string,
+	storedKey: string,
+): TreeFieldFilter | false | undefined {
+	if (filter === undefined) {
+		return undefined;
+	}
+	const childFilter = filter(parentSchemaIdentifier, storedKey);
+	return childFilter === true ? undefined : childFilter;
 }
 
 /**

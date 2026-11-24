@@ -38,6 +38,8 @@ import type { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
  *
  * After the attach phase, roots destruction is carried out.
  * This needs to happen last to allow modifications to detached roots to be applied before they are destroyed.
+ * Attachments that would close a cycle in a detached tree are omitted.
+ * Their now-unreachable roots are destroyed after traversal, instead of consuming an entered ancestor.
  *
  * The details of the delta visit algorithm can impact how/when events are emitted by the objects that own the visitors.
  * For example, as of 2024-03-27, the subtreeChanged event of an AnchorNode is emitted when exiting a node during a
@@ -65,6 +67,7 @@ export function visitDelta(
 	const attachPassRoots: Map<ForestRootId, Delta.FieldMap> = new Map();
 	const rootTransfers: Delta.DetachedNodeRename[] = [];
 	const rootDestructions: Delta.DetachedNodeDestruction[] = [];
+	const cyclicRoots: ForestRootId[] = [];
 	const replacedMarks: Set<Delta.Mark> = new Set();
 	const refreshers: NestedMap<Major, Minor, ITreeCursorSynchronous> = new Map();
 	for (const {
@@ -86,6 +89,8 @@ export function visitDelta(
 		attachPassRoots,
 		rootTransfers,
 		rootDestructions,
+		cyclicRoots,
+		currentRoot: undefined,
 		replacedMarks,
 	};
 	processBuilds(delta.build, detachConfig, visitor);
@@ -110,6 +115,8 @@ export function visitDelta(
 		attachPassRoots,
 		rootTransfers,
 		rootDestructions,
+		cyclicRoots,
+		currentRoot: undefined,
 		replacedMarks,
 	};
 	visitFieldMarks(delta.fields, visitor, attachConfig);
@@ -123,6 +130,16 @@ export function visitDelta(
 			visitor.destroy(field, 1);
 			detachedFieldIndex.deleteEntry(offsetId);
 		}
+	}
+	// TODO: AB#89314: Recover cycle content correctly for undo/redo and concurrent edits.
+	// Destroying content that is concurrently made cyclic allows the common case to proceed
+	// and cleans up resources associated with that cycle, but subsequent edits that attempt
+	// to resurrect that content do not behave correctly with this implementation. See work item
+	// for more details.
+	// Destroying the nodes also invalidates retained node references, which can help avoid document
+	// corruption as invalidated nodes will reject edits locally before any ops are submitted.
+	for (const root of cyclicRoots) {
+		visitor.destroy(detachedFieldIndex.toFieldKey(root), 1);
 	}
 }
 
@@ -142,11 +159,13 @@ function fixedPointVisitOfRoots(
 	while (roots.size > 0) {
 		for (const [root, modifications] of roots) {
 			roots.delete(root);
+			config.currentRoot = root;
 			const field = config.detachedFieldIndex.toFieldKey(root);
 			visitor.enterField(field);
 			// Note: each visit may lead to `roots` being populated with new entries or having some entries removed.
 			visitNode(0, modifications, visitor, config);
 			visitor.exitField(field);
+			config.currentRoot = undefined;
 		}
 	}
 }
@@ -361,6 +380,11 @@ interface PassConfig {
 	readonly func: Pass;
 
 	/**
+	 * The detached root whose subtree is being visited, if any.
+	 */
+	currentRoot: ForestRootId | undefined;
+
+	/**
 	 * The latest revision tag associated with the given delta. This is used to keep track
 	 * of when repair data should be garbage collected.
 	 */
@@ -397,6 +421,11 @@ interface PassConfig {
 	 * Carried out at the end of the attach pass.
 	 */
 	readonly rootDestructions: Delta.DetachedNodeDestruction[];
+	/**
+	 * Roots whose cycle-closing attachment was omitted.
+	 * Their index entries have already been consumed, but their fields must survive until traversal exits.
+	 */
+	readonly cyclicRoots: ForestRootId[];
 	/**
 	 * Marks applied as replacements during the detach pass.
 	 * Their incoming nodes remain in the field and must not be attached again in the attach pass.
@@ -609,6 +638,7 @@ function attachPass(
 			index += mark.count;
 			continue;
 		}
+		let omittedAttaches = 0;
 		if (mark.attach !== undefined) {
 			for (let i = 0; i < mark.count; i += 1) {
 				const offsetAttachId = offsetDetachId(mark.attach, i);
@@ -630,8 +660,13 @@ function attachPass(
 					sourceRoot = config.detachedFieldIndex.getEntry(offsetAttachId);
 				}
 				const sourceField = config.detachedFieldIndex.toFieldKey(sourceRoot);
-				const offsetIndex = index + i;
-				visitor.attach(sourceField, 1, offsetIndex);
+				const offsetIndex = index + i - omittedAttaches;
+				if (sourceRoot === config.currentRoot) {
+					config.cyclicRoots.push(sourceRoot);
+					omittedAttaches++;
+				} else {
+					visitor.attach(sourceField, 1, offsetIndex);
+				}
 				config.detachedFieldIndex.deleteEntry(offsetAttachId);
 				const fields = config.attachPassRoots.get(sourceRoot);
 				if (fields !== undefined) {
@@ -644,7 +679,7 @@ function attachPass(
 			visitNode(index, mark.fields, visitor, config);
 		}
 		if (mark.detach === undefined || mark.attach !== undefined) {
-			index += mark.count;
+			index += mark.count - omittedAttaches;
 		}
 	}
 }

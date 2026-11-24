@@ -169,15 +169,11 @@ export class SharedTreeChangeFamily
 					};
 				}
 				case "schema": {
+					// Reverting schema changes may be supported in the future
+					assert(isRollback, 0xde1 /* Reverting schema changes is not supported */);
 					return {
 						type: "schema",
-						innerChange: {
-							schema: {
-								new: innerChange.innerChange.schema.old,
-								old: innerChange.innerChange.schema.new,
-							},
-							isInverse: true,
-						},
+						innerChange: innerChange.innerChange.rollback(),
 					};
 				}
 				default: {
