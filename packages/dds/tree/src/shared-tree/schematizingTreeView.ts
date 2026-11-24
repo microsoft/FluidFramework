@@ -277,7 +277,7 @@ export class SchematizingSimpleTreeView<
 				: SchemaIdentityInternal.extract(configAlpha.schemaIdentity);
 		if (identity?.expectedHash !== undefined) {
 			const { expectedHash, schemaHasher: hasher } = identity;
-			assert(hasher !== undefined, "An expected schema hash requires a hasher.");
+			assert(hasher !== undefined, 0xde0 /* An expected schema hash requires a hasher. */);
 			const actualHash = hasher(toInitialSchema(configAlpha.schema, this.stagedUpgradePolicy));
 			if (actualHash !== expectedHash) {
 				const versionSuggestion =

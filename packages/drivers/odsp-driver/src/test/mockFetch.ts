@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 import { stub } from "sinon";
 
 /**
@@ -31,6 +32,13 @@ export const createResponse = async (
 	headers: headers ? new Headers(headers) : new Headers(),
 	json: async () => response,
 });
+
+/**
+ * Builds a `www-authenticate` header value that carries a claims challenge, as ODSP returns with a 401 response.
+ * @param claims - The claims JSON, before base64 encoding.
+ */
+export const createClaimsChallengeHeader = (claims: string): string =>
+	`Bearer realm="", error="insufficient_claims", claims="${fromUtf8ToBase64(claims)}"`;
 
 export const okResponse = async (
 	headers: { [key: string]: string },

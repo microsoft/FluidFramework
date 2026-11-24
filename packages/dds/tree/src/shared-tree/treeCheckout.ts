@@ -1840,7 +1840,9 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		}
 		this.checkCanSwitchBranch();
 		this.breaker.run(() => {
-			switchBranch(this.#transaction.branch.fork(targetCommit));
+			const oldBranch = this.#transaction.branch;
+			switchBranch(oldBranch.fork(targetCommit));
+			oldBranch.dispose();
 		});
 	}
 

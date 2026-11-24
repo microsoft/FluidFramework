@@ -209,6 +209,73 @@ describe("visitDelta", () => {
 		testDeltaVisit(delta, expected, index);
 		assert.equal(index.entries().next().done, true);
 	});
+	for (const cycleOffset of [0, 1]) {
+		// TODO: AB#89314: This test validates current behavior, but that behavior likely needs to change
+		// to support correct handling of any changes that resurrect content previously made part of a cycle
+		// (which can happen via undo/redo or from other concurrent edits).
+		it(`finishes remaining edits before destroying a cycle (attachment offset: ${cycleOffset})`, () => {
+			const index = makeDetachedFieldIndex("");
+			for (let minor = 42; minor < 46; minor++) {
+				index.createEntry({ minor });
+			}
+			const cyclicField = cycleOffset === 0 ? field0 : field1;
+			const incomingField = cycleOffset === 0 ? field1 : field0;
+			const delta: DeltaRoot = {
+				global: [
+					{
+						id: { minor: 42 + cycleOffset },
+						fields: new Map([
+							[
+								fooKey,
+								{
+									marks: [
+										{ count: 2, attach: { minor: 42 } },
+										{
+											count: 1,
+											fields: new Map([
+												[barKey, { marks: [{ count: 1, attach: { minor: 44 } }] }],
+											]),
+										},
+									],
+								},
+							],
+						]),
+					},
+				],
+			};
+			testDeltaVisit(
+				delta,
+				[
+					["enterField", cyclicField],
+					["enterNode", 0],
+					["enterField", fooKey],
+					["enterNode", 0],
+					["enterField", barKey],
+					["exitField", barKey],
+					["exitNode", 0],
+					["exitField", fooKey],
+					["exitNode", 0],
+					["exitField", cyclicField],
+					["enterField", cyclicField],
+					["enterNode", 0],
+					["enterField", fooKey],
+					["attach", incomingField, 1, 0],
+					["enterNode", 1],
+					["enterField", barKey],
+					["attach", field2, 1, 0],
+					["exitField", barKey],
+					["exitNode", 1],
+					["exitField", fooKey],
+					["exitNode", 0],
+					["exitField", cyclicField],
+					["destroy", cyclicField, 1],
+				],
+				index,
+			);
+			assert.deepEqual([...index.entries()], [{ id: { minor: 45 }, root: 3 }]);
+		});
+	}
+
 	it("remove root", () => {
 		const index = makeDetachedFieldIndex("");
 		const mark: DeltaMark = {

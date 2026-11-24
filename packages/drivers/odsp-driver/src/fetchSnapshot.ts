@@ -61,6 +61,7 @@ import {
 	getWithRetryForTokenRefresh,
 	getOdspResolvedUrl,
 	getWithRetryForTokenRefreshRepeat,
+	isClaimsChallenge,
 	isSnapshotFetchForLoadingGroup,
 	measure,
 	measureP,
@@ -133,6 +134,7 @@ export async function fetchSnapshotWithRedeem(
 	loadingGroupIds: string[] | undefined,
 	enableRedeemFallback?: boolean,
 	requestHeaders?: Readonly<Record<string, string>>,
+	propagateClaimsChallenges?: boolean,
 ): Promise<ISnapshot> {
 	// back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
@@ -153,8 +155,14 @@ export async function fetchSnapshotWithRedeem(
 		enableRedeemFallback,
 	)
 		.catch(async (error) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-			if (enableRedeemFallback && isRedeemSharingLinkError(odspResolvedUrl, error)) {
+			if (
+				enableRedeemFallback &&
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+				isRedeemSharingLinkError(odspResolvedUrl, error) &&
+				// With propagateClaimsChallenges, fail with the original claims challenge.
+				// Redeeming the sharing link can't satisfy it, and an error from the redeem request could replace it.
+				!(propagateClaimsChallenges === true && isClaimsChallenge(error))
+			) {
 				// Execute the redeem fallback
 				await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger, requestHeaders);
 
@@ -571,8 +579,12 @@ async function fetchLatestSnapshotCore(
 					fluidEpoch,
 					version: persistedCacheValueVersion,
 				};
-				// eslint-disable-next-line @typescript-eslint/no-floating-promises
-				putInCache(valueWithEpoch);
+				// Caching is best-effort: the fetch doesn't wait for the write, and a failed write doesn't fail the fetch.
+				// The only effect of a failed write is that later loads can't get this snapshot from the cache.
+				// The callers log the failure: EpochTracker.put logs cachePutError,
+				// and prefetchLatestSnapshot logs PrefetchLatestSnapshotError.
+				// So this catch only keeps a failed write from becoming an unhandled promise rejection.
+				putInCache(valueWithEpoch).catch(() => {});
 			}
 
 			event.end({
