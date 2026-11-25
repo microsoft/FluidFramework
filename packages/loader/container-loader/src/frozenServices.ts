@@ -63,7 +63,7 @@ export function createFrozenDocumentServiceFactory(
 		// the new argument).
 		return factory.readOnly === readOnly
 			? factory
-			: new FrozenDocumentServiceFactory(readOnly, factory.inner);
+			: new FrozenDocumentServiceFactory(readOnly, factory.inner, factory.attachmentsOmitted);
 	}
 	return new FrozenDocumentServiceFactory(readOnly, factory);
 }
@@ -72,6 +72,7 @@ export class FrozenDocumentServiceFactory implements IDocumentServiceFactory {
 	constructor(
 		public readonly readOnly: boolean,
 		public readonly inner?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>,
+		public readonly attachmentsOmitted: boolean = false,
 	) {}
 
 	async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
@@ -80,6 +81,7 @@ export class FrozenDocumentServiceFactory implements IDocumentServiceFactory {
 			resolvedUrl,
 			this.readOnly,
 			await factory?.createDocumentService(resolvedUrl),
+			this.attachmentsOmitted,
 		);
 	}
 	async createContainer(): Promise<IDocumentService> {
@@ -101,6 +103,7 @@ class FrozenDocumentService
 		public readonly resolvedUrl: IResolvedUrl,
 		private readonly readOnly: boolean,
 		private readonly documentService?: IDocumentService,
+		private readonly attachmentsOmitted: boolean = false,
 	) {
 		super();
 		// When readOnly, advertise the storageOnly policy. The connectionManager short-circuits
@@ -123,6 +126,7 @@ class FrozenDocumentService
 		const storage = new FrozenDocumentStorageService(
 			this.readOnly,
 			await this.documentService?.connectToStorage(),
+			this.attachmentsOmitted,
 		);
 		this.storageServices.add(storage);
 		return storage;
@@ -174,12 +178,15 @@ const frozenDocumentStorageServiceHandler = (): never => {
  * that hit this path are exercising a fully-offline frozen load whose pending
  * state omits a required structural or attachment blob. A generic "operation
  * not supported" is technically true but unhelpful; this message names the
- * missing precondition and the API mode that satisfies it.
+ * missing payload and the offline-capture or online-read remedies.
  */
-const frozenReadBlobOfflineHandler = async (): Promise<never> => {
+const frozenReadBlobOfflineHandler = async (attachmentsOmitted: boolean): Promise<never> => {
+	const captureGuidance = attachmentsOmitted
+		? 'This state was captured with blobCaptureMode: "reference", which omits attachment payloads. '
+		: "Use `captureFullContainerState` with " +
+			'blobCaptureMode: "inline" to capture eligible payloads; "reference" omits attachment payloads. ';
 	throw new UsageError(
-		"Attempted to read a blob from a frozen-loaded container without a live storage service. " +
-			"Fully-offline frozen loads must use pending state produced by `captureFullContainerState` with the default inline blob capture mode.",
+		`Attempted to read a blob from a frozen-loaded container without a live storage service. The blob payload was not captured. ${captureGuidance}To read omitted blobs, use the online form of \`loadFrozenContainerFromPendingState\` with live driver wiring.`,
 	);
 };
 
@@ -199,7 +206,11 @@ class FrozenDocumentStorageService implements IDocumentStorageService, IDisposab
 		return this._disposed;
 	}
 
-	constructor(readOnly: boolean, documentStorageService?: IDocumentStorageService) {
+	constructor(
+		readOnly: boolean,
+		documentStorageService?: IDocumentStorageService,
+		attachmentsOmitted: boolean = false,
+	) {
 		let rejectFn!: (error: Error) => void;
 		const promise = new Promise<never>((_, reject) => {
 			rejectFn = reject;
@@ -223,7 +234,7 @@ class FrozenDocumentStorageService implements IDocumentStorageService, IDisposab
 			: async () => this.disposalDeferred.promise;
 		this.readBlob =
 			documentStorageService?.readBlob.bind(documentStorageService) ??
-			frozenReadBlobOfflineHandler;
+			(async () => frozenReadBlobOfflineHandler(attachmentsOmitted));
 	}
 
 	getSnapshotTree = frozenDocumentStorageServiceHandler;

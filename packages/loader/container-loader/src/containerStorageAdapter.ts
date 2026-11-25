@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString } from "@fluid-internal/client-utils";
 import type {
 	ISnapshotTreeWithBlobContents,
 	IContainerStorageService,
@@ -33,19 +32,16 @@ import type {
 	ISerializedStateManagerDocumentStorageService,
 	SerializedSnapshotInfo,
 } from "./serializedStateManager.js";
-import { convertSnapshotInfoToSnapshot } from "./utils.js";
+import { convertSnapshotInfoToSnapshot, serializeBlobContents } from "./utils.js";
 
 /**
  * Stringified blobs from a summary/snapshot tree, keyed by blob id.
- * Values are **UTF-8-encoded** — this is the right encoding for JSON or
- * other text the runtime authors and consumes through this map. For
- * arbitrary binary payloads (e.g. attachment blob contents), use
- * {@link IBase64BlobContents} instead; a UTF-8 round-trip silently
- * corrupts non-UTF-8 byte sequences with replacement characters.
+ * Ordinary serialization uses legacy UTF-8 strings. Capture sessions can
+ * use an explicitly tagged base64 representation for non-UTF-8 contents.
  * @internal
  */
 export interface ISerializableBlobContents {
-	[id: string]: string;
+	[id: string]: string | { encoding: "base64"; contents: string };
 }
 
 /**
@@ -53,9 +49,8 @@ export interface ISerializableBlobContents {
  * Values are **base64-encoded** raw bytes. Used for attachment-blob
  * payloads, which may carry arbitrary binary data (images, encrypted
  * blobs, etc.). Mirrors the encoding used by the runtime's own
- * pending-blob serializer in `BlobManager`. Structurally identical to
- * {@link ISerializableBlobContents}; the two types exist to keep the
- * encoding contract visible at every call site.
+ * pending-blob serializer in `BlobManager`. Unlike
+ * {@link ISerializableBlobContents}, every value is base64.
  * @internal
  */
 export interface IBase64BlobContents {
@@ -330,20 +325,24 @@ const redirectTableBlobName = ".redirectTable";
 
 /**
  * Get blob contents of a snapshot tree from storage (or, ideally, cache)
+ * @param snapshot - The snapshot whose blob contents should be serialized.
+ * @param storage - Storage used to read blob contents not included in the snapshot.
+ * @param useLosslessBlobEncoding - Preserve binary contents for a continued capture session.
  */
 export async function getBlobContentsFromTree(
 	snapshot: ISnapshot | ISnapshotTree,
 	storage: Pick<IDocumentStorageService, "readBlob">,
+	useLosslessBlobEncoding = false,
 ): Promise<ISerializableBlobContents> {
-	const blobs = {};
+	const blobs: ISerializableBlobContents = {};
 	if (isInstanceOfISnapshot(snapshot)) {
 		const blobContents = snapshot.blobContents;
 		for (const [id, content] of blobContents.entries()) {
 			// ArrayBufferLike will not survive JSON.stringify()
-			blobs[id] = bufferToString(content, "utf8");
+			blobs[id] = serializeBlobContents(content, useLosslessBlobEncoding);
 		}
 	} else {
-		await getBlobContentsFromTreeCore(snapshot, blobs, storage);
+		await getBlobContentsFromTreeCore(snapshot, blobs, storage, useLosslessBlobEncoding);
 	}
 	return blobs;
 }
@@ -352,20 +351,25 @@ async function getBlobContentsFromTreeCore(
 	tree: ISnapshotTree,
 	blobs: ISerializableBlobContents,
 	storage: Pick<IDocumentStorageService, "readBlob">,
+	useLosslessBlobEncoding: boolean,
 	root = true,
 ): Promise<unknown[]> {
 	const treePs: Promise<unknown>[] = [];
 	for (const [key, subTree] of Object.entries(tree.trees)) {
 		if (root && key === blobsTreeName) {
-			treePs.push(getBlobManagerTreeFromTree(subTree, blobs, storage));
+			treePs.push(
+				getBlobManagerTreeFromTree(subTree, blobs, storage, useLosslessBlobEncoding),
+			);
 		} else {
-			treePs.push(getBlobContentsFromTreeCore(subTree, blobs, storage, false));
+			treePs.push(
+				getBlobContentsFromTreeCore(subTree, blobs, storage, useLosslessBlobEncoding, false),
+			);
 		}
 	}
 	for (const id of Object.values(tree.blobs)) {
 		const blob = await storage.readBlob(id);
 		// ArrayBufferLike will not survive JSON.stringify()
-		blobs[id] = bufferToString(blob, "utf8");
+		blobs[id] = serializeBlobContents(blob, useLosslessBlobEncoding);
 	}
 	return Promise.all(treePs);
 }
@@ -375,12 +379,13 @@ async function getBlobManagerTreeFromTree(
 	tree: ISnapshotTree,
 	blobs: ISerializableBlobContents,
 	storage: Pick<IDocumentStorageService, "readBlob">,
+	useLosslessBlobEncoding: boolean,
 ): Promise<void> {
 	const id = tree.blobs[redirectTableBlobName];
 	assert(id !== undefined, 0x9ce /* id is undefined in getBlobManagerTreeFromTree */);
 	const blob = await storage.readBlob(id);
 	// ArrayBufferLike will not survive JSON.stringify()
-	blobs[id] = bufferToString(blob, "utf8");
+	blobs[id] = serializeBlobContents(blob, useLosslessBlobEncoding);
 }
 
 /**
@@ -389,7 +394,7 @@ async function getBlobManagerTreeFromTree(
 export function getBlobContentsFromTreeWithBlobContents(
 	snapshot: ISnapshotTreeWithBlobContents,
 ): ISerializableBlobContents {
-	const blobs = {};
+	const blobs: ISerializableBlobContents = {};
 	getBlobContentsFromTreeWithBlobContentsCore(snapshot, blobs);
 	return blobs;
 }
@@ -410,7 +415,7 @@ function getBlobContentsFromTreeWithBlobContentsCore(
 		const blob = tree.blobsContents?.[id];
 		assert(blob !== undefined, 0x2ec /* "Blob must be present in blobsContents" */);
 		// ArrayBufferLike will not survive JSON.stringify()
-		blobs[id] = bufferToString(blob, "utf8");
+		blobs[id] = serializeBlobContents(blob);
 	}
 }
 
@@ -427,5 +432,5 @@ function getBlobManagerTreeFromTreeWithBlobContents(
 	const blob = tree.blobsContents?.[id];
 	assert(blob !== undefined, 0x70f /* Blob must be present in blobsContents */);
 	// ArrayBufferLike will not survive JSON.stringify()
-	blobs[id] = bufferToString(blob, "utf8");
+	blobs[id] = serializeBlobContents(blob);
 }

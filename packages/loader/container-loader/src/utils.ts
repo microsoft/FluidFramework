@@ -205,15 +205,19 @@ function convertSummaryToISnapshot(
  *
  * Note, this assumes the ISnapshot sequence number is defined. Otherwise an assert will be thrown
  * @param snapshot - ISnapshot
+ * @param useLosslessBlobEncoding - Preserve binary contents for a continued capture session.
  */
-export function convertSnapshotToSnapshotInfo(snapshot: ISnapshot): SerializedSnapshotInfo {
+export function convertSnapshotToSnapshotInfo(
+	snapshot: ISnapshot,
+	useLosslessBlobEncoding = false,
+): SerializedSnapshotInfo {
 	assert(
 		snapshot.sequenceNumber !== undefined,
 		0x93a /* Snapshot sequence number is missing */,
 	);
 	const snapshotBlobs: ISerializableBlobContents = {};
 	for (const [blobId, arrayBufferLike] of snapshot.blobContents.entries()) {
-		snapshotBlobs[blobId] = bufferToString(arrayBufferLike, "utf8");
+		snapshotBlobs[blobId] = serializeBlobContents(arrayBufferLike, useLosslessBlobEncoding);
 	}
 	return {
 		baseSnapshot: snapshot.snapshotTree,
@@ -234,7 +238,7 @@ export function convertSnapshotInfoToSnapshot(
 ): ISnapshot {
 	const blobContents = new Map<string, ArrayBuffer>();
 	for (const [blobId, serializedContent] of Object.entries(snapshotInfo.snapshotBlobs)) {
-		blobContents.set(blobId, stringToBuffer(serializedContent, "utf8"));
+		blobContents.set(blobId, deserializeBlobContents(serializedContent));
 	}
 	return {
 		snapshotTree: snapshotInfo.baseSnapshot,
@@ -346,17 +350,60 @@ function isPendingDetachedContainerState(
 /**
  * Converts an ISnapshot to a SnapshotWithBlobs, extracting and serializing its blob contents.
  * @param snapshot - The ISnapshot to convert.
+ * @param useLosslessBlobEncoding - Preserve binary contents for a continued capture session.
  * @returns A SnapshotWithBlobs containing the base snapshot and serialized blob contents.
  */
-export function convertISnapshotToSnapshotWithBlobs(snapshot: ISnapshot): SnapshotWithBlobs {
+export function convertISnapshotToSnapshotWithBlobs(
+	snapshot: ISnapshot,
+	useLosslessBlobEncoding = false,
+): SnapshotWithBlobs {
 	const snapshotBlobs: ISerializableBlobContents = {};
 	for (const [id, blob] of snapshot.blobContents.entries()) {
-		snapshotBlobs[id] = bufferToString(blob, "utf8");
+		snapshotBlobs[id] = serializeBlobContents(blob, useLosslessBlobEncoding);
 	}
 	return {
 		baseSnapshot: snapshot.snapshotTree,
 		snapshotBlobs,
 	};
+}
+
+const summaryBlobTextDecoder = new TextDecoder("utf8", {
+	fatal: true,
+	ignoreBOM: true,
+});
+
+/**
+ * Serializes summary blob bytes using legacy text unless lossless capture encoding is requested.
+ * @param blob - Raw summary blob contents.
+ * @param useLosslessBlobEncoding - Allow tagged base64 for binary contents in capture sessions.
+ * @returns Legacy text, or lossless text/tagged base64 when explicitly requested.
+ */
+export function serializeBlobContents(
+	blob: ArrayBufferLike,
+	useLosslessBlobEncoding = false,
+): ISerializableBlobContents[string] {
+	if (!useLosslessBlobEncoding) {
+		return bufferToString(blob, "utf8");
+	}
+	try {
+		return summaryBlobTextDecoder.decode(blob);
+	} catch (error) {
+		if (!(error instanceof TypeError)) {
+			throw error;
+		}
+		return { encoding: "base64", contents: bufferToString(blob, "base64") };
+	}
+}
+
+/**
+ * Decodes legacy text or explicitly encoded summary blob contents.
+ * @param blob - Serialized summary blob contents.
+ * @returns The original blob bytes.
+ */
+export function deserializeBlobContents(blob: ISerializableBlobContents[string]): ArrayBuffer {
+	return typeof blob === "string"
+		? stringToBuffer(blob, "utf8")
+		: stringToBuffer(blob.contents, blob.encoding);
 }
 
 /**
