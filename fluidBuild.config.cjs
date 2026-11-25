@@ -284,16 +284,18 @@ module.exports = {
 			script: true,
 		},
 		"depcruise": [],
-		// check:exports provides protection for all of the subtasks so long as
-		// they are not the specifically requested task by requiring all
+		// check:exports provides protection for all of the subtasks (so long as
+		// they are not the specifically requested task) by requiring all
 		// entrypoints to be built before any of the child tasks are run.
 		// This is done because the "check:exports:*" tasks have variable
 		// names depending on the package configuration and fluid-build does
 		// not support wildcards in task dependencies.
+		// Packages supporting CJS but no longer "api" tasks will need to
+		// customize as only ESM dependencies are accounted for.
 		// note: these are technically missing dependency on a task that generates tsdoc-metadata.json.
 		// However different tasks are used to do that depending on run under CI or not. The metadata
 		// file is small and changes rarely so it can be checked-in in future to avoid complexity.
-		"check:exports": ["build:package", "api"],
+		"check:exports": ["build:package:esm", "api"],
 		"check:exports:bundle-release-tags": ["build:esm", "build:esnext"],
 		// The package's local 'api-extractor-lint.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.

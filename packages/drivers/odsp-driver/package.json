@@ -15,24 +15,15 @@
 	"exports": {
 		".": {
 			"types": "./lib/public.d.ts",
-			"default": "./lib/index.js",
-			"internal-entrypoint-generation": {
-				"types": "./dist/public.d.ts"
-			}
+			"default": "./lib/index.js"
 		},
 		"./legacy": {
 			"types": "./lib/legacy.d.ts",
-			"default": "./lib/index.js",
-			"internal-entrypoint-generation": {
-				"types": "./dist/legacy.d.ts"
-			}
+			"default": "./lib/index.js"
 		},
 		"./legacy/alpha": {
 			"types": "./lib/legacyAlpha.d.ts",
-			"default": "./lib/index.js",
-			"internal-entrypoint-generation": {
-				"types": "./dist/legacyAlpha.d.ts"
-			}
+			"default": "./lib/index.js"
 		},
 		"./legacy/point-in-time": {
 			"types": "./lib/pointInTime.d.ts",
@@ -54,7 +45,6 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local --config api-extractor/api-extractor-model.json",
 		"build:entrypoints": "fluid-build . --task build:entrypoints",
-		"build:entrypoints:cjs": "flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outFileLegacyAlpha legacyAlpha --outDir ./dist",
 		"build:entrypoints:esm": "flub generate entrypoints --outFileLegacyBeta legacy --outFileLegacyAlpha legacyAlpha --outDir ./lib",
 		"build:esm": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
@@ -65,10 +55,6 @@
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
-		"check:exports:cjs:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.cjs.json",
-		"check:exports:cjs:legacyAlpha": "api-extractor run --config api-extractor/api-extractor-lint-legacyAlpha.cjs.json",
-		"check:exports:cjs:pointInTime": "api-extractor run --config api-extractor/api-extractor-lint-pointInTime.cjs.json",
-		"check:exports:cjs:public": "api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json",
 		"check:exports:esm:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.esm.json",
 		"check:exports:esm:legacyAlpha": "api-extractor run --config api-extractor/api-extractor-lint-legacyAlpha.esm.json",
 		"check:exports:esm:pointInTime": "api-extractor run --config api-extractor/api-extractor-lint-pointInTime.esm.json",
