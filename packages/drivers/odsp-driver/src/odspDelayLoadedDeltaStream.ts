@@ -39,6 +39,7 @@ import { v4 as uuid } from "uuid";
 
 import { policyLabelsUpdatesSignalType } from "./contracts.js";
 import type { EpochTracker } from "./epochTracker.js";
+import { JoinSessionCache } from "./joinSessionCache.js";
 import type { IOdspCache } from "./odspCache.js";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection.js";
 import {
@@ -65,6 +66,7 @@ export class OdspDelayLoadedDeltaStream {
 	private _relayServiceTenantAndSessionId: string | undefined;
 
 	private firstConnectionAttempt = true;
+	private hasAttemptedJoinSession = false;
 
 	// Tracks the time at which the Policy Labels were updated the last time. This is used to resolve race conditions
 	// between label updates from the join session and the Fluid signals and they could have same or different timestamps.
@@ -434,6 +436,16 @@ export class OdspDelayLoadedDeltaStream {
 		isRefreshingJoinSession: boolean,
 		displayName: string | undefined,
 	): Promise<ISocketStorageDiscovery> {
+		// Classify the caller for throttle-wait telemetry; this does not select retry behavior.
+		let caller: string;
+		if (isRefreshingJoinSession) {
+			caller = "periodicRefresh";
+		} else if (options.refresh) {
+			caller = requestSocketToken ? "socketTokenRefresh" : "storageTokenRefresh";
+		} else {
+			caller = this.hasAttemptedJoinSession ? "reconnect" : "initialConnect";
+		}
+		this.hasAttemptedJoinSession = true;
 		const disableJoinSessionRefresh = this.mc.config.getBoolean(
 			"Fluid.Driver.Odsp.disableJoinSessionRefresh",
 		);
@@ -469,14 +481,18 @@ export class OdspDelayLoadedDeltaStream {
 			entryTime: number;
 			joinSessionResponse: ISocketStorageDiscovery;
 		}> => {
-			const _response = await this.cache.sessionJoinCache.addOrGet(
-				this.joinSessionKey,
-				executeFetch,
-			);
-			// If the response does not contain refreshSessionDurationSeconds, then treat it as old flow and let the
-			// cache entry to be treated as expired after 1 hour.
-			_response.joinSessionResponse.refreshSessionDurationSeconds =
-				_response.joinSessionResponse.refreshSessionDurationSeconds ?? 3600;
+			const sessionJoinCache = this.cache.sessionJoinCache;
+			// The legacy-beta cache interface also permits a consumer-supplied PromiseCache.
+			const promise =
+				sessionJoinCache instanceof JoinSessionCache
+					? sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch, {
+							logger: this.mc.logger,
+							caller,
+						})
+					: sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
+			const _response = await promise;
+			// Responses without a refresh duration use the legacy one-hour lifetime.
+			_response.joinSessionResponse.refreshSessionDurationSeconds ??= 3600;
 			return {
 				..._response,
 				refreshAfterDeltaMs: this.calculateJoinSessionRefreshDelta(
