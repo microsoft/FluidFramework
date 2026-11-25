@@ -33,9 +33,10 @@ To run the example with SharePoint, complete these steps:
 
 There is a single Fluid object that make up the Table application:
 
-### [TableDataObject](./src/Table/dataObject.js)
+### [TableDataObject](./src/dataObject.ts)
 
-A TableDataObject is the top level Fluid object. It can create, remove, move rows and columns into the table.
+A TableDataObject is the top level Fluid object.
+It can create, remove, move rows and columns into the table.
 
 ## The views
 

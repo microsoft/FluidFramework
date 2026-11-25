@@ -4,7 +4,11 @@
  */
 
 import { TreeDataObject, TreeDataObjectFactory } from "@fluidframework/aqueduct/legacy";
-import { FluidClientVersion } from "@fluidframework/tree/alpha";
+import {
+	FluidClientVersion,
+	initializeAndView,
+	viewExisting,
+} from "@fluidframework/tree/alpha";
 import {
 	configuredSharedTreeBetaLegacy,
 	TreeViewConfiguration,
@@ -46,19 +50,17 @@ export class TableDataObject extends TreeDataObject {
 	}
 
 	protected override async initializingFirstTime(): Promise<void> {
-		this.#treeView = this.tree.viewWith(this.config);
-		if (!this.treeView.compatibility.canInitialize) {
-			throw new Error("Incompatible schema");
-		}
-
-		this.treeView.initialize(getInitialTree());
+		this.#treeView = initializeAndView(this.tree, this.config, getInitialTree());
 	}
 
 	protected override async initializingFromExisting(): Promise<void> {
-		this.#treeView = this.tree.viewWith(this.config);
-		if (!this.treeView.compatibility.canView) {
-			throw new Error("Incompatible schema");
+		const result = viewExisting(this.tree, this.config);
+		if (!result.canView) {
+			throw new Error("This version of the app cannot open the table.", {
+				cause: result.incompatibilities,
+			});
 		}
+		this.#treeView = result.view;
 	}
 }
 

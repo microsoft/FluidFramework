@@ -88,4 +88,12 @@ export {
 	type SharedTreeChangeFormatVersion,
 } from "./sharedTreeChangeCodecs.js";
 
-export { createViewableTreeAlpha, openCheckoutView } from "./viewableTree.js";
+export { createViewableTreeAlpha } from "./viewableTree.js";
+export {
+	initializeAndView,
+	viewExisting,
+	type ViewTreeIncompatibilities,
+	type ViewExistingResult,
+	type ViewExistingSuccess,
+	type ViewExistingFailure,
+} from "./viewCreation.js";

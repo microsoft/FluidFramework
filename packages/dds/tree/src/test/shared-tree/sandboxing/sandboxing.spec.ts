@@ -1537,27 +1537,6 @@ describe("Host and Guest correctness", () => {
 		}
 	});
 
-	it("opens and disposes ready views on the Guest without ending synchronization", async () => {
-		const { guest, guestView, main } = await setup(["initial"]);
-		guestView.dispose();
-
-		// Edit through the alpha surface of the public Guest tree and wait for the Host to observe it.
-		const readyResult = asAlpha(guest.tree).openView(stringArrayConfig);
-		assert.equal(readyResult.kind, "ready");
-		const ready = readyResult.view;
-		ready.root.push("guest");
-		await guest.updateHostPromise;
-		assert.deepEqual([...main.root], ["initial", "guest"]);
-		ready.dispose();
-
-		// The Guest owns the checkout, so closing this view must leave a new view usable.
-		const nextResult = asAlpha(guest.tree).openView(stringArrayConfig);
-		assert.equal(nextResult.kind, "ready");
-		const next = nextResult.view;
-		assert.deepEqual([...next.root], ["initial", "guest"]);
-		next.dispose();
-	});
-
 	it("preserves marker-shaped tree data during initialization and edits in both directions", async () => {
 		const factory = new SchemaFactoryAlpha("sandbox.marker-data");
 		/** Allows transport discriminators and prototype-related names as ordinary tree keys. */

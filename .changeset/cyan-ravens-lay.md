@@ -5,8 +5,11 @@
 ---
 Add an alternative flow for loading and initializing tree views
 
-`ViewableTreeAlpha.openView` (`asAlpha(tree).openView(config)`) offers an alternative flow for loading and initializing tree views, which makes schema upgrades automatic (when required).
-The caller, therefore, no longer needs to be concerned about various tree view compatibility states - the result is either a usable tree view or an error explaining why the document cannot be loaded or initialized.
+Use `initializeAndView(tree, config, initialContent)` when creating a tree, and `viewExisting(tree, config)` when loading an initialized document.
+The first returns the editable view directly.
+The second applies a permitted upgrade only when needed and returns either a view or structured diagnostics explaining why viewing the tree isn't possible.
+
+Use `tree.viewWith(config)` if you need to inspect compatibility and decide whether to upgrade yourself.
 
 
 #### Caller experience
@@ -17,7 +20,7 @@ Whether you create or load a note, you get a `NoteDocument` with the open contai
 
 ```typescript
 import { SchemaFactory, SharedTree, TreeViewConfiguration, type IFluidContainer } from "fluid-framework";
-import { asAlpha, type TreeViewAlpha } from "@fluidframework/tree/alpha";
+import { initializeAndView, viewExisting, type TreeViewAlpha } from "@fluidframework/tree/alpha";
 
 const schemaFactory = new SchemaFactory("notes");
 class Note extends schemaFactory.object("Note", { title: schemaFactory.string }) {}
@@ -32,31 +35,21 @@ interface NoteDocument {
 
 ##### Creating a new document
 
-Create a detached container and open its tree.
-You expect an initializer because no client has set the document's schema or content yet.
-Initialize the note **before** attaching the container so other clients can only load an initialized document.
+Use `initializeAndView` **before** attaching the container so other clients can only load an initialized document.
+An already-initialized tree or initial content that does not match the schema causes a usage error.
 
 ```typescript
 async function createNote(title: string): Promise<NoteDocument> {
 	const { container } = await client.createContainer(containerSchema, "2.0.0");
 	try {
-		const result = asAlpha(container.initialObjects.tree).openView(treeViewConfig);
-		switch (result.kind) {
-			case "uninitialized": {
-				const view = result.initialize({ title });
-				try {
-					await container.attach();
-				} catch (error) {
-					view.dispose();
-					throw error;
-				}
-				return { container, view };
-			}
-			case "ready":
-				throw new Error("Expected a new Note, but the tree is already initialized.");
-			case "incompatible":
-				throw new Error("Cannot create the Note with this schema.", { cause: result.incompatibilities });
+		const view = initializeAndView(container.initialObjects.tree, treeViewConfig, { title });
+		try {
+			await container.attach();
+		} catch (error) {
+			view.dispose();
+			throw error;
 		}
+		return { container, view };
 	} catch (error) {
 		container.dispose();
 		throw error;
@@ -68,22 +61,18 @@ async function createNote(title: string): Promise<NoteDocument> {
 
 Pass the saved document ID to `loadNote`.
 It loads the container by ID, then opens the tree with the same view configuration.
-The `"ready"` case gives you the existing note, including when opening required a schema upgrade.
-Neither of the other cases should create or replace content on the load path.
+`canView` tells you whether the existing note is ready to use, including after a required schema upgrade.
+An incompatible schema returns diagnostics; an unexpectedly uninitialized tree throws a usage error.
 
 ```typescript
 async function loadNote(documentId: string): Promise<NoteDocument> {
 	const { container } = await client.getContainer(documentId, containerSchema, "2.0.0");
 	try {
-		const result = asAlpha(container.initialObjects.tree).openView(treeViewConfig);
-		switch (result.kind) {
-			case "ready":
-				return { container, view: result.view };
-			case "uninitialized":
-				throw new Error("The tree has not been initialized.");
-			case "incompatible":
-				throw new Error("This version of the schema cannot open the existing Note tree.", { cause: result.incompatibilities });
+		const result = viewExisting(container.initialObjects.tree, treeViewConfig);
+		if (!result.canView) {
+			throw new Error("This version of the app cannot open the note.", { cause: result.incompatibilities });
 		}
+		return { container, view: result.view };
 	} catch (error) {
 		container.dispose();
 		throw error;

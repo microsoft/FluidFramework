@@ -333,18 +333,18 @@ export class SchematizingSimpleTreeView<
 	}
 
 	public initialize(content: InsertableField<TRootSchema>): void {
-		this.initializeForOpen(content as InsertableContent | undefined);
+		this.initializeWithContent(content as InsertableContent | undefined);
 	}
 
 	/**
-	 * Initializes the view without breaking the checkout on invalid initial content or a stale initializer.
+	 * Initializes the view without breaking the checkout on invalid input or a tree that is already initialized.
 	 *
 	 * @remarks
 	 * Only the mutation needs a breaking scope here. The existing `TreeView.initialize` method
 	 * retains its own breaking scope, including input validation.
 	 */
 	@throwIfBroken
-	public initializeForOpen(content: InsertableContent | undefined): void {
+	public initializeWithContent(content: InsertableContent | undefined): void {
 		this.ensureUndisposed();
 
 		const compatibility = this.compatibility;

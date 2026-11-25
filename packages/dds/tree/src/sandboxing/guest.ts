@@ -15,11 +15,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { DiscriminatedUnionDispatcher, type ICodecOptions } from "../codec/index.js";
-import {
-	openCheckoutView,
-	type ForestOptions,
-	type ViewContent,
-} from "../shared-tree/index.js";
+import type { ForestOptions, ViewContent } from "../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- The sandbox Guest requires its independent tree's checkout.
 import { createIndependentTreeCheckout } from "../shared-tree/independentView.js";
 import type {
@@ -28,7 +24,6 @@ import type {
 	TreeViewAlpha,
 	TreeViewConfiguration,
 	ViewableTree,
-	ViewableTreeAlpha,
 } from "../simple-tree/index.js";
 
 import {
@@ -67,7 +62,7 @@ export class GuestImplementation implements Sandboxing.Guest {
 
 	private readonly logger: TelemetryLoggerExt;
 	#synchronization: GuestSynchronization | undefined;
-	private viewableTree: Pick<ViewableTreeAlpha, "viewWith" | "openView"> | undefined;
+	private viewableTree: ViewableTree | undefined;
 	private readonly initialized = makePromiseWithResolvers();
 	private disposed = false;
 
@@ -238,7 +233,6 @@ export class GuestImplementation implements Sandboxing.Guest {
 				);
 				return view as TreeView<TRoot>;
 			},
-			openView: (config) => openCheckoutView(synchronization.checkout, config),
 		};
 		this.initialized.resolver();
 	}

@@ -100,8 +100,6 @@ export interface ViewableTree {
 	 * Only one schematized view may exist for a given ITree at a time.
 	 * If creating a second, the first must be disposed before calling `viewWith` again.
 	 *
-	 * @see For an alternative view initialization flow that handles schema upgrades automatically as needed, see {@link ViewableTreeAlpha.openView}.
-	 *
 	 * @privateRemarks
 	 * TODO: Support adapters for handling out-of-schema data.
 	 */
@@ -132,43 +130,6 @@ export interface ITree extends ViewableTree, IFluidLoadable {}
  * @alpha
  */
 export interface ViewableTreeAlpha extends ViewableTree {
-	/**
-	 * Opens this tree for editing with the given view schema.
-	 *
-	 * @remarks
-	 * Opening an initialized tree writes to the document only if a permitted schema upgrade is needed to use it.
-	 * This write submits an op that can affect other clients.
-	 *
-	 * Opening an uninitialized tree does not write any schema or content.
-	 *
-	 * @param config - The schema and behavior configuration for the view.
-	 *
-	 * @returns
-	 * A result containing a ready view, an initializer, or diagnostics if neither viewing nor upgrading is possible.
-	 *
-	 * If `kind` is `"ready"`, you own `result.view`. If `kind` is `"uninitialized"`, you own the initializer.
-	 * Dispose the view or initializer when you no longer need it.
-	 *
-	 * A mismatch between the view schema and the stored schema that prevents both viewing and upgrading
-	 * returns an {@link IncompatibleTreeResult} rather than throwing.
-	 *
-	 * @throws
-	 * An error with `errorType: "usageError"` if the tree's branch has been disposed or already has a live view or initializer.
-	 * Dispose the current view or initializer before opening another on the same branch.
-	 *
-	 * @throws
-	 * An error with `errorType: "usageError"` if `config` specifies an expected schema hash
-	 * that does not match the schema in `config`.
-	 *
-	 * @see If you want direct control over when an upgrade occurs, use {@link ViewableTree.viewWith}.
-	 *
-	 * @privateRemarks
-	 * TODO: Support adapters for handling out-of-schema data.
-	 */
-	openView<TRoot extends ImplicitFieldSchema>(
-		config: TreeViewConfiguration<TRoot>,
-	): OpenTreeViewResult<TRoot>;
-
 	/**
 	 * Contains the application-defined versions in the document's stored schema.
 	 *
@@ -974,103 +935,6 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 * The view schema used by this TreeView.
 	 */
 	readonly schema: TSchema;
-}
-
-/**
- * The result of opening a tree with {@link ViewableTreeAlpha.openView}.
- * @remarks
- * Use `kind` to distinguish a view you can edit now from a tree you can initialize or a schema mismatch.
- * @sealed @alpha
- */
-export type OpenTreeViewResult<TRoot extends ImplicitFieldSchema> =
-	| ReadyTreeResult<TRoot>
-	| UninitializedTreeResult<TRoot>
-	| IncompatibleTreeResult;
-
-/**
- * The result of successfully opening an initialized tree.
- * @remarks
- * You can use the view immediately without checking compatibility or upgrading its schema.
- * A subsequent schema change may invalidate its root. Listen for {@link TreeViewEvents.schemaChanged},
- * then dispose the old view and reopen the tree before resuming edits.
- * No further upgrade happens automatically.
- * @sealed @alpha
- */
-export interface ReadyTreeResult<in out TRoot extends ImplicitFieldSchema> {
-	/**
-	 * Identifies a ready view.
-	 */
-	readonly kind: "ready";
-
-	/**
-	 * The editable view. Dispose it when you no longer need it.
-	 */
-	readonly view: TreeViewAlpha<TRoot>;
-}
-
-/**
- * A disposable initializer for a tree with no stored schema or content.
- * @remarks
- * This handle does not reserve the tree. Initialize a newly created tree before attaching its container.
- * @sealed @alpha
- */
-export interface UninitializedTreeResult<in out TRoot extends ImplicitFieldSchema>
-	extends IDisposable {
-	/**
-	 * Identifies an initializer.
-	 */
-	readonly kind: "uninitialized";
-
-	/**
-	 * Sets the initial stored schema and content.
-	 * @remarks
-	 * The call consumes this initializer even if it fails. Disposing the consumed initializer does not dispose the returned view.
-	 * @param content - The initial content for the configured schema.
-	 * @returns A ready view that you own.
-	 * @throws A `UsageError` if the initializer has been consumed or disposed, or if the tree is no longer uninitialized.
-	 * Invalid initial content also causes initialization to fail.
-	 */
-	initialize(content: InsertableTreeFieldFromImplicitField<TRoot>): TreeViewAlpha<TRoot>;
-}
-
-/**
- * The result of opening a document that can be neither viewed nor upgraded.
- *
- * @remarks
- * This result does not own a view. Log {@link IncompatibleTreeResult.incompatibilities | incompatibilities}
- * to report what blocked the open.
- * @sealed @alpha
- */
-export interface IncompatibleTreeResult {
-	/**
-	 * Identifies a schema mismatch.
-	 */
-	readonly kind: "incompatible";
-
-	/**
-	 * The schema requirements that prevented this open from returning a view.
-	 */
-	readonly incompatibilities: OpenTreeIncompatibilities;
-}
-
-/**
- * The reasons a document could be neither viewed nor upgraded.
- *
- * @remarks
- * Both lists describe the schemas at the time of the failed open, even if the document changes later.
- *
- * @sealed @alpha
- */
-export interface OpenTreeIncompatibilities {
-	/**
-	 * The nonempty list of incompatibilities that prevented viewing the document.
-	 */
-	readonly view: readonly SchemaViewIncompatibility[];
-
-	/**
-	 * The nonempty list of incompatibilities that prevented upgrading the document.
-	 */
-	readonly upgrade: readonly SchemaUpgradeIncompatibility[];
 }
 
 /**
