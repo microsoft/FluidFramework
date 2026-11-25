@@ -54,11 +54,7 @@ import type { BranchId, SharedTreeBranch } from "./branch.js";
 import { BranchCommitEnricher } from "./branchCommitEnricher.js";
 import type { ChangeEnricher } from "./changeEnricher.js";
 import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
-import {
-	EditManager,
-	type HistoryCompactionPolicy,
-	minimumPossibleSequenceNumber,
-} from "./editManager.js";
+import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
 import { makeEditManagerCodecBuilder } from "./editManagerCodecs.js";
 import type { EditManagerFormatVersion, SeqNumber } from "./editManagerFormatCommons.js";
 import { EditManagerSummarizer } from "./editManagerSummarizer.js";
@@ -294,13 +290,13 @@ export class SharedTreeCore<
 	}
 
 	/**
-	 * Compacts retained history using the supplied per-pair decision callback.
+	 * Combines an explicitly selected pair of adjacent retained commits.
 	 * @remarks
 	 * Does not validate reader compatibility or update checkout state.
 	 * No application option or automatic summary hook invokes this method.
 	 */
-	public compactHistory(canCompact: HistoryCompactionPolicy<TChange>): number {
-		return this.editManager.compactHistory(canCompact);
+	public compactHistory(current: GraphCommit<TChange>, target: GraphCommit<TChange>): void {
+		this.editManager.compactHistory(current, target);
 	}
 
 	protected async loadInternal(

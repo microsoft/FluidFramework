@@ -24,3 +24,36 @@ In order to run the performance E2E tests, simply choose one of the following co
 `npm run test:benchmark:frs` for benchmarks against the FRS service.
 
 Notice that every run will generate its output on the console window and, also, json files on the same folder.
+
+## SharedTree compaction summary size
+
+[`historyCompaction.spec.ts`](./historyCompaction.spec.ts) compares full channel-summary blob bytes for equivalent uncompacted and compacted histories.
+It uses the selected Fluid service driver, a dedicated summarizer, and a load from the exact uploaded summary version.
+It does not measure retained heap memory.
+It runs two variants: no customer commit metadata, and a 256-byte ASCII note plus operation, edit-index, and row-ID fields per workload commit.
+Both variants use the same single-edit transactions and report decimal MB, captured commits, and customer metadata bytes within history.
+All original metadata records must survive compaction and the summary load.
+Compaction runs on the interactive client's second channel and, independently, on the summarizer's second channel.
+Each client's first channel remains uncompacted as its size-comparison control.
+All channels use `retainHistory: true` and share the same container collaboration context.
+Local sizes come from full channel summaries generated in memory; summarizer sizes come from the uploaded full summary.
+The local compacted blobs are also reloaded with the existing mock channel-storage fixture.
+`local.compactionMs` and `summarizer.compactionMs` time the explicit compaction calls, including internal eligibility checks.
+They exclude pair selection, test assertions, serialization, upload, reload, and collaboration waits.
+This internal prototype uses `NoCompat` and adds no public API or automatic compaction policy.
+
+Build the tree package and its test exports before compiling this package.
+From this package's root, run the full workload (10,000 rows, 1,000 replacements, groups of 100):
+
+```bash
+pnpm run build:test:esm
+FLUID_TEST_PERF_MODE=1 \
+MOCHA_SPEC=lib/test/benchmark/historyCompaction.spec.js \
+pnpm exec mocha --driver=local --compatKind=None \
+--reporter @fluid-tools/benchmark/dist/mocha/Reporter.js
+```
+
+Use `--driver=t9s` with a running Tinylicious server, or a configured `--driver=odsp` / `--driver=r11s` endpoint.
+Omit `FLUID_TEST_PERF_MODE=1` for the small correctness workload.
+Add `--grep 'metadata=none'` or `--grep 'metadata=256-byte-note'` to select just one variant.
+See [history-compaction-findings.md](./history-compaction-findings.md) for the compaction methodology, Tinylicious's role, and measured results.

@@ -471,49 +471,33 @@ export class EditManager<
 	}
 
 	/**
-	 * Composes adjacent retained main-trunk commits, considering the oldest pair first.
-	 * A decision of `true` combines their metadata; a metadata tree replaces it.
-	 * A decision of `false` leaves the pair unchanged.
-	 * @returns The number of removed commits.
+	 * Combines an explicitly selected adjacent pair of retained main-trunk commits into the newer commit.
+	 * Preserves the newer commit's identity and combines metadata in commit order.
 	 * @remarks
-	 * Only sequenced commits within the collaboration bound and before registered fork bases are eligible.
+	 * Both commits must be sequenced, at or below the minimum sequence number, and before registered fork bases.
+	 * Invalid pairs are rejected before mutation. Composition errors propagate to the caller.
 	 * Does not rebase peers, update checkout state, or invalidate cached history data.
-	 * Policy and composition errors propagate to the caller.
 	 */
-	public compactHistory(canCompact: HistoryCompactionPolicy<TChangeset>): number {
+	public compactHistory(
+		current: GraphCommit<TChangeset>,
+		target: GraphCommit<TChangeset>,
+	): void {
 		const mainBranch = this.getSharedBranch("main");
-		const eligible = this.getCompactionCandidates();
-		let removedCount = 0;
-		for (let index = 1; index < eligible.length; index++) {
-			// An earlier merge changes the survivor in place, so the next decision sees the composition.
-			const current = eligible[index - 1] ?? fail("Expected an eligible preceding commit");
-			const target = eligible[index] ?? fail("Expected an eligible target commit");
-			const decision = canCompact(current, target);
-			if (decision !== false) {
-				mainBranch.compactTrunkCommits(
-					current,
-					target,
-					decision === true ? undefined : decision,
-				);
-				removedCount++;
-			}
+		const commits = this.getTrunkCommits("main");
+		if (!commits.includes(current) || !commits.includes(target)) {
+			throw new UsageError("Both commits must be retained main-trunk commits");
 		}
-		return removedCount;
-	}
-
-	/**
-	 * Gets eligible main-trunk commits in oldest-first order without changing history.
-	 */
-	private getCompactionCandidates(): GraphCommit<TChangeset>[] {
+		if (target.parent !== current) {
+			throw new UsageError("Commits must be adjacent and ordered from older to newer");
+		}
 		const bound = minSequenceId(
 			this.getUpperTrimmingBoundForMinimumSequenceNumber(),
 			this.getUpperTrimmingBoundForLocalForks(),
 		);
-		const newestEligible =
-			this.getSharedBranch("main").sequenceIdToCommit.getPairOrNextLower(bound);
-		return newestEligible === undefined
-			? []
-			: getPathFromBase(newestEligible[1], this.trunkBase);
+		if (sequenceIdComparator(mainBranch.getCommitSequenceId(target.revision), bound) > 0) {
+			throw new UsageError("Commits are still required by collaboration or a registered fork");
+		}
+		mainBranch.combineTrunkCommits(current, target);
 	}
 
 	public isEmpty(): boolean {
@@ -826,16 +810,6 @@ export interface SummaryData<TChangeset> {
 	readonly branches?: ReadonlyMap<BranchId, SharedBranchSummaryData<TChangeset>>;
 }
 
-/**
- * A synchronous decision callback shared by the engine and its internal entry point.
- * Returns `false` to retain a pair, `true` to combine it with its metadata, or a replacement metadata tree.
- * This type describes a callback, not stored configuration or an app-facing API.
- */
-export type HistoryCompactionPolicy<TChangeset> = (
-	current: GraphCommit<TChangeset>,
-	target: GraphCommit<TChangeset>,
-) => boolean | CustomMetadataTree;
-
 export interface SharedBranchSummaryData<TChangeset> {
 	readonly id?: BranchId;
 	readonly name?: string;
@@ -1122,26 +1096,30 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 	/**
 	 * Replaces an adjacent trunk pair with its composition in `target`, removing `current` from the graph and indexes.
 	 * Keeps the target's object, revision, and sequence ID.
-	 * Metadata is combined in commit order unless `mergedMetadata` replaces it.
+	 * Metadata is combined in commit order.
 	 * @remarks
 	 * Does not invalidate cached rollback data or notify checkouts.
 	 */
-	public compactTrunkCommits(
+	public combineTrunkCommits(
 		current: GraphCommit<TChangeset>,
 		target: GraphCommit<TChangeset>,
-		mergedMetadata?: CustomMetadataTree,
 	): void {
 		assert(target.parent === current, "Only adjacent commits can be composed");
 		assert(current.parent !== undefined, "The trunk base cannot be composed away");
-		const currentMetadata = this.commitMetadata.get(current.revision);
-		assert(currentMetadata !== undefined, "Only sequenced trunk commits can be composed");
+		const currentSequencingMetadata = this.commitMetadata.get(current.revision);
+		assert(
+			currentSequencingMetadata !== undefined,
+			"Only sequenced trunk commits can be composed",
+		);
 
 		const composed = target as Mutable<GraphCommit<TChangeset>>;
 		composed.change = this.composeTrunkChanges(current, target);
-		composed.customMetadata =
-			mergedMetadata ?? composeCustomMetadata(current.customMetadata, target.customMetadata);
+		composed.customMetadata = composeCustomMetadata(
+			current.customMetadata,
+			target.customMetadata,
+		);
 		composed.parent = current.parent;
-		this.sequenceIdToCommit.delete(currentMetadata.sequenceId);
+		this.sequenceIdToCommit.delete(currentSequencingMetadata.sequenceId);
 		this.commitMetadata.delete(current.revision);
 	}
 

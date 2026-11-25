@@ -693,7 +693,7 @@ export function encodeRevisionInfos(
 		ChangeEncodingContext
 	>,
 ): EncodedRevisionInfo[] | undefined {
-	if (context.revision !== undefined) {
+	if (context.revision !== undefined && revisions.length <= 1) {
 		assert(
 			revisions.length === 1 &&
 				// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- Using optional chaining here would change behavior: `revisions[0]?.rollbackOf === undefined` is true when revisions[0] is undefined, but this check requires revisions[0] to be defined. As currently written, such a change would be safe because context.revision is included in the check and from a couple lines above is confirmed not undefined. But this more verbose form is clearer.
@@ -706,6 +706,7 @@ export function encodeRevisionInfos(
 		return undefined;
 	}
 
+	// A commit tag cannot reconstruct the original revision namespaces of a composed change.
 	const encodedRevisions = [];
 	for (const revision of revisions) {
 		const encodedRevision: Mutable<EncodedRevisionInfo> = {

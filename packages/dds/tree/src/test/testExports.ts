@@ -18,5 +18,9 @@
 
 export { baseTreeModel } from "./shared-tree/index.js";
 
+export type { ISharedTree } from "../treeFactory.js";
+// eslint-disable-next-line import-x/no-internal-modules
+export { measureSummarySize, measureStoredHistory } from "./shared-tree/summarySize.js";
+
 // eslint-disable-next-line import-x/no-internal-modules
 export { createCompatFuzzSuite } from "./shared-tree/fuzz/compatFuzzUtils.js";

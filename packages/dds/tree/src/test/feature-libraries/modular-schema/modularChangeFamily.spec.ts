@@ -1341,6 +1341,24 @@ describe("ModularChangeFamily", () => {
 			describe(`revision metadata in version ${version}`, () => {
 				const jsonCodec = family.codecs.resolve(version);
 
+				for (const isSummary of [false, true]) {
+					it(`preserves composed revisions with a context tag (isSummary=${isSummary})`, () => {
+						const change = family.compose([
+							tagChangeInline(rootChange1a, tag1),
+							tagChangeInline(rootChange2, tag2),
+						]);
+						const taggedContext: ChangeEncodingContext = {
+							...context,
+							revision: tag2,
+							isSummary,
+						};
+						const encoded = jsonCodec.encode(change, taggedContext);
+						const decoded = jsonCodec.decode(encoded, taggedContext);
+						assert.deepEqual(decoded.revisions, [{ revision: tag1 }, { revision: tag2 }]);
+						assertEquivalent(decoded, change);
+					});
+				}
+
 				it("maxId accounts for IDs allocated during decoding", () => {
 					const change = inlineRevision(rootChange1a, tag1);
 					const encoded = jsonCodec.encode(change, context);
