@@ -682,12 +682,7 @@ export class SchematizingSimpleTreeView<
 
 	public dispose(): void {
 		if (this.disposed) {
-			// Disposing a branch also disposes its live views. Only ignore repeated disposal while the branch is live.
-			if (this.checkout.disposed) {
-				throw new UsageError(
-					"Cannot dispose this view again: both the view and its branch have already been disposed.",
-				);
-			}
+			// Cleanup already ran. A replacement view may now own the checkout's view slot.
 			return;
 		}
 		this.disposed = true;

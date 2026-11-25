@@ -1735,6 +1735,17 @@ describe("sharedTreeView", () => {
 			},
 		);
 
+		itView(
+			"a view can be disposed immediately after its branch",
+			({ view, tree, forkCheckout }) => {
+				const branch = forkCheckout(tree);
+				const forkView = branch.viewWith(view.config);
+
+				branch.dispose();
+				assert.doesNotThrow(() => forkView.dispose());
+			},
+		);
+
 		it("disposing a stale view again leaves its replacement active", () => {
 			const tree = new TestTreeProviderLite().trees[0];
 			const config = new TreeViewConfiguration({ schema: SchemaFactory.number });
