@@ -3068,6 +3068,43 @@ describe("ModularChangeFamily integration", () => {
 
 			assertEqual(inverse, expected);
 		});
+
+		it("Root rename", () => {
+			const fieldAId = { nodeId: undefined, field: fieldA };
+			const oldId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+			const removeId: ChangeAtomId = { revision: tag1, localId: brand(1) };
+			const renameInSequence = Change.build(
+				{
+					family,
+					maxId: 2,
+					renames: [
+						{
+							oldId,
+							newId: removeId,
+							count: 1,
+							detachLocation: fieldAId,
+						},
+					],
+					revisions: [{ revision: tag1 }],
+				},
+				Change.field(fieldA, sequenceIdentifier, [MarkMaker.rename(1, oldId, removeId)]),
+			);
+
+			const inverse = family.invert(tagChange(renameInSequence, tag1), false, tag2);
+
+			const expected = Change.build(
+				{
+					family,
+					maxId: 2,
+					revisions: [{ revision: tag2 }],
+				},
+				Change.field(fieldA, sequenceIdentifier, [
+					MarkMaker.tomb(removeId.revision, removeId.localId),
+				]),
+			);
+
+			assertEqual(inverse, expected);
+		});
 	});
 
 	describe("toDelta", () => {

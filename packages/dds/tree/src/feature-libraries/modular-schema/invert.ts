@@ -475,6 +475,20 @@ class InvertNodeManagerI implements InvertNodeManager {
 		const inputRootId = inputRootIdEntry.value;
 		countProcessed = inputRootIdEntry.length;
 
+		if (this.table.isRollback) {
+			const inputId = this.getInvertedMoveId(inputRootId);
+			return { value: inputId, length: countProcessed };
+		}
+
+		const detachEntry = getFirstFieldForDetach(this.table.change, inputRootId, countProcessed);
+		countProcessed = detachEntry.length;
+
+		if (detachEntry.value === undefined) {
+			// A reverted change only has renames for roots that it attaches.
+			// Since the original change did not detach this root, there will be no rename in the revert.
+			return { value: undefined, length: countProcessed };
+		}
+
 		const attachEntry = getFirstFieldForAttach(this.table.change, rootId, countProcessed);
 		countProcessed = attachEntry.length;
 
