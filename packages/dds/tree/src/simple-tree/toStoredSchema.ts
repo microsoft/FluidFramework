@@ -99,9 +99,14 @@ export function resolveStoredSchemaGenerationOptions(
  * This allows as much as possible, relying on further validation when inserting the content.
  *
  * TODO: this should get additional options to enable support for unknown optional fields.
+ *
+ * @privateRemarks
+ * Copy the permissive policy rather than aliasing it: `allowedTypeFilter` uses object identity to include deprecated types for unhydrated nodes.
+ * An alias would also let the public permissive policy introduce deprecated types when initializing or upgrading a document.
  */
-export const toUnhydratedSchema: StagedSchemaUpgradePolicy =
-	StagedSchemaUpgradePolicy.permissive;
+export const toUnhydratedSchema: StagedSchemaUpgradePolicy = {
+	...StagedSchemaUpgradePolicy.permissive,
+};
 
 /**
  * Converts a {@link SimpleTreeSchema} from `SchemaType.View` to `SchemaType.Stored`.
@@ -382,7 +387,12 @@ export function filterAllowedTypes(
 	const filtered: Map<string, SimpleAllowedTypeAttributes> = new Map();
 	for (const [type, data] of schema) {
 		if (options === Unchanged) {
-			filtered.set(type, { isStaged: data.isStaged });
+			filtered.set(type, {
+				isStaged: data.isStaged,
+
+				// Copy the deprecation marker only when present so unmarked types keep their original shape.
+				...(data.isDeprecated && { isDeprecated: true }),
+			});
 		} else if (allowedTypeFilter(data, options)) {
 			filtered.set(type, { isStaged: undefined });
 		}
@@ -449,7 +459,7 @@ function allowedTypeFilter(
 	options: StoredSchemaGenerationOptions,
 ): boolean {
 	if (options === ExpectStored) {
-		if (data.isStaged !== undefined) {
+		if (data.isStaged !== undefined || data.isDeprecated !== undefined) {
 			throw new UsageError(
 				"Failed to covert view schema to stored schema. The simple schema provided was indicated to be a stored schema by the use of `ExpectStored`, but view schema specific content was encountered which requires a `StagedSchemaUpgradePolicy` to process.",
 			);
@@ -461,6 +471,12 @@ function allowedTypeFilter(
 		throw new UsageError(
 			"Failed to covert view schema to stored schema. The simple schema provided as the view schema was actually a stored schema. If this was intended, use `ExpectStored` for the `StoredSchemaGenerationOptions` to indicate the input is already a stored schema and only a format conversion is required.",
 		);
+	}
+
+	// Unhydrated nodes have no destination document yet.
+	// Validate against its stored schema on insertion.
+	if (data.isDeprecated === true) {
+		return options === toUnhydratedSchema;
 	}
 
 	// If the allowed type is staged, only include it if the options allow it.

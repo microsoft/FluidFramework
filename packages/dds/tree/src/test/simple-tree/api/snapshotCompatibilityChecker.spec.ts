@@ -58,6 +58,57 @@ const nodeFileSystem = {
 };
 
 describe("snapshotCompatibilityChecker", () => {
+	it("snapshots preserve deprecated allowed types without making them enableable", () => {
+		const schemaFactory = new SchemaFactoryAlpha("notes");
+
+		// V1 permits both strings and numbers.
+		const configV1 = new TreeViewConfiguration({
+			schema: [schemaFactory.string, schemaFactory.number],
+		});
+
+		// V2 deprecates numbers: it can still open V1 documents, but new documents always omit numbers.
+		const configV2 = new TreeViewConfiguration({
+			schema: schemaFactory.types([
+				schemaFactory.string,
+				schemaFactory.deprecated(schemaFactory.number),
+			]),
+		});
+
+		// V3 removes the numeric alternative from the view entirely.
+		const configV3 = new TreeViewConfiguration({ schema: schemaFactory.string });
+
+		// Snapshots must restore the historical read support, not turn it into a staged addition.
+		const snapshot = exportCompatibilitySchemaSnapshot(configV2);
+		decodeSchemaCompatibilitySnapshot(snapshot, FormatValidatorBasic);
+		const restoredV2 = importCompatibilitySchemaSnapshot(snapshot);
+		assert.deepEqual(exportCompatibilitySchemaSnapshot(restoredV2), snapshot);
+		expectSchemaEqual(
+			toInitialSchema(restoredV2.schema, StagedSchemaUpgradePolicy.permissive),
+			toInitialSchema(configV3.schema),
+		);
+
+		// V2 understands both types permitted by V1. V3 can open documents initialized by V2 because those permit only strings.
+		assert.equal(
+			checkCompatibility(
+				/* documentViewConfiguration: */ configV1,
+				/* clientViewConfiguration: */ restoredV2,
+			).canView,
+			true,
+		);
+		assert.equal(
+			checkCompatibility(
+				/* documentViewConfiguration: */ restoredV2,
+				/* clientViewConfiguration: */ configV3,
+			).canView,
+			true,
+		);
+
+		// V1 documents still permit numbers, so V3 can neither view them nor upgrade them to a string-only schema.
+		const removedTooSoon = checkCompatibility(configV1, configV3);
+		assert.equal(removedTooSoon.canView, false);
+		assert.equal(removedTooSoon.canUpgrade, false);
+	});
+
 	it("exposes upgrade diagnostics when neither viewing nor upgrading is possible", () => {
 		const sf = new SchemaFactoryAlpha("snapshotDiagnostics");
 		const status = checkCompatibility(

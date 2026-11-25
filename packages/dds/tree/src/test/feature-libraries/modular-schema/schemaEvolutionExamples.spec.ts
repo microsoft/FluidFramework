@@ -1912,6 +1912,223 @@ describe("Schema Evolution Examples", () => {
 		});
 	});
 
+	describe("Deprecating an allowed type", () => {
+		// V1 permits both strings and numbers in `Note.color`.
+		class NoteV1 extends factory.object("Note", {
+			color: factory.optional([factory.string, factory.number]),
+		}) {}
+
+		const v1ViewConfig = new TreeViewConfiguration({ schema: NoteV1 });
+
+		// V2 deprecates numeric colors.
+		// but its view still supports documents created by V1.
+		const deprecatedNumericColor = factory.deprecated(factory.number);
+		const colorWithDeprecatedNumber = factory.optional(
+			factory.types([factory.string, deprecatedNumericColor]),
+		);
+		class NoteV2 extends factory.object("Note", { color: colorWithDeprecatedNumber }) {}
+
+		const v2ViewConfig = new TreeViewConfiguration({ schema: NoteV2 });
+
+		// V3 removes the numeric entry entirely, so its view requires a string-only color field.
+		class NoteV3 extends factory.object("Note", {
+			color: factory.optional(factory.string),
+		}) {}
+
+		const v3ViewConfig = new TreeViewConfiguration({ schema: NoteV3 });
+
+		/**
+		 * Open a V1 document with V2, then apply an upgrade that adds an optional label without changing the color declaration.
+		 * V1 and V2 must still be able to exchange numeric colors after the upgrade.
+		 * Even if they replace the last numeric value with a string, V3 must reject the document because its stored schema still permits numbers.
+		 */
+		it("keeps historical numeric colors usable, including after an unrelated upgrade", () => {
+			class LabeledNote extends factory.object("Note", {
+				color: colorWithDeprecatedNumber,
+				label: factory.optional(factory.string),
+			}) {}
+			const provider = new TestTreeProviderLite(3);
+			const [writer, reader, finalReader] = provider.trees;
+			const original = writer.viewWith(v1ViewConfig);
+			original.initialize({ color: 1 });
+			provider.synchronizeMessages();
+
+			// Declaring the type deprecated neither hides the V1 value nor changes the document.
+			const transitional = reader.viewWith(v2ViewConfig);
+			assert.equal(transitional.root.color, 1);
+			verifyNoOpUpgrade(provider, transitional);
+
+			// A detached V2 note does not yet know its destination.
+			// Its numeric color is valid in this V1 document.
+			const numericNote = new NoteV2({ color: 2 });
+			assert.equal(numericNote.color, 2);
+			transitional.root = numericNote;
+			provider.synchronizeMessages();
+			assert.equal(original.root.color, 2);
+			transitional.root.color = "red";
+			provider.synchronizeMessages();
+			assert.equal(original.root.color, "red");
+			transitional.dispose();
+
+			// This upgrade is needed for the label, not for deprecation. It must retain numeric color support.
+			const labeled = reader.viewWith(new TreeViewConfiguration({ schema: LabeledNote }));
+			assert.equal(labeled.compatibility.canView, false);
+			assert.equal(labeled.compatibility.canUpgrade, true);
+			labeled.upgradeSchema();
+			provider.synchronizeMessages();
+			labeled.root.color = 2;
+			provider.synchronizeMessages();
+			assert.equal(original.root.color, 2);
+
+			// V3 cannot narrow the stored schema, even when the synchronized value already fits its view.
+			original.root.color = "red";
+			provider.synchronizeMessages();
+			assert.equal(labeled.root.color, "red");
+			verifyRejectedUpgrade(provider, finalReader.viewWith(v3ViewConfig));
+			labeled.dispose();
+			original.dispose();
+		});
+
+		/**
+		 * Unlike V1, V2 initializes documents without allowing numeric colors.
+		 * The V2 view still declares numbers for historical documents, but it must reject a numeric write here.
+		 */
+		it("rejects numeric writes to a document initialized by V2", () => {
+			const provider = new TestTreeProviderLite(1);
+			const transitional = provider.trees[0].viewWith(v2ViewConfig);
+			transitional.initialize({ color: "red" });
+			assert.throws(
+				() => {
+					transitional.root.color = 1;
+				},
+				validateUsageError(/not allowed/),
+			);
+		});
+
+		/**
+		 * V2 initializes a document that permits only string colors.
+		 * V3 can use it immediately, but V1 must first upgrade it to permit numbers.
+		 * Once V3 receives the schema change from V1's upgrade, its string-only view becomes incompatible even though the color is still `"red"`.
+		 * V2 remains usable across both stored schemas.
+		 */
+		it("omits numeric colors on new documents until an older client restores them", () => {
+			const provider = new TestTreeProviderLite(3);
+			const [creator, originalReader, finalReader] = provider.trees;
+			const transitional = creator.viewWith(v2ViewConfig);
+			transitional.initialize({ color: "red" });
+			provider.synchronizeMessages();
+			verifyNoOpUpgrade(provider, transitional);
+			const final = finalReader.viewWith(v3ViewConfig);
+			assert.equal(final.root.color, "red");
+
+			// V1 restores the type through a schema change; it has not edited the color yet.
+			const original = originalReader.viewWith(v1ViewConfig);
+			assert.equal(original.compatibility.canView, false);
+			assert.equal(original.compatibility.canUpgrade, true);
+			original.upgradeSchema();
+			provider.synchronizeMessages();
+			assert.equal(final.compatibility.canView, false);
+			assert.equal(final.compatibility.canUpgrade, false);
+			original.root.color = 1;
+			provider.synchronizeMessages();
+			assert.equal(transitional.root.color, 1);
+			final.dispose();
+			original.dispose();
+			transitional.dispose();
+		});
+
+		/**
+		 * V1 permits numeric colors. `MixedNote` keeps V2's deprecation of numbers and stages RGB as a new color type.
+		 * With RGB enabled, `MixedNote` must permit strings and RGB without reintroducing numbers,
+		 * whether it initializes a new document or upgrades a string-only document created by V3.
+		 */
+		describe("enabling a staged type alongside a deprecated type", () => {
+			class RgbColor extends factory.object("Rgb", { red: factory.number }) {}
+			const stagedRgb = factory.staged(RgbColor);
+			const token = stagedRgb.metadata.stagedSchemaUpgrade;
+			assert(token !== undefined);
+
+			// Note variant that deprecates numeric colors and stages the RGB color type.
+			class MixedNote extends factory.object("Note", {
+				color: factory.optional(
+					factory.types([factory.string, deprecatedNumericColor, stagedRgb]),
+				),
+			}) {}
+
+			// Expected note variant after applying the staged RGB color upgrade and deprecating numeric colors.
+			class ExpectedNote extends factory.object("Note", {
+				color: factory.optional([factory.string, RgbColor]),
+			}) {}
+
+			/**
+			 * Checks that the single client's document permits RGB but rejects a numeric note that V1 would accept.
+			 */
+			function verifyColorTypes(
+				provider: TestTreeProviderLite,
+				view: TreeView<typeof MixedNote>,
+			): void {
+				provider.synchronizeMessages();
+				expectSchemaEqual(
+					provider.trees[0].kernel.checkout.storedSchema,
+					toUpgradeSchema(ExpectedNote),
+				);
+				assert(view.root.color instanceof RgbColor);
+
+				// Constructing an unhydrated note is valid; inserting it is what checks the document's stored schema.
+				const numericNote = new MixedNote({ color: 2 });
+				assert.equal(numericNote.color, 2);
+				assert.throws(
+					() => {
+						view.root = numericNote;
+					},
+					validateUsageError(/not allowed/),
+				);
+			}
+
+			for (const [name, policy] of [
+				["RGB token enabled", StagedSchemaUpgradePolicy.enabledStagedUpgrades(token)],
+				["permissive policy", StagedSchemaUpgradePolicy.permissive],
+				[
+					"custom policy",
+					{
+						includeStaged: (upgrade) => {
+							// Only the genuinely staged alternative should ever reach the policy.
+							assert.equal(upgrade, token);
+							return true;
+						},
+						includeStagedOptional: () => true,
+					} satisfies StagedSchemaUpgradePolicy,
+				],
+			] as const) {
+				const config = new TreeViewConfigurationAlpha({
+					schema: MixedNote,
+					stagedUpgradePolicy: policy,
+				});
+
+				it(`initializes a new document with RGB but not numeric colors (${name})`, () => {
+					const provider = new TestTreeProviderLite(1);
+					const view = provider.trees[0].viewWith(config);
+					view.initialize({ color: new RgbColor({ red: 255 }) });
+					verifyColorTypes(provider, view);
+				});
+
+				it(`upgrades a V3 document to allow RGB but not numeric colors (${name})`, () => {
+					const provider = new TestTreeProviderLite(1);
+					const tree = provider.trees[0];
+					const original = tree.viewWith(v3ViewConfig);
+					original.initialize({ color: "red" });
+					original.dispose();
+
+					const view = tree.viewWith(config);
+					assert.equal(view.compatibility.canUpgrade, true);
+					view.upgradeSchema();
+					view.root.color = new RgbColor({ red: 255 });
+					verifyColorTypes(provider, view);
+				});
+			}
+		});
+	});
+
 	describe("Staged allowed types", () => {
 		/**
 		 * V1 permits numeric `priority`.

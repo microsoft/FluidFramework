@@ -1550,6 +1550,26 @@ export class SchemaFactoryAlpha<
 	public override readonly requiredRecursive = schemaStatics.requiredRecursive;
 
 	/**
+	 * {@inheritDoc SchemaStaticsAlpha.deprecated}
+	 */
+	public readonly deprecated = schemaStaticsAlpha.deprecated;
+
+	/**
+	 * {@inheritDoc SchemaStaticsAlpha.deprecated}
+	 */
+	public static readonly deprecated = schemaStaticsAlpha.deprecated;
+
+	/**
+	 * {@inheritDoc SchemaStaticsAlpha.deprecatedRecursive}
+	 */
+	public readonly deprecatedRecursive = schemaStaticsAlpha.deprecatedRecursive;
+
+	/**
+	 * {@inheritDoc SchemaStaticsAlpha.deprecatedRecursive}
+	 */
+	public static readonly deprecatedRecursive = schemaStaticsAlpha.deprecatedRecursive;
+
+	/**
 	 * {@inheritdoc SchemaStaticsAlpha.withDefault}
 	 */
 	public readonly withDefault = schemaStaticsAlpha.withDefault;

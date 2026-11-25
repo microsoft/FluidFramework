@@ -228,6 +228,14 @@ export interface SimpleAllowedTypeAttributes<out Type extends SchemaType = Schem
 	 * This API should be reevaluated before stabilizing.
 	 */
 	readonly isStaged: Type extends SchemaType.Stored ? undefined : false | SchemaUpgrade;
+
+	/**
+	 * True for a deprecated allowed type in a view.
+	 *
+	 * @remarks
+	 * The view recognizes the type but never introduces it into stored schema.
+	 */
+	readonly isDeprecated?: Type extends SchemaType.Stored ? undefined : true;
 }
 
 /**

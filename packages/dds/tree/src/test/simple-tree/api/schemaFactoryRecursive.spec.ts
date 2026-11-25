@@ -40,6 +40,8 @@ import {
 	type ApplyKindInput,
 	type NodeBuilderData,
 	SchemaFactoryAlpha,
+	StagedSchemaUpgradePolicy,
+	toInitialSchema,
 	type AnnotatedAllowedType,
 	type TreeNodeSchema,
 	type AllowedTypesFull,
@@ -1420,6 +1422,44 @@ describe("SchemaFactory Recursive methods", () => {
 				const node = new Recursive([]);
 			}
 		});
+	});
+
+	it("`deprecatedRecursive` preserves a recursive array's reference type", () => {
+		const sf = new SchemaFactoryAlpha("recursive");
+
+		// An `Item` can contain strings or other `Item`s. The callback lets the schema refer to `Item`
+		// before the class is defined; only the nested `Item` alternative is deprecated.
+		class Item extends sf.arrayRecursive(
+			"Item",
+			sf.typesRecursive([sf.string, sf.deprecatedRecursive(() => Item)]),
+		) {}
+
+		// Recursive helpers relax their type constraints, so check the completed schema at compile time.
+		type _check = ValidateRecursiveSchema<typeof Item>;
+
+		// Unhydrated items can still contain historical nested items.
+		// New documents never permit the self-reference, even when genuine staged types are enabled.
+		const nested = new Item([]);
+		assert.equal(new Item([nested]).at(0), nested);
+		class StringItems extends sf.array("Item", sf.string) {}
+		assert.deepEqual(
+			toInitialSchema(Item, StagedSchemaUpgradePolicy.permissive),
+			toInitialSchema(StringItems),
+		);
+
+		// The static helper also accepts an already annotated reference. It must still resolve to `Item` at runtime.
+		const reference = SchemaFactoryAlpha.deprecatedRecursive({
+			type: () => Item,
+			metadata: {},
+		});
+		assert.equal(reference.type(), Item);
+
+		// Runtime identity alone would not catch TypeScript widening the callback's return type to a generic schema.
+		allowUnused<
+			requireTrue<
+				areSafelyAssignable<typeof reference, AnnotatedAllowedType<() => typeof Item>>
+			>
+		>();
 	});
 
 	describe("stagedRecursive", () => {

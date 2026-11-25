@@ -215,7 +215,8 @@ function encodeContainerNode(
 }
 
 /**
- * Encodes a simple allowed types map to a serializable object. Needed because JSON serialization does not support Maps.
+ * Encodes a simple allowed types map to a serializable object.
+ * @remarks This is needed because JSON serialization does not support Maps.
  * @param simpleAllowedTypes - The simple allowed types map to convert.
  * @returns A serializable representation of the simple allowed types.
  */
@@ -224,6 +225,14 @@ function encodeSimpleAllowedTypes(
 ): Format.SimpleAllowedTypesFormat {
 	const encodedAllowedTypes: Format.SimpleAllowedTypesFormat = {};
 	for (const [identifier, attributes] of simpleAllowedTypes) {
+		if (attributes.isDeprecated === true) {
+			// Set isStaged because the restrictive policy treats deprecated and staged types alike:
+			// the view supports them where already allowed, but does not add them to the stored schema.
+			// Also set isDeprecated so the decoder restores a deprecated entry rather than creating a token
+			// that could enable the type later.
+			encodedAllowedTypes[identifier] = { isStaged: true, isDeprecated: true };
+			continue;
+		}
 		const isStaged = attributes.isStaged instanceof SchemaUpgrade ? true : attributes.isStaged;
 		encodedAllowedTypes[identifier] = { isStaged };
 	}
@@ -423,6 +432,9 @@ function decodeSimpleAllowedTypes(
 	const simpleAllowedTypes = transformMapValues(
 		untypedMap,
 		(value): SimpleAllowedTypeAttributes => {
+			if (value.isDeprecated === true) {
+				return { isStaged: false, isDeprecated: true };
+			}
 			const isStaged = value.isStaged === true ? createSchemaUpgrade() : value.isStaged;
 			return { isStaged };
 		},

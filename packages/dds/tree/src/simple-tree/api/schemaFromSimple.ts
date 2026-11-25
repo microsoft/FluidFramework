@@ -108,6 +108,13 @@ function generateAllowedTypes(
 ): AllowedTypesFull {
 	const types = Array.from(allowed.entries(), ([id, attributes]) => {
 		const schema = context.get(id) ?? fail(0xb5a /* Missing schema */);
+
+		// Keep deprecated types readable where already allowed, without giving upgrades a way to introduce them.
+		if (attributes.isDeprecated === true) {
+			return factory.deprecated(schema);
+		}
+
+		// A staged type needs a new upgrade token in the reconstructed view; an ordinary allowed type needs no annotation.
 		return attributes.isStaged instanceof SchemaUpgrade ? factory.staged(schema) : schema;
 	});
 	// TODO: AB#53315: `AllowedTypesFullFromMixed` does not correctly handle the `(AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]` case.
