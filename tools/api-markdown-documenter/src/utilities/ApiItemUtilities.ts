@@ -21,10 +21,10 @@ import {
 	type ApiNamespace,
 	ApiOptionalMixin,
 	type ApiPackage,
+	type ApiPropertyItem,
 	ApiParameterListMixin,
 	ApiReadonlyMixin,
 	type ApiReleaseTagMixin,
-	ApiStaticMixin,
 	type ApiTypeAlias,
 	type Excerpt,
 	type IResolveDeclarationReferenceResult,
@@ -66,6 +66,19 @@ export function getApiItemKind(apiItem: ApiItem): ValidApiItemKind {
 			return apiItem.kind;
 		}
 	}
+}
+
+/**
+ * Identifies class properties and interface property signatures by their API model kind.
+ *
+ * @remarks
+ * A caller may load an API model with another installation of API Extractor Model.
+ * The serialized kind is shared between installations, but their JavaScript constructors are not.
+ */
+export function isPropertyItem(apiItem: ApiItem): apiItem is ApiPropertyItem {
+	return (
+		apiItem.kind === ApiItemKind.Property || apiItem.kind === ApiItemKind.PropertySignature
+	);
 }
 
 /**
@@ -603,10 +616,7 @@ export function isReadonly(apiItem: ApiItem): boolean {
  * @public
  */
 export function isStatic(apiItem: ApiItem): boolean {
-	if (ApiStaticMixin.isBaseClassOf(apiItem)) {
-		return apiItem.isStatic;
-	}
-	return false;
+	return "isStatic" in apiItem && apiItem.isStatic === true;
 }
 
 /**

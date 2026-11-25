@@ -7,6 +7,8 @@ import {
 	ApiDocumentedItem,
 	type ApiItem,
 	ApiItemKind,
+	type ApiMethod,
+	type ApiMethodSignature,
 	type ApiPackage,
 	type ApiPropertyItem,
 	ApiReturnTypeMixin,
@@ -28,10 +30,10 @@ import {
 } from "../../utilities/index.js";
 import { transformTsdoc } from "../TsdocNodeTransforms.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
-import { getLinkForApiItem, mdastToHtml } from "../utilities/index.js";
+import { getLinkForApiItem, mdastToHtml, type MemberType } from "../utilities/index.js";
 
 import { createExcerptSpanWithHyperlinks } from "./Helpers.js";
-import { createTableFromItems } from "./TableCreation.js";
+import { type ColumnOptions, createTableFromItems } from "./TableCreation.js";
 
 /**
  * Input properties for creating a table of API members
@@ -62,6 +64,16 @@ export interface MemberTableProperties {
  * Content / formatting options for table creation.
  */
 export interface TableCreationOptions {
+	/**
+	 * The type whose instance members are being summarized, including inherited declarations.
+	 */
+	summaryOwner?: ApiItem;
+
+	/**
+	 * Property and return types as seen from the type whose table is being rendered.
+	 */
+	inheritedTypes?: ReadonlyMap<ApiItem, MemberType> | undefined;
+
 	/**
 	 * A list of modifiers to omit from table creation.
 	 *
@@ -222,7 +234,7 @@ export function createDefaultSummaryTable(
 			{
 				title: { type: "text", value: "Modifiers" },
 				columnKind: "optional",
-				createCellContent: (item) => createModifiersCell(item, options?.modifiersToOmit),
+				createCellContent: (item) => createModifiersCell(item, options),
 			},
 			{
 				title: { type: "text", value: "Description" },
@@ -374,9 +386,10 @@ export function createFunctionLikeSummaryTable(
 	}
 
 	function createReturnTypeCell(apiItem: ApiFunctionLike): TableCell | undefined {
-		return ApiReturnTypeMixin.isBaseClassOf(apiItem)
-			? createTypeExcerptCell(apiItem.returnTypeExcerpt, config)
-			: undefined;
+		const returnType =
+			options?.inheritedTypes?.get(apiItem) ??
+			(ApiReturnTypeMixin.isBaseClassOf(apiItem) ? apiItem.returnTypeExcerpt : undefined);
+		return returnType === undefined ? undefined : createTypeExcerptCell(returnType, config);
 	}
 
 	return createTableFromItems(apiItems, {
@@ -384,8 +397,9 @@ export function createFunctionLikeSummaryTable(
 			{
 				title: { type: "text", value: nameColumnLabel },
 				columnKind: "required",
-				createCellContent: (item) => createNameCell(item, config),
+				createCellContent: (item) => createNameCell(item, config, options?.summaryOwner),
 			},
+			createInheritanceColumn(options?.summaryOwner, config),
 			{
 				title: { type: "text", value: "Alerts" },
 				columnKind: "optional",
@@ -394,12 +408,12 @@ export function createFunctionLikeSummaryTable(
 			{
 				title: { type: "text", value: "Modifiers" },
 				columnKind: "optional",
-				createCellContent: (item) => createModifiersCell(item, options?.modifiersToOmit),
+				createCellContent: (item) => createModifiersCell(item, options),
 			},
 			{
 				title: { type: "text", value: "Return Type" },
 				columnKind: "optional",
-				createCellContent: (item) => createReturnTypeCell(item),
+				createCellContent: createReturnTypeCell,
 			},
 			{
 				title: { type: "text", value: "Description" },
@@ -441,6 +455,7 @@ export function createPropertiesTable(
 				columnKind: "required",
 				createCellContent: (item) => createNameCell(item, config),
 			},
+			createInheritanceColumn(options?.summaryOwner, config),
 			{
 				title: { type: "text", value: "Alerts" },
 				columnKind: "optional",
@@ -449,7 +464,7 @@ export function createPropertiesTable(
 			{
 				title: { type: "text", value: "Modifiers" },
 				columnKind: "optional",
-				createCellContent: (item) => createModifiersCell(item, options?.modifiersToOmit),
+				createCellContent: (item) => createModifiersCell(item, options),
 			},
 			{
 				title: { type: "text", value: "Default Value" },
@@ -459,7 +474,11 @@ export function createPropertiesTable(
 			{
 				title: { type: "text", value: "Type" },
 				columnKind: "required",
-				createCellContent: (item) => createTypeExcerptCell(item.propertyTypeExcerpt, config),
+				createCellContent: (item) =>
+					createTypeExcerptCell(
+						options?.inheritedTypes?.get(item) ?? item.propertyTypeExcerpt,
+						config,
+					),
 			},
 			{
 				title: { type: "text", value: "Description" },
@@ -502,7 +521,7 @@ export function createVariablesTable(
 			{
 				title: { type: "text", value: "Modifiers" },
 				columnKind: "optional",
-				createCellContent: (item) => createModifiersCell(item, options?.modifiersToOmit),
+				createCellContent: (item) => createModifiersCell(item, options),
 			},
 			{
 				title: { type: "text", value: "Type" },
@@ -578,36 +597,90 @@ function createDescriptionCell(
 }
 
 /**
+ * Identifies methods eligible to appear in an inherited instance table.
+ */
+function isInstanceMethod(item: ApiItem): item is ApiMethod | ApiMethodSignature {
+	return (
+		item.kind === ApiItemKind.MethodSignature ||
+		(item.kind === ApiItemKind.Method && !(item as ApiMethod).isStatic)
+	);
+}
+
+/**
  * Creates a table cell containing the name of the provided API item.
  *
  * @remarks This content will be generated as a link to the section content describing the API item.
  *
- * @param apiItem - The API item whose name will be displayed in the cell, and to whose content the generate link
- * will point.
+ * @param apiItem - The declaration to name and link to.
  * @param config - See {@link ApiItemTransformationConfiguration}.
+ * @param summaryOwner - The type whose instance members appear in this table.
+ * When provided, inherited overloads are distinguished by number. If omitted, the configured link text is used as-is.
  */
 function createNameCell(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
+	summaryOwner?: ApiItem,
 ): TableCell {
-	const link = getLinkForApiItem(apiItem, config);
+	const text =
+		summaryOwner !== undefined &&
+		apiItem.parent !== summaryOwner &&
+		isInstanceMethod(apiItem) &&
+		apiItem
+			.getMergedSiblings()
+			.some(
+				(sibling) =>
+					isInstanceMethod(sibling) && sibling.overloadIndex !== apiItem.overloadIndex,
+			)
+			? `${config.getLinkTextForItem(apiItem)} - overload ${apiItem.overloadIndex}`
+			: undefined;
 	return {
 		type: "tableCell",
-		children: [link],
+		children: [getLinkForApiItem(apiItem, config, text)],
 	};
 }
 
 /**
- * Creates a table cell containing a list of modifiers that apply.
- *
- * @param apiItem - The API item whose modifiers will be displayed in the cell.
- * @param modifiersToOmit - List of modifiers to omit from the generated cell, even if they apply to the item.
+ * Links to the type that declares a member, even when it is inherited through several bases.
+ * Local declarations leave the cell empty, so a table with no inherited members omits the column.
+ */
+function createInheritanceColumn(
+	summaryOwner: ApiItem | undefined,
+	config: ApiItemTransformationConfiguration,
+): ColumnOptions<ApiItem> {
+	return {
+		title: {
+			type: "text",
+			value: summaryOwner?.kind === ApiItemKind.TypeAlias ? "Declared By" : "Inherited From",
+		},
+		columnKind: "optional",
+		createCellContent: (member) => {
+			const owner = member.parent;
+			return summaryOwner === undefined || owner === undefined || owner === summaryOwner
+				? undefined
+				: { type: "tableCell", children: [getLinkForApiItem(owner, config)] };
+		},
+	};
+}
+
+/**
+ * Lists a member's modifiers, including protected access on inherited class members.
  */
 function createModifiersCell(
 	apiItem: ApiItem,
-	modifiersToOmit?: ApiModifier[],
+	options?: TableCreationOptions,
 ): TableCell | undefined {
-	const modifiers = getModifiers(apiItem, modifiersToOmit);
+	const modifiers: string[] = getModifiers(apiItem, options?.modifiersToOmit);
+
+	// Without a local signature, an inherited protected member can look public.
+	if (
+		options?.summaryOwner !== undefined &&
+		apiItem.parent !== options.summaryOwner &&
+		(apiItem.kind === ApiItemKind.Method || apiItem.kind === ApiItemKind.Property) &&
+		"isProtected" in apiItem &&
+		apiItem.isProtected === true
+	) {
+		modifiers.unshift("protected");
+	}
 
 	const contents: PhrasingContent[] = [];
 	let needsComma = false;
@@ -707,18 +780,21 @@ function createTypeParameterSummaryCell(
 }
 
 /**
- * Creates a table cell containing type information.
- * @remarks This content will be generated as links to type signature documentation for other items local to the same
- * API suite (model).
- *
- * @param typeExcerpt - An excerpt describing the type to be displayed in the cell.
- * @param config - See {@link ApiItemTransformationConfiguration}.
+ * Renders a declared or inherited type, labeling an inherited type when substitution was ambiguous.
  */
 function createTypeExcerptCell(
-	typeExcerpt: Excerpt,
+	type: Excerpt | MemberType,
 	config: ApiItemTransformationConfiguration,
 ): TableCell | undefined {
-	const excerptSpan = createExcerptSpanWithHyperlinks(typeExcerpt, config);
+	const inherited = "asDeclared" in type;
+	const excerptSpan = createExcerptSpanWithHyperlinks(
+		inherited ? type.excerpt : type,
+		config,
+		/* onlyLinkDocumentedItems */ inherited,
+	);
+	if (excerptSpan.length > 0 && inherited && type.asDeclared) {
+		excerptSpan.push({ type: "text", value: " (as declared)" });
+	}
 	return excerptSpan.length === 0
 		? undefined
 		: {

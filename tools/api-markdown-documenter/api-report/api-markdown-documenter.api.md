@@ -246,6 +246,7 @@ export interface DocumentationSuiteConfiguration {
     readonly getUriBaseOverrideForItem: (apiItem: ApiItem) => string | undefined;
     readonly hierarchy: HierarchyConfiguration;
     readonly includeBreadcrumb: boolean;
+    readonly includeInheritedMembers?: boolean;
     readonly includeTopLevelDocumentHeading: boolean;
     readonly minimumReleaseLevel: ReleaseLevel;
 }

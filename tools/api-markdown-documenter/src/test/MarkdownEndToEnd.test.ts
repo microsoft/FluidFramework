@@ -106,9 +106,11 @@ describe("Markdown end-to-end tests", () => {
 				const snapshotPath = Path.join(snapshotsDirectoryPath, modelName, configName);
 
 				it(configName, async () => {
+					// Opt in across layouts so the snapshots exercise links to both headings and standalone member documents.
 					const options: MarkdownRenderer.RenderApiModelOptions = {
 						...inputConfig,
 						apiModel,
+						includeInheritedMembers: true,
 						outputDirectoryPath: temporaryOutputPath,
 					};
 
@@ -132,6 +134,7 @@ describe("Markdown end-to-end tests", () => {
 
 			await MarkdownRenderer.renderApiModel({
 				apiModel,
+				includeInheritedMembers: true,
 				uriRoot: "",
 				outputDirectoryPath: temporaryOutputPath,
 			});

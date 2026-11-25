@@ -10,11 +10,11 @@ import type { Link } from "mdast";
 
 import type { SectionHeading } from "../../mdast/index.js";
 import {
+	type ApiTypeLike,
 	getApiItemKind,
 	getFilteredParent,
 	getFileSafeNameForApiItem,
 	type ValidApiItemKind,
-	getEffectiveReleaseLevel,
 } from "../../utilities/index.js";
 import {
 	FolderDocumentPlacement,
@@ -25,6 +25,10 @@ import {
 	type DocumentationHierarchyConfiguration,
 	type HierarchyConfiguration,
 } from "../configuration/index.js";
+
+import { shouldItemBeIncluded } from "./ApiItemVisibility.js";
+import type { MemberType } from "./InheritedMemberTypes.js";
+import { getInheritedMembers } from "./InheritedMembers.js";
 
 /**
  * This module contains `ApiItem`-related utilities for use in transformation logic.
@@ -398,88 +402,6 @@ export function doesItemRequireOwnDocument(
 }
 
 /**
- * Determines whether or not the specified API item should be excluded from documentation generation,
- * based on {@link ApiItemTransformationConfiguration.exclude} in terms of the item itself and its ancestry.
- */
-export function isItemOrAncestorExcluded(
-	apiItem: ApiItem,
-	config: ApiItemTransformationConfiguration,
-): boolean {
-	// Check if this item, or any of its ancestors, is explicitly excluded by the user config.
-	// If so, this item will not be included.
-	let currentItem: ApiItem | undefined = apiItem;
-	while (currentItem !== undefined) {
-		if (config.exclude(currentItem)) {
-			return true;
-		}
-		currentItem = getFilteredParent(currentItem);
-	}
-
-	// Nothing in the ancestry is excluded by the user config.
-	return false;
-}
-
-/**
- * Determines whether or not the specified API item should have documentation generated for it.
- * Accounts for {@link DocumentationSuiteConfiguration.minimumReleaseLevel} and {@link DocumentationSuiteConfiguration.exclude}.
- *
- * @remarks
- *
- * If an item does not have its own release tag, it will inherit its release scope from its nearest ancestor.
- *
- * Items without an associated release tag (directly or in their ancestry) will always be included as a precaution.
- *
- * @param apiItem - The API item being queried.
- * @param config - See {@link ApiItemTransformationConfiguration}.
- *
- * @example Hierarchical inheritance
- *
- * Items with tagged ancestors inherit their release scope when one is not specified.
- * This includes class/interface members...
- *
- * ```typescript
- * // @public
- * export interface Foo {
- * 	// `@public` inherited from the interface
- * 	bar: string;
- * }
- * ```
- *
- * This also includes scopes like namespaces, which can add further hierarchy...
- *
- * ```typescript
- * // @public
- * export namespace Foo {
- * 	// `@public` inherited from the namespace
- * 	export interface Bar {
- * 		// `@public` inherited from the namespace
- * 		baz: string;
- * 	}
- * }
- * ```
- *
- * @public
- */
-export function shouldItemBeIncluded(
-	apiItem: ApiItem,
-	config: ApiItemTransformationConfiguration,
-): boolean {
-	const releaseTag = getEffectiveReleaseLevel(apiItem);
-
-	// If the item has a release tag that is more restrictive than the minimum release level, it should not be included.
-	if (releaseTag < config.minimumReleaseLevel) {
-		return false;
-	}
-
-	// If the item or any of its ancestors are explicitly excluded, it should not be included.
-	if (isItemOrAncestorExcluded(apiItem, config)) {
-		return false;
-	}
-
-	return true;
-}
-
-/**
  * Filters and returns the provided list of `ApiItem`s to include only those desired by the user configuration.
  * Accounts for {@link DocumentationSuiteConfiguration.minimumReleaseLevel} and {@link DocumentationSuiteConfiguration.exclude}.
  *
@@ -493,4 +415,79 @@ export function filterItems<TApiItem extends ApiItem>(
 	config: ApiItemTransformationConfiguration,
 ): TApiItem[] {
 	return apiItems.filter((member) => shouldItemBeIncluded(member, config));
+}
+
+/**
+ * Orders member names using English collation regardless of the host's default locale.
+ *
+ * @remarks
+ * Digit sequences are compared numerically, so `item2` sorts before `item10`.
+ */
+const memberNameOrder = new Intl.Collator("en", { numeric: true });
+
+/**
+ * The members to summarize for a type and the declarations whose details it owns.
+ */
+export interface FilteredMembers {
+	/**
+	 * Visible members for the summary tables.
+	 *
+	 * @remarks
+	 * When inheritance is enabled, declared and inherited members are sorted together by name.
+	 * Otherwise, only direct declarations appear, in model order.
+	 */
+	readonly members: readonly ApiItem[];
+
+	/**
+	 * Visible members declared directly on this type, in their original model order.
+	 *
+	 * @remarks
+	 * Use this list for member details so inherited declarations are documented only where they originate.
+	 */
+	readonly declaredMembers: readonly ApiItem[];
+
+	/**
+	 * Maps each visible inherited declaration to the property or return type to display on this type's page.
+	 *
+	 * @remarks
+	 * The map is absent when inheritance is disabled or the type itself is excluded,
+	 * and empty when inheritance is enabled for a visible type with no visible inherited members.
+	 *
+	 * @example
+	 * If `StringBox` extends `Box<string>`, its entry for `Box.value` shows `string` instead of `T`.
+	 */
+	readonly inheritedTypes?: ReadonlyMap<ApiItem, MemberType>;
+}
+
+/**
+ * Selects the visible members of a class, interface, or type alias for the configured documentation suite.
+ *
+ * @remarks
+ * With inheritance disabled, both lists contain only direct declarations in model order.
+ * With inheritance enabled, `members` includes inherited declarations and sorts all rows by name,
+ * comparing digits numerically and breaking ties by canonical reference.
+ * `declaredMembers` keeps its original order so rendering summaries does not change member details.
+ * The accompanying type information describes inherited properties and return types in the scope of `item`.
+ */
+export function getFilteredMembers(
+	item: ApiTypeLike,
+	config: ApiItemTransformationConfiguration,
+): FilteredMembers {
+	if (!shouldItemBeIncluded(item, config)) {
+		return { members: [], declaredMembers: [] };
+	}
+	const declaredMembers = filterItems(item.members, config);
+	if (config.includeInheritedMembers !== true) {
+		return { members: declaredMembers, declaredMembers };
+	}
+	const inheritedTypes = getInheritedMembers(item, config);
+	const members = [...declaredMembers, ...inheritedTypes.keys()].sort(
+		(left, right) =>
+			memberNameOrder.compare(left.displayName, right.displayName) ||
+			memberNameOrder.compare(
+				left.canonicalReference.toString(),
+				right.canonicalReference.toString(),
+			),
+	);
+	return { members, declaredMembers, inheritedTypes };
 }

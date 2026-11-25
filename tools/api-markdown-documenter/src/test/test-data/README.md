@@ -6,3 +6,8 @@ These suites were generated via the following sample repository: https://github.
 
 Given the complexity of the `.api.json` files API-Extractor generates, it is likely easier to update the test scenarios by using the above repo.
 That said, direct modifications can be made _carefully_ to those files if needed.
+
+The [extracted inheritance report](./extracted-inheritance/test-inheritance.api.json) is a small API Extractor model for the resolver regression tests.
+Two names are intentionally shared: `TestConstructorTypeAndValue` names both a constructor value and an unrelated interface, while `TestClassWithMergedInterface` names a class and its merged interface.
+Preserve the distinct canonical references for these declarations when editing the report.
+The [document target tests](../ExtractedInheritanceLinks.test.ts) check merged declaration paths and an inherited symbol link in memory, without adding this model to the Markdown snapshot suites.
