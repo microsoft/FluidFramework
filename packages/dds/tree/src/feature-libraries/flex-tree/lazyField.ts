@@ -15,6 +15,7 @@ import {
 	type FieldKindIdentifier,
 	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
+	ITreeSubscriptionCursorState,
 	type NormalizedFieldUpPath,
 	type TreeNavigationResult,
 	inCursorNode,
@@ -52,7 +53,7 @@ import {
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
 import { LazyEntity } from "./lazyEntity.js";
-import { type LazyTreeNode, getOrCreateHydratedFlexTreeNode } from "./lazyNode.js";
+import { LazyTreeNode, getOrCreateHydratedFlexTreeNode } from "./lazyNode.js";
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
 
 /**
@@ -76,10 +77,10 @@ import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
  * Fields are disposed when their parent is destroyed or their context is cleared, not when they become empty.
  *
  * Fields without a parent node or a cached parent wrapper are not cached here.
- * `makeField` builds a field anchor even on cache hits; `getCachedField` avoids that work when the parent wrapper is already available.
+ * Unless given the parent's anchor node, `makeField` builds a field anchor even on cache hits; `getCachedField` avoids that work when the parent wrapper is already available.
  * Reuse also reduces repeated field-access costs by avoiding wrapper allocation, cursor creation, and listener registration.
  */
-const fieldCache: WeakMap<LazyTreeNode, Map<FieldKey, FlexTreeField>> = new WeakMap();
+const fieldCache: WeakMap<HydratedFlexTreeNode, Map<FieldKey, FlexTreeField>> = new WeakMap();
 
 /**
  * Looks up a field without navigating a cursor.
@@ -89,51 +90,72 @@ export function getCachedField(node: LazyTreeNode, key: FieldKey): FlexTreeField
 	return fieldCache.get(node)?.get(key);
 }
 
+/**
+ * Gets the {@link FlexTreeField} for the field `cursor` is in, creating it if it is not cached.
+ * @param parent - The anchor node of the node which contains the field, if known.
+ * Providing it avoids anchoring the field from the cursor's path, which requires building that path and walking it from the root.
+ */
 export function makeField(
 	context: Context,
 	schema: FieldKindIdentifier,
 	cursor: ITreeSubscriptionCursor,
+	parent?: AnchorNode,
 ): FlexTreeField {
-	const fieldAnchor = cursor.buildFieldAnchor();
-	let usedAnchor = false;
+	const anchors = context.checkout.forest.anchors;
 
-	const makeFlexTreeField = (): FlexTreeField => {
-		usedAnchor = true;
-		const field = new (
-			kindToClass.get(schema) ?? fail(0xb0f /* missing field implementation */)
-		)(context, schema, cursor, fieldAnchor);
-		return field;
-	};
-
-	if (fieldAnchor.parent === undefined) {
-		return makeFlexTreeField();
+	let parentAnchorNode = parent;
+	// Anchor for the field built from the cursor's path. Owned by this function until passed to a new field.
+	let builtAnchor: FieldAnchor | undefined;
+	if (parentAnchorNode === undefined) {
+		builtAnchor = cursor.buildFieldAnchor();
+		if (builtAnchor.parent === undefined) {
+			return createField(context, schema, cursor, builtAnchor);
+		}
+		parentAnchorNode = anchors.locate(builtAnchor.parent) ?? fail(0xb10 /* missing anchor */);
 	}
 
 	// For the common case (all but roots), cache field associated with its node's anchor and field key.
-	const anchorNode =
-		context.checkout.forest.anchors.locate(fieldAnchor.parent) ??
-		fail(0xb10 /* missing anchor */);
-
 	// Since anchor-set could be reused across a flex tree context getting disposed, key off the flex tree node not the anchor.
-	const cacheKey = anchorNode.slots.get(flexTreeSlot);
-
-	// If there is no flex tree parent node, skip caching: this is not expected to be a hot path, but should probably be fixed at some point.
-	if (cacheKey === undefined) {
-		return makeFlexTreeField();
+	const cacheKey = parentAnchorNode.slots.get(flexTreeSlot);
+	const fieldKey = cursor.getFieldKey();
+	const cached = cacheKey === undefined ? undefined : fieldCache.get(cacheKey)?.get(fieldKey);
+	if (cached !== undefined) {
+		if (builtAnchor?.parent !== undefined) {
+			// The anchor must be disposed to avoid leaking. In the case of a cache hit,
+			// we are not transferring ownership to a new FlexTreeField, so it must be disposed of here to avoid the leak.
+			anchors.forget(builtAnchor.parent);
+		}
+		return cached;
 	}
 
-	const innerCache = getOrCreate(
-		fieldCache,
-		cacheKey,
-		() => new Map<FieldKey, FlexTreeField>(),
+	const field = createField(
+		context,
+		schema,
+		cursor,
+		builtAnchor ?? { parent: anchors.track(parentAnchorNode), fieldKey },
 	);
-	const result = getOrCreate(innerCache, fieldAnchor.fieldKey, makeFlexTreeField);
-	if (!usedAnchor) {
-		// The anchor must be disposed to avoid leaking. In the case of a cache hit,
-		// we are not transferring ownership to a new FlexTreeField, so it must be disposed of here to avoid the leak.
-		context.checkout.forest.anchors.forget(fieldAnchor.parent);
+	// If there is no flex tree parent node, skip caching: this is not expected to be a hot path, but should probably be fixed at some point.
+	if (cacheKey !== undefined) {
+		getOrCreate(fieldCache, cacheKey, () => new Map<FieldKey, FlexTreeField>()).set(
+			fieldKey,
+			field,
+		);
 	}
-	return result;
+	return field;
+}
+
+function createField(
+	context: Context,
+	schema: FieldKindIdentifier,
+	cursor: ITreeSubscriptionCursor,
+	fieldAnchor: FieldAnchor,
+): LazyField {
+	return new (kindToClass.get(schema) ?? fail(0xb0f /* missing field implementation */))(
+		context,
+		schema,
+		cursor,
+		fieldAnchor,
+	);
 }
 
 /**
@@ -210,6 +232,34 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 		return this.context.checkout.forest.tryMoveCursorToField(this.anchor, cursor);
 	}
 
+	protected override cursorFromAncestor(): ITreeSubscriptionCursor | undefined {
+		if (this.anchor.parent === undefined) {
+			return undefined;
+		}
+		const parent = this.context.checkout.forest.anchors.locate(this.anchor.parent);
+		const cursor =
+			parent === undefined ? undefined : LazyTreeNode.forkCursorFromAncestor(parent, true);
+		cursor?.enterField(this.key);
+		return cursor;
+	}
+
+	/**
+	 * The cursor this field holds, if it is current and at this field.
+	 * @remarks
+	 * A held cursor is moved away from its field only briefly, while reading the field's content.
+	 */
+	public currentCursorAtField(): ITreeSubscriptionCursor | undefined {
+		if (this.isFreed()) {
+			return undefined;
+		}
+		const held = this.heldCursor;
+		return held.state === ITreeSubscriptionCursorState.Current &&
+			held.mode === CursorLocationType.Fields &&
+			held.getFieldKey() === this.key
+			? held
+			: undefined;
+	}
+
 	protected override forgetAnchor(): void {
 		this.offAfterDestroy?.();
 		if (this.anchor.parent === undefined) return;
@@ -221,8 +271,29 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 	}
 
 	public atIndex(index: number): FlexTreeUnknownUnboxed {
+		const cached = this.cachedNonLeafChild(index);
+		if (cached !== undefined) {
+			return cached;
+		}
 		return inCursorNode(this.cursor, index, (cursor) =>
 			unboxedFlexNode(this.context, cursor, this.anchor),
+		);
+	}
+
+	/**
+	 * The {@link LazyTreeNode} already created for the node at `index`, if there is one and it is not a leaf.
+	 * @remarks
+	 * Such a node is found through the anchors, so reading it needs no cursor at this field.
+	 */
+	protected cachedNonLeafChild(index: number): LazyTreeNode | undefined {
+		if (this.anchor.parent === undefined) {
+			return undefined;
+		}
+		this.ensureValidForAccess();
+		return LazyTreeNode.cachedNonLeaf(
+			this.context.checkout.forest.anchors
+				.locate(this.anchor.parent)
+				?.childIfAnchored(this.key, index),
 		);
 	}
 
@@ -432,7 +503,7 @@ export class LazyOptionalField extends LazyField implements FlexTreeOptionalFiel
 	}
 
 	public get content(): FlexTreeUnknownUnboxed | undefined {
-		return this.length === 0 ? undefined : this.atIndex(0);
+		return this.cachedNonLeafChild(0) ?? (this.length === 0 ? undefined : this.atIndex(0));
 	}
 }
 
@@ -483,6 +554,15 @@ export function unboxedFlexNode(
 		const anchorNode = context.checkout.forest.anchors.locate(anchor);
 		assert(anchorNode !== undefined, 0xa4c /* missing anchor */);
 		child = anchorNode.childIfAnchored(fieldAnchor.fieldKey, cursor.fieldIndex);
+		if (child === undefined) {
+			// Anchoring the child under its parent's anchor node needs neither the child's path nor a walk from the root,
+			// whereas getOrCreateHydratedFlexTreeNode anchors it from the cursor's path.
+			const [childAnchor, childAnchorNode] = anchorNode.getOrCreateChildRef(
+				fieldAnchor.fieldKey,
+				cursor.fieldIndex,
+			);
+			return new LazyTreeNode(context, cursor.type, cursor, childAnchorNode, childAnchor);
+		}
 	}
 
 	if (child !== undefined) {
