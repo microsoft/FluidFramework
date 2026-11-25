@@ -66,8 +66,8 @@ overrides:
 
   # Resolve known security vulnerabilities in transitive dependencies.
   "@babel/core@>=7 <8": ^7.29.6
-  # Resolve known axios vulnerabilities (CVE-2026-44486, CVE-2026-44487, CVE-2026-44492).
-  axios@>=1 <1.16: 1.16.0
+  # Resolve known axios vulnerabilities, including CVE-2026-101898 through CVE-2026-101909.
+  axios@>=1 <1.16: 1.20.0
   brace-expansion@>=1 <2: ^1.1.17
   brace-expansion@>=2 <3: ^2.1.3
   brace-expansion@>=5 <6: ^5.0.8
@@ -115,7 +115,7 @@ overrides:
   diff@>=5 <6: ^5.2.2
   # js-yaml: overridden to fix a known vulnerability (prototype pollution via
   # merge keys).
-  js-yaml@<4: 3.15.0
+  js-yaml@<4: 3.15.2
   js-yaml@>=4: 4.3.2
   # jws: overridden to ^3.2.3 to resolve a known vulnerability in jws 3.2.2
   # (transitive via jsonwebtoken). Stays within jsonwebtoken's declared ^3.2.2

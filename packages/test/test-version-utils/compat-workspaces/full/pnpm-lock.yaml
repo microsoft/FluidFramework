@@ -5,8 +5,8 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  axios@<1: ^0.33.0
-  axios@>=1 <2: 1.18.1
+  axios@<1: ^0.34.0
+  axios@>=1 <2: 1.20.0
   brace-expansion@>=1 <2: ^1.1.17
   brace-expansion@>=2 <3: ^2.1.3
   brace-expansion@>=5 <6: ^5.0.8
@@ -3324,8 +3324,8 @@ packages:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
 
-  axios@1.18.1:
-    resolution: {integrity: sha512-3nTvFlvpn9Zu/RkHUqtc7/+al4UpRW5az71ap5zccp6e8RAYEzhMTecX8Dz1wWDYrPpUoB1HAQEGEAEvUr7S9g==}
+  axios@1.20.0:
+    resolution: {integrity: sha512-r8aOh8j9cGKpgQAqpzrUHnSIc6a59Y3Xf/cv8sy1DrHCkZHzQGEuoq1tARk6qSyDdtQGSDgpb9kFlruzPvrgwg==}
 
   base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
@@ -7311,7 +7311,7 @@ snapshots:
       '@fluidframework/core-utils': 2.0.9
       '@fluidframework/driver-definitions': 2.0.9
       '@fluidframework/telemetry-utils': 2.0.9
-      axios: 1.18.1(debug@4.4.3)
+      axios: 1.20.0(debug@4.4.3)
       lz4js: 0.2.0
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -7349,7 +7349,7 @@ snapshots:
       '@fluidframework/core-utils': 2.13.0
       '@fluidframework/driver-definitions': 2.13.0
       '@fluidframework/telemetry-utils': 2.13.0
-      axios: 1.18.1(debug@4.4.3)
+      axios: 1.20.0(debug@4.4.3)
       lz4js: 0.2.0
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -7363,7 +7363,7 @@ snapshots:
       '@fluidframework/core-utils': 2.23.0
       '@fluidframework/driver-definitions': 2.23.0
       '@fluidframework/telemetry-utils': 2.23.0
-      axios: 1.18.1(debug@4.4.3)
+      axios: 1.20.0(debug@4.4.3)
       lz4js: 0.2.0
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -7377,7 +7377,7 @@ snapshots:
       '@fluidframework/core-utils': 2.33.2
       '@fluidframework/driver-definitions': 2.33.2
       '@fluidframework/telemetry-utils': 2.33.2
-      axios: 1.18.1(debug@4.4.3)
+      axios: 1.20.0(debug@4.4.3)
       lz4js: 0.2.0
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -7391,7 +7391,7 @@ snapshots:
       '@fluidframework/core-utils': 2.40.0
       '@fluidframework/driver-definitions': 2.40.0
       '@fluidframework/telemetry-utils': 2.40.0
-      axios: 1.18.1(debug@4.4.3)
+      axios: 1.20.0(debug@4.4.3)
       lz4js: 0.2.0
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -7405,7 +7405,7 @@ snapshots:
       '@fluidframework/core-utils': 2.43.0
       '@fluidframework/driver-definitions': 2.43.0
       '@fluidframework/telemetry-utils': 2.43.0
-      axios: 1.18.1(debug@4.4.3)
+      axios: 1.20.0(debug@4.4.3)
       lz4js: 0.2.0
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -7419,7 +7419,7 @@ snapshots:
       '@fluidframework/core-utils': 2.5.0
       '@fluidframework/driver-definitions': 2.5.0
       '@fluidframework/telemetry-utils': 2.5.0
-      axios: 1.18.1(debug@4.4.3)
+      axios: 1.20.0(debug@4.4.3)
       lz4js: 0.2.0
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -7433,7 +7433,7 @@ snapshots:
       '@fluidframework/core-utils': 2.53.1
       '@fluidframework/driver-definitions': 2.53.1
       '@fluidframework/telemetry-utils': 2.53.1
-      axios: 1.18.1(debug@4.4.3)
+      axios: 1.20.0(debug@4.4.3)
       lz4js: 0.2.0
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -7447,7 +7447,7 @@ snapshots:
       '@fluidframework/core-utils': 2.63.0
       '@fluidframework/driver-definitions': 2.63.0
       '@fluidframework/telemetry-utils': 2.63.0
-      axios: 1.18.1(debug@4.4.3)
+      axios: 1.20.0(debug@4.4.3)
       lz4js: 0.2.0
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -7461,7 +7461,7 @@ snapshots:
       '@fluidframework/core-utils': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
       '@fluidframework/telemetry-utils': 2.74.0
-      axios: 1.18.1(debug@4.4.3)
+      axios: 1.20.0(debug@4.4.3)
       lz4js: 0.2.0
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -7475,7 +7475,7 @@ snapshots:
       '@fluidframework/core-utils': 2.80.0
       '@fluidframework/driver-definitions': 2.80.0
       '@fluidframework/telemetry-utils': 2.80.0
-      axios: 1.18.1(debug@4.4.3)
+      axios: 1.20.0(debug@4.4.3)
       lz4js: 0.2.0
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -11733,7 +11733,7 @@ snapshots:
       '@types/semver': 7.7.1
       assert: 2.1.0
       async: 3.2.6
-      axios: 1.18.1(debug@4.4.3)
+      axios: 1.20.0(debug@4.4.3)
       buffer: 6.0.3
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -11760,7 +11760,7 @@ snapshots:
       '@types/semver': 7.7.1
       assert: 2.1.0
       async: 3.2.6
-      axios: 1.18.1(debug@4.4.3)
+      axios: 1.20.0(debug@4.4.3)
       buffer: 6.0.3
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -11789,7 +11789,7 @@ snapshots:
       '@types/semver': 7.7.1
       assert: 2.1.0
       async: 3.2.6
-      axios: 1.18.1(debug@4.4.3)
+      axios: 1.20.0(debug@4.4.3)
       buffer: 6.0.3
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -11949,7 +11949,7 @@ snapshots:
       '@fluidframework/gitresources': 5.0.0
       '@fluidframework/protocol-base': 5.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      axios: 1.18.1(debug@4.4.3)
+      axios: 1.20.0(debug@4.4.3)
       crc-32: 1.2.0
       debug: 4.4.3
       json-stringify-safe: 5.0.1
@@ -11966,7 +11966,7 @@ snapshots:
       '@fluidframework/gitresources': 7.0.0
       '@fluidframework/protocol-base': 7.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      axios: 1.18.1(debug@4.4.3)
+      axios: 1.20.0(debug@4.4.3)
       crc-32: 1.2.0
       debug: 4.4.3
       json-stringify-safe: 5.0.1
@@ -11983,7 +11983,7 @@ snapshots:
       '@fluidframework/gitresources': 7.0.1
       '@fluidframework/protocol-base': 7.0.1
       '@fluidframework/protocol-definitions': 3.2.0
-      axios: 1.18.1(debug@4.4.3)
+      axios: 1.20.0(debug@4.4.3)
       crc-32: 1.2.0
       debug: 4.4.3
       json-stringify-safe: 5.0.1
@@ -13814,7 +13814,7 @@ snapshots:
     dependencies:
       possible-typed-array-names: 1.1.0
 
-  axios@1.18.1(debug@4.4.3):
+  axios@1.20.0(debug@4.4.3):
     dependencies:
       follow-redirects: 1.16.0(debug@4.4.3)
       form-data: 4.0.6
