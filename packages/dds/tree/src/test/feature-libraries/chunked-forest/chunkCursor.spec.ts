@@ -12,6 +12,9 @@ import {
 	CursorLocationType,
 	clonePath,
 	type FieldKey,
+	type ChunkedCursor,
+	type TreeNodeSchemaIdentifier,
+	tryGetStringSequence,
 } from "../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
@@ -29,9 +32,9 @@ import {
 	UniformChunk,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
-import type { TreeChunk } from "../../../feature-libraries/index.js";
-import { numberSchema } from "../../../simple-tree/index.js";
-import { brand } from "../../../util/index.js";
+import { cursorForStringSequence, type TreeChunk } from "../../../feature-libraries/index.js";
+import { numberSchema, stringSchema } from "../../../simple-tree/index.js";
+import { brand, StringSequence } from "../../../util/index.js";
 
 import {
 	numberSequenceField,
@@ -81,6 +84,43 @@ describe("chunkCursor", () => {
 	});
 
 	describe("ChunkCursor", () => {
+		it("forwards string storage through fallback cursors with the enclosing chunk offset", () => {
+			const type: TreeNodeSchemaIdentifier = brand(stringSchema.identifier);
+			const sequence = StringSequence.fromString("ab");
+			const shape = new TreeShape(type, true, []).withTopLevelLength(2);
+			const inner = new UniformChunk(shape, ["a", "b"]);
+			const wrapped = new (class extends WrapperChunk {
+				public override cursor(): ChunkedCursor {
+					return cursorForStringSequence(type, sequence, this);
+				}
+			})(inner);
+			const chunk = new SequenceChunk([numericBasicChunk(), wrapped, numericBasicChunk()]);
+			const cursor = chunk.cursor();
+			cursor.enterNode(0);
+			assert.equal(tryGetStringSequence(cursor), undefined);
+			assert(cursor.nextNode());
+			assert.equal(tryGetStringSequence(cursor), sequence);
+			assert.equal(cursor.chunkStart, 1);
+			assert.equal(cursor.chunkLength, 2);
+			const fork = cursor.fork();
+			assert(cursor.nextNode());
+			assert.equal(cursor.value, "b");
+			assert.equal(tryGetStringSequence(cursor), sequence);
+			assert(cursor.nextNode());
+			assert.equal(tryGetStringSequence(cursor), undefined);
+			assert.equal(tryGetStringSequence(fork), sequence);
+			assert.equal(fork.value, "a");
+			assert(cursor.seekNodes(-2));
+			assert.equal(tryGetStringSequence(cursor), sequence);
+			assert.equal(cursor.value, "a");
+			cursor.enterField(EmptyKey);
+			assert.equal(cursor.firstNode(), false);
+			cursor.exitField();
+			assert.equal(tryGetStringSequence(cursor), sequence);
+			chunk.referenceRemoved();
+			inner.referenceRemoved();
+		});
+
 		it("keeps local root lengths through inline fields, fallback cursors, forks, and boundary exits", () => {
 			const leaf = new TreeShape(brand(numberSchema.identifier), true, []);
 			const shape = new TreeShape(brand("parent"), false, [[EmptyKey, leaf, 2]]);

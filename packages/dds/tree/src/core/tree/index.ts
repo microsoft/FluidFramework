@@ -124,6 +124,7 @@ export {
 	tryGetChunk,
 	type ChunkedCursor,
 } from "./chunk.js";
+export { cursorStringSequence, tryGetStringSequence } from "./stringSequence.js";
 
 export {
 	DetachedFieldIndex,

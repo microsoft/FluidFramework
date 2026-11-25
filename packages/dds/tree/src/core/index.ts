@@ -107,6 +107,8 @@ export {
 	dummyRoot,
 	cursorChunk,
 	tryGetChunk,
+	cursorStringSequence,
+	tryGetStringSequence,
 	type ChunkedCursor,
 	DetachedFieldIndexFormatVersion,
 	detachedFieldIndexCodecBuilder,

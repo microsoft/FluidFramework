@@ -8,6 +8,8 @@ import { assert, fail, oob } from "@fluidframework/core-utils/internal";
 import {
 	CursorLocationType,
 	cursorChunk,
+	cursorStringSequence,
+	tryGetStringSequence,
 	dummyRoot,
 	type ChunkedCursor,
 	type FieldKey,
@@ -18,6 +20,7 @@ import {
 	type UpPath,
 	type Value,
 } from "../../core/index.js";
+import type { StringSequence } from "../../util/index.js";
 import { SynchronousCursor } from "../treeCursorUtils.js";
 
 import { getFieldLength, locateNodeInChunks } from "./chunkEditing.js";
@@ -82,6 +85,11 @@ export interface ChunkInlineCursor
 			ChunkedCursor,
 			keyof ChunkLocalCursor | keyof SynchronousCursor | "firstNode" | "nextNode"
 		> {
+	/**
+	 * Optional string storage covering the current node's chunk range.
+	 * Follows {@link cursorStringSequence}.
+	 */
+	readonly [cursorStringSequence]?: StringSequence | undefined;
 	/**
 	 * Optional specialized entry into the first node of an inline field.
 	 * @remarks
@@ -305,6 +313,9 @@ export abstract class ChunkTraversal
 	}
 	public get [cursorChunk](): TreeChunk | undefined {
 		return this.inline[cursorChunk];
+	}
+	public get [cursorStringSequence](): StringSequence | undefined {
+		return this.inline[cursorStringSequence];
 	}
 	public atChunkRoot(): boolean {
 		return this.atRoot && this.local.atChunkRoot();
@@ -682,6 +693,9 @@ class CompleteChunkCursorAdapter implements ChunkInlineCursor {
 	}
 	public get [cursorChunk](): TreeChunk | undefined {
 		return this.cursor[cursorChunk];
+	}
+	public get [cursorStringSequence](): StringSequence | undefined {
+		return tryGetStringSequence(this.cursor);
 	}
 	public get fieldIndex(): number {
 		return this.cursor.fieldIndex;

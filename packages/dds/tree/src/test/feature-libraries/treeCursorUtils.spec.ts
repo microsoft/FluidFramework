@@ -8,10 +8,13 @@ import { strict as assert } from "node:assert";
 import {
 	CursorLocationType,
 	type DetachedField,
+	type FieldKey,
 	type FieldUpPath,
+	type JsonableTree,
 	type TreeNodeSchemaIdentifier,
 	type UpPath,
 	compareFieldUpPaths,
+	keyAsDetachedField,
 } from "../../core/index.js";
 import {
 	PrefixedPath,
@@ -19,6 +22,7 @@ import {
 	prefixPath,
 	stackTreeFieldCursor,
 	stackTreeNodeCursor,
+	type CursorAdapter,
 	// Allow importing from this specific file which is being tested:
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/treeCursorUtils.js";
@@ -300,6 +304,195 @@ describe("treeCursorUtils", () => {
 				parent: undefined,
 				parentField: brand("key"),
 				parentIndex: 0,
+			});
+		});
+
+		describe("composed field delegation", () => {
+			const delegated: FieldKey = brand("delegated");
+			const innerField: FieldKey = brand("inner");
+			const after: FieldKey = brand("after");
+			const empty: FieldKey = brand("empty");
+			const numberType: TreeNodeSchemaIdentifier = brand(numberSchema.identifier);
+			const tree: JsonableTree = {
+				type: brand("container"),
+				fields: {
+					delegated: [
+						{
+							type: brand("container"),
+							fields: {
+								inner: [
+									{ type: numberType, value: 11 },
+									{ type: numberType, value: 12 },
+								],
+							},
+						},
+						{ type: numberType, value: 20 },
+					],
+					after: [{ type: numberType, value: 30 }],
+				},
+			};
+
+			const subtreeDelegatingAdapter: CursorAdapter<JsonableTree> = {
+				...adapter,
+				getFieldCursor: (node, key) => {
+					if (key !== delegated) {
+						return undefined;
+					}
+					assert.equal(node, tree);
+					return stackTreeFieldCursor(adapter, node, keyAsDetachedField(key));
+				},
+			};
+
+			it("prefixes node and field paths inside a delegated subtree", () => {
+				const cursor = stackTreeNodeCursor(subtreeDelegatingAdapter, tree);
+				cursor.enterField(delegated);
+				cursor.enterNode(0);
+				cursor.enterField(innerField);
+				cursor.enterNode(1);
+				assert.equal(cursor.value, 12);
+
+				const prefix = {
+					parent: {
+						parent: undefined,
+						parentField: brand<FieldKey>("owner"),
+						parentIndex: 5,
+					},
+					rootFieldOverride: brand<FieldKey>("prefixed"),
+					indexOffset: 7,
+				};
+				const prefixedDelegatedParent: UpPath = {
+					parent: prefix.parent,
+					parentField: prefix.rootFieldOverride,
+					parentIndex: 7,
+				};
+				const prefixedInnerLeaf: UpPath = {
+					parent: prefixedDelegatedParent,
+					parentField: innerField,
+					parentIndex: 1,
+				};
+				expectEqualPaths(cursor.getPath(prefix), prefixedInnerLeaf);
+				cursor.enterField(empty);
+				expectEqualFieldPaths(cursor.getFieldPath(prefix), {
+					parent: prefixedInnerLeaf,
+					field: empty,
+				});
+			});
+
+			it("keeps a fork in the delegated subtree after the original cursor leaves it", () => {
+				const cursor = stackTreeNodeCursor(subtreeDelegatingAdapter, tree);
+				cursor.enterField(delegated);
+				cursor.enterNode(0);
+				cursor.enterField(innerField);
+				cursor.enterNode(1);
+				const forkedLeafPath = cursor.getPath();
+				cursor.enterField(empty);
+				const nestedEmptyFieldFork = cursor.fork();
+
+				// Return the original cursor to the outer root, releasing its delegate.
+				cursor.exitField();
+				cursor.exitNode();
+				cursor.exitField();
+				cursor.exitNode();
+				cursor.exitField();
+				assert.equal(cursor.getNode(), tree);
+
+				assert.equal(nestedEmptyFieldFork.getFieldLength(), 0);
+				nestedEmptyFieldFork.exitField();
+				assert.equal(nestedEmptyFieldFork.value, 12);
+				expectEqualPaths(nestedEmptyFieldFork.getPath(), forkedLeafPath);
+			});
+
+			it("returns to delegated siblings after leaving a nested field", () => {
+				const cursor = stackTreeNodeCursor(subtreeDelegatingAdapter, tree);
+				cursor.enterField(delegated);
+				cursor.enterNode(0);
+				cursor.enterField(innerField);
+				cursor.enterNode(1);
+				cursor.exitNode();
+				cursor.exitField();
+
+				assert(cursor.nextNode());
+				assert.equal(cursor.value, 20);
+				assert.equal(cursor.nextNode(), false);
+				assert.equal(cursor.getFieldKey(), delegated);
+			});
+
+			it("resumes ordinary field iteration after exhausting a delegated field", () => {
+				const cursor = stackTreeNodeCursor(subtreeDelegatingAdapter, tree);
+				assert(cursor.firstField());
+				assert.equal(cursor.getFieldKey(), delegated);
+				cursor.enterNode(1);
+				assert.equal(cursor.nextNode(), false);
+				assert.equal(cursor.getFieldKey(), delegated);
+
+				assert(cursor.nextField());
+				assert.equal(cursor.getFieldKey(), after);
+				assert(cursor.firstNode());
+				assert.equal(cursor.value, 30);
+				cursor.exitNode();
+				assert.equal(cursor.nextField(), false);
+				assert.equal(cursor.getNode(), tree);
+				assert(cursor.firstField());
+				assert.equal(cursor.getFieldKey(), delegated);
+			});
+
+			it("supports null as the parent node of a delegated field", () => {
+				const base: CursorAdapter<number | null> = {
+					type: () => numberType,
+					value: (node) => node ?? undefined,
+					keysFromNode: (node) => (node === null ? [delegated] : []),
+					getFieldFromNode: (node, key) => (node === null && key === delegated ? [1, 2] : []),
+				};
+				const delegatingAdapter: CursorAdapter<number | null> = {
+					...base,
+					getFieldCursor: (node, key) => {
+						assert.equal(node, null);
+						return stackTreeFieldCursor(base, node, keyAsDetachedField(key));
+					},
+				};
+				const cursor = stackTreeNodeCursor(delegatingAdapter, null);
+				assert(cursor.firstField());
+				assert(cursor.firstNode());
+				assert.equal(cursor.getNode(), 1);
+				assert(cursor.nextNode());
+				assert.equal(cursor.value, 2);
+				assert.equal(cursor.nextNode(), false);
+				cursor.exitField();
+				assert.equal(cursor.getNode(), null);
+			});
+
+			it("rejects delegates that do not start at a field", () => {
+				const cursor = stackTreeNodeCursor(
+					{
+						...adapter,
+						getFieldCursor: () => stackTreeNodeCursor(adapter, tree),
+					},
+					tree,
+				);
+				assert.throws(() => cursor.enterField(delegated), /must start at its root field/);
+			});
+
+			it("leaves an empty delegated field without entering or enumerating nodes", () => {
+				const cursor = stackTreeNodeCursor(
+					{
+						...adapter,
+						getFieldCursor: (node, key) =>
+							stackTreeFieldCursor(adapter, node, keyAsDetachedField(key)),
+						getFieldFromNode: () => {
+							throw new Error("Delegation must not enumerate the outer field");
+						},
+					},
+					tree,
+				);
+				cursor.enterField(empty);
+				assert.equal(cursor.getFieldLength(), 0);
+				assert.equal(cursor.firstNode(), false);
+				expectEqualFieldPaths(cursor.getFieldPath(), { parent: undefined, field: empty });
+				const fork = cursor.fork();
+				assert.equal(cursor.nextField(), false);
+				assert.equal(cursor.getNode(), tree);
+				fork.exitField();
+				assert.equal(fork.getNode(), tree);
 			});
 		});
 	});
