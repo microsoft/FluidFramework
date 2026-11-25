@@ -681,6 +681,9 @@ export class SchematizingSimpleTreeView<
 	}
 
 	public dispose(): void {
+		if (this.disposed) {
+			return;
+		}
 		this.disposed = true;
 		this.checkout.disposeLocations();
 		this.disposeFlexView();
