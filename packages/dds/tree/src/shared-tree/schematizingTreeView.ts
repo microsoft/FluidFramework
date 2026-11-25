@@ -682,7 +682,6 @@ export class SchematizingSimpleTreeView<
 
 	public dispose(): void {
 		if (this.disposed) {
-			// Cleanup already ran. A replacement view may now own the checkout's view slot.
 			return;
 		}
 		this.disposed = true;
