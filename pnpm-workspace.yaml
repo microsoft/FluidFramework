@@ -137,16 +137,15 @@ overrides:
 
   # axios pre-1.0 is forced to a patched release to resolve known vulnerabilities.
   # Caret dependencies aren't enough on a pre-1.0 package.
-  # 0.33.0 patches GHSA-gcfj-64vw-6mp9 and related SSRF/proxy CVEs (CVE-2026-44486/44487/44490/44492).
-  axios@<1: ^0.33.0
+  # 0.34.0 also fixes CVE-2026-101902 and CVE-2026-101909 for legacy consumers
+  # whose ranges cannot reach it.
+  axios@<1: ^0.34.0
 
-  # Force vulnerable axios ^1.15.0 requests to a patched release.
-  # 1.18.1 fixes GHSA-gcfj-64vw-6mp9, GHSA-jqh4-m9w3-8hp9, GHSA-mmx7-hfxf-jppx,
-  # GHSA-7q8q-rj6j-mhjq, GHSA-mwf2-3pr3-8698, GHSA-f4gw-2p7v-4548, GHSA-xj6q-8x83-jv6g.
+  # 1.20.0 fixes CVE-2026-101898 through CVE-2026-101909.
   # Kept as an exact pin (not caret) so we don't automatically pick up any future
   # axios release before it has been vetted — see the axios supply-chain compromise
   # note further down (neverBuiltDependencies).
-  axios@^1.15.0: 1.18.1
+  axios@^1.15.0: 1.20.0
 
   # diff is overridden to patched versions to resolve a known ReDoS vulnerability. diff@3.x and diff@7.x
   # have no fix in their major range so they are bumped to the nearest patched major.

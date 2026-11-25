@@ -60,8 +60,8 @@ overrides:
   '@github/copilot': ^1.0.43
   '@nevware21/ts-utils': ^0.14.0
   '@types/node': ~22.19.17
-  axios@<1: ^0.33.0
-  axios@^1.15.0: 1.18.1
+  axios@<1: ^0.34.0
+  axios@^1.15.0: 1.20.0
   diff@>=3 <4: ^4.0.4
   diff@>=5 <6: ^5.2.2
   diff@>=7 <8: ^8.0.3
@@ -3776,8 +3776,8 @@ importers:
         specifier: ^2.0.0
         version: 2.1.0
       axios:
-        specifier: 1.18.1
-        version: 1.18.1(debug@4.4.3)(supports-color@10.2.2)
+        specifier: 1.20.0
+        version: 1.20.0(debug@4.4.3)(supports-color@10.2.2)
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
@@ -3897,8 +3897,8 @@ importers:
         specifier: ^2.0.0
         version: 2.1.0
       axios:
-        specifier: 1.18.1
-        version: 1.18.1(debug@4.4.3)(supports-color@10.2.2)
+        specifier: 1.20.0
+        version: 1.20.0(debug@4.4.3)(supports-color@10.2.2)
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
@@ -4694,8 +4694,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/utils/tool-utils
       axios:
-        specifier: 1.18.1
-        version: 1.18.1(debug@4.4.3)(supports-color@10.2.2)
+        specifier: 1.20.0
+        version: 1.20.0(debug@4.4.3)(supports-color@10.2.2)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -5787,8 +5787,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/dds/shared-object-base
       axios:
-        specifier: 1.18.1
-        version: 1.18.1(debug@4.4.3)(supports-color@10.2.2)
+        specifier: 1.20.0
+        version: 1.20.0(debug@4.4.3)(supports-color@10.2.2)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -20082,11 +20082,11 @@ packages:
     resolution: {integrity: sha512-RE3mdQ7P3FRSe7eqCWoeQ/Z9QXrtniSjp1wUjt5nRC3WIpz5rSCve6o3fsZ2aCpJtrZjSZgjwXAoTO5k4tEI0w==}
     engines: {node: '>=4'}
 
-  axios@0.33.0:
-    resolution: {integrity: sha512-juz19g7B3UWT9r3+tgRFQf2Bdy6IKDVroiyuVOUrkILVKHpqHL++K1l8ybvfdEP9B/VE72vk8vllbnedVCm/og==}
+  axios@0.34.0:
+    resolution: {integrity: sha512-CkOmqy7BaT4VC9+wRUmSM3LVwCkKK3UYc7koEqIHWRpOTJypwdNctaVOgnOjhHP3599Ubq2K8KqYwfC7c8NdPQ==}
 
-  axios@1.18.1:
-    resolution: {integrity: sha512-3nTvFlvpn9Zu/RkHUqtc7/+al4UpRW5az71ap5zccp6e8RAYEzhMTecX8Dz1wWDYrPpUoB1HAQEGEAEvUr7S9g==}
+  axios@1.20.0:
+    resolution: {integrity: sha512-r8aOh8j9cGKpgQAqpzrUHnSIc6a59Y3Xf/cv8sy1DrHCkZHzQGEuoq1tARk6qSyDdtQGSDgpb9kFlruzPvrgwg==}
 
   azure-devops-node-api@11.2.0:
     resolution: {integrity: sha512-XdiGPhrpaT5J8wdERRKs5g8E0Zy1pvOYTli7z9E8nmOn3YGp4FhtjhrOyFmX/8veWCwdI69mCHKJw6l+4J/bHA==}
@@ -20209,14 +20209,14 @@ packages:
   boolbase@1.0.0:
     resolution: {integrity: sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==}
 
-  brace-expansion@1.1.18:
-    resolution: {integrity: sha512-Edep/X9fGqVNmzKBVsDYIOtD+z1tuezV70LBjdCst9Tqu76lsnvRiZ6oTic1n+/BIwX6QDGAO94PN4N2SADvtw==}
+  brace-expansion@1.1.22:
+    resolution: {integrity: sha512-CKLDTuSsN0+r1ThM0WkzzBI7dnPI6xEGfa/JnVYIK9JNBA1N1NyPwXVHor//NKD/y3sDxp764sZdLhFK7pH8XQ==}
 
-  brace-expansion@2.1.4:
-    resolution: {integrity: sha512-hGfVzPxthbf3+2yjg/RBs60cB0FhqBS/zvdV/4wn4/BmN0bNMMHPc4V/BbFieqf1TKAGGAHnY4eSjajCl0f2Xg==}
+  brace-expansion@2.1.8:
+    resolution: {integrity: sha512-BnlDzDYQoplTsZSvPi86CNzmbcb07X8ufR8fk1zivaiEJlXJkiq1MQyDCVmlWcsWbj6aWXqHnrwwevbrm/Saig==}
 
-  brace-expansion@5.0.9:
-    resolution: {integrity: sha512-ScQ4IuvIEF1TMlP7Zt+vjJ//9zlPb2SDcxWxM3bk8s6t6GGdJ7KO1dCcTidOPJKePW30LE/2cT7wCyPho9/Wxg==}
+  brace-expansion@5.0.13:
+    resolution: {integrity: sha512-Vh3dmFbc4wZeox7M9I/0L9GfFd83Su4+yCck/OF9Gi/P/dAHn0RT7X4K9R7gMNMhDck3DvhR6QXsnQdjjgwNvQ==}
     engines: {node: 20 || >=22}
 
   braces@3.0.3:
@@ -22814,8 +22814,8 @@ packages:
   jju@1.4.0:
     resolution: {integrity: sha1-o6vicYryQaKykE+EpiWXDzia4yo=}
 
-  joi@17.13.3:
-    resolution: {integrity: sha512-otDA4ldcIx+ZXsKHWmp0YizCweVRZG96J10b0FevjfuncLO1oX59THoAmHkNubYJ+9gWsYsp5k8v4ib6oDv1fA==}
+  joi@17.13.9:
+    resolution: {integrity: sha512-llFCT2rVtfwgBCaIqxtjim+iHqrgss4ONiGSYiiGH9jnjWq90ppSRffqmqKvwpa8W+YfILyQV6XyGcegXX2T4g==}
 
   js-base64@3.7.7:
     resolution: {integrity: sha512-7rCnleh0z2CkXhH67J8K1Ytz0b2Y+yxTPL+/KOJoa20hfnVQ/3/T6W/KflYI4bRHRagNeXeU2bkNGI3v1oS/lw==}
@@ -28925,7 +28925,7 @@ snapshots:
       '@fluidframework/routerlicious-driver': 1.4.0(debug@4.4.3)(supports-color@10.2.2)
       '@fluidframework/runtime-utils': 1.4.0(supports-color@10.2.2)
       '@fluidframework/server-services-client': 0.1036.5002(supports-color@10.2.2)
-      axios: 0.33.0(debug@4.4.3)
+      axios: 0.34.0(debug@4.4.3)
       uuid: 11.1.1
     transitivePeerDependencies:
       - bufferutil
@@ -29360,7 +29360,7 @@ snapshots:
       '@fluidframework/protocol-base': 0.1036.5002
       '@fluidframework/protocol-definitions': 0.1028.2000
       '@fluidframework/telemetry-utils': 1.4.0(supports-color@10.2.2)
-      axios: 0.33.0(debug@4.4.3)
+      axios: 0.34.0(debug@4.4.3)
       uuid: 11.1.1
     transitivePeerDependencies:
       - debug
@@ -29904,7 +29904,7 @@ snapshots:
       '@types/semver': 7.7.0
       assert: 2.1.0
       async: 3.2.6
-      axios: 1.18.1(debug@4.3.7)(supports-color@10.2.2)
+      axios: 1.20.0(debug@4.3.7)(supports-color@10.2.2)
       buffer: 6.0.3
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -29933,7 +29933,7 @@ snapshots:
       '@types/semver': 7.7.0
       assert: 2.1.0
       async: 3.2.6
-      axios: 1.18.1(debug@4.4.3)(supports-color@10.2.2)
+      axios: 1.20.0(debug@4.4.3)(supports-color@10.2.2)
       buffer: 6.0.3
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -29962,7 +29962,7 @@ snapshots:
       '@types/semver': 7.7.0
       assert: 2.1.0
       async: 3.2.6
-      axios: 1.18.1(supports-color@10.2.2)
+      axios: 1.20.0(supports-color@10.2.2)
       buffer: 6.0.3
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -30030,7 +30030,7 @@ snapshots:
       '@fluidframework/gitresources': 0.1036.5002
       '@fluidframework/protocol-base': 0.1036.5002
       '@fluidframework/protocol-definitions': 0.1028.2000
-      axios: 0.33.0(debug@4.4.3)
+      axios: 0.34.0(debug@4.4.3)
       crc-32: 1.2.0
       debug: 4.4.3(supports-color@10.2.2)
       json-stringify-safe: 5.0.1
@@ -30048,7 +30048,7 @@ snapshots:
       '@fluidframework/gitresources': 7.0.1
       '@fluidframework/protocol-base': 7.0.1
       '@fluidframework/protocol-definitions': 3.2.0
-      axios: 1.18.1(debug@4.4.3)(supports-color@10.2.2)
+      axios: 1.20.0(debug@4.4.3)(supports-color@10.2.2)
       crc-32: 1.2.0
       debug: 4.4.3(supports-color@10.2.2)
       json-stringify-safe: 5.0.1
@@ -33290,7 +33290,7 @@ snapshots:
 
   axe-core@4.10.2: {}
 
-  axios@0.33.0(debug@4.4.3):
+  axios@0.34.0(debug@4.4.3):
     dependencies:
       follow-redirects: 1.16.0(debug@4.4.3)
       form-data: 4.0.6
@@ -33298,7 +33298,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  axios@1.18.1(debug@4.3.7)(supports-color@10.2.2):
+  axios@1.20.0(debug@4.3.7)(supports-color@10.2.2):
     dependencies:
       follow-redirects: 1.16.0(debug@4.3.7)
       form-data: 4.0.6
@@ -33308,7 +33308,7 @@ snapshots:
       - debug
       - supports-color
 
-  axios@1.18.1(debug@4.4.3)(supports-color@10.2.2):
+  axios@1.20.0(debug@4.4.3)(supports-color@10.2.2):
     dependencies:
       follow-redirects: 1.16.0(debug@4.4.3)
       form-data: 4.0.6
@@ -33318,7 +33318,7 @@ snapshots:
       - debug
       - supports-color
 
-  axios@1.18.1(supports-color@10.2.2):
+  axios@1.20.0(supports-color@10.2.2):
     dependencies:
       follow-redirects: 1.16.0
       form-data: 4.0.6
@@ -33503,16 +33503,16 @@ snapshots:
 
   boolbase@1.0.0: {}
 
-  brace-expansion@1.1.18:
+  brace-expansion@1.1.22:
     dependencies:
       balanced-match: 1.0.2
       concat-map: 0.0.1
 
-  brace-expansion@2.1.4:
+  brace-expansion@2.1.8:
     dependencies:
       balanced-match: 1.0.2
 
-  brace-expansion@5.0.9:
+  brace-expansion@5.0.13:
     dependencies:
       balanced-match: 4.0.3
 
@@ -37066,7 +37066,7 @@ snapshots:
 
   jju@1.4.0: {}
 
-  joi@17.13.3:
+  joi@17.13.9:
     dependencies:
       '@hapi/hoek': 9.3.0
       '@hapi/topo': 5.1.0
@@ -38096,19 +38096,19 @@ snapshots:
 
   minimatch@10.2.4:
     dependencies:
-      brace-expansion: 5.0.9
+      brace-expansion: 5.0.13
 
   minimatch@3.1.5:
     dependencies:
-      brace-expansion: 1.1.18
+      brace-expansion: 1.1.22
 
   minimatch@5.1.9:
     dependencies:
-      brace-expansion: 2.1.4
+      brace-expansion: 2.1.8
 
   minimatch@9.0.9:
     dependencies:
-      brace-expansion: 2.1.4
+      brace-expansion: 2.1.8
 
   minimist@1.2.8: {}
 
@@ -40604,7 +40604,7 @@ snapshots:
       '@fluidframework/server-services-utils': 7.0.1(supports-color@10.2.2)
       '@fluidframework/server-test-utils': 7.0.1(supports-color@10.2.2)
       agentkeepalive: 4.6.0
-      axios: 1.18.1(debug@4.3.7)(supports-color@10.2.2)
+      axios: 1.20.0(debug@4.3.7)(supports-color@10.2.2)
       body-parser: 1.20.3(supports-color@10.2.2)
       charwise: 3.0.1
       compression: 1.8.1(supports-color@10.2.2)
@@ -40645,7 +40645,7 @@ snapshots:
       '@fluidframework/server-services-utils': 7.0.1(supports-color@10.2.2)
       '@fluidframework/server-test-utils': 7.0.1(supports-color@10.2.2)
       agentkeepalive: 4.6.0
-      axios: 1.18.1(debug@4.4.3)(supports-color@10.2.2)
+      axios: 1.20.0(debug@4.4.3)(supports-color@10.2.2)
       body-parser: 1.20.3(supports-color@10.2.2)
       charwise: 3.0.1
       compression: 1.8.1(supports-color@10.2.2)
@@ -40686,7 +40686,7 @@ snapshots:
       '@fluidframework/server-services-utils': 7.0.1(supports-color@10.2.2)
       '@fluidframework/server-test-utils': 7.0.1(supports-color@10.2.2)
       agentkeepalive: 4.6.0
-      axios: 1.18.1(supports-color@10.2.2)
+      axios: 1.20.0(supports-color@10.2.2)
       body-parser: 1.20.3(supports-color@10.2.2)
       charwise: 3.0.1
       compression: 1.8.1(supports-color@10.2.2)
@@ -41239,8 +41239,8 @@ snapshots:
 
   wait-on@8.0.1(debug@4.3.7)(supports-color@10.2.2):
     dependencies:
-      axios: 1.18.1(debug@4.3.7)(supports-color@10.2.2)
-      joi: 17.13.3
+      axios: 1.20.0(debug@4.3.7)(supports-color@10.2.2)
+      joi: 17.13.9
       lodash: 4.18.1
       minimist: 1.2.8
       rxjs: 7.8.2

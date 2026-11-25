@@ -62,8 +62,8 @@ overrides:
   # concurrently pins vulnerable shell-quote (CVE-2026-13311).
   concurrently@10.0.3>shell-quote: ^1.11.0
 
-  # Resolve known axios vulnerabilities (CVE-2026-44486, CVE-2026-44487, CVE-2026-44492).
-  axios@>=1 <1.16: 1.16.0
+  # Resolve known axios vulnerabilities, including CVE-2026-101898 through CVE-2026-101909.
+  axios@>=1 <1.16: 1.20.0
 
   # Resolve known security vulnerabilities in transitive dependencies.
   brace-expansion@>=1 <2: ^1.1.17
