@@ -11,7 +11,6 @@ The second applies a permitted upgrade only when needed and returns either a vie
 
 Use `tree.viewWith(config)` if you need to inspect compatibility and decide whether to upgrade yourself.
 
-
 #### Caller experience
 
 Both of the following examples use the same note schema and a configured Fluid client named `client`.
