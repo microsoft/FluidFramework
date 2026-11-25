@@ -8,6 +8,7 @@ import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils/
 import { expect } from 'chai';
 
 import { Change, ChangeType, StablePlace, StableRange } from '../ChangeTypes.js';
+import { SharedTreeEvent } from '../EventTypes.js';
 import { SharedTreeMergeHealthTelemetryHeartbeat } from '../MergeHealth.js';
 import { RevisionView } from '../RevisionView.js';
 import { SequencedEditAppliedEventArguments, SharedTree } from '../SharedTree.js';
@@ -88,16 +89,11 @@ function itAggregatesMocked(
 		const events: ITelemetryBaseEvent[] = [];
 		const logger = { send: (event) => events.push(event) };
 		const heartbeat = new SharedTreeMergeHealthTelemetryHeartbeat();
-		let savedListener!: (...args: any[]) => void;
-		const mockTree = {
-			on: (event: string, listener: (...args: any[]) => void) => {
-				savedListener = listener;
-			},
-		};
-		heartbeat.attachTree(mockTree as SharedTree);
+		const { tree } = setUpTestSharedTree();
+		heartbeat.attachTree(tree);
 		for (const param of params) {
-			savedListener({
-				tree: mockTree,
+			tree.emit(SharedTreeEvent.SequencedEditApplied, {
+				tree,
 				logger,
 				edit: {},
 				reconciliationPath: [],
