@@ -933,6 +933,8 @@ export class ConnectionManager implements IConnectionManager {
 		this.props.incomingOpHandler(
 			initialMessages,
 			this.connectFirstConnection ? "InitialOps" : "ReconnectOps",
+			connection.clientId,
+			connection.checkpointSequenceNumber,
 		);
 
 		this._connectionDetails = ConnectionManager.detailsFromConnection(connection, reason);
@@ -1217,7 +1219,13 @@ export class ConnectionManager implements IConnectionManager {
 		messagesArg: ISequencedDocumentMessage[],
 	): void => {
 		const messages = Array.isArray(messagesArg) ? messagesArg : [messagesArg];
-		this.props.incomingOpHandler(messages, "opHandler");
+		assert(this.connection !== undefined, "Received an op without an active connection");
+		this.props.incomingOpHandler(
+			messages,
+			"opHandler",
+			this.connection.clientId,
+			this.connection.checkpointSequenceNumber,
+		);
 	};
 
 	private readonly signalHandler = (signalsArg: ISignalMessage | ISignalMessage[]): void => {
