@@ -242,11 +242,9 @@ export interface IContainerEvents extends IEvent {
     (event: "metadataUpdate", listener: (metadata: Record<string, string>) => void): any;
 }
 
-// @beta @legacy (undocumented)
+// @beta @legacy
 export interface IContainerLoadMode {
-    // (undocumented)
     deltaConnection?: "none" | "delayed" | undefined;
-    // (undocumented)
     opsBeforeReturn?: undefined | "cached" | "all";
 }
 

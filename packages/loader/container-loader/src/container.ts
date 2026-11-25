@@ -167,6 +167,7 @@ import {
 	convertISnapshotToSnapshotWithBlobs,
 	convertSnapshotInfoToSnapshot,
 } from "./utils.js";
+import { waitForFetchedOpsToBeProcessed } from "./waitForFetchedOps.js";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -1697,7 +1698,7 @@ export class Container
 		const lastProcessedSequenceNumber =
 			pendingLocalState?.savedOps[pendingLocalState.savedOps.length - 1]?.sequenceNumber ??
 			attributes.sequenceNumber;
-		let opsBeforeReturnP: Promise<void> | undefined;
+		let opsBeforeReturnP: Promise<number> | undefined;
 
 		// Attach op handlers to finish initialization and be able to start processing ops
 		// Kick off any ops fetching if required.
@@ -1772,7 +1773,10 @@ export class Container
 			if (opsBeforeReturnP !== undefined) {
 				this._deltaManager.inbound.resume();
 
-				await PerformanceEvent.timedExecAsync(
+				// The sequence number of the last op that the requested fetch queued.
+				// Ops that arrive later (from the background storage fetch for "cached", or from the delta connection)
+				// must not delay load.
+				const lastFetchedSeqNumber = await PerformanceEvent.timedExecAsync(
 					this.mc.logger,
 					{ eventName: "WaitOps" },
 					async () => opsBeforeReturnP,
@@ -1780,7 +1784,15 @@ export class Container
 				await PerformanceEvent.timedExecAsync(
 					this.mc.logger,
 					{ eventName: "WaitOpProcessing" },
-					async () => this._deltaManager.inbound.waitTillProcessingDone(),
+					async (event) => {
+						const result = await waitForFetchedOpsToBeProcessed(
+							this._deltaManager.inbound,
+							() => this._deltaManager.lastSequenceNumber,
+							lastFetchedSeqNumber,
+							() => this.closed,
+						);
+						event.end({ ...result });
+					},
 				);
 
 				// eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -2158,7 +2170,7 @@ export class Container
 		attributes: IDocumentAttributes,
 		prefetchType?: "cached" | "all" | "none",
 		lastProcessedSequenceNumber?: number,
-	): Promise<void> {
+	): Promise<number> {
 		return this._deltaManager.attachOpHandler(
 			attributes.minimumSequenceNumber /* minimumSequenceNumber */,
 			attributes.sequenceNumber /* snapshotSequenceNumber */,
