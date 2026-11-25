@@ -128,6 +128,7 @@ export {
 export {
 	DetachedFieldIndex,
 	type DetachedFieldIndexCheckpoint,
+	type DetachedFieldIndexRestorePoint,
 	type ReadOnlyDetachedFieldIndex,
 } from "./detachedFieldIndex.js";
 
