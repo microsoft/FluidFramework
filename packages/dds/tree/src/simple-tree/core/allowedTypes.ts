@@ -630,6 +630,16 @@ export function markSchemaMostDerived(
 	schema: TreeNodeSchema,
 	oneTimeInitialize = false,
 ): void {
+	// A schema already marked most derived needs no further checks: in schemas with many classes, reading a class's properties is slow,
+	// and this is called for each schema on each walk of a schema.
+	if (
+		!oneTimeInitialize &&
+		(schema as { readonly constructorCached?: { readonly constructor?: unknown } })
+			.constructorCached?.constructor === schema
+	) {
+		return;
+	}
+
 	// Leaf schemas are not classes, and thus do not need to be marked as most derived.
 	if (schema.kind === NodeKind.Leaf) {
 		return;

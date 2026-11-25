@@ -346,6 +346,40 @@ function formatTypes(allowed: Iterable<TreeNodeSchema>): string {
 }
 
 /**
+ * Throws a `UsageError` for the first schema in `union` which is also earlier in it.
+ */
+function checkNoDuplicateSchema(union: Iterable<TreeNodeSchema>): void {
+	const schemas = Array.isArray(union) ? (union as readonly TreeNodeSchema[]) : [...union];
+	// Small unions are compared pairwise, which is faster than hashing their schema.
+	const checked: Set<TreeNodeSchema> | undefined =
+		schemas.length > maxPairwiseDuplicateCheck ? new Set() : undefined;
+	for (let index = 0; index < schemas.length; index++) {
+		const schema = schemas[index] ?? oob();
+		let duplicate: boolean;
+		if (checked === undefined) {
+			duplicate = false;
+			for (let earlier = 0; earlier < index; earlier++) {
+				if (schemas[earlier] === schema) {
+					duplicate = true;
+					break;
+				}
+			}
+		} else {
+			duplicate = checked.has(schema);
+			checked.add(schema);
+		}
+		if (duplicate) {
+			throw new UsageError(`Duplicate schema in allowed types: ${schema.identifier}`);
+		}
+	}
+}
+
+/**
+ * The size of the largest union {@link checkNoDuplicateSchema} checks pairwise.
+ */
+const maxPairwiseDuplicateCheck = 16;
+
+/**
  * Check if union contents are valid (shallowly).
  *
  * @param union - The union of {@link TreeNodeSchema} to check.
@@ -361,6 +395,13 @@ export function checkUnion(
 	preventAmbiguity: boolean,
 	ambiguityErrors: string[],
 ): void {
+	if (!preventAmbiguity) {
+		// Without preventAmbiguity, the only error is a duplicate schema.
+		// Checking for one does not read properties of the schema, which is slow in schemas with many classes.
+		checkNoDuplicateSchema(union);
+		return;
+	}
+
 	const checked: Set<TreeNodeSchema> = new Set();
 	const maps: MapNodeSchema[] = [];
 	const arrays: ArrayNodeSchema[] = [];
@@ -408,11 +449,6 @@ export function checkUnion(
 				unreachableCase(schema.kind);
 			}
 		}
-	}
-
-	if (!preventAmbiguity) {
-		// All remaining checks are for the preventAmbiguity case, so skip them if not enabled.
-		return;
 	}
 
 	if (arrays.length > 1) {
