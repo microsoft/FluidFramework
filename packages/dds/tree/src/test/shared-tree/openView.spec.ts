@@ -488,11 +488,13 @@ describe("openView", () => {
 					const result = tree.openView(numberConfig);
 					assert.equal(result.kind, "incompatible");
 					assert(
-						result.viewIncompatibilities.length > 0 &&
-							result.upgradeIncompatibilities.length > 0,
+						result.incompatibilities.view.length > 0 &&
+							result.incompatibilities.upgrade.length > 0,
 					);
-					assert.deepEqual(result.viewIncompatibilities, view.incompatibilities);
-					assert.deepEqual(result.upgradeIncompatibilities, upgrade.incompatibilities);
+					assert.deepEqual(result.incompatibilities, {
+						view: view.incompatibilities,
+						upgrade: upgrade.incompatibilities,
+					});
 				});
 
 				// Opening another view tests cleanup; reading the original diagnostics after an upgrade tests their lifetime.
@@ -515,8 +517,8 @@ describe("openView", () => {
 					other.dispose();
 
 					// Only now read the diagnostics: they must still describe the original schema.
-					assert.deepEqual(result.viewIncompatibilities, view.incompatibilities);
-					assert.deepEqual(result.upgradeIncompatibilities, upgrade.incompatibilities);
+					assert.deepEqual(result.incompatibilities.view, view.incompatibilities);
+					assert.deepEqual(result.incompatibilities.upgrade, upgrade.incompatibilities);
 				});
 			});
 

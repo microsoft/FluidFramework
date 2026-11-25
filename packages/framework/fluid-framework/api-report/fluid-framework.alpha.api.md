@@ -1183,9 +1183,8 @@ export function importCompatibilitySchemaSnapshot(config: JsonCompatibleReadOnly
 
 // @alpha @sealed
 export interface IncompatibleTreeResult {
+    readonly incompatibilities: OpenTreeIncompatibilities;
     readonly kind: "incompatible";
-    readonly upgradeIncompatibilities: readonly SchemaUpgradeIncompatibility[];
-    readonly viewIncompatibilities: readonly SchemaViewIncompatibility[];
 }
 
 // @alpha
@@ -1729,6 +1728,12 @@ export type OldestSupportedServiceClientVersion = `${2 | 3}.${bigint}.0`;
 
 // @beta
 export function onAssertionFailure(handler: (error: Error) => void): () => void;
+
+// @alpha @sealed
+export interface OpenTreeIncompatibilities {
+    readonly upgrade: readonly SchemaUpgradeIncompatibility[];
+    readonly view: readonly SchemaViewIncompatibility[];
+}
 
 // @alpha @sealed
 export type OpenTreeViewResult<TRoot extends ImplicitFieldSchema> = ReadyTreeResult<TRoot> | UninitializedTreeResult<TRoot> | IncompatibleTreeResult;

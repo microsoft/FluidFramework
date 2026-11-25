@@ -1034,9 +1034,11 @@ export interface UninitializedTreeResult<in out TRoot extends ImplicitFieldSchem
 }
 
 /**
- * Diagnostics from an open that could neither view nor upgrade the document.
+ * The result of opening a document that can be neither viewed nor upgraded.
+ *
  * @remarks
- * Both lists describe the schemas at the time of the failed open. This result does not own a view.
+ * This result does not own a view. Log {@link IncompatibleTreeResult.incompatibilities | incompatibilities}
+ * to report what blocked the open.
  * @sealed @alpha
  */
 export interface IncompatibleTreeResult {
@@ -1046,14 +1048,29 @@ export interface IncompatibleTreeResult {
 	readonly kind: "incompatible";
 
 	/**
+	 * The schema requirements that prevented this open from returning a view.
+	 */
+	readonly incompatibilities: OpenTreeIncompatibilities;
+}
+
+/**
+ * The reasons a document could be neither viewed nor upgraded.
+ *
+ * @remarks
+ * Both lists describe the schemas at the time of the failed open, even if the document changes later.
+ *
+ * @sealed @alpha
+ */
+export interface OpenTreeIncompatibilities {
+	/**
 	 * The nonempty list of incompatibilities that prevented viewing the document.
 	 */
-	readonly viewIncompatibilities: readonly SchemaViewIncompatibility[];
+	readonly view: readonly SchemaViewIncompatibility[];
 
 	/**
 	 * The nonempty list of incompatibilities that prevented upgrading the document.
 	 */
-	readonly upgradeIncompatibilities: readonly SchemaUpgradeIncompatibility[];
+	readonly upgrade: readonly SchemaUpgradeIncompatibility[];
 }
 
 /**

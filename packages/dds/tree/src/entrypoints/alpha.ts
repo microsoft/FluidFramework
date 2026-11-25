@@ -278,6 +278,7 @@ export {
   ObjectNodeSchemaWorkaround,
   ObjectSchemaOptionsAlpha,
   ObservationResults,
+  OpenTreeIncompatibilities,
   OpenTreeViewResult,
   PlainText,
   ReadSchema,

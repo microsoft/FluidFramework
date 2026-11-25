@@ -19,15 +19,21 @@ Neither the behavior nor the type of `viewWith` changes.
 
 Both examples use the same note schema and a configured Fluid client named `client`.
 The container schema identifies the SharedTree; the view configuration describes the note stored in it.
+Whether you create or load a note, you get a `NoteDocument` with the open container and the editable view.
 
 ```typescript
-import { SchemaFactory, SharedTree, TreeViewConfiguration } from "fluid-framework";
-import { asAlpha } from "@fluidframework/tree/alpha";
+import { SchemaFactory, SharedTree, TreeViewConfiguration, type IFluidContainer } from "fluid-framework";
+import { asAlpha, type TreeViewAlpha } from "@fluidframework/tree/alpha";
 
 const schemaFactory = new SchemaFactory("notes");
 class Note extends schemaFactory.object("Note", { title: schemaFactory.string }) {}
-const config = new TreeViewConfiguration({ schema: Note });
+const treeViewConfig = new TreeViewConfiguration({ schema: Note });
 const containerSchema = { initialObjects: { tree: SharedTree } } as const;
+
+interface NoteDocument {
+	readonly container: IFluidContainer<typeof containerSchema>;
+	readonly view: TreeViewAlpha<typeof Note>;
+}
 ```
 
 ### Create a new document
@@ -37,42 +43,46 @@ You expect an initializer because no client has set the document's schema or con
 Initialize the note **before** attaching the container so other clients can only load an initialized document.
 
 ```typescript
-async function createNote(title: string): Promise<string> {
+async function createNote(title: string): Promise<NoteDocument> {
 	const { container } = await client.createContainer(containerSchema, "2.0.0");
 	try {
-		const result = asAlpha(container.initialObjects.tree).openView(config);
+		const result = asAlpha(container.initialObjects.tree).openView(treeViewConfig);
 		switch (result.kind) {
 			case "uninitialized": {
 				const view = result.initialize({ title });
 				try {
-					return await container.attach();
-				} finally {
+					await container.attach();
+				} catch (error) {
 					view.dispose();
+					throw error;
 				}
+				return { container, view };
 			}
 			case "ready":
 				result.view.dispose();
 				throw new Error("Expected a new note, but the tree is already initialized.");
 			case "incompatible":
-				throw new Error("Cannot create the note with this schema.", { cause: result });
+				throw new Error("Cannot create the note with this schema.", { cause: result.incompatibilities });
 		}
-	} finally {
+	} catch (error) {
 		container.dispose();
+		throw error;
 	}
 }
 ```
 
 ### Load an existing document
 
-Pass the identifier returned by `createNote` to `getContainer`, then open the tree with the same view configuration.
+Pass the saved document ID to `loadNote`.
+It loads the container by ID, then opens the tree with the same view configuration.
 The `"ready"` case gives you the existing note, including when opening required a schema upgrade.
 Neither of the other cases should create or replace content on the load path.
 
 ```typescript
-async function loadNote(documentId: string) {
+async function loadNote(documentId: string): Promise<NoteDocument> {
 	const { container } = await client.getContainer(documentId, containerSchema, "2.0.0");
 	try {
-		const result = asAlpha(container.initialObjects.tree).openView(config);
+		const result = asAlpha(container.initialObjects.tree).openView(treeViewConfig);
 		switch (result.kind) {
 			case "ready":
 				return { container, view: result.view };
@@ -80,7 +90,7 @@ async function loadNote(documentId: string) {
 				result.dispose();
 				throw new Error("The saved note has not been initialized.");
 			case "incompatible":
-				throw new Error("This version of the app cannot open the note.", { cause: result });
+				throw new Error("This version of the app cannot open the note.", { cause: result.incompatibilities });
 		}
 	} catch (error) {
 		container.dispose();
@@ -123,16 +133,17 @@ openView<TRoot extends ImplicitFieldSchema>(
 ): OpenTreeViewResult<TRoot>;
 ```
 
-Export four types from `@fluidframework/tree/alpha`: the result union and one type for each outcome.
+The alpha entry point exports the result union, one type for each outcome, and a type for the diagnostics.
 The read-only `kind` property identifies the outcome on the object itself.
-After checking it, you can use `result.view.root`, call `result.initialize(content)`, or inspect `result.viewIncompatibilities` and `result.upgradeIncompatibilities`.
+After checking it, you can use `result.view.root`, call `result.initialize(content)`, or log `result.incompatibilities` without including the result's `kind`.
 
 | Type | Shape or contract |
 | --- | --- |
 | `OpenTreeViewResult<TRoot>` | `ReadyTreeResult<TRoot> \| UninitializedTreeResult<TRoot> \| IncompatibleTreeResult`. |
 | `ReadyTreeResult<TRoot>` | `kind: "ready"` and `readonly view: TreeViewAlpha<TRoot>`. The caller owns `view`. |
 | `UninitializedTreeResult<TRoot>` | `kind: "uninitialized"`, the existing [`IDisposable`](../../../../common/core-interfaces/src/disposable.ts) contract, and `initialize(content: InsertableTreeFieldFromImplicitField<TRoot>): TreeViewAlpha<TRoot>`. No root or upgrade controls on the initializer. |
-| `IncompatibleTreeResult` | `kind: "incompatible"` and two read-only properties: `viewIncompatibilities: readonly SchemaViewIncompatibility[]` and `upgradeIncompatibilities: readonly SchemaUpgradeIncompatibility[]`. Both lists are nonempty. No live handle. |
+| `IncompatibleTreeResult` | `kind: "incompatible"` and `readonly incompatibilities: OpenTreeIncompatibilities`. No live handle. |
+| `OpenTreeIncompatibilities` | Two read-only lists: `view` contains the `SchemaViewIncompatibility` entries and `upgrade` contains the `SchemaUpgradeIncompatibility` entries. Both lists are nonempty. |
 
 Both paths give the caller the actual [`TreeViewAlpha`](../../src/simple-tree/api/tree.ts), not a narrowed interface.
 On a successful open, use `result.view`. On initialization, use the view returned by `result.initialize(content)` directly.
@@ -223,7 +234,7 @@ Comparing the root alone would not detect an unwanted schema upgrade.
 
 ### Diagnostics and other failures
 
-- **F1. Diagnostic details.** For O6, both `viewIncompatibilities` and `upgradeIncompatibilities` must be nonempty and match the corresponding structured diagnostics from `viewWith` on the same starting schema. Check the mismatch and its location, not the wording of a message.
+- **F1. Diagnostic details.** For O6, `result.incompatibilities` must contain only the `view` and `upgrade` lists. Both must be nonempty and match the corresponding structured diagnostics from `viewWith` on the same starting schema. Check the mismatch and its location, not the wording of a message.
 - **F2. Diagnostic lifetime.** After an incompatible open, immediately open the tree with a compatible configuration and change its stored schema. Both lists on the original result must still describe the failed open, even if the caller first reads them after the change. No caller disposal of the incompatible result is required.
 - **F3. Unexpected failure.** Cause the upgrade operation to throw a known exception after the temporary view is created. `openView` must propagate that exception and release the temporary view. It must not return `"incompatible"` or dispose the caller's tree.
 
@@ -244,4 +255,4 @@ For example, a test for the type of a root read must not depend on a test for as
 
 - **T1. Result narrowing.** An exhaustive `switch` on `kind` must type-check without a cast. Only `"ready"` carries a `TreeViewAlpha` in `view`; only `"uninitialized"` exposes `initialize` directly; only `"incompatible"` exposes the two diagnostic lists. Both the view and the initializer must support disposal. Initialization must return the same full view type as the ready result's `view`.
 - **T2. Root and input types.** With the note configuration, both `initialize({ title: "Draft" })` and `view.root = { title: "Draft" }` must compile. A read of `view.root` must have type `Note`, not the insertable object type. A numeric `title` must fail to type-check in both write positions.
-- **T3. Alpha boundary.** The four named types must be importable from `@fluidframework/tree/alpha`. The method must be callable through `asAlpha(tree)` but must not appear on the stable tree interface. Existing stable `viewWith` calls must retain their return type.
+- **T3. Alpha boundary.** The result and diagnostics types must be importable from `@fluidframework/tree/alpha`. The method must be callable through `asAlpha(tree)` but must not appear on the stable tree interface. Existing stable `viewWith` calls must retain their return type.

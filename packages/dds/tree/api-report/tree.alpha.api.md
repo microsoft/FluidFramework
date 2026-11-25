@@ -725,9 +725,8 @@ export function importCompatibilitySchemaSnapshot(config: JsonCompatibleReadOnly
 
 // @alpha @sealed
 export interface IncompatibleTreeResult {
+    readonly incompatibilities: OpenTreeIncompatibilities;
     readonly kind: "incompatible";
-    readonly upgradeIncompatibilities: readonly SchemaUpgradeIncompatibility[];
-    readonly viewIncompatibilities: readonly SchemaViewIncompatibility[];
 }
 
 // @alpha
@@ -1174,6 +1173,12 @@ export interface ObjectSchemaOptionsBeta<TCustomMetadata = unknown> extends Obje
 export interface ObservationResults<TResult> {
     readonly result: TResult;
     readonly unsubscribe: () => void;
+}
+
+// @alpha @sealed
+export interface OpenTreeIncompatibilities {
+    readonly upgrade: readonly SchemaUpgradeIncompatibility[];
+    readonly view: readonly SchemaViewIncompatibility[];
 }
 
 // @alpha @sealed

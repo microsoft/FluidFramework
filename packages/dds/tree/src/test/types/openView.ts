@@ -17,6 +17,7 @@ import {
 import {
 	asAlpha,
 	type IncompatibleTreeResult,
+	type OpenTreeIncompatibilities,
 	type OpenTreeViewResult,
 	type ReadyTreeResult,
 	type TreeViewAlpha,
@@ -76,6 +77,9 @@ function checkNarrowing(result: OpenTreeViewResult<typeof Note>): void {
 		}
 		case "incompatible": {
 			type _error = requireTrue<areSafelyAssignable<typeof result, IncompatibleTreeResult>>;
+			type _details = requireTrue<
+				areSafelyAssignable<typeof result.incompatibilities, OpenTreeIncompatibilities>
+			>;
 			return;
 		}
 		default: {
@@ -112,13 +116,7 @@ function checkInitializer(initializer: UninitializedTreeResult<typeof Note>): vo
 		areSafelyAssignable<
 			Extract<
 				keyof typeof initializer,
-				| "root"
-				| "events"
-				| "schema"
-				| "upgradeSchema"
-				| "compatibility"
-				| "viewIncompatibilities"
-				| "upgradeIncompatibilities"
+				"root" | "events" | "schema" | "upgradeSchema" | "compatibility" | "incompatibilities"
 			>,
 			never
 		>
@@ -134,8 +132,5 @@ function checkInitializer(initializer: UninitializedTreeResult<typeof Note>): vo
  * Checks that an incompatible result exposes only its kind and the diagnostics for viewing and upgrading.
  */
 type _diagnosticKeys = requireTrue<
-	areSafelyAssignable<
-		keyof IncompatibleTreeResult,
-		"kind" | "viewIncompatibilities" | "upgradeIncompatibilities"
-	>
+	areSafelyAssignable<keyof IncompatibleTreeResult, "kind" | "incompatibilities">
 >;

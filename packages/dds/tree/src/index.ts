@@ -81,6 +81,7 @@ export {
 	type ReadyTreeResult,
 	type UninitializedTreeResult,
 	type IncompatibleTreeResult,
+	type OpenTreeIncompatibilities,
 	type ITree,
 	type TreeNodeSchema,
 	TreeViewConfiguration,

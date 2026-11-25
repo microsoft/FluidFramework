@@ -74,8 +74,10 @@ export function openCheckoutView<TRoot extends ImplicitFieldSchema>(
 			if (!status.upgrade.isCompatible) {
 				const result = {
 					kind: "incompatible",
-					viewIncompatibilities: status.view.incompatibilities,
-					upgradeIncompatibilities: status.upgrade.incompatibilities,
+					incompatibilities: {
+						view: status.view.incompatibilities,
+						upgrade: status.upgrade.incompatibilities,
+					},
 				} as const;
 				view.dispose();
 				return result;

@@ -34,6 +34,7 @@ export type {
 	ReadyTreeResult,
 	UninitializedTreeResult,
 	IncompatibleTreeResult,
+	OpenTreeIncompatibilities,
 	TreeViewEvents,
 	SchemaCompatibilityStatus,
 	SchemaCompatibilityStatusBeta,
