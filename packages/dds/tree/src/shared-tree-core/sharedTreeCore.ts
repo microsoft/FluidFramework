@@ -454,6 +454,7 @@ export class SharedTreeCore<
 			// Clone the schema to ensure that during resubmit the schema has not been mutated by later changes
 			schema: schemaAndPolicy.schema.clone(),
 			policy: schemaAndPolicy.policy,
+			branchId: message.branchId,
 		});
 	}
 
