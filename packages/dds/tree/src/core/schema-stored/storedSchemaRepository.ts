@@ -133,10 +133,18 @@ export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 	}
 }
 
+/**
+ * Returns whether the tree's stored schema is still in its initial state.
+ */
 export function schemaDataIsEmpty(data: TreeStoredSchema): boolean {
-	// A version map, even an empty one with no node definitions, is stored schema state.
-	// Treating it as uninitialized would allow initialization to overwrite its versions.
-	return data.nodeSchema.size === 0 && data.schemaVersion === undefined;
+	const root = data.rootFieldSchema;
+	return (
+		data.schemaVersion === undefined &&
+		data.nodeSchema.size === 0 &&
+		root.kind === storedEmptyFieldSchema.kind &&
+		root.types.size === 0 &&
+		root.persistedMetadata === undefined
+	);
 }
 
 /**
