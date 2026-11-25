@@ -594,19 +594,25 @@ const containerRuntimeLoader: ContainerRuntimeLoader = async (
 		oldestSupportedClient: parameters.oldestSupportedClient,
 		runtimeOptions: { enableRuntimeIdCompressor: "on" },
 	});
-	if (!parameters.existing) {
-		assert(
-			parameters.newContainerRootType !== undefined,
-			0xd12 /* Root data store kind must be provided for new containers */,
-		);
-		const dataStore = await runtime.createDataStore(parameters.newContainerRootType);
-		const aliasResult = await dataStore.trySetAlias(rootDataStoreId);
-		assert(
-			aliasResult === "Success",
-			0xd13 /* Should be able to set alias on new data store */,
-		);
+	try {
+		if (!parameters.existing) {
+			assert(
+				parameters.newContainerRootType !== undefined,
+				0xd12 /* Root data store kind must be provided for new containers */,
+			);
+			const dataStore = await runtime.createDataStore(parameters.newContainerRootType);
+			const aliasResult = await dataStore.trySetAlias(rootDataStoreId);
+			assert(
+				aliasResult === "Success",
+				0xd13 /* Should be able to set alias on new data store */,
+			);
+		}
+		return runtime;
+	} catch (error) {
+		// The loader cannot dispose this runtime until it has been returned to the container.
+		runtime.dispose();
+		throw error;
 	}
-	return runtime;
 };
 
 const urlResolver = new LocalResolver();
@@ -657,13 +663,20 @@ export class EphemeralServiceContainer<TData>
 			),
 		});
 
-		return new EphemeralServiceContainer<T>(
-			registry,
-			options,
-			container,
-			(await container.getEntryPoint()) as T,
-			undefined,
-		);
+		try {
+			return new EphemeralServiceContainer<T>(
+				registry,
+				options,
+				container,
+				(await container.getEntryPoint()) as T,
+				undefined,
+			);
+		} catch (error) {
+			// Entry-point initialization can fail before the service starts tracking this container.
+			container.close();
+			container.dispose();
+			throw error;
+		}
 	}
 
 	public static async load<T>(
@@ -684,13 +697,20 @@ export class EphemeralServiceContainer<TData>
 			),
 		});
 
-		const container = new EphemeralServiceContainer<T>(
-			registry,
-			options,
-			containerInner,
-			(await containerInner.getEntryPoint()) as T,
-			id,
-		);
+		let container: EphemeralServiceContainer<T>;
+		try {
+			container = new EphemeralServiceContainer<T>(
+				registry,
+				options,
+				containerInner,
+				(await containerInner.getEntryPoint()) as T,
+				id,
+			);
+		} catch (error) {
+			containerInner.close();
+			containerInner.dispose();
+			throw error;
+		}
 		assert(
 			container.id !== undefined,
 			0xd14 /* id should be defined when loading a container */,
