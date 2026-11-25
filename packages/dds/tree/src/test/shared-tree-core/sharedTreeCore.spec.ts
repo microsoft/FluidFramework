@@ -399,6 +399,39 @@ describe("SharedTreeCore", () => {
 		assert.equal(getTrunkLength(tree), 1);
 	});
 
+	it("takes its own sequenced ops from their local metadata, without decoding them", () => {
+		const factory = new MockContainerRuntimeFactory();
+		const trees = [0, 1].map(() => {
+			const runtime = new MockFluidDataStoreRuntime();
+			const sharedObject = new TestSharedTreeCore(runtime);
+			factory.createContainerRuntime(runtime);
+			sharedObject.connect({
+				deltaConnection: runtime.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			});
+			return sharedObject.kernel;
+		});
+		const decodes = trees.map((tree) => {
+			const { messageCodec } = tree as unknown as {
+				messageCodec: { decode: (...args: unknown[]) => unknown };
+			};
+			const decode = messageCodec.decode.bind(messageCodec);
+			const count = { value: 0 };
+			messageCodec.decode = (...args) => {
+				count.value++;
+				return decode(...args);
+			};
+			return count;
+		});
+
+		changeTree(trees[0]);
+		changeTree(trees[0]);
+		factory.processAllMessages();
+
+		assert.equal(decodes[0].value, 0);
+		assert(decodes[1].value > 0);
+	});
+
 	/**
 	 * This test triggered 0x4a6 at the time of writing, as rebasing tree2's final edit over tree1's final edit
 	 * didn't properly track state related to the detached node the edit affects.
