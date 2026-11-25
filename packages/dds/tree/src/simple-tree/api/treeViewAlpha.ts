@@ -75,12 +75,16 @@ export interface ViewExistingSuccess<in out TRoot extends ImplicitFieldSchema> {
  */
 export interface ViewExistingFailure {
 	/**
-	 * Indicates that no view was opened.
+	 * Indicates that the client's view schema is incompatible with the existing tree's stored schema.
+	 * 
+	 * @remarks
+	 * The existing tree cannot be viewed as-is, and nor can it be upgraded to be made compatible.
+	 * See {@link ViewExistingFailure.incompatibilities} for diagnostic information explaining the incompatibilities.
 	 */
 	readonly canView: false;
 
 	/**
-	 * The viewing and upgrade blockers at the time of the call.
+	 * The discrepancies between the client's view schema and the existing tree's stored schema that prevent the client from opening the tree.
 	 */
 	readonly incompatibilities: ViewTreeIncompatibilities;
 }
