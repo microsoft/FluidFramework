@@ -13,6 +13,23 @@ If you don't have `pnpm` installed, you will need to do so first.
 pnpm i
 ```
 
+## Link checks
+
+`pnpm run check-links` uses linkcheck 3.0.0 with the existing URL and skip file.
+`pnpm run ci:check-links` starts the website server and preserves the existing CI report.
+The runner downloads the release into a temporary directory, verifies its checked-in SHA-256 checksum, and then extracts it.
+It removes the directory after linkcheck exits and returns the exit code from linkcheck.
+The download requires access to GitHub releases each time the command runs.
+
+`infra/linkcheck.mjs` supports Linux and macOS on x64 and arm64, and Windows on x64.
+On Windows, the runner starts the bundled Dart executable with the same snapshot as the upstream batch file.
+This avoids shell interpretation of command arguments.
+
+To update linkcheck, select a release and update its version and checksums in `infra/linkcheck.mjs`.
+Verify each archive against a reviewed checksum source at an immutable commit.
+Do not use a checksum from a mutable branch during installation.
+Keep `tar` and `unzipper` current for archive extraction.
+
 ## DOMPurify browser script
 
 `static/dompurify/purify.min.js` is a checked-in copy of DOMPurify's browser distribution. Its source is `dist/purify.min.js` in the official `dompurify` npm package. The website build does not generate this file.
@@ -452,7 +469,7 @@ The following npm scripts are supported in this directory:
 | `build:search` | `pagefind --site build` | |
 | `build:site` | `npm run build:generate-content && npm run build:docusaurus && npm run build:search` | Build the site, including API documentation. |
 | `build:test` | `tsc --project test/tsconfig.json --pretty --noEmit` | TSC build of the test code as a sanity check. |
-| `check-links` | `linkcheck http://127.0.0.1:3000 --skip-file skipped-urls.txt` | Run link validation on the website. Requires the website to be running locally, either via `start` or `serve`. |
+| `check-links` | `node ./infra/linkcheck.mjs http://127.0.0.1:3000 --skip-file skipped-urls.txt` | Run link validation on the website. Requires the website to be running locally, either via `start` or `serve`. |
 | `ci:check-links` | `start-server-and-test "npm run serve -- --host 127.0.0.1 --no-open" http://127.0.0.1:3000 check-links` | `check-links` variant for CI. Serves the site before running checks. |
 | `clean` | `concurrently "npm:clean:*"` | Clean up generated artifacts (build output, etc.). |
 | `clean:api-documentation` | `node ./infra/clean-api-documentation.mjs` | Clean up generate API documentation content. |

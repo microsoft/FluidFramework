@@ -136,6 +136,9 @@ overrides:
   # Resolve multiple tar vulnerabilities; 6.x line is EOL with no backports.
   tar: ^7.5.11
 
+  # Published server packages still permit zookeeper versions that use decompress.
+  zookeeper: ^7.4.1
+
   # sharp <0.32.6 has a vulnerability flagged by Component Governance (GHSA-54xq-cgqr-rpm3),
   # pulled in transitively via jssm-viz-cli.
   sharp: ^0.33.2
