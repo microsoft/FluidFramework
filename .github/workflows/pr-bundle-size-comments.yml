@@ -29,17 +29,11 @@ on:
   check_run:
     types: [created, completed]
 
-# Use concurrency to ensure the completed event wins over the created event for a given (SHA, check
-# name) — so the results sticky is never clobbered by a still-running "pending" handler. The check name
-# is part of the group key because each ADO sub-check fires its own check_run event on the same SHA
-# (e.g. `Build - client packages (🔒 SDLSources ...)`, `Build - client packages (Build Stage Build)`)
-# and we don't want those to cancel an in-flight acknowledge-build / identify-* run that's processing a
-# matching event. Cross-SHA staleness on the PR path (push A then B, then A's build completes anyway)
-# is handled in identify-from-pr-build: it searches for an open PR whose current head SHA matches the
-# just-completed build, so an event for a stale SHA finds no PR and can't write anything.
+# Serialize events for the same SHA and check without discarding a completion.
+# GitHub can schedule `created` after `completed`, so acknowledge-build also checks the live build state.
 concurrency:
   group: pr-bundle-size-${{ github.event.check_run.head_sha }}-${{ github.event.check_run.name }}
-  cancel-in-progress: true
+  queue: max
 
 permissions:
   contents: read
@@ -106,8 +100,8 @@ jobs:
             core.setOutput("pr_num", pr.number);
             core.setOutput("head_sha", pr.headRefOid);
 
-      - name: Resolve base commit from the ADO build
-        id: find_base
+      - name: Check ADO build status and resolve the base commit
+        id: inspect_build
         if: steps.find_pr.outputs.pr_num != ''
         # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -118,12 +112,11 @@ jobs:
             // read without searching for a matching build. Its first parent is the target-branch
             // commit that build merged the PR into, i.e. the comparison's baseline.
             //
-            // Best-effort: the sticky just shows a nicer pending body, and the real comparison
-            // derives the base itself. Any failure here leaves the base unresolved in the body.
+            // Only post "Pending" for a known active build. Resolving its base commit is best-effort.
             const detailsUrl = new URL(context.payload.check_run.details_url);
             const buildId = detailsUrl.searchParams.get("buildId");
             if (!buildId) {
-              core.info(`No buildId in details_url ${detailsUrl}; leaving the base unresolved.`);
+              core.info(`No buildId in details_url ${detailsUrl}; skipping the pending comment.`);
               return;
             }
 
@@ -136,12 +129,18 @@ jobs:
             try {
               const response = await fetch(buildUrl);
               if (!response.ok) {
-                core.info(`ADO build ${buildId} lookup failed (${response.status}); leaving the base unresolved.`);
+                core.warning(`ADO build ${buildId} lookup failed (${response.status}); skipping the pending comment.`);
                 return;
               }
-              ({ sourceVersion } = await response.json());
+              const build = await response.json();
+              if (!["notStarted", "postponed", "inProgress"].includes(build.status)) {
+                core.info(`ADO build ${buildId} status: ${build.status}; skipping the pending comment.`);
+                return;
+              }
+              core.setOutput("active", "true");
+              sourceVersion = build.sourceVersion;
             } catch (error) {
-              core.info(`ADO build ${buildId} lookup failed (${error}); leaving the base unresolved.`);
+              core.warning(`ADO build ${buildId} lookup failed (${error}); skipping the pending comment.`);
               return;
             }
 
@@ -171,13 +170,13 @@ jobs:
 
       - name: Render initial comment body
         id: render
-        if: steps.find_pr.outputs.pr_num != ''
+        if: steps.inspect_build.outputs.active == 'true'
         # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           PR_NUM: ${{ steps.find_pr.outputs.pr_num }}
           HEAD_SHA: ${{ steps.find_pr.outputs.head_sha }}
-          BASE_SHA: ${{ steps.find_base.outputs.base_sha }}
+          BASE_SHA: ${{ steps.inspect_build.outputs.base_sha }}
         with:
           script: |
             const fs = require("fs");
