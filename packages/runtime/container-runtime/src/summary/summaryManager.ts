@@ -297,9 +297,12 @@ export class SummaryManager
 				this.summarizer = summarizer;
 				this.setupForwardedEvents(summarizer);
 
-				// A stop may have been requested while we were awaiting summarizer creation.
-				// Replay it now so the summarizer can observe the stop intent and move to exit.
-				if (this.pendingStopReason !== undefined) {
+				// Disposal clears pending stop intent and removes the listeners that could stop a
+				// late-created summarizer. Signal it explicitly so the last-summary path can exit.
+				if (this.disposed) {
+					summarizer.stop("parentNotConnected");
+				} else if (this.pendingStopReason !== undefined) {
+					// Replay a stop requested while we were awaiting summarizer creation.
 					summarizer.stop(this.pendingStopReason);
 					this.pendingStopReason = undefined;
 				}
