@@ -18,6 +18,8 @@ import {
 	type FieldKey,
 	type MapTree,
 	type RevisionTag,
+	combineVisitors,
+	createSourceValidationVisitor,
 	makeDetachedFieldIndex,
 	visitDelta,
 } from "../../../core/index.js";
@@ -99,7 +101,12 @@ function testDeltaVisit(
 	for (const methodName of visitorMethods) {
 		visitor[methodName] = makeChecker(methodName);
 	}
-	visit(delta, visitor, detachedFieldIndex, revision);
+	visit(
+		delta,
+		combineVisitors([createSourceValidationVisitor(), visitor]),
+		detachedFieldIndex,
+		revision,
+	);
 	assert.deepEqual(result, expected);
 }
 
@@ -157,7 +164,7 @@ describe("visitDelta", () => {
 			["enterField", rootKey],
 			["exitField", rootKey],
 			["enterField", rootKey],
-			["attach", field0, 1, 0],
+			["attach", field0, { start: 0, end: 1 }, 0],
 			["exitField", rootKey],
 		];
 		testDeltaVisit(delta, expected, index);
@@ -197,7 +204,7 @@ describe("visitDelta", () => {
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["attach", field0, 1, 0],
+			["attach", field0, { start: 0, end: 1 }, 0],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
@@ -259,16 +266,16 @@ describe("visitDelta", () => {
 					["enterField", cyclicField],
 					["enterNode", 0],
 					["enterField", fooKey],
-					["attach", incomingField, 1, 0],
+					["attach", incomingField, { start: 0, end: 1 }, 0],
 					["enterNode", 1],
 					["enterField", barKey],
-					["attach", field2, 1, 0],
+					["attach", field2, { start: 0, end: 1 }, 0],
 					["exitField", barKey],
 					["exitNode", 1],
 					["exitField", fooKey],
 					["exitNode", 0],
 					["exitField", cyclicField],
-					["destroy", cyclicField, 1],
+					["destroy", cyclicField, { start: 0, end: 1 }],
 				],
 				index,
 			);
@@ -366,10 +373,10 @@ describe("visitDelta", () => {
 			["exitNode", 0],
 			["exitField", field0],
 			["enterField", rootKey],
-			["attach", field0, 1, 0],
+			["attach", field0, { start: 0, end: 1 }, 0],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["attach", field1, 1, 42],
+			["attach", field1, { start: 0, end: 1 }, 42],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
@@ -395,7 +402,7 @@ describe("visitDelta", () => {
 			["detach", { start: 1, end: 2 }, field0, moveId, false],
 			["exitField", rootKey],
 			["enterField", rootKey],
-			["attach", field0, 1, 2],
+			["attach", field0, { start: 0, end: 1 }, 2],
 			["exitField", rootKey],
 		];
 		testTreeVisit({ marks }, expected, { detachedFieldIndex: index });
@@ -429,8 +436,8 @@ describe("visitDelta", () => {
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["attach", field0, 1, 2],
-			["attach", field1, 1, 3],
+			["attach", field0, { start: 0, end: 1 }, 2],
+			["attach", field1, { start: 0, end: 1 }, 3],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
@@ -470,7 +477,7 @@ describe("visitDelta", () => {
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["attach", field0, 1, 0],
+			["attach", field0, { start: 0, end: 1 }, 0],
 			["exitField", fooKey],
 			["enterField", barKey],
 			["exitField", barKey],
@@ -511,7 +518,7 @@ describe("visitDelta", () => {
 			["enterField", field1],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["attach", field0, 1, 0],
+			["attach", field0, { start: 0, end: 1 }, 0],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", field1],
@@ -551,11 +558,11 @@ describe("visitDelta", () => {
 			["enterField", field0],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["attach", field1, 1, 0],
+			["attach", field1, { start: 0, end: 1 }, 0],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", field0],
-			["destroy", field0, 1],
+			["destroy", field0, { start: 0, end: 1 }],
 		];
 		testDeltaVisit(delta, expected, index);
 		assert.equal(index.entries().next().done, true);
@@ -568,8 +575,8 @@ describe("visitDelta", () => {
 			destroy: [{ id, count: 2 }],
 		};
 		const expected: VisitScript = [
-			["destroy", field0, 1],
-			["destroy", field1, 1],
+			["destroy", field0, { start: 0, end: 1 }],
+			["destroy", field1, { start: 0, end: 1 }],
 		];
 		testDeltaVisit(delta, expected, index);
 		assert.equal(index.entries().next().done, true);
@@ -588,7 +595,7 @@ describe("visitDelta", () => {
 			["enterField", field0],
 			["detach", { start: 0, end: 1 }, field1, detachId, false],
 			["exitField", field0],
-			["destroy", field1, 1],
+			["destroy", field1, { start: 0, end: 1 }],
 		];
 		testDeltaVisit(delta, expected, index);
 		assert.equal(index.entries().next().done, true);
@@ -625,10 +632,10 @@ describe("visitDelta", () => {
 			["detach", { start: 0, end: 1 }, field1, moveId1, false],
 			["exitField", rootKey],
 			["enterField", rootKey],
-			["attach", field1, 1, 0],
+			["attach", field1, { start: 0, end: 1 }, 0],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["attach", field0, 1, 0],
+			["attach", field0, { start: 0, end: 1 }, 0],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
@@ -677,11 +684,11 @@ describe("visitDelta", () => {
 			["detach", { start: 0, end: 1 }, field2, { minor: 3 }, false],
 			["exitField", rootKey],
 			["enterField", rootKey],
-			["attach", field1, 1, 0],
-			["attach", field2, 1, 1],
+			["attach", field1, { start: 0, end: 1 }, 0],
+			["attach", field2, { start: 0, end: 1 }, 1],
 			["enterNode", 1],
 			["enterField", fooKey],
-			["attach", field0, 1, 0],
+			["attach", field0, { start: 0, end: 1 }, 0],
 			["exitField", fooKey],
 			["exitNode", 1],
 			["exitField", rootKey],
@@ -710,8 +717,8 @@ describe("visitDelta", () => {
 			["create", mapTreeX, field0],
 			["create", mapTreeY, field1],
 			["enterField", rootKey],
-			["replace", field0, { start: 0, end: 1 }, field2, { minor: 2 }],
-			["replace", field1, { start: 1, end: 2 }, field3, { minor: 3 }],
+			["replace", field0, { start: 0, end: 1 }, { start: 0, end: 1 }, field2, { minor: 2 }],
+			["replace", field1, { start: 0, end: 1 }, { start: 1, end: 2 }, field3, { minor: 3 }],
 			["exitField", rootKey],
 			["enterField", rootKey],
 			["exitField", rootKey],
@@ -748,7 +755,7 @@ describe("visitDelta", () => {
 			["create", mapTreeX, field0],
 			["create", mapTreeY, field1],
 			["enterField", rootKey],
-			["replace", field0, { start: 0, end: 1 }, field2, { minor: 2 }],
+			["replace", field0, { start: 0, end: 1 }, { start: 0, end: 1 }, field2, { minor: 2 }],
 			["detach", { start: 1, end: 2 }, field3, { minor: 3 }, false],
 			["enterNode", 1],
 			["enterField", fooKey],
@@ -756,7 +763,7 @@ describe("visitDelta", () => {
 			["exitNode", 1],
 			["exitField", rootKey],
 			["enterField", rootKey],
-			["attach", field1, 1, 0],
+			["attach", field1, { start: 0, end: 1 }, 0],
 			["enterNode", 2],
 			["enterField", fooKey],
 			["exitField", fooKey],
@@ -788,8 +795,8 @@ describe("visitDelta", () => {
 			["detach", { start: 0, end: 1 }, field3, { minor: 1 }, false],
 			["exitField", rootKey],
 			["enterField", rootKey],
-			["attach", field0, 1, 0],
-			["attach", field3, 1, 1],
+			["attach", field0, { start: 0, end: 1 }, 0],
+			["attach", field3, { start: 0, end: 1 }, 1],
 			["exitField", rootKey],
 		]);
 	});
@@ -813,7 +820,7 @@ describe("visitDelta", () => {
 			["exitNode", 0],
 			["exitField", field0],
 			["enterField", rootKey],
-			["attach", field0, 1, 0],
+			["attach", field0, { start: 0, end: 1 }, 0],
 			["enterNode", 0],
 			["enterField", fooKey],
 			["exitField", fooKey],
@@ -841,7 +848,7 @@ describe("visitDelta", () => {
 				["detach", { start: 0, end: 1 }, field2, { minor: 2 }, false],
 				["exitField", field1],
 				["enterField", rootKey],
-				["attach", field0, 1, 0],
+				["attach", field0, { start: 0, end: 1 }, 0],
 				["exitField", rootKey],
 			],
 			index,
@@ -862,11 +869,11 @@ describe("visitDelta", () => {
 			[
 				["create", mapTreeX, field0],
 				["enterField", rootKey],
-				["replace", field0, { start: 0, end: 1 }, field1, { minor: 1 }],
+				["replace", field0, { start: 0, end: 1 }, { start: 0, end: 1 }, field1, { minor: 1 }],
 				["exitField", rootKey],
 				["enterField", rootKey],
 				["exitField", rootKey],
-				["destroy", field1, 1],
+				["destroy", field1, { start: 0, end: 1 }],
 			],
 			index,
 		);
@@ -907,12 +914,12 @@ describe("visitDelta", () => {
 			["detach", { start: 0, end: 1 }, field2, moveId1, false],
 			["exitField", rootKey],
 			["enterField", rootKey],
-			["attach", field2, 1, 0],
+			["attach", field2, { start: 0, end: 1 }, 0],
 			["exitField", rootKey],
 			["enterField", field1],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["attach", field0, 1, 0],
+			["attach", field0, { start: 0, end: 1 }, 0],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", field1],
@@ -955,10 +962,10 @@ describe("visitDelta", () => {
 			["detach", { start: 0, end: 1 }, field2, moveId1, false],
 			["exitField", rootKey],
 			["enterField", rootKey],
-			["attach", field2, 1, 0],
+			["attach", field2, { start: 0, end: 1 }, 0],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["attach", field1, 1, 0],
+			["attach", field1, { start: 0, end: 1 }, 0],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
@@ -1014,7 +1021,7 @@ describe("visitDelta", () => {
 			["enterField", field2],
 			["enterNode", 0],
 			["enterField", barKey],
-			["attach", field1, 1, 0],
+			["attach", field1, { start: 0, end: 1 }, 0],
 			["exitField", barKey],
 			["exitNode", 0],
 			["exitField", field2],
@@ -1035,7 +1042,7 @@ describe("visitDelta", () => {
 			["enterField", rootKey],
 			["exitField", rootKey],
 			["enterField", rootKey],
-			["attach", field0, 1, 0],
+			["attach", field0, { start: 0, end: 1 }, 0],
 			["exitField", rootKey],
 		];
 		testTreeVisit({ marks }, expected, { detachedFieldIndex: index });
@@ -1063,7 +1070,7 @@ describe("visitDelta", () => {
 			["detach", { start: 0, end: 1 }, field1, moveId, false],
 			["exitField", field0],
 			["enterField", rootKey],
-			["attach", field1, 1, 0],
+			["attach", field1, { start: 0, end: 1 }, 0],
 			["exitField", rootKey],
 		];
 		testTreeVisit({ marks }, expected, { detachedFieldIndex: index, rename: [rename] });
@@ -1098,7 +1105,7 @@ describe("visitDelta", () => {
 			["enterField", field0],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["attach", field1, 1, 0],
+			["attach", field1, { start: 0, end: 1 }, 0],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", field0],
@@ -1152,7 +1159,7 @@ describe("visitDelta", () => {
 			["enterField", field2],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["attach", field0, 1, 0],
+			["attach", field0, { start: 0, end: 1 }, 0],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", field2],
@@ -1231,7 +1238,7 @@ describe("visitDelta", () => {
 				["exitField", rootKey],
 				["enterField", rootKey],
 				["create", mapTreeX, field0],
-				["attach", field0, 1, 0],
+				["attach", field0, { start: 0, end: 1 }, 0],
 				["exitField", rootKey],
 			];
 			testDeltaVisit(delta, expected, index);
@@ -1260,7 +1267,7 @@ describe("visitDelta", () => {
 				["enterNode", 0],
 				["enterField", fooKey],
 				["create", mapTreeX, field0],
-				["attach", field0, 1, 0],
+				["attach", field0, { start: 0, end: 1 }, 0],
 				["exitField", fooKey],
 				["exitNode", 0],
 				["exitField", rootKey],
@@ -1288,7 +1295,7 @@ describe("visitDelta", () => {
 				["exitField", rootKey],
 				["enterField", rootKey],
 				["create", mapTreeY, field0],
-				["attach", field0, 1, 0],
+				["attach", field0, { start: 0, end: 1 }, 0],
 				["exitField", rootKey],
 			];
 			testDeltaVisit(delta, expected, index);
@@ -1311,7 +1318,7 @@ describe("visitDelta", () => {
 				["enterField", field1],
 				["enterNode", 0],
 				["enterField", fooKey],
-				["attach", field0, 1, 0],
+				["attach", field0, { start: 0, end: 1 }, 0],
 				["exitField", fooKey],
 				["exitNode", 0],
 				["exitField", field1],
@@ -1408,7 +1415,7 @@ describe("visitDelta", () => {
 				["enterField", field0],
 				["enterNode", 0],
 				["enterField", fooKey],
-				["attach", field1, 1, 0],
+				["attach", field1, { start: 0, end: 1 }, 0],
 				["exitField", fooKey],
 				["exitNode", 0],
 				["exitField", field0],
@@ -1440,8 +1447,8 @@ describe("visitDelta", () => {
 				["create", mapTreeX, field0],
 				["create", mapTreeY, field1],
 				["enterField", rootKey],
-				["replace", field0, { start: 0, end: 1 }, field2, { minor: 2 }],
-				["replace", field1, { start: 1, end: 2 }, field3, { minor: 3 }],
+				["replace", field0, { start: 0, end: 1 }, { start: 0, end: 1 }, field2, { minor: 2 }],
+				["replace", field1, { start: 0, end: 1 }, { start: 1, end: 2 }, field3, { minor: 3 }],
 				["exitField", rootKey],
 				["enterField", rootKey],
 				["exitField", rootKey],
@@ -1478,7 +1485,7 @@ describe("visitDelta", () => {
 				["exitField", rootKey],
 				["enterField", rootKey],
 				["create", mapTreeX, field0],
-				["attach", field0, 1, 0],
+				["attach", field0, { start: 0, end: 1 }, 0],
 				["exitField", rootKey],
 			];
 			testDeltaVisit(delta, expected, index);
@@ -1498,7 +1505,7 @@ describe("visitDelta", () => {
 				["enterField", rootKey],
 				["exitField", rootKey],
 				["enterField", rootKey],
-				["attach", field0, 1, 0],
+				["attach", field0, { start: 0, end: 1 }, 0],
 				["exitField", rootKey],
 			];
 			testDeltaVisit(delta, expected, index);
@@ -1519,7 +1526,7 @@ describe("visitDelta", () => {
 				["enterField", rootKey],
 				["exitField", rootKey],
 				["enterField", rootKey],
-				["attach", field0, 1, 0],
+				["attach", field0, { start: 0, end: 1 }, 0],
 				["exitField", rootKey],
 			];
 			testDeltaVisit(delta, expected, index);

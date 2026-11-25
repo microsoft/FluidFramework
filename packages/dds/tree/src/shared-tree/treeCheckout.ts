@@ -1514,7 +1514,7 @@ export abstract class CheckoutBase implements ITreeCheckout {
 
 				// get the detached field for the root and delete it from the removed roots
 				for (const root of roots) {
-					visitor.destroy(this._removedRoots.toFieldKey(root), 1);
+					visitor.destroy(this._removedRoots.toFieldKey(root), { start: 0, end: 1 });
 				}
 
 				this._removedRoots.deleteRootsLastTouchedByRevision(revision);

@@ -247,7 +247,7 @@ describe("LazyField", () => {
 
 		assert(!field.isFreed());
 		const v = forest.anchors.acquireVisitor();
-		v.destroy(rootFieldKey, 1);
+		v.destroy(rootFieldKey, { start: 0, end: 1 });
 		assert(field.isFreed());
 		assert.throws(() => holder.getBoxed(brand("f")));
 
@@ -275,7 +275,7 @@ describe("LazyField", () => {
 		assert(field.isFreed());
 		// Should not double free.
 		const v = forest.anchors.acquireVisitor();
-		v.destroy(rootFieldKey, 1);
+		v.destroy(rootFieldKey, { start: 0, end: 1 });
 	});
 
 	describe("unboxedFlexNode", () => {
@@ -608,7 +608,7 @@ describe("LazyField", () => {
 						const { checkout, view, field, parent } = setup();
 						assert.equal(field.length, threshold);
 						const visitor = checkout.forest.anchors.acquireVisitor();
-						visitor.destroy(rootFieldKey, 1);
+						visitor.destroy(rootFieldKey, { start: 0, end: 1 });
 						visitor.free();
 						assert.equal(parent.anchorNode.events.hasListeners("childrenChanging"), false);
 						assert(field.isFreed());

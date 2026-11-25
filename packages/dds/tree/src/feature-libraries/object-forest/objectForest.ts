@@ -37,12 +37,12 @@ import {
 	type Value,
 	aboveRootPlaceholder,
 	combineVisitors,
+	createSourceValidationVisitor,
 	deepCopyMapTree,
 	makeBreakingVisitor,
 	rootFieldKey,
 } from "../../core/index.js";
 import {
-	assertNonNegativeSafeInteger,
 	assertValidIndex,
 	assertValidRange,
 	brand,
@@ -233,12 +233,16 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 					this.forest.checkSchema();
 				}
 			}
-			public destroy(detachedField: FieldKey, count: number): void {
+			public destroy(detachedField: FieldKey, range: Range): void {
 				preEdit();
 				const field = this.forest.#roots.fields.get(detachedField);
 				assert(field !== undefined, 0xd28 /* Destroyed field must exist */);
-				assert(field.length === count, 0xd29 /* Destroy count must match field length */);
-				this.forest.delete(detachedField);
+				assertValidRange(range, field);
+				if (range.start === 0 && range.end === field.length) {
+					this.forest.delete(detachedField);
+				} else {
+					field.splice(range.start, range.end - range.start);
+				}
 			}
 			public create(content: readonly ITreeCursorSynchronous[], destination: FieldKey): void {
 				preEdit();
@@ -249,9 +253,9 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 				this.forest.add(content, destination);
 				this.forest.#events.emit("afterRootFieldCreated", destination);
 			}
-			public attach(source: FieldKey, count: number, destination: PlaceIndex): void {
+			public attach(source: FieldKey, sourceRange: Range, destination: PlaceIndex): void {
 				preEdit();
-				this.attachEdit(source, count, destination);
+				this.attachEdit(source, sourceRange, destination);
 			}
 			public detach(source: Range, destination: FieldKey, id: DeltaDetachedNodeId): void {
 				preEdit();
@@ -259,6 +263,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 			}
 			public replace(
 				source: FieldKey,
+				sourceRange: Range,
 				range: Range,
 				destination: FieldKey,
 				id: DeltaDetachedNodeId,
@@ -268,19 +273,21 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 					source !== destination,
 					0xdc1 /* Replacement source and destination must differ */,
 				);
+				assert(
+					sourceRange.end - sourceRange.start === range.end - range.start,
+					"Replacement lengths must match",
+				);
 				this.detachEdit(range, destination);
-				this.attachEdit(source, range.end - range.start, range.start);
+				this.attachEdit(source, sourceRange, range.start);
 			}
 			/**
-			 * Attaches the nodes from the given source field into the current field.
+			 * Attaches a range of nodes from the given source field into the current field.
 			 * Does not invalidate dependents.
-			 * @param source - The the range to be attached.
-			 * @param count - The number of nodes being attached.
-			 * Expected to match the number of nodes in the source detached field.
+			 * @param source - The detached field containing the nodes to attach.
+			 * @param sourceRange - The range of nodes to attach from the source field.
 			 * @param destination - The index in the current field at which to attach the content.
 			 */
-			private attachEdit(source: FieldKey, count: number, destination: PlaceIndex): void {
-				assertNonNegativeSafeInteger(count);
+			private attachEdit(source: FieldKey, sourceRange: Range, destination: PlaceIndex): void {
 				const [parent, key] = cursor.getParent();
 				assert(
 					parent !== this.forest.roots || key !== source,
@@ -288,10 +295,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 				);
 				const sourceField = this.forest.#roots.fields.get(source);
 				assert(sourceField !== undefined, 0xd2c /* Attach source field must exist */);
-				assert(
-					sourceField.length === count,
-					0xd2d /* Attach must consume all nodes in source field */,
-				);
+				assertValidRange(sourceRange, sourceField);
 				const existingDestinationField = parent.fields.get(key) ?? [];
 				assert(
 					destination <= existingDestinationField.length,
@@ -299,8 +303,14 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 				);
 				assertValidIndex(destination, existingDestinationField, true);
 				const currentField = getOrCreateField(parent, key);
-				replaceArrayRange(currentField, destination, destination, sourceField);
-				this.forest.delete(source);
+				let content: MutableMapTree[];
+				if (sourceRange.start === 0 && sourceRange.end === sourceField.length) {
+					content = sourceField;
+					this.forest.delete(source);
+				} else {
+					content = sourceField.splice(sourceRange.start, sourceRange.end - sourceRange.start);
+				}
+				replaceArrayRange(currentField, destination, destination, content);
 			}
 			/**
 			 * Detaches the range from the current field and transfers it to the given destination if any.
@@ -358,6 +368,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 			announcedVisitors.push(getVisitor());
 		}
 		const visitor = combineVisitors([
+			createSourceValidationVisitor(),
 			makeBreakingVisitor(forestVisitor, this.breaker),
 			...announcedVisitors,
 		]);

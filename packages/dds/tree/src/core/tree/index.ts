@@ -97,6 +97,7 @@ export {
 	type AnnouncedVisitor,
 	applyDelta,
 	createAnnouncedVisitor,
+	createSourceValidationVisitor,
 	combineVisitors,
 	makeBreakingVisitor,
 	makeDetachedFieldIndex,

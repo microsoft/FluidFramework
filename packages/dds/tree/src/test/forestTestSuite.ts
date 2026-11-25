@@ -404,7 +404,7 @@ export function testForest(config: ForestTestConfiguration): void {
 		assert.equal(reader.nextNode(), false);
 		reader.clear();
 
-		forest.acquireVisitor().destroy(detachedFieldAsKey(detachedField), 1);
+		forest.acquireVisitor().destroy(detachedFieldAsKey(detachedField), { start: 0, end: 1 });
 
 		// check the detached field no longer exists
 		const detachedCursor = forest.allocateCursor();
@@ -521,6 +521,118 @@ export function testForest(config: ForestTestConfiguration): void {
 		expectEqualPaths(forest.anchors.locate(unrelated), unrelatedPath);
 	});
 
+	describe("partial detached ranges", () => {
+		const source: FieldKey = brand("partialSource");
+		const content: JsonCompatible[] = [{ key: [1, 2] }, "\uD83D\uDE00", "e\u0301", 42];
+		const ranges = [
+			{ start: 0, end: 2 },
+			{ start: 1, end: 3 },
+			{ start: 2, end: 4 },
+		];
+		const readField = (forest: IEditableForest, fieldKey: FieldKey): JsonCompatible[] => {
+			const cursor = forest.allocateCursor();
+			forest.tryMoveCursorToField({ fieldKey, parent: undefined }, cursor);
+			const result = mapCursorField(cursor, cursorToJsonObject);
+			cursor.free();
+			return result;
+		};
+		for (const sourceRange of ranges) {
+			for (const fork of [false, true]) {
+				for (const action of ["attach", "destroy"] as const) {
+					it(`${action} [${sourceRange.start}, ${sourceRange.end}) with nested content (fork: ${fork})`, () => {
+						const schema = new TreeStoredSchemaRepository(jsonSequenceRootSchema);
+						const original = factory(schema);
+						initializeForest(original, fieldJsonCursor([{ x: [0] }]));
+						const creator = original.acquireVisitor();
+						creator.create(content.map(singleJsonCursor), source);
+						creator.free();
+						const forest = fork ? original.clone(schema) : original;
+						const selected = content.slice(sourceRange.start, sourceRange.end);
+						const remaining = [
+							...content.slice(0, sourceRange.start),
+							...content.slice(sourceRange.end),
+						];
+						const announcements: string[] = [];
+						forest.registerAnnouncedVisitor(() =>
+							createAnnouncedVisitor({
+								beforeAttach: (field, range, destination) => {
+									announcements.push("beforeAttach");
+									assert.equal(field, source);
+									assert.deepEqual(range, sourceRange);
+									assert.equal(destination, 1);
+									assert.deepEqual(readField(forest, source), content);
+								},
+								afterAttach: (field, range, destination) => {
+									announcements.push("afterAttach");
+									assert.equal(field, source);
+									assert.deepEqual(range, sourceRange);
+									assert.deepEqual(destination, { start: 1, end: 3 });
+									assert.deepEqual(readField(forest, source), remaining);
+									assert.deepEqual(readField(forest, rootFieldKey), [{ x: [0, ...selected] }]);
+								},
+								beforeDestroy: (field, range) => {
+									announcements.push("beforeDestroy");
+									assert.equal(field, source);
+									assert.deepEqual(range, sourceRange);
+									assert.deepEqual(readField(forest, source), content);
+								},
+							}),
+						);
+						const visitor = forest.acquireVisitor();
+						if (action === "attach") {
+							visitor.enterField(rootFieldKey);
+							visitor.enterNode(0);
+							visitor.enterField(xField);
+							visitor.enterNode(0);
+							visitor.enterField(EmptyKey);
+							visitor.attach(source, sourceRange, 1);
+							visitor.exitField(EmptyKey);
+							visitor.exitNode(0);
+							visitor.exitField(xField);
+							visitor.exitNode(0);
+							visitor.exitField(rootFieldKey);
+						} else {
+							visitor.destroy(source, sourceRange);
+						}
+						assert.deepEqual(readField(forest, source), remaining);
+						visitor.free();
+						assert.deepEqual(
+							announcements,
+							action === "attach" ? ["beforeAttach", "afterAttach"] : ["beforeDestroy"],
+						);
+						if (fork) {
+							assert.deepEqual(readField(original, source), content);
+							assert.deepEqual(readField(original, rootFieldKey), [{ x: [0] }]);
+						}
+					});
+				}
+			}
+		}
+
+		it("edits a child from a distinct source and destroys roots after ascending", () => {
+			const forest = factory(new TreeStoredSchemaRepository(jsonSequenceRootSchema));
+			initializeForest(forest, fieldJsonCursor([{ x: 0 }, { x: 1 }, { x: 2 }]));
+			const visitor = forest.acquireVisitor();
+			// A detached source may have the same key as the current child field.
+			visitor.create([singleJsonCursor(99)], xField);
+			visitor.enterField(rootFieldKey);
+			visitor.enterNode(1);
+			visitor.enterField(xField);
+			visitor.detach({ start: 0, end: 1 }, source, detachId, false);
+			visitor.attach(xField, { start: 0, end: 1 }, 0);
+			visitor.replace(source, { start: 0, end: 1 }, { start: 0, end: 1 }, xField, detachId);
+			visitor.destroy(xField, { start: 0, end: 1 });
+			visitor.exitField(xField);
+			visitor.exitNode(1);
+			visitor.destroy(rootFieldKey, { start: 0, end: 1 });
+			visitor.exitField(rootFieldKey);
+			visitor.free();
+			assert.deepEqual(readField(forest, rootFieldKey), [{ x: 1 }, { x: 2 }]);
+			assert.deepEqual(readField(forest, source), []);
+			assert.deepEqual(readField(forest, xField), []);
+		});
+	});
+
 	/**
 	 * This suite checks that forests assert on invalid deltas.
 	 *
@@ -559,12 +671,68 @@ export function testForest(config: ForestTestConfiguration): void {
 			);
 		}
 
+		for (const [name, edit] of [
+			[
+				"attach",
+				(visitor: DeltaVisitor) => visitor.attach(rootFieldKey, { start: 0, end: 1 }, 0),
+			],
+			[
+				"replace",
+				(visitor: DeltaVisitor) =>
+					visitor.replace(
+						rootFieldKey,
+						{ start: 0, end: 1 },
+						{ start: 0, end: 1 },
+						brand("outgoing"),
+						detachId,
+					),
+			],
+			[
+				"destroy",
+				(visitor: DeltaVisitor) => visitor.destroy(rootFieldKey, { start: 0, end: 1 }),
+			],
+		] as const) {
+			it(`rejects ancestor-source ${name} before notifications or mutation`, () => {
+				const forest = factory(new TreeStoredSchemaRepository(jsonSequenceRootSchema));
+				const content = [{ x: 0 }, { x: 1 }, { x: 2 }];
+				initializeForest(forest, fieldJsonCursor(content));
+				const notifications: string[] = [];
+				forest.events.on("beforeChange", () => notifications.push("beforeChange"));
+				forest.registerAnnouncedVisitor(() =>
+					createAnnouncedVisitor({
+						beforeAttach: () => notifications.push("beforeAttach"),
+						beforeReplace: () => notifications.push("beforeReplace"),
+						beforeDestroy: () => notifications.push("beforeDestroy"),
+					}),
+				);
+				const visitor = forest.acquireVisitor();
+				visitor.enterField(rootFieldKey);
+				visitor.enterNode(1);
+				visitor.enterField(xField);
+				assert.throws(
+					() => edit(visitor),
+					validateAssertionError(
+						"Cannot consume roots from the detached field containing an entered node",
+					),
+				);
+				assert.deepEqual(notifications, []);
+				const cursor = forest.allocateCursor();
+				moveToDetachedField(forest, cursor);
+				assert.deepEqual(mapCursorField(cursor, cursorToJsonObject), content);
+				cursor.free();
+				visitor.exitField(xField);
+				visitor.exitNode(1);
+				visitor.exitField(rootFieldKey);
+				visitor.free();
+			});
+		}
+
 		it("rejects destroying a missing detached field", () => {
 			const forest = setupForest();
 			const visitor = forest.acquireVisitor();
 
 			assert.throws(
-				() => visitor.destroy(detachedKey, 0),
+				() => visitor.destroy(detachedKey, { start: 0, end: 0 }),
 				validateAssertionError("Destroyed field must exist"),
 			);
 			afterAssert(forest, visitor);
@@ -587,21 +755,23 @@ export function testForest(config: ForestTestConfiguration): void {
 			visitor.enterField(rootFieldKey);
 
 			assert.throws(
-				() => visitor.attach(detachedKey, 1, 0),
+				() => visitor.attach(detachedKey, { start: 0, end: 1 }, 0),
 				validateAssertionError("Attach source field must exist"),
 			);
 			afterAssert(forest, visitor);
 		});
 
-		it("rejects attaching with a mismatched count", () => {
+		it("rejects attaching beyond the source field", () => {
 			const forest = setupForest();
 			const visitor = forest.acquireVisitor();
 			visitor.create([singleJsonCursor(98), singleJsonCursor(99)], detachedKey);
 			visitor.enterField(rootFieldKey);
 
 			assert.throws(
-				() => visitor.attach(detachedKey, 1, 0),
-				validateAssertionError("Attach must consume all nodes in source field"),
+				() => visitor.attach(detachedKey, { start: 1, end: 3 }, 0),
+				validateAssertionError(
+					/(Range end must be less than or equal to length|Edit range must not exceed field length)/,
+				),
 			);
 			afterAssert(forest, visitor);
 		});
@@ -613,7 +783,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			visitor.enterField(rootFieldKey);
 
 			assert.throws(
-				() => visitor.attach(detachedKey, 1, 6),
+				() => visitor.attach(detachedKey, { start: 0, end: 1 }, 6),
 				validateAssertionError("Attach destination must not exceed field length"),
 			);
 			afterAssert(forest, visitor);
@@ -625,7 +795,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			visitor.enterField(rootFieldKey);
 
 			assert.throws(
-				() => visitor.attach(rootFieldKey, 5, 0),
+				() => visitor.attach(rootFieldKey, { start: 0, end: 5 }, 0),
 				validateAssertionError("Attach source field must be different from current field"),
 			);
 			afterAssert(forest, visitor);
@@ -670,14 +840,35 @@ export function testForest(config: ForestTestConfiguration): void {
 			afterAssert(forest, visitor);
 		});
 
-		it("rejects destroying with a mismatched count", () => {
+		it("rejects destroying beyond the source field", () => {
 			const forest = setupForest();
 			const visitor = forest.acquireVisitor();
 			visitor.create([singleJsonCursor(98), singleJsonCursor(99)], detachedKey);
 
 			assert.throws(
-				() => visitor.destroy(detachedKey, 1),
-				validateAssertionError("Destroy count must match field length"),
+				() => visitor.destroy(detachedKey, { start: 1, end: 3 }),
+				validateAssertionError(
+					/(Range end must be less than or equal to length|Edit range must not exceed field length)/,
+				),
+			);
+			afterAssert(forest, visitor);
+		});
+
+		it("rejects replacement ranges of different lengths", () => {
+			const forest = setupForest();
+			const visitor = forest.acquireVisitor();
+			visitor.create([singleJsonCursor(98), singleJsonCursor(99)], detachedKey);
+			visitor.enterField(rootFieldKey);
+			assert.throws(
+				() =>
+					visitor.replace(
+						detachedKey,
+						{ start: 0, end: 2 },
+						{ start: 1, end: 2 },
+						brand("outgoing"),
+						detachId,
+					),
+				validateAssertionError("Replacement lengths must match"),
 			);
 			afterAssert(forest, visitor);
 		});
@@ -897,13 +1088,13 @@ export function testForest(config: ForestTestConfiguration): void {
 			reader.free();
 		});
 
-		it("replaces a range with consistent announcements, anchors, and detached content", () => {
+		it("replaces from a partial range with consistent announcements, anchors, and detached content", () => {
 			const forest = factory(new TreeStoredSchemaRepository(jsonSequenceRootSchema));
 			initializeForest(forest, fieldJsonCursor([1, 2, 3, 4]));
 			const source: FieldKey = brand("incoming");
 			const destination: FieldKey = brand("outgoing");
 			const creator = forest.acquireVisitor();
-			creator.create([singleJsonCursor(10), singleJsonCursor(11)], source);
+			creator.create([9, 10, 11, 12].map(singleJsonCursor), source);
 			creator.free();
 			const readField = (fieldKey: FieldKey): JsonCompatible[] => {
 				const cursor = forest.allocateCursor();
@@ -920,7 +1111,12 @@ export function testForest(config: ForestTestConfiguration): void {
 			const incomingAnchor = forest.anchors.track({
 				parent: undefined,
 				parentField: source,
-				parentIndex: 0,
+				parentIndex: 1,
+			});
+			const sourceSiblingAnchor = forest.anchors.track({
+				parent: undefined,
+				parentField: source,
+				parentIndex: 3,
 			});
 			const siblingAnchor = forest.anchors.track({
 				parent: undefined,
@@ -930,19 +1126,20 @@ export function testForest(config: ForestTestConfiguration): void {
 			const events: string[] = [];
 			forest.registerAnnouncedVisitor(() =>
 				createAnnouncedVisitor({
-					beforeReplace: (incoming, range, outgoing) => {
+					beforeReplace: (incoming, sourceRange, range, outgoing) => {
 						events.push("beforeReplace");
 						assert.equal(incoming, source);
+						assert.deepEqual(sourceRange, { start: 1, end: 3 });
 						assert.deepEqual(range, { start: 1, end: 3 });
 						assert.equal(outgoing, destination);
 						assert.deepEqual(readField(rootFieldKey), [1, 2, 3, 4]);
-						assert.deepEqual(readField(source), [10, 11]);
+						assert.deepEqual(readField(source), [9, 10, 11, 12]);
 						assert.deepEqual(readField(destination), []);
 					},
 					afterReplace: () => {
 						events.push("afterReplace");
 						assert.deepEqual(readField(rootFieldKey), [1, 10, 11, 4]);
-						assert.deepEqual(readField(source), []);
+						assert.deepEqual(readField(source), [9, 12]);
 						assert.deepEqual(readField(destination), [2, 3]);
 						expectEqualPaths(forest.anchors.locate(outgoingAnchor), {
 							parent: undefined,
@@ -959,6 +1156,11 @@ export function testForest(config: ForestTestConfiguration): void {
 							parentField: rootFieldKey,
 							parentIndex: 3,
 						});
+						expectEqualPaths(forest.anchors.locate(sourceSiblingAnchor), {
+							parent: undefined,
+							parentField: source,
+							parentIndex: 1,
+						});
 					},
 				}),
 			);
@@ -971,13 +1173,20 @@ export function testForest(config: ForestTestConfiguration): void {
 				forest.anchors.acquireVisitor(),
 			]);
 			visitor.enterField(rootFieldKey);
-			visitor.replace(source, { start: 1, end: 3 }, destination, detachId);
+			visitor.replace(
+				source,
+				{ start: 1, end: 3 },
+				{ start: 1, end: 3 },
+				destination,
+				detachId,
+			);
 			visitor.exitField(rootFieldKey);
 			visitor.free();
 			assert.deepEqual(events, ["beforeReplace", "beforeChange", "afterReplace"]);
 			forest.forgetAnchor(outgoingAnchor);
 			forest.forgetAnchor(incomingAnchor);
 			forest.forgetAnchor(siblingAnchor);
+			forest.forgetAnchor(sourceSiblingAnchor);
 		});
 
 		it("remove", () => {
