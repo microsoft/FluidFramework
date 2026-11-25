@@ -35,6 +35,12 @@ import type { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
  * Replacements whose incoming roots are available and have no pending nested changes can run in the detach pass.
  * These replacements retain their positions through the remainder of that pass and are skipped in the attach pass.
  * Replacements with nested edits on outgoing content or with scheduled root transfers use separate detach and attach calls.
+ * Although more incoming roots are available in the attach pass, deferring replacements to that pass would also defer their detaches.
+ * Their outgoing roots may be needed by root transfers or by attaches visited before the replacement.
+ * Replacement cycles (such as swapping two nodes) cannot all wait for their incoming roots to become available.
+ * Keeping all detaches in the first pass avoids dependency analysis and backtracking.
+ * Fields with completed replacements and no remaining attaches or nested edits are not revisited in the attach pass.
+ * Nodes with nothing left to attach in their fields or below them are not revisited in the attach pass either.
  *
  * After the attach phase, roots destruction is carried out.
  * This needs to happen last to allow modifications to detached roots to be applied before they are destroyed.
@@ -69,6 +75,8 @@ export function visitDelta(
 	const rootDestructions: Delta.DetachedNodeDestruction[] = [];
 	const cyclicRoots: ForestRootId[] = [];
 	const replacedMarks: Set<Delta.Mark> = new Set();
+	const replacedFields: Set<Delta.FieldChanges> = new Set();
+	const withoutAttaches: Set<Delta.FieldMap> = new Set();
 	const refreshers: NestedMap<Major, Minor, ITreeCursorSynchronous> = new Map();
 	for (const {
 		id: { major, minor },
@@ -92,6 +100,8 @@ export function visitDelta(
 		cyclicRoots,
 		currentRoot: undefined,
 		replacedMarks,
+		replacedFields,
+		withoutAttaches,
 	};
 	processBuilds(delta.build, detachConfig, visitor);
 	processGlobal(delta.global, detachConfig, visitor);
@@ -118,6 +128,8 @@ export function visitDelta(
 		cyclicRoots,
 		currentRoot: undefined,
 		replacedMarks,
+		replacedFields,
+		withoutAttaches,
 	};
 	visitFieldMarks(delta.fields, visitor, attachConfig);
 	fixedPointVisitOfRoots(visitor, attachPassRoots, attachConfig);
@@ -431,22 +443,46 @@ interface PassConfig {
 	 * Their incoming nodes remain in the field and must not be attached again in the attach pass.
 	 */
 	readonly replacedMarks: Set<Delta.Mark>;
+	/**
+	 * Fields with completed replacements and no remaining attach-pass work.
+	 */
+	readonly replacedFields: Set<Delta.FieldChanges>;
+	/**
+	 * Nested changes of nodes with nothing left to attach in their fields or below them after the detach pass.
+	 * Populated by the detach pass. The attach pass does not visit these nodes.
+	 */
+	readonly withoutAttaches: Set<Delta.FieldMap>;
 }
 
-type Pass = (delta: Delta.FieldChanges, visitor: DeltaVisitor, config: PassConfig) => void;
+/**
+ * Visits the changes to a field.
+ * @returns For the detach pass, whether the attach pass has anything to attach in the field or below its nodes.
+ * The attach pass returns false.
+ */
+type Pass = (delta: Delta.FieldChanges, visitor: DeltaVisitor, config: PassConfig) => boolean;
 
+/**
+ * @returns For the detach pass, whether the attach pass has anything to attach in the fields or below their nodes.
+ */
 function visitFieldMarks(
 	fields: Delta.FieldMap | undefined,
 	visitor: DeltaVisitor,
 	config: PassConfig,
-): void {
+): boolean {
+	let needsAttachPass = false;
 	if (fields !== undefined) {
 		for (const [key, field] of fields) {
+			if (config.func === attachPass && config.replacedFields.has(field)) {
+				continue;
+			}
 			visitor.enterField(key);
-			config.func(field, visitor, config);
+			if (config.func(field, visitor, config)) {
+				needsAttachPass = true;
+			}
 			visitor.exitField(key);
 		}
 	}
+	return needsAttachPass;
 }
 
 function visitNode(
@@ -456,9 +492,15 @@ function visitNode(
 	config: PassConfig,
 ): void {
 	if (fields !== undefined) {
+		if (config.func === attachPass && config.withoutAttaches.has(fields)) {
+			return;
+		}
 		visitor.enterNode(index);
-		visitFieldMarks(fields, visitor, config);
+		const needsAttachPass = visitFieldMarks(fields, visitor, config);
 		visitor.exitNode(index);
+		if (config.func === detachPass && !needsAttachPass) {
+			config.withoutAttaches.add(fields);
+		}
 	}
 }
 
@@ -471,21 +513,28 @@ function detachPass(
 	fieldChanges: Delta.FieldChanges,
 	visitor: DeltaVisitor,
 	config: PassConfig,
-): void {
+): boolean {
 	visitor.fieldMarks?.(fieldChanges.marks);
 	let index = 0;
+	let hasReplacements = false;
+	let needsAttachPass = false;
 	for (const mark of fieldChanges.marks) {
 		if (tryReplace(mark, index, visitor, config)) {
 			config.replacedMarks.add(mark);
+			hasReplacements = true;
 			index += mark.count;
 			continue;
 		}
+		needsAttachPass ||= mark.attach !== undefined;
 		if (mark.fields !== undefined) {
 			assert(
 				mark.attach === undefined || mark.detach !== undefined,
 				0x7d0 /* Invalid nested changes on an additive mark */,
 			);
 			visitNode(index, mark.fields, visitor, config);
+			// Nested changes of a detached node are visited in the attach pass through `attachPassRoots`, not through this field.
+			needsAttachPass ||=
+				mark.detach === undefined && !config.withoutAttaches.has(mark.fields);
 		}
 		if (mark.detach !== undefined) {
 			for (let i = 0; i < mark.count; i += 1) {
@@ -502,6 +551,10 @@ function detachPass(
 			index += mark.count;
 		}
 	}
+	if (hasReplacements && !needsAttachPass) {
+		config.replacedFields.add(fieldChanges);
+	}
+	return needsAttachPass;
 }
 
 /**
@@ -631,7 +684,7 @@ function attachPass(
 	fieldChanges: Delta.FieldChanges,
 	visitor: DeltaVisitor,
 	config: PassConfig,
-): void {
+): boolean {
 	let index = 0;
 	for (const mark of fieldChanges.marks) {
 		if (config.replacedMarks.has(mark)) {
@@ -682,6 +735,7 @@ function attachPass(
 			index += mark.count - omittedAttaches;
 		}
 	}
+	return false;
 }
 
 /**
