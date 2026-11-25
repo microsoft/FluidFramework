@@ -5,6 +5,8 @@
 
 import process from "process";
 
+import type * as Mocha from "mocha";
+
 import { makeRandom } from "./random.js";
 
 function createSuite<TArgs extends StressSuiteArguments>(
