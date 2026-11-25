@@ -4,11 +4,7 @@
  */
 
 import { TreeDataObject, TreeDataObjectFactory } from "@fluidframework/aqueduct/legacy";
-import {
-	FluidClientVersion,
-	initializeAndView,
-	viewExisting,
-} from "@fluidframework/tree/alpha";
+import { FluidClientVersion, TreeViewAlpha } from "@fluidframework/tree/alpha";
 import {
 	configuredSharedTreeBetaLegacy,
 	TreeViewConfiguration,
@@ -50,11 +46,11 @@ export class TableDataObject extends TreeDataObject {
 	}
 
 	protected override async initializingFirstTime(): Promise<void> {
-		this.#treeView = initializeAndView(this.tree, this.config, getInitialTree());
+		this.#treeView = TreeViewAlpha.initializeNew(this.tree, this.config, getInitialTree());
 	}
 
 	protected override async initializingFromExisting(): Promise<void> {
-		const result = viewExisting(this.tree, this.config);
+		const result = TreeViewAlpha.openExisting(this.tree, this.config);
 		if (!result.canView) {
 			throw new Error("This version of the app cannot open the table.", {
 				cause: result.incompatibilities,

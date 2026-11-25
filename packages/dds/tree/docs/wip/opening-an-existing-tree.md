@@ -8,7 +8,7 @@ Your application supplies a *view schema*, which describes the data it expects t
 Today, [`viewWith`](../../src/simple-tree/api/tree.ts) returns a view even when these schemas are incompatible and access to `root` would throw.
 You must check compatibility and decide whether to upgrade before you can use the root.
 
-Use `initializeAndView` for creation or `viewExisting` for loading.
+Use `TreeViewAlpha.initializeNew` for creation or `TreeViewAlpha.openExisting` for loading.
 The creation helper takes initial content and returns an editable view.
 The loading helper applies a permitted schema upgrade only if needed for access; if it can neither view nor upgrade the document, it returns diagnostics.
 Use `viewWith` if you need to inspect compatibility without writing to the document or obtain consent before an upgrade.
@@ -22,7 +22,7 @@ Whether you create or load a note, you get a `NoteDocument` with the open contai
 
 ```typescript
 import { SchemaFactory, SharedTree, TreeViewConfiguration, type IFluidContainer } from "fluid-framework";
-import { initializeAndView, viewExisting, type TreeViewAlpha } from "@fluidframework/tree/alpha";
+import { TreeViewAlpha } from "@fluidframework/tree/alpha";
 
 const schemaFactory = new SchemaFactory("notes");
 class Note extends schemaFactory.object("Note", { title: schemaFactory.string }) {}
@@ -38,13 +38,13 @@ interface NoteDocument {
 ### Create a new document
 
 Initialize the note with its first title **before** attaching the container, so other clients can only load an initialized document.
-`initializeAndView` returns the editable view directly. It throws a usage error if the tree is already initialized or the initial content does not match the schema.
+`TreeViewAlpha.initializeNew` returns the editable view directly. It throws a usage error if the tree is already initialized or the initial content does not match the schema.
 
 ```typescript
 async function createNote(title: string): Promise<NoteDocument> {
 	const { container } = await client.createContainer(containerSchema, "2.0.0");
 	try {
-		const view = initializeAndView(container.initialObjects.tree, treeViewConfig, { title });
+		const view = TreeViewAlpha.initializeNew(container.initialObjects.tree, treeViewConfig, { title });
 		try {
 			await container.attach();
 		} catch (error) {
@@ -70,7 +70,7 @@ An incompatible schema returns diagnostics; an unexpectedly uninitialized tree t
 async function loadNote(documentId: string): Promise<NoteDocument> {
 	const { container } = await client.getContainer(documentId, containerSchema, "2.0.0");
 	try {
-		const result = viewExisting(container.initialObjects.tree, treeViewConfig);
+		const result = TreeViewAlpha.openExisting(container.initialObjects.tree, treeViewConfig);
 		if (!result.canView) {
 			throw new Error("This version of the app cannot open the note.", { cause: result.incompatibilities });
 		}
@@ -87,7 +87,7 @@ The caller owns the returned view and container and disposes both when it closes
 
 ## What opening a view does
 
-`viewExisting` opens a view with `viewWith` and checks the following conditions in order:
+`TreeViewAlpha.openExisting` opens a view with `viewWith` and checks the following conditions in order:
 
 | First matching condition | Result | Effect on the document |
 | --- | --- | --- |
@@ -108,12 +108,12 @@ If the app needs to coordinate this change across versions, follow the [schema e
 
 ## Types and errors
 
-Both free functions take an `ITree` and a `TreeViewConfiguration<TRoot>`. Pass the tree from the container directly.
-`initializeAndView` also requires the initial content, typed as `InsertableTreeFieldFromImplicitField<TRoot>`, and returns `TreeViewAlpha<TRoot>`.
+Both methods take an `ITree` and a `TreeViewConfiguration<TRoot>`. Pass the tree from the container directly.
+`TreeViewAlpha.initializeNew` also requires the initial content, typed as `InsertableTreeFieldFromImplicitField<TRoot>`, and returns `TreeViewAlpha<TRoot>`.
 It does not attempt an upgrade on an initialized tree, even if the configuration would permit one.
 If the content does not match the schema, the tree remains available for another initialization attempt.
 
-`viewExisting` returns `ViewExistingResult<TRoot>`.
+`TreeViewAlpha.openExisting` returns `ViewExistingResult<TRoot>`.
 With `canView: true`, you own `result.view`; with `canView: false`, `result.incompatibilities` explains both blockers and there is nothing to dispose.
 Calling it on an uninitialized tree is a usage error, not a compatibility result.
 
@@ -125,7 +125,7 @@ Calling it on an uninitialized tree is a usage error, not a compatibility result
 | `ViewTreeIncompatibilities` | Two read-only lists: `view` contains the `SchemaViewIncompatibility` entries and `upgrade` contains the `SchemaUpgradeIncompatibility` entries. Both lists are nonempty. |
 
 Both paths give the caller the actual [`TreeViewAlpha`](../../src/simple-tree/api/tree.ts), not a narrowed interface.
-On a successful load, use `result.view`. On creation, use the view returned by `initializeAndView` directly.
+On a successful load, use `result.view`. On creation, use the view returned by `TreeViewAlpha.initializeNew` directly.
 The existing root accessors and view-level helpers work unchanged: for example, you can assign `{ title: "Draft" }` to the root, read back a typed `Note`, or pass the view to `Tree.runTransaction`.
 The view still exposes `compatibility` and `upgradeSchema`, but callers do not need either to begin editing.
 
@@ -137,12 +137,12 @@ Invalid usage, invalid initial content, and unexpected failures still throw; do 
 
 ## View lifetime
 
-`initializeAndView` rechecks that the tree is still uninitialized after preparing the caller's content, then sets its stored schema and content together.
+`TreeViewAlpha.initializeNew` rechecks that the tree is still uninitialized after preparing the caller's content, then sets its stored schema and content together.
 If this client has already observed another initialization, the call throws a `UsageError` rather than overwriting content or returning a view as though it used your input.
 This local check cannot prevent two clients from initializing concurrently before either observes the other's change.
 Initializing before attachment avoids that race.
 
-The root is ready when `viewExisting` succeeds or `initializeAndView` returns.
+The root is ready when `TreeViewAlpha.openExisting` succeeds or `TreeViewAlpha.initializeNew` returns.
 Another client can later change the stored schema and invalidate the root.
 The returned view retains the existing `schemaChanged` notification, followed by `rootChanged`; neither event triggers an automatic upgrade.
 If you keep a view open, stop using the old root on `schemaChanged`.
@@ -151,8 +151,8 @@ This keeps the decision to write the shared schema at an explicit call site.
 
 ## Implementation
 
-The [helpers](../../src/shared-tree/viewCreation.ts) each create one view with `viewWith` and reuse its [schema implementation](../../src/shared-tree/schematizingTreeView.ts).
-Only `viewExisting` can upgrade an existing document. On success, each helper gives ownership of its view to the caller.
+The [helpers](../../src/simple-tree/api/treeViewAlpha.ts) each create one view with `viewWith` and reuse its [schema implementation](../../src/shared-tree/schematizingTreeView.ts).
+Only `TreeViewAlpha.openExisting` can upgrade an existing document. On success, each helper gives ownership of its view to the caller.
 For an incompatible result or an exception during open, dispose the temporary view; do not dispose the caller's tree.
 This design requires no new stored format, compatibility algorithm, or event.
 
@@ -195,9 +195,9 @@ Comparing the root alone would not detect an unwanted schema upgrade.
 
 ### Initialization and ownership
 
-- **I1. Successful initialization.** Calling `initializeAndView` with `{ title: "Draft" }` must return a `TreeViewAlpha` with `root.title === "Draft"` that can be edited without a second open.
-- **I2. Repeated initialization.** On an initialized tree, `initializeAndView` must throw without writing, even if loading with that configuration could apply an upgrade.
-- **I3a. Invalid initial content.** Content that the root schema rejects must cause `initializeAndView` to throw a usage error.
+- **I1. Successful initialization.** Calling `TreeViewAlpha.initializeNew` with `{ title: "Draft" }` must return a `TreeViewAlpha` with `root.title === "Draft"` that can be edited without a second open.
+- **I2. Repeated initialization.** On an initialized tree, `TreeViewAlpha.initializeNew` must throw without writing, even if loading with that configuration could apply an upgrade.
+- **I3a. Invalid initial content.** Content that the root schema rejects must cause `TreeViewAlpha.initializeNew` to throw a usage error.
 - **I3b. Cleanup after invalid input.** After validation fails, another call with valid input must succeed without requiring any cleanup by the caller.
 - **I4. Ready-view disposal.** Disposing a ready view must release the view, not the tree. A new open must return a usable view of the same content.
 
@@ -205,7 +205,7 @@ Comparing the root alone would not detect an unwanted schema upgrade.
 
 - **F1. Diagnostic details.** For O6, `result.incompatibilities` must contain only the `view` and `upgrade` lists. Both must be nonempty and match the corresponding structured diagnostics from `viewWith` on the same starting schema. Check the mismatch and its location, not the wording of a message.
 - **F2. Diagnostic lifetime.** After an incompatible open, immediately open the tree with a compatible configuration and change its stored schema. Both lists on the original result must still describe the failed open, even if the caller first reads them after the change. No caller disposal of the incompatible result is required.
-- **F3. Unexpected failure.** Cause the upgrade operation to throw a known exception after the temporary view is created. `viewExisting` must propagate that exception and release the temporary view. It must not return `canView: false` or dispose the caller's tree.
+- **F3. Unexpected failure.** Cause the upgrade operation to throw a known exception after the temporary view is created. `TreeViewAlpha.openExisting` must propagate that exception and release the temporary view. It must not return `canView: false` or dispose the caller's tree.
 
 ### Collaboration and existing callers
 
@@ -223,5 +223,5 @@ Use focused compile-time tests for each result variant, accessor, and entry poin
 For example, a test for the type of a root read must not depend on a test for assignment to the root.
 
 - **T1. Result narrowing.** A check on `canView` must narrow the result without a cast. Only success carries a view, and only failure exposes diagnostics. Initialization must return the same full view type as a successful load.
-- **T2. Root and input types.** With the note configuration, passing `{ title: "Draft" }` to `initializeAndView` and assigning it to `view.root` must compile. Reading `view.root` must yield a `Note`. A numeric `title` must fail to type-check in both write positions.
+- **T2. Root and input types.** With the note configuration, passing `{ title: "Draft" }` to `TreeViewAlpha.initializeNew` and assigning it to `view.root` must compile. Reading `view.root` must yield a `Note`. A numeric `title` must fail to type-check in both write positions.
 - **T3. Alpha boundary.** The helpers and their result and diagnostic types must be importable from `@fluidframework/tree/alpha`. Both accept a stable `ITree` directly; existing `viewWith` calls retain their return type.

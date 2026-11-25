@@ -421,7 +421,7 @@ function createRunTransaction(): RunTransaction {
  * Run the given transaction.
  * @remarks
  * This API is not publicly exported but is exported outside of this module so that test code may unit test the `Tree.runTransaction` function directly without being restricted to its public API overloads.
- * @deprecated This API catches exceptions then tries to modify the tree before rethrowing: this is not robust. Use {@link TreeViewAlpha.runTransaction} instead which does not try to edit content in the error case.
+ * @deprecated This API catches exceptions then tries to modify the tree before rethrowing: this is not robust. Use {@link (TreeViewAlpha:interface).runTransaction} instead which does not try to edit content in the error case.
  */
 export function runTransaction<
 	TNode extends TreeNode,
@@ -457,7 +457,7 @@ export function runTransaction<
 
 /**
  * Run the given transaction.
- * @deprecated This API catches exceptions then tries to modify the tree before rethrowing: this is not robust. Use {@link TreeViewAlpha.runTransaction} instead which does not try to editing content in the error case.
+ * @deprecated This API catches exceptions then tries to modify the tree before rethrowing: this is not robust. Use {@link (TreeViewAlpha:interface).runTransaction} instead which does not try to editing content in the error case.
  */
 function runTransactionInCheckout<TResult>(
 	checkout: ITreeCheckout,

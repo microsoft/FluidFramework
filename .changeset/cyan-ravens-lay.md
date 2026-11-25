@@ -5,7 +5,7 @@
 ---
 Add an alternative flow for loading and initializing tree views
 
-Use `initializeAndView(tree, config, initialContent)` when creating a tree, and `viewExisting(tree, config)` when loading an initialized document.
+Use `TreeViewAlpha.initializeNew(tree, config, initialContent)` when creating a tree, and `TreeViewAlpha.openExisting(tree, config)` when loading an initialized document.
 The first returns the editable view directly.
 The second applies a permitted upgrade only when needed and returns either a view or structured diagnostics explaining why viewing the tree isn't possible.
 
@@ -20,7 +20,7 @@ Whether you create or load a note, you get a `NoteDocument` with the open contai
 
 ```typescript
 import { SchemaFactory, SharedTree, TreeViewConfiguration, type IFluidContainer } from "fluid-framework";
-import { initializeAndView, viewExisting, type TreeViewAlpha } from "@fluidframework/tree/alpha";
+import { TreeViewAlpha } from "@fluidframework/tree/alpha";
 
 const schemaFactory = new SchemaFactory("notes");
 class Note extends schemaFactory.object("Note", { title: schemaFactory.string }) {}
@@ -35,14 +35,14 @@ interface NoteDocument {
 
 ##### Creating a new document
 
-Use `initializeAndView` **before** attaching the container so other clients can only load an initialized document.
+Use `TreeViewAlpha.initializeNew` **before** attaching the container so other clients can only load an initialized document.
 An already-initialized tree or initial content that does not match the schema causes a usage error.
 
 ```typescript
 async function createNote(title: string): Promise<NoteDocument> {
 	const { container } = await client.createContainer(containerSchema, "2.0.0");
 	try {
-		const view = initializeAndView(container.initialObjects.tree, treeViewConfig, { title });
+		const view = TreeViewAlpha.initializeNew(container.initialObjects.tree, treeViewConfig, { title });
 		try {
 			await container.attach();
 		} catch (error) {
@@ -68,7 +68,7 @@ An incompatible schema returns diagnostics; an unexpectedly uninitialized tree t
 async function loadNote(documentId: string): Promise<NoteDocument> {
 	const { container } = await client.getContainer(documentId, containerSchema, "2.0.0");
 	try {
-		const result = viewExisting(container.initialObjects.tree, treeViewConfig);
+		const result = TreeViewAlpha.openExisting(container.initialObjects.tree, treeViewConfig);
 		if (!result.canView) {
 			throw new Error("This version of the app cannot open the note.", { cause: result.incompatibilities });
 		}

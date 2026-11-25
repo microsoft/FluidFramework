@@ -385,7 +385,6 @@ export {
   incrementalSummaryHint,
   independentInitializedView,
   independentView,
-  initializeAndView,
   instantiateTreeFirstTime,
   minimize,
   normalizeAllowedTypes,
@@ -396,6 +395,5 @@ export {
   trackDirtyNodes,
   unsafeArrayToTuple,
   utf16LengthForCodePoints,
-  viewExisting,
   // #endregion
 } from "../index.js";

@@ -24,7 +24,6 @@ import {
 	asBeta,
 	createIdentifierIndex,
 	createTreeIndex,
-	initializeAndView,
 	type ImplicitFieldSchema,
 	type InsertableTreeFieldFromImplicitField,
 	type ITreeAlpha,
@@ -32,18 +31,17 @@ import {
 	SchemaFactoryAlpha,
 	StagedSchemaUpgradePolicy,
 	Tree,
-	type TreeViewAlpha,
+	TreeViewAlpha,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
-	viewExisting,
 } from "@fluidframework/tree/alpha";
 import type { ITree as PreviousTree } from "@fluidframework/tree-previous";
 
 // eslint-disable-next-line import-x/no-internal-modules -- Inspect the checkout to detect even edits with no net effect.
-import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
-import { toUpgradeSchema } from "../../simple-tree/index.js";
-import type { ISharedTree } from "../../treeFactory.js";
-import { DefaultTestSharedTreeKind, spyOnMethod, TestTreeProviderLite } from "../utils.js";
+import { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
+import { toUpgradeSchema } from "../../../simple-tree/index.js";
+import type { ISharedTree } from "../../../treeFactory.js";
+import { DefaultTestSharedTreeKind, spyOnMethod, TestTreeProviderLite } from "../../utils.js";
 
 const numberConfig = new TreeViewConfiguration({ schema: SchemaFactory.number });
 const optionalConfig = new TreeViewConfiguration({
@@ -53,15 +51,15 @@ const unionConfig = new TreeViewConfiguration({
 	schema: [SchemaFactory.number, SchemaFactory.string],
 });
 
-describe("viewCreation", () => {
-	describe("viewExisting", () => {
+describe("treeViewAlpha", () => {
+	describe("TreeViewAlpha.openExisting", () => {
 		it("opens a matching document without submitting an edit", () => {
 			const provider = new TestTreeProviderLite();
 			const tree = provider.trees[0];
-			initializeAndView(tree, numberConfig, 5).dispose();
+			TreeViewAlpha.initializeNew(tree, numberConfig, 5).dispose();
 			provider.synchronizeMessages();
 
-			const result = viewExisting(tree, numberConfig);
+			const result = TreeViewAlpha.openExisting(tree, numberConfig);
 			assert(result.canView);
 			assert.equal(result.view.root, 5);
 			assert.equal(provider.peekNextMessage(), undefined);
@@ -70,9 +68,9 @@ describe("viewCreation", () => {
 
 		it("returns an editable view after a required upgrade", () => {
 			const tree = new TestTreeProviderLite().trees[0];
-			initializeAndView(tree, numberConfig, 5).dispose();
+			TreeViewAlpha.initializeNew(tree, numberConfig, 5).dispose();
 
-			const result = viewExisting(tree, unionConfig);
+			const result = TreeViewAlpha.openExisting(tree, unionConfig);
 			assert(result.canView);
 			assert.equal(result.view.root, 5);
 			result.view.root = "new type";
@@ -82,13 +80,13 @@ describe("viewCreation", () => {
 
 		it("returns both diagnostic lists without retaining an incompatible view", () => {
 			const tree = new TestTreeProviderLite().trees[0];
-			initializeAndView(tree, unionConfig, 5).dispose();
+			TreeViewAlpha.initializeNew(tree, unionConfig, 5).dispose();
 
 			const probe = asBeta(tree.viewWith(numberConfig));
 			const { view, upgrade } = probe.compatibility;
 			assert(!view.isCompatible && !upgrade.isCompatible);
 			probe.dispose();
-			const result = viewExisting(tree, numberConfig);
+			const result = TreeViewAlpha.openExisting(tree, numberConfig);
 			assert.deepEqual(result, {
 				canView: false,
 				incompatibilities: {
@@ -101,37 +99,40 @@ describe("viewCreation", () => {
 
 		it("rejects an uninitialized required root without retaining a view", () => {
 			const tree = new TestTreeProviderLite().trees[0];
-			assert.throws(() => viewExisting(tree, numberConfig), validateUsageError(/initializ/i));
-			initializeAndView(tree, numberConfig, 5).dispose();
+			assert.throws(
+				() => TreeViewAlpha.openExisting(tree, numberConfig),
+				validateUsageError(/initializ/i),
+			);
+			TreeViewAlpha.initializeNew(tree, numberConfig, 5).dispose();
 		});
 
 		it("does not install a schema when loading an uninitialized optional root", () => {
 			const tree = new TestTreeProviderLite().trees[0];
 			assert.throws(
-				() => viewExisting(tree, optionalConfig),
+				() => TreeViewAlpha.openExisting(tree, optionalConfig),
 				validateUsageError(/initializ/i),
 			);
-			initializeAndView(tree, optionalConfig, undefined).dispose();
+			TreeViewAlpha.initializeNew(tree, optionalConfig, undefined).dispose();
 		});
 
 		it("opens an initialized optional root with no content", () => {
 			const tree = new TestTreeProviderLite().trees[0];
-			initializeAndView(tree, optionalConfig, undefined).dispose();
-			const result = viewExisting(tree, optionalConfig);
+			TreeViewAlpha.initializeNew(tree, optionalConfig, undefined).dispose();
+			const result = TreeViewAlpha.openExisting(tree, optionalConfig);
 			assert(result.canView);
 			assert.equal(result.view.root, undefined);
 			result.view.dispose();
 		});
 	});
 
-	describe("initializeAndView", () => {
-		const factory = new SchemaFactory("viewCreation");
+	describe("TreeViewAlpha.initializeNew", () => {
+		const factory = new SchemaFactory("treeViewAlpha");
 		class Note extends factory.object("Note", { title: factory.string }) {}
 		const noteConfig = new TreeViewConfiguration({ schema: Note });
 
 		it("returns the initialized view with a writable typed root", () => {
 			const tree = new TestTreeProviderLite().trees[0];
-			const view = initializeAndView(tree, noteConfig, { title: "Draft" });
+			const view = TreeViewAlpha.initializeNew(tree, noteConfig, { title: "Draft" });
 			assert(view.root instanceof Note);
 			assert.equal(view.root.title, "Draft");
 			view.root = { title: "Published" };
@@ -143,19 +144,19 @@ describe("viewCreation", () => {
 			const tree = new TestTreeProviderLite().trees[0];
 			assert.throws(
 				// @ts-expect-error -- A JavaScript caller can supply a number for the string title.
-				() => initializeAndView(tree, noteConfig, { title: 42 }),
+				() => TreeViewAlpha.initializeNew(tree, noteConfig, { title: 42 }),
 				validateUsageError(/./),
 			);
-			const view = initializeAndView(tree, noteConfig, { title: "Retry" });
+			const view = TreeViewAlpha.initializeNew(tree, noteConfig, { title: "Retry" });
 			assert.equal(view.root.title, "Retry");
 			view.dispose();
 		});
 
 		it("does not replace existing content when the schema matches", () => {
 			const tree = new TestTreeProviderLite().trees[0];
-			initializeAndView(tree, numberConfig, 5).dispose();
+			TreeViewAlpha.initializeNew(tree, numberConfig, 5).dispose();
 			assert.throws(
-				() => initializeAndView(tree, numberConfig, 10),
+				() => TreeViewAlpha.initializeNew(tree, numberConfig, 10),
 				validateUsageError(/initializ/i),
 			);
 			assert.equal(tree.exportVerbose(), 5);
@@ -164,13 +165,13 @@ describe("viewCreation", () => {
 		it("does not upgrade an initialized document to accept the requested schema", () => {
 			const provider = new TestTreeProviderLite();
 			const tree = provider.trees[0];
-			initializeAndView(tree, numberConfig, 5).dispose();
+			TreeViewAlpha.initializeNew(tree, numberConfig, 5).dispose();
 			provider.synchronizeMessages();
 			const before = tree.exportSimpleSchema();
 
 			// A load could enable strings here. A mistaken creation request must not submit that edit.
 			assert.throws(
-				() => initializeAndView(tree, unionConfig, "replacement"),
+				() => TreeViewAlpha.initializeNew(tree, unionConfig, "replacement"),
 				validateUsageError(/initializ/i),
 			);
 			assert.equal(provider.peekNextMessage(), undefined);
@@ -181,9 +182,9 @@ describe("viewCreation", () => {
 
 		it("rejects an already-initialized document even when its schema is incompatible", () => {
 			const tree = new TestTreeProviderLite().trees[0];
-			initializeAndView(tree, unionConfig, "existing").dispose();
+			TreeViewAlpha.initializeNew(tree, unionConfig, "existing").dispose();
 			assert.throws(
-				() => initializeAndView(tree, numberConfig, 5),
+				() => TreeViewAlpha.initializeNew(tree, numberConfig, 5),
 				validateUsageError(/initializ/i),
 			);
 			const view = tree.viewWith(unionConfig);
@@ -258,7 +259,7 @@ describe("view creation compatibility", () => {
 		const head = checkout.getLocationHead();
 		const schema = tree.exportSimpleSchema();
 		const content = tree.exportVerbose();
-		const result = viewExisting(tree, config);
+		const result = TreeViewAlpha.openExisting(tree, config);
 		assert.equal(checkout.getLocationHead(), head);
 		assert.deepEqual(tree.exportSimpleSchema(), schema);
 		assert.deepEqual(tree.exportVerbose(), content);
@@ -286,7 +287,7 @@ describe("view creation compatibility", () => {
 
 		it("replaces the root with insertable content and reads it as the configured node", () => {
 			seedTree(tree, noteConfig, { title: "Draft" });
-			const result = viewExisting(tree, noteConfig);
+			const result = TreeViewAlpha.openExisting(tree, noteConfig);
 			assert(result.canView);
 			const { view } = result;
 			assert.equal(view.schema, Note);
@@ -375,7 +376,7 @@ describe("view creation compatibility", () => {
 			seedTree(tree, new TreeViewConfiguration({ schema: [factory.number, Before] }), 42);
 
 			// The possible documents are unchanged, but viewing still requires the new field definition.
-			const result = viewExisting(
+			const result = TreeViewAlpha.openExisting(
 				tree,
 				new TreeViewConfiguration({ schema: [factory.number, After] }),
 			);
@@ -388,7 +389,7 @@ describe("view creation compatibility", () => {
 		it("does not write on a second open", () => {
 			// The first open upgrades the document; disposing it closes only the view.
 			seedTree(tree, numberConfig, 5);
-			const firstResult = viewExisting(tree, unionConfig);
+			const firstResult = TreeViewAlpha.openExisting(tree, unionConfig);
 			assert(firstResult.canView);
 			const first = firstResult.view;
 			first.dispose();
@@ -432,8 +433,8 @@ describe("view creation compatibility", () => {
 				assert(!manual.compatibility.canView && manual.compatibility.canUpgrade);
 				manual.upgradeSchema();
 
-				// Let viewExisting upgrade the other tree and compare the two results.
-				const result = viewExisting(tree, config);
+				// Let TreeViewAlpha.openExisting upgrade the other tree and compare the two results.
+				const result = TreeViewAlpha.openExisting(tree, config);
 				assert(result.canView);
 				assert.deepEqual(tree.exportSimpleSchema(), control.exportSimpleSchema());
 				assert.equal(result.view.root, manual.root);
@@ -446,7 +447,7 @@ describe("view creation compatibility", () => {
 	describe("ready view helpers", () => {
 		it("runs a view transaction on an empty optional root", () => {
 			seedTree(tree, optionalConfig, undefined);
-			const result = viewExisting(tree, optionalConfig);
+			const result = TreeViewAlpha.openExisting(tree, optionalConfig);
 			assert(result.canView);
 			const { view } = result;
 			Tree.runTransaction(view, (root) => {
@@ -460,7 +461,7 @@ describe("view creation compatibility", () => {
 
 		it("indexes a ready view by a selected field", () => {
 			seedTree(tree, noteConfig, { title: "Draft" });
-			const result = viewExisting(tree, noteConfig);
+			const result = TreeViewAlpha.openExisting(tree, noteConfig);
 			assert(result.canView);
 			const { view } = result;
 			const index = createTreeIndex(
@@ -479,7 +480,7 @@ describe("view creation compatibility", () => {
 
 		it("indexes identifiers on the view returned by initialization", () => {
 			class Identified extends factory.object("Identified", { id: factory.identifier }) {}
-			const view = initializeAndView(
+			const view = TreeViewAlpha.initializeNew(
 				tree,
 				new TreeViewConfiguration({ schema: Identified }),
 				{},
@@ -505,7 +506,7 @@ describe("view creation compatibility", () => {
 			const { view, upgrade } = probe.compatibility;
 			assert(!view.isCompatible && !upgrade.isCompatible);
 			probe.dispose();
-			const result = viewExisting(tree, numberConfig);
+			const result = TreeViewAlpha.openExisting(tree, numberConfig);
 			assert(!result.canView);
 
 			// Open a different view immediately and change the stored schema.
@@ -535,7 +536,7 @@ describe("view creation compatibility", () => {
 		// Attempt the open and check that the exact exception reaches the caller.
 		try {
 			assert.throws(
-				() => viewExisting(tree, unionConfig),
+				() => TreeViewAlpha.openExisting(tree, unionConfig),
 				(error) => error === sentinel,
 			);
 		} finally {
@@ -557,7 +558,7 @@ describe("view creation compatibility", () => {
 		);
 		try {
 			assert.throws(
-				() => viewExisting(tree, unionConfig),
+				() => TreeViewAlpha.openExisting(tree, unionConfig),
 				(error) => error === failure,
 			);
 			assert.throws(() => breaker.use());
@@ -584,12 +585,12 @@ describe("view creation compatibility", () => {
 			},
 		};
 		assert.throws(
-			() => initializeAndView(local, noteConfig, content),
+			() => TreeViewAlpha.initializeNew(local, noteConfig, content),
 			validateUsageError(/initialized more than once/),
 		);
 
 		// A recoverable rejection leaves both the checkout and the other client's note intact.
-		const reopenedResult = viewExisting(local, noteConfig);
+		const reopenedResult = TreeViewAlpha.openExisting(local, noteConfig);
 		assert(reopenedResult.canView);
 		const reopened = reopenedResult.view;
 		assert.equal(reopened.root.title, "Remote");
@@ -687,7 +688,7 @@ describe("view creation collaboration", () => {
 		const detached = await provider.createDetachedContainer(provider.createFluidEntryPoint());
 		const creator = await getTree(detached);
 		assert.equal(creator.isAttached(), false);
-		const initialized = initializeAndView(creator, numberConfig, 5);
+		const initialized = TreeViewAlpha.initializeNew(creator, numberConfig, 5);
 		initialized.dispose();
 
 		// Attach the initialized document so a second client can load it by ID.
@@ -697,7 +698,7 @@ describe("view creation collaboration", () => {
 		const reader = await getTree(await provider.loadTestContainer());
 		const before = reader.contentSnapshot();
 		const localEdits = countLocalEdits(reader);
-		const loadedResult = viewExisting(reader, numberConfig);
+		const loadedResult = TreeViewAlpha.openExisting(reader, numberConfig);
 		assert(loadedResult.canView);
 		const loaded = loadedResult.view;
 		assert.equal(loaded.root, 5);
@@ -721,10 +722,10 @@ describe("view creation collaboration", () => {
 		// A attempts to initialize after the remote value is visible.
 		const before = a.contentSnapshot();
 		const localEdits = countLocalEdits(a);
-		assert.throws(() => initializeAndView(a, numberConfig, 42), UsageError);
+		assert.throws(() => TreeViewAlpha.initializeNew(a, numberConfig, 42), UsageError);
 
 		// Reopen on A and verify that B's value survived with no edit from A.
-		const reopenedResult = viewExisting(a, numberConfig);
+		const reopenedResult = TreeViewAlpha.openExisting(a, numberConfig);
 		assert(reopenedResult.canView);
 		const reopened = reopenedResult.view;
 		assert.equal(reopened.root, 5);
@@ -750,7 +751,7 @@ describe("view creation collaboration", () => {
 			const a = await createNumberTree();
 			const b = await getTree(await provider.loadTestContainer());
 
-			const result = viewExisting(a, numberConfig);
+			const result = TreeViewAlpha.openExisting(a, numberConfig);
 
 			assert(result.canView);
 			const { view } = result;
@@ -764,7 +765,7 @@ describe("view creation collaboration", () => {
 			const localEdits = countLocalEdits(a);
 
 			// B opens with the wider schema, then its upgrade is delivered to A.
-			const upgradedResult = viewExisting(b, unionConfig);
+			const upgradedResult = TreeViewAlpha.openExisting(b, unionConfig);
 			assert(upgradedResult.canView);
 			const upgraded = upgradedResult.view;
 			assert.equal(upgraded.root, 5);
@@ -792,7 +793,7 @@ describe("view creation collaboration", () => {
 
 			// Retry with the old schema, which no longer covers all permitted root values.
 			const before = a.contentSnapshot();
-			const reopened = viewExisting(a, numberConfig);
+			const reopened = TreeViewAlpha.openExisting(a, numberConfig);
 			assert(!reopened.canView);
 
 			// Confirm that rejecting the old schema did not undo B's change.
@@ -808,7 +809,7 @@ describe("view creation collaboration", () => {
 
 			// Reopen using B's schema and read the value B preserved.
 			const before = a.contentSnapshot();
-			const reopenedResult = viewExisting(a, unionConfig);
+			const reopenedResult = TreeViewAlpha.openExisting(a, unionConfig);
 			assert(reopenedResult.canView);
 			const reopened = reopenedResult.view;
 			assert.equal(reopened.root, 5);
@@ -820,7 +821,7 @@ describe("view creation collaboration", () => {
 		});
 	});
 
-	// Unlike viewExisting, opening through viewWith must not publish a schema change on the caller's behalf.
+	// Unlike TreeViewAlpha.openExisting, opening through viewWith must not publish a schema change on the caller's behalf.
 	it("viewWith waits for an explicit upgradeSchema call", async () => {
 		// Load the number-only document and start tracking changes on the reader.
 		const creator = await createNumberTree();
@@ -854,7 +855,7 @@ describe("view creation collaboration", () => {
 	it("the previous SharedTree reads the upgraded document and sends a compatible edit", async () => {
 		// Publish the current client's schema upgrade before the previous client loads the document.
 		const tree = await createNumberTree();
-		const upgradedResult = viewExisting(tree, unionConfig);
+		const upgradedResult = TreeViewAlpha.openExisting(tree, unionConfig);
 		assert(upgradedResult.canView);
 		const upgraded = upgradedResult.view;
 		assert.equal(upgraded.root, 5);

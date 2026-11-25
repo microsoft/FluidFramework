@@ -1206,9 +1206,6 @@ export interface IndependentViewTelemetryOptions {
     readonly logger?: ITelemetryBaseLogger | undefined;
 }
 
-// @alpha
-export function initializeAndView<TRoot extends ImplicitFieldSchema>(tree: ITree, config: TreeViewConfiguration<TRoot>, initialContent: InsertableTreeFieldFromImplicitField<TRoot>): TreeViewAlpha<TRoot>;
-
 // @public
 export type InitialObjects<T extends ContainerSchema> = {
     [K in keyof T["initialObjects"]]: T["initialObjects"][K] extends SharedObjectKind<infer TChannel> ? TChannel : never;
@@ -3177,6 +3174,12 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
     readonly schemaVersion: TreeViewSchemaVersions;
 }
 
+// @alpha
+export namespace TreeViewAlpha {
+    export function initializeNew<TRoot extends ImplicitFieldSchema>(tree: ITree, config: TreeViewConfiguration<TRoot>, initialContent: InsertableTreeFieldFromImplicitField<TRoot>): TreeViewAlpha<TRoot>;
+    export function openExisting<TRoot extends ImplicitFieldSchema>(tree: ITree, config: TreeViewConfiguration<TRoot>): ViewExistingResult<TRoot>;
+}
+
 // @beta @sealed
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, UntypedTreeView {
     // (undocumented)
@@ -3365,9 +3368,6 @@ export interface ViewContent {
     readonly schema: JsonCompatible;
     readonly tree: JsonCompatible<IFluidHandle>;
 }
-
-// @alpha
-export function viewExisting<TRoot extends ImplicitFieldSchema>(tree: ITree, config: TreeViewConfiguration<TRoot>): ViewExistingResult<TRoot>;
 
 // @alpha @sealed
 export interface ViewExistingFailure {

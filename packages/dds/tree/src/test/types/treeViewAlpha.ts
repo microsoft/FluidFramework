@@ -15,16 +15,14 @@ import {
 	type TreeView,
 } from "@fluidframework/tree";
 import {
-	initializeAndView,
-	viewExisting,
 	type ViewTreeIncompatibilities,
-	type TreeViewAlpha,
+	TreeViewAlpha,
 	type ViewExistingResult,
 } from "@fluidframework/tree/alpha";
 
 import type { areSafelyAssignable, requireTrue } from "../../util/index.js";
 
-const schemaFactory = new SchemaFactory("viewCreation.types");
+const schemaFactory = new SchemaFactory("treeViewAlpha.types");
 
 /**
  * Object schema that distinguishes the node an application reads from the object literal it can insert.
@@ -38,13 +36,13 @@ const config = new TreeViewConfiguration({ schema: Note });
 function checkCreateAndLoad(tree: ITree): void {
 	const legacy = tree.viewWith(config);
 	type _legacy = requireTrue<areSafelyAssignable<typeof legacy, TreeView<typeof Note>>>;
-	const initialized = initializeAndView(tree, config, { title: "Draft" });
+	const initialized = TreeViewAlpha.initializeNew(tree, config, { title: "Draft" });
 	type _initialized = requireTrue<
 		areSafelyAssignable<typeof initialized, TreeViewAlpha<typeof Note>>
 	>;
 	// @ts-expect-error -- Initial content must match the configured note schema.
-	initializeAndView(tree, config, { title: 42 });
-	const result = viewExisting(tree, config);
+	TreeViewAlpha.initializeNew(tree, config, { title: 42 });
+	const result = TreeViewAlpha.openExisting(tree, config);
 	type _result = requireTrue<
 		areSafelyAssignable<typeof result, ViewExistingResult<typeof Note>>
 	>;
