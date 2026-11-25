@@ -139,7 +139,6 @@ module.exports = {
 		"build:esm": ["^build:package:esm", "build:genver"],
 		"build:esnext": ["^build:esnext", "^api-extractor:esnext", "build:genver"],
 		"build:entrypoints:esm": ["build:esm"],
-		"build:entrypoints:cjs": ["build:cjs"],
 		// Aliases to depend on complete package (or ESM/CJS specific side) implementation.
 		// These will dependent on the outermost of the entrypoint generation which may just
 		// be the code build.
@@ -154,7 +153,6 @@ module.exports = {
 			// sneaking in.
 			dependsOn: [
 				// keep verifying CJS buildability
-				"build:entrypoints:cjs",
 				"build:cjs",
 				// build the real requirements for require-esm that will be used.
 				"build:entrypoints:esm",
