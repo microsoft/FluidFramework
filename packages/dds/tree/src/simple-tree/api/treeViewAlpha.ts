@@ -76,7 +76,7 @@ export interface ViewExistingSuccess<in out TRoot extends ImplicitFieldSchema> {
 export interface ViewExistingFailure {
 	/**
 	 * Indicates that the client's view schema is incompatible with the existing tree's stored schema.
-	 * 
+	 *
 	 * @remarks
 	 * The existing tree cannot be viewed as-is, nor can it be upgraded to be made compatible.
 	 * See {@link ViewExistingFailure.incompatibilities} for diagnostic information explaining the incompatibilities.
@@ -186,13 +186,12 @@ export namespace TreeViewAlpha {
 	 * Otherwise, if a schema upgrade is required to make the tree viewable with the client's view schema, an upgrade is applied immediately before returning the view to the caller.
 	 * An upgrade changes the shared document and can affect other clients.
 	 *
-	 * @typeParam TRoot - The schema for the tree's root field.
 	 * @param tree - An existing, initialized tree with no active view.
 	 * @param config - The view schema and its configuration.
+	 * @typeParam TRoot - The schema for the root field of the tree.
 	 * @returns A result with `canView: true` and a view you own, or `canView: false` and diagnostics you can log.
 	 * @throws An error with `errorType: "usageError"` if the tree is uninitialized or already has an active view.
 	 * @see {@link (TreeViewAlpha:namespace).initializeNew} to initialize a new tree.
-	 *
 	 * @alpha
 	 */
 	export function openExisting<TRoot extends ImplicitFieldSchema>(
@@ -238,11 +237,11 @@ export namespace TreeViewAlpha {
 	 * Call this before attaching a new container. An already-initialized tree is rejected without changing its schema or content.
 	 * If the initial content does not match the schema, no view is retained and you can retry with valid content.
 	 *
-	 * @typeParam TRoot - The schema for the root field.
 	 * @param tree - An uninitialized tree with no active view.
 	 * @param config - The view schema used to create the initial stored schema.
 	 * @param initialContent - The initial root content. It must conform to the configured schema.
-	 * @returns A view that you own. Dispose it when you no longer need it.
+	 * @typeParam TRoot - The schema for the root field of the tree.
+	 * @returns A view of the provided tree, which you own. Dispose it when you no longer need it.
 	 * @throws An error with `errorType: "usageError"` if the tree is already initialized, has an active view,
 	 * or the supplied content does not conform to the schema.
 	 * @see {@link (TreeViewAlpha:namespace).openExisting} for an initialized document.
