@@ -3,10 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert, fail, oob } from "@fluidframework/core-utils/internal";
 
 import type { ChunkedCursor, FieldKey, TreeChunk } from "../../core/index.js";
-import { ReferenceCountedBase, replaceArrayRange } from "../../util/index.js";
+import {
+	ReferenceCountedBase,
+	assertNonNegativeSafeInteger,
+	replaceArrayRange,
+} from "../../util/index.js";
 
 const ownershipKey = Symbol("chunk ownership");
 const sequences = new WeakMap<readonly TreeChunk[], ChunkSequence | ChunkSequenceEditor>();
@@ -129,6 +133,7 @@ export class ChunkEdit {
 	private active = true;
 	private childScopes = 0;
 	private fields: FieldKey[] | undefined;
+	private structureChanged = false;
 	private readonly previousLength: number;
 	public readonly mutationState: MutationState;
 
@@ -170,6 +175,12 @@ export class ChunkEdit {
 		assert(key === ownershipKey, "Invalid ownership authority");
 		this.assertFor(this.chunk);
 		this.childScopes += delta;
+	}
+
+	public markStructureChanged(key: typeof ownershipKey): void {
+		assert(key === ownershipKey, "Invalid ownership authority");
+		this.assertFor(this.chunk);
+		this.structureChanged = true;
 	}
 
 	/**
@@ -217,6 +228,7 @@ export class ChunkEdit {
 				this.previousLength,
 				this.preserveLength,
 				commit,
+				this.structureChanged,
 			);
 		}
 	}
@@ -235,6 +247,7 @@ export class ChunkSequence {
 	private editor: ChunkSequenceEditor | undefined;
 	private disposed = false;
 	private failed = false;
+	#revision = 0;
 
 	public constructor(
 		chunks: readonly TreeChunk[],
@@ -263,6 +276,44 @@ export class ChunkSequence {
 	public get index(): readonly number[] | undefined {
 		this.assertReadable();
 		return this.ends;
+	}
+
+	/**
+	 * Locates a top-level node within this sequence.
+	 * @param index - Non-negative safe integer less than {@link ChunkSequence.length}.
+	 * @returns The containing chunk, its index in this sequence, and the node's index among that chunk's top-level nodes.
+	 */
+	public locateNode(index: number): {
+		chunk: TreeChunk;
+		indexOfChunk: number;
+		indexWithinChunk: number;
+	} {
+		this.assertReadable();
+		assertNonNegativeSafeInteger(index);
+		const ends = this.ends;
+		if (ends === undefined) {
+			const first = this.data[0] ?? oob();
+			assert(index < this.totalLength, "missing edited node");
+			return { chunk: first, indexOfChunk: 0, indexWithinChunk: index };
+		}
+		const indexOfChunk = findChunkIndex(ends, index);
+		const chunk = this.data[indexOfChunk] ?? fail("missing edited node");
+		return {
+			chunk,
+			indexOfChunk,
+			indexWithinChunk: index - (indexOfChunk === 0 ? 0 : (ends[indexOfChunk - 1] ?? oob())),
+		};
+	}
+
+	/** Changes when this sequence or a descendant is structurally edited. */
+	public get revision(): number {
+		this.assertReadable();
+		return this.#revision;
+	}
+
+	public markStructureChanged(key: typeof ownershipKey): void {
+		assert(key === ownershipKey, "Invalid ownership authority");
+		this.#revision++;
 	}
 
 	public acquireEditor(
@@ -362,6 +413,7 @@ export class ChunkSequenceEditor {
 	private changedFrom: number | undefined;
 	private mutating = false;
 	private failed = false;
+	private edits = 0;
 	public readonly mutationState: MutationState;
 
 	public constructor(
@@ -391,6 +443,18 @@ export class ChunkSequenceEditor {
 	public get chunks(): readonly TreeChunk[] {
 		this.assertReadable();
 		return this.data;
+	}
+
+	/** Number of structural edits published through this scope or its descendants. */
+	public get revision(): number {
+		this.assertReadable();
+		return this.edits;
+	}
+
+	private markStructureChanged(): void {
+		this.edits++;
+		this.sequence?.markStructureChanged(ownershipKey);
+		this.parent?.markStructureChanged(ownershipKey);
 	}
 
 	public splice(
@@ -449,6 +513,7 @@ export class ChunkSequenceEditor {
 			}
 			replaceArrayRange(this.data, start, end, output);
 			this.sequence?.refresh(ownershipKey, start);
+			this.markStructureChanged();
 			this.onChange?.(this.data);
 			completed = true;
 		} finally {
@@ -522,6 +587,7 @@ export class ChunkSequenceEditor {
 		previousLength: number,
 		preserveLength: boolean,
 		commit: boolean,
+		structureChanged: boolean,
 	): void {
 		assert(key === ownershipKey, "Invalid ownership authority");
 		this.assertActive();
@@ -539,6 +605,9 @@ export class ChunkSequenceEditor {
 		}
 		if (!preserveLength) {
 			this.unstableChildren--;
+		}
+		if (commit && structureChanged) {
+			this.markStructureChanged();
 		}
 		if (this.sequence !== undefined && chunk.topLevelLength !== previousLength) {
 			this.changedFrom = Math.min(this.changedFrom ?? index, index);
@@ -598,7 +667,7 @@ export function getChunkSequence(chunks: readonly TreeChunk[]): ChunkSequence | 
 /**
  * Finds the first exclusive end greater than the requested node position.
  */
-export function findChunkIndex(ends: readonly number[], index: number): number {
+function findChunkIndex(ends: readonly number[], index: number): number {
 	let low = 0;
 	let high = ends.length;
 	while (low < high) {

@@ -346,8 +346,7 @@ describe("chunkTree", () => {
 				defaultIncrementalEncodingPolicy,
 			);
 			try {
-				const limit = defaultChunkPolicy.sequenceChunkSplitThreshold;
-				for (const length of [1, limit, limit + 1]) {
+				for (const length of [1, 2, 3, 64, 65, 4097]) {
 					const expected = Array.from({ length }, () => ({
 						type: brand<TreeNodeSchemaIdentifier>(structOptional.identifier),
 					}));
@@ -355,8 +354,14 @@ describe("chunkTree", () => {
 						policy,
 						idCompressor: undefined,
 					});
-					assert.equal(chunks.length, length <= limit ? length : 2);
-					assert(chunks.every((chunk) => chunk instanceof SequenceChunk === length > limit));
+					assert(chunks.length <= defaultChunkPolicy.sequenceChunkSplitThreshold);
+					assert(
+						chunks.every((chunk) =>
+							length <= defaultChunkPolicy.sequenceChunkSplitThreshold
+								? chunk instanceof BasicChunk
+								: chunk instanceof SequenceChunk,
+						),
+					);
 					const result = new SequenceChunk(chunks);
 					assertChunkCursorEquals(result, expected);
 					result.referenceRemoved();

@@ -6,8 +6,14 @@
 import { strict as assert } from "node:assert";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import { EmptyKey, type TreeChunk, type TreeValue } from "../../../core/index.js";
+import {
+	EmptyKey,
+	type FieldKey,
+	type TreeChunk,
+	type TreeValue,
+} from "../../../core/index.js";
 /* eslint-disable import-x/no-internal-modules -- Exercise ownership and indexing contracts directly. */
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
 import { ChunkCursor } from "../../../feature-libraries/chunked-forest/chunkCursor.js";
@@ -19,7 +25,6 @@ import {
 import {
 	ChunkSequence,
 	assertChunksReadable,
-	findChunkIndex,
 	getChunkSequence,
 } from "../../../feature-libraries/chunked-forest/chunkSequence.js";
 import {
@@ -39,7 +44,7 @@ import { numberSchema } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
 import { assertStructuralEquality } from "../../utils.js";
 
-import { numericBasicChunk } from "./fieldCursorTestUtilities.js";
+import { forEachChunk, getChunkStats, numericBasicChunk } from "./fieldCursorTestUtilities.js";
 
 const shape = new TreeShape(brand(numberSchema.identifier), true, []);
 
@@ -56,6 +61,31 @@ function valuesOf(chunks: readonly TreeChunk[]): unknown[] {
 	return values;
 }
 
+function assertBalanced(
+	chunks: readonly TreeChunk[],
+	maximum = defaultChunkPolicy.sequenceChunkSplitThreshold,
+): number {
+	assert(chunks.length <= maximum, "Child arrays must respect the grouping limit");
+	const sequence = getChunkSequence(chunks);
+	let length = 0;
+	const ends = chunks.map((chunk) => (length += chunk.topLevelLength));
+	if (sequence !== undefined) {
+		assert.equal(sequence.length, length);
+		assert.deepEqual(sequence.index, chunks.length < 2 ? undefined : ends);
+	}
+	let height: number | undefined;
+	for (const chunk of chunks) {
+		let nextHeight = 0;
+		if (chunk instanceof SequenceChunk) {
+			assert(chunk.subChunks.length >= Math.ceil(maximum / 2), "Groups must be half full");
+			nextHeight = assertBalanced(chunk.subChunks, maximum) + 1;
+		}
+		assert(height === undefined || height === nextHeight, "Leaves must have equal depth");
+		height = nextHeight;
+	}
+	return height ?? 0;
+}
+
 describe("ChunkSequence", () => {
 	it("compares chunks by their contents", () => {
 		const make = (value: number): BasicChunk =>
@@ -68,6 +98,49 @@ describe("ChunkSequence", () => {
 		root.referenceRemoved();
 		equal.referenceRemoved();
 		different.referenceRemoved();
+	});
+
+	it("counts packed chunks inside groups and fields without counting sequences as basic chunks", () => {
+		const leaves = Array.from({ length: 128 }, (_, index) => packed(index, index + 1));
+		const flat = new BasicChunk(brand("parent"), new Map([[EmptyKey, leaves]]));
+		for (const leaf of leaves) {
+			leaf.referenceAdded();
+		}
+		const grouped = new BasicChunk(
+			brand("parent"),
+			new Map([
+				[
+					EmptyKey,
+					[
+						new SequenceChunk(
+							groupChunks([...leaves], {
+								...defaultChunkPolicy,
+								sequenceChunkSplitThreshold: 64,
+							}),
+						),
+					],
+				],
+			]),
+		);
+		for (const root of [flat, grouped]) {
+			const visited: TreeChunk[] = [];
+			forEachChunk(root, (chunk) => {
+				if (chunk instanceof UniformChunk) {
+					visited.push(chunk);
+				}
+			});
+			assert.deepEqual(visited, leaves);
+			assert.deepEqual(getChunkStats(root), {
+				total: root === flat ? 129 : 132,
+				basic: 1,
+				largestUniformNodes: 2,
+			});
+		}
+		const nested = new SequenceChunk([grouped]);
+		assert.deepEqual(getChunkStats(nested), { total: 133, basic: 1, largestUniformNodes: 2 });
+		nested.referenceRemoved();
+		flat.referenceRemoved();
+		assert(leaves.every((leaf) => leaf.isUnreferenced()));
 	});
 
 	for (const shared of [false, true]) {
@@ -172,6 +245,8 @@ describe("ChunkSequence", () => {
 		child.append(edit, [12, 13], 2);
 		assert.throws(() => assertChunksReadable(chunks), /variable-length child edit/);
 		assert.throws(() => sequence.length, /variable-length child edit/);
+		assert.throws(() => sequence.locateNode(0), /variable-length child edit/);
+		assert.throws(() => locateNodeInChunks(chunks, 0), /variable-length child edit/);
 		assert.throws(() => child.cursor(), /length-changing edit/);
 		edit.close();
 		assertChunksReadable(chunks);
@@ -192,8 +267,10 @@ describe("ChunkSequence", () => {
 		const sequence = new ChunkSequence([]);
 		sequence.edit((editor) => {
 			assert.equal(sequence.length, 0);
+			assert.throws(() => sequence.locateNode(0), /Array index is out of bounds/);
 			editor.splice(0, 0, [packed(1, 2)]);
 			assert.equal(sequence.index, undefined);
+			assert.equal(sequence.locateNode(1).indexWithinChunk, 1);
 			editor.splice(0, 0, [emptyChunk, packed(3)]);
 			assert.deepEqual(sequence.index, [0, 1, 3]);
 			assert.equal(locateNodeInChunks(sequence.chunks, 0).indexOfChunk, 1);
@@ -203,10 +280,13 @@ describe("ChunkSequence", () => {
 			}
 			assert.equal(sequence.index, undefined);
 			assert.equal(sequence.length, 2);
+			assert.equal(sequence.locateNode(1).indexWithinChunk, 1);
 			editor.splice(0, 1)[0].referenceRemoved();
 			assert.equal(sequence.length, 0);
+			assert.throws(() => sequence.locateNode(0), /Array index is out of bounds/);
 		});
 		sequence.dispose();
+		assert.throws(() => sequence.locateNode(0), /ownership has been released/);
 	});
 
 	it("copies constructor containers without copying owned children", () => {
@@ -227,7 +307,7 @@ describe("ChunkSequence", () => {
 		assert(child.isUnreferenced());
 	});
 
-	it("editing a small field does not create an index", () => {
+	it("keeps small fields unindexed while enforcing owned child edits", () => {
 		const child = packed(1);
 		const root = new BasicChunk(brand("parent"), new Map([[EmptyKey, [child]]]));
 		const chunks = root.fields.get(EmptyKey);
@@ -249,6 +329,7 @@ describe("ChunkSequence", () => {
 		edit.close();
 		assert.equal(root.fields.get(EmptyKey), chunks);
 		assert.equal(getChunkSequence(chunks), undefined);
+		assert.equal(getFieldLength(chunks), 3);
 		assert.throws(() => child.acquireEditor(), /through their owner/);
 		root.referenceRemoved();
 		assert(child.isUnreferenced());
@@ -279,8 +360,28 @@ describe("ChunkSequence", () => {
 		next.close();
 	});
 
-	it("editing a grouped field leaves its clone unchanged", () => {
-		const limit = defaultChunkPolicy.sequenceChunkSplitThreshold;
+	it("releases an unused empty field editor before the field is reopened", () => {
+		const root = new BasicChunk(brand("parent"), new Map());
+		const edit = root.acquireEditor();
+		const field = root.acquireField(edit, EmptyKey);
+		const chunks = field.chunks;
+		assert.equal(getChunkSequence(chunks), undefined);
+		assert.equal(root.fields.has(EmptyKey), false);
+		assert.throws(() => root.acquireField(edit, EmptyKey), /already has an editor/);
+		field.close();
+		assert.equal(getChunkSequence(chunks), undefined);
+		assert.throws(() => field.chunks, /Invalid or expired sequence editor/);
+		const reopened = root.acquireField(edit, EmptyKey);
+		reopened.splice(0, 0, [packed(1)]);
+		reopened.close();
+		edit.close();
+		assertBalanced(root.fields.get(EmptyKey) ?? []);
+		assert.deepEqual(valuesOf(root.fields.get(EmptyKey) ?? []), [1]);
+		root.referenceRemoved();
+	});
+
+	it("editing a long indexed field leaves its clone unchanged", () => {
+		const limit = 128;
 		const model = Array.from({ length: limit }, (_, index) => index);
 		const root = new BasicChunk(
 			brand("parent"),
@@ -314,7 +415,7 @@ describe("ChunkSequence", () => {
 			}
 			const chunks = root.fields.get(EmptyKey);
 			assert(chunks !== undefined);
-			assert(chunks.length <= limit);
+			assertBalanced(chunks);
 			assert.deepEqual(valuesOf(chunks), model);
 			assert.deepEqual(valuesOf(clone.fields.get(EmptyKey) ?? []), snapshot);
 		}
@@ -324,7 +425,7 @@ describe("ChunkSequence", () => {
 	});
 
 	it("splits a long field without walking through every node", () => {
-		const count = defaultChunkPolicy.sequenceChunkSplitThreshold ** 2 + 1;
+		const count = 4097;
 		const chunks = Array.from({ length: count }, (_, index) => numericBasicChunk(index));
 		let leafCursorCalls = 0;
 		for (const chunk of chunks) {
@@ -334,7 +435,7 @@ describe("ChunkSequence", () => {
 				return getLocalCursor(reuse);
 			};
 		}
-		const field = groupChunks(chunks, defaultChunkPolicy);
+		const field: TreeChunk[] = [new SequenceChunk(chunks)];
 		const middle = Math.floor(count / 2);
 		const slot = splitFieldAtIndex(field, middle, {
 			policy: defaultChunkPolicy,
@@ -350,6 +451,260 @@ describe("ChunkSequence", () => {
 			chunk.referenceRemoved();
 		}
 		assert(chunks.every((chunk) => chunk.isUnreferenced()));
+	});
+
+	for (const maximum of [3, 4, 64]) {
+		it(`balances repeated appends and bounds fresh lookup depth (limit: ${maximum})`, () => {
+			const total = maximum === 64 ? 16384 : 2048;
+			const leaves = Array.from({ length: total }, (_, index) => numericBasicChunk(index));
+			const root = new BasicChunk(brand("parent"), new Map());
+			const editor = new ChunkEditTraversal(root, {
+				policy: { ...defaultChunkPolicy, sequenceChunkSplitThreshold: maximum },
+				idCompressor: undefined,
+			});
+			editor.enterField(EmptyKey);
+			for (const [index, leaf] of leaves.entries()) {
+				editor.splice({ start: index, end: index }, [leaf]);
+				const count = index + 1;
+				if ([maximum + 1, 97, 98, 1024, 2048, 4096, 8192, 16384].includes(count)) {
+					const chunks = root.fields.get(EmptyKey);
+					assert(chunks !== undefined);
+					const depth = assertBalanced(chunks, maximum);
+					assert(depth <= Math.floor(Math.log(count) / Math.log(Math.ceil(maximum / 2))));
+					if (count === 4096) {
+						leaves[0].referenceAdded = (): never =>
+							assert.fail("Appending must not rebuild the untouched prefix");
+						const first = chunks[0];
+						assert(first instanceof SequenceChunk);
+						let prefix = first;
+						while (prefix.subChunks[0] instanceof SequenceChunk) {
+							prefix = prefix.subChunks[0];
+						}
+						const ends = getChunkSequence(prefix.subChunks)?.index;
+						assert(ends !== undefined);
+						Object.freeze(ends);
+					}
+					const getLocalCursor = SequenceChunk.prototype.getLocalCursor;
+					let visits = 0;
+					SequenceChunk.prototype.getLocalCursor = function () {
+						visits++;
+						return getLocalCursor.call(this);
+					};
+					try {
+						for (const position of [0, Math.floor(count / 2), count - 1]) {
+							visits = 0;
+							const cursor = ChunkCursor.fromChunks(chunks);
+							cursor.enterNode(position);
+							assert.equal(cursor.value, position);
+							assert.equal(visits, depth);
+						}
+					} finally {
+						SequenceChunk.prototype.getLocalCursor = getLocalCursor;
+					}
+				}
+			}
+			assert.deepEqual(
+				valuesOf(root.fields.get(EmptyKey) ?? []),
+				leaves.map((_, index) => index),
+			);
+			editor.free();
+			root.referenceRemoved();
+			assert(leaves.every((leaf) => leaf.isUnreferenced()));
+		});
+	}
+
+	for (const maximum of [3, 4, 64]) {
+		it(`balances prepends, middle edits, and shrinking (limit: ${maximum})`, () => {
+			const initial = Array.from({ length: 257 }, (_, index) => numericBasicChunk(index));
+			const root = new BasicChunk(brand("parent"), new Map([[EmptyKey, initial]]));
+			const clone = root.clone();
+			const model = initial.map((_, index) => index);
+			const editor = new ChunkEditTraversal(root, {
+				policy: { ...defaultChunkPolicy, sequenceChunkSplitThreshold: maximum },
+				idCompressor: undefined,
+			});
+			const random = makeRandom(90347);
+			editor.enterField(EmptyKey);
+			for (let step = 0; step < 256; step++) {
+				const at = step < 128 ? 0 : random.integer(0, model.length);
+				const count = step < 128 ? 0 : random.integer(0, Math.min(24, model.length - at));
+				const added = Array.from(
+					{ length: random.integer(1, 4) },
+					(_, index) => -step * 4 - index - 1,
+				);
+				const removed = editor.splice(
+					{ start: at, end: at + count },
+					added.map(numericBasicChunk),
+				);
+				model.splice(at, count, ...added);
+				for (const chunk of removed) {
+					chunk.referenceRemoved();
+				}
+				const chunks = root.fields.get(EmptyKey) ?? [];
+				assertBalanced(chunks, maximum);
+				assert.deepEqual(valuesOf(chunks), model);
+			}
+			while (model.length > 0) {
+				const at = Math.floor(model.length / 3);
+				const count = Math.min(model.length - at, 17);
+				for (const chunk of editor.splice({ start: at, end: at + count }, [])) {
+					chunk.referenceRemoved();
+				}
+				model.splice(at, count);
+				const chunks = root.fields.get(EmptyKey) ?? [];
+				assertBalanced(chunks, maximum);
+				assert.deepEqual(valuesOf(chunks), model);
+			}
+			editor.free();
+			assert.deepEqual(
+				valuesOf(clone.fields.get(EmptyKey) ?? []),
+				initial.map((_, index) => index),
+			);
+			root.referenceRemoved();
+			clone.referenceRemoved();
+			assert(initial.every((leaf) => leaf.isUnreferenced()));
+		});
+	}
+
+	it("normalizes shared incoming sequences without changing the source", () => {
+		const leaves = Array.from({ length: 6 }, (_, index) => numericBasicChunk(index));
+		const source = new SequenceChunk([
+			new SequenceChunk(leaves.slice(1, 3)),
+			new SequenceChunk(leaves.slice(3, 5)),
+		]);
+		source.referenceAdded();
+		const root = new BasicChunk(
+			brand("parent"),
+			new Map([[EmptyKey, [leaves[0], leaves[5]]]]),
+		);
+		const editor = new ChunkEditTraversal(root, {
+			policy: defaultChunkPolicy,
+			idCompressor: undefined,
+		});
+		editor.enterField(EmptyKey);
+		editor.splice({ start: 1, end: 1 }, [source]);
+		const chunks = root.fields.get(EmptyKey) ?? [];
+		assertBalanced(chunks);
+		assert.deepEqual(chunks, leaves);
+		assert.deepEqual(valuesOf([source]), [1, 2, 3, 4]);
+		editor.free();
+		root.referenceRemoved();
+		source.referenceRemoved();
+		assert(leaves.every((leaf) => leaf.isUnreferenced()));
+	});
+
+	it("balances restored ancestors after normalizing packed nodes", () => {
+		const maximum = 3;
+		const valueKey: FieldKey = brand("value");
+		const addedKey: FieldKey = brand("added");
+		const rowShape = new TreeShape(brand("row"), false, [[valueKey, shape, 1]]);
+		const initial = Array.from(
+			{ length: 64 },
+			(_, index) =>
+				new UniformChunk(
+					rowShape.withTopLevelLength(4),
+					Array.from({ length: 4 }, (_value, offset) => index * 4 + offset),
+				),
+		);
+		const policy = { ...defaultChunkPolicy, sequenceChunkSplitThreshold: maximum };
+		const root = new BasicChunk(
+			brand("parent"),
+			new Map([[EmptyKey, groupChunks([...initial], policy)]]),
+		);
+		const snapshot = root.clone();
+		const editor = new ChunkEditTraversal(root, { policy, idCompressor: undefined });
+		editor.enterField(EmptyKey);
+		for (const at of [0, 1, 3, 4, 127, 128, 254, 255]) {
+			editor.enterNode(at);
+			editor.enterField(addedKey);
+			editor.splice({ start: 0, end: 0 }, [numericBasicChunk(-at)]);
+			editor.exitField();
+			editor.enterField(valueKey);
+			editor.enterNode(0);
+			assert.equal(editor.value, at);
+			editor.exitNode();
+			editor.exitField();
+			editor.exitNode();
+			assert.equal(editor.getFieldLength(), 256);
+			assertBalanced(root.fields.get(EmptyKey) ?? [], maximum);
+		}
+		editor.free();
+		for (const [index, chunk] of initial.entries()) {
+			assert.deepEqual(
+				chunk.values,
+				Array.from({ length: 4 }, (_, offset) => index * 4 + offset),
+			);
+		}
+		root.referenceRemoved();
+		snapshot.referenceRemoved();
+		assert(initial.every((chunk) => chunk.isUnreferenced()));
+	});
+
+	it("updates offsets when an equal-length replacement reduces the chunk count", () => {
+		const leaves = Array.from({ length: 65 }, (_, index) => numericBasicChunk(index));
+		const root = new BasicChunk(
+			brand("parent"),
+			new Map([[EmptyKey, groupChunks([...leaves], defaultChunkPolicy)]]),
+		);
+		const clone = root.clone();
+		const editor = new ChunkEditTraversal(root, {
+			policy: defaultChunkPolicy,
+			idCompressor: undefined,
+		});
+		editor.enterField(EmptyKey);
+		for (const chunk of editor.splice({ start: 0, end: 33 }, [
+			packed(...Array.from({ length: 33 }, (_, index) => index)),
+		])) {
+			chunk.referenceRemoved();
+		}
+		const chunks = root.fields.get(EmptyKey) ?? [];
+		assert.equal(chunks.length, 33);
+		assertBalanced(chunks);
+		assert.deepEqual(
+			valuesOf(chunks),
+			leaves.map((_, index) => index),
+		);
+		assert.deepEqual(
+			valuesOf(clone.fields.get(EmptyKey) ?? []),
+			leaves.map((_, index) => index),
+		);
+		editor.free();
+		root.referenceRemoved();
+		clone.referenceRemoved();
+		assert(leaves.every((leaf) => leaf.isUnreferenced()));
+	});
+
+	it("updates offsets after expanding packed storage at a fixed logical length", () => {
+		const initial = [
+			packed(...Array.from({ length: 1024 }, (_, index) => index)),
+			...Array.from({ length: 64 }, (_, index) => numericBasicChunk(index + 1024)),
+		];
+		const root = new BasicChunk(
+			brand("parent"),
+			new Map([[EmptyKey, groupChunks([...initial], defaultChunkPolicy)]]),
+		);
+		const clone = root.clone();
+		const editor = new ChunkEditTraversal(root, {
+			policy: defaultChunkPolicy,
+			idCompressor: undefined,
+		});
+		editor.enterField(EmptyKey);
+		const added = Array.from(
+			{ length: 1024 },
+			(_, index) => new BasicChunk(brand("other"), new Map(), index),
+		);
+		for (const chunk of editor.splice({ start: 0, end: 1024 }, added)) {
+			chunk.referenceRemoved();
+		}
+		const expected = Array.from({ length: 1088 }, (_, index) => index);
+		const chunks = root.fields.get(EmptyKey) ?? [];
+		assertBalanced(chunks);
+		assert.deepEqual(valuesOf(chunks), expected);
+		assert.deepEqual(valuesOf(clone.fields.get(EmptyKey) ?? []), expected);
+		editor.free();
+		root.referenceRemoved();
+		clone.referenceRemoved();
+		assert([...initial, ...added].every((leaf) => leaf.isUnreferenced()));
 	});
 
 	it("copies shared ancestry before editing a singly referenced descendant", () => {
@@ -395,6 +750,7 @@ describe("ChunkSequence", () => {
 				field.transformRange(0, 1, (owned) => {
 					assert.throws(() => parent.cursor(), /sequence mutation/);
 					assert.throws(() => sequence.length, /sequence mutation/);
+					assert.throws(() => sequence.locateNode(0), /sequence mutation/);
 					return owned;
 				});
 				field.close();
@@ -438,6 +794,7 @@ describe("ChunkSequence", () => {
 		);
 		assert.throws(() => assertChunksReadable(chunks), /Sequence edit failed/);
 		assert.throws(() => sequence.length, /Sequence edit failed/);
+		assert.throws(() => sequence.locateNode(0), /Sequence edit failed/);
 		assert.throws(() => sequence.acquireEditor(), /Sequence edit failed/);
 	});
 
@@ -595,26 +952,94 @@ describe("ChunkSequence", () => {
 		sequence.dispose();
 	});
 
-	it("bounds binary-search probes logarithmically", () => {
-		for (const count of [16, 256, 4096]) {
-			let probes = 0;
-			const ends = new Proxy(
-				Array.from({ length: count }, (_, index) => (index + 1) * 3),
-				{
-					get(target, key): number | undefined {
-						if (key === "length") {
-							return target.length;
-						}
-						probes++;
-						return typeof key === "string" ? target[Number(key)] : undefined;
-					},
-				},
-			);
-			for (const position of [0, count, count * 3 - 1, count * 3]) {
-				probes = 0;
-				assert.equal(findChunkIndex(ends, position), Math.floor(position / 3));
-				assert(probes <= Math.ceil(Math.log2(count)) + 1);
+	it("locates nodes across empty chunks and unequal chunk lengths", () => {
+		const chunks = [
+			emptyChunk,
+			packed(10, 11),
+			emptyChunk,
+			packed(20),
+			packed(30, 31, 32),
+			emptyChunk,
+		];
+		const sequence = new ChunkSequence(chunks);
+		const locations = [
+			[1, 0],
+			[1, 1],
+			[3, 0],
+			[4, 0],
+			[4, 1],
+			[4, 2],
+		] as const;
+		for (const [index, [indexOfChunk, indexWithinChunk]] of locations.entries()) {
+			const expected = { chunk: chunks[indexOfChunk], indexOfChunk, indexWithinChunk };
+			assert.deepEqual(sequence.locateNode(index), expected);
+			assert.deepEqual(locateNodeInChunks(sequence.chunks, index), expected);
+		}
+		sequence.dispose();
+	});
+
+	it("rejects invalid node indices with and without allocated offsets", () => {
+		for (const chunks of [
+			[],
+			[emptyChunk],
+			[packed(1, 2)],
+			[emptyChunk, packed(1, 2), emptyChunk],
+		]) {
+			const sequence = new ChunkSequence(chunks);
+			for (const [index, message] of [
+				[-1, "index must be non-negative"],
+				[0.5, "index must be an integer"],
+				[Number.NaN, "index must be an integer"],
+				[Infinity, "index must be an integer"],
+				[Number.MAX_SAFE_INTEGER + 1, "index must be an integer"],
+			] as const) {
+				assert.throws(() => sequence.locateNode(index), validateAssertionError(message));
+				assert.throws(
+					() => locateNodeInChunks(sequence.chunks, index),
+					validateAssertionError(message),
+				);
 			}
+			const outOfBounds =
+				chunks.length === 0 ? "Array index is out of bounds" : "missing edited node";
+			for (const index of [sequence.length, sequence.length + 1]) {
+				assert.throws(() => sequence.locateNode(index), validateAssertionError(outOfBounds));
+				assert.throws(
+					() => locateNodeInChunks(sequence.chunks, index),
+					validateAssertionError(outOfBounds),
+				);
+			}
+			sequence.dispose();
+		}
+	});
+
+	it("bounds node lookup probes logarithmically", () => {
+		for (const count of [16, 256, 4096]) {
+			const chunks = Array.from({ length: count }, (_, index) =>
+				packed(index * 3, index * 3 + 1, index * 3 + 2),
+			);
+			const sequence = new ChunkSequence(chunks);
+			const ends = sequence.index;
+			assert(ends !== undefined);
+			let probes = 0;
+			for (let index = 0; index < count; index++) {
+				Object.defineProperty(ends, index, {
+					get(): number {
+						probes++;
+						return (index + 1) * 3;
+					},
+				});
+			}
+			for (const position of [0, count, count * 3 - 1]) {
+				probes = 0;
+				const indexOfChunk = Math.floor(position / 3);
+				assert.deepEqual(sequence.locateNode(position), {
+					chunk: chunks[indexOfChunk],
+					indexOfChunk,
+					indexWithinChunk: position % 3,
+				});
+				assert(probes <= Math.ceil(Math.log2(count)) + 2);
+			}
+			sequence.dispose();
 		}
 	});
 

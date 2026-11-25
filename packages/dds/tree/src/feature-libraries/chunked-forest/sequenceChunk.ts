@@ -28,6 +28,7 @@ import {
 export class SequenceChunk extends MutableChunk implements CompositeChunk, EditableChunk {
 	public readonly topLevelLength: number;
 	private readonly children: ChunkSequence;
+	#balance: { revision: number; maximum: number; height: number | undefined } | undefined;
 
 	public override hasStableTopLevelLength(): boolean {
 		return true;
@@ -39,6 +40,42 @@ export class SequenceChunk extends MutableChunk implements CompositeChunk, Edita
 
 	public get subChunks(): readonly TreeChunk[] {
 		return this.children.chunks;
+	}
+
+	/**
+	 * Returns the sequence height when all groups are half full and leaves have equal depth.
+	 * Structural edits invalidate the cached result without walking unaffected subtrees.
+	 * @param maximum - Maximum number of direct children allowed in each sequence group.
+	 * Each group, including nested groups, must also have at least `Math.ceil(maximum / 2)` children.
+	 * @returns One plus the common child height, treating non-sequence chunks as height 0.
+	 * Returns `undefined` if any group is empty, violates the child-count limits, or has children of different sequence heights.
+	 */
+	public getBalancedHeight(maximum: number): number | undefined {
+		this.assertReadable();
+		const revision = this.children.revision;
+		if (this.#balance?.revision === revision && this.#balance.maximum === maximum) {
+			return this.#balance.height;
+		}
+		const chunks = this.subChunks;
+		let childHeight: number | undefined;
+		let balanced = chunks.length >= Math.ceil(maximum / 2) && chunks.length <= maximum;
+		if (balanced) {
+			for (const chunk of chunks) {
+				const nextHeight =
+					chunk instanceof SequenceChunk ? chunk.getBalancedHeight(maximum) : 0;
+				if (
+					nextHeight === undefined ||
+					(childHeight !== undefined && childHeight !== nextHeight)
+				) {
+					balanced = false;
+					break;
+				}
+				childHeight = nextHeight;
+			}
+		}
+		const height = balanced && childHeight !== undefined ? childHeight + 1 : undefined;
+		this.#balance = { revision, maximum, height };
+		return height;
 	}
 
 	/**

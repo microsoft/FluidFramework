@@ -685,31 +685,172 @@ export function chunkRange(
 }
 
 /**
- * Groups long child arrays into a tree of sequence chunks.
+ * The two-child limit retains the original grouping behavior.
+ * Splitting three children into two groups requires a one-child group.
+ * These groups can accumulate into deep chains; guaranteeing logarithmic height at this limit requires a different balancing rule.
+ */
+const binarySequenceChunkSplitThreshold = 2;
+
+/**
+ * Groups child arrays into bounded sequences, joining unequal-height boundaries.
  * Consumes the input's owning references and returns owning references to the grouped storage.
- * Short arrays are returned unchanged.
+ * Limits of at least three keep groups half full with equal leaf depth.
+ * The two-child policy retains its original grouping behavior.
  */
 export function groupChunks(chunks: TreeChunk[], policy: ChunkPolicy): TreeChunk[] {
-	let output = chunks;
-	while (output.length > policy.sequenceChunkSplitThreshold) {
-		const chunkCount = Math.ceil(output.length / policy.sequenceChunkSplitThreshold);
-		const newOutput: TreeChunk[] = [];
-		// Rounding down, and add an extra item to some of the chunks.
-		const chunkSize = Math.floor(output.length / chunkCount);
-		// number of chunks to add an extra item to to make total line up.
-		const extra = output.length % chunkCount;
-		let previousEnd = 0;
-		for (let index = 0; index < chunkCount; index++) {
-			// If we are in the first `extra` items, add an extra to this chunk.
-			const end = previousEnd + chunkSize + (index < extra ? 1 : 0);
-			newOutput.push(new SequenceChunk(output.slice(previousEnd, end)));
-			previousEnd = end;
+	const maximum = Math.floor(policy.sequenceChunkSplitThreshold);
+	if (
+		maximum === Number.POSITIVE_INFINITY ||
+		maximum === binarySequenceChunkSplitThreshold ||
+		uniformChunkHeight(chunks, maximum) !== undefined
+	) {
+		let grouped = chunks;
+		while (grouped.length > maximum) {
+			grouped = wrapChunkGroups(grouped, maximum);
 		}
-		assert(previousEnd === output.length, 0x581 /* chunks should add up to total */);
-		output = newOutput;
+		return grouped;
 	}
 
+	let output: TreeChunk[] = [];
+	let height = 0;
+	const pending = [chunks.values()];
+	while (pending.length > 0) {
+		const next = (pending.at(-1) ?? oob()).next();
+		if (next.done === true) {
+			pending.pop();
+			continue;
+		}
+		const chunk = next.value;
+		const nextHeight = chunk instanceof SequenceChunk ? chunk.getBalancedHeight(maximum) : 0;
+		if (nextHeight === undefined) {
+			assert(chunk instanceof SequenceChunk, "Only sequences can have unbalanced children");
+			pending.push(chunk.takeChildren().values());
+			continue;
+		}
+		if (output.length === 0) {
+			output.push(chunk);
+			height = nextHeight;
+		} else if (height === nextHeight) {
+			output.push(chunk);
+		} else if (height > nextHeight) {
+			output.push(...joinChunks(output.pop() ?? oob(), height, chunk, nextHeight, maximum));
+		} else {
+			const left = output.length === 1 ? (output[0] ?? oob()) : new SequenceChunk(output);
+			const leftHeight = output.length === 1 ? height : height + 1;
+			output = joinChunks(left, leftHeight, chunk, nextHeight, maximum);
+			height = nextHeight;
+		}
+		if (output.length > maximum) {
+			output = wrapChunkGroups(output, maximum);
+			height++;
+		}
+	}
 	return output;
+}
+
+/** Returns the common height when every child is a balanced group or a leaf. */
+function uniformChunkHeight(
+	chunks: readonly TreeChunk[],
+	maximum: number,
+): number | undefined {
+	let height: number | undefined;
+	for (const chunk of chunks) {
+		const next = chunk instanceof SequenceChunk ? chunk.getBalancedHeight(maximum) : 0;
+		if (next === undefined || (height !== undefined && height !== next)) {
+			return undefined;
+		}
+		height = next;
+	}
+	return height ?? 0;
+}
+
+/** Consumes equal-height children, distributing them evenly over one level of new groups. */
+function wrapChunkGroups(chunks: TreeChunk[], maximum: number): TreeChunk[] {
+	const expectedNumberOfGroups = Math.ceil(chunks.length / maximum);
+	const childrenPerGroup = Math.floor(chunks.length / expectedNumberOfGroups);
+	const extra = chunks.length % expectedNumberOfGroups;
+	const output: TreeChunk[] = [];
+	let start = 0;
+	for (let index = 0; index < expectedNumberOfGroups; index++) {
+		const end = start + childrenPerGroup + (index < extra ? 1 : 0);
+		output.push(new SequenceChunk(chunks.slice(start, end)));
+		start = end;
+	}
+	assert(start === chunks.length, "Groups must contain all input chunks");
+	return output;
+}
+
+/** Consumes two roots and repairs only their adjoining paths, returning roots at the larger height. */
+function joinChunks(
+	left: TreeChunk,
+	leftHeight: number,
+	right: TreeChunk,
+	rightHeight: number,
+	maximum: number,
+): TreeChunk[] {
+	if (leftHeight === 0 && rightHeight === 0) {
+		return [left, right];
+	}
+	if (leftHeight === rightHeight) {
+		assert(
+			left instanceof SequenceChunk && right instanceof SequenceChunk,
+			"Non-leaf roots must be sequences",
+		);
+		const minimum = Math.ceil(maximum / 2);
+		if (
+			left.subChunks.length + right.subChunks.length > maximum &&
+			left.subChunks.length >= minimum &&
+			right.subChunks.length >= minimum
+		) {
+			return [left, right];
+		}
+		return wrapChunkGroups([...left.takeChildren(), ...right.takeChildren()], maximum);
+	}
+	if (leftHeight > rightHeight) {
+		assert(left instanceof SequenceChunk, "A taller root must be a sequence");
+		const leftChildren = left.takeChildren();
+		const last = leftChildren.pop() ?? oob();
+		leftChildren.push(...joinChunks(last, leftHeight - 1, right, rightHeight, maximum));
+		return wrapChunkGroups(leftChildren, maximum);
+	}
+	assert(right instanceof SequenceChunk, "A taller root must be a sequence");
+	const children = right.takeChildren();
+	const first = children.shift() ?? oob();
+	return wrapChunkGroups(
+		[...joinChunks(left, leftHeight, first, rightHeight - 1, maximum), ...children],
+		maximum,
+	);
+}
+
+/**
+ * Repairs structurally edited fields and removes redundant root groups.
+ */
+export function balanceField(field: ChunkSequenceEditor, policy: ChunkPolicy): void {
+	const maximum = Math.floor(policy.sequenceChunkSplitThreshold);
+	if (maximum === Number.POSITIVE_INFINITY || field.revision === 0) {
+		return;
+	}
+	const chunks = field.chunks;
+	if (
+		chunks.length <= maximum &&
+		(maximum === binarySequenceChunkSplitThreshold ||
+			(uniformChunkHeight(chunks, maximum) !== undefined &&
+				// A lone sequence can be balanced but still adds a removable level.
+				!(chunks.length === 1 && chunks[0] instanceof SequenceChunk)))
+	) {
+		return;
+	}
+	field.transformRange(0, chunks.length, (owned) => {
+		let output = groupChunks(owned, policy);
+		while (
+			maximum > binarySequenceChunkSplitThreshold &&
+			output.length === 1 &&
+			output[0] instanceof SequenceChunk
+		) {
+			output = groupChunks(output[0].takeChildren(), policy);
+		}
+		return output;
+	});
 }
 
 /**

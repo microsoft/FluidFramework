@@ -12,10 +12,10 @@ import type { ChunkCompressor } from "./chunkTree.js";
 import type { ChunkLocalCursor } from "./chunkCursor.js";
 import {
 	type ChunkEdit,
+	type ChunkSequence,
 	type ChunkSequenceEditor,
 	MutableChunk,
 	getChunkSequence,
-	findChunkIndex,
 } from "./chunkSequence.js";
 
 /**
@@ -113,18 +113,12 @@ export function getFieldLength(chunks: readonly TreeChunk[]): number {
 export function locateNodeInChunks(
 	chunks: readonly TreeChunk[],
 	index: number,
-): { chunk: TreeChunk; indexOfChunk: number; indexWithinChunk: number } {
-	assertNonNegativeSafeInteger(index);
-	const ends = getChunkSequence(chunks)?.index;
-	if (ends !== undefined) {
-		const indexOfChunk = findChunkIndex(ends, index);
-		const chunk = chunks[indexOfChunk] ?? fail("missing edited node");
-		return {
-			chunk,
-			indexOfChunk,
-			indexWithinChunk: index - (indexOfChunk === 0 ? 0 : (ends[indexOfChunk - 1] ?? oob())),
-		};
+): ReturnType<ChunkSequence["locateNode"]> {
+	const sequence = getChunkSequence(chunks);
+	if (sequence !== undefined) {
+		return sequence.locateNode(index);
 	}
+	assertNonNegativeSafeInteger(index);
 	let indexWithinChunk = index;
 	for (let indexOfChunk = 0; indexOfChunk < chunks.length; indexOfChunk++) {
 		const chunk = chunks[indexOfChunk] ?? oob();

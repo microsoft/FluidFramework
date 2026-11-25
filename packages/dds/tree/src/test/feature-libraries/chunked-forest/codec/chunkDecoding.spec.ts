@@ -1059,27 +1059,24 @@ describe("chunkDecoding", () => {
 		assertRefCount(child, 0);
 	});
 
-	it("retains grouped long sequences when decoding fields", () => {
-		const count = defaultChunkPolicy.sequenceChunkSplitThreshold ** 2 + 1;
+	it("balances oversized sequence groups when aggregating decoded fields", () => {
+		const count = 4097;
 		const expected = Array.from({ length: count }, (_, value) => ({
 			type: brand<TreeNodeSchemaIdentifier>("number"),
 			value,
 		}));
 		const leaves = expected.map((node) => new BasicChunk(node.type, new Map(), node.value));
-		const sequence = aggregateChunks(leaves);
-		assert(sequence instanceof SequenceChunk);
-		function checkGroup(chunk: TreeChunk): void {
-			if (chunk instanceof SequenceChunk) {
-				assert(chunk.subChunks.length <= defaultChunkPolicy.sequenceChunkSplitThreshold);
-				for (const child of chunk.subChunks) {
-					checkGroup(child);
-				}
-			}
-		}
-		checkGroup(sequence);
+		const groups = [
+			new SequenceChunk(leaves.slice(0, 2048)),
+			new SequenceChunk(leaves.slice(2048)),
+		];
+		const sequence = new SequenceChunk(groups);
 		const fields = deaggregateChunks(sequence);
-		assert(fields.some((chunk) => chunk instanceof SequenceChunk));
+		assert.deepEqual(fields, groups);
 		const combined = aggregateChunks(fields);
+		assert(combined instanceof SequenceChunk);
+		assert(combined.subChunks.length <= defaultChunkPolicy.sequenceChunkSplitThreshold);
+		assert(combined.subChunks.every((chunk) => chunk instanceof SequenceChunk));
 		assertChunkCursorEquals(combined, expected);
 		combined.referenceRemoved();
 		assert(leaves.every((leaf) => leaf.isUnreferenced()));

@@ -20,6 +20,50 @@ import { ReferenceCountedBase, brand } from "../../../util/index.js";
 import { checkFieldTraversal } from "../../cursorTestSuite.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { UniformChunk } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
+
+/**
+ * Visits stored chunks through sequence groups and node fields, counting each owning reference.
+ */
+export function forEachChunk(chunk: TreeChunk, visit: (chunk: TreeChunk) => void): void {
+	visit(chunk);
+	if (chunk instanceof SequenceChunk) {
+		for (const child of chunk.subChunks) {
+			forEachChunk(child, visit);
+		}
+	} else if (chunk instanceof BasicChunk) {
+		for (const children of chunk.fields.values()) {
+			for (const child of children) {
+				forEachChunk(child, visit);
+			}
+		}
+	}
+}
+
+/**
+ * Counts stored chunks, including sequence wrappers and the supplied root.
+ */
+export function getChunkStats(root: TreeChunk): {
+	total: number;
+	basic: number;
+	largestUniformNodes: number;
+} {
+	let total = 0;
+	let basic = 0;
+	let largestUniformNodes = 0;
+	forEachChunk(root, (chunk) => {
+		total++;
+		if (chunk instanceof BasicChunk) {
+			basic++;
+		} else if (chunk instanceof UniformChunk) {
+			largestUniformNodes = Math.max(largestUniformNodes, chunk.topLevelLength);
+		}
+	});
+	return { total, basic, largestUniformNodes };
+}
 
 export function numberSequenceField(length: number): JsonableTree[] {
 	const field: JsonableTree[] = [];

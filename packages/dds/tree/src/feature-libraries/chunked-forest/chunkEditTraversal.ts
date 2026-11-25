@@ -5,13 +5,14 @@
 
 import { assert, debugAssert, fail, oob } from "@fluidframework/core-utils/internal";
 
-import type {
-	FieldKey,
-	ITreeCursorSynchronous,
-	Range,
-	TreeChunk,
-	UpPath,
-	Value,
+import {
+	CursorLocationType,
+	type FieldKey,
+	type ITreeCursorSynchronous,
+	type Range,
+	type TreeChunk,
+	type UpPath,
+	type Value,
 } from "../../core/index.js";
 
 import { BasicChunk } from "./basicChunk.js";
@@ -26,8 +27,8 @@ import {
 import { type ChunkEdit, ChunkSequenceEditor } from "./chunkSequence.js";
 import {
 	type ChunkCompressor,
+	balanceField,
 	basicChunkTree,
-	groupChunks,
 	splitFieldAtIndex,
 	coalesceUniformChunks,
 } from "./chunkTree.js";
@@ -106,6 +107,7 @@ function spliceChunkField(
 			chunk.supportsRootEdits() &&
 			indexWithinChunk + count <= chunk.topLevelLength
 		) {
+			const revision = field.revision;
 			const scope = field.acquireChild(indexOfChunk, true, true);
 			assert(isEditableChunk(scope.chunk), "Expected editable storage");
 			const cursor = scope.chunk.getEditCursor(scope);
@@ -121,6 +123,9 @@ function spliceChunkField(
 				cursor.release(replaced !== undefined);
 			}
 			if (replaced !== undefined) {
+				if (field.revision !== revision) {
+					balanceField(field, compressor.policy);
+				}
 				return replaced;
 			}
 		}
@@ -135,9 +140,7 @@ function spliceChunkField(
 		start: Math.max(0, start - 1),
 		end: Math.min(chunks.length, start + content.length + 1),
 	});
-	if (chunks.length > compressor.policy.sequenceChunkSplitThreshold) {
-		field.transformRange(0, chunks.length, (owned) => groupChunks(owned, compressor.policy));
-	}
+	balanceField(field, compressor.policy);
 	return removed;
 }
 
@@ -236,10 +239,22 @@ export class ChunkEditTraversal
 			cursorForChunk: (chunk) => this.cursorForChunk(chunk),
 			releaseChunk: (cursor) => {
 				assertEditingCursor(cursor);
+				this.balanceCursorField(cursor);
 				cursor.release();
 			},
+			restoreField: (cursor) => this.balanceCursorField(cursor),
 		});
 		this.enterNode(0);
+	}
+
+	private balanceCursorField(cursor: ChunkLocalCursor): void {
+		assertEditingCursor(cursor);
+		if (cursor.mode === CursorLocationType.Fields) {
+			const field = cursor.getFieldEditor?.();
+			if (field !== undefined) {
+				balanceField(field, this.compressor.policy);
+			}
+		}
 	}
 
 	/**

@@ -160,6 +160,8 @@ export interface ChunkNavigationHooks {
 	cursorForChunk(chunk: TreeChunk): ChunkLocalCursor;
 	/** Releases editing scopes when a chunk is exited or navigation is freed. */
 	releaseChunk?(cursor: ChunkLocalCursor): void;
+	/** Repairs a restored field after its child scope closes; may change its chunk boundaries. */
+	restoreField?(cursor: ChunkLocalCursor): void;
 }
 
 /**
@@ -447,6 +449,7 @@ export abstract class ChunkTraversal
 		this.local = frame.cursor;
 		this.offset = frame.savedOffset;
 		this.atRoot = frame.savedAtRoot;
+		this.navigationHooks?.restoreField?.(this.local);
 		return frame;
 	}
 
@@ -496,8 +499,9 @@ export abstract class ChunkTraversal
 			const fieldIndex = frame.chunkStartIndex + index;
 			const owner =
 				index < -1 || index > exited.rootLength ? getChunkSequence(frame.chunks) : undefined;
-			if (owner !== undefined) {
-				if (fieldIndex >= 0 && fieldIndex < owner.length) {
+			if (owner !== undefined || this.navigationHooks !== undefined) {
+				const length = owner?.length ?? this.local.getFieldLength();
+				if (fieldIndex >= 0 && fieldIndex < length) {
 					this.enterNodeAt(
 						fieldIndex,
 						locateNodeInChunks(frame.chunks, fieldIndex),

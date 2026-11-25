@@ -78,6 +78,11 @@ import { configuredSharedTree } from "../../../treeFactory.js";
 import { brand } from "../../../util/index.js";
 import { configureBenchmarkHooks, TestTreeProviderLite } from "../../utils.js";
 
+import {
+	forEachChunk as forEachChunkInTree,
+	getChunkStats,
+} from "./fieldCursorTestUtilities.js";
+
 /** Iteration counts for the memory benchmarks (mirrors the shared `iterationSettings` helper). */
 const iterationSettings = { keepIterations: 4, warmUpIterations: 2 };
 
@@ -230,19 +235,8 @@ function insertEdit(
 
 /** Visits every chunk reachable from a chunked forest's roots. */
 function forEachChunk(forest: IForestSubscription, visit: (chunk: TreeChunk) => void): void {
-	const roots = (forest as unknown as { readonly roots: ChunkWithFields }).roots;
-	function walk(chunk: TreeChunk): void {
-		visit(chunk);
-		const fields = (chunk as ChunkWithFields).fields;
-		if (fields !== undefined) {
-			for (const chunks of fields.values()) {
-				for (const child of chunks) {
-					walk(child);
-				}
-			}
-		}
-	}
-	walk(roots);
+	assert(forest instanceof ChunkedForest, "Chunk counting requires a chunked forest");
+	forEachChunkInTree(forest.roots, visit);
 }
 
 /** Counts every UniformChunk reachable from a chunked forest's roots. */
@@ -258,27 +252,17 @@ function countUniformChunks(forest: IForestSubscription): number {
 
 /**
  * Summarizes the chunk shape of a forest.
- * @returns The total chunk count, non-uniform chunk count, and largest uniform chunk's top-level node count.
+ * @returns The total chunk count, BasicChunk count, and largest uniform chunk's top-level node count.
  * @remarks
  * Includes the forest's synthetic root and detached content, not just the current document.
- * The `basic` metric counts all non-uniform chunks; these fixtures use no sequence chunks.
  */
 function chunkStats(forest: IForestSubscription): {
 	total: number;
 	basic: number;
 	largestUniformNodes: number;
 } {
-	let total = 0;
-	let uniform = 0;
-	let largestUniformNodes = 0;
-	forEachChunk(forest, (chunk) => {
-		total++;
-		if (chunk instanceof UniformChunk) {
-			uniform++;
-			largestUniformNodes = Math.max(largestUniformNodes, chunk.topLevelLength);
-		}
-	});
-	return { total, basic: total - uniform, largestUniformNodes };
+	assert(forest instanceof ChunkedForest, "Chunk counting requires a chunked forest");
+	return getChunkStats(forest.roots);
 }
 
 // #endregion
