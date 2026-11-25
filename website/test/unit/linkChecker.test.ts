@@ -15,10 +15,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 const require = createRequire(import.meta.url);
 const cli = fileURLToPath(new URL("cli.js", pathToFileURL(require.resolve("linkinator"))));
-const configuration = readFileSync(
-	new URL("../../linkinator.config.json", import.meta.url),
-	"utf8",
-);
+const configuration = readFileSync(new URL("../../linkinator.config.mjs", import.meta.url), "utf8");
 const packageJson: { scripts: { "check-links": string } } = JSON.parse(
 	readFileSync(new URL("../../package.json", import.meta.url), "utf8"),
 );
@@ -85,7 +82,7 @@ describe("link checker", () => {
 		}
 		origin = `http://127.0.0.1:${address.port}`;
 		writeFileSync(
-			join(directory, "linkinator.config.json"),
+			join(directory, "linkinator.config.mjs"),
 			configuration.replaceAll(":3000", `:${address.port}`),
 		);
 	});
@@ -128,17 +125,18 @@ describe("link checker", () => {
 	it.each(["missing", "malformed"] as const)(
 		"rejects a %s configuration before making requests",
 		async (kind) => {
-			const configPath = join(directory, "linkinator.config.json");
+			const configPath = join(directory, "linkinator.config.mjs");
 			if (kind === "missing") {
 				rmSync(configPath);
 			} else {
-				writeFileSync(configPath, "{malformed");
+				writeFileSync(configPath, "export default {");
 			}
 
 			const result = await check();
 			expect(result.code, result.output).toBe(1);
-			expect(result.output).toContain("linkinator.config.json");
-			expect(result.output).toContain(kind === "missing" ? "ENOENT" : "Error parsing");
+			expect(result.output).toContain(
+				kind === "missing" ? "linkinator.config.mjs" : "Unexpected end of input",
+			);
 			expect(requests).toEqual([]);
 		},
 	);
