@@ -19,6 +19,8 @@ import { rootFieldKey } from "./types.js";
  * Contiguous part of the tree which get stored together in some data format.
  * Copy-on-write, but optimized to be mutated in place when a chunk only has a single user (detected using reference counting).
  * This allows for efficient cloning without major performance overheads for non-cloning scenarios.
+ * Mutable chunks must be edited through their owning sequence after establishing exclusivity
+ * along the owning path, keeping that sequence's length and lookup metadata current.
  */
 export interface TreeChunk extends ReferenceCounted {
 	/**

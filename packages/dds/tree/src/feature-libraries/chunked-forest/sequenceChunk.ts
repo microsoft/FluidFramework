@@ -3,13 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import { dummyRoot, type ChunkedCursor, type TreeChunk } from "../../core/index.js";
-import { ReferenceCountedBase } from "../../util/index.js";
 
 import { ChunkCursor, ChunkSequenceCursor, type CompositeChunk } from "./chunkCursor.js";
-import { type EditableChunk, type ChunkEditCursor, getFieldLength } from "./chunkEditing.js";
+import type { EditableChunk, ChunkEditCursor } from "./chunkEditing.js";
+import {
+	type ChunkEdit,
+	ChunkSequence,
+	type ChunkSequenceEditor,
+	MutableChunk,
+} from "./chunkSequence.js";
 
 /**
  * A {@link CompositeChunk} representing the concatenation of its child {@link TreeChunk}s.
@@ -20,14 +25,57 @@ import { type EditableChunk, type ChunkEditCursor, getFieldLength } from "./chun
  * Cursor integration tests are in chunkCursor.spec.ts, alongside shared traversal and mixed-format boundary cases.
  * Editing integration and root-length preservation are covered in chunkEditTraversal.spec.ts.
  */
-export class SequenceChunk
-	extends ReferenceCountedBase
-	implements CompositeChunk, EditableChunk
-{
+export class SequenceChunk extends MutableChunk implements CompositeChunk, EditableChunk {
 	public readonly topLevelLength: number;
+	private readonly children: ChunkSequence;
+	#balance: { revision: number; maximum: number; height: number | undefined } | undefined;
+
+	public override hasStableTopLevelLength(): boolean {
+		return true;
+	}
 
 	public supportsRootEdits(): boolean {
 		return true;
+	}
+
+	public get subChunks(): readonly TreeChunk[] {
+		return this.children.chunks;
+	}
+
+	/**
+	 * Returns the sequence height when all groups are half full and leaves have equal depth.
+	 * Structural edits invalidate the cached result without walking unaffected subtrees.
+	 * @param maximum - Maximum number of direct children allowed in each sequence group.
+	 * Each group, including nested groups, must also have at least `Math.ceil(maximum / 2)` children.
+	 * @returns One plus the common child height, treating non-sequence chunks as height 0.
+	 * Returns `undefined` if any group is empty, violates the child-count limits, or has children of different sequence heights.
+	 */
+	public getBalancedHeight(maximum: number): number | undefined {
+		this.assertReadable();
+		const revision = this.children.revision;
+		if (this.#balance?.revision === revision && this.#balance.maximum === maximum) {
+			return this.#balance.height;
+		}
+		const chunks = this.subChunks;
+		let childHeight: number | undefined;
+		let balanced = chunks.length >= Math.ceil(maximum / 2) && chunks.length <= maximum;
+		if (balanced) {
+			for (const chunk of chunks) {
+				const nextHeight =
+					chunk instanceof SequenceChunk ? chunk.getBalancedHeight(maximum) : 0;
+				if (
+					nextHeight === undefined ||
+					(childHeight !== undefined && childHeight !== nextHeight)
+				) {
+					balanced = false;
+					break;
+				}
+				childHeight = nextHeight;
+			}
+		}
+		const height = balanced && childHeight !== undefined ? childHeight + 1 : undefined;
+		this.#balance = { revision, maximum, height };
+		return height;
 	}
 
 	/**
@@ -35,15 +83,17 @@ export class SequenceChunk
 	 * @remarks
 	 * Edits to {@link SequenceChunk.subChunks} must update child reference counts and preserve {@link SequenceChunk.topLevelLength}.
 	 * Changing the total number of top-level nodes requires replacing the sequence in its owning parent.
-	 * @param subChunks - Child array whose ownership is transferred to this chunk.
+	 * @param subChunks - Child references transferred to this chunk; the array is copied.
 	 * The caller must have accounted for one reference to each child via `referenceAdded`.
 	 */
-	public constructor(public readonly subChunks: TreeChunk[]) {
+	public constructor(subChunks: readonly TreeChunk[]) {
 		super();
-		this.topLevelLength = getFieldLength(subChunks);
+		this.children = new ChunkSequence(subChunks, this, true);
+		this.topLevelLength = this.children.length;
 	}
 
 	public clone(): SequenceChunk {
+		this.assertCloneable();
 		const subChunks = this.subChunks.map((child) => {
 			child.referenceAdded();
 			return child;
@@ -52,29 +102,42 @@ export class SequenceChunk
 	}
 
 	public cursor(): ChunkedCursor {
+		this.assertReadable();
 		return ChunkCursor.fromChunk(this);
 	}
 
 	public getLocalCursor(): ChunkSequenceCursor {
+		this.assertReadable();
 		return new ChunkSequenceCursor(this.subChunks, dummyRoot, this.topLevelLength);
 	}
 
-	public getEditCursor(): ChunkEditCursor {
+	public getEditCursor(edit?: ChunkEdit): ChunkEditCursor {
 		assert(!this.isShared(), 0xe0f /* Editing requires exclusive chunk ownership */);
-		return new SequenceEditCursor(this);
+		const scope = edit ?? this.acquireEditor();
+		scope.assertFor(this);
+		return new SequenceEditCursor(this, this.children.acquireEditor(scope), scope);
+	}
+
+	/** Consumes an external reference and returns independently owned child references. */
+	public takeChildren(): TreeChunk[] {
+		this.assertExternalOwnership();
+		const children = this.subChunks.map((child) => {
+			child.referenceAdded();
+			return child;
+		});
+		this.referenceRemoved();
+		return children;
 	}
 
 	protected onUnreferenced(): void {
-		for (const child of this.subChunks) {
-			child.referenceRemoved();
-		}
+		this.children.dispose();
 	}
 }
 
 /**
  * A {@link ChunkEditCursor} exposing an exclusive {@link SequenceChunk}'s child array.
  * @remarks
- * Generic edits preserve {@link SequenceChunk.topLevelLength}; {@link SequenceEditCursor.setFieldChunks} checks that invariant.
+ * Its field owner requires edits to preserve {@link SequenceChunk.topLevelLength}.
  */
 class SequenceEditCursor extends ChunkSequenceCursor implements ChunkEditCursor {
 	/**
@@ -84,22 +147,24 @@ class SequenceEditCursor extends ChunkSequenceCursor implements ChunkEditCursor 
 	 */
 	public constructor(
 		/** Borrowed exclusive sequence supplying {@link SequenceChunk.topLevelLength}. */
-		private readonly chunk: SequenceChunk,
+		chunk: SequenceChunk,
+		private readonly fieldEditor: ChunkSequenceEditor,
+		private readonly edit: ChunkEdit,
 	) {
 		super(chunk.subChunks, dummyRoot, chunk.topLevelLength);
 	}
-	public override getFieldChunks(): TreeChunk[] {
-		return this.chunk.subChunks;
+	public override getFieldChunks(): readonly TreeChunk[] {
+		return this.fieldEditor.chunks;
 	}
-	public setFieldChunks(chunks: TreeChunk[]): void {
-		assert(!this.chunk.isShared(), 0xe10 /* Editing requires exclusive chunk ownership */);
-		assert(
-			chunks === this.chunk.subChunks,
-			0xe11 /* Expected the sequence's own child array */,
-		);
-		assert(
-			getFieldLength(chunks) === this.chunk.topLevelLength,
-			0xe12 /* Sequence edits must preserve length */,
-		);
+	public getFieldEditor(): ChunkSequenceEditor {
+		this.fieldEditor.assertActive();
+		return this.fieldEditor;
+	}
+	public release(commit = true): void {
+		this.fieldEditor.close();
+		this.edit.close(commit);
+	}
+	public override fork(): ChunkSequenceCursor {
+		return fail("Editing navigation must not be forked");
 	}
 }

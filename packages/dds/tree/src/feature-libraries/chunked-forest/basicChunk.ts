@@ -19,7 +19,6 @@ import {
 	type UpPath,
 	type Value,
 } from "../../core/index.js";
-import { ReferenceCountedBase } from "../../util/index.js";
 import { prefixFieldPath, prefixPath } from "../treeCursorUtils.js";
 
 import {
@@ -29,15 +28,31 @@ import {
 	type ChunkInlineCursor,
 } from "./chunkCursor.js";
 import { type ChunkEditCursor, type EditableChunk, getFieldLength } from "./chunkEditing.js";
+import {
+	type ChunkEdit,
+	type ChunkSequenceEditor,
+	assertChunksReadable,
+	MutableChunk,
+} from "./chunkSequence.js";
 
 /**
  * General purpose one node chunk.
  */
-export class BasicChunk extends ReferenceCountedBase implements EditableChunk, CompositeChunk {
+export class BasicChunk extends MutableChunk implements EditableChunk, CompositeChunk {
 	public readonly topLevelLength: number = 1;
+	private readonly fieldData = new Map<FieldKey, TreeChunk[]>();
+
+	public override hasStableTopLevelLength(): boolean {
+		return true;
+	}
 
 	public supportsRootEdits(): boolean {
 		return false;
+	}
+
+	public get fields(): ReadonlyMap<FieldKey, readonly TreeChunk[]> {
+		this.assertReadable();
+		return this.fieldData;
 	}
 
 	/**
@@ -45,24 +60,61 @@ export class BasicChunk extends ReferenceCountedBase implements EditableChunk, C
 	 * Caller must have already accounted for references via `fields` to the children in the fields map (via `referenceAdded`).
 	 */
 	public constructor(
-		public type: TreeNodeSchemaIdentifier,
+		public readonly type: TreeNodeSchemaIdentifier,
 		/**
 		 * Fields of this node.
 		 * @remarks
-		 * This object has exclusive deep ownership of this map (which might mutate it in the future).
-		 * Any code editing this map must update child reference counts.
+		 * Containers are copied and their child references transferred to this chunk.
+		 * Editing requires authority obtained through the owning path.
 		 * Fields with no nodes must be removed from the map.
 		 */
-		public fields: Map<FieldKey, TreeChunk[]>,
+		fields: ReadonlyMap<FieldKey, readonly TreeChunk[]>,
 		/** The value on this node, if any. */
-		public value?: TreeValue,
+		public readonly value?: TreeValue,
 	) {
 		super();
+		for (const [key, chunks] of fields) {
+			this.fieldData.set(key, this.adoptChildren(chunks));
+		}
+	}
+
+	public acquireField(editor: ChunkEdit, key: FieldKey): ChunkSequenceEditor {
+		editor.assertFor(this);
+		const data = this.fieldData.get(key) ?? [];
+		return editor.acquireField(key, data, (chunks) => {
+			if (chunks.length === 0) {
+				this.fieldData.delete(key);
+			} else {
+				this.fieldData.set(key, data);
+			}
+		});
+	}
+
+	public takeField(editor: ChunkEdit, key: FieldKey): TreeChunk[] {
+		const field = this.acquireField(editor, key);
+		try {
+			return field.splice(0, field.chunks.length);
+		} finally {
+			field.close();
+		}
+	}
+
+	public createField(editor: ChunkEdit, key: FieldKey, chunks: readonly TreeChunk[]): void {
+		editor.assertFor(this);
+		assert(!this.fieldData.has(key), "Field already exists");
+		const field = this.acquireField(editor, key);
+		try {
+			field.splice(0, 0, chunks);
+		} finally {
+			field.close();
+		}
 	}
 
 	public clone(): BasicChunk {
+		this.assertCloneable();
 		const fields = new Map<FieldKey, TreeChunk[]>();
 		for (const [key, children] of this.fields) {
+			assertChunksReadable(children);
 			const field = children.map((child) => {
 				child.referenceAdded();
 				return child;
@@ -73,10 +125,12 @@ export class BasicChunk extends ReferenceCountedBase implements EditableChunk, C
 	}
 
 	public cursor(): ChunkCursor {
+		this.assertReadable();
 		return ChunkCursor.fromChunk(this);
 	}
 
 	public getLocalCursor(reuse?: ChunkLocalCursor): BasicChunkLocalCursor {
+		this.assertReadable();
 		if (reuse instanceof BasicChunkLocalCursor) {
 			reuse.reset(this);
 			return reuse;
@@ -84,16 +138,16 @@ export class BasicChunk extends ReferenceCountedBase implements EditableChunk, C
 		return new BasicChunkLocalCursor(this);
 	}
 
-	public getEditCursor(): BasicChunkLocalCursor {
+	public getEditCursor(edit?: ChunkEdit): BasicChunkLocalCursor {
 		assert(!this.isShared(), 0xde2 /* Editing requires exclusive chunk ownership */);
-		return this.getLocalCursor();
+		const scope = edit ?? this.acquireEditor();
+		scope.assertFor(this);
+		return new BasicChunkLocalCursor(this, scope);
 	}
 
 	protected onUnreferenced(): void {
-		for (const children of this.fields.values()) {
-			for (const child of children) {
-				child.referenceRemoved();
-			}
+		for (const children of this.fieldData.values()) {
+			this.disposeChildren(children);
 		}
 	}
 }
@@ -115,6 +169,7 @@ export class BasicChunkLocalCursor implements ChunkInlineCursor, ChunkEditCursor
 	private keys: readonly FieldKey[] = [];
 	/** Index of the selected field in {@link BasicChunkLocalCursor.keys}, valid only at depth 2. */
 	private keyIndex = 0;
+	private fieldEditor: ChunkSequenceEditor | undefined;
 
 	/**
 	 * Starts at the {@link dummyRoot} field containing the supplied {@link BasicChunk}'s node.
@@ -125,6 +180,7 @@ export class BasicChunkLocalCursor implements ChunkInlineCursor, ChunkEditCursor
 	public constructor(
 		/** Borrowed node storage, replaced only when the exited adapter is reused. */
 		private chunk: BasicChunk,
+		private readonly edit?: ChunkEdit,
 	) {}
 
 	/**
@@ -169,9 +225,33 @@ export class BasicChunkLocalCursor implements ChunkInlineCursor, ChunkEditCursor
 		return this.depth === 0 ? dummyRoot : (this.keys[this.keyIndex] ?? oob());
 	}
 
-	public getFieldChunks(): TreeChunk[] | undefined {
+	public getFieldChunks(): readonly TreeChunk[] | undefined {
 		assert(this.mode === CursorLocationType.Fields, 0xde9 /* Expected a field */);
+		if (this.edit !== undefined) {
+			return this.getFieldEditor()?.chunks;
+		}
 		return this.depth === 0 ? undefined : (this.chunk.fields.get(this.getFieldKey()) ?? []);
+	}
+
+	public getFieldEditor(): ChunkSequenceEditor | undefined {
+		assert(this.edit !== undefined, "An editing scope is required");
+		this.edit.assertFor(this.chunk);
+		assert(this.mode === CursorLocationType.Fields, "Expected a field");
+		if (this.depth === 0) {
+			return undefined;
+		}
+		this.fieldEditor ??= this.chunk.acquireField(this.edit, this.getFieldKey());
+		return this.fieldEditor;
+	}
+
+	private releaseField(): void {
+		this.fieldEditor?.close();
+		this.fieldEditor = undefined;
+	}
+
+	public release(commit = true): void {
+		this.releaseField();
+		this.edit?.close(commit);
 	}
 
 	public getFieldLength(): number {
@@ -220,6 +300,7 @@ export class BasicChunkLocalCursor implements ChunkInlineCursor, ChunkEditCursor
 
 	public nextField(): boolean {
 		assert(this.depth === 2, 0xdef /* Expected an owned field */);
+		this.releaseField();
 		if (++this.keyIndex < this.keys.length) {
 			return true;
 		}
@@ -229,6 +310,7 @@ export class BasicChunkLocalCursor implements ChunkInlineCursor, ChunkEditCursor
 
 	public exitField(): void {
 		assert(this.depth === 2, 0xdf0 /* Expected an owned field */);
+		this.releaseField();
 		this.depth = 1;
 		this.keys = [];
 		this.keyIndex = 0;
@@ -254,21 +336,12 @@ export class BasicChunkLocalCursor implements ChunkInlineCursor, ChunkEditCursor
 	}
 
 	public fork(): BasicChunkLocalCursor {
+		assert(this.edit === undefined, "Editing navigation must not be forked");
 		const cursor = new BasicChunkLocalCursor(this.chunk);
 		cursor.depth = this.depth;
 		// Navigation replaces key arrays rather than modifying them, so forks can share the enumeration snapshot.
 		cursor.keys = this.keys;
 		cursor.keyIndex = this.keyIndex;
 		return cursor;
-	}
-
-	public setFieldChunks(chunks: TreeChunk[]): void {
-		assert(this.depth === 2, 0xdf4 /* Expected a field owned by the node */);
-		assert(!this.chunk.isShared(), 0xdf5 /* Editing requires exclusive chunk ownership */);
-		if (chunks.length === 0) {
-			this.chunk.fields.delete(this.getFieldKey());
-		} else {
-			this.chunk.fields.set(this.getFieldKey(), chunks);
-		}
 	}
 }

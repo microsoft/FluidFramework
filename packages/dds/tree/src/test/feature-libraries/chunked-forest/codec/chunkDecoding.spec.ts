@@ -23,6 +23,7 @@ import {
 import { BasicChunk } from "../../../../feature-libraries/chunked-forest/basicChunk.js";
 import {
 	chunkField,
+	defaultChunkPolicy,
 	makeTreeChunker,
 	tryCoalesceUniformChunks,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -1014,8 +1015,7 @@ describe("chunkDecoding", () => {
 			assertRefCount(basic, "shared"); // aggregated and sequence both own a ref.
 			assert(aggregated instanceof SequenceChunk);
 			assert(compareArrays(aggregated.subChunks, [basic, basic2]));
-			basic.referenceRemoved();
-			basic2.referenceRemoved();
+			aggregated.referenceRemoved();
 		}
 
 		assertRefCount(sequence, 1);
@@ -1038,6 +1038,48 @@ describe("chunkDecoding", () => {
 			assertRefCount(basic, 0);
 			assertRefCount(basic2, 0);
 		}
+	});
+
+	it("deaggregates shared sequences without exposing their child array", () => {
+		const child = new BasicChunk(brand("foo"), new Map());
+		const other = new BasicChunk(brand("bar"), new Map());
+		const sequence = new SequenceChunk([child, other]);
+		sequence.referenceAdded();
+		const extracted = deaggregateChunks(sequence);
+		assert.notEqual(extracted, sequence.subChunks);
+		assertRefCount(child, "shared");
+		for (const chunk of extracted) {
+			chunk.referenceRemoved();
+		}
+		extracted.length = 0;
+		assert.equal(sequence.subChunks[0], child);
+		assert.equal(sequence.topLevelLength, 2);
+		assertRefCount(child, 1);
+		sequence.referenceRemoved();
+		assertRefCount(child, 0);
+	});
+
+	it("balances oversized sequence groups when aggregating decoded fields", () => {
+		const count = 4097;
+		const expected = Array.from({ length: count }, (_, value) => ({
+			type: brand<TreeNodeSchemaIdentifier>("number"),
+			value,
+		}));
+		const leaves = expected.map((node) => new BasicChunk(node.type, new Map(), node.value));
+		const groups = [
+			new SequenceChunk(leaves.slice(0, 2048)),
+			new SequenceChunk(leaves.slice(2048)),
+		];
+		const sequence = new SequenceChunk(groups);
+		const fields = deaggregateChunks(sequence);
+		assert.deepEqual(fields, groups);
+		const combined = aggregateChunks(fields);
+		assert(combined instanceof SequenceChunk);
+		assert(combined.subChunks.length <= defaultChunkPolicy.sequenceChunkSplitThreshold);
+		assert(combined.subChunks.every((chunk) => chunk instanceof SequenceChunk));
+		assertChunkCursorEquals(combined, expected);
+		combined.referenceRemoved();
+		assert(leaves.every((leaf) => leaf.isUnreferenced()));
 	});
 
 	describe("EncodedNestedArrayShape", () => {

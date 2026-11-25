@@ -40,7 +40,8 @@ import { BasicChunk } from "./basicChunk.js";
 import { ChunkCursor, ChunkSequenceCursor } from "./chunkCursor.js";
 import { ChunkEditTraversal } from "./chunkEditTraversal.js";
 import { getFieldLength } from "./chunkEditing.js";
-import { type IChunker, chunkField, chunkTree } from "./chunkTree.js";
+import { ChunkSequence } from "./chunkSequence.js";
+import { type IChunker, chunkField, chunkTree, groupChunks } from "./chunkTree.js";
 
 export { ensureExclusiveBasicChunk } from "./chunkEditTraversal.js";
 export { locateNodeInChunks } from "./chunkEditing.js";
@@ -56,6 +57,13 @@ function makeRoot(): BasicChunk {
  */
 export class ChunkedForest implements IEditableForest, WithBreakable {
 	private activeVisitor?: DeltaVisitor;
+	private readonly rootSequence: ChunkSequence;
+
+	public get roots(): BasicChunk {
+		const root = this.rootSequence.chunks[0];
+		assert(root instanceof BasicChunk, "Forest root must be a basic chunk");
+		return root;
+	}
 
 	private readonly deltaVisitors: Set<() => AnnouncedVisitor> = new Set();
 	readonly #events = createEmitter<ForestEvents>();
@@ -68,13 +76,15 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 	 * @param anchors - anchorSet used to track location in this forest across changes. Callers of applyDelta must ensure this is updated accordingly.
 	 */
 	public constructor(
-		public roots: BasicChunk,
+		roots: BasicChunk,
 		public readonly schema: TreeStoredSchemaSubscription,
 		public readonly chunker: IChunker,
 		public readonly anchors: AnchorSet = new AnchorSet(),
 		public readonly idCompressor?: IIdCompressor,
 		public readonly breaker: Breakable = new Breakable("ChunkedForest"),
-	) {}
+	) {
+		this.rootSequence = new ChunkSequence([roots]);
+	}
 
 	public get isEmpty(): boolean {
 		this.breaker.use();
@@ -83,6 +93,7 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 
 	public clone(schema: TreeStoredSchemaSubscription, breaker?: Breakable): ChunkedForest {
 		this.breaker.use();
+		assert(this.activeVisitor === undefined, "Cannot clone a forest with an acquired visitor");
 		this.roots.referenceAdded();
 		return new ChunkedForest(
 			this.roots,
@@ -125,20 +136,21 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 			0x76a /* Must release existing visitor before acquiring another */,
 		);
 
-		if (this.roots.isShared()) {
-			const oldRoots = this.roots;
-			this.roots = oldRoots.clone();
-			oldRoots.referenceRemoved();
-		}
-
-		const editor = new ChunkEditTraversal(this.roots, {
-			policy: this.chunker,
-			idCompressor: this.idCompressor,
-		});
+		const rootSequenceEditor = this.rootSequence.acquireEditor();
+		const rootEdit = rootSequenceEditor.acquireChild(0);
+		const editor = new ChunkEditTraversal(
+			this.roots,
+			{
+				policy: this.chunker,
+				idCompressor: this.idCompressor,
+			},
+			rootEdit,
+		);
 		const forestVisitor = {
 			forest: this,
 			free(): void {
 				editor.free();
+				rootSequenceEditor.close();
 				assert(
 					this.forest.activeVisitor !== undefined,
 					0x76b /* Multiple free calls for same visitor */,
@@ -153,8 +165,7 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 					getFieldLength(field) === count,
 					0xd1e /* Destroy count must match field length */,
 				);
-				this.forest.roots.fields.delete(detachedField);
-				for (const chunk of field) {
+				for (const chunk of this.forest.roots.takeField(rootEdit, detachedField)) {
 					chunk.referenceRemoved();
 				}
 			},
@@ -171,7 +182,11 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 						shouldRechunk: () => true,
 					}),
 				);
-				this.forest.roots.fields.set(destination, chunks);
+				this.forest.roots.createField(
+					rootEdit,
+					destination,
+					groupChunks(chunks, this.forest.chunker),
+				);
 				this.forest.#events.emit("afterRootFieldCreated", destination);
 			},
 			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
@@ -211,10 +226,13 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 					getFieldLength(content) === range.end - range.start,
 					0xe03 /* Replacement lengths must match */,
 				);
-				const removed = editor.splice(range, content);
-				this.forest.roots.fields.delete(source);
+				const removed = editor.splice(range, this.forest.roots.takeField(rootEdit, source));
 				if (removed.length > 0) {
-					this.forest.roots.fields.set(destination, removed);
+					this.forest.roots.createField(
+						rootEdit,
+						destination,
+						groupChunks(removed, this.forest.chunker),
+					);
 				}
 			},
 			/**
@@ -238,8 +256,10 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 					destination <= editor.getFieldLength(),
 					0xd23 /* Attach destination must not exceed field length */,
 				);
-				editor.splice({ start: destination, end: destination }, sourceField);
-				this.forest.roots.fields.delete(source);
+				editor.splice(
+					{ start: destination, end: destination },
+					this.forest.roots.takeField(rootEdit, source),
+				);
 			},
 			/**
 			 * Detaches the range from the current field and transfers it to the given destination if any.
@@ -272,7 +292,11 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 					}
 				} else {
 					if (newField.length > 0) {
-						this.forest.roots.fields.set(destination, newField);
+						this.forest.roots.createField(
+							rootEdit,
+							destination,
+							groupChunks(newField, this.forest.chunker),
+						);
 					}
 				}
 			},

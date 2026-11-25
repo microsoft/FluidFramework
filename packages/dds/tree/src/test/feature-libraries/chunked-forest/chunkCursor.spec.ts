@@ -156,6 +156,7 @@ describe("chunkCursor", () => {
 			const replacement = numericBasicChunk(2);
 			const chunks: TreeChunk[] = [original];
 			const calls: string[] = [];
+			let adapter: ReturnType<BasicChunk["getEditCursor"]> | undefined;
 			const cursor = new ChunkCursor(new ChunkSequenceCursor(chunks), {
 				prepareChunk: (owned, index) => {
 					assert.equal(owned, chunks);
@@ -169,7 +170,12 @@ describe("chunkCursor", () => {
 					assert.equal(chunk, replacement);
 					assert.equal(original.isUnreferenced(), true);
 					calls.push("adapter");
-					return replacement.getEditCursor();
+					adapter = replacement.getEditCursor();
+					return adapter;
+				},
+				releaseChunk: () => {
+					adapter?.release();
+					adapter = undefined;
 				},
 			});
 			assert(cursor.firstNode());
@@ -213,6 +219,7 @@ describe("chunkCursor", () => {
 			assert.equal(chunk.firstNodeCalls, 1);
 			const editor = chunk.getEditCursor();
 			assert.equal(editor.getFieldChunks, undefined);
+			editor.release();
 			chunk.referenceRemoved();
 		});
 
@@ -337,17 +344,14 @@ describe("chunkCursor", () => {
 		describe("sequence boundaries", () => {
 			it("reuses the owning field array while scanning siblings in both directions", () => {
 				let fieldLookups = 0;
-				class CountedFields extends Map<FieldKey, TreeChunk[]> {
-					public override get(key: FieldKey): TreeChunk[] | undefined {
+				class CountedChunk extends BasicChunk {
+					public override get fields(): ReadonlyMap<FieldKey, readonly TreeChunk[]> {
 						fieldLookups++;
-						return super.get(key);
+						return super.fields;
 					}
 				}
 				const children = Array.from({ length: 100 }, (_, index) => numericBasicChunk(index));
-				const root = new BasicChunk(
-					brand("parent"),
-					new CountedFields([[EmptyKey, children]]),
-				);
+				const root = new CountedChunk(brand("parent"), new Map([[EmptyKey, children]]));
 				const cursor = root.cursor();
 				cursor.enterNode(0);
 				cursor.enterField(EmptyKey);
@@ -362,6 +366,40 @@ describe("chunkCursor", () => {
 					assert.equal(cursor.seekNodes(-1), index > 0);
 				}
 				assert(fieldLookups < 10, `Expected bounded field lookups, observed ${fieldLookups}`);
+				root.referenceRemoved();
+			});
+
+			it("jumps to nodes without scanning through the chunk list", () => {
+				let lengthReads = 0;
+				class CountedChunk extends UniformChunk {
+					public override get topLevelLength(): number {
+						lengthReads++;
+						return super.topLevelLength;
+					}
+				}
+				const shape = new TreeShape(brand(numberSchema.identifier), true, []);
+				const chunks = Array.from(
+					{ length: 4096 },
+					(_, index) =>
+						new CountedChunk(shape.withTopLevelLength(2), [index * 2, index * 2 + 1]),
+				);
+				const root = new SequenceChunk(chunks);
+				const cursor = root.cursor();
+				lengthReads = 0;
+				// The stride is arbitrary but odd, so positions do not repeat before all 8192 are visited.
+				const stride = 7919;
+				for (let i = 0; i < 100; i++) {
+					const index = (i * stride) % 8192;
+					assert.equal(cursor.getFieldLength(), 8192);
+					cursor.enterNode(index);
+					assert.equal(cursor.value, index);
+					const destination = 8191 - index;
+					assert(cursor.seekNodes(destination - index));
+					assert.equal(cursor.value, destination);
+					assert.equal(cursor.fieldIndex, destination);
+					cursor.exitNode();
+				}
+				assert(lengthReads < 1000, `Unexpected sibling scans: ${lengthReads} length reads`);
 				root.referenceRemoved();
 			});
 

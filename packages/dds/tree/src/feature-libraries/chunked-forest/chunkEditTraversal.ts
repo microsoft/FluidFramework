@@ -5,15 +5,15 @@
 
 import { assert, debugAssert, fail, oob } from "@fluidframework/core-utils/internal";
 
-import type {
-	FieldKey,
-	ITreeCursorSynchronous,
-	Range,
-	TreeChunk,
-	UpPath,
-	Value,
+import {
+	CursorLocationType,
+	type FieldKey,
+	type ITreeCursorSynchronous,
+	type Range,
+	type TreeChunk,
+	type UpPath,
+	type Value,
 } from "../../core/index.js";
-import { replaceArrayRange } from "../../util/index.js";
 
 import { BasicChunk } from "./basicChunk.js";
 import { ChunkCursor, type ChunkLocalCursor } from "./chunkCursor.js";
@@ -24,20 +24,30 @@ import {
 	locateNodeInChunks,
 	validateChunkEditRange,
 } from "./chunkEditing.js";
+import { type ChunkEdit, ChunkSequenceEditor } from "./chunkSequence.js";
 import {
 	type ChunkCompressor,
+	balanceField,
 	basicChunkTree,
 	splitFieldAtIndex,
 	coalesceUniformChunks,
 } from "./chunkTree.js";
+
+/** Narrows the additional contract supplied by editing adapters. */
+function assertEditingCursor(cursor: ChunkLocalCursor): asserts cursor is ChunkEditCursor {
+	assert(
+		"release" in cursor && typeof cursor.release === "function",
+		"Expected an editing cursor",
+	);
+}
 
 /**
  * Tries {@link ChunkEditCursor.trySplice}, then performs a generic splice if the field exposes child chunks.
  * @remarks
  * Requires an exclusively owned field. Returns undefined for unsupported inline edits without consuming content.
  * Generic edits to a chunk's root sequence must preserve {@link ChunkLocalCursor.rootLength}; its owning parent handles length changes.
- * Generic splices use {@link ChunkEditCursor.getFieldChunks} and {@link ChunkEditCursor.setFieldChunks}
- * to update the array and finalize format-specific bookkeeping, leaving the adapter at the same field.
+ * Generic splices use {@link ChunkEditCursor.getFieldEditor} to transfer references and publish updated
+ * metadata, leaving the adapter at the same field.
  * @param cursor - Active {@link ChunkEditCursor}, positioned at the field to edit.
  * @param range - Half-open logical node range to remove from the whole field.
  * @param content - Incoming chunks, with one owned reference per entry; the array itself is not modified.
@@ -55,17 +65,13 @@ export function trySpliceField(
 	if (specialized !== undefined) {
 		return specialized;
 	}
-	const chunks = cursor.getFieldChunks?.();
+	const field = cursor.getFieldEditor?.();
 	if (
-		chunks === undefined ||
+		field === undefined ||
 		(cursor.atChunkRoot() && range.end - range.start !== getFieldLength(content))
 	) {
 		return undefined;
 	}
-	assert(
-		cursor.setFieldChunks !== undefined,
-		0xe07 /* Exposed child arrays require write-back support */,
-	);
 	const nonEmptyContent = content.some((chunk) => chunk.topLevelLength === 0)
 		? content.filter((chunk) => {
 				if (chunk.topLevelLength === 0) {
@@ -75,24 +81,24 @@ export function trySpliceField(
 				return true;
 			})
 		: content;
-	const removed = spliceChunkField(chunks, range, nonEmptyContent, compressor);
-	cursor.setFieldChunks(chunks);
-	return removed;
+	return spliceChunkField(field, range, nonEmptyContent, compressor);
 }
 
 /**
  * Splices an exclusively owned child array, first offering contained replacements to the child format.
  * @remarks
- * Consumes incoming references and returns owned outgoing references. The caller finalizes field bookkeeping.
+ * Consumes incoming references and returns owned outgoing references.
+ * The field editor publishes structural changes and their offsets together.
  * Contained replacements delegate through {@link trySpliceField}; the fallback uses {@link splitFieldAtIndex}
  * and {@link coalesceUniformChunks} to preserve neighboring storage where possible.
  */
 function spliceChunkField(
-	chunks: TreeChunk[],
+	field: ChunkSequenceEditor,
 	range: Range,
 	content: readonly TreeChunk[],
 	compressor: ChunkCompressor,
 ): TreeChunk[] {
+	const chunks = field.chunks;
 	const count = range.end - range.start;
 	if (count > 0 && count === getFieldLength(content)) {
 		const { chunk, indexOfChunk, indexWithinChunk } = locateNodeInChunks(chunks, range.start);
@@ -101,40 +107,40 @@ function spliceChunkField(
 			chunk.supportsRootEdits() &&
 			indexWithinChunk + count <= chunk.topLevelLength
 		) {
-			// Keep a speculative clone out of the owning array until the edit succeeds, so a declined attempt
-			// leaves the parent's reference unchanged and can fall back without consuming incoming content.
-			const editable = chunk.isShared() ? chunk.clone() : chunk;
-			const replaced = trySpliceField(
-				editable.getEditCursor(),
-				{ start: indexWithinChunk, end: indexWithinChunk + count },
-				content,
-				compressor,
-			);
+			const revision = field.revision;
+			const scope = field.acquireChild(indexOfChunk, true, true);
+			assert(isEditableChunk(scope.chunk), "Expected editable storage");
+			const cursor = scope.chunk.getEditCursor(scope);
+			let replaced: TreeChunk[] | undefined;
+			try {
+				replaced = trySpliceField(
+					cursor,
+					{ start: indexWithinChunk, end: indexWithinChunk + count },
+					content,
+					compressor,
+				);
+			} finally {
+				cursor.release(replaced !== undefined);
+			}
 			if (replaced !== undefined) {
-				if (editable !== chunk) {
-					chunks[indexOfChunk] = editable;
-					chunk.referenceRemoved();
+				if (field.revision !== revision) {
+					balanceField(field, compressor.policy);
 				}
 				return replaced;
-			}
-			if (editable !== chunk) {
-				// A declined edit leaves the input untouched; discard the speculative clone before splitting.
-				editable.referenceRemoved();
 			}
 		}
 	}
 	// Splitting the start first prevents the end split from shifting its saved chunk index.
-	// If repeated scans become costly, splitting both boundaries in one pass could avoid walking the same prefix twice.
-	const start = splitFieldAtIndex(chunks, range.start, compressor);
-	const end = splitFieldAtIndex(chunks, range.end, compressor);
-	const removed = chunks.slice(start, end);
-	replaceArrayRange(chunks, start, end, content);
+	const start = splitFieldAtIndex(field, range.start, compressor);
+	const end = splitFieldAtIndex(field, range.end, compressor);
+	const removed = field.splice(start, end - start, content);
 	// Check the incoming chunks and one neighbor on each side. With no incoming chunks, this covers
 	// the newly adjacent pair on either side of the removed range.
-	coalesceUniformChunks(chunks, compressor.policy, {
+	coalesceUniformChunks(field, compressor.policy, {
 		start: Math.max(0, start - 1),
 		end: Math.min(chunks.length, start + content.length + 1),
 	});
+	balanceField(field, compressor.policy);
 	return removed;
 }
 
@@ -143,15 +149,16 @@ function spliceChunkField(
  * @remarks
  * Mutates the owning chunk array, splitting and converting only the selected node as needed.
  * The returned chunk is owned by that array; no additional reference is transferred to the caller.
- * @param chunks - Exclusively owned child array whose references may be replaced during normalization.
+ * @param field - Owning field editor or exclusively owned child array used during normalization.
  * @param index - Logical index of the selected node in the whole array's content.
  * @param compressor - {@link ChunkCompressor} used by {@link splitFieldAtIndex} and {@link basicChunkTree}.
  */
 export function ensureExclusiveBasicChunk(
-	chunks: TreeChunk[],
+	field: TreeChunk[] | ChunkSequenceEditor,
 	index: number,
 	compressor: ChunkCompressor,
 ): BasicChunk {
+	const chunks = field instanceof ChunkSequenceEditor ? field.chunks : field;
 	const { chunk, indexOfChunk } = locateNodeInChunks(chunks, index);
 	let finalIndexOfChunk: number;
 	let basicChunk: BasicChunk;
@@ -161,8 +168,8 @@ export function ensureExclusiveBasicChunk(
 	} else {
 		// Split the end first so the last call returns the target node's final chunk index.
 		if (chunk.topLevelLength > 1) {
-			splitFieldAtIndex(chunks, index + 1, compressor);
-			finalIndexOfChunk = splitFieldAtIndex(chunks, index, compressor);
+			splitFieldAtIndex(field, index + 1, compressor);
+			finalIndexOfChunk = splitFieldAtIndex(field, index, compressor);
 		} else {
 			finalIndexOfChunk = indexOfChunk;
 		}
@@ -173,13 +180,24 @@ export function ensureExclusiveBasicChunk(
 		cursor.firstNode();
 		// Conversion can reuse a BasicChunk inside the source, so acquire it before releasing the source.
 		basicChunk = basicChunkTree(cursor, compressor);
-		chunks[finalIndexOfChunk] = basicChunk;
+		if (field instanceof ChunkSequenceEditor) {
+			field.splice(finalIndexOfChunk, 1, [basicChunk]);
+		} else {
+			field[finalIndexOfChunk] = basicChunk;
+		}
 		isolatedChunk.referenceRemoved();
 	}
 	debugAssert(() => chunks[finalIndexOfChunk] === basicChunk || "bad child index");
+	if (field instanceof ChunkSequenceEditor) {
+		const scope = field.acquireChild(finalIndexOfChunk);
+		assert(scope.chunk instanceof BasicChunk, "Expected a basic chunk");
+		const exclusive = scope.chunk;
+		scope.close();
+		return exclusive;
+	}
 	if (basicChunk.isShared()) {
 		const exclusiveChunk = basicChunk.clone();
-		chunks[finalIndexOfChunk] = exclusiveChunk;
+		field[finalIndexOfChunk] = exclusiveChunk;
 		basicChunk.referenceRemoved();
 		return exclusiveChunk;
 	}
@@ -203,6 +221,7 @@ export class ChunkEditTraversal
 {
 	/** Shared cursor that applies the editor's ownership policy before crossing chunk boundaries. */
 	private readonly navigation: ChunkCursor;
+	private prepared: ChunkEdit | undefined;
 
 	/**
 	 * Starts on the supplied root node, ready to enter one of its fields.
@@ -213,12 +232,29 @@ export class ChunkEditTraversal
 		root: BasicChunk,
 		/** Chunking and ID-compression context used for all edits during this traversal. */
 		private readonly compressor: ChunkCompressor,
+		rootEdit?: ChunkEdit,
 	) {
-		this.navigation = new ChunkCursor(root.getEditCursor(), {
+		this.navigation = new ChunkCursor(root.getEditCursor(rootEdit), {
 			prepareChunk: (chunks, index, location) => this.prepareChunk(chunks, index, location),
 			cursorForChunk: (chunk) => this.cursorForChunk(chunk),
+			releaseChunk: (cursor) => {
+				assertEditingCursor(cursor);
+				this.balanceCursorField(cursor);
+				cursor.release();
+			},
+			restoreField: (cursor) => this.balanceCursorField(cursor),
 		});
 		this.enterNode(0);
+	}
+
+	private balanceCursorField(cursor: ChunkLocalCursor): void {
+		assertEditingCursor(cursor);
+		if (cursor.mode === CursorLocationType.Fields) {
+			const field = cursor.getFieldEditor?.();
+			if (field !== undefined) {
+				balanceField(field, this.compressor.policy);
+			}
+		}
 	}
 
 	/**
@@ -270,11 +306,8 @@ export class ChunkEditTraversal
 	 */
 	private get editingCursor(): ChunkEditCursor {
 		const local = this.navigation.localAdapter;
-		assert(
-			"getFieldChunks" in local || "trySplice" in local,
-			0xe08 /* Expected an editing cursor */,
-		);
-		return local as ChunkEditCursor;
+		assertEditingCursor(local);
+		return local;
 	}
 
 	/** Makes the selected child exclusive, using {@link ensureExclusiveBasicChunk} for formats without editing support. */
@@ -283,30 +316,27 @@ export class ChunkEditTraversal
 		index: number,
 		existingLocation?: ReturnType<typeof locateNodeInChunks>,
 	): ReturnType<typeof locateNodeInChunks> {
-		const owned =
-			this.editingCursor.getFieldChunks?.() ?? fail(0xe09 /* Expected owned child chunks */);
+		const field =
+			this.editingCursor.getFieldEditor?.() ?? fail(0xe09 /* Expected owned child chunks */);
+		const owned = field.chunks;
 		assert(owned === chunks, 0xe0a /* Expected the active owning array */);
-		const location = existingLocation ?? locateNodeInChunks(owned, index);
-		const { chunk, indexOfChunk } = location;
-		if (!isEditableChunk(chunk)) {
-			ensureExclusiveBasicChunk(owned, index, this.compressor);
-			return locateNodeInChunks(owned, index);
+		let location = existingLocation ?? locateNodeInChunks(owned, index);
+		if (!isEditableChunk(location.chunk)) {
+			ensureExclusiveBasicChunk(field, index, this.compressor);
+			location = locateNodeInChunks(owned, index);
 		}
-		// Ancestors are already exclusive: cloning them has exposed any indirect sharing of this child.
-		if (chunk.isShared()) {
-			const exclusive = chunk.clone();
-			owned[indexOfChunk] = exclusive;
-			chunk.referenceRemoved();
-			return { ...location, chunk: exclusive };
-		}
-		return location;
+		this.prepared = field.acquireChild(location.indexOfChunk, true);
+		return { ...location, chunk: this.prepared.chunk };
 	}
 
 	/** Obtains the prepared child's {@link ChunkEditCursor} after the ownership check. */
 	private cursorForChunk(chunk: TreeChunk): ChunkLocalCursor {
 		// Editing adapters may carry format-specific mutation state, so do not reuse a read adapter here.
 		assert(isEditableChunk(chunk), 0xe0b /* Expected editable child storage */);
-		return chunk.getEditCursor();
+		const scope = this.prepared;
+		assert(scope?.chunk === chunk, "Missing prepared editing scope");
+		this.prepared = undefined;
+		return chunk.getEditCursor(scope);
 	}
 
 	/**
@@ -361,10 +391,10 @@ export class ChunkEditTraversal
 	 * Requires a field with a separately stored child array; index is relative to that whole field.
 	 */
 	private enterBasicNode(index: number): void {
-		const chunks =
-			this.editingCursor.getFieldChunks?.() ??
+		const field =
+			this.editingCursor.getFieldEditor?.() ??
 			fail(0xe0e /* Expected separately stored children */);
-		ensureExclusiveBasicChunk(chunks, index, this.compressor);
+		ensureExclusiveBasicChunk(field, index, this.compressor);
 		this.enterNode(index);
 	}
 }

@@ -13,6 +13,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 import {
 	CursorLocationType,
+	cursorChunk,
 	EmptyKey,
 	type FieldKey,
 	type JsonableTree,
@@ -186,6 +187,26 @@ describe("chunkTree", () => {
 	});
 
 	describe("uniformChunkFromCursor", () => {
+		it("keeps the values array it builds instead of copying it", () => {
+			const cursor = fieldJsonCursor([10, 20, 30]);
+			cursor.firstNode();
+			const numberShape = new TreeShape(brand(numberSchema.identifier), true, []);
+			const takeValues = UniformChunk.takeValues;
+			let collectedValues: TreeValue[] | undefined;
+			UniformChunk.takeValues = (shape, values, idCompressor) => {
+				collectedValues = values;
+				return takeValues(shape, values, idCompressor);
+			};
+			try {
+				const chunk = uniformChunkFromCursor(cursor, numberShape, 3, true);
+				assert.equal(chunk.values, collectedValues);
+				assert.deepEqual(chunk.values, [10, 20, 30]);
+				chunk.referenceRemoved();
+			} finally {
+				UniformChunk.takeValues = takeValues;
+			}
+		});
+
 		it("maxTopLevelLength and skipLastNavigation are respected", () => {
 			const uniformPolygon = polygonTree.dataFactory();
 			const polygonReference = cursorForJsonableTreeNode(polygonTree.reference);
@@ -288,13 +309,18 @@ describe("chunkTree", () => {
 
 	describe("chunkRange", () => {
 		it("inlines a reused SequenceChunk without duplicating its nodes", () => {
-			// A chunk-backed cursor enables chunkRange's reuse path rather than rebuilding the nodes.
 			const sequence = new SequenceChunk([
 				new BasicChunk(brand(numberSchema.identifier), new Map(), 0),
 				new BasicChunk(brand(numberSchema.identifier), new Map(), 1),
 			]);
 			const cursor = sequence.cursor();
 			assert(cursor.firstNode());
+			// Expose the whole sequence, not just the leaf selected by ChunkCursor.
+			Object.defineProperties(cursor, {
+				[cursorChunk]: { value: sequence },
+				chunkStart: { value: 0 },
+				chunkLength: { value: sequence.topLevelLength },
+			});
 
 			const chunks = chunkRange(
 				cursor,
@@ -307,7 +333,42 @@ describe("chunkTree", () => {
 				chunks.reduce((length, chunk) => length + chunk.topLevelLength, 0),
 				sequence.topLevelLength,
 			);
-			assertChunkCursorEquals(new SequenceChunk(chunks), numberSequenceField(2));
+			const result = new SequenceChunk(chunks);
+			assertChunkCursorEquals(result, numberSequenceField(2));
+			result.referenceRemoved();
+			sequence.referenceRemoved();
+		});
+
+		it("keeps short fields flat and groups long fields with the default chunker", () => {
+			const policy = makeTreeChunker(
+				new TreeStoredSchemaRepository(schema),
+				defaultSchemaPolicy,
+				defaultIncrementalEncodingPolicy,
+			);
+			try {
+				for (const length of [1, 2, 3, 64, 65, 4097]) {
+					const expected = Array.from({ length }, () => ({
+						type: brand<TreeNodeSchemaIdentifier>(structOptional.identifier),
+					}));
+					const chunks = chunkField(cursorForJsonableTreeField(expected), {
+						policy,
+						idCompressor: undefined,
+					});
+					assert(chunks.length <= defaultChunkPolicy.sequenceChunkSplitThreshold);
+					assert(
+						chunks.every((chunk) =>
+							length <= defaultChunkPolicy.sequenceChunkSplitThreshold
+								? chunk instanceof BasicChunk
+								: chunk instanceof SequenceChunk,
+						),
+					);
+					const result = new SequenceChunk(chunks);
+					assertChunkCursorEquals(result, expected);
+					result.referenceRemoved();
+				}
+			} finally {
+				policy.dispose();
+			}
 		});
 
 		it("single basic chunk", () => {
@@ -435,7 +496,7 @@ describe("chunkTree", () => {
 					assert.equal(cursor.fieldIndex, fieldLength - 1);
 
 					function checkChunks(
-						innerChunks: TreeChunk[],
+						innerChunks: readonly TreeChunk[],
 						expectedDepthRemaining: number,
 					): void {
 						assert(innerChunks.length <= threshold);

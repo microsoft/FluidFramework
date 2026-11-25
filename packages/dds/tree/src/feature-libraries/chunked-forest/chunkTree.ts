@@ -36,6 +36,8 @@ import {
 import { isStableNodeIdentifier } from "../node-identifier/index.js";
 
 import { BasicChunk } from "./basicChunk.js";
+import { getFieldLength, locateNodeInChunks } from "./chunkEditing.js";
+import { ChunkSequenceEditor } from "./chunkSequence.js";
 import type { IncrementalEncodingPolicy } from "./codec/index.js";
 import { SequenceChunk } from "./sequenceChunk.js";
 import { type FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
@@ -57,7 +59,7 @@ export function makeTreeChunker(
 	return new Chunker(
 		schema,
 		policy,
-		defaultChunkPolicy.sequenceChunkInlineThreshold,
+		defaultChunkPolicy.sequenceChunkSplitThreshold,
 		defaultChunkPolicy.sequenceChunkInlineThreshold,
 		defaultChunkPolicy.uniformChunkNodeCount,
 		defaultChunkPolicy.uniformChunkNodeCountDynamicTargetMax,
@@ -452,10 +454,9 @@ export function tryShapeFromFieldSchema(
  * Use `makeTreeChunker` to create a policy with the defaults, but leverages to schema.
  */
 export const defaultChunkPolicy: ChunkPolicy = {
-	// Currently ChunkedForest and BasicTreeCursor don't handle SequenceChunks very efficiently:
-	// they likely add more overhead than they save for now, so don't create them.
-	sequenceChunkSplitThreshold: Number.POSITIVE_INFINITY,
-	sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
+	// Keep short fields flat and bound the child arrays of long fields.
+	sequenceChunkSplitThreshold: 64,
+	sequenceChunkInlineThreshold: 16,
 	// Current UniformChunk handling doesn't scale well to large chunks, so set a modest size limit:
 	uniformChunkNodeCount: 400,
 	uniformChunkNodeCountDynamicTargetMax: 25,
@@ -601,7 +602,7 @@ export function chunkRange(
 		(cursor.mode === CursorLocationType.Nodes) === length > 0,
 		0xb59 /* Should be in nodes mode if not past end */,
 	);
-	let output: TreeChunk[] = [];
+	const output: TreeChunk[] = [];
 	let remaining = length;
 	while (remaining > 0) {
 		assert(cursor.mode === CursorLocationType.Nodes, 0x57f /* should be in nodes */);
@@ -627,9 +628,10 @@ export function chunkRange(
 							subChunk.referenceAdded();
 							output.push(subChunk);
 						}
+					} else {
+						chunk.referenceAdded();
+						output.push(chunk);
 					}
-					chunk.referenceAdded();
-					output.push(chunk);
 					remaining -= chunkLength;
 					reusedChunk = true;
 					let seek = chunkLength;
@@ -679,57 +681,225 @@ export function chunkRange(
 	// when their combined size fits within the applicable chunk size limit.
 	// Newly converted runs are already packed by uniformChunkFromCursor.
 
-	// If output is large, group it into a tree of sequence chunks.
-	while (output.length > chunkCompressor.policy.sequenceChunkSplitThreshold) {
-		const chunkCount = Math.ceil(
-			output.length / chunkCompressor.policy.sequenceChunkSplitThreshold,
-		);
-		const newOutput: TreeChunk[] = [];
-		// Rounding down, and add an extra item to some of the chunks.
-		const chunkSize = Math.floor(output.length / chunkCount);
-		// number of chunks to add an extra item to to make total line up.
-		const extra = output.length % chunkCount;
-		let previousEnd = 0;
-		for (let index = 0; index < chunkCount; index++) {
-			// If we are in the first `extra` items, add an extra to this chunk.
-			const end = previousEnd + chunkSize + (index < extra ? 1 : 0);
-			newOutput.push(new SequenceChunk(output.slice(previousEnd, end)));
-			previousEnd = end;
-		}
-		assert(previousEnd === output.length, 0x581 /* chunks should add up to total */);
-		output = newOutput;
-	}
-
-	return output;
+	return groupChunks(output, chunkCompressor.policy);
 }
 
 /**
- * Walks the `chunks` array of a field and splits a chunk if needed so that `nodeIndex` sits on
- * a chunk boundary. After the call, inserting a chunk at the returned index would place its
- * first top-level node at index `nodeIndex` when treating `chunks` as a field.
+ * The two-child limit retains the original grouping behavior.
+ * Splitting three children into two groups requires a one-child group.
+ * These groups can accumulate into deep chains; guaranteeing logarithmic height at this limit requires a different balancing rule.
+ */
+const binarySequenceChunkSplitThreshold = 2;
+
+/**
+ * Groups child arrays into bounded sequences, joining unequal-height boundaries.
+ * Consumes the input's owning references and returns owning references to the grouped storage.
+ * Limits of at least three keep groups half full with equal leaf depth.
+ * The two-child policy retains its original grouping behavior.
+ */
+export function groupChunks(chunks: TreeChunk[], policy: ChunkPolicy): TreeChunk[] {
+	const maximum = Math.floor(policy.sequenceChunkSplitThreshold);
+	if (
+		maximum === Number.POSITIVE_INFINITY ||
+		maximum === binarySequenceChunkSplitThreshold ||
+		uniformChunkHeight(chunks, maximum) !== undefined
+	) {
+		let grouped = chunks;
+		while (grouped.length > maximum) {
+			grouped = wrapChunkGroups(grouped, maximum);
+		}
+		return grouped;
+	}
+
+	let output: TreeChunk[] = [];
+	let height = 0;
+	const pending = [chunks.values()];
+	while (pending.length > 0) {
+		const next = (pending.at(-1) ?? oob()).next();
+		if (next.done === true) {
+			pending.pop();
+			continue;
+		}
+		const chunk = next.value;
+		const nextHeight = chunk instanceof SequenceChunk ? chunk.getBalancedHeight(maximum) : 0;
+		if (nextHeight === undefined) {
+			assert(chunk instanceof SequenceChunk, "Only sequences can have unbalanced children");
+			pending.push(chunk.takeChildren().values());
+			continue;
+		}
+		if (output.length === 0) {
+			output.push(chunk);
+			height = nextHeight;
+		} else if (height === nextHeight) {
+			output.push(chunk);
+		} else if (height > nextHeight) {
+			output.push(...joinChunks(output.pop() ?? oob(), height, chunk, nextHeight, maximum));
+		} else {
+			const left = output.length === 1 ? (output[0] ?? oob()) : new SequenceChunk(output);
+			const leftHeight = output.length === 1 ? height : height + 1;
+			output = joinChunks(left, leftHeight, chunk, nextHeight, maximum);
+			height = nextHeight;
+		}
+		if (output.length > maximum) {
+			output = wrapChunkGroups(output, maximum);
+			height++;
+		}
+	}
+	return output;
+}
+
+/** Returns the common height when every child is a balanced group or a leaf. */
+function uniformChunkHeight(
+	chunks: readonly TreeChunk[],
+	maximum: number,
+): number | undefined {
+	let height: number | undefined;
+	for (const chunk of chunks) {
+		const next = chunk instanceof SequenceChunk ? chunk.getBalancedHeight(maximum) : 0;
+		if (next === undefined || (height !== undefined && height !== next)) {
+			return undefined;
+		}
+		height = next;
+	}
+	return height ?? 0;
+}
+
+/** Consumes equal-height children, distributing them evenly over one level of new groups. */
+function wrapChunkGroups(chunks: TreeChunk[], maximum: number): TreeChunk[] {
+	const expectedNumberOfGroups = Math.ceil(chunks.length / maximum);
+	const childrenPerGroup = Math.floor(chunks.length / expectedNumberOfGroups);
+	const extra = chunks.length % expectedNumberOfGroups;
+	const output: TreeChunk[] = [];
+	let start = 0;
+	for (let index = 0; index < expectedNumberOfGroups; index++) {
+		const end = start + childrenPerGroup + (index < extra ? 1 : 0);
+		output.push(new SequenceChunk(chunks.slice(start, end)));
+		start = end;
+	}
+	assert(start === chunks.length, "Groups must contain all input chunks");
+	return output;
+}
+
+/** Consumes two roots and repairs only their adjoining paths, returning roots at the larger height. */
+function joinChunks(
+	left: TreeChunk,
+	leftHeight: number,
+	right: TreeChunk,
+	rightHeight: number,
+	maximum: number,
+): TreeChunk[] {
+	if (leftHeight === 0 && rightHeight === 0) {
+		return [left, right];
+	}
+	if (leftHeight === rightHeight) {
+		assert(
+			left instanceof SequenceChunk && right instanceof SequenceChunk,
+			"Non-leaf roots must be sequences",
+		);
+		const minimum = Math.ceil(maximum / 2);
+		if (
+			left.subChunks.length + right.subChunks.length > maximum &&
+			left.subChunks.length >= minimum &&
+			right.subChunks.length >= minimum
+		) {
+			return [left, right];
+		}
+		return wrapChunkGroups([...left.takeChildren(), ...right.takeChildren()], maximum);
+	}
+	if (leftHeight > rightHeight) {
+		assert(left instanceof SequenceChunk, "A taller root must be a sequence");
+		const leftChildren = left.takeChildren();
+		const last = leftChildren.pop() ?? oob();
+		leftChildren.push(...joinChunks(last, leftHeight - 1, right, rightHeight, maximum));
+		return wrapChunkGroups(leftChildren, maximum);
+	}
+	assert(right instanceof SequenceChunk, "A taller root must be a sequence");
+	const children = right.takeChildren();
+	const first = children.shift() ?? oob();
+	return wrapChunkGroups(
+		[...joinChunks(left, leftHeight, first, rightHeight - 1, maximum), ...children],
+		maximum,
+	);
+}
+
+/**
+ * Repairs structurally edited fields and removes redundant root groups.
+ */
+export function balanceField(field: ChunkSequenceEditor, policy: ChunkPolicy): void {
+	const maximum = Math.floor(policy.sequenceChunkSplitThreshold);
+	if (maximum === Number.POSITIVE_INFINITY || field.revision === 0) {
+		return;
+	}
+	const chunks = field.chunks;
+	if (
+		chunks.length <= maximum &&
+		(maximum === binarySequenceChunkSplitThreshold ||
+			(uniformChunkHeight(chunks, maximum) !== undefined &&
+				// A lone sequence can be balanced but still adds a removable level.
+				!(chunks.length === 1 && chunks[0] instanceof SequenceChunk)))
+	) {
+		return;
+	}
+	field.transformRange(0, chunks.length, (owned) => {
+		let output = groupChunks(owned, policy);
+		while (
+			maximum > binarySequenceChunkSplitThreshold &&
+			output.length === 1 &&
+			output[0] instanceof SequenceChunk
+		) {
+			output = groupChunks(output[0].takeChildren(), policy);
+		}
+		return output;
+	});
+}
+
+/**
+ * Splits chunks in `field` as needed so that `nodeIndex` sits on a chunk boundary.
+ * After the call, inserting a chunk at the returned chunk index places its first top-level node at `nodeIndex` within `field`.
  *
  * @remarks
  * When splitting chunks, large chunks are split evenly so that repeated calls to this method (or similar operations)
  * avoid poor worst-case behavior. See {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax} for details.
  *
- * @param chunks - The array of {@link TreeChunk}s for the field to split. Mutated in place.
+ * @param field - The owning editor or array of {@link TreeChunk}s to split. Modified in place.
  * @param nodeIndex - The index to split at, measured in top-level nodes within the field.
  * Must be in `[0, totalNodes]`, where `totalNodes` is the sum of {@link TreeChunk.topLevelLength}
- * across all chunks.
+ * across all chunks in `field`.
  * @param policy - The {@link ChunkCompressor} to use when splitting chunks and re-chunking each side
  * of the split via {@link chunkRange}.
  *
- * @returns The index in `chunks` (after modifications made by this function) where if a chunk were inserted at that index its first top level node would have index `nodeIndex` when treating `chunks` as a field.
+ * @returns The chunk index at which to insert content so that its first top-level node is at `nodeIndex` in `field`.
  */
 export function splitFieldAtIndex(
-	chunks: TreeChunk[],
+	field: TreeChunk[] | ChunkSequenceEditor,
 	nodeIndex: number,
 	policy: ChunkCompressor,
 ): number {
+	const chunks = field instanceof ChunkSequenceEditor ? field.chunks : field;
 	assertNonNegativeSafeInteger(nodeIndex);
+	const length = getFieldLength(chunks);
+	assert(nodeIndex <= length, "nodeIndex exceeds total node count in field");
+	if (nodeIndex === 0) {
+		return 0;
+	}
+	if (nodeIndex === length) {
+		return chunks.length;
+	}
+	const location = locateNodeInChunks(chunks, nodeIndex);
+	if (location.indexWithinChunk === 0) {
+		return location.indexOfChunk;
+	}
+	if (field instanceof ChunkSequenceEditor) {
+		let splitIndex = 0;
+		field.transformRange(location.indexOfChunk, location.indexOfChunk + 1, (owned) => {
+			splitIndex = splitFieldAtIndex(owned, location.indexWithinChunk, policy);
+			return owned;
+		});
+		return location.indexOfChunk + splitIndex;
+	}
 	const bisectThreshold = policy.policy.uniformChunkNodeCountDynamicTargetMax;
-	let remaining = nodeIndex;
-	let chunkIndex = 0;
+	let remaining = location.indexWithinChunk;
+	let chunkIndex = location.indexOfChunk;
 	while (chunkIndex < chunks.length) {
 		if (remaining === 0) {
 			return chunkIndex;
@@ -751,20 +921,28 @@ export function splitFieldAtIndex(
 		const splitPoint = total > bisectThreshold ? Math.floor(total / 2) : remaining;
 		let before: TreeChunk[];
 		let after: TreeChunk[];
-		if (chunk instanceof UniformChunk) {
+		if (chunk instanceof SequenceChunk) {
+			const children = chunk.subChunks.map((child) => {
+				child.referenceAdded();
+				return child;
+			});
+			const split = splitFieldAtIndex(children, splitPoint, policy);
+			before = groupChunks(children.slice(0, split), policy.policy);
+			after = groupChunks(children.slice(split), policy.policy);
+		} else if (chunk instanceof UniformChunk) {
 			// Preserve the known shape and value encoding rather than inferring a shape from schema again.
 			// A polymorphic schema could otherwise convert unaffected siblings to BasicChunks during fallback.
 			const shape = chunk.shape.treeShape;
 			const valueSplit = splitPoint * shape.valuesPerTopLevelNode;
 			before = [
-				new UniformChunk(
+				UniformChunk.takeValues(
 					shape.withTopLevelLength(splitPoint),
 					chunk.values.slice(0, valueSplit),
 					chunk.idCompressor,
 				),
 			];
 			after = [
-				new UniformChunk(
+				UniformChunk.takeValues(
 					shape.withTopLevelLength(total - splitPoint),
 					chunk.values.slice(valueSplit),
 					chunk.idCompressor,
@@ -776,7 +954,7 @@ export function splitFieldAtIndex(
 			before = chunkRange(cursor, policy, splitPoint, false);
 			after = chunkRange(cursor, policy, total - splitPoint, true);
 		}
-		replaceArrayRange(chunks, chunkIndex, chunkIndex + 1, [...before, ...after]);
+		replaceArrayRange(field, chunkIndex, chunkIndex + 1, [...before, ...after]);
 		// Each replacement array entry owns a reference, whether constructed above or returned by chunkRange.
 		// Release the removed array slot's reference to the original chunk.
 		chunk.referenceRemoved();
@@ -788,7 +966,7 @@ export function splitFieldAtIndex(
 /**
  * Coalesce adjacent small same-shape {@link UniformChunk}s into larger {@link UniformChunk}s.
  *
- * @param chunks - The chunks array, modified in place.
+ * @param field - The owning editor or chunks array, modified in place.
  * @param policy - The {@link ChunkPolicy} supplying the per-chunk cap.
  * @param range - Half-open `[start, end)` sub-range of `chunks` (by chunk index) to consider for
  * merging. Defaults to the whole array. `end` must not exceed `chunks.length`.
@@ -806,15 +984,36 @@ export function splitFieldAtIndex(
  * them, so matching the two keeps repeated split/coalesce cycles from oscillating.
  */
 export function coalesceUniformChunks(
-	chunks: TreeChunk[],
+	field: TreeChunk[] | ChunkSequenceEditor,
 	policy: ChunkPolicy,
 	range?: IndexRange,
 ): void {
+	const chunks = field instanceof ChunkSequenceEditor ? field.chunks : field;
 	const rangeStart = range?.start ?? 0;
 	const rangeEnd = range?.end ?? chunks.length;
 	validateIndexRange(rangeStart, rangeEnd, chunks, "coalesceUniformChunks");
 	if (rangeEnd - rangeStart < 2) {
 		// Zero and 1 chunks are common cases, so as an optimization we return early as there is never anything to do for them.
+		return;
+	}
+	if (field instanceof ChunkSequenceEditor) {
+		// A transform refreshes offsets to the end of the sequence, even if nothing merges.
+		// Find a mergeable pair first so checking a small range does not trigger that full scan.
+		for (let index = rangeStart + 1; index < rangeEnd; index++) {
+			const left = chunks[index - 1] ?? oob();
+			const right = chunks[index] ?? oob();
+			if (
+				left instanceof UniformChunk &&
+				right instanceof UniformChunk &&
+				canCoalesceUniformChunks(left, right, policy)
+			) {
+				field.transformRange(index - 1, rangeEnd, (owned) => {
+					coalesceUniformChunks(owned, policy);
+					return owned;
+				});
+				break;
+			}
+		}
 		return;
 	}
 
@@ -836,8 +1035,38 @@ export function coalesceUniformChunks(
 	}
 
 	if (mutated) {
-		replaceArrayRange(chunks, rangeStart, rangeEnd, result);
+		replaceArrayRange(field, rangeStart, rangeEnd, result);
 	}
+}
+
+/** Checks whether two uniform chunks can merge without changing them. */
+function canCoalesceUniformChunks(
+	left: UniformChunk,
+	right: UniformChunk,
+	policy: ChunkPolicy,
+): boolean {
+	if (!left.shape.treeShape.equals(right.shape.treeShape)) {
+		return false;
+	}
+	// Documents the invariant that all chunks in a single ChunkedForest share its idCompressor.
+	// If this assertion ever fires it means a caller mixed chunks from different forests; merging
+	// them would silently decompress one side's compressed-id values to the wrong strings.
+	const leftCompressor = left.idCompressor;
+	const rightCompressor = right.idCompressor;
+	assert(
+		leftCompressor === undefined ||
+			rightCompressor === undefined ||
+			leftCompressor === rightCompressor,
+		0xd50 /* tryCoalesceUniformChunks: left and right carry different idCompressors */,
+	);
+	// Keep merged chunks within the limit used when splitting.
+	if (
+		left.topLevelLength + right.topLevelLength >
+		policy.uniformChunkNodeCountDynamicTargetMax
+	) {
+		return false;
+	}
+	return true;
 }
 
 /**
@@ -867,45 +1096,35 @@ export function tryCoalesceUniformChunks(
 	right: TreeChunk,
 	policy: ChunkPolicy,
 ): UniformChunk | undefined {
-	if (!(left instanceof UniformChunk) || !(right instanceof UniformChunk)) {
+	if (
+		!(left instanceof UniformChunk) ||
+		!(right instanceof UniformChunk) ||
+		!canCoalesceUniformChunks(left, right, policy)
+	) {
 		return undefined;
 	}
 	const leftTreeShape = left.shape.treeShape;
-	const rightTreeShape = right.shape.treeShape;
-	if (!leftTreeShape.equals(rightTreeShape)) {
-		return undefined;
-	}
-	// Documents the invariant that all chunks in a single ChunkedForest share its idCompressor.
-	// If this assertion ever fires it means a caller mixed chunks from different forests; merging
-	// them would silently decompress one side's compressed-id values to the wrong strings.
 	const leftCompressor = left.idCompressor;
 	const rightCompressor = right.idCompressor;
-	assert(
-		leftCompressor === undefined ||
-			rightCompressor === undefined ||
-			leftCompressor === rightCompressor,
-		0xd50 /* tryCoalesceUniformChunks: left and right carry different idCompressors */,
-	);
 	const combinedTopLevel = left.topLevelLength + right.topLevelLength;
-	// Don't merge if the result would exceed the per-chunk node cap: this keeps chunks from
-	// growing unbounded and matches the threshold {@link splitFieldAtIndex} bisects at, so a
-	// merged chunk won't just be re-split on the next edit.
-	if (combinedTopLevel > policy.uniformChunkNodeCountDynamicTargetMax) {
-		return undefined;
-	}
 
+	left.assertExternalOwnership();
+	right.assertExternalOwnership();
 	if (!left.isShared()) {
 		// In-place: grow `left` to absorb `right`. `left`'s sole array-slot ref is preserved
 		// and returned; `right`'s slot ref is released.
-		left.values.push(...right.values);
-		left.shape = leftTreeShape.withTopLevelLength(combinedTopLevel);
-		left.idCompressor ??= rightCompressor;
+		const edit = left.acquireEditor();
+		try {
+			left.append(edit, right.values, right.topLevelLength, rightCompressor);
+		} finally {
+			edit.close();
+		}
 		right.referenceRemoved();
 		return left;
 	}
 
 	// Left is shared: build a fresh merged chunk and release the two inputs.
-	const merged = new UniformChunk(
+	const merged = UniformChunk.takeValues(
 		leftTreeShape.withTopLevelLength(combinedTopLevel),
 		[...left.values, ...right.values],
 		leftCompressor ?? rightCompressor,
@@ -1003,5 +1222,9 @@ export function uniformChunkFromCursor(
 		}
 		topLevelLength += 1;
 	}
-	return new UniformChunk(shape.withTopLevelLength(topLevelLength), values, idCompressor);
+	return UniformChunk.takeValues(
+		shape.withTopLevelLength(topLevelLength),
+		values,
+		idCompressor,
+	);
 }

@@ -21,6 +21,7 @@ import {
 import { SynchronousCursor } from "../treeCursorUtils.js";
 
 import { getFieldLength, locateNodeInChunks } from "./chunkEditing.js";
+import { getChunkSequence } from "./chunkSequence.js";
 
 /**
  * Field navigation within one {@link TreeChunk}, used by {@link ChunkTraversal}.
@@ -157,6 +158,10 @@ export interface ChunkNavigationHooks {
 	): ReturnType<typeof locateNodeInChunks>;
 	/** Creates a {@link ChunkLocalCursor} at the root field of the child prepared by {@link ChunkNavigationHooks.prepareChunk}. */
 	cursorForChunk(chunk: TreeChunk): ChunkLocalCursor;
+	/** Releases editing scopes when a chunk is exited or navigation is freed. */
+	releaseChunk?(cursor: ChunkLocalCursor): void;
+	/** Repairs a restored field after its child scope closes; may change its chunk boundaries. */
+	restoreField?(cursor: ChunkLocalCursor): void;
 }
 
 /**
@@ -237,6 +242,12 @@ export abstract class ChunkTraversal
 
 	/** Discards all adapters and boundary frames. */
 	protected clearTraversal(): void {
+		if (this.navigationHooks !== undefined && this.current !== undefined) {
+			while (this.parentStack.length > 0) {
+				this.restoreParent();
+			}
+			this.navigationHooks.releaseChunk?.(this.local);
+		}
 		this.current = undefined;
 		this.currentInline = undefined;
 		this.parentStack.length = 0;
@@ -433,10 +444,12 @@ export abstract class ChunkTraversal
 	 * @returns The popped {@link ChunkCursorFrame}, identifying the chunk that was exited.
 	 */
 	protected restoreParent(): ChunkCursorFrame {
+		this.navigationHooks?.releaseChunk?.(this.local);
 		const frame = this.parentStack.pop() ?? oob();
 		this.local = frame.cursor;
 		this.offset = frame.savedOffset;
 		this.atRoot = frame.savedAtRoot;
+		this.navigationHooks?.restoreField?.(this.local);
 		return frame;
 	}
 
@@ -484,6 +497,25 @@ export abstract class ChunkTraversal
 		while (this.parentStack.length > 0) {
 			const frame = this.restoreParent();
 			const fieldIndex = frame.chunkStartIndex + index;
+			const owner =
+				index < -1 || index > exited.rootLength ? getChunkSequence(frame.chunks) : undefined;
+			if (owner !== undefined || this.navigationHooks !== undefined) {
+				const length = owner?.length ?? this.local.getFieldLength();
+				if (fieldIndex >= 0 && fieldIndex < length) {
+					this.enterNodeAt(
+						fieldIndex,
+						locateNodeInChunks(frame.chunks, fieldIndex),
+						exited,
+						frame,
+					);
+					return true;
+				}
+				index = fieldIndex;
+				if (!this.local.atChunkRoot()) {
+					break;
+				}
+				continue;
+			}
 			let slot = frame.indexOfChunk;
 			while (index < 0 && slot > 0) {
 				slot--;

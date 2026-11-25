@@ -13,6 +13,7 @@ import {
 	TreeStoredSchemaRepository,
 	type FieldKey,
 	type TreeNodeSchemaIdentifier,
+	type TreeValue,
 } from "../../../core/index.js";
 import {
 	BasicChunk,
@@ -30,6 +31,8 @@ import {
 	locateNodeInChunks,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkEditing.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { ChunkEdit } from "../../../feature-libraries/chunked-forest/chunkSequence.js";
 import {
 	basicOnlyChunkPolicy,
 	defaultChunkPolicy,
@@ -286,10 +289,10 @@ describe("chunkEditTraversal", () => {
 		for (const shared of [false, true]) {
 			it(`consumes empty incoming chunks without registering empty fields (shared: ${shared})`, () => {
 				for (const existingField of [false, true]) {
-					const root = new BasicChunk(brand("root"), new Map());
-					if (existingField) {
-						root.fields.set(EmptyKey, [numericBasicChunk(1)]);
-					}
+					const root = new BasicChunk(
+						brand("root"),
+						new Map(existingField ? [[EmptyKey, [numericBasicChunk(1)]]] : []),
+					);
 					const emptyChild = new SequenceChunk([]);
 					const incoming = new SequenceChunk([emptyChild]);
 					const editor = new ChunkEditTraversal(root, basicOnlyChunkCompressor);
@@ -374,16 +377,9 @@ describe("chunkEditTraversal", () => {
 			cursor.enterNode(0);
 			cursor.enterField(EmptyKey);
 			let attempts = 0;
-			let writeBacks = 0;
 			cursor.trySplice = () => {
 				attempts++;
 				return undefined;
-			};
-			const setFieldChunks = cursor.setFieldChunks.bind(cursor);
-			cursor.setFieldChunks = (chunks) => {
-				writeBacks++;
-				assert.equal(cursor.getFieldKey(), EmptyKey);
-				setFieldChunks(chunks);
 			};
 			const incoming = numericBasicChunk(1);
 			assert.deepEqual(
@@ -398,12 +394,12 @@ describe("chunkEditTraversal", () => {
 				[incoming],
 			);
 			assert.equal(attempts, 2);
-			assert.equal(writeBacks, 2);
 			assert.deepEqual(owned, []);
 			assert.equal(parent.fields.has(EmptyKey), false);
 			assert.equal(cursor.getFieldLength(), 0);
 			assert.equal(incoming.isUnreferenced(), false);
 			incoming.referenceRemoved();
+			cursor.release();
 			parent.referenceRemoved();
 		});
 
@@ -448,6 +444,7 @@ describe("chunkEditTraversal", () => {
 		class RootEditableLeaf extends BasicChunk {
 			public calls = 0;
 			public lastClone: RootEditableLeaf | undefined;
+			public override value: TreeValue | undefined;
 
 			public override supportsRootEdits(): boolean {
 				return true;
@@ -458,6 +455,7 @@ describe("chunkEditTraversal", () => {
 				value: number,
 			) {
 				super(brand(numberSchema.identifier), new Map(), value);
+				this.value = value;
 			}
 
 			public override clone(): RootEditableLeaf {
@@ -465,8 +463,11 @@ describe("chunkEditTraversal", () => {
 				return (this.lastClone = new RootEditableLeaf(this.accepts, this.value as number));
 			}
 
-			public override getEditCursor(): BasicChunkLocalCursor & ChunkEditCursor {
-				const cursor: BasicChunkLocalCursor & ChunkEditCursor = super.getEditCursor();
+			public override getEditCursor(
+				edit?: ChunkEdit,
+			): BasicChunkLocalCursor & ChunkEditCursor {
+				const scope = edit ?? this.acquireEditor();
+				const cursor: BasicChunkLocalCursor & ChunkEditCursor = super.getEditCursor(scope);
 				cursor.trySplice = (range, content, compressor) => {
 					this.calls++;
 					assert.equal(cursor.mode, CursorLocationType.Fields);
@@ -483,7 +484,9 @@ describe("chunkEditTraversal", () => {
 					const reader = source.cursor();
 					reader.enterNode(0);
 					const removed = new BasicChunk(this.type, new Map(), this.value);
-					this.value = reader.value;
+					scope.mutate(() => {
+						this.value = reader.value;
+					});
 					source.referenceRemoved();
 					return [removed];
 				};
@@ -548,6 +551,7 @@ describe("chunkEditTraversal", () => {
 			);
 			assert.deepEqual(child.values, [1]);
 			incoming.referenceRemoved();
+			cursor.release();
 			parent.referenceRemoved();
 		});
 
@@ -586,6 +590,7 @@ describe("chunkEditTraversal", () => {
 					child.referenceRemoved();
 				}
 				incoming.referenceRemoved();
+				cursor.release();
 				parent.referenceRemoved();
 			});
 		}
@@ -616,6 +621,7 @@ describe("chunkEditTraversal", () => {
 			for (const chunk of removed) {
 				chunk.referenceRemoved();
 			}
+			cursor.release();
 			parent.referenceRemoved();
 		});
 
@@ -643,6 +649,7 @@ describe("chunkEditTraversal", () => {
 			for (const chunk of outgoing) {
 				chunk.referenceRemoved();
 			}
+			editor.release();
 			root.referenceRemoved();
 		});
 	});
