@@ -148,9 +148,7 @@ module.exports = {
 		},
 		"build:package:cjs": {
 			// CJS entrypoints are off and fall to ESM default via require-esm.
-			// Continue building CJS to verify require-esm, support CJS testing,
-			// and ability to rollback entrypoint trimming without new issues
-			// sneaking in.
+			// Continue building CJS to verify require-esm and support CJS testing.
 			dependsOn: [
 				// keep verifying CJS buildability
 				"build:cjs",
