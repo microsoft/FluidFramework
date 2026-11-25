@@ -1,7 +1,5 @@
 # Further information about `generate typetests`
 
-_This documentation is accurate as of build-tools 0.45.0._
-
 The `typetests` and `generate:typetests` commands are used to generate and manage type compatibility tests based on the
 individual package settings in package.json.
 
@@ -45,9 +43,7 @@ reference documentation for details about the flags and options they provide.
 
 ## The prepare phase: resetting tests and updating the previous version
 
-The prepare phase determines the baseline previous version to use, updates the previous version devDependency in
-package.json, resets any typetest overrides (the entries in `typeValidation.broken`), and normalizes `typeValidation`
-settings.
+The prepare phase determines the baseline previous version to use, updates the previous version dependency, resets any typetest overrides (the entries in `typeValidation.broken`), and normalizes `typeValidation` settings.
 
 The prepare phase is typically used when resetting the type tests to a clean state, such as after a release.
 
@@ -62,6 +58,28 @@ which invokes `flub typetests` with the following flags: `--reset --previous --n
 
 If the version changes after running preparation, then `pnpm install --no-frozen-lockfile` must be run
 before the generate phase will run correctly.
+
+### Baseline versions in pnpm catalogs
+
+In pnpm workspaces, `flub typetests --previous` and `flub typetests --exact <version>` store baseline aliases in the `typeTest-previous` catalog in the workspace's `pnpm-workspace.yaml`:
+
+```yaml
+catalogs:
+  typeTest-previous:
+    "@fluidframework/example-previous": npm:@fluidframework/example@3.5.0
+```
+
+The command creates the catalog if needed and sets each selected package's devDependency to `catalog:typeTest-previous`.
+Later baseline updates change the catalog entries without changing these dependency declarations.
+Only selected packages are updated; other catalog entries and workspace settings are preserved.
+
+Use `--no-catalog` with `--previous` or `--exact` to write inline npm aliases in package.json instead.
+Packages outside pnpm workspaces always use inline aliases.
+Without `--previous` or `--exact`, the command does not migrate existing dependencies to a catalog.
+
+Removing a dependency with `--remove` or disabling type tests removes the package.json dependency but keeps the catalog entry.
+Other packages can still reference that entry.
+You can remove unused catalog entries manually.
 
 ## The generate phase
 
