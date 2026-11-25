@@ -5,7 +5,12 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { areEqualChangeAtomIds, type RevisionTag } from "../../core/index.js";
+import {
+	areEqualChangeAtomIds,
+	offsetChangeAtomId,
+	type ChangeAtomId,
+	type RevisionTag,
+} from "../../core/index.js";
 import type { IdAllocator, Mutable } from "../../util/index.js";
 import type { InvertNodeManager, NodeId } from "../modular-schema/index.js";
 
@@ -104,8 +109,7 @@ function invertMark(
 				};
 				return [withNodeChange(inverse, mark.changes)];
 			} else {
-				// An undo does not invert root renames, so we should not invert cell renames.
-				return [invertNodeChangeOrSkip(mark.count, mark.changes, mark.idOverride)];
+				return invertRename(mark.idOverride, mark.count, crossFieldManager);
 			}
 		}
 		case "Detach": {
@@ -201,6 +205,39 @@ function invertInsertSegment(
 	}
 
 	return removeMark;
+}
+
+function invertRename(
+	idOverride: ChangeAtomId,
+	count: number,
+	crossFieldManager: InvertNodeManager,
+): Mark[] {
+	const invertedMarks: Mark[] = [];
+	let countRemaining = count;
+	let nextIdOverride = idOverride;
+	while (countRemaining > 0) {
+		const rootRenameEntry = crossFieldManager.getInvertedRenameForRoot(
+			nextIdOverride,
+			countRemaining,
+		);
+		const countProcessed = rootRenameEntry.length;
+
+		if (rootRenameEntry.value === undefined) {
+			invertedMarks.push(invertNodeChangeOrSkip(countProcessed, undefined, nextIdOverride));
+		} else {
+			invertedMarks.push({
+				type: "Rename",
+				cellId: nextIdOverride,
+				idOverride: rootRenameEntry.value,
+				count: countProcessed,
+			});
+		}
+
+		nextIdOverride = offsetChangeAtomId(nextIdOverride, countProcessed);
+		countRemaining -= countProcessed;
+	}
+
+	return invertedMarks;
 }
 
 function invertNodeChangeOrSkip(

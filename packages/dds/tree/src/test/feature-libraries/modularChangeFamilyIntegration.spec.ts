@@ -20,7 +20,6 @@ import {
 	type TaggedChange,
 	areEqualChangeAtomIds,
 	makeAnonChange,
-	offsetChangeAtomId,
 	rebaseChangeOverChanges,
 	revisionMetadataSourceFromInfo,
 	tagChange,
@@ -3033,6 +3032,79 @@ describe("ModularChangeFamily integration", () => {
 
 			assertEqual(inverse, expected);
 		});
+
+		it("Move and remove", () => {
+			const fieldAId = { nodeId: undefined, field: fieldA };
+			const moveId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+			const removeId: ChangeAtomId = { revision: tag1, localId: brand(1) };
+			const moveAndRemove = Change.build(
+				{
+					family,
+					maxId: 2,
+					renames: [{ oldId: moveId, newId: removeId, count: 1, detachLocation: undefined }],
+					revisions: [{ revision: tag1 }],
+				},
+				Change.field(fieldA, sequenceIdentifier, [
+					MarkMaker.detach(1, moveId),
+					MarkMaker.rename(1, { revision: tag1, localId: brand(2) }, removeId),
+				]),
+			);
+
+			const inverse = family.invert(tagChange(moveAndRemove, tag1), false, tag2);
+
+			const reviveId: ChangeAtomId = { revision: tag2, localId: brand(0) };
+			const expected = Change.build(
+				{
+					family,
+					maxId: 2,
+					renames: [{ oldId: removeId, newId: reviveId, count: 1, detachLocation: fieldAId }],
+					revisions: [{ revision: tag2 }],
+				},
+				Change.field(fieldA, sequenceIdentifier, [
+					MarkMaker.attach(1, reviveId, { cellId: moveId }),
+					MarkMaker.rename(1, removeId, reviveId),
+				]),
+			);
+
+			assertEqual(inverse, expected);
+		});
+
+		it("Root rename", () => {
+			const fieldAId = { nodeId: undefined, field: fieldA };
+			const oldId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+			const removeId: ChangeAtomId = { revision: tag1, localId: brand(1) };
+			const renameInSequence = Change.build(
+				{
+					family,
+					maxId: 2,
+					renames: [
+						{
+							oldId,
+							newId: removeId,
+							count: 1,
+							detachLocation: fieldAId,
+						},
+					],
+					revisions: [{ revision: tag1 }],
+				},
+				Change.field(fieldA, sequenceIdentifier, [MarkMaker.rename(1, oldId, removeId)]),
+			);
+
+			const inverse = family.invert(tagChange(renameInSequence, tag1), false, tag2);
+
+			const expected = Change.build(
+				{
+					family,
+					maxId: 2,
+					revisions: [{ revision: tag2 }],
+				},
+				Change.field(fieldA, sequenceIdentifier, [
+					MarkMaker.tomb(removeId.revision, removeId.localId),
+				]),
+			);
+
+			assertEqual(inverse, expected);
+		});
 	});
 
 	describe("toDelta", () => {
@@ -3105,53 +3177,6 @@ describe("ModularChangeFamily integration", () => {
 		const fieldAPath = { parent: rootPath, field: fieldA };
 		const fieldAId = { nodeId: undefined, field: fieldA };
 		const revisions = [{ revision: tag1 }];
-
-		describe("Can encode node restoration", () => {
-			for (const version of family.codecs.getSupportedFormats()) {
-				const codecForVersion = family.codecs.resolve(version);
-				for (const renameOffset of [0, 1, 3]) {
-					it(`version ${version}, rename at offset ${renameOffset}`, () => {
-						const graveIDs: ChangeAtomId = { revision: tag2, localId: brand(1) };
-						const oldRootId = offsetChangeAtomId(graveIDs, renameOffset);
-						const newRootId: ChangeAtomId = { revision: tag1, localId: brand(1) };
-						const destinationCell: ChangeAtomId = { revision: tag3, localId: brand(1) };
-						const marks: Changeset = [
-							{ count: 4, cellId: graveIDs },
-							MarkMaker.attach(1, destinationCell, {
-								id: newRootId.localId,
-								revision: newRootId.revision,
-							}),
-						];
-						const change = Change.build(
-							{
-								family,
-								maxId: 4,
-								revisions,
-								renames: [
-									{
-										oldId: oldRootId,
-										newId: newRootId,
-										count: 1,
-										detachLocation: fieldAId,
-									},
-								],
-							},
-							Change.field(fieldA, sequenceIdentifier, marks),
-						);
-
-						// Act
-						const encoded = codecForVersion.encode(change, context);
-						const decoded = codecForVersion.decode(encoded, context);
-
-						// Verify
-						validateChangeset(decoded, family.fieldKinds);
-						const decodedDelta = intoDelta(makeAnonChange(decoded), family.fieldKinds);
-						const expectedDelta = intoDelta(makeAnonChange(change), family.fieldKinds);
-						assertDeltaEqual(decodedDelta, expectedDelta);
-					});
-				}
-			}
-		});
 
 		const revive = Change.build(
 			{
@@ -3391,6 +3416,11 @@ describe("ModularChangeFamily integration", () => {
 			revisionMetadataSourceFromInfo([{ revision: tag0 }, { revision: tag1 }]),
 		);
 
+		const reviveAndReturn = tagChangeInline(
+			family.invert(makeAnonChange(moveAndRemove), false, tag2),
+			tag1,
+		).change;
+
 		const encodingTestData: EncodingTestData<
 			ModularChangeset,
 			EncodedModularChangesetV1,
@@ -3411,6 +3441,7 @@ describe("ModularChangeFamily integration", () => {
 				["edit detached (optional field)", editDetachedInOptional, context],
 				["rename in optional field", renameInOptional, context],
 				["rename in sequence field", renameInSequence, context],
+				["revive and return", reviveAndReturn, context],
 			],
 		};
 
