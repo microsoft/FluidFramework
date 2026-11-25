@@ -17,6 +17,7 @@ import type {
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import {
 	type IFluidSerializer,
@@ -212,6 +213,7 @@ export class ConsensusOrderedCollection<T = any>
 		// then we are losing all checked out work!
 		this.removeClient(idForLocalUnattachedClient);
 
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const builder = new SummaryTreeBuilder();
 		let blobContent = this.serializeValue(this.data.asArray(), serializer);
 		builder.addBlob(snapshotFileNameData, blobContent);

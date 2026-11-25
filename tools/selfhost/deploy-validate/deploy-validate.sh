@@ -47,6 +47,9 @@ if [[ ! -f "$PARAMS_FILE" ]]; then
   echo "ERROR: parameters file not found: $PARAMS_FILE" >&2
   exit 1
 fi
+. "$SELFHOST_ROOT/azure-cloud.sh"
+load_azure_cloud
+export AZURE_PORTAL_URL
 
 RG="$(jq -r '.resourceGroup' "$PARAMS_FILE")"
 AFD="$(jq -r '.frontDoor.profileName' "$PARAMS_FILE")"
@@ -56,7 +59,7 @@ APP_ID=""
 APP_ID_URI=""
 TOKEN_SCOPE=""
 SERVICE_PRINCIPAL_OBJECT_ID=""
-AZURE_APP_REGISTRATIONS_URL="https://ms.portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade"
+AZURE_APP_REGISTRATIONS_URL="$AZURE_PORTAL_URL/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade"
 
 print_app_registration_help() {
   echo "Re-check tools/selfhost/token-service/README.md and confirm the App Registration exists," >&2
@@ -103,7 +106,7 @@ if [[ "$USE_TOKEN_SERVICE" == true ]]; then
   SERVICE_PRINCIPAL_OBJECT_ID="$(jq -r \
     '.tokenService.servicePrincipalObjectId // empty' "$PARAMS_FILE")"
   SUBSCRIPTION_ID="$(jq -r '.subscriptionId' "$PARAMS_FILE")"
-  AUTH_URL="https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$TOKEN_SERVICE_RG/providers/Microsoft.Web/sites/$TOKEN_SERVICE_APP/config/authsettingsV2?api-version=2023-12-01"
+  AUTH_URL="$AZURE_RESOURCE_MANAGER/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$TOKEN_SERVICE_RG/providers/Microsoft.Web/sites/$TOKEN_SERVICE_APP/config/authsettingsV2?api-version=2023-12-01"
   if ! AUTH_APP_ID="$(az rest --method GET --url "$AUTH_URL" \
     --query properties.identityProviders.azureActiveDirectory.registration.clientId \
     -o tsv 2>/dev/null)"; then

@@ -187,7 +187,7 @@ describe("LazyNode", () => {
 			const config = new TreeViewConfiguration({ schema: Item });
 			const provider = new TestTreeProviderLite(
 				2,
-				new SharedTreeTestFactory(() => {}, undefined, { forest }),
+				SharedTreeTestFactory.build(() => {}, undefined, { forest }),
 			);
 			const [sourceTree, targetTree] = provider.trees;
 			assert(sourceTree !== undefined && targetTree !== undefined);

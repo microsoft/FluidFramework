@@ -150,7 +150,7 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 | `build:test:examples` | `tsc --project ./src/rules/test/test-cases/tsconfig.json` |
 | `clean` | `rimraf --glob dist "**/*.build.log" nyc` |
 | `format` | `npm run prettier:fix` |
-| `install-no-frozen` | `pnpm --config.minimum-release-age=10080 i --no-frozen-lockfile` |
+| `install-no-frozen` | `node ../../../scripts/install-no-frozen.cjs` |
 | `prettier` | `prettier --check . --cache --ignore-path ../../../.prettierignore` |
 | `prettier:fix` | `prettier --write . --cache --ignore-path ../../../.prettierignore` |
 | `print-configs` | `jiti scripts/print-configs.ts printed-configs` |

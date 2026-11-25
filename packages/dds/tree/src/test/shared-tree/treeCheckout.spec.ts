@@ -25,6 +25,7 @@ import {
 	type NormalizedFieldUpPath,
 	LeafNodeStoredSchema,
 	type TreeNodeSchemaIdentifier,
+	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	ValueSchema,
 } from "../../core/index.js";
@@ -421,13 +422,11 @@ describe("sharedTreeView", () => {
 				"subtree",
 				"change",
 				"subtree",
-				"change",
 				"after",
 				"editStart",
 				"subtree",
 				"change",
 				"subtree",
-				"change",
 				"after",
 				"unsubscribe",
 				"editStart",
@@ -467,13 +466,11 @@ describe("sharedTreeView", () => {
 				"subtree-rootFieldKey-0",
 				"change-rootFieldKey-0",
 				"subtree-rootFieldKey-0",
-				"change-rootFieldKey-0",
 				"after",
 				"editStart",
 				"subtree-rootFieldKey-0",
 				"change-rootFieldKey-0",
 				"subtree-rootFieldKey-0",
-				"change-rootFieldKey-0",
 				"after",
 				"unsubscribe",
 				"editStart",
@@ -1624,6 +1621,36 @@ describe("sharedTreeView", () => {
 			assert.deepEqual([...view.root], ["parent"]);
 			view.dispose();
 		});
+
+		for (const rewindCount of [0, 1, 2]) {
+			it(`lets history be trimmed after a fork rewound ${rewindCount} times is disposed`, () => {
+				const provider = new TestTreeProviderLite(1);
+				const view = provider.trees[0].kernel.viewWith(config);
+				view.initialize([]);
+				view.root.insertAtEnd("A");
+				provider.synchronizeMessages();
+				const revisionA = view.branchHistory.getHead()?.revision;
+				assert(revisionA !== undefined);
+				view.root.insertAtEnd("B");
+				provider.synchronizeMessages();
+
+				const fork = view.fork();
+				for (let i = 0; i < rewindCount; i++) {
+					fork.rewindTo(revisionA);
+				}
+				view.root.insertAtEnd("C");
+				provider.synchronizeMessages();
+				fork.root.insertAtEnd("D");
+				view.merge(fork);
+				provider.synchronizeMessages();
+				assert.deepEqual([...view.root].sort(), ["A", "B", "C", "D"]);
+
+				view.root.insertAtEnd("E");
+				provider.synchronizeMessages();
+				assert.equal(view.branchHistory.length, 1);
+				view.dispose();
+			});
+		}
 	});
 
 	describe("history", () => {
@@ -1807,7 +1834,7 @@ describe("sharedTreeView", () => {
 			const newSchema = sf.optional([sf.string, Added]);
 			const provider = new TestTreeProviderLite(
 				2,
-				new SharedTreeTestFactory(() => {}, undefined, { forest: ForestTypeOptimized }),
+				SharedTreeTestFactory.build(() => {}, undefined, { forest: ForestTypeOptimized }),
 			);
 			const [a, b] = provider.trees;
 			const aView = a.kernel.viewWith(new TreeViewConfiguration({ schema: oldSchema }));
@@ -1821,9 +1848,9 @@ describe("sharedTreeView", () => {
 			provider.synchronizeMessages();
 
 			// Only B's root rebases over A's edit. The independent fork retains its upgraded schema.
-			assert.equal(bView.compatibility.isEquivalent, false);
+			assert.equal(bView.compatibility.canView, false);
 			expectSchemaEqual(bView.checkout.storedSchema, toUpgradeSchema(oldSchema));
-			assert.equal(fork.compatibility.isEquivalent, true);
+			assert.equal(fork.compatibility.canView, true);
 			expectSchemaEqual(fork.checkout.storedSchema, toUpgradeSchema(newSchema));
 			assert.equal(fork.checkout.transaction.size, 0);
 			fork.root = new Added({ value: "fork data" });
@@ -2310,6 +2337,44 @@ describe("sharedTreeView", () => {
 				newRootAllowedTypeCount: oldSchema.rootFieldSchema.types.size,
 			});
 		});
+
+		it("does not classify a version-only schema change as initialization", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				SharedTreeTestFactory.build(() => {}, undefined, {
+					allowPossiblyIncompatibleWriteVersionOverrides: true,
+					writeVersionOverrides: new Map([["Schema", "schemaVersion"]]),
+				}),
+			);
+			const [tree] = provider.trees;
+			const view = tree.kernel.viewWith(
+				new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation }),
+			);
+			view.initialize([]);
+			const schema: TreeStoredSchema = {
+				rootFieldSchema: {
+					kind: FieldKinds.optional.identifier,
+					types: new Set(),
+					persistedMetadata: undefined,
+				},
+				nodeSchema: new Map(),
+			};
+			view.checkout.updateSchema(schema, true);
+			view.checkout.updateSchema({
+				rootFieldSchema: schema.rootFieldSchema,
+				nodeSchema: schema.nodeSchema,
+				schemaVersion: new Map([["com.fluidframework.test", 1]]),
+			});
+
+			const schemaChangeEvents = provider.logger
+				.events()
+				.filter((event) =>
+					event.eventName.endsWith(TreeCheckout.schemaChangeTelemetryEventName),
+				);
+			const versionChangeEvent = schemaChangeEvents.at(-1);
+			assert(versionChangeEvent !== undefined, "Expected schema change telemetry.");
+			assert.equal(parseCodeArtifactDetails(versionChangeEvent.details).changeKind, "upgrade");
+		});
 	});
 
 	describe("throws an error if it is in the middle of an edit when a user attempts to", () => {
@@ -2651,7 +2716,7 @@ describe("sharedTreeView", () => {
 			assert.equal(view1Revertibles.length, 1);
 			view1.runTransaction(() => {
 				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
-				// TODO AD#57584: Use such an operation here when one is available
+				// TODO: AB#57584: Use such an operation here when one is available
 				view1.root.insertAtEnd({ id: "B" });
 				view1.root.insertAtEnd({ id: "C" });
 			});
@@ -2688,7 +2753,7 @@ describe("sharedTreeView", () => {
 			assert.equal(view1Revertibles.length, 1);
 			view1.runTransaction(() => {
 				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
-				// TODO AD#57584: Use such an operation here when one is available
+				// TODO: AB#57584: Use such an operation here when one is available
 				view1.root.insertAtEnd({ id: "B" });
 				view1.root.insertAtEnd({ id: "C" });
 			});
@@ -2750,7 +2815,7 @@ describe("sharedTreeView", () => {
 			assert.equal(view1Revertibles.length, 1);
 			await view1.runTransactionAsync(async () => {
 				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
-				// TODO AD#57584: Use such an operation here when one is available
+				// TODO: AB#57584: Use such an operation here when one is available
 				view1.root.insertAtEnd({ id: "B" });
 				view1.root.insertAtEnd({ id: "C" });
 			});
@@ -2787,7 +2852,7 @@ describe("sharedTreeView", () => {
 			assert.equal(view1Revertibles.length, 1);
 			await view1.runTransactionAsync(async () => {
 				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
-				// TODO AD#57584: Use such an operation here when one is available
+				// TODO: AB#57584: Use such an operation here when one is available
 				view1.root.insertAtEnd({ id: "B" });
 				view1.root.insertAtEnd({ id: "C" });
 			});

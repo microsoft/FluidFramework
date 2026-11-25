@@ -252,6 +252,21 @@ testModes.forEach((mode) => {
 				});
 
 				describe("Blobs", () => {
+					it("Rejects an invalid authorized physical root", async () => {
+						return supertest
+							.get(
+								`/repos/${testOwnerName}/${testRepoName}/git/blobs/b45ef6fec89518d314f546fd6c3025367b721684`,
+							)
+							.set(
+								Constants.StorageRoutingIdHeader,
+								getStorageRoutingHeaderValue(testRepoName, testDocId),
+							)
+							.set(Constants.DocumentContainerNameHeader, "../victim")
+							.set(Constants.DocumentStorageLayoutHeader, "v2")
+							.set(Constants.DocumentLifecycleVersionHeader, "generation-1")
+							.expect(400);
+					});
+
 					it("Can create and retrieve a blob", async () => {
 						await createRepo(supertest, testOwnerName, testRepoName);
 						const result = await createBlob(
@@ -415,6 +430,26 @@ testModes.forEach((mode) => {
 				});
 
 				describe("Commits", () => {
+					it("Returns 503 when ephemeral storage is unavailable instead of leaving the read pending", async () => {
+						const createFileSystem = sinon.spy(fileSystemManagerFactory, "create");
+						try {
+							await supertest
+								.get(
+									`/repos/${testOwnerName}/${testRepoName}/git/commits/38421e18f9cf4ec024ae98f687e79c0bdf8f3f18`,
+								)
+								.set(
+									Constants.StorageRoutingIdHeader,
+									getStorageRoutingHeaderValue(testRepoName, testDocId),
+								)
+								.set(Constants.IsEphemeralContainer, "true")
+								.timeout({ response: 500, deadline: 1000 })
+								.expect(503);
+							sinon.assert.notCalled(createFileSystem);
+						} finally {
+							createFileSystem.restore();
+						}
+					});
+
 					it("Can create and retrieve a commit", async () => {
 						await createRepo(supertest, testOwnerName, testRepoName);
 						await createBlob(

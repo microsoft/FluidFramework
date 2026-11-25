@@ -12,6 +12,8 @@ import {
 } from "@fluidframework/container-definitions";
 import {
 	ContainerErrorTypes,
+	isIDeltaManagerFull,
+	type IDeltaManagerFull,
 	type IContainerContext,
 	type IContainerContextInternal,
 	type IBatchMessage,
@@ -31,6 +33,7 @@ import type {
 	ITelemetryBaseLogger,
 	OpaqueJsonDeserialized,
 } from "@fluidframework/core-interfaces/internal";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import type { ISummaryTree, SummaryObject } from "@fluidframework/driver-definitions";
 import {
 	type ISnapshot,
@@ -309,13 +312,18 @@ describe("Runtime", () => {
 			updateDirtyContainerState: (_dirty: boolean) => {},
 			updatePendingOpState,
 			getLoadedFromVersion: () => loadedFromVersion,
-			submitFn: (
-				_type: MessageType,
-				contents: object,
-				_batch: boolean,
-				metadata?: unknown,
-			) => {
-				submittedOps.push({ ...contents, metadata }); // Note: this object shape is for testing only. Not representative of real ops.
+			submitBatchFn: (messages: IBatchMessage[]) => {
+				for (const message of messages) {
+					submittedOps.push({
+						...JSON.parse(message.contents ?? "{}"),
+						metadata: message.metadata,
+					});
+					opFakeSequenceNumber++;
+				}
+				return opFakeSequenceNumber - 1;
+			},
+			submitSummaryFn: (contents) => {
+				submittedOps.push({ ...contents, metadata: undefined }); // Note: this object shape is for testing only. Not representative of real ops.
 				return opFakeSequenceNumber++;
 			},
 			submitSignalFn: (content: unknown, targetClientId?: string) => {
@@ -954,24 +962,22 @@ describe("Runtime", () => {
 								}
 							},
 							updateDirtyContainerState: (_dirty: boolean) => {},
-							submitFn: (
-								_type: MessageType,
-								// eslint-disable-next-line @typescript-eslint/no-explicit-any
-								contents: any,
-								_batch: boolean,
-								appData?: unknown,
-							) => {
-								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-								if (contents.type === "groupedBatch") {
-									// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-									for (const subMessage of contents.contents) {
-										// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-										submittedOpsMetadata.push(subMessage.metadata);
+							submitBatchFn: (messages: IBatchMessage[]) => {
+								for (const message of messages) {
+									const contents = JSON.parse(message.contents ?? "{}") as {
+										type?: string;
+										contents: { metadata?: unknown }[];
+									};
+									if (contents.type === "groupedBatch") {
+										for (const subMessage of contents.contents) {
+											submittedOpsMetadata.push(subMessage.metadata);
+										}
+									} else {
+										submittedOpsMetadata.push(message.metadata);
 									}
-								} else {
-									submittedOpsMetadata.push(appData);
+									opFakeSequenceNumber++;
 								}
-								return opFakeSequenceNumber++;
+								return opFakeSequenceNumber - 1;
 							},
 							connected: true,
 							clientId: fakeClientId,
@@ -1202,8 +1208,9 @@ describe("Runtime", () => {
 								containerErrors.push(error);
 							}
 						},
-						submitFn: (...args) => {
-							return ++submittedOpsCount; // clientSequenceNumber
+						submitBatchFn: (messages) => {
+							submittedOpsCount += messages.length;
+							return submittedOpsCount; // clientSequenceNumber
 						},
 						updateDirtyContainerState: (dirty: boolean) => {},
 						getLoadedFromVersion: () => undefined,
@@ -5812,6 +5819,206 @@ describe("Runtime", () => {
 					false,
 					"Runtime should exit staging mode after discard",
 				);
+			});
+
+			describe("inbound processing", () => {
+				let deltaManager: IDeltaManagerFull;
+				const isInactiveControlsError = (error: Error & IErrorBase): boolean =>
+					error.errorType === ContainerErrorTypes.usageError &&
+					error.message === "Not in staging mode";
+
+				beforeEach(() => {
+					const manager = containerRuntime.deltaManager;
+					assert(
+						isIDeltaManagerFull(manager),
+						"Expected access to the inbound and outbound queues",
+					);
+					deltaManager = manager;
+				});
+
+				it("pauses and resumes idempotently without exiting staging mode", async () => {
+					const controls = containerRuntime.enterStagingMode();
+					const { inbound, inboundSignal, outbound } = deltaManager;
+					// Keep the pause pending to simulate inbound processing that has not stopped yet.
+					const processingStopped = new Deferred<void>();
+					const pauseQueue = inbound.pause.bind(inbound);
+					const pause = sandbox.stub(inbound, "pause").callsFake(async () => {
+						await pauseQueue();
+						return processingStopped.promise;
+					});
+					const resume = sandbox.spy(inbound, "resume");
+					assert.equal(
+						inbound.paused,
+						false,
+						"Entering staging mode should not pause inbound",
+					);
+
+					let pauseSettled = false;
+					let repeatedPauseSettled = false;
+					const paused = controls.pauseInbound().then(() => {
+						pauseSettled = true;
+					});
+					assert.equal(inbound.paused, true, "Inbound should be paused immediately");
+					const repeatedPause = controls.pauseInbound().then(() => {
+						repeatedPauseSettled = true;
+					});
+					await clock.tickAsync(0);
+					assert.equal(
+						pauseSettled,
+						false,
+						"Pausing should wait for inbound processing to stop",
+					);
+					assert.equal(
+						repeatedPauseSettled,
+						false,
+						"Repeated pauses should also wait for inbound processing to stop",
+					);
+
+					processingStopped.resolve();
+					await Promise.all([paused, repeatedPause]);
+					assert.equal(pause.callCount, 1, "Repeated calls should acquire only one pause");
+					assert.equal(inboundSignal.paused, false, "Inbound signals should not be paused");
+					assert.equal(outbound.paused, false, "Outbound processing should not be paused");
+
+					controls.resumeInbound();
+					controls.resumeInbound();
+					assert.equal(inbound.paused, false, "Inbound should be resumed");
+					assert.equal(resume.callCount, 1, "Repeated resumes should release only one pause");
+					assert.equal(
+						containerRuntime.inStagingMode,
+						true,
+						"Staging mode should remain active",
+					);
+
+					await controls.pauseInbound();
+					controls.commitChanges();
+					assert.equal(inbound.paused, false, "A subsequent pause should also be released");
+					assert.equal(pause.callCount, 2);
+					assert.equal(resume.callCount, 2);
+				});
+
+				for (const exitMethod of ["commitChanges", "discardChanges"] as const) {
+					it(`${exitMethod} releases an outstanding pause before notifying exit listeners`, async () => {
+						const channelCollection = stubChannelCollection(containerRuntime);
+						const controls = containerRuntime.enterStagingMode();
+						const { inbound } = deltaManager;
+						const resume = sandbox.spy(inbound, "resume");
+						const paused = controls.pauseInbound();
+						submitDataStoreOp(
+							containerRuntime,
+							"1",
+							genTestDataStoreMessage("staged-op"),
+							"LOCAL_OP_METADATA",
+						);
+						const hasStagedChangesChanged = sandbox.spy((hasStagedChanges: boolean) => {
+							if (!hasStagedChanges) {
+								assert.equal(
+									inbound.paused,
+									false,
+									"Inbound should resume before the staged-change exit event",
+								);
+							}
+						});
+						containerRuntime.on("hasStagedChangesChanged", hasStagedChangesChanged);
+						channelCollection.notifyStagingMode.withArgs(false).callsFake(() => {
+							assert.equal(
+								inbound.paused,
+								false,
+								"Inbound should resume before data store exit notifications",
+							);
+						});
+						containerRuntime.on("stagingModeChanged", ({ inStagingMode }) => {
+							if (!inStagingMode) {
+								assert.equal(
+									inbound.paused,
+									false,
+									"Inbound should resume before the exit event",
+								);
+							}
+						});
+
+						controls[exitMethod]();
+						assert(hasStagedChangesChanged.calledOnceWithExactly(false));
+						await paused;
+						assert.equal(
+							inbound.paused,
+							false,
+							"Inbound should resume even before pause is awaited",
+						);
+						assert.equal(resume.callCount, 1);
+					});
+
+					for (const pauseThroughControls of [false, true]) {
+						it(`${exitMethod} preserves an external pause with staging pause ${pauseThroughControls}`, async () => {
+							const { inbound } = deltaManager;
+							await inbound.pause();
+							const controls = containerRuntime.enterStagingMode();
+							if (pauseThroughControls) {
+								await controls.pauseInbound();
+							}
+
+							controls[exitMethod]();
+							assert.equal(inbound.paused, true, "The external pause should remain active");
+							inbound.resume();
+							assert.equal(inbound.paused, false, "No staging pause should remain");
+						});
+					}
+
+					it(`${exitMethod} releases its pause when exiting throws`, async () => {
+						const channelCollection = stubChannelCollection(containerRuntime);
+						const controls = containerRuntime.enterStagingMode();
+						const { inbound } = deltaManager;
+						await controls.pauseInbound();
+						channelCollection.notifyStagingMode
+							.withArgs(false)
+							.throws(new Error("Failed to exit staging mode"));
+
+						assert.throws(() => controls[exitMethod](), /Failed to exit staging mode/);
+						assert.equal(
+							inbound.paused,
+							false,
+							"A failed exit should release the staging pause",
+						);
+					});
+
+					it(`${exitMethod} releases its pause when the final flush throws`, async () => {
+						const controls = containerRuntime.enterStagingMode();
+						const { inbound } = deltaManager;
+						await controls.pauseInbound();
+						// Stub only after entering, since entering staging mode also flushes the Outbox.
+						const { outbox } = containerRuntime as unknown as {
+							outbox: { flush: () => void };
+						};
+						sandbox.stub(outbox, "flush").throws(new Error("Failed to flush"));
+
+						assert.throws(() => controls[exitMethod](), /Failed to flush/);
+						assert.equal(
+							inbound.paused,
+							false,
+							"A failed final flush should release the staging pause",
+						);
+					});
+				}
+
+				for (const reenterStaging of [false, true]) {
+					it(`rejects inactive pause controls with subsequent staging session ${reenterStaging}`, async () => {
+						const controls = containerRuntime.enterStagingMode();
+						controls.commitChanges();
+						const currentControls = reenterStaging
+							? containerRuntime.enterStagingMode()
+							: undefined;
+						await currentControls?.pauseInbound();
+
+						await assert.rejects(controls.pauseInbound(), isInactiveControlsError);
+						assert.throws(() => controls.resumeInbound(), isInactiveControlsError);
+						assert.equal(
+							deltaManager.inbound.paused,
+							reenterStaging,
+							"Inactive controls should not change the current pause state",
+						);
+						currentControls?.discardChanges();
+					});
+				}
 			});
 
 			it("entering staging mode twice not allowed", () => {

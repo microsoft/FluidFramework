@@ -36,7 +36,6 @@ interface ISharedSummaryBlockDataSerializable {
 /**
  * Implementation of a shared summary block. It does not generate any ops. It is only part of the summary.
  * Data should be set in this object in response to a remote op.
- * @legacy @beta
  */
 // eslint-disable-next-line import-x/no-deprecated -- Internal implementations still use this base class.
 export class SharedSummaryBlockClass extends SharedObject implements ISharedSummaryBlock {

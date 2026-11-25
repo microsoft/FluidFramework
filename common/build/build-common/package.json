@@ -16,6 +16,7 @@
 	},
 	"scripts": {
 		"format": "npm run prettier:fix",
+		"install-no-frozen": "node ../../../scripts/install-no-frozen.cjs",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",

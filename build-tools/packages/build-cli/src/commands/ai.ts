@@ -15,7 +15,7 @@ import chalk from "picocolors";
 import { type AliasProposal, runAiSession } from "../library/ai/copilotSession.js";
 import { BaseCommand } from "../library/commands/base.js";
 
-const FALLBACK_MODEL = "claude-haiku-4.5";
+export const FALLBACK_MODEL = "gpt-6-luna";
 export const SUPPORTED_ALIASES = ["dev", "copilot", "oce"] as const;
 
 export async function readAssetFile(
@@ -55,7 +55,7 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		},
 		{
 			description: "Use a specific model for the launcher assistant.",
-			command: "<%= config.bin %> <%= command.id %> --model claude-sonnet-4.5",
+			command: "<%= config.bin %> <%= command.id %> --model gpt-6-luna",
 		},
 	];
 
@@ -86,7 +86,7 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		model: Flags.string({
 			description:
 				"The AI model to use for the launcher assistant. " +
-				"Defaults to the model specified in launcher-prompt.md frontmatter.",
+				"Defaults to the model specified in launcher-prompt.md frontmatter, or GPT-6 Luna.",
 		}),
 		...BaseCommand.flags,
 	};

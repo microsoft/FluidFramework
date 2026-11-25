@@ -255,18 +255,19 @@ describeCompat(
 
 		// A caller can cancel an in-flight point-in-time load via its AbortSignal. The load waits while
 		// the delta manager replays ops toward the target; firing the signal during that replay must
-		// reject the load (and close the container) with a cancellation error rather than hanging or
+		// reject the load (and dispose the container) with a cancellation error rather than hanging or
 		// materializing a container.
 		//
-		// The cancelled load closes its container with the loader's generic cancellation error, then
+		// The cancelled load disposes its container with the loader's generic cancellation error, then
 		// reports the public loader's terminal cancellation event. Both are expected.
 		//
 		// The beyond-tip target used below to keep the load pending also makes the delta-storage layer
 		// emit the same ops-unavailable telemetry as the beyond-tip test - OdspDriver:GetDeltas_Error
 		// ("Too Many Retries") and DeltaManager:GetDeltas_Exception - as a byproduct while the abort
 		// tears the load down. Because the loader's abort signal does not propagate into the op-fetch
-		// layer, that fetch races the abort-driven container close, so those two error events may or may
-		// not fire before the close - they can't be declared as (required, ordered) itExpects events.
+		// layer, that fetch races the abort-driven container disposal.
+		// Those two error events may or may not fire before disposal, so they can't be declared as
+		// (required, ordered) itExpects events.
 		// They are not the behavior under test (the cancellation is), so the abortingLogger below
 		// downgrades them from error to generic before the tracker sees them, keeping the suite's
 		// unexpected-error check focused on genuinely unexpected errors.
@@ -274,7 +275,7 @@ describeCompat(
 			"cancels an in-flight point-in-time load when its abort signal fires",
 			[
 				{
-					eventName: "fluid:telemetry:Container:ContainerClose",
+					eventName: "fluid:telemetry:Container:ContainerDispose",
 					errorType: "genericError",
 				},
 				{
@@ -320,7 +321,7 @@ describeCompat(
 						// to fetch the (non-existent) ops, which emits OdspDriver:GetDeltas_Error ("Too Many
 						// Retries") and DeltaManager:GetDeltas_Exception. These are byproducts of how the load
 						// is held open, not the cancellation under test, and race the abort-driven container
-						// close. Downgrade them from error to generic before the tracker sees them - but only
+						// disposal. Downgrade them from error to generic before the tracker sees them - but only
 						// when the message is the expected ops-unavailable failure (the same signatures the
 						// beyond-tip test asserts). That firing is exactly the pending-load mechanism working;
 						// any OTHER GetDeltas error stays error-category so a genuinely unexpected failure is
@@ -352,8 +353,8 @@ describeCompat(
 						abortingLogger,
 					),
 					(error: Error & { errorType?: string }) => {
-						// The abort rejects the wait with the loader's generic cancellation error and closes
-						// the container (logged as ContainerClose/genericError, declared above).
+						// The abort rejects the wait with the loader's generic cancellation error and disposes
+						// the container (logged as ContainerDispose/genericError, declared above).
 						const isCancellation = /cancel/i.test(error.message);
 						assert(
 							isCancellation,

@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 import { stub } from "sinon";
 
 /**
@@ -32,6 +33,13 @@ export const createResponse = async (
 	json: async () => response,
 });
 
+/**
+ * Builds a `www-authenticate` header value that carries a claims challenge, as ODSP returns with a 401 response.
+ * @param claims - The claims JSON, before base64 encoding.
+ */
+export const createClaimsChallengeHeader = (claims: string): string =>
+	`Bearer realm="", error="insufficient_claims", claims="${fromUtf8ToBase64(claims)}"`;
+
 export const okResponse = async (
 	headers: { [key: string]: string },
 	response: object,
@@ -42,19 +50,31 @@ export const notFound = async (
 
 export type FetchCallType = "internal" | "external" | "single";
 
+/**
+ * Creates the mock response to a fetch call.
+ * @param headers - The headers of the request.
+ * @param url - The URL of the request.
+ */
+export type MockResponseFactory = (
+	headers?: { [key: string]: string },
+	url?: string,
+) => Promise<object>;
+
 export async function mockFetchMultiple<T>(
 	callback: () => Promise<T>,
-	responses: ((headers?: { [key: string]: string }) => Promise<object>)[],
+	responses: MockResponseFactory[],
 	type: FetchCallType = "single",
 ): Promise<T> {
 	const fetchStub = stub(globalThis, "fetch");
-	fetchStub.callsFake(async (_, init) => {
+	fetchStub.callsFake(async (input, init) => {
 		if (type === "external") {
 			fetchStub.restore();
 		}
 		const cb = responses.shift();
 		assert(cb !== undefined, "the end");
-		return cb(Object.fromEntries(new Headers(init?.headers))) as Promise<Response>;
+		const url =
+			typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+		return cb(Object.fromEntries(new Headers(init?.headers)), url) as Promise<Response>;
 	});
 	try {
 		return await callback();
@@ -68,7 +88,7 @@ export async function mockFetchMultiple<T>(
 
 export async function mockFetchSingle<T>(
 	callback: () => Promise<T>,
-	responseType: (headers?: { [key: string]: string }) => Promise<object>,
+	responseType: MockResponseFactory,
 	type: FetchCallType = "single",
 ): Promise<T> {
 	return mockFetchMultiple(callback, [responseType], type);
@@ -80,6 +100,27 @@ export async function mockFetchOk<T>(
 	headers: { [key: string]: string } = {},
 ): Promise<T> {
 	return mockFetchSingle(callback, async () => okResponse(headers, response));
+}
+
+/**
+ * Mock a single fetch call that returns a 200 OK response, and record the URL it requested.
+ * @param callback - The callback to invoke for the fetch call.
+ * @param response - The response to return.
+ * @param headers - The headers to include in the response.
+ * @returns The result of the callback, and the URL of the fetch call.
+ */
+export async function mockFetchOkAndGetUrl<T>(
+	callback: () => Promise<T>,
+	response = {},
+	headers: { [key: string]: string } = {},
+): Promise<{ result: T; url: string }> {
+	let url: string | undefined;
+	const result = await mockFetchSingle(callback, async (_requestHeaders, requestUrl) => {
+		url = requestUrl;
+		return okResponse(headers, response);
+	});
+	assert(url !== undefined, "fetch should be called");
+	return { result, url };
 }
 
 /**

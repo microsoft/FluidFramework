@@ -230,7 +230,9 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     readonly isReadOnly?: () => boolean;
     readonly loadingGroupId?: string;
     makeLocallyVisible(): void;
+    // @deprecated
     readonly minVersionForCollab: OldestSupportedClientVersion;
+    readonly oldestSupportedClient: OldestSupportedClientVersion;
     // (undocumented)
     readonly options: Record<string | number, any>;
     readonly scope: FluidObject;
@@ -445,6 +447,8 @@ export type ResolveResult = {
 export interface StageControls {
     readonly commitChanges: () => void;
     readonly discardChanges: () => void;
+    readonly pauseInbound?: () => Promise<void>;
+    readonly resumeInbound?: () => void;
 }
 
 // @beta @legacy

@@ -87,6 +87,13 @@ interface TestSimpleTreeSchema extends NamedCase {
 	readonly schema: ImplicitFieldSchema;
 	/** Whether the schema permits ambiguous content. */
 	readonly ambiguous: boolean;
+	/**
+	 * Expected presence of staging in the root field or any transitively reachable schema.
+	 * @remarks
+	 * Tests of {@link testSchema} interpret omission as `false`.
+	 * This expectation is authored independently of {@link getStagedSchemaUpgrades} and the production staging detection.
+	 */
+	readonly hasStagedSchema?: true;
 }
 
 /**
@@ -453,6 +460,8 @@ const library = {
  * Named simple-tree schemas used by schema-focused test suites.
  *
  * Each schema must have at least one matching entry in {@link testSimpleTrees}.
+ * Add a representative schema with observable staging whenever adding a new staging mechanism.
+ * Staged entries must produce different restrictive and permissive stored schemas so uncached conversion can independently validate their metadata.
  */
 export const testSchema: readonly TestSimpleTreeSchema[] = [
 	{ name: "empty", schema: emptySchema, ambiguous: false },
@@ -478,13 +487,43 @@ export const testSchema: readonly TestSimpleTreeSchema[] = [
 		schema: AllowsUnknownOptionalFields,
 		ambiguous: false,
 	},
-	{ name: "hasStagedAllowedTypes", schema: HasStagedAllowedTypes, ambiguous: false },
-	{ name: "mapWithStaged", schema: MapWithStaged, ambiguous: false },
-	{ name: "stagedAllowedTypesRoot", schema: stagedAllowedTypesRoot, ambiguous: false },
-	{ name: "hasStagedOptionalField", schema: HasStagedOptionalField, ambiguous: false },
-	{ name: "stagedOptionalRoot", schema: stagedOptionalRoot, ambiguous: false },
-	{ name: "nestedStagedOptional", schema: NestedStagedOptional, ambiguous: false },
-	{ name: "nestedMultiStage", schema: NestedMultiStage, ambiguous: false },
+	{
+		name: "hasStagedAllowedTypes",
+		schema: HasStagedAllowedTypes,
+		ambiguous: false,
+		hasStagedSchema: true,
+	},
+	{ name: "mapWithStaged", schema: MapWithStaged, ambiguous: false, hasStagedSchema: true },
+	{
+		name: "stagedAllowedTypesRoot",
+		schema: stagedAllowedTypesRoot,
+		ambiguous: false,
+		hasStagedSchema: true,
+	},
+	{
+		name: "hasStagedOptionalField",
+		schema: HasStagedOptionalField,
+		ambiguous: false,
+		hasStagedSchema: true,
+	},
+	{
+		name: "stagedOptionalRoot",
+		schema: stagedOptionalRoot,
+		ambiguous: false,
+		hasStagedSchema: true,
+	},
+	{
+		name: "nestedStagedOptional",
+		schema: NestedStagedOptional,
+		ambiguous: false,
+		hasStagedSchema: true,
+	},
+	{
+		name: "nestedMultiStage",
+		schema: NestedMultiStage,
+		ambiguous: false,
+		hasStagedSchema: true,
+	},
 	{ name: "plainText", schema: PlainText.Tree, ambiguous: false },
 	{ name: "formattedText", schema: FormattedTextDocument, ambiguous: false },
 ];

@@ -162,6 +162,14 @@ export enum CommitOutcome {
     NewContentOnly = 2
 }
 
+// @beta @sealed
+export type CompatibilityResult<TIncompatibility> = {
+    readonly isCompatible: true;
+} | {
+    readonly isCompatible: false;
+    readonly incompatibilities: readonly TIncompatibility[];
+};
+
 // @beta
 export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | ConciseTree<THandle>[] | {
     [key: string]: ConciseTree<THandle>;
@@ -231,9 +239,9 @@ export type DeserializeCallback = (properties: PropertySet) => void;
 export function enumFromStrings<TScope extends string, const Members extends readonly string[]>(factory: SchemaFactory<TScope>, members: Members): (<TValue extends Members[number]>(value: TValue) => TValue extends unknown ? NodeFromSchema<ReturnType<typeof singletonSchema<TScope, TValue>>> : never) & { [Index in Extract<keyof Members, `${number}`> extends `${infer N extends number}` ? N : never as Members[Index]]: TreeNodeSchemaClass<ScopedSchemaName<TScope, Members[Index]>, NodeKind.Object, TreeNode & {
         readonly value: Members[Index];
     }, Record<string, never>, true, Record<string, never>, undefined>; } & {
-    readonly schema: UnionToTuple<Members[number] extends unknown ? { [Index in Extract<keyof Members, `${number}`> extends `${infer N extends number}` ? N : never as Members[Index]]: TreeNodeSchemaClass<ScopedSchemaName<TScope, Members[Index]>, NodeKind.Object, TreeNode & {
-            readonly value: Members[Index];
-        }, Record<string, never>, true, Record<string, never>, undefined>; }[Members[number]] : never>;
+    readonly schema: { -readonly [Position in keyof Members]: TreeNodeSchemaClass<ScopedSchemaName<TScope, Members[Position]>, NodeKind.Object, TreeNode & {
+            readonly value: Members[Position];
+        }, Record<string, never>, true, Record<string, never>, undefined>; };
 };
 
 // @beta @sealed @system
@@ -1206,6 +1214,7 @@ type NodeBuilderData<T extends TreeNodeSchemaCore<string, NodeKind, boolean>> = 
 // @beta @sealed
 export interface NodeChangedData<TNode extends TreeNode = TreeNode> {
     readonly changedProperties?: ReadonlySet<TNode extends WithType<string, NodeKind.Object, infer TInfo> ? string & keyof TInfo : string>;
+    readonly changedUnknownProperties?: ReadonlySet<string>;
     readonly delta?: readonly ArrayNodeDeltaOp[] | undefined;
 }
 
@@ -1265,9 +1274,13 @@ export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFie
     -readonly [Property in keyof T]: Property extends string ? TreeFieldFromImplicitField<T[Property]> : unknown;
 };
 
-// @beta @input
-export interface ObjectSchemaOptions<TCustomMetadata = unknown> extends NodeSchemaOptions<TCustomMetadata> {
+// @public @input
+export interface ObjectSchemaOptions {
     readonly allowUnknownOptionalFields?: boolean;
+}
+
+// @beta @input
+export interface ObjectSchemaOptionsBeta<TCustomMetadata = unknown> extends ObjectSchemaOptions, NodeSchemaOptions<TCustomMetadata> {
 }
 
 // @public
@@ -1346,55 +1359,46 @@ export interface RunTransactionParamsBeta {
     readonly preconditions?: readonly TransactionConstraintBeta[];
 }
 
+// @beta @sealed
+export type SchemaAllowedTypesDiscrepancy = {
+    readonly mismatch: "allowedTypes";
+    readonly location: SchemaDiscrepancyFieldLocation;
+    readonly view: readonly string[];
+    readonly stagedView?: readonly string[];
+    readonly stored: readonly string[];
+    readonly viewIsStagedOptional?: true;
+};
+
 // @public @sealed
 export interface SchemaCompatibilityStatus {
     readonly canInitialize: boolean;
     readonly canUpgrade: boolean;
     readonly canView: boolean;
+    // @deprecated
     readonly isEquivalent: boolean;
 }
 
 // @beta @sealed
 export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus {
     readonly discrepancies: readonly SchemaDiscrepancy[] | undefined;
+    readonly upgrade: CompatibilityResult<SchemaUpgradeIncompatibility>;
+    readonly view: CompatibilityResult<SchemaViewIncompatibility>;
 }
 
 // @beta @sealed
-export type SchemaDiscrepancy = {
-    readonly mismatch: "allowedTypes";
-    readonly location: "root" | {
-        readonly nodeType: string;
-        readonly fieldKey: string | undefined;
-    };
-    readonly view: readonly string[];
-    readonly stagedView?: readonly string[];
-    readonly stored: readonly string[];
-    readonly viewIsStagedOptional?: true;
-} | {
-    readonly mismatch: "fieldKind";
-    readonly location: "root" | {
-        readonly nodeType: string;
-        readonly fieldKey: string | undefined;
-    };
-    readonly view: string;
-    readonly stored: string;
-    readonly viewIsStagedOptional?: true;
-} | {
-    readonly mismatch: "valueSchema";
+export type SchemaDiscrepancy = SchemaAllowedTypesDiscrepancy | SchemaFieldKindDiscrepancy | SchemaValueSchemaDiscrepancy | SchemaNodeKindDiscrepancy;
+
+// @beta @sealed
+export type SchemaDiscrepancyFieldLocation = "root" | {
     readonly nodeType: string;
-    readonly view: string | undefined;
-    readonly stored: string | undefined;
-} | {
-    readonly mismatch: "nodeKind";
-    readonly nodeType: string;
-    readonly view: string;
-    readonly stored: string;
+    readonly fieldKey: string | undefined;
 };
 
 // @public @sealed
 export class SchemaFactory<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactory_base {
-    constructor(
-    scope: TScope);
+    constructor(scopeOrOptions: TScope | (SchemaFactoryOptions & {
+        readonly scope: TScope;
+    }));
     array<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchemaNonClass<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, true, T, undefined>;
     array<const Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Array, TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Array>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, true, T, undefined>;
     arrayRecursive<const Name extends TName, const T extends System_Unsafe.ImplicitAllowedTypesUnsafe>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Array, System_Unsafe.TreeArrayNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Array>, {
@@ -1407,9 +1411,11 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     mapRecursive<Name extends TName, const T extends System_Unsafe.ImplicitAllowedTypesUnsafe>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, System_Unsafe.TreeMapNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>, {
         [Symbol.iterator](): Iterator<[string, System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>]>;
     } | { readonly [P in string]: System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>; }, false, T, undefined>;
-    object<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>>(name: Name, fields: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
-    objectRecursive<const Name extends TName, const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>, false, T>;
+    object<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>>(name: Name, fields: T, options?: ObjectSchemaOptions): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
+    objectRecursive<const Name extends TName, const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>>(name: Name, t: T, options?: ObjectSchemaOptions): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>, false, T>;
     readonly scope: TScope;
+    scopedFactory<const T extends TName>(name: T, settings?: SchemaFactoryOptions): SchemaFactory<ScopedSchemaName<TScope, T>>;
+    readonly settings: SchemaFactoryOptions;
 }
 
 // @public @system
@@ -1417,13 +1423,16 @@ export const SchemaFactory_base: SchemaStatics & (new () => SchemaStatics);
 
 // @beta
 export class SchemaFactoryBeta<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactory<TScope, TName> {
-    object<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>, const TCustomMetadata = unknown>(name: Name, fields: T, options?: ObjectSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T, never, TCustomMetadata>;
-    // (undocumented)
-    objectRecursive<const Name extends TName, const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>, const TCustomMetadata = unknown>(name: Name, t: T, options?: ObjectSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>, false, T, never, TCustomMetadata>;
+    constructor(scopeOrOptions: TScope | (SchemaFactoryBetaOptions & {
+        readonly scope: TScope;
+    }));
+    object<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>, const TCustomMetadata = unknown>(name: Name, fields: T, options?: ObjectSchemaOptionsBeta<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T, never, TCustomMetadata>;
+    objectRecursive<const Name extends TName, const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>, const TCustomMetadata = unknown>(name: Name, t: T, options?: ObjectSchemaOptionsBeta<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>, false, T, never, TCustomMetadata>;
     record<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchemaNonClass<ScopedSchemaName<TScope, `Record<${string}>`>, NodeKind.Record, TreeRecordNode<T> & WithType<ScopedSchemaName<TScope, `Record<${string}>`>, NodeKind.Record>, RecordNodeInsertableData<T>, true, T, undefined>;
     record<const Name extends TName, const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Record, TreeRecordNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Record>, RecordNodeInsertableData<T>, true, T, undefined, TCustomMetadata>;
     recordRecursive<Name extends TName, const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Record, TreeRecordNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Record>, { readonly [P in string]: System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>; }, false, T, undefined, TCustomMetadata>;
-    scopedFactory<const T extends TName, TNameInner extends number | string = string>(name: T): SchemaFactoryBeta<ScopedSchemaName<TScope, T>, TNameInner>;
+    scopedFactory<const T extends TName>(name: T, settings?: SchemaFactoryBetaOptions): SchemaFactoryBeta<ScopedSchemaName<TScope, T>>;
+    readonly settings: SchemaFactoryBetaOptions;
     static staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
     staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
     static stagedRecursive: <const T extends Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>>(t: T) => AnnotatedAllowedTypeUnsafe<UnannotateAllowedTypeUnsafe<T>>;
@@ -1434,8 +1443,38 @@ export class SchemaFactoryBeta<out TScope extends string | undefined = string | 
     typesRecursive: <const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]>(t: T, metadata?: AllowedTypesMetadata) => AllowedTypesFullFromMixedUnsafe<T>;
 }
 
+// @beta @input
+export interface SchemaFactoryBetaOptions extends SchemaFactoryOptions {
+    readonly objectOptions?: ObjectSchemaOptionsBeta<never>;
+}
+
+// @public @input
+export interface SchemaFactoryOptions {
+    readonly objectOptions?: ObjectSchemaOptions;
+}
+
+// @beta @sealed
+export type SchemaFieldKindDiscrepancy = {
+    readonly mismatch: "fieldKind";
+    readonly location: SchemaDiscrepancyFieldLocation;
+    readonly view: string;
+    readonly stored: string;
+    readonly viewIsStagedOptional?: true;
+};
+
 // @public @system
 const schemaIdentifierBrand: unique symbol;
+
+// @beta
+export type SchemaIncompatibilityReason = string;
+
+// @beta @sealed
+export type SchemaNodeKindDiscrepancy = {
+    readonly mismatch: "nodeKind";
+    readonly nodeType: string;
+    readonly view: string;
+    readonly stored: string;
+};
 
 // @public @sealed @system
 export interface SchemaStatics {
@@ -1470,6 +1509,87 @@ export class SchemaUpgrade {
     // (undocumented)
     protected _typeCheck: MakeNominal;
 }
+
+// @beta @sealed
+export type SchemaUpgradeAllowedTypesIncompatibility = {
+    readonly mismatch: "allowedTypes";
+    readonly reason: SchemaIncompatibilityReason;
+    readonly location: SchemaDiscrepancyFieldLocation;
+    readonly proposed: readonly string[];
+    readonly stored: readonly string[];
+};
+
+// @beta @sealed
+export type SchemaUpgradeFieldKindIncompatibility = {
+    readonly mismatch: "fieldKind";
+    readonly reason: SchemaIncompatibilityReason;
+    readonly location: SchemaDiscrepancyFieldLocation;
+    readonly proposed: string;
+    readonly stored: string;
+};
+
+// @beta @sealed
+export type SchemaUpgradeIncompatibility = SchemaUpgradeAllowedTypesIncompatibility | SchemaUpgradeFieldKindIncompatibility | SchemaUpgradeValueSchemaIncompatibility | SchemaUpgradeNodeKindIncompatibility | SchemaUpgradeMissingNodeSchemaIncompatibility | SchemaUpgradeUnsatisfiedNodeSchemaIncompatibility | SchemaUpgradeVersionIncompatibility | SchemaUpgradeViewIncompatibility;
+
+// @beta @sealed
+export type SchemaUpgradeMissingNodeSchemaIncompatibility = {
+    readonly mismatch: "missingNodeSchema";
+    readonly reason: SchemaIncompatibilityReason;
+    readonly nodeType: string;
+};
+
+// @beta @sealed
+export type SchemaUpgradeNodeKindIncompatibility = {
+    readonly mismatch: "nodeKind";
+    readonly reason: SchemaIncompatibilityReason;
+    readonly nodeType: string;
+    readonly proposed: string;
+    readonly stored: string;
+};
+
+// @beta @sealed
+export type SchemaUpgradeUnsatisfiedNodeSchemaIncompatibility = {
+    readonly mismatch: "nodeSchemaCannotBeSatisfied";
+    readonly reason: SchemaIncompatibilityReason;
+    readonly nodeType: string;
+};
+
+// @beta @sealed
+export type SchemaUpgradeValueSchemaIncompatibility = {
+    readonly mismatch: "valueSchema";
+    readonly reason: SchemaIncompatibilityReason;
+    readonly nodeType: string;
+    readonly proposed: string | undefined;
+    readonly stored: string | undefined;
+};
+
+// @beta @sealed
+export type SchemaUpgradeVersionIncompatibility = {
+    readonly mismatch: "schemaVersion";
+    readonly reason: SchemaIncompatibilityReason;
+    readonly proposed: Readonly<Record<string, number>> | undefined;
+    readonly stored: Readonly<Record<string, number>> | undefined;
+};
+
+// @beta @sealed
+export type SchemaUpgradeViewIncompatibility = {
+    readonly mismatch: "viewIncompatibleAfterUpgrade";
+    readonly reason: SchemaIncompatibilityReason;
+    readonly incompatibilities: readonly SchemaViewIncompatibility[];
+};
+
+// @beta @sealed
+export type SchemaValueSchemaDiscrepancy = {
+    readonly mismatch: "valueSchema";
+    readonly nodeType: string;
+    readonly view: string | undefined;
+    readonly stored: string | undefined;
+};
+
+// @beta @sealed
+export type SchemaViewIncompatibility = SchemaDiscrepancy & {
+    readonly reason: SchemaIncompatibilityReason;
+};
 
 // @public @system
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;

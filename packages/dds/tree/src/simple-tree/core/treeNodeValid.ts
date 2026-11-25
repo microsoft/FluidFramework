@@ -178,7 +178,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	public constructor(input: TInput | InternalTreeNode) {
 		super(privateToken);
 		const schema = this.constructor as typeof TreeNodeValid & TreeNodeSchema;
-		const cache = schema.oneTimeInitialize();
+		schema.oneTimeInitialize();
 
 		if (isTreeNode(input)) {
 			// TODO: update this once TreeBeta.clone is stable.
@@ -194,13 +194,9 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		);
 
 		const result = schema.prepareInstance(this, node);
-		// For unhydrated nodes, grab the context from the `simpleContext` (which likely is from cache.oneTimeInitialized.context,
-		// but might be customized for better schema evolution support like unknown optional fields like in clone)
-		// For hydrated nodes, this context is unused, so using the default from cache.oneTimeInitialized.context is always fine.
-		const context =
-			node instanceof UnhydratedFlexTreeNode
-				? node.simpleContext
-				: cache.oneTimeInitialized.context;
+		// Only an unhydrated node uses the context given to its kernel: a hydrated node's context comes from its tree.
+		// Cloned unhydrated nodes can have a customized context supporting unknown optional fields.
+		const context = node instanceof UnhydratedFlexTreeNode ? node.simpleContext : undefined;
 		// The TreeNodeKernel associates itself the TreeNode (result here, not node) so it can be looked up later via getKernel.
 		// If desired this could be put in a non-enumerable symbol property for lookup instead, but that gets messy going through proxies,
 		// so just relying on the WeakMap seems like the cleanest approach.

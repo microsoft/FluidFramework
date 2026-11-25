@@ -1,5 +1,25 @@
 # @fluid-example/multiview-plot-coordinate-view
 
+## 3.14.0
+
+Dependency updates only.
+
+## 3.13.0
+
+Dependency updates only.
+
+## 3.12.0
+
+Dependency updates only.
+
+## 3.11.0
+
+Dependency updates only.
+
+## 3.10.0
+
+Dependency updates only.
+
 ## 3.7.0
 
 Dependency updates only.

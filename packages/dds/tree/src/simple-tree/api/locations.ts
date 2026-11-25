@@ -19,6 +19,24 @@ import type { TreeArrayNode } from "../node-kinds/index.js";
 export type TextLocationNode = TreeNode & PlainText.Members;
 
 /**
+ * Internal capability supplied by supported text implementations, including their subclasses.
+ * Not exported from the package: applications cannot register arbitrary nodes as text.
+ * @remarks
+ * Accessing this capability depends on the array-node representation of text, which future text optimizations may change.
+ * Such dependencies should generally be avoided.
+ */
+export const textLocationArray: unique symbol = Symbol("textLocationArray");
+
+/**
+ * Identifies text nodes without relying on public method names or stored schema identifiers.
+ */
+export function isTextLocationNode(
+	node: TreeNode,
+): node is TextLocationNode & { readonly [textLocationArray]: TreeArrayNode } {
+	return textLocationArray in node;
+}
+
+/**
  * Input describing a whole node, an array gap, or a text gap in the current local view.
  * @remarks
  * A node location can refer to any SimpleTree {@link TreeNode}, including an entire array.

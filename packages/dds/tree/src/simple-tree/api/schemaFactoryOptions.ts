@@ -10,58 +10,74 @@ import type { NodeSchemaMetadata } from "../core/index.js";
  * Options when declaring an {@link SchemaFactory.object|object node}'s schema.
  *
  * @input
- * @beta
+ * @public
  */
-export interface ObjectSchemaOptions<TCustomMetadata = unknown>
-	extends NodeSchemaOptions<TCustomMetadata> {
+export interface ObjectSchemaOptions {
 	/**
-	 * Allow nodes typed with this object node schema to contain optional fields that are not present in the schema declaration.
-	 * Such nodes can come into existence either via import APIs (see remarks) or by way of collaboration with another client
-	 * that has upgraded the document's schema to include those optional fields.
+	 * Whether object nodes may contain optional fields not declared in this schema.
 	 *
-	 * @defaultValue `false`
 	 * @remarks
-	 * The advantage of enabling this option is that it allows an application ecosystem with staged rollout to more quickly
-	 * upgrade documents to include schema for new optional features.
+	 * When you add optional fields to an application schema, older application versions may still need to collaborate on the same documents.
+	 * Enabling this option on the older object schema lets its views tolerate the additional optional fields introduced by newer clients.
+	 * Those views can continue to read and edit the fields they declare without exposing the additional fields through their property API.
+	 * The same tolerance applies when a document contains unknown optional fields introduced through imports.
 	 *
-	 * However, it does come with trade-offs that applications should weigh carefully when it comes to interactions between
-	 * code and documents.
-	 * When opening such documents, the API presented is still determined by the view schema.
-	 * This can have implications on the behavior of edits or code which uses portions of the view schema,
-	 * since this may inadvertently drop data which is present in those optional fields in the document schema.
+	 * This also lets you remove an optional field from an application's view schema, for example when rolling back a release or retiring an experimental feature.
+	 * Existing documents keep the field and its data, which the reduced view treats as unknown.
+	 * Later compatible upgrades retain the omitted field and the node definitions it needs, so the view does not have to restore the declaration to perform those upgrades.
+	 * New documents initialized with the reduced view do not include the omitted field in their stored schema.
 	 *
-	 * Consider the following example:
+	 * This tolerance is limited to additional optional fields; it does not make other schema differences compatible.
+	 * For example, the view cannot omit a required field or read an unsupported type in a field it declares.
+	 * Keep the object's stored identifier and the stored keys of its remaining fields stable so they continue to identify the same schema.
+	 *
+	 * Because unknown optional fields are not exposed through the view's properties, copying those properties does not copy the entire stored node.
+	 * This matters when implementing operations such as cloning: a new node constructed from the visible properties loses any unknown-field data.
+	 * For example, suppose a newer client stores a person with a nickname, while an older client declares only the name:
 	 *
 	 * ```typescript
 	 * const sf = new SchemaFactory("com.example");
 	 * class PersonView extends sf.object("Person", { name: sf.string }, { allowUnknownOptionalFields: true }) {}
 	 * class PersonStored extends sf.object("Person", { name: sf.string, nickname: sf.optional(sf.string) }) {}
 	 *
-	 * // Say we have a document which uses `PersonStored` in its schema, and application code constructs
-	 * // a tree view using `PersonView`. If the application for some reason had implemented a function like this:
+	 * // With a `PersonView` view of the stored person, this copies `name` but loses `nickname`.
 	 * function clonePerson(a: PersonView): PersonView {
 	 * 	return new PersonView({ name: a.name });
 	 * }
-	 * // ...or even like this:
-	 * function clonePerson(a: PersonView): PersonView {
-	 *  return new PersonView({ ...a})
+	 *
+	 * // Spreading the visible properties has the same limitation.
+	 * function clonePersonWithSpread(a: PersonView): PersonView {
+	 * 	return new PersonView({ ...a });
 	 * }
-	 * // Then the alleged clone wouldn't actually clone the entire person in either case, it would drop the nickname.
 	 * ```
 	 *
-	 * The existing import and export APIs have similar problems.
-	 * For example currently the {@link (TreeAlpha:interface).exportVerbose|exportVerbose} API with stored keys preserves unknown optional fields,
-	 * but {@link Unhydrated} nodes produced by {@link TreeNode} constructors, insertable content, and {@link (TreeAlpha:interface).importVerbose|importVerbose} do not.
-	 * {@link (TreeBeta:interface).clone} however can be used to clone a node preserving unknown optional fields.
-	 * To check if a node has content in unknown optional fields, use {@link (TreeAlpha:interface).hasUnknownChildren}.
+	 * To clone a node without losing unknown optional fields, use {@link (TreeBeta:interface).clone} rather than reconstructing it from its properties.
+	 * Operations that move entire nodes, such as `moveTo` and `moveToEnd` on arrays, also preserve these fields because SharedTree moves the stored node rather than copying its visible properties.
 	 *
-	 * Note that public API methods which operate on entire nodes (such as `moveTo`, `moveToEnd`, etc. on arrays) do not encounter
-	 * this problem as SharedTree's implementation stores the entire node in its lower layers.
-	 * It's only when application code reaches into a node
-	 * (either by accessing its fields, spreading it, or some other means) that this problem arises.
+	 * When transferring data through import and export APIs, check both sides of the operation for the same copying limitation.
+	 * The {@link (TreeAlpha:interface).exportVerbose | exportVerbose} API with stored keys preserves unknown optional fields,
+	 * but {@link Unhydrated} nodes produced by {@link TreeNode} constructors, insertable content, and {@link (TreeAlpha:interface).importVerbose | importVerbose} do not.
+	 * The exception is `importVerbose` with a view (see {@link TreeImportOptions}), which uses the stored schema of a document.
+	 * Exporting those fields therefore does not guarantee that importing the result will preserve them.
+	 * To detect whether a node contains unknown-field data that an operation could lose, use {@link (TreeAlpha:interface).hasUnknownChildren}.
+	 *
+	 * @defaultValue `true`
 	 */
 	readonly allowUnknownOptionalFields?: boolean;
 }
+
+/**
+ * Options when declaring an {@link SchemaFactoryBeta.object|object node}'s schema, including custom metadata.
+ *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the node schema.
+ * See {@link NodeSchemaMetadata.custom}.
+ *
+ * @input
+ * @beta
+ */
+export interface ObjectSchemaOptionsBeta<TCustomMetadata = unknown>
+	extends ObjectSchemaOptions,
+		NodeSchemaOptions<TCustomMetadata> {}
 
 /**
  * Options when declaring an {@link SchemaFactory.object|object node}'s schema
@@ -70,18 +86,8 @@ export interface ObjectSchemaOptions<TCustomMetadata = unknown>
  * @alpha
  */
 export interface ObjectSchemaOptionsAlpha<TCustomMetadata = unknown>
-	extends ObjectSchemaOptions<TCustomMetadata>,
+	extends ObjectSchemaOptionsBeta<TCustomMetadata>,
 		NodeSchemaOptionsAlpha<TCustomMetadata> {}
-
-/**
- * Default options for Object node schema creation.
- * @remarks Omits parameters that are not relevant for common use cases.
- */
-export const defaultSchemaFactoryObjectOptions: Required<
-	Pick<ObjectSchemaOptions, "allowUnknownOptionalFields">
-> = {
-	allowUnknownOptionalFields: false,
-};
 
 /**
  * Additional information to provide to Node Schema creation.
@@ -119,4 +125,128 @@ export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown>
 	 * This gets exposed via {@link SimpleNodeSchemaBaseAlpha.persistedMetadata}.
 	 */
 	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
+}
+
+/**
+ * Configures default options for a {@link SchemaFactory} instance.
+ *
+ * @remarks
+ * Pass one object with these options and the scope to {@link SchemaFactory}.
+ * You can create these options and read them from {@link SchemaFactory.settings}.
+ *
+ * @input
+ * @public
+ */
+export interface SchemaFactoryOptions {
+	/**
+	 * Options for schemas created with {@link SchemaFactory.object}.
+	 *
+	 * @remarks
+	 * This also applies to {@link SchemaFactory.objectRecursive}.
+	 *
+	 * Options passed to the schema creation method override these defaults.
+	 * Options are combined with a shallow merge.
+	 *
+	 * Use this to set defaults such as
+	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields | allowUnknownOptionalFields}
+	 * for object schemas.
+	 *
+	 * @example
+	 * ```typescript
+	 * const sf = new SchemaFactory({
+	 *     scope: "com.example",
+	 *     objectOptions: {
+	 *         allowUnknownOptionalFields: true,
+	 *     },
+	 * });
+	 * ```
+	 */
+	readonly objectOptions?: ObjectSchemaOptions;
+}
+
+/**
+ * Configures default options for a {@link SchemaFactoryBeta} instance.
+ *
+ * @remarks
+ * Pass one object with these options and the scope to {@link SchemaFactoryBeta}.
+ * You can create these options and read them from {@link SchemaFactoryBeta.settings}.
+ *
+ * @input
+ * @beta
+ */
+export interface SchemaFactoryBetaOptions extends SchemaFactoryOptions {
+	/**
+	 * Options for schemas created with {@link SchemaFactoryBeta.object}.
+	 *
+	 * @remarks
+	 * This also applies to {@link SchemaFactoryBeta.objectRecursive}.
+	 * Options passed to the schema creation method override these defaults.
+	 * Options are combined with a shallow merge, so per-schema metadata replaces the default metadata.
+	 * Custom metadata must be provided per-schema to preserve its inferred type.
+	 *
+	 * Use this to set defaults such as
+	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields | allowUnknownOptionalFields}
+	 * for object schemas.
+	 *
+	 * @example
+	 * ```typescript
+	 * const sf = new SchemaFactoryBeta({
+	 *     scope: "com.example",
+	 *     objectOptions: {
+	 *         allowUnknownOptionalFields: true,
+	 *         metadata: { description: "Default description" },
+	 *     },
+	 * });
+	 * ```
+	 *
+	 * @privateRemarks
+	 * Note: for now, factory-level custom metadata is not supported.
+	 * This can be added in the future as needed by adding the necessary type parameter to this type and forwarding it here.
+	 */
+	readonly objectOptions?: ObjectSchemaOptionsBeta<never>;
+}
+
+/**
+ * Configures default options for a {@link SchemaFactoryAlpha} instance.
+ *
+ * @remarks
+ * Pass one object with these options and the scope to {@link SchemaFactoryAlpha}.
+ * You can create these options and read them from {@link SchemaFactoryAlpha.settings}.
+ *
+ * @input
+ * @alpha
+ */
+export interface SchemaFactoryAlphaOptions extends SchemaFactoryBetaOptions {
+	/**
+	 * Options for schemas created with {@link SchemaFactoryAlpha.objectAlpha}.
+	 *
+	 * @remarks
+	 * This also applies to the inherited {@link SchemaFactoryBeta.object} method,
+	 * {@link SchemaFactoryAlpha.objectRecursive}, and
+	 * {@link SchemaFactoryAlpha.objectRecursiveAlpha}.
+	 *
+	 * Options passed to the schema creation method override these defaults.
+	 * Options are combined with a shallow merge, so per-schema metadata replaces the default metadata.
+	 * Custom metadata must be provided per-schema to preserve its inferred type.
+	 *
+	 * Use this to set defaults such as
+	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields | allowUnknownOptionalFields}
+	 * for all object schemas created with these methods.
+	 *
+	 * @example
+	 * ```typescript
+	 * const sf = new SchemaFactoryAlpha({
+	 *     scope: "com.example",
+	 *     objectOptions: {
+	 *         allowUnknownOptionalFields: true,
+	 *         persistedMetadata: { library: "com.example" },
+	 *     },
+	 * });
+	 * ```
+	 *
+	 * @privateRemarks
+	 * Note: for now, factory-level custom metadata is not supported.
+	 * This can be added in the future as needed by adding the necessary type parameter to this type and forwarding it here.
+	 */
+	readonly objectOptions?: ObjectSchemaOptionsAlpha<never>;
 }

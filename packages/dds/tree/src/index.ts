@@ -64,6 +64,7 @@ export {
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
+	type TreeBranchHandleAlpha,
 	minimize,
 } from "./shared-tree/index.js";
 
@@ -81,14 +82,21 @@ export {
 	TreeViewConfiguration,
 	type ITreeViewConfiguration,
 	type ITreeViewConfigurationAlpha,
+	type SchemaVersionMap,
+	type SchemaVersions,
+	type TreeViewSchemaVersions,
 	type ITreeConfigurationOptions,
 	type TreeView,
 	type TreeViewEvents,
 	SchemaFactory,
+	type SchemaFactoryOptions,
 	SchemaFactoryBeta,
+	type SchemaFactoryBetaOptions,
 	type SchemaStaticsBeta,
 	SchemaFactoryAlpha,
+	type SchemaFactoryAlphaOptions,
 	type ObjectSchemaOptionsAlpha,
+	type ObjectSchemaOptionsBeta,
 	type ObjectSchemaOptions,
 	type ImplicitFieldSchema,
 	type TreeFieldFromImplicitField,
@@ -113,7 +121,24 @@ export {
 	type TreeNodeSchemaClass,
 	type SchemaCompatibilityStatus,
 	type SchemaCompatibilityStatusBeta,
+	type CompatibilityResult,
+	type SchemaViewIncompatibility,
+	type SchemaUpgradeIncompatibility,
 	type SchemaDiscrepancy,
+	type SchemaDiscrepancyFieldLocation,
+	type SchemaIncompatibilityReason,
+	type SchemaAllowedTypesDiscrepancy,
+	type SchemaFieldKindDiscrepancy,
+	type SchemaValueSchemaDiscrepancy,
+	type SchemaNodeKindDiscrepancy,
+	type SchemaUpgradeAllowedTypesIncompatibility,
+	type SchemaUpgradeFieldKindIncompatibility,
+	type SchemaUpgradeValueSchemaIncompatibility,
+	type SchemaUpgradeNodeKindIncompatibility,
+	type SchemaUpgradeMissingNodeSchemaIncompatibility,
+	type SchemaUpgradeUnsatisfiedNodeSchemaIncompatibility,
+	type SchemaUpgradeVersionIncompatibility,
+	type SchemaUpgradeViewIncompatibility,
 	type FieldProps,
 	type FieldPropsAlpha,
 	normalizeFieldSchema,
@@ -311,6 +336,7 @@ export {
 	type TreeRecordNode,
 	KeyEncodingOptions,
 	type TreeParsingOptions,
+	type TreeImportOptions,
 	type SchemaFactory_base,
 	type NumberKeys,
 	type SimpleAllowedTypeAttributes,
@@ -417,6 +443,7 @@ export {
 	utf16LengthForCodePoints,
 } from "./text/index.js";
 export { ExtensibleUnionNode } from "./extensibleUnionNode.js";
+export { ExtrinsicLocations } from "./extrinsic-locations/index.js";
 export { Component } from "./componentApi.js";
 
 export { defineTreeDataStore, instantiateTreeFirstTime } from "./treeDataStore.js";
@@ -424,6 +451,9 @@ export type { TreeDataStoreOptions } from "./treeDataStore.js";
 
 export { Sandboxing } from "./sandboxing/index.js";
 export {
-	identifySchemaAlpha,
+	identifySchema,
+	identifySchemaWithHash,
+	type IdentifySchemaOptions,
+	type IdentifySchemaWithHashOptions,
 	type SchemaIdentity,
 } from "./simple-tree/index.js";

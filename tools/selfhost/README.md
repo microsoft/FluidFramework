@@ -7,6 +7,11 @@ Service, with Azure Event Hubs for ordering, Azure Cosmos DB for MongoDB for doc
 operations, Azure Managed Redis, and Azure Files for snapshots. You own every resource it
 creates.
 
+If Azure Managed Redis cannot be created in your region, you can explicitly select
+[Azure Cache for Redis as a temporary fallback](./azure/README.md#azure-cache-for-redis-fallback).
+The deployment also includes a [maintenance-window migration script](./azure/README.md#migrating-the-fallback-to-azure-managed-redis)
+to switch to Managed Redis later without deleting the old cache automatically.
+
 ## Cost
 
 > **Planned:** a basic cost estimate for the default configuration will be added here.

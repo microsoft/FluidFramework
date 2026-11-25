@@ -23,7 +23,11 @@ import {
 	type StableNodeIdentifier,
 } from "../../../feature-libraries/index.js";
 import { FieldKinds } from "../../../feature-libraries/index.js";
+import { asAlpha } from "../../../api.js";
 import {
+	createIndependentTreeAlpha,
+	independentView,
+	exportVerboseFiltered,
 	SchematizingSimpleTreeView,
 	TreeAlpha,
 	TreeBeta,
@@ -51,6 +55,8 @@ import {
 } from "../../../simple-tree/core/treeNodeKernel.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { SchemaComponent } from "../../../simple-tree/treeSchema.js";
 import {
 	type ArrayNodeDeltaOp,
 	type ArrayNodeTreeChangedDeltaOp,
@@ -67,8 +73,10 @@ import {
 	type TransactionVoidResult,
 	treeNodeApi as Tree,
 	type TreeChangeEvents,
+	type TreeFieldFilter,
 	type TreeLeafValue,
 	type TreeNode,
+	type TreeView,
 	TreeViewConfiguration,
 	unhydratedFlexTreeFromInsertable,
 	type UnsafeUnknownSchema,
@@ -85,7 +93,10 @@ import {
 import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
 import { ajvValidator } from "../../codec/index.js";
 import {
+	AllowsUnknownOptionalFields,
+	HasMinimalValueField,
 	hasUnknownOptionalFieldsDocument,
+	Minimal,
 	testDocumentIndependentView,
 	testDocuments,
 	testSimpleTrees,
@@ -2197,6 +2208,87 @@ describe("treeNodeApi", () => {
 				testNode.child = undefined;
 				assert.deepEqual(log, ['nodeChanged: ["child"]', `treeChanged`]);
 			});
+
+			describe("unknown optional fields", () => {
+				// The newer schema has the `extra` field. The older schema does not.
+				// `extra` uses a custom stored key, to check that events report the stored key.
+				const factoryNew = new SchemaFactoryAlpha("unknownOptionalFields");
+				class PersonNew extends factoryNew.object("Person", {
+					known: factoryNew.optional(factoryNew.string),
+					extra: factoryNew.optional(factoryNew.string, { key: "extraKey" }),
+				}) {}
+				const factoryOld = new SchemaFactoryAlpha("unknownOptionalFields");
+				class PersonOld extends factoryOld.object(
+					"Person",
+					{ known: factoryOld.optional(factoryOld.string) },
+					{ allowUnknownOptionalFields: true },
+				) {}
+
+				/**
+				 * Two clients sharing the same document, one with each schema.
+				 */
+				interface Clients {
+					/**
+					 * Provider for both clients. Call `synchronizeMessages` to deliver edits between them.
+					 */
+					readonly provider: TestTreeProviderLite;
+					/**
+					 * View of the client with the newer schema. Edits to `extra` are made through this view.
+					 */
+					readonly viewNew: TreeView<typeof PersonNew>;
+					/**
+					 * Data of each `nodeChanged` event on the root of the client with the older schema, in order.
+					 */
+					readonly events: readonly unknown[];
+				}
+
+				/**
+				 * Creates a client with the newer schema and a client with the older schema, sharing the same document.
+				 * Records the `nodeChanged` events on the older client's root.
+				 */
+				function setup(): Clients {
+					const provider = new TestTreeProviderLite(2);
+					const viewNew = provider.trees[0].viewWith(
+						new TreeViewConfiguration({ schema: PersonNew }),
+					);
+					viewNew.initialize(new PersonNew({}));
+					provider.synchronizeMessages();
+					const viewOld = provider.trees[1].viewWith(
+						new TreeViewConfiguration({ schema: PersonOld }),
+					);
+					const events: unknown[] = [];
+					TreeBeta.on(viewOld.root, "nodeChanged", (data) => events.push(data));
+					return { provider, viewNew, events };
+				}
+
+				it("nodeChanged reports only unknown optional fields", () => {
+					const { provider, viewNew, events } = setup();
+
+					viewNew.root.extra = "x";
+					provider.synchronizeMessages();
+
+					assert.deepEqual(events, [
+						{ changedProperties: new Set(), changedUnknownProperties: new Set(["extraKey"]) },
+					]);
+				});
+
+				it("nodeChanged reports known and unknown optional fields changed in the same batch", () => {
+					const { provider, viewNew, events } = setup();
+
+					(viewNew as SchematizingSimpleTreeView<typeof PersonNew>).runTransaction(() => {
+						viewNew.root.known = "a";
+						viewNew.root.extra = "b";
+					});
+					provider.synchronizeMessages();
+
+					assert.deepEqual(events, [
+						{
+							changedProperties: new Set(["known"]),
+							changedUnknownProperties: new Set(["extraKey"]),
+						},
+					]);
+				});
+			});
 		});
 
 		describeHydration("array node", (initializeTree) => {
@@ -3440,6 +3532,43 @@ describe("treeNodeApi", () => {
 			innerPoints: schema.array(TestPoint),
 		}) {}
 
+		for (const hydrated of [false, true]) {
+			it(`clones ${hydrated ? "hydrated" : "unhydrated"} nodes without requesting a default context`, () => {
+				class CloneSchema extends schema.object("CloneWithoutDefaultContext", {
+					value: schema.number,
+				}) {}
+				let original: CloneSchema;
+				if (hydrated) {
+					const view = getView(new TreeViewConfiguration({ schema: CloneSchema }));
+					view.initialize({ value: 1 });
+					original = view.root;
+				} else {
+					original = new CloneSchema({ value: 1 });
+				}
+				const component = SchemaComponent.fromSchema(CloneSchema);
+				Object.defineProperty(component, "context", {
+					configurable: true,
+					get() {
+						assert.fail("Cloning must not request the component's default context");
+					},
+				});
+				try {
+					const cloned = TreeBeta.clone<typeof CloneSchema>(original);
+					assert.deepEqual(cloned, original);
+					assert.notStrictEqual(cloned, original);
+					const inner = getInnerNode(cloned);
+					assert(inner instanceof UnhydratedFlexTreeNode);
+					assert.strictEqual(inner.simpleContext.schema, component.definitions);
+					assert.strictEqual(
+						inner.context.schema.nodeSchema,
+						getInnerNode(original).context.schema.nodeSchema,
+					);
+				} finally {
+					Reflect.deleteProperty(component, "context");
+				}
+			});
+		}
+
 		it("clones unhydrated nodes", () => {
 			const topLeft = new TestPoint({ x: 1, y: 1 });
 			const bottomRight = new TestPoint({ x: 10, y: 10 });
@@ -4104,6 +4233,96 @@ describe("treeNodeApi", () => {
 					),
 				);
 			});
+
+			it("unknown optional fields with view", () => {
+				const view = testDocumentIndependentView(hasUnknownOptionalFieldsDocument);
+				const exported = TreeAlpha.exportVerbose(view.root as AllowsUnknownOptionalFields, {
+					keys: KeyEncodingOptions.allStoredKeys,
+				});
+
+				const imported = TreeAlpha.importVerbose(AllowsUnknownOptionalFields, exported, {
+					keys: KeyEncodingOptions.allStoredKeys,
+					view,
+				});
+
+				// A document whose stored schema does not allow the unknown optional fields rejects the import.
+				const otherView = independentView(
+					new TreeViewConfiguration({ schema: AllowsUnknownOptionalFields }),
+				);
+				otherView.initialize(new AllowsUnknownOptionalFields({}));
+				assert.throws(
+					() => {
+						otherView.root = imported;
+					},
+					validateUsageError(/Tree does not conform to schema/),
+				);
+
+				// The document that supplied the stored schema accepts the import.
+				view.root = imported;
+				assert.deepEqual(
+					TreeAlpha.exportVerbose(view.root as AllowsUnknownOptionalFields, {
+						keys: KeyEncodingOptions.allStoredKeys,
+					}),
+					exported,
+				);
+			});
+
+			it("errors on a missing view, a view without allStoredKeys, or a view that does not match the schema", () => {
+				class OptionalField extends schema.object("A", {
+					a: schema.optional(schema.string),
+				}) {}
+				const otherFactory = new SchemaFactoryAlpha("com.example");
+				class RequiredField extends otherFactory.object("A", { a: otherFactory.string }) {}
+				const data: VerboseTree = { type: OptionalField.identifier, fields: {} };
+
+				assert.throws(
+					() =>
+						// @ts-expect-error allStoredKeys requires a view.
+						TreeAlpha.importVerbose(OptionalField, data, {
+							keys: KeyEncodingOptions.allStoredKeys,
+						}),
+					validateAssertionError(/requires a view/),
+				);
+
+				const tree = createIndependentTreeAlpha();
+				const view = asAlpha(
+					tree.viewWith(new TreeViewConfiguration({ schema: OptionalField })),
+				);
+				view.initialize(new OptionalField({}));
+				assert.throws(
+					() =>
+						TreeAlpha.importVerbose(RequiredField, data, {
+							keys: KeyEncodingOptions.allStoredKeys,
+							view,
+						}),
+					validateUsageError(
+						/is not the same object as the schema with this identifier in the view/,
+					),
+				);
+				assert.throws(
+					() =>
+						TreeAlpha.importVerbose(OptionalField, data, {
+							keys: KeyEncodingOptions.knownStoredKeys,
+							// @ts-expect-error A view is allowed only with allStoredKeys.
+							view,
+						}),
+					validateAssertionError(/only when importing with `allStoredKeys`/),
+				);
+				view.dispose();
+
+				const incompatibleView = asAlpha(
+					tree.viewWith(new TreeViewConfiguration({ schema: RequiredField })),
+				);
+				assert(!incompatibleView.compatibility.canView);
+				assert.throws(
+					() =>
+						TreeAlpha.importVerbose(RequiredField, data, {
+							keys: KeyEncodingOptions.allStoredKeys,
+							view: incompatibleView,
+						}),
+					validateUsageError(/cannot view its document/),
+				);
+			});
 		});
 
 		describe("exportVerbose", () => {
@@ -4126,7 +4345,7 @@ describe("treeNodeApi", () => {
 				// Use limited context for view part and full context for flex-tree parts, so that unknown optional fields are unknown in the view schema, but allowed in the flex tree.
 				const flexContext = new UnhydratedContext(
 					defaultSchemaPolicy,
-					dummyContextFull.flexContext.schema,
+					dummyContextFull.flexContext.schema.nodeSchema,
 				);
 				const context: Context = new Context(flexContext, dummyContextLimited.schema);
 
@@ -4251,6 +4470,12 @@ describe("treeNodeApi", () => {
 											expectTreesEqual(root, imported);
 										}
 
+										const importedWithView = TreeAlpha.importVerbose(view.schema, exported, {
+											keys: KeyEncodingOptions.allStoredKeys,
+											view,
+										});
+										expectTreesEqual(root, importedWithView);
+
 										const exportedKnown = TreeAlpha.exportVerbose(root, {
 											keys: KeyEncodingOptions.knownStoredKeys,
 										});
@@ -4311,6 +4536,104 @@ describe("treeNodeApi", () => {
 						),
 					);
 				});
+			});
+		});
+
+		describe("filter", () => {
+			it("filters known fields", () => {
+				class FilterChild extends schema.object("FilterChild", {
+					a: schema.number,
+					b: schema.number,
+				}) {}
+				class FilterList extends schema.array("FilterList", FilterChild) {}
+				class FilterParent extends schema.object("FilterParent", {
+					keep: schema.string,
+					child: FilterChild,
+					list: FilterList,
+				}) {}
+				const root = hydrate(FilterParent, {
+					keep: "a",
+					child: { a: 1, b: 2 },
+					list: [{ a: 3, b: 4 }],
+				});
+				const filter: TreeFieldFilter = (parentSchemaIdentifier, storedKey) => {
+					switch (storedKey) {
+						// Use this filter for the fields of the nodes in these fields.
+						case "child":
+						case "list": {
+							return filter;
+						}
+						// The field of an array node: include all elements, with all of their content.
+						case "": {
+							return parentSchemaIdentifier === FilterList.identifier;
+						}
+						// Read `root` while the export is in the fields of other nodes.
+						default: {
+							return storedKey === root.keep;
+						}
+					}
+				};
+				assert.deepEqual(exportVerboseFiltered(root, {}, filter), {
+					type: FilterParent.identifier,
+					fields: {
+						child: { type: FilterChild.identifier, fields: { a: 1 } },
+						list: {
+							type: FilterList.identifier,
+							fields: [{ type: FilterChild.identifier, fields: { a: 3, b: 4 } }],
+						},
+					},
+				});
+				// An omitted array field gives an empty array of elements.
+				assert.deepEqual(
+					exportVerboseFiltered(root.list, {}, () => false),
+					{
+						type: FilterList.identifier,
+						fields: [],
+					},
+				);
+			});
+
+			it("filters unknown optional fields", () => {
+				const view = testDocumentIndependentView(hasUnknownOptionalFieldsDocument);
+				const root = view.root as AllowsUnknownOptionalFields;
+				const unknownFields = view.unknownFieldSchemas?.get(AllowsUnknownOptionalFields);
+
+				// Include one unknown optional field, with all of its content.
+				const includeRecursive: TreeFieldFilter = (parentSchemaIdentifier, storedKey) =>
+					storedKey === "recursive";
+				assert.deepEqual(
+					exportVerboseFiltered(
+						root,
+						{ keys: KeyEncodingOptions.allStoredKeys },
+						includeRecursive,
+					),
+					{
+						type: AllowsUnknownOptionalFields.identifier,
+						fields: {
+							recursive: {
+								type: AllowsUnknownOptionalFields.identifier,
+								fields: { leaf: "nested leaf" },
+							},
+						},
+					},
+				);
+
+				// Include each unknown optional field, but not the fields of the node in it.
+				// The value of a leaf node is always included.
+				const omitContent: TreeFieldFilter = (parentSchemaIdentifier, storedKey) =>
+					unknownFields?.has(storedKey) === true ? () => false : false;
+				assert.deepEqual(
+					exportVerboseFiltered(root, { keys: KeyEncodingOptions.allStoredKeys }, omitContent),
+					{
+						type: AllowsUnknownOptionalFields.identifier,
+						fields: {
+							recursive: { type: AllowsUnknownOptionalFields.identifier, fields: {} },
+							minimal: { type: Minimal.identifier, fields: {} },
+							hasMinimalValueField: { type: HasMinimalValueField.identifier, fields: {} },
+							leaf: "leaf",
+						},
+					},
+				);
 			});
 		});
 	});

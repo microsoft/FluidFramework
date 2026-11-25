@@ -96,7 +96,7 @@ describe("EditManagerSummarizer", () => {
 		class Added extends sf.object("Added", { value: sf.string }) {}
 		const oldConfig = new TreeViewConfiguration({ schema: sf.optional(sf.string) });
 		const newConfig = new TreeViewConfiguration({ schema: sf.optional([sf.string, Added]) });
-		const factory = new SharedTreeTestFactory(() => {}, undefined, {
+		const factory = SharedTreeTestFactory.build(() => {}, undefined, {
 			minVersionForCollab: currentVersion,
 		});
 		const provider = new TestTreeProviderLite(2, factory);
@@ -112,7 +112,7 @@ describe("EditManagerSummarizer", () => {
 		provider.synchronizeMessages();
 
 		assert.equal(aView.root, "concurrent edit");
-		assert.equal(bView.compatibility.isEquivalent, false);
+		assert.equal(bView.compatibility.canView, false);
 		expectSchemaEqual(a.kernel.checkout.storedSchema, toInitialSchema(oldConfig.schema));
 		// A retains B's original schema and data commits in peer history to rebase later messages from B.
 		// Its document schema does not include Added, so using that schema to encode B's data would fail.

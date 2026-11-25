@@ -11,6 +11,7 @@ import {
 	type IEphemeralSummaryAccessRecord,
 	type IEphemeralSummaryAccessStore,
 	type ISummaryAccessContext,
+	type IDocumentAccessProof,
 	MalformedEphemeralSummaryAccessRecordError,
 } from "../services";
 import {
@@ -28,23 +29,36 @@ export interface IResolveSummaryAccessArgs extends IValidateSummaryDocumentArgs 
 
 function contextFromDocument(
 	document: IDocument,
-	source: ISummaryAccessContext["source"],
 	ignoreEphemeralFlag: boolean,
 ): ISummaryAccessContext {
+	const isEphemeralContainer = !ignoreEphemeralFlag && document.isEphemeralContainer === true;
 	return {
 		tenantId: document.tenantId,
 		documentId: document.documentId,
-		isEphemeralContainer: !ignoreEphemeralFlag && document.isEphemeralContainer === true,
+		isEphemeralContainer,
 		createTime: document.createTime,
 		storageName: document.storageName ?? undefined,
-		source,
+		source: "alfred",
+	};
+}
+
+function createEphemeralAccessProof(context: ISummaryAccessContext): IDocumentAccessProof {
+	return {
+		tenantId: context.tenantId,
+		documentId: context.documentId,
+		operation: "read",
+		source: "ec-lifecycle-redis",
+		containerType: "ephemeral",
+		ephemeralCreateTime: context.createTime,
+		lifecycleVersion: String(context.createTime),
+		state: "active",
 	};
 }
 
 function logAllowed(
 	args: IResolveSummaryAccessArgs,
 	documentId: string,
-	source: ISummaryAccessContext["source"],
+	source: "localEphemeral" | "alfred",
 	details: Omit<ISummaryOwnershipTelemetryDetails, "source"> = {},
 ): void {
 	logOwnershipOutcome(
@@ -120,7 +134,7 @@ export async function resolveSummaryAccess(
 			logAllowed(args, identity.documentId, "localEphemeral", {
 				localOutcome: "active",
 			});
-			return {
+			const context: ISummaryAccessContext = {
 				tenantId: args.tenantId,
 				documentId: identity.documentId,
 				isEphemeralContainer: true,
@@ -128,6 +142,8 @@ export async function resolveSummaryAccess(
 				storageName: undefined,
 				source: "localEphemeral",
 			};
+			context.accessProof = createEphemeralAccessProof(context);
+			return context;
 		}
 
 		const fallbackDetails: Omit<ISummaryOwnershipTelemetryDetails, "source"> = {
@@ -142,7 +158,7 @@ export async function resolveSummaryAccess(
 		});
 		if (document.isEphemeralContainer !== true) {
 			logAllowed(args, identity.documentId, "alfred", fallbackDetails);
-			return contextFromDocument(document, "alfred", args.ignoreEphemeralFlag ?? false);
+			return contextFromDocument(document, args.ignoreEphemeralFlag ?? false);
 		}
 		if (localFailureOutcome !== undefined) {
 			throw new NetworkError(503, "Ephemeral summary access state is unavailable.");
@@ -210,7 +226,11 @@ export async function resolveSummaryAccess(
 			...fallbackDetails,
 			activationOutcome: activation,
 		});
-		return contextFromDocument(document, "alfred", args.ignoreEphemeralFlag ?? false);
+		const context = contextFromDocument(document, args.ignoreEphemeralFlag ?? false);
+		if (activation !== "writeError") {
+			context.accessProof = createEphemeralAccessProof(context);
+		}
+		return context;
 	}
 
 	const document = await validateSummaryDocument({
@@ -219,5 +239,5 @@ export async function resolveSummaryAccess(
 		logAllowedOutcome: false,
 	});
 	logAllowed(args, identity.documentId, "alfred");
-	return contextFromDocument(document, "alfred", args.ignoreEphemeralFlag ?? false);
+	return contextFromDocument(document, args.ignoreEphemeralFlag ?? false);
 }

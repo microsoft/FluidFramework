@@ -6,6 +6,7 @@
 import { assert, fail, oob, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+import type { SchemaVersions } from "../../core/index.js";
 import { getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import {
@@ -26,12 +27,8 @@ import {
 	type RecordNodeSchema,
 } from "../node-kinds/index.js";
 import type { SchemaType, SimpleNodeSchema } from "../simpleSchema.js";
-import {
-	toInitialSchema,
-	toUnhydratedSchema,
-	transformSimpleSchema,
-} from "../toStoredSchema.js";
-import { createTreeSchema, type TreeSchema } from "../treeSchema.js";
+import { toUnhydratedSchema, transformSimpleSchema } from "../toStoredSchema.js";
+import { getRootSchemaDerivedData, toInitialSchema, type TreeSchema } from "../treeSchema.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
 
 import { SchemaIdentityInternal, type SchemaIdentity } from "./schemaIdentity.js";
@@ -167,12 +164,12 @@ export interface ITreeViewConfigurationAlpha<
 	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
 > extends ITreeViewConfiguration<TSchema> {
 	/**
-	 * Policy for generating stored schema from the view schema during staged schema upgrades.
+	 * Policy selecting staged schema upgrades to enable when initializing or upgrading a document.
 	 *
 	 * @remarks
-	 * If provided, this policy is used when generating stored schema to include in documents via
-	 * `initialize` / `upgradeSchema` as well as in {@link snapshotSchemaCompatibility} to validate
-	 * the compatibility of such documents.
+	 * Use this policy to control which staged upgrades this client may enable, for example based on a feature flag.
+	 *
+	 * @see {@link SchemaStaticsBeta.staged} and {@link SchemaStaticsAlpha.stagedOptional} for what enabling each kind of upgrade permits.
 	 *
 	 * @defaultValue {@link StagedSchemaUpgradePolicyFactory.restrictive}
 	 *
@@ -187,9 +184,12 @@ export interface ITreeViewConfigurationAlpha<
 	readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;
 
 	/**
-	 * Provides hashing for schema telemetry and optional checks when constructing a view.
+	 * Specifies the schema identity for runtime hashing and application-defined versions.
+	 *
 	 * @remarks
-	 * Create with {@link identifySchemaAlpha}.
+	 * {@link identifySchema} provides application-defined versions only,
+	 * while {@link identifySchemaWithHash} also enables hash checks and hash telemetry.
+	 * {@link SchemaVersions} describes application version requirements and upgrade rules.
 	 */
 	readonly schemaIdentity?: SchemaIdentity;
 }
@@ -253,12 +253,11 @@ export class TreeViewConfiguration<
 		this.enableSchemaValidation = config.enableSchemaValidation;
 		this.preventAmbiguity = config.preventAmbiguity;
 
-		// Ambiguity errors are lower priority to report than invalid schema errors, so collect these in an array and report them all at once.
+		// Collect ambiguity errors so validation failures encountered during this walk take priority.
+		// Reachable identifier uniqueness is checked later when the derived root graph is requested.
 		const ambiguityErrors: string[] = [];
 
-		// Validate the schema and collect ambiguity errors.
-		// This does a lot of validation (throwing usage errors as a side effect) in addition to just collecting ambiguity errors.
-		// ambiguityErrors are considered a lower priority, so only thrown if no other errors are found.
+		// Configuration-specific validation must visit every field, independently of cached component data.
 		walkFieldSchema(config.schema, {
 			allowedTypes({ types }: AllowedTypesFullEvaluated): void {
 				checkUnion(
@@ -306,13 +305,22 @@ export class TreeViewConfigurationAlpha<
 	 */
 	public readonly schemaIdentity: ITreeViewConfigurationAlpha["schemaIdentity"];
 
-	// TODO: Consider an async creator so identifySchemaAlpha can use native Web Crypto hashing APIs,
+	/**
+	 * Returns the application-defined versions configured through {@link TreeViewConfigurationAlpha.schemaIdentity},
+	 * or `undefined` if none were supplied.
+	 */
+	public get schemaVersion(): SchemaVersions | undefined {
+		return this.schemaIdentity?.schemaVersion;
+	}
+
+	// TODO: Consider an async creator so identifySchemaWithHashAlpha can use native Web Crypto
+	// hashing APIs,
 	// saving approximately 2 KB of compressed bundle size.
 	// This is worth pursuing if there is another reason to make configuration creation async,
 	// rather than introducing async creation solely for the bundle size savings.
 	public constructor(props: ITreeViewConfigurationAlpha<TSchema>) {
 		super(props);
-		const treeSchema = createTreeSchema(this.schema);
+		const { treeSchema } = getRootSchemaDerivedData(this.schema);
 		this.root = treeSchema.root;
 		this.definitions = treeSchema.definitions;
 
@@ -323,7 +331,7 @@ export class TreeViewConfigurationAlpha<
 		}
 
 		// Eagerly perform these conversions to surface errors sooner.
-		toInitialSchema(this.root, this.stagedUpgradePolicy);
+		toInitialSchema(this.root, this.stagedUpgradePolicy, this.schemaVersion);
 		transformSimpleSchema(treeSchema, toUnhydratedSchema);
 	}
 }

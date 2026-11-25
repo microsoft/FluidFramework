@@ -85,6 +85,11 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	 */
 	public minVersionForCollab: OldestSupportedClientVersion = defaultMinVersionForCollab;
 
+	/**
+	 * {@inheritdoc @fluidframework/runtime-definitions#IFluidDataStoreContext.oldestSupportedClient}
+	 */
+	public oldestSupportedClient: OldestSupportedClientVersion = defaultMinVersionForCollab;
+
 	constructor(
 		public readonly id: string = uuid(),
 		public readonly existing: boolean = false,

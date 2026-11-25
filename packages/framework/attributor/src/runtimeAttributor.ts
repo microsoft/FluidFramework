@@ -17,6 +17,7 @@ import type {
 	AttributionKey,
 	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import { OpStreamAttributor, type IAttributor } from "./attributor.js";
@@ -104,6 +105,7 @@ export class RuntimeAttributor implements IRuntimeAttributor {
 			this.opAttributor !== undefined,
 			0xa1d /* RuntimeAttributor should be initialized before summarization */,
 		);
+		// eslint-disable-next-line import-x/no-deprecated -- Internal implementation use is supported (AB#88250).
 		const builder = new SummaryTreeBuilder();
 		builder.addBlob(opBlobName, this.encoder.encode(this.opAttributor));
 		return builder.getSummaryTree();

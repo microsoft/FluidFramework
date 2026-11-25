@@ -38,6 +38,7 @@ import {
 interface IFoo {
 	foo: string;
 	minVersionForCollab: OldestSupportedClientVersion | undefined;
+	oldestSupportedClient: OldestSupportedClientVersion | undefined;
 }
 class SharedFooFactory implements IChannelFactory<IFoo> {
 	public static readonly Type: string = "SharedFoo";
@@ -61,6 +62,7 @@ class SharedFooFactory implements IChannelFactory<IFoo> {
 			attributes: this.attributes,
 			id,
 			minVersionForCollab: (runtime as FluidDataStoreRuntime).minVersionForCollab,
+			oldestSupportedClient: (runtime as FluidDataStoreRuntime).oldestSupportedClient,
 			// Note: other IChannel methods aren't relevant
 		} as IFoo & IChannel;
 	}
@@ -107,7 +109,7 @@ describe("createSharedObjectKind's return type", () => {
  * The options used to construct a `FooKernelFactory`.
  */
 interface FooOptionsInternal {
-	readonly minVersionForCollab: OldestSupportedClientVersion;
+	readonly oldestSupportedClient: OldestSupportedClientVersion;
 }
 
 /**
@@ -120,16 +122,20 @@ interface FooKernelView extends IFoo {
 }
 
 /**
- * A minimal implementation of a `SharedKernel` that builds a view containing the `minVersionForCollab` it was
- * constructed with. Does not provide any method implementations beyond the constructor.
+ * A minimal implementation of a `SharedKernel` that exposes both compatibility properties through its view for assertions.
+ * The tests need only this view, so all methods other than the constructor throw.
  */
 class FooKernel implements SharedKernel {
 	public readonly view: FooKernelView;
 
-	constructor(minVersionForCollab: OldestSupportedClientVersion | undefined) {
+	constructor(
+		minVersionForCollab: OldestSupportedClientVersion | undefined,
+		oldestSupportedClient: OldestSupportedClientVersion | undefined,
+	) {
 		this.view = {
 			kernel: this,
 			minVersionForCollab,
+			oldestSupportedClient,
 			foo: "foo",
 		};
 	}
@@ -162,15 +168,16 @@ class FooKernel implements SharedKernel {
 	}
 }
 
-describe("createSharedObjectKind with minVersionForCollab", () => {
+describe("createSharedObjectKind with oldestSupportedClient", () => {
 	/**
-	 * A simple KernelFactory that creates a `FooKernel` with the `minVersionForCollab` from its constructor arguments.
+	 * A simple KernelFactory that creates a `FooKernel` with both compatibility properties from its constructor arguments.
 	 * @param options - The options for the factory.
 	 * @returns A `SharedKernelFactory` that creates `FooKernelView` instances.
 	 */
 	function fooKernelFactory(options: FooOptionsInternal): SharedKernelFactory<FooKernelView> {
 		function fooFromKernelArgs(args: KernelArgs): FooKernel {
-			return new FooKernel(args.minVersionForCollab);
+			assert.strictEqual(args.oldestSupportedClient, args.minVersionForCollab);
+			return new FooKernel(args.minVersionForCollab, args.oldestSupportedClient);
 		}
 
 		return {
@@ -189,34 +196,42 @@ describe("createSharedObjectKind with minVersionForCollab", () => {
 		};
 	}
 
-	it("SharedObject can be constructed with a minVersionForCollab from the runtime", () => {
-		const minVersionForCollab = "2.2.3";
-		const type = "Foo";
+	for (const property of ["minVersionForCollab", "oldestSupportedClient"] as const) {
+		it(`SharedObject accepts a runtime that exposes only ${property}`, () => {
+			const oldestSupportedClient = "2.2.3";
+			const type = "Foo";
 
-		const attributes: IChannelAttributes = {
-			type,
-			snapshotFormatVersion: "0.1",
-			packageVersion: "2.0.0",
-		};
+			const attributes: IChannelAttributes = {
+				type,
+				snapshotFormatVersion: "0.1",
+				packageVersion: "2.0.0",
+			};
 
-		const options: FooOptionsInternal = {
-			minVersionForCollab,
-		};
+			const options: FooOptionsInternal = {
+				oldestSupportedClient,
+			};
 
-		const sharedObjectOptions: SharedObjectOptions<IFoo> = {
-			type: "",
-			attributes,
-			telemetryContextPrefix: "foo_",
-			factory: fooKernelFactory(options),
-		};
+			const sharedObjectOptions: SharedObjectOptions<IFoo> = {
+				type: "",
+				attributes,
+				telemetryContextPrefix: "foo_",
+				factory: fooKernelFactory(options),
+			};
 
-		const SharedFoo = makeSharedObjectKind(sharedObjectOptions);
-		const runtime = new MockFluidDataStoreRuntime({
-			registry: [SharedFoo.getFactory()],
-			minVersionForCollab,
+			const SharedFoo = makeSharedObjectKind(sharedObjectOptions);
+			const runtime = new MockFluidDataStoreRuntime({
+				registry: [SharedFoo.getFactory()],
+				[property]: oldestSupportedClient,
+			});
+			Object.defineProperty(
+				runtime,
+				property === "minVersionForCollab" ? "oldestSupportedClient" : "minVersionForCollab",
+				{ value: undefined },
+			);
+			const foo = SharedFoo.create(runtime, "test-id");
+
+			assert.strictEqual(foo.minVersionForCollab, "2.2.3");
+			assert.strictEqual(foo.oldestSupportedClient, "2.2.3");
 		});
-		const foo = SharedFoo.create(runtime, "test-id");
-
-		assert.strictEqual(foo.minVersionForCollab, "2.2.3");
-	});
+	}
 });

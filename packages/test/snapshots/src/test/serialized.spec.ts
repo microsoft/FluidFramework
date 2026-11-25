@@ -21,7 +21,7 @@ import {
 import { type ISharedMap, SharedMap, SharedDirectory } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import {
-	ConsensusOrderedCollection,
+	type IConsensusOrderedCollection,
 	ConsensusQueue,
 } from "@fluidframework/ordered-collection/internal";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
@@ -83,7 +83,7 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 				await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
 			const crc =
 				await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
-			const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
+			const coc = await defaultDataStore.getSharedObject<IConsensusOrderedCollection>(cocId);
 			const sharedMatrix =
 				await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
 			const sparseMatrix =
@@ -132,7 +132,7 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 				await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
 			const crc =
 				await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
-			const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
+			const coc = await defaultDataStore.getSharedObject<IConsensusOrderedCollection>(cocId);
 			const sharedMatrix =
 				await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
 			const sparseMatrix =

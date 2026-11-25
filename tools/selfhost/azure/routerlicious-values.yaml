@@ -18,7 +18,7 @@
 # secret at pod startup (see azure/README.md Phase 5), not the value in this file.
 #
 # The <*_EXTERNAL_URL> placeholders below are substituted by deploy.sh, which is also where the
-# <ACR>/<IMAGE_TAG>/<REDIS_HOSTNAME> placeholders are filled in. Front Door hostnames do not
+# <ACR>/<IMAGE_TAG>/<REDIS_HOSTNAME>/<REDIS_PORT> placeholders are filled in. Front Door hostnames do not
 # exist until phase12 runs, so the first pass renders the in-cluster URLs and phase12 re-runs
 # phase5_helm once the real hostnames are known. The validated client supplies separate alfred,
 # nexus, and historian endpoints directly. The referenced chart does not map nexus.externalUrl
@@ -161,19 +161,19 @@ zookeeper:
 # phase5_helm in azure/deploy.sh for the actual wiring.
 redis:
   url: <REDIS_HOSTNAME>
-  port: 10000
+  port: <REDIS_PORT>
   tls: true
 redis2:
   url: <REDIS_HOSTNAME>
-  port: 10000
+  port: <REDIS_PORT>
   tls: true
 redisForThrottling:
   url: <REDIS_HOSTNAME>
-  port: 10000
+  port: <REDIS_PORT>
   tls: true
 redisForTenantCache:
   url: <REDIS_HOSTNAME>
-  port: 10000
+  port: <REDIS_PORT>
   tls: true
 
 # Client access tokens (Fluid JWTs signed with a tenant key).

@@ -17,7 +17,13 @@ import type { Router } from "express";
 import type * as nconf from "nconf";
 import winston from "winston";
 
-import type { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
+import type {
+	ICache,
+	IDocumentAccessAuthorizer,
+	ISimplifiedCustomDataRetriever,
+	ITenantService,
+	ITrustedCreateContextResolver,
+} from "../../services";
 import * as utils from "../utils";
 
 export function create(
@@ -32,6 +38,8 @@ export function create(
 	denyList?: IDenyList,
 	ephemeralDocumentTTLSec?: number,
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
+	documentAccessAuthorizer?: IDocumentAccessAuthorizer,
+	_trustedCreateContextResolver?: ITrustedCreateContextResolver,
 ): Router {
 	const { router, maxTokenLifetimeSec, tenantThrottleOptions, restTenantGeneralThrottler } =
 		utils.createRouteContext(config, restTenantThrottlers);
@@ -51,6 +59,8 @@ export function create(
 			documentManager,
 			cache,
 			ephemeralDocumentTTLSec,
+			accessOperation: "read",
+			documentAccessAuthorizer,
 		});
 		return service.getContent(path, ref);
 	}

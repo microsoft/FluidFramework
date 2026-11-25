@@ -20,7 +20,7 @@ import type { LinkLikeNavbarItemProps } from "@theme/NavbarItem";
 import DefaultNavbarItem from "@theme/NavbarItem/DefaultNavbarItem";
 import type { Props } from "@theme/NavbarItem/DocsVersionDropdownNavbarItem";
 import DropdownNavbarItem from "@theme/NavbarItem/DropdownNavbarItem";
-import type { KeyboardEvent } from "react";
+import { useState, type KeyboardEvent } from "react";
 
 /**
  * Gets the documentation page marked as the main/landing page for a version,
@@ -54,17 +54,22 @@ type AccessibleLinkProps = LinkLikeNavbarItemProps & {
 };
 
 /**
- * Moves focus within the open documentation version dropdown in the desktop navbar.
+ * Handles navigation and dismissal of the open documentation version dropdown in the desktop navbar.
  */
-function handleVersionDropdownKeyDown(event: KeyboardEvent<HTMLDivElement>): void {
+function handleVersionDropdownKeyDown(
+	event: KeyboardEvent<HTMLDivElement>,
+	dismissed: boolean,
+	setDismissed: (dismissed: boolean) => void,
+): void {
 	if (event.defaultPrevented === true || !(event.target instanceof HTMLAnchorElement)) {
 		return;
 	}
 
 	// Docusaurus uses a state class to open the dropdown with the keyboard.
 	// Pointer hover opens it through the hover selector without a change to `aria-expanded`.
+	// Exclude hover when Escape suppresses it, so arrows cannot focus hidden links.
 	const dropdown = event.currentTarget.querySelector(
-		".dropdown--show, .dropdown--hoverable:hover",
+		dismissed ? ".dropdown--show" : ".dropdown--show, .dropdown--hoverable:hover",
 	);
 	if (dropdown === null) {
 		return;
@@ -72,9 +77,21 @@ function handleVersionDropdownKeyDown(event: KeyboardEvent<HTMLDivElement>): voi
 
 	const links = [...dropdown.querySelectorAll<HTMLAnchorElement>(".dropdown__menu a[href]")];
 	const currentIndex = links.indexOf(event.target);
+	const trigger = dropdown.querySelector<HTMLAnchorElement>(".navbar__link");
 	// The trigger has index -1 because it is not a menu link.
 	// Other elements outside the menu links must not start navigation.
-	if (currentIndex === -1 && event.target !== dropdown.querySelector(".navbar__link")) {
+	if (trigger === null || (currentIndex === -1 && event.target !== trigger)) {
+		return;
+	}
+
+	if (event.key === "Escape") {
+		event.preventDefault();
+		setDismissed(true);
+		// Docusaurus has no close API. Focus outside its dropdown invokes its focusin listener
+		// and clears React state. The wrapper is outside the dropdown and the normal Tab order.
+		// Return focus synchronously, before the menu becomes hidden. Do not activate the link.
+		event.currentTarget.focus({ preventScroll: true });
+		trigger.focus({ preventScroll: true });
 		return;
 	}
 
@@ -119,18 +136,20 @@ function handleVersionDropdownKeyDown(event: KeyboardEvent<HTMLDivElement>): voi
  * @remarks
  * This component replaces the Docusaurus classic theme's `DocsVersionDropdownNavbarItem`.
  * Desktop refers to the non-mobile navbar layout.
- * Docusaurus controls dropdown visibility and hover behavior.
- * It also controls link activation.
+ * Docusaurus controls keyboard visibility and link activation.
+ * The wrapper dismisses the dropdown with Escape and suppresses hover until the pointer reenters.
  *
  * When the dropdown is open, the desktop wrapper adds these keys for navigation:
  * - ArrowUp and ArrowDown move focus between links.
  * - Home moves focus to the first link.
  * - End moves focus to the last link.
+ * - Escape closes the dropdown and returns focus to its trigger without navigation.
  *
  * The handler does not open closed dropdowns.
  * It does not change mobile navigation or single-version links.
  *
- * The handler depends on Docusaurus's dropdown state classes and link markup.
+ * The handler depends on Docusaurus's dropdown state classes, link markup, and outside focusin listener.
+ * The temporary focus change is an integration workaround, not a supported close API.
  * After a Docusaurus upgrade, check these selectors with `VersionDropdown.spec.ts`.
  * If Docusaurus adds the same keyboard navigation, remove the handler.
  *
@@ -144,6 +163,7 @@ export default function DocsVersionDropdownNavbarItem({
 	dropdownItemsAfter,
 	...props
 }: Props): JSX.Element {
+	const [dismissed, setDismissed] = useState(false);
 	const { search, hash } = useLocation();
 	const activeDocContext = useActiveDocContext(docsPluginId);
 	const versions = useVersions(docsPluginId);
@@ -201,7 +221,20 @@ export default function DocsVersionDropdownNavbarItem({
 	return (
 		<div
 			className="version-dropdown-wrapper"
-			onKeyDown={mobile === true ? undefined : handleVersionDropdownKeyDown}
+			data-dismissed={mobile !== true && dismissed}
+			tabIndex={mobile === true ? undefined : -1}
+			onMouseEnter={
+				mobile === true
+					? undefined
+					: () => {
+							setDismissed(false);
+						}
+			}
+			onKeyDown={
+				mobile === true
+					? undefined
+					: (event) => handleVersionDropdownKeyDown(event, dismissed, setDismissed)
+			}
 		>
 			<DropdownNavbarItem
 				{...props}

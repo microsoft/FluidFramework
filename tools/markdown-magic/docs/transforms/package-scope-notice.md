@@ -13,11 +13,22 @@ By default, the transform detects the kind from the package name in `package.jso
 
 Valid values for `scopeKind` are `FRAMEWORK`, `EXAMPLE`, `EXPERIMENTAL`, `INTERNAL`, `PRIVATE`, and `TOOLS`. `FRAMEWORK` generates no notice. An unrecognized package scope also generates no notice when `scopeKind` is absent.
 
-## Example
+## Examples
+
+### Markdown
 
 The following marker generates the notice for an internal package:
 
 ```markdown
 <!-- markdown-magic:begin {"transform":"package-scope-notice","scopeKind":"INTERNAL"} -->
 <!-- markdown-magic:end -->
+```
+
+### MDX
+
+For an MDX document, use MDX comments:
+
+```mdx
+{/* markdown-magic:begin {"transform":"package-scope-notice","scopeKind":"INTERNAL"} */}
+{/* markdown-magic:end */}
 ```

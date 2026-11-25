@@ -14,14 +14,22 @@ import {
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
 
-import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
+import {
+	createOdspCreateContainerRequest,
+	createOdspCreateContainerRequestFromOptions,
+} from "../createOdspCreateContainerRequest.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 import { getOdspResolvedUrl } from "../odspUtils.js";
 
-import { mockFetchMultiple, mockFetchOk, okResponse } from "./mockFetch.js";
+import {
+	mockFetchMultiple,
+	mockFetchOk,
+	mockFetchOkAndGetUrl,
+	okResponse,
+} from "./mockFetch.js";
 
 describe("Odsp Create Container Test", () => {
 	const siteUrl = "https://www.localhost.xxx";
@@ -164,6 +172,91 @@ describe("Odsp Create Container Test", () => {
 				"ODSP CreateFile call returned no item ID",
 				"Message should be correct",
 			);
+		}
+	});
+
+	describe("Creates the file in the requested folder", () => {
+		const parentFolderId = "01VUXKMZBAWJETO47NOFDJ6F4ALDI23UL5";
+		const testCases = [
+			{
+				folder: "the folder at the file path",
+				createRequest: (): IRequest =>
+					createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName),
+				fileItemPath: `root:%2F${filePath}/${fileName}`,
+				isWithParentFolderId: false,
+			},
+			{
+				folder: "the folder with the parent folder ID",
+				createRequest: (): IRequest =>
+					createOdspCreateContainerRequestFromOptions({
+						siteUrl,
+						driveId,
+						parentFolderId,
+						fileName,
+					}),
+				fileItemPath: `${parentFolderId}:/${fileName}`,
+				isWithParentFolderId: true,
+			},
+		];
+		for (const { folder, createRequest, fileItemPath, isWithParentFolderId } of testCases) {
+			it(`Should create the file in ${folder}`, async () => {
+				const resolved = await resolver.resolve(createRequest());
+				const { result: docService, url } = await mockFetchOkAndGetUrl(
+					async () => createService(createSummary(true, true), resolved),
+					expectedResponse,
+					{ "x-fluid-epoch": "epoch1" },
+				);
+				assert.strictEqual(
+					url,
+					`${siteUrl}/_api/v2.1/drives/${driveId}/items/${fileItemPath}:/opStream/snapshots/snapshot?ump=1`,
+					"Create file url should match",
+				);
+				assert.strictEqual(
+					getOdspResolvedUrl(docService.resolvedUrl).itemId,
+					itemId,
+					"ItemId should match",
+				);
+				logger.assertMatchAny(
+					[{ eventName: "OdspDriver:CreateNew_end", isWithParentFolderId }],
+					undefined /* message */,
+					false /* inlineDetailsProp */,
+					false /* clearEventsAfterCheck */,
+				);
+			});
+		}
+	});
+
+	describe("Rejects a new file request without exactly one valid folder", () => {
+		const testCases = [
+			{
+				folder: "no folder",
+				query: "",
+				message:
+					"Either a file path or a parent folder ID must be provided to create a new file",
+			},
+			{
+				folder: "both a file path and a parent folder ID",
+				query: "&path=path&parentFolderId=id",
+				message:
+					"Only one of a file path or a parent folder ID can be provided to create a new file",
+			},
+			{
+				folder: "an empty parent folder ID",
+				query: "&parentFolderId=",
+				message: "The parent folder ID for a new file must not be empty",
+			},
+		];
+		for (const { folder, query, message } of testCases) {
+			it(`Should reject a request with ${folder}`, async () => {
+				// The resolver rejects these requests, so modify a resolved URL to reach the factory's checks.
+				const resolved: IOdspResolvedUrl = {
+					...(await resolver.resolve(request)),
+					url: `https://placeholder?driveId=${driveId}${query}`,
+				};
+				await assert.rejects(createService(createSummary(true, true), resolved), {
+					message,
+				});
+			});
 		}
 	});
 });

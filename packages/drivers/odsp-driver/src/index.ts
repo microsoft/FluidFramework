@@ -39,7 +39,12 @@ export {
 } from "./odspDocumentServiceFactoryCore.js";
 
 // File creation
-export { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest.js";
+export {
+	createOdspCreateContainerRequest,
+	createOdspCreateContainerRequestFromOptions,
+	type OdspCreateContainerRequestBaseOptions,
+	type OdspCreateContainerRequestOptions,
+} from "./createOdspCreateContainerRequest.js";
 
 // URI Resolver functionality, URI management
 export { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";

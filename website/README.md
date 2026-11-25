@@ -128,27 +128,6 @@ pnpm test
 The aggregate command installs Playwright's browser dependencies before running the suites.
 `pnpm run build:test` type-checks all test code without executing it.
 
-## User Telemetry
-
-The Fluid Framework website collects basic user telemetry to help improve the experience for our users.
-The telemetry data includes anonymous information such as:
-
--   Daily / Monthly users
--   Pages visited
--   User flow
-
-This data is collected in compliance with relevant privacy standards.
-For more information, please refer to our [privacy policy.](https://www.microsoft.com/privacy/privacystatement).
-If you have any concerns about telemetry, please reach out to our team via [GitHub Issues](https://github.com/microsoft/FluidFramework/issues).
-
-To test this telemetry locally add the following key to the .env file.
-This key is used to instantiate Application Insights so that usage events can be tracked.
-The key can be requested from internal Microsoft Fluid Framework engineers.
-
-```
-INSTRUMENTATION_KEY=<key>
-```
-
 ## Deployment
 
 The Fluid Framework website is deployed using the build-docs pipeline. `INSTRUMENTATION_KEY`
@@ -499,6 +478,7 @@ The following npm scripts are supported in this directory:
 | `generate-api-documentation` | `dotenv -- node ./infra/generate-api-documentation.mjs` | Generate API documentation from downloaded API model artifacts. |
 | `generate-versions` | `dotenv -- node ./infra/generate-versions.mjs` | |
 | `preinstall` | `node ../scripts/only-pnpm.cjs` | Ensure developer is using `pnpm`. |
+| `install-no-frozen` | `node ../scripts/install-no-frozen.cjs` | |
 | `lint` | `concurrently npm:eslint npm:prettier` | Check for linter violations. |
 | `lint:fix` | `npm run eslint:fix && npm run prettier:fix` | Auto-fix linter violations. |
 | `prettier` | `prettier --check . --cache --ignore-path ../.prettierignore` | Check for formatting issues with `prettier`. |

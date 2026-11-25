@@ -4,10 +4,16 @@
 
 ```ts
 
+// @beta @sealed @legacy
+export interface AcknowledgedSummary {
+    readonly referenceSequenceNumber: number;
+    readonly version: string;
+}
+
 // @alpha @legacy
 export function asLegacyAlpha(base: IContainer): ContainerAlpha;
 
-// @alpha @legacy
+// @beta @legacy
 export function captureFullContainerState(input: ICaptureFullContainerStateProps): Promise<string>;
 
 // @public
@@ -21,6 +27,12 @@ export enum ConnectionState {
 // @alpha @sealed @legacy
 export interface ContainerAlpha extends IContainer {
     getPendingLocalState(): Promise<string>;
+    serializeAttached(options: ContainerSerializationOptions): Promise<string>;
+}
+
+// @alpha @legacy
+export interface ContainerSerializationOptions {
+    readonly includePendingLocalState: boolean;
 }
 
 // @beta @legacy
@@ -47,7 +59,7 @@ export interface IBaseProtocolHandler {
     snapshot(): IQuorumSnapshot;
 }
 
-// @alpha @legacy
+// @beta @legacy @input
 export interface ICaptureFullContainerStateProps {
     readonly blobCaptureMode?: "inline" | "reference" | undefined;
     readonly documentServiceFactory: IDocumentServiceFactory;
@@ -188,6 +200,9 @@ export interface IScribeProtocolState {
     // (undocumented)
     values: [string, ICommittedProposal][];
 }
+
+// @beta @legacy
+export function loadAndSummarize(loadSummarizerContainerProps: ILoadSummarizerContainerProps): Promise<AcknowledgedSummary>;
 
 // @beta @legacy
 export function loadContainerToSequenceNumber(props: ILoadContainerToSequenceNumberProps): Promise<IContainer>;

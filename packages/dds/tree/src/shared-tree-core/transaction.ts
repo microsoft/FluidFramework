@@ -95,6 +95,11 @@ export interface TransactionEvents {
 	 */
 	aborting(): void;
 	/**
+	 * Raised after a transaction has been aborted and its rollback callbacks have completed.
+	 * @remarks The aborted transaction has already been removed from {@link Transactor.size}.
+	 */
+	aborted(): void;
+	/**
 	 * Raised just before a transaction is committed.
 	 * @remarks When this event fires, {@link Transactor.size} will still be greater than 0 because the transaction has not yet ended.
 	 */
@@ -206,6 +211,7 @@ export class TransactionStack<TOptions> implements Transactor<TOptions>, IDispos
 		}
 		this.#events.emit("aborting");
 		this.#stack.pop()?.callbacks.onPop?.(TransactionResult.Abort);
+		this.#events.emit("aborted");
 	}
 
 	public dispose(): void {
@@ -502,8 +508,9 @@ export class SquashingTransactionStack<
 										0xcaf /* Unexpected commit in transaction */,
 									);
 								}
+
 								// Squash all the new commits on the transaction branch into a new commit on the original branch
-								const squash = rebaser.compose(transactionSteps);
+								const squash = rebaser.ensureCompatibility(rebaser.compose(transactionSteps));
 								cheapRebaseValidation("Malformed composed transaction", () =>
 									changeFamily.validator(squash),
 								);

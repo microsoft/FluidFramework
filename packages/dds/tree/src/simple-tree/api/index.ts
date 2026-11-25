@@ -8,12 +8,22 @@ export type {
 	ITreeConfigurationOptions,
 	ITreeViewConfigurationAlpha,
 } from "./configuration.js";
+export type { SchemaVersionMap, SchemaVersions } from "../../core/index.js";
 export {
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 } from "./configuration.js";
-export { computeSchemaHash, identifySchemaAlpha } from "./schemaHash.js";
-export { type SchemaIdentity, SchemaIdentityInternal } from "./schemaIdentity.js";
+export {
+	computeSchemaHash,
+	identifySchemaWithHash,
+	type IdentifySchemaWithHashOptions,
+} from "./schemaHash.js";
+export {
+	identifySchema,
+	type IdentifySchemaOptions,
+	type SchemaIdentity,
+	SchemaIdentityInternal,
+} from "./schemaIdentity.js";
 export type {
 	CommitRevision,
 	ITree,
@@ -23,8 +33,26 @@ export type {
 	TreeViewEvents,
 	SchemaCompatibilityStatus,
 	SchemaCompatibilityStatusBeta,
+	CompatibilityResult,
+	SchemaViewIncompatibility,
+	SchemaUpgradeIncompatibility,
 	SchemaDiscrepancy,
+	SchemaDiscrepancyFieldLocation,
+	SchemaIncompatibilityReason,
+	SchemaAllowedTypesDiscrepancy,
+	SchemaFieldKindDiscrepancy,
+	SchemaValueSchemaDiscrepancy,
+	SchemaNodeKindDiscrepancy,
+	SchemaUpgradeAllowedTypesIncompatibility,
+	SchemaUpgradeFieldKindIncompatibility,
+	SchemaUpgradeValueSchemaIncompatibility,
+	SchemaUpgradeNodeKindIncompatibility,
+	SchemaUpgradeMissingNodeSchemaIncompatibility,
+	SchemaUpgradeUnsatisfiedNodeSchemaIncompatibility,
+	SchemaUpgradeVersionIncompatibility,
+	SchemaUpgradeViewIncompatibility,
 	TreeViewAlpha,
+	TreeViewSchemaVersions,
 	TreeViewBeta,
 	UntypedTreeView,
 	UntypedTreeViewAlpha,
@@ -46,6 +74,7 @@ export type {
 	TreeLocationResolution,
 	TreeLocationResolver,
 } from "./locations.js";
+export { isTextLocationNode, textLocationArray } from "./locations.js";
 export { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
 export {
 	SchemaFactory,
@@ -54,6 +83,7 @@ export {
 	scoped,
 	type ScopedSchemaName,
 	type ObjectSchemaOptionsAlpha,
+	type ObjectSchemaOptionsBeta,
 	type ObjectSchemaOptions,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
@@ -61,6 +91,11 @@ export {
 } from "./schemaFactory.js";
 export type { SchemaStaticsBeta } from "./schemaFactoryBeta.js";
 export type { SchemaStaticsAlpha, NodeProvider } from "./schemaFactoryAlpha.js";
+export {
+	type SchemaFactoryOptions,
+	type SchemaFactoryBetaOptions,
+	type SchemaFactoryAlphaOptions,
+} from "./schemaFactoryOptions.js";
 export {
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,
@@ -119,7 +154,7 @@ export { getJsonSchema } from "./getJsonSchema.js";
 export { getSimpleSchema } from "./getSimpleSchema.js";
 export {
 	checkSchemaCompatibility,
-	getSchemaIncompatibilityDetails,
+	isSchemaUpgradeAllowed,
 } from "./schemaCompatibilityTester.js";
 export { type StagedUpgradeStatus } from "./schemaCompatibilityTester.js";
 export type {
@@ -159,6 +194,8 @@ export {
 	type HandleConverter,
 	KeyEncodingOptions,
 	type TreeParsingOptions,
+	type TreeImportOptions,
+	type TreeFieldFilter,
 } from "./customTree.js";
 
 export {

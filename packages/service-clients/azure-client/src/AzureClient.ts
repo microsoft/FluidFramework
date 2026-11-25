@@ -94,10 +94,10 @@ export class AzureClient {
 
 	private readonly createContainerRuntimeFactory?: ({
 		schema,
-		minVersionForCollaboration,
+		oldestSupportedClient,
 	}: {
 		schema: ContainerSchema;
-		minVersionForCollaboration: OldestSupportedClientVersion;
+		oldestSupportedClient: OldestSupportedClientVersion;
 	}) => IRuntimeFactory;
 
 	/**
@@ -320,11 +320,11 @@ export class AzureClient {
 		const runtimeFactory = this.createContainerRuntimeFactory
 			? this.createContainerRuntimeFactory({
 					schema,
-					minVersionForCollaboration: oldestSupportedClient,
+					oldestSupportedClient,
 				})
 			: createDOProviderContainerRuntimeFactory({
 					schema,
-					minVersionForCollaboration: oldestSupportedClient,
+					oldestSupportedClient,
 				});
 
 		const load = async (): Promise<IFluidModuleWithDetails> => {

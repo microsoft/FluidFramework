@@ -8,27 +8,9 @@ import type {
 	IEmitter,
 	Listenable,
 	Listeners,
-	MapGetSet,
 	NoListenersCallback,
 	Off,
 } from "@fluidframework/core-interfaces/internal";
-
-/**
- * Retrieve a value from a map with the given key, or create a new entry if the key is not in the map.
- * @param map - The map to query/update
- * @param key - The key to lookup in the map
- * @param defaultValue - a function which returns a default value. This is called and used to set an initial value for the given key in the map if none exists
- * @returns either the existing value for the given key, or the newly-created value (the result of `defaultValue`)
- * @internal
- */
-function getOrCreate<K, V>(map: MapGetSet<K, V>, key: K, defaultValue: (key: K) => V): V {
-	let value = map.get(key);
-	if (value === undefined) {
-		value = defaultValue(key);
-		map.set(key, value);
-	}
-	return value;
-}
 
 /**
  * Provides an API for subscribing to and listening to events.
@@ -86,9 +68,18 @@ function getOrCreate<K, V>(map: MapGetSet<K, V>, key: K, defaultValue: (key: K) 
 export class CustomEventEmitter<TListeners extends Listeners<TListeners>>
 	implements Listenable<TListeners>, HasListeners<TListeners>
 {
+	/**
+	 * The listeners of each event with listeners: the listener itself while it is the only one,
+	 * and a set of them once a second is added.
+	 * @remarks
+	 * Most emitters have at most one listener per event, so this saves a set for each of their events.
+	 * A set is kept until the event has no listeners, so that listeners added or removed by another listener
+	 * during an emit are treated the same whether or not the event had a set.
+	 */
 	protected readonly listeners = new Map<
 		keyof TListeners,
-		Set<(...args: any[]) => TListeners[keyof TListeners]>
+		| ((...args: any[]) => TListeners[keyof TListeners])
+		| Set<(...args: any[]) => TListeners[keyof TListeners]>
 	>();
 
 	// Because this is protected and not public, calling this externally (not from a subclass) makes sending events to the constructed instance impossible.
@@ -100,9 +91,11 @@ export class CustomEventEmitter<TListeners extends Listeners<TListeners>>
 		...args: Parameters<TListeners[K]>
 	): void {
 		const listeners = this.listeners.get(eventName);
-		if (listeners !== undefined) {
-			// Current tsc (5.4.5) cannot spread `args` into `listener()`.
-			const argArray: unknown[] = args;
+		// Current tsc (5.4.5) cannot spread `args` into `listener()`.
+		const argArray: unknown[] = args;
+		if (typeof listeners === "function") {
+			listeners(...argArray);
+		} else if (listeners !== undefined) {
 			// This explicitly copies listeners so that new listeners added during this call to emit will not receive this event.
 			for (const listener of [...listeners]) {
 				// If listener has been unsubscribed while invoking other listeners, skip it.
@@ -118,8 +111,11 @@ export class CustomEventEmitter<TListeners extends Listeners<TListeners>>
 		...args: Parameters<TListeners[K]>
 	): ReturnType<TListeners[K]>[] {
 		const listeners = this.listeners.get(eventName);
+		const argArray: unknown[] = args;
+		if (typeof listeners === "function") {
+			return [listeners(...argArray) as ReturnType<TListeners[K]>];
+		}
 		if (listeners !== undefined) {
-			const argArray: unknown[] = args;
 			const resultArray: ReturnType<TListeners[K]>[] = [];
 			for (const listener of [...listeners.values()]) {
 				resultArray.push(listener(...argArray));
@@ -133,16 +129,27 @@ export class CustomEventEmitter<TListeners extends Listeners<TListeners>>
 		eventName: K,
 		listener: TListeners[K],
 	): Off {
-		const listeners = getOrCreate(this.listeners, eventName, () => new Set());
-		if (listeners.has(listener)) {
+		const listeners = this.listeners.get(eventName);
+		if (listeners === undefined) {
+			this.listeners.set(eventName, listener);
+		} else if (
+			typeof listeners === "function" ? listeners === listener : listeners.has(listener)
+		) {
 			const eventDescription =
 				typeof eventName === "symbol" ? eventName.description : String(eventName.toString());
 
 			throw new Error(
 				`Attempted to register the same listener object twice for event ${eventDescription}`,
 			);
+		} else if (typeof listeners === "function") {
+			// Added one at a time: a set built from an array is allocated with a larger table.
+			const set = new Set<(...args: any[]) => TListeners[keyof TListeners]>();
+			set.add(listeners);
+			set.add(listener);
+			this.listeners.set(eventName, set);
+		} else {
+			listeners.add(listener);
 		}
-		listeners.add(listener);
 		return () => this.off(eventName, listener);
 	}
 
@@ -151,7 +158,11 @@ export class CustomEventEmitter<TListeners extends Listeners<TListeners>>
 		listener: TListeners[K],
 	): void {
 		const listeners = this.listeners.get(eventName);
-		if (listeners?.delete(listener) === true && listeners.size === 0) {
+		if (
+			typeof listeners === "function"
+				? listeners === listener
+				: listeners?.delete(listener) === true && listeners.size === 0
+		) {
 			this.listeners.delete(eventName);
 			this.noListeners?.(eventName);
 		}

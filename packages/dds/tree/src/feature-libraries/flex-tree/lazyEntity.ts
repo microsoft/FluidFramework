@@ -82,7 +82,7 @@ export abstract class LazyEntity<TAnchor = unknown> implements FlexTreeEntity, I
 	 * @throws A usage error if the cursor is not current and the forest is broken.
 	 */
 	protected ensureValidForAccess(): void {
-		assert(!this.isFreed(), "Cannot access a freed FlexTree entity");
+		assert(!this.isFreed(), 0xd93 /* Cannot access a freed FlexTree entity */);
 		if (this.#lazyCursor.state !== ITreeSubscriptionCursorState.Current) {
 			this.context.checkout.forest.breaker.use();
 		}
