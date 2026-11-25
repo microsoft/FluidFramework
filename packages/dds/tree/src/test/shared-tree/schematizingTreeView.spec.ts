@@ -983,6 +983,40 @@ describe("SchematizingSimpleTreeView", () => {
 		// Schema for tree that must always be empty.
 		const emptyViewSchema = builder.optional([]);
 
+		it("upgrades a V1 tree for a V2 client even when both schemas allow the same content", () => {
+			// V1 declares Pending, but its required reason has no enabled type.
+			// A V1 tree can therefore store a number, but not a Pending node.
+			class PendingV1 extends schema.objectAlpha("Pending", {
+				reason: schema.required(schema.types([schema.staged(schema.string)])),
+			}) {}
+			const tree = createIndependentTreeAlpha();
+			const v1View = tree.viewWith(
+				new TreeViewConfiguration({ schema: [schema.number, PendingV1] }),
+			);
+			v1View.initialize(42);
+			v1View.dispose();
+
+			// V2 adds retryCount to the same Pending type without enabling strings for reason.
+			class PendingV2 extends schema.objectAlpha("Pending", {
+				reason: schema.required(schema.types([schema.staged(schema.string)])),
+				retryCount: schema.optional(schema.number),
+			}) {}
+
+			// A V2 client opens the existing V1 tree. Its view expects the stored schema to declare
+			// retryCount even though the tree contains only the number 42.
+			const v2View = tree.viewWith(
+				new TreeViewConfiguration({ schema: [schema.number, PendingV2] }),
+			);
+			assert.equal(v2View.compatibility.canView, false);
+			assert.equal(v2View.compatibility.canUpgrade, true);
+
+			// The upgrade must make the view usable without changing the stored value.
+			v2View.upgradeSchema();
+			assert.equal(v2View.compatibility.canView, true);
+			assert.equal(v2View.root, 42);
+			v2View.dispose();
+		});
+
 		it("compatible empty schema", () => {
 			const view = testDocumentIndependentView({
 				ambiguous: false,

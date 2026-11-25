@@ -431,13 +431,14 @@ export class SchematizingSimpleTreeView<
 				}),
 			);
 		}
+		// Skip an equivalent upgrade only if the current view is already usable.
 		if (
+			this.compatibility.canView &&
 			isAdditiveSchemaUpgrade &&
 			allowsRepoSuperset(defaultSchemaPolicy, newSchema, storedSchema) &&
 			compareSchemaVersions(storedSchema.schemaVersion, newSchema.schemaVersion) ===
 				SchemaVersionComparison.Equal
 		) {
-			// No-op
 			return;
 		}
 
