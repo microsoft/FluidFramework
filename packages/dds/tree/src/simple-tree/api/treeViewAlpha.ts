@@ -78,7 +78,7 @@ export interface ViewExistingFailure {
 	 * Indicates that the client's view schema is incompatible with the existing tree's stored schema.
 	 * 
 	 * @remarks
-	 * The existing tree cannot be viewed as-is, and nor can it be upgraded to be made compatible.
+	 * The existing tree cannot be viewed as-is, nor can it be upgraded to be made compatible.
 	 * See {@link ViewExistingFailure.incompatibilities} for diagnostic information explaining the incompatibilities.
 	 */
 	readonly canView: false;
