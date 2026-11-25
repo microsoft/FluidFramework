@@ -24,6 +24,7 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_ConsensusOrderedCollection": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_ConsensusOrderedCollection = requireAssignableTo<TypeOnly<old.ConsensusOrderedCollection>, TypeOnly<current.ConsensusOrderedCollection>>
 
 /*
@@ -33,6 +34,7 @@ declare type old_as_current_for_Class_ConsensusOrderedCollection = requireAssign
  * typeValidation.broken:
  * "Class_ConsensusOrderedCollection": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_ConsensusOrderedCollection = requireAssignableTo<TypeOnly<current.ConsensusOrderedCollection>, TypeOnly<old.ConsensusOrderedCollection>>
 
 /*
@@ -42,6 +44,7 @@ declare type current_as_old_for_Class_ConsensusOrderedCollection = requireAssign
  * typeValidation.broken:
  * "Class_ConsensusQueueClass": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_ConsensusQueueClass = requireAssignableTo<TypeOnly<old.ConsensusQueueClass>, TypeOnly<current.ConsensusQueueClass>>
 
 /*
@@ -51,6 +54,7 @@ declare type old_as_current_for_Class_ConsensusQueueClass = requireAssignableTo<
  * typeValidation.broken:
  * "Class_ConsensusQueueClass": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_ConsensusQueueClass = requireAssignableTo<TypeOnly<current.ConsensusQueueClass>, TypeOnly<old.ConsensusQueueClass>>
 
 /*
@@ -60,6 +64,7 @@ declare type current_as_old_for_Class_ConsensusQueueClass = requireAssignableTo<
  * typeValidation.broken:
  * "ClassStatics_ConsensusOrderedCollection": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_ConsensusOrderedCollection = requireAssignableTo<TypeOnly<typeof current.ConsensusOrderedCollection>, TypeOnly<typeof old.ConsensusOrderedCollection>>
 
 /*
@@ -69,6 +74,7 @@ declare type current_as_old_for_ClassStatics_ConsensusOrderedCollection = requir
  * typeValidation.broken:
  * "ClassStatics_ConsensusQueueClass": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_ConsensusQueueClass = requireAssignableTo<TypeOnly<typeof current.ConsensusQueueClass>, TypeOnly<typeof old.ConsensusQueueClass>>
 
 /*
@@ -195,6 +201,7 @@ declare type old_as_current_for_TypeAlias_ConsensusQueue = requireAssignableTo<T
  * typeValidation.broken:
  * "TypeAlias_ConsensusQueue": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_ConsensusQueue = requireAssignableTo<TypeOnly<current.ConsensusQueue>, TypeOnly<old.ConsensusQueue>>
 
 /*

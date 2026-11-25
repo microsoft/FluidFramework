@@ -11,7 +11,6 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
-// eslint-disable-next-line import-x/no-deprecated -- Internal usage of deprecated class in factory
 import { ConsensusQueueClass } from "./consensusQueue.js";
 import type { IConsensusOrderedCollection } from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
@@ -49,14 +48,12 @@ export class ConsensusQueueFactory<T>
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<IConsensusOrderedCollection<T>> {
-		// eslint-disable-next-line import-x/no-deprecated -- Internal usage of deprecated class
 		const collection = new ConsensusQueueClass<T>(id, runtime, attributes);
 		await collection.load(services);
 		return collection;
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string): IConsensusOrderedCollection<T> {
-		// eslint-disable-next-line import-x/no-deprecated -- Internal usage of deprecated class
 		const collection = new ConsensusQueueClass<T>(id, document, this.attributes);
 		collection.initializeLocal();
 		return collection;
@@ -64,7 +61,7 @@ export class ConsensusQueueFactory<T>
 }
 
 /**
- * {@inheritDoc ConsensusQueueClass}
+ * {@inheritDoc IConsensusOrderedCollection}
  * @legacy @beta
  */
 export const ConsensusQueue =
@@ -84,10 +81,10 @@ export const ConsensusQueue =
 // }
 
 /**
- * {@inheritDoc ConsensusQueueClass}
+ * {@inheritDoc IConsensusOrderedCollection}
  * @deprecated Use {@link IConsensusOrderedCollection} for typing instead. This type alias will be removed in a future release.
  * @legacy @beta
  */
 // TODO: #22835 Use undefined instead of any (breaking change)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any, import-x/no-deprecated
-export type ConsensusQueue<T = any> = ConsensusQueueClass<T>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ConsensusQueue<T = any> = IConsensusOrderedCollection<T>;
