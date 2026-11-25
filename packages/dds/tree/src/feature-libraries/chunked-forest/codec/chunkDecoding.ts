@@ -378,17 +378,19 @@ function decodeUniform(
 		values = stream.data as TreeValue[];
 		stream.offset = stream.data.length;
 	} else {
-		values = [];
+		const decoded: TreeValue[] = [];
 		if (plan.valuesAreVerbatim) {
 			const endOffset = stream.offset + encodedSize;
 			while (stream.offset < endOffset) {
-				values.push(readStreamValue(stream));
+				decoded.push(readStreamValue(stream));
 			}
 		} else {
 			for (let index = 0; index < repetitions; index++) {
-				plan.decodeValuesInto(stream, values);
+				plan.decodeValuesInto(stream, decoded);
 			}
 		}
+		// Copy the values to an array of exactly their length, without the spare capacity left by push.
+		values = [...decoded];
 	}
 	return new UniformChunk(
 		plan.treeShape.withTopLevelLength(length),
@@ -859,7 +861,7 @@ export class NodeDecoder extends UniformShapeDecoder {
 				if (hasValue) {
 					return undefined;
 				}
-				nodeCount += plan.treeShape.positions.length * plan.topLevelLength;
+				nodeCount += plan.treeShape.nodeCount * plan.topLevelLength;
 				// Bound individual shape metadata, not repetitions of that shape in a chunk.
 				// See UniformDecodingPlan for the size-policy rationale.
 				if (nodeCount > defaultChunkPolicy.uniformChunkNodeCount) {
