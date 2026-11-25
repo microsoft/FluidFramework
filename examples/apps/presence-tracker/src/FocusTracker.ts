@@ -65,6 +65,12 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 			this.emit("focusChanged", this.focus.local);
 		});
 
+		// When an attendee disconnects, emit the focusChanged event so client can update their
+		// rendered view accordingly.
+		presence.attendees.events.on("attendeeDisconnected", () => {
+			this.emit("focusChanged", this.focus.local);
+		});
+
 		// Listen to the local focus and blur events. On each event, update the local focus state, then
 		// emit the focusChanged event with the local data.
 		window.addEventListener("focus", () => {
