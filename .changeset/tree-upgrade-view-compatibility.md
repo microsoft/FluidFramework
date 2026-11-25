@@ -5,6 +5,5 @@
 ---
 SharedTree applies schema upgrades needed to make a view usable
 
-`view.upgradeSchema()` no longer skips a required schema change just because the old and new stored schemas permit the same documents.
-For example, a view may need a new field definition on a node that cannot yet occur because its required content is staged but disabled.
-Applying the upgrade makes the root accessible without changing its content.
+Previously, `view.upgradeSchema()` could return successfully while `view.compatibility.canView` remained `false`.
+It now applies the permitted schema change needed to make the view usable, without changing the tree's content.

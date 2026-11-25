@@ -431,6 +431,7 @@ export class SchematizingSimpleTreeView<
 				}),
 			);
 		}
+		// Skip an equivalent upgrade only if the current view is already usable.
 		if (
 			this.compatibility.canView &&
 			isAdditiveSchemaUpgrade &&
@@ -438,8 +439,6 @@ export class SchematizingSimpleTreeView<
 			compareSchemaVersions(storedSchema.schemaVersion, newSchema.schemaVersion) ===
 				SchemaVersionComparison.Equal
 		) {
-			// Equivalent sets of possible documents need not have the same view compatibility.
-			// Skip the edit only when the current schema already supports the view.
 			return;
 		}
 
