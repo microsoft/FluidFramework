@@ -71,6 +71,7 @@ import type { SpecializationStrategy } from "./schemaBasedEncodeVText.js";
  * The strategy does not read the batch before the encode.
  * The encoder of each single-type sequence reads the items of its field, and then writes them.
  * It pins a leaf whose value changes at most one time in {@link minAverageRunLength} items on average, such as a format property.
+ * Then it unpins each pinned leaf whose signatures and runs cost more bytes than the pin saves. See {@link unpinLeaves}.
  * It uses a dictionary for a leaf that is not pinned but has few common values, such as a character.
  * All other leaves are raw.
  *
@@ -326,8 +327,19 @@ class LeafStats {
 	public changes = 0;
 	/**
 	 * How the single-type sequence writes the leaf. The single-type sequence sets it after it reads all nodes.
+	 * {@link unpinLeaves} can change it from "pinToShape" to {@link LeafStats.unpinnedEncoding}.
 	 */
 	public encoding: LeafEncoding = "raw";
+	/**
+	 * How the single-type sequence writes the leaf if the leaf is not pinned. {@link chooseLeafEncoding} sets it.
+	 */
+	public unpinnedEncoding: DictionaryLeafEncoder | "raw" = "raw";
+	/**
+	 * The approximate number of bytes that a pin of the leaf saves, compared with {@link LeafStats.unpinnedEncoding}.
+	 * It does not include the cost of the signatures and runs of the leaf.
+	 * {@link chooseLeafEncoding} sets it.
+	 */
+	public pinSavedBytes = 0;
 
 	public constructor(public readonly leafType: TreeNodeSchemaIdentifier) {}
 
@@ -536,6 +548,68 @@ function replaySignature(
 }
 
 /**
+ * Returns the approximate number of bytes that the signatures and runs of the items add, with the current encoding of each leaf.
+ * @param root - The path node of the items.
+ * @param trace - The tokens of all items.
+ * @param itemCount - The number of items.
+ */
+function signatureAndRunBytes(
+	root: PathNode,
+	trace: readonly Token[],
+	itemCount: number,
+): number {
+	const trie = newTrieNode();
+	// The items read their tokens in order, so `reader` moves from one item to the next.
+	const reader = { position: 0 };
+	const signatures = new Set<TrieNode>();
+	let previous: TrieNode | undefined;
+	let runs = 0;
+	for (let index = 0; index < itemCount; index++) {
+		const signature = replaySignature(root, trie, trace, reader);
+		// Items that are next to each other and have the same signature make one run. A new signature can only start a run.
+		if (signature !== previous) {
+			runs += 1;
+			signatures.add(signature);
+			previous = signature;
+		}
+	}
+	return signatures.size * signatureBytes + runs * runBytes;
+}
+
+/**
+ * Unpins each pinned leaf if the unpin removes more bytes of signatures and runs than the pin saves.
+ * @remarks
+ * It checks each leaf one time, in order. An unpin can change the cost of the other pins, so the order can change the result.
+ * A check replays the signatures of all items only if the current cost of the signatures and runs is more than {@link LeafStats.pinSavedBytes}.
+ * @param leaves - The leaves of the items.
+ * @param root - The path node of the items.
+ * @param trace - The tokens of all items.
+ * @param itemCount - The number of items.
+ */
+function unpinLeaves(
+	leaves: readonly LeafStats[],
+	root: PathNode,
+	trace: readonly Token[],
+	itemCount: number,
+): void {
+	let costBytes = signatureAndRunBytes(root, trace, itemCount);
+	for (const leaf of leaves) {
+		// An unpin saves at most `costBytes`. Replay the signatures only if that can be more than `pinSavedBytes`.
+		if (leaf.encoding === "pinToShape" && costBytes > leaf.pinSavedBytes) {
+			leaf.encoding = leaf.unpinnedEncoding;
+			const unpinnedCostBytes = signatureAndRunBytes(root, trace, itemCount);
+			// Keep the unpin if it saves more bytes of signatures and runs than the pin saves. If not, pin the leaf again.
+			const unpinSavedBytes = costBytes - unpinnedCostBytes;
+			if (unpinSavedBytes > leaf.pinSavedBytes) {
+				costBytes = unpinnedCostBytes;
+			} else {
+				leaf.encoding = "pinToShape";
+			}
+		}
+	}
+}
+
+/**
  * The encoders that all single-type sequences of one encode share.
  * @remarks
  * The shapes table holds one shape for each encoder object, so this class keeps one encoder object for each shape.
@@ -691,9 +765,25 @@ const minAverageRunLength = 8;
 /**
  * The strategy pins a leaf only if each of its values is in at least this number of items, on average.
  * @remarks
- * Each value of a pinned leaf adds about 80 bytes of shapes, and each item saves only the bytes of the value.
+ * Each value of a pinned leaf adds a constant leaf shape ({@link constantLeafShapeBytes}) and at least one signature ({@link signatureBytes}).
+ * Each item saves only the bytes of the value.
  */
 const minItemsPerPinnedValue = 20;
+
+/**
+ * The approximate number of bytes that one signature of the items adds to the shapes table.
+ * @remarks
+ * The value is for an item with one pinned leaf: a specialized shape with one field override, and a nested array shape for its runs.
+ * A signature of an item with nested pinned leaves adds more shapes. For these items, the value is too low.
+ */
+const signatureBytes = 45;
+
+/**
+ * The approximate number of bytes that one run adds to the data.
+ * @remarks
+ * A run holds a shape index, the brackets of an array and commas.
+ */
+const runBytes = 6;
 
 /**
  * The number of bytes that one constant leaf shape adds to the shapes table, without the JSON of its value.
@@ -717,6 +807,13 @@ const maxCountedValues = 1000;
 const minDictionaryCoverage = 0.75;
 
 /**
+ * The approximate number of bytes of the index of the base leaf shape and its comma.
+ * @remarks
+ * In a leaf with a dictionary, a value that is not in the dictionary writes this index before the value.
+ */
+const baseLeafIndexBytes = 2.5;
+
+/**
  * Returns true if a value in `count` items saves more bytes in the data than its constant leaf shape adds to the shapes table.
  * @remarks
  * The costs are for ASCII text. `jsonLength` counts characters, and a character that is not ASCII is more than one byte in UTF-8.
@@ -733,12 +830,80 @@ function savesBytes(count: number, jsonLength: number, indexBytes: number): bool
 }
 
 /**
+ * Returns the approximate number of bytes that a pin of a raw leaf saves.
+ * @remarks
+ * A pin removes the value and its comma from the data of each item, and adds a constant leaf shape for each value.
+ * The result does not include the cost of the signatures and runs.
+ * @param valueCounts - The number of items with each value of the leaf.
+ */
+function rawPinSavedBytes(valueCounts: ReadonlyMap<Value, number>): number {
+	let savedBytes = 0;
+	for (const [value, valueCount] of valueCounts) {
+		const jsonLength = JSON.stringify(value).length;
+		// Each item holds the value and a comma. The pin adds a constant leaf shape.
+		const itemBytes = jsonLength + 1;
+		const shapeBytes = constantLeafShapeBytes + jsonLength;
+		savedBytes += valueCount * itemBytes - shapeBytes;
+	}
+	return savedBytes;
+}
+
+/**
+ * Returns the approximate number of bytes that a pin of a leaf with a dictionary saves.
+ * @remarks
+ * For a value in the dictionary, a pin removes the shape index and its comma from the data of each item.
+ * The dictionary already has the constant leaf shape of the value.
+ * The shapes table is sorted by count, so a more common value has a shorter index.
+ *
+ * For a value that is not in the dictionary, a pin removes the index of the base leaf shape, the value and its comma.
+ * It adds a constant leaf shape.
+ *
+ * The result does not include the cost of the signatures and runs.
+ * @param valueCounts - The number of items with each value of the leaf.
+ * @param admitted - The values in the dictionary.
+ */
+function dictionaryPinSavedBytes(
+	valueCounts: ReadonlyMap<Value, number>,
+	admitted: readonly Value[],
+): number {
+	// The position of each value in the dictionary, from the most common value to the least common value.
+	const count = (value: Value): number => valueCounts.get(value) ?? 0;
+	const ranks = new Map(
+		[...admitted].sort((a, b) => count(b) - count(a)).map((value, rank) => [value, rank]),
+	);
+	let savedBytes = 0;
+	for (const [value, valueCount] of valueCounts) {
+		const rank = ranks.get(value);
+		if (rank === undefined) {
+			// Not in the dictionary: each item holds the index of the base leaf shape, the value and a comma.
+			// The pin adds a constant leaf shape.
+			const jsonLength = JSON.stringify(value).length;
+			const itemBytes = baseLeafIndexBytes + jsonLength + 1;
+			const shapeBytes = constantLeafShapeBytes + jsonLength;
+			savedBytes += valueCount * itemBytes - shapeBytes;
+		} else {
+			// In the dictionary: each item holds a shape index and a comma.
+			// The dictionary already has the constant leaf shape.
+			const itemBytes = String(rank).length + 1;
+			savedBytes += valueCount * itemBytes;
+		}
+	}
+	return savedBytes;
+}
+
+/**
  * Chooses how a single-type sequence writes a leaf.
  * @remarks
- * Returns "pinToShape" if the value changes at most one time in {@link minAverageRunLength} items,
- * and each value is in at least {@link minItemsPerPinnedValue} items, on average.
- * If not, it admits each value that {@link savesBytes}, to a maximum of {@link maxCountedValues} different values.
- * It returns a dictionary of these values if they are at least {@link minDictionaryCoverage} of the values, and "raw" if not.
+ * First, it chooses how to write the leaf if the leaf is not pinned.
+ * It admits each value that {@link savesBytes}, to a maximum of {@link maxCountedValues} different values.
+ * If these values are at least {@link minDictionaryCoverage} of the values, it uses a dictionary of these values. If not, it uses "raw".
+ * It sets {@link LeafStats.unpinnedEncoding} to this encoding.
+ * It sets {@link LeafStats.pinSavedBytes} to the bytes that a pin saves, compared with this encoding.
+ * See {@link rawPinSavedBytes} and {@link dictionaryPinSavedBytes}.
+ * Then it returns "pinToShape" if it counted all values, and the leaf has long runs of few values.
+ * In a long run, the value changes at most one time in {@link minAverageRunLength} items, on average.
+ * Each of the few values is in at least {@link minItemsPerPinnedValue} items, on average.
+ * If not, it returns {@link LeafStats.unpinnedEncoding}.
  * @param leaf - The values of the leaf in the items.
  * @param sharedEncoders - Gives the dictionary encoder.
  */
@@ -759,15 +924,6 @@ function chooseLeafEncoding(leaf: LeafStats, sharedEncoders: SharedEncoders): Le
 		}
 	}
 
-	// The value has `changes + 1` runs in the values.
-	if (
-		!valueCountsTruncated &&
-		(leaf.changes + 1) * minAverageRunLength <= valueTotal &&
-		valueCounts.size * minItemsPerPinnedValue <= valueTotal
-	) {
-		return "pinToShape";
-	}
-
 	// A dictionary with more values has longer shape indexes.
 	const indexBytes = String(valueCounts.size).length + 0.5;
 	const admitted: Value[] = [];
@@ -780,10 +936,28 @@ function chooseLeafEncoding(leaf: LeafStats, sharedEncoders: SharedEncoders): Le
 		}
 	}
 
-	if (admittedTotal >= valueTotal * minDictionaryCoverage) {
-		return sharedEncoders.dictionary(leaf.leafType, admitted);
+	const coverage = admittedTotal / valueTotal;
+	if (coverage >= minDictionaryCoverage) {
+		leaf.unpinnedEncoding = sharedEncoders.dictionary(leaf.leafType, admitted);
+		leaf.pinSavedBytes = dictionaryPinSavedBytes(valueCounts, admitted);
+	} else {
+		leaf.unpinnedEncoding = "raw";
+		leaf.pinSavedBytes = rawPinSavedBytes(valueCounts);
 	}
-	return "raw";
+
+	// Each value of a pinned leaf adds shapes, and each run of a value starts a new signature.
+	// So a pin needs long runs, and values that are each in many items. The values have `changes + 1` runs.
+	const averageRunLength = valueTotal / (leaf.changes + 1);
+	const averageItemsPerValue = valueTotal / valueCounts.size;
+	// If some values are not counted, `averageItemsPerValue` is too high.
+	if (
+		!valueCountsTruncated &&
+		averageRunLength >= minAverageRunLength &&
+		averageItemsPerValue >= minItemsPerPinnedValue
+	) {
+		return "pinToShape";
+	}
+	return leaf.unpinnedEncoding;
 }
 
 /**
@@ -945,6 +1119,7 @@ class SingleTypeSequenceEncoder implements FieldEncoder {
 	 * Chooses the encoder of each node of a field of object nodes.
 	 * @remarks
 	 * If all leaves are raw, every node uses `itemEncoder`.
+	 * After it chooses the encoding of each leaf, it calls {@link unpinLeaves}.
 	 * The cursor reads the fields of a node again only for the first node with each signature, to make its specialized encoder.
 	 */
 	private chooseNodeEncoders(
@@ -962,10 +1137,17 @@ class SingleTypeSequenceEncoder implements FieldEncoder {
 			itemCount += 1;
 		});
 
-		// Choose: how to write each leaf. If all leaves are raw, no item is specialized.
+		// Choose: how to write each leaf.
 		for (const leaf of leaves) {
 			leaf.encoding = chooseLeafEncoding(leaf, this.sharedEncoders);
 		}
+
+		// Unpin: remove the pins that cost more bytes than they save.
+		if (leaves.some((leaf) => leaf.encoding === "pinToShape")) {
+			unpinLeaves(leaves, root, trace, itemCount);
+		}
+
+		// If all leaves are raw, no item is specialized.
 		if (leaves.every((leaf) => leaf.encoding === "raw")) {
 			return Array.from({ length: itemCount }, () => itemEncoder);
 		}
