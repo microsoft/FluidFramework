@@ -29,7 +29,8 @@ overrides:
   concurrently@10.0.3>shell-quote: ^1.11.0
 
   # Resolve known security vulnerabilities in transitive dependencies.
-  # js-yaml: CVE-2026-59869 (quadratic CPU DoS via merge-key chains).
+  # js-yaml: CVE-2026-59869 (quadratic CPU DoS via merge-key chains)
+  # and CVE-2026-84375 (CPU DoS via empty merge sources).
   js-yaml@>=3 <4: 3.15.2
   js-yaml@>=4 <5: 4.3.2
 # Disable pnpm update notifications since we use corepack to install package managers.

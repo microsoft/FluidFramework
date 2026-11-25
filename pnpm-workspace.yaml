@@ -137,7 +137,8 @@ overrides:
 
   # axios pre-1.0 is forced to a patched release to resolve known vulnerabilities.
   # Caret dependencies aren't enough on a pre-1.0 package.
-  # 0.34.0 also fixes CVE-2026-101909 for legacy consumers whose ranges cannot reach it.
+  # 0.34.0 also fixes CVE-2026-101902 and CVE-2026-101909 for legacy consumers
+  # whose ranges cannot reach it.
   axios@<1: ^0.34.0
 
   # 1.20.0 fixes CVE-2026-101898 through CVE-2026-101909.
