@@ -289,6 +289,16 @@ export class SharedTreeCore<
 		builder.addWithStats(summarizablesTreeKey, summarizableBuilder.getSummaryTree());
 	}
 
+	/**
+	 * Combines an explicitly selected pair of adjacent retained commits.
+	 * @remarks
+	 * Does not validate reader compatibility or update checkout state.
+	 * No application option or automatic summary hook invokes this method.
+	 */
+	public compactHistory(current: GraphCommit<TChange>, target: GraphCommit<TChange>): void {
+		this.editManager.compactHistory(current, target);
+	}
+
 	protected async loadInternal(
 		services: IChannelStorageService,
 		parse: SummaryElementParser,

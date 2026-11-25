@@ -18,6 +18,7 @@ import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	CommitKind,
+	type CustomMetadataTree,
 	type GraphCommit,
 	type RevisionTag,
 	findAncestor,
@@ -467,6 +468,36 @@ export class EditManager<
 		this.trimState.trimmedCommitCount += trimmedRevisions.length;
 
 		this.trimmer.emit("ancestryTrimmed", trimmedRevisions);
+	}
+
+	/**
+	 * Combines an explicitly selected adjacent pair of retained main-trunk commits into the newer commit.
+	 * Preserves the newer commit's identity and combines metadata in commit order.
+	 * @remarks
+	 * Both commits must be sequenced, at or below the minimum sequence number, and before registered fork bases.
+	 * Invalid pairs are rejected before mutation. Composition errors propagate to the caller.
+	 * Does not rebase peers, update checkout state, or invalidate cached history data.
+	 */
+	public compactHistory(
+		current: GraphCommit<TChangeset>,
+		target: GraphCommit<TChangeset>,
+	): void {
+		const mainBranch = this.getSharedBranch("main");
+		const commits = this.getTrunkCommits("main");
+		if (!commits.includes(current) || !commits.includes(target)) {
+			throw new UsageError("Both commits must be retained main-trunk commits");
+		}
+		if (target.parent !== current) {
+			throw new UsageError("Commits must be adjacent and ordered from older to newer");
+		}
+		const bound = minSequenceId(
+			this.getUpperTrimmingBoundForMinimumSequenceNumber(),
+			this.getUpperTrimmingBoundForLocalForks(),
+		);
+		if (sequenceIdComparator(mainBranch.getCommitSequenceId(target.revision), bound) > 0) {
+			throw new UsageError("Commits are still required by collaboration or a registered fork");
+		}
+		mainBranch.combineTrunkCommits(current, target);
 	}
 
 	public isEmpty(): boolean {
@@ -1062,6 +1093,49 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 		this.commitMetadata.delete(commit.revision);
 	}
 
+	/**
+	 * Replaces an adjacent trunk pair with its composition in `target`, removing `current` from the graph and indexes.
+	 * Keeps the target's object, revision, and sequence ID.
+	 * Metadata is combined in commit order.
+	 * @remarks
+	 * Does not invalidate cached rollback data or notify checkouts.
+	 */
+	public combineTrunkCommits(
+		current: GraphCommit<TChangeset>,
+		target: GraphCommit<TChangeset>,
+	): void {
+		assert(target.parent === current, "Only adjacent commits can be composed");
+		assert(current.parent !== undefined, "The trunk base cannot be composed away");
+		const currentSequencingMetadata = this.commitMetadata.get(current.revision);
+		assert(
+			currentSequencingMetadata !== undefined,
+			"Only sequenced trunk commits can be composed",
+		);
+
+		const composed = target as Mutable<GraphCommit<TChangeset>>;
+		composed.change = this.composeTrunkChanges(current, target);
+		composed.customMetadata = composeCustomMetadata(
+			current.customMetadata,
+			target.customMetadata,
+		);
+		composed.parent = current.parent;
+		this.sequenceIdToCommit.delete(currentSequencingMetadata.sequenceId);
+		this.commitMetadata.delete(current.revision);
+	}
+
+	/**
+	 * Composes two tagged changes without mutating their commits or branch indexes.
+	 */
+	private composeTrunkChanges(
+		current: GraphCommit<TChangeset>,
+		target: GraphCommit<TChangeset>,
+	): TChangeset {
+		return this.changeFamily.rebaser.compose([
+			tagChange(current.change, current.revision),
+			tagChange(target.change, target.revision),
+		]);
+	}
+
 	public getLocalCommits(): readonly GraphCommit<TChangeset>[] {
 		return this.localCommits;
 	}
@@ -1337,3 +1411,19 @@ type OnSequenceCommit<TChangeset> = (
 	sequenceId: SequenceId,
 	prevSequenceId: SequenceId,
 ) => void;
+
+/**
+ * Combines metadata in commit order, without flattening authored or synthetic subtrees.
+ */
+function composeCustomMetadata(
+	before: CustomMetadataTree | undefined,
+	after: CustomMetadataTree | undefined,
+): CustomMetadataTree | undefined {
+	if (before === undefined) {
+		return after;
+	}
+	if (after === undefined) {
+		return before;
+	}
+	return { metadata: undefined, children: [before, after] };
+}
