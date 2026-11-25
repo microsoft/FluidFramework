@@ -5,12 +5,14 @@
 
 export {
 	isTreeNode,
+	kernelSlot,
 	TreeNodeKernel,
 	getKernel,
 	tryGetTreeNodeSchema,
 	type InnerNode,
 	tryDisposeTreeNode,
 	getInnerNode,
+	getInnerNodeFromTarget,
 	treeNodeFromAnchor,
 	getSimpleNodeSchemaFromInnerNode,
 	SimpleContextSlot,

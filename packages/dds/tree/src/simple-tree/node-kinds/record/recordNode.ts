@@ -16,12 +16,14 @@ import {
 import { type JsonCompatibleReadOnlyObject, brand } from "../../../util/index.js";
 import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
 import {
+	kernelSlot,
 	type TreeNodeSchema,
 	NodeKind,
 	schemaIdentifierBrand,
 	typeSchemaSymbol,
 	type UnhydratedFlexTreeNode,
 	getInnerNode,
+	getInnerNodeFromTarget,
 	getKernel,
 	type InternalTreeNode,
 	type NodeSchemaMetadata,
@@ -74,6 +76,9 @@ function createRecordNodeProxy(
 		get: (target, key, receiver): unknown => {
 			if (typeof key === "symbol") {
 				switch (key) {
+					case kernelSlot: {
+						return Reflect.get(target, key);
+					}
 					// POJO mode records don't have TreeNode's build in members on their targets, so special case them:
 					case typeSchemaSymbol: {
 						return schema;
@@ -104,7 +109,7 @@ function createRecordNodeProxy(
 			}
 
 			if (typeof key === "string") {
-				const innerNode = getInnerNode(receiver);
+				const innerNode = getInnerNodeFromTarget(target, receiver);
 				const field = innerNode.tryGetField(brand(key));
 				if (field !== undefined) {
 					return tryGetTreeNodeForField(field);
@@ -139,7 +144,7 @@ function createRecordNodeProxy(
 		},
 		has: (target, key): boolean => {
 			if (typeof key === "symbol") {
-				return Object.prototype.hasOwnProperty.call(target, key);
+				return key !== kernelSlot && Object.prototype.hasOwnProperty.call(target, key);
 			}
 
 			const innerNode = getInnerNode(proxy);
@@ -153,11 +158,15 @@ function createRecordNodeProxy(
 			// For example, tools that transpile JavaScript private fields (`#field`) to symbol-keyed properties for runtimes
 			// older than ES2022, such as Babel with its `privateFieldsAsSymbols` assumption, give every node a
 			// non-configurable symbol-keyed property for `TreeNode`'s `#brand`.
-			return [...innerNode.keys(), ...Object.getOwnPropertySymbols(target)];
+			// The slot holding the node's kernel is internal, so it is not reported.
+			return [
+				...innerNode.keys(),
+				...Object.getOwnPropertySymbols(target).filter((key) => key !== kernelSlot),
+			];
 		},
 		getOwnPropertyDescriptor: (target, key) => {
 			if (typeof key === "symbol") {
-				return Reflect.getOwnPropertyDescriptor(target, key);
+				return key === kernelSlot ? undefined : Reflect.getOwnPropertyDescriptor(target, key);
 			}
 
 			const innerNode = getInnerNode(proxy);
@@ -175,6 +184,9 @@ function createRecordNodeProxy(
 			};
 		},
 		defineProperty(target, key, attributes) {
+			if (key === kernelSlot) {
+				return Reflect.defineProperty(target, key, attributes);
+			}
 			throw new UsageError("Shadowing properties of record nodes is not permitted.");
 		},
 		deleteProperty(target, key) {

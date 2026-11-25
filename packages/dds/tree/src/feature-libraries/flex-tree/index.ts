@@ -20,6 +20,7 @@ export {
 	type FlexibleNodeContent,
 	type FlexibleFieldContent,
 	type HydratedFlexTreeNode,
+	notLeafContent,
 } from "./flexTreeTypes.js";
 
 export {
