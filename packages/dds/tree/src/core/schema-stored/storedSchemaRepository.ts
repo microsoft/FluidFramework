@@ -134,7 +134,7 @@ export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 }
 
 /**
- * Returns whether the repository still has its initial forbidden root and no other stored schema.
+ * Returns whether the tree's stored schema is still in its initial state.
  */
 export function schemaDataIsEmpty(data: TreeStoredSchema): boolean {
 	const root = data.rootFieldSchema;
