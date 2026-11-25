@@ -682,9 +682,11 @@ export class SchematizingSimpleTreeView<
 
 	public dispose(): void {
 		if (this.disposed) {
-			// Disposing a fork also closes its views. Preserve the error for operations on a disposed branch.
+			// Disposing a branch also disposes its live views. Only ignore repeated disposal while the branch is live.
 			if (this.checkout.disposed) {
-				throw new UsageError("Cannot dispose a view of an already disposed branch.");
+				throw new UsageError(
+					"Cannot dispose this view again: both the view and its branch have already been disposed.",
+				);
 			}
 			return;
 		}
