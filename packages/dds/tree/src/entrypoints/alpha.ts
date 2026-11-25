@@ -240,6 +240,7 @@ export {
   IdentifySchemaOptions,
   IdentifySchemaWithHashOptions,
   IncrementalEncodingPolicy,
+  IndependentTreeHistoryOptions,
   IndependentViewOptions,
   IndependentViewTelemetryOptions,
   Insertable,

@@ -91,6 +91,8 @@ import {
 	SquashingTransactionStack,
 	SharedTreeBranch,
 	TransactionResult as InternalTransactionResult,
+	type BranchTrimmingEvents,
+	type BranchTrimState,
 	type SharedTreeBranchChange,
 	type SquashingTransactionOptions,
 	type Transactor,
@@ -127,6 +129,7 @@ import {
 	throwIfBroken,
 	type JsonCompatibleReadOnly,
 	type JsonCompatibleReadOnlyObject,
+	type Mutable,
 	type WithBreakable,
 } from "../util/index.js";
 
@@ -396,8 +399,17 @@ export function createTreeCheckout(
 		 * Providing a newer finalized ancestor can enable optimizations that depend on finalized history.
 		 */
 		getFinalizedCommit?: () => GraphCommit<SharedTreeChange>;
+		/**
+		 * See {@link CheckoutHistoryBound.maxRevertibles}.
+		 * Must not be provided with `branch`: the checkout trims the history of the branch it creates.
+		 */
+		maxRevertibles?: number;
 	},
 ): TreeCheckout {
+	assert(
+		args?.maxRevertibles === undefined || args.branch === undefined,
+		"History trimming requires the checkout to create its own branch",
+	);
 	const schema = args?.schema ?? new TreeStoredSchemaRepository();
 	const forest = args?.forest ?? buildForest(new Breakable("TreeCheckout"), schema);
 	const defaultCodecOptions: CodecWriteOptions = {
@@ -415,6 +427,7 @@ export function createTreeCheckout(
 			idCompressor,
 		);
 
+	const trimState: Mutable<BranchTrimState> = { trimmedCommitCount: 0 };
 	// TODO: If a branch is passed in, is it supposed to be local main?
 	// Otherwise shouldn't we set `isSharedBranch` to false?
 	const branch =
@@ -428,7 +441,7 @@ export function createTreeCheckout(
 			},
 			changeFamily,
 			() => idCompressor.generateCompressedId(),
-			{ trimmedCommitCount: 0 },
+			trimState,
 		);
 
 	return new TreeCheckout({
@@ -444,6 +457,10 @@ export function createTreeCheckout(
 		removedRoots: args?.removedRoots,
 		disposeForksAfterTransaction: true,
 		getFinalizedCommit: args?.getFinalizedCommit,
+		historyBound:
+			args?.maxRevertibles === undefined
+				? undefined
+				: { maxRevertibles: args.maxRevertibles, trimState },
 	});
 }
 
@@ -621,6 +638,34 @@ export interface TreeCheckoutOptions {
 	 * Defaults to the current root of the checkout's commit graph.
 	 */
 	readonly getFinalizedCommit?: () => GraphCommit<SharedTreeChange>;
+
+	/**
+	 * Bounds the number of revertibles created by this checkout that are valid at once, and the history the checkout retains.
+	 * @remarks
+	 * When defined, creating a revertible beyond {@link CheckoutHistoryBound.maxRevertibles} disposes the oldest valid revertible,
+	 * and after each commit is applied, the checkout trims the history of its branch to the commits that its valid revertibles need.
+	 * Trimming is skipped while a transaction is in progress, during change events, and while the branch has undisposed forks
+	 * (other than the branches held by revertibles).
+	 *
+	 * Must only be defined for a checkout that owns its branch and cannot switch it to another branch.
+	 * Forks of the checkout do not inherit this option.
+	 */
+	readonly historyBound?: CheckoutHistoryBound;
+}
+
+/**
+ * See {@link TreeCheckoutOptions.historyBound}.
+ */
+export interface CheckoutHistoryBound {
+	/**
+	 * The maximum number of revertibles created by the checkout that are valid at once.
+	 * Must be a positive integer or `Number.POSITIVE_INFINITY`.
+	 */
+	readonly maxRevertibles: number;
+	/**
+	 * The trim state shared by the checkout's branch and its forks, which the checkout updates when it trims the branch's history.
+	 */
+	readonly trimState: Mutable<BranchTrimState>;
 }
 
 /**
@@ -710,6 +755,47 @@ export abstract class CheckoutBase implements ITreeCheckout {
 	>();
 
 	/**
+	 * {@inheritDoc TreeCheckoutOptions.historyBound}
+	 */
+	private readonly historyBound: CheckoutHistoryBound | undefined;
+
+	/**
+	 * Notifies this checkout's branch (and its forks) when {@link CheckoutBase.trimHistory} trims the branch's history.
+	 * @remarks Defined if and only if {@link CheckoutBase.historyBound} is defined.
+	 */
+	private readonly historyTrimmer:
+		| ReturnType<typeof createEmitter<BranchTrimmingEvents>>
+		| undefined;
+
+	/**
+	 * Undisposed branches forked (directly or transitively) from this checkout's branch, excluding the branches held by this checkout's revertibles.
+	 * Each is mapped to a function which stops tracking its forks.
+	 * @remarks
+	 * Such a branch may share history with this checkout's branch, so history is not trimmed while any exist.
+	 * Only tracked when {@link CheckoutBase.historyBound} is defined.
+	 */
+	private readonly liveForks = new Map<
+		SharedTreeBranch<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>,
+		() => void
+	>();
+
+	/**
+	 * Revertibles which were disposed because more than {@link CheckoutHistoryBound.maxRevertibles} revertibles were valid.
+	 */
+	private readonly revertiblesDisposedByLimit = new WeakSet<RevertibleAlpha>();
+
+	/**
+	 * The revision of the commit being reverted by a revertible which will be disposed once the revert completes.
+	 * @remarks
+	 * Such a revertible does not count toward {@link CheckoutHistoryBound.maxRevertibles} while the revert creates new revertibles.
+	 */
+	private revisionBeingReverted: RevisionTag | undefined;
+
+	/**
 	 * The name of the telemetry event logged for calls to {@link CheckoutBase.revertRevertible}.
 	 * @privateRemarks Exposed for testing purposes.
 	 */
@@ -795,6 +881,7 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		removedRoots = makeDetachedFieldIndex("repair"),
 		disposeForksAfterTransaction = true,
 		getFinalizedCommit,
+		historyBound,
 	}: TreeCheckoutOptions) {
 		this.branch = branch;
 		this.isSharedBranch = isSharedBranch;
@@ -808,6 +895,14 @@ export abstract class CheckoutBase implements ITreeCheckout {
 		this._removedRoots = removedRoots;
 		this.disposeForksAfterTransaction = disposeForksAfterTransaction;
 		this.getFinalizedCommitOverride = getFinalizedCommit;
+		this.historyBound = historyBound;
+		if (historyBound === undefined) {
+			this.historyTrimmer = undefined;
+		} else {
+			this.historyTrimmer = createEmitter<BranchTrimmingEvents>();
+			branch.trimmer = this.historyTrimmer;
+			this.trackForks(branch);
+		}
 		this.serializedChangeCodec = makeSerializedChangeCodec(
 			this.changeFamily,
 			this.jsonValidator,
@@ -1070,6 +1165,7 @@ export abstract class CheckoutBase implements ITreeCheckout {
 						if (this.transaction.size === 0) {
 							// The changes in a transaction squash commit have already applied to the checkout and are known to be valid, so we can validate the squash commit automatically.
 							this.validateCommit(newHead);
+							this.trimHistory();
 						}
 						break;
 					}
@@ -1171,11 +1267,11 @@ export abstract class CheckoutBase implements ITreeCheckout {
 								onRevertibleDisposed,
 								commitLabelTree,
 							);
-							this.revertibleCommitBranches.set(
-								revision,
-								this.#transaction.branch.fork(commit),
-							);
+							const revertibleBranch = this.#transaction.branch.fork(commit);
+							this.untrackRevertibleBranch(revertibleBranch);
+							this.revertibleCommitBranches.set(revision, revertibleBranch);
 							this.revertibles.set(revision, revertible);
+							this.disposeRevertiblesOverLimit();
 							return revertible;
 						};
 
@@ -1273,6 +1369,7 @@ export abstract class CheckoutBase implements ITreeCheckout {
 				this.validateCommit(commit);
 			}
 		}
+		this.trimHistory();
 	};
 
 	/**
@@ -1520,7 +1617,140 @@ export abstract class CheckoutBase implements ITreeCheckout {
 				this._removedRoots.deleteRootsLastTouchedByRevision(revision);
 			}
 		});
+		for (const revision of revisions) {
+			// A trimmed commit can no longer settle, so its events will never be emitted.
+			this.localCommitEventEmitters.delete(revision);
+		}
 	};
+
+	/**
+	 * Adds the forks of `branch` to {@link CheckoutBase.liveForks} as they are created, along with their own forks.
+	 * @returns A function which stops tracking the forks of `branch`.
+	 */
+	private trackForks(
+		branch: SharedTreeBranch<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>,
+	): () => void {
+		return branch.events.on("fork", (fork) => {
+			this.liveForks.set(fork, this.trackForks(fork));
+			fork.events.on("dispose", () => this.liveForks.delete(fork));
+		});
+	}
+
+	/**
+	 * Removes a branch held by a revertible of this checkout from {@link CheckoutBase.liveForks}.
+	 * @remarks
+	 * The history that such a branch needs is retained by {@link CheckoutBase.trimHistory}.
+	 * Its forks are not tracked: they hold revertibles cloned into this checkout, whose history is also retained,
+	 * or into forks of this checkout, which are tracked themselves.
+	 */
+	private untrackRevertibleBranch(
+		branch: SharedTreeBranch<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>,
+	): void {
+		this.liveForks.get(branch)?.();
+		this.liveForks.delete(branch);
+	}
+
+	/**
+	 * Disposes the oldest revertibles until no more than {@link CheckoutHistoryBound.maxRevertibles} are valid.
+	 */
+	private disposeRevertiblesOverLimit(): void {
+		if (this.historyBound === undefined) {
+			return;
+		}
+		const beingReverted =
+			this.revisionBeingReverted !== undefined &&
+			this.revertibles.has(this.revisionBeingReverted)
+				? this.revisionBeingReverted
+				: undefined;
+		let excess =
+			this.revertibles.size -
+			this.historyBound.maxRevertibles -
+			(beingReverted === undefined ? 0 : 1);
+		// `revertibles` iterates in creation order, so the oldest revertibles come first.
+		for (const [revision, revertible] of this.revertibles) {
+			if (excess <= 0) {
+				break;
+			}
+			if (revision !== beingReverted) {
+				this.revertiblesDisposedByLimit.add(revertible);
+				revertible.dispose();
+				excess--;
+			}
+		}
+	}
+
+	/**
+	 * Trims the history of this checkout's branch to the commits that its valid revertibles need, if {@link CheckoutBase.historyBound} is defined.
+	 * @remarks
+	 * The oldest commit needed by a revertible (or the head commit, if there are no revertibles) is retained along with all commits after it.
+	 * Its parent becomes the new base of the branch's history, and older commits are discarded together with the repair data that only they use.
+	 * The history is cut as `EditManager` trims the trunk, and the `ancestryTrimmed` event it emits is handled the same way.
+	 *
+	 * Must only be called once the head commit has been applied to the forest.
+	 * Does nothing while a transaction is in progress, while the edit lock is held, or while {@link CheckoutBase.liveForks} is not empty.
+	 * The branch of a transaction is a fork, so this also does nothing while a transaction is ending.
+	 */
+	private trimHistory(): void {
+		const trimmer = this.historyTrimmer;
+		if (
+			trimmer === undefined ||
+			this.historyBound === undefined ||
+			this.disposed ||
+			this.#transaction.size > 0 ||
+			this.editLock.isLocked ||
+			this.liveForks.size > 0
+		) {
+			return;
+		}
+
+		const neededCommits = new Set<GraphCommit<SharedTreeChange>>();
+		for (const revertibleBranch of this.revertibleCommitBranches.values()) {
+			neededCommits.add(revertibleBranch.getHead());
+		}
+		let oldestRetained = this.#transaction.branch.getHead();
+		let remaining = neededCommits.size - (neededCommits.has(oldestRetained) ? 1 : 0);
+		while (remaining > 0) {
+			const parent = oldestRetained.parent;
+			if (parent === undefined) {
+				// A revertible's commit is not in the retained history of this branch, so it is unclear what can be trimmed.
+				return;
+			}
+			oldestRetained = parent;
+			if (neededCommits.has(oldestRetained)) {
+				remaining--;
+			}
+		}
+
+		const newBase = oldestRetained.parent as
+			| Mutable<GraphCommit<SharedTreeChange>>
+			| undefined;
+		if (newBase?.parent === undefined) {
+			return;
+		}
+		const trimmedCommits: Mutable<GraphCommit<SharedTreeChange>>[] = [];
+		findAncestor([newBase, trimmedCommits]);
+		const trimmedRevisions = trimmedCommits.map((commit) => commit.revision);
+		for (const commit of trimmedCommits) {
+			commit.wasTrimmed = true;
+		}
+		// The new base remains reachable as the sentinel commit of the remaining history,
+		// so release its change and metadata, which no longer have any use.
+		newBase.change = this.changeFamily.rebaser.compose([]);
+		newBase.customMetadata = undefined;
+		// Dropping the parent removes all references to the older commits so they can be garbage collected.
+		delete newBase.parent;
+		// The trim state must be updated before notifying the branches, so that their commit counts are consistent.
+		this.historyBound.trimState.trimmedCommitCount += trimmedRevisions.length;
+		trimmer.emit("ancestryTrimmed", trimmedRevisions);
+	}
 
 	@breakingMethod
 	private withCombinedVisitor(fn: (visitor: DeltaVisitor) => void): void {
@@ -1591,6 +1821,11 @@ export abstract class CheckoutBase implements ITreeCheckout {
 			},
 			revert: (releaseOrOptions: boolean | RevertOptionsAlpha = true) => {
 				if (revertible.status === RevertibleStatus.Disposed) {
+					if (checkout.revertiblesDisposedByLimit.has(revertible)) {
+						throw new UsageError(
+							`Unable to revert a revertible that was disposed because more than ${checkout.historyBound?.maxRevertibles} revertibles were valid (see "maxRevertibles").`,
+						);
+					}
 					throw new UsageError("Unable to revert a revertible that has been disposed.");
 				}
 
@@ -1598,18 +1833,25 @@ export abstract class CheckoutBase implements ITreeCheckout {
 					typeof releaseOrOptions === "boolean"
 						? { dispose: releaseOrOptions }
 						: releaseOrOptions;
-				const revertMetrics = checkout.revertRevertible(
-					revision,
-					kind,
-					labelTree,
-					checkout.snapshotCustomMetadata(options),
-				);
+				const disposeAfterRevert = options.dispose ?? true;
+				checkout.revisionBeingReverted = disposeAfterRevert ? revision : undefined;
+				let revertMetrics: RevertMetrics;
+				try {
+					revertMetrics = checkout.revertRevertible(
+						revision,
+						kind,
+						labelTree,
+						checkout.snapshotCustomMetadata(options),
+					);
+				} finally {
+					checkout.revisionBeingReverted = undefined;
+				}
 				checkout.logger?.sendTelemetryEvent({
 					eventName: CheckoutBase.revertTelemetryEventName,
 					...revertMetrics,
 				});
 
-				if (options.dispose ?? true) {
+				if (disposeAfterRevert) {
 					revertible.dispose();
 				}
 			},
@@ -1631,7 +1873,9 @@ export abstract class CheckoutBase implements ITreeCheckout {
 					);
 				}
 
-				targetCheckout.revertibleCommitBranches.set(revision, revertibleBranch.fork());
+				const clonedBranch = revertibleBranch.fork();
+				targetCheckout.untrackRevertibleBranch(clonedBranch);
+				targetCheckout.revertibleCommitBranches.set(revision, clonedBranch);
 
 				return this.createRevertible(
 					revision,

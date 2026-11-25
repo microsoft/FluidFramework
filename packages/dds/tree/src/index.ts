@@ -57,6 +57,7 @@ export {
 	independentView,
 	type IndependentViewOptions,
 	type IndependentViewTelemetryOptions,
+	type IndependentTreeHistoryOptions,
 	createIndependentTreeAlpha,
 	createIndependentTreeBeta,
 	createIndependentTreeView,
