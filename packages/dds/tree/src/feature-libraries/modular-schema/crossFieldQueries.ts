@@ -67,7 +67,6 @@ export interface InvertNodeManager {
 
 	/**
 	 * Returns the ID `rootId` is renamed to in the inverted changeset, or undefined if it is not renamed.
-	 * Will also return undefined if the root is not detached in the output context of the original changeset.
 	 *
 	 * @param rootId - The root ID from the output context of the original changeset.
 	 * @param count - The number of nodes in the block being queried.
