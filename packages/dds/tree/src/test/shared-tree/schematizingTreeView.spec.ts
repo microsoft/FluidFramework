@@ -985,7 +985,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 		it("makes an incompatible view usable even when the allowed documents do not change", () => {
 			// The required field cannot be populated until strings are enabled, so neither version
-			// of Pending can occur. The stored document uses the other permitted root type.
+			// of Pending can occur. The existing tree uses the other permitted root type.
 			const required = schema.required(schema.types([schema.staged(schema.string)]));
 			class Before extends schema.objectAlpha("Pending", { required }) {}
 			class After extends schema.objectAlpha("Pending", {
