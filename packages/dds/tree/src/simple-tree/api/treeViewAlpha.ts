@@ -54,12 +54,12 @@ export type ViewExistingResult<TRoot extends ImplicitFieldSchema> =
 	| ViewExistingFailure;
 
 /**
- * A result containing a view that can read and edit the existing document.
+ * {@link TreeViewAlpha.openExisting} result containing a view that can read and edit the existing document.
  * @sealed @alpha
  */
 export interface ViewExistingSuccess<in out TRoot extends ImplicitFieldSchema> {
 	/**
-	 * Indicates that the view is usable, including after a required upgrade.
+	 * Indicates that the {@link ViewExistingSuccess.view} was loaded successfully and is usable.
 	 */
 	readonly canView: true;
 
@@ -70,7 +70,7 @@ export interface ViewExistingSuccess<in out TRoot extends ImplicitFieldSchema> {
 }
 
 /**
- * A result explaining why an initialized document could be neither viewed nor upgraded.
+ * {@link TreeViewAlpha.openExisting} result indicating that the tree cannot be opened with the client's view schema.
  * @sealed @alpha
  */
 export interface ViewExistingFailure {
@@ -90,21 +90,18 @@ export interface ViewExistingFailure {
 }
 
 /**
- * The reasons a document could be neither viewed nor upgraded.
- *
- * @remarks
- * Both lists describe the schemas at the time of the failed open, even if the document changes later.
+ * The reasons the existing tree could be neither viewed as-is nor upgraded to be compatible with the client's view schema.
  *
  * @sealed @alpha
  */
 export interface ViewTreeIncompatibilities {
 	/**
-	 * The nonempty list of incompatibilities that prevented viewing the document.
+	 * The list of incompatibilities that prevented viewing the tree as-is.
 	 */
 	readonly view: readonly SchemaViewIncompatibility[];
 
 	/**
-	 * The nonempty list of incompatibilities that prevented upgrading the document.
+	 * The list of incompatibilities that prevented upgrading the existing tree's stored schema to be compatible with the client's view schema.
 	 */
 	readonly upgrade: readonly SchemaUpgradeIncompatibility[];
 }
@@ -182,15 +179,15 @@ export interface TreeViewAlpha<
  */
 export namespace TreeViewAlpha {
 	/**
-	 * Opens an initialized tree for editing.
+	 * Opens an existing, initialized tree with the provided view configuration.
 	 *
 	 * @remarks
-	 * If the document is already viewable, this function does not write to it.
-	 * Otherwise, it applies a permitted schema upgrade only if one is needed to provide access.
+	 * If the tree is viewable as-is, this function does not make any changes to it.
+	 * Otherwise, if a schema upgrade is required to make the tree viewable with the client's view schema, an upgrade is applied immediately before returning the view to the caller.
 	 * An upgrade changes the shared document and can affect other clients.
 	 *
-	 * @typeParam TRoot - The schema for the root field.
-	 * @param tree - An initialized tree with no active view.
+	 * @typeParam TRoot - The schema for the tree's root field.
+	 * @param tree - An existing, initialized tree with no active view.
 	 * @param config - The view schema and its configuration.
 	 * @returns A result with `canView: true` and a view you own, or `canView: false` and diagnostics you can log.
 	 * @throws An error with `errorType: "usageError"` if the tree is uninitialized or already has an active view.
