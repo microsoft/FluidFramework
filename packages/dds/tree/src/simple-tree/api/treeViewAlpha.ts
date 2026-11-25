@@ -54,7 +54,7 @@ export type ViewExistingResult<TRoot extends ImplicitFieldSchema> =
 	| ViewExistingFailure;
 
 /**
- * {@link TreeViewAlpha.openExisting} result containing a view that can read and edit the existing document.
+ * {@link TreeViewAlpha.openExisting} result containing a view that can read and edit the existing tree.
  * @sealed @alpha
  */
 export interface ViewExistingSuccess<in out TRoot extends ImplicitFieldSchema> {
@@ -184,7 +184,7 @@ export namespace TreeViewAlpha {
 	 * @remarks
 	 * If the tree is viewable as-is, this function does not make any changes to it.
 	 * Otherwise, if a schema upgrade is required to make the tree viewable with the client's view schema, an upgrade is applied immediately before returning the view to the caller.
-	 * An upgrade changes the shared document and can affect other clients.
+	 * Applying a schema upgrade results in an update to the underlying shared document, which can affect other clients.
 	 *
 	 * @param tree - An existing, initialized tree with no active view.
 	 * @param config - The view schema and its configuration.
@@ -192,6 +192,7 @@ export namespace TreeViewAlpha {
 	 * @returns A result with `canView: true` and a view you own, or `canView: false` and diagnostics you can log.
 	 * @throws An error with `errorType: "usageError"` if the tree is uninitialized or already has an active view.
 	 * @see {@link (TreeViewAlpha:namespace).initializeNew} to initialize a new tree.
+	 *
 	 * @alpha
 	 */
 	export function openExisting<TRoot extends ImplicitFieldSchema>(
@@ -244,7 +245,7 @@ export namespace TreeViewAlpha {
 	 * @returns A view of the provided tree, which you own. Dispose it when you no longer need it.
 	 * @throws An error with `errorType: "usageError"` if the tree is already initialized, has an active view,
 	 * or the supplied content does not conform to the schema.
-	 * @see {@link (TreeViewAlpha:namespace).openExisting} for an initialized document.
+	 * @see {@link (TreeViewAlpha:namespace).openExisting} for an existing tree.
 	 *
 	 * @alpha
 	 */
