@@ -161,8 +161,7 @@ async function getDocumentCachedEphemeralProperties(
 
 /**
  * Whether a document is an Ephemeral Container and when it was created.
- * If the document does not exist or an error is encountered when accessing the document,
- * the document is considered _not_ ephemeral, with an undefined create time.
+ * Returns undefined when static data is unavailable, so the caller can resolve it authoritatively.
  *
  * If the document exists and the isEphemeralContainer flag is not set, the document is considered _not_ ephemeral.
  */
@@ -170,7 +169,7 @@ async function getDocumentStaticEphemeralProperties(
 	documentManager: IDocumentManager,
 	tenantId: string,
 	documentId: string,
-): Promise<{ isEphemeralContainer: boolean; createTime: number | undefined }> {
+): Promise<{ isEphemeralContainer: boolean; createTime: number | undefined } | undefined> {
 	try {
 		const staticProps = await runWithRetry(
 			async () => documentManager.readStaticProperties(tenantId, documentId) /* api */,
@@ -184,7 +183,7 @@ async function getDocumentStaticEphemeralProperties(
 				`Static data not found when checking isEphemeral flag.`,
 				getLumberBaseProperties(documentId, tenantId),
 			);
-			return { isEphemeralContainer: false, createTime: undefined };
+			return undefined;
 		}
 		return {
 			isEphemeralContainer: staticProps.isEphemeralContainer ?? false,
@@ -196,7 +195,7 @@ async function getDocumentStaticEphemeralProperties(
 			getLumberBaseProperties(documentId, tenantId),
 			error,
 		);
-		return { isEphemeralContainer: false, createTime: undefined };
+		return undefined;
 	}
 }
 
@@ -204,9 +203,8 @@ async function getDocumentStaticEphemeralProperties(
  * Checks the cache for the isEphemeral flag for the given document. If the flag is not in the cache, it fetches the
  * static data from the document and caches the flag.
  *
- * Returns false if the flag is not found in the static data will cause Ephemeral Container access
- * to fail, which is better than returning true and causing durable container access to fail.
- * Ephemeral containers do not have as strong of an SLA as durable containers, so this is the safer choice.
+ * When configured, authoritative fallback must succeed before unknown routing can be cached.
+ * Callers without that fallback retain the legacy default-to-durable behavior.
  *
  * @returns - Returns a boolean indicating whether the container is ephemeral or not.
  * @throws - Throws an error if falling back to static data indicates an ephemeral document is older than the provided
@@ -219,6 +217,7 @@ async function checkAndCacheIsEphemeral({
 	ephemeralDocumentTTLSec,
 	isEphemeralContainerOverride,
 	cache,
+	resolveMissingStaticProperties,
 }: {
 	documentId: string;
 	tenantId: string;
@@ -226,6 +225,7 @@ async function checkAndCacheIsEphemeral({
 	ephemeralDocumentTTLSec: number;
 	isEphemeralContainerOverride?: boolean;
 	cache?: ICache;
+	resolveMissingStaticProperties?: () => Promise<IDocument>;
 }): Promise<boolean> {
 	if (typeof isEphemeralContainerOverride === "boolean") {
 		// If an isEphemeralContainerOverride flag was passed in, cache it and return it.
@@ -244,8 +244,22 @@ async function checkAndCacheIsEphemeral({
 	}
 
 	// Finally, if isEphemeral was not in the cache, fetch the value from database.
-	const { isEphemeralContainer: staticPropsIsEphemeral, createTime } =
-		await getDocumentStaticEphemeralProperties(documentManager, tenantId, documentId);
+	let staticProperties = await getDocumentStaticEphemeralProperties(
+		documentManager,
+		tenantId,
+		documentId,
+	);
+	if (staticProperties === undefined && resolveMissingStaticProperties !== undefined) {
+		const document = await resolveMissingStaticProperties();
+		staticProperties = {
+			isEphemeralContainer: document.isEphemeralContainer ?? false,
+			createTime: document.createTime,
+		};
+	}
+	const { isEphemeralContainer: staticPropsIsEphemeral, createTime } = staticProperties ?? {
+		isEphemeralContainer: false,
+		createTime: undefined,
+	};
 
 	if (staticPropsIsEphemeral === true && createTime !== undefined) {
 		// Explicitly check for ephemeral document expiration.
@@ -502,6 +516,7 @@ export async function validateSummaryDocument({
 export interface ICreateGitServiceResult {
 	service: RestGitService;
 	accessProof?: IDocumentAccessProof;
+	isEphemeralContainer: boolean;
 }
 
 export async function createGitServiceWithAccess(
@@ -534,6 +549,11 @@ export async function createGitServiceWithAccess(
 		tenantId,
 		authorization,
 	);
+	const gitrestOwnershipValidation =
+		config.get("restGitService:gitrestOwnershipValidation") === true;
+	if (gitrestOwnershipValidation && (tenantId.includes(":") || tokenDocumentId.includes(":"))) {
+		throw new NetworkError(400, "Invalid document storage routing identity.");
+	}
 	const details =
 		authenticatedTenantDetails ??
 		(await tenantService.getTenant(tenantId, accessToken, allowDisabledTenant ?? false));
@@ -548,7 +568,7 @@ export async function createGitServiceWithAccess(
 	const containerTypeHint =
 		explicitContainerTypeHint ??
 		(isEphemeralHint === undefined ? undefined : isEphemeralHint ? "ephemeral" : "durable");
-	const accessProof =
+	let accessProof =
 		accessOperation === undefined || documentAccessAuthorizer === undefined
 			? undefined
 			: await documentAccessAuthorizer.authorize({
@@ -589,12 +609,71 @@ export async function createGitServiceWithAccess(
 		throw new NetworkError(500, "Document access authorizer returned an invalid proof.");
 	}
 	const documentId = accessProof?.documentId ?? tokenDocumentId;
+	let documentRequest: ReturnType<IDocumentManager["readDocument"]> | undefined;
+	const readDocument = () =>
+		(documentRequest ??= documentManager.readDocument(tenantId, documentId).catch((error) => {
+			documentRequest = undefined;
+			throw error;
+		}));
+	const requestDocumentManager: IDocumentManager = gitrestOwnershipValidation
+		? {
+				readDocument: (requestedTenant, requestedDocument, options) =>
+					requestedTenant === tenantId &&
+					requestedDocument === documentId &&
+					options === undefined
+						? readDocument()
+						: documentManager.readDocument(requestedTenant, requestedDocument, options),
+				readStaticProperties: documentManager.readStaticProperties.bind(documentManager),
+				purgeStaticCache: documentManager.purgeStaticCache.bind(documentManager),
+		  }
+		: documentManager;
+	let validatedDocumentRequest: Promise<IDocument> | undefined;
+	const validateDocument = () =>
+		(validatedDocumentRequest ??= validateSummaryDocument({
+			tenantId,
+			authorization,
+			documentManager: requestDocumentManager,
+			operation: "get",
+			routeType: "notApplicable",
+			ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
+			ignoreEphemeralFlag,
+			reuseCustomerAccessToken:
+				config.get("restGitService:reuseCustomerAccessTokenForSummaryOwnership") ?? false,
+		}).catch((error) => {
+			validatedDocumentRequest = undefined;
+			throw error;
+		}));
+	const requestStorageNameRetriever:
+		| (IStorageNameRetriever & {
+				getForRequest?(
+					tenant: string,
+					document: string,
+					read: () => ReturnType<IDocumentManager["readDocument"]>,
+				): Promise<string>;
+				getWithDocumentDetails?(tenant: string, document: IDocument): Promise<string>;
+		  })
+		| undefined = storageNameRetriever;
+	let storageNameRequest: Promise<string | undefined> | undefined;
+	const getStorageName = () =>
+		(storageNameRequest ??=
+			gitrestOwnershipValidation && requestStorageNameRetriever?.getForRequest
+				? requestStorageNameRetriever.getForRequest(tenantId, documentId, () =>
+						createArgs.validateDurableSummaryAccess &&
+						!postIsEphemeral &&
+						accessProof === undefined &&
+						accessOperation !== undefined &&
+						accessOperation !== "create"
+							? validateDocument()
+							: readDocument(),
+				  )
+				: Promise.resolve(storageNameRetriever?.get(tenantId, documentId)));
 
 	const customData: ITenantCustomDataExternal = details.customData;
 	const simplifiedCustomData = simplifiedCustomDataRetriever?.get(customData);
 	const writeToExternalStorage = !!customData?.externalStorageData;
 	const storageUrl = config.get("storageUrl") as string | undefined;
-	const ignoreEphemeralFlag: boolean = config.get("ignoreEphemeralFlag");
+	const ignoreEphemeralFlag: boolean =
+		createArgs.ignoreEphemeralFlag ?? config.get("ignoreEphemeralFlag");
 	const maxCacheableSummarySize: number =
 		config.get("restGitService:maxCacheableSummarySize") ?? 1_000_000_000; // default: 1gb
 
@@ -607,10 +686,13 @@ export async function createGitServiceWithAccess(
 					: await checkAndCacheIsEphemeral({
 							documentId,
 							tenantId,
-							documentManager,
+							documentManager: requestDocumentManager,
 							ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
 							isEphemeralContainerOverride: isEphemeralContainer,
 							cache,
+							resolveMissingStaticProperties: gitrestOwnershipValidation
+								? validateDocument
+								: undefined,
 					  }));
 	if (isEphemeral) {
 		Lumberjack.info(`Document is ephemeral.`, getLumberBaseProperties(documentId, tenantId));
@@ -622,7 +704,7 @@ export async function createGitServiceWithAccess(
 			tenantId,
 			documentId,
 			isEphemeral,
-			createArgs,
+			{ ...createArgs, documentManager: requestDocumentManager },
 		);
 	}
 
@@ -631,34 +713,101 @@ export async function createGitServiceWithAccess(
 		calculatedStorageName = accessProof.storageAccountName;
 	} else if (accessProof?.containerType === "ephemeral") {
 		calculatedStorageName = undefined;
+	} else if (accessProof?.source === "trusted-create") {
+		calculatedStorageName = customData?.storageName;
 	} else if (initialUpload && storageName && documentAccessAuthorizer === undefined) {
 		calculatedStorageName = storageName;
-	} else if (summaryAccessContext?.isEphemeralContainer === true) {
-		// FRS EC summaries use RedisFS, selected by the ephemeral flag. Azure Blob storageName
+	} else if (
+		summaryAccessContext?.isEphemeralContainer === true ||
+		(gitrestOwnershipValidation && postIsEphemeral)
+	) {
+		// EC requests use RedisFS, selected by the ephemeral flag. Azure Blob storageName
 		// applies only to durable containers. Calling the retriever for a local EC hit would
 		// reintroduce the Alfred/Riddler lookup that the summary access fast path avoids.
 		calculatedStorageName = undefined;
 	} else {
-		calculatedStorageName =
-			summaryAccessContext?.storageName ??
-			(await storageNameRetriever?.get(tenantId, documentId)) ??
-			customData?.storageName;
+		const resolvedStorageName = summaryAccessContext?.storageName ?? (await getStorageName());
+		if (
+			gitrestOwnershipValidation &&
+			storageNameRetriever !== undefined &&
+			resolvedStorageName === undefined
+		) {
+			throw new NetworkError(403, "Document storage ownership does not match.", false);
+		}
+		calculatedStorageName = resolvedStorageName ?? customData?.storageName;
 	}
-	return {
-		service: new RestGitService(
-			details.storage,
-			writeToExternalStorage,
+	const validateDocumentStorage = async (allowEphemeral = false) => {
+		const document = await validateDocument();
+		const authoritativeStorageName =
+			document.storageName ??
+			(requestStorageNameRetriever?.getWithDocumentDetails !== undefined
+				? await requestStorageNameRetriever.getWithDocumentDetails(tenantId, document)
+				: await getStorageName()) ??
+			(storageNameRetriever === undefined ? customData?.storageName : undefined);
+		if (
+			(!allowEphemeral && document.isEphemeralContainer === true) ||
+			(typeof authoritativeStorageName !== "string" &&
+				!(authoritativeStorageName === undefined && storageNameRetriever === undefined)) ||
+			authoritativeStorageName !== calculatedStorageName
+		) {
+			throw new NetworkError(403, "Document storage ownership does not match.", false);
+		}
+		return document;
+	};
+	if (
+		gitrestOwnershipValidation &&
+		createArgs.validateDurableSummaryAccess &&
+		!postIsEphemeral &&
+		accessProof === undefined &&
+		accessOperation !== undefined &&
+		accessOperation !== "create"
+	) {
+		const document = await validateDocumentStorage(ignoreEphemeralFlag);
+		accessProof = {
 			tenantId,
 			documentId,
-			cache,
-			calculatedStorageName,
-			storageUrl,
-			postIsEphemeral,
-			maxCacheableSummarySize,
-			simplifiedCustomData,
-			accessProof,
-		),
+			operation: accessOperation,
+			containerType: "durable",
+			source: "alfred-fallback",
+			state: "active",
+			lifecycleVersion: String(document.createTime),
+			storageAccountName: calculatedStorageName,
+		};
+	}
+	const recoverDocumentStorage =
+		gitrestOwnershipValidation &&
+		!postIsEphemeral &&
+		(accessProof === undefined ||
+			(accessProof.source === "alfred-fallback" && accessProof.state === "active"))
+			? async () => {
+					try {
+						await validateDocumentStorage();
+						await service.backfillDocumentStorage();
+					} finally {
+						documentRequest = undefined;
+						validatedDocumentRequest = undefined;
+						storageNameRequest = undefined;
+					}
+			  }
+			: undefined;
+	const service: RestGitService = new RestGitService(
+		details.storage,
+		writeToExternalStorage,
+		tenantId,
+		documentId,
+		cache,
+		calculatedStorageName,
+		storageUrl,
+		postIsEphemeral,
+		maxCacheableSummarySize,
+		simplifiedCustomData,
 		accessProof,
+		recoverDocumentStorage,
+	);
+	return {
+		service,
+		accessProof,
+		isEphemeralContainer: postIsEphemeral,
 	};
 }
 

@@ -421,14 +421,15 @@ export async function getRepoManagerFromWriteAPI(
 	try {
 		return await repoManagerFactory.open(repoManagerParams);
 	} catch (error: any) {
-		// If repoPerDocEnabled is true, we want the behavior to be "open or create" for GitRest Write APIs,
-		// creating the repository on the fly. So, if the open operation fails with a 400 code (representing
-		// the repo does not exist), we try to create the reposiroty instead.
+		// Per-document writes create repositories on demand. Providers may report
+		// either a missing repository (400) or its missing storage container (404).
 		if (
 			repoPerDocEnabled &&
 			error instanceof Error &&
 			error?.name === "NetworkError" &&
-			(error as NetworkError)?.code === 400
+			((error as NetworkError)?.code === 400 ||
+				((error as NetworkError)?.code === 404 &&
+					repoManagerParams.isEphemeralContainer !== true))
 		) {
 			return repoManagerFactory.create(repoManagerParams);
 		}

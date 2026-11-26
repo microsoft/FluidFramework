@@ -5,17 +5,90 @@
 
 import assert from "node:assert";
 import type { Request } from "express";
+import { NetworkError } from "@fluidframework/server-services-client";
+import { NullExternalStorageManager } from "../externalStorageManager";
 import {
 	Constants,
 	getFilesystemManagerFactory,
 	getRepoManagerParamsFromRequest,
+	getRepoManagerFromWriteAPI,
 	getRepositoryRoot,
 	getRepoPath,
 	MemFsManagerFactory,
+	IsomorphicGitManagerFactory,
 	sizeof,
 } from "../utils";
 
 describe("helpers", () => {
+	describe("per-document write creation", () => {
+		for (const missingStatus of [400, 404]) {
+			it(`creates content when opening reports missing storage with ${missingStatus}`, async () => {
+				const inner = new IsomorphicGitManagerFactory(
+					{ useRepoOwner: false, baseDir: "/" },
+					{ defaultFileSystemManagerFactory: new MemFsManagerFactory() },
+					new NullExternalStorageManager(),
+					true,
+				);
+				const repository = await getRepoManagerFromWriteAPI(
+					{
+						open: async () => {
+							throw new NetworkError(missingStatus, "Missing");
+						},
+						create: async (params) => inner.create(params),
+					},
+					{
+						repoOwner: "owner",
+						repoName: "tenant",
+						storageRoutingId: { tenantId: "tenant", documentId: "document" },
+					},
+					true,
+				);
+				const blob = await repository.createBlob({ content: "new", encoding: "utf-8" });
+				assert.strictEqual((await repository.getBlob(blob.sha)).content, "bmV3");
+			});
+		}
+		for (const status of [403, 409, 503]) {
+			it(`does not create after an ownership or dependency failure ${status}`, async () => {
+				const failure = new NetworkError(status, "Denied");
+				await assert.rejects(
+					getRepoManagerFromWriteAPI(
+						{
+							open: async () => {
+								throw failure;
+							},
+							create: async () => {
+								throw new Error("Unexpected creation");
+							},
+						},
+						{ repoOwner: "owner", repoName: "tenant" },
+						true,
+					),
+					(error: unknown) => error === failure,
+				);
+			});
+		}
+		for (const ephemeral of [true, false]) {
+			it(`preserves missing-storage failure outside durable per-document writes, ephemeral=${ephemeral}`, async () => {
+				const failure = new NetworkError(404, "Missing");
+				await assert.rejects(
+					getRepoManagerFromWriteAPI(
+						{
+							open: async () => {
+								throw failure;
+							},
+							create: async () => {
+								throw new Error("Unexpected creation");
+							},
+						},
+						{ repoOwner: "owner", repoName: "tenant", isEphemeralContainer: ephemeral },
+						ephemeral,
+					),
+					(error: unknown) => error === failure,
+				);
+			});
+		}
+	});
+
 	describe("filesystem selection", () => {
 		const durable = new MemFsManagerFactory();
 		const ephemeral = new MemFsManagerFactory();

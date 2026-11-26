@@ -302,6 +302,34 @@ describe("RestGitService Git object SHA validation", () => {
 			sinon.assert.notCalled(downstream);
 		});
 
+		it("reuses ephemeral content across creation-only storage routing changes", async () => {
+			const cache = new TestCache();
+			const initial = new RestGitService(
+				storage,
+				false,
+				tenantId,
+				documentId,
+				cache,
+				"creation-account",
+				undefined,
+				true,
+			);
+			const subsequent = new RestGitService(
+				storage,
+				false,
+				tenantId,
+				documentId,
+				cache,
+				undefined,
+				undefined,
+				true,
+			);
+			const downstream = sandbox.stub(BasicRestWrapper.prototype, "get").resolves(commit);
+			await initial.getCommit(canonicalSha, true);
+			assert.strictEqual(await subsequent.getCommit(canonicalSha, true), commit);
+			sinon.assert.calledOnce(downstream);
+		});
+
 		it("uses the same isolated namespace for background blob fills", async () => {
 			const cache = new TestCache();
 			const service = new RestGitService(storage, false, tenantId, documentId, cache);
@@ -326,6 +354,61 @@ describe("RestGitService Git object SHA validation", () => {
 			assert.strictEqual(await cache.get(`${tenantId}:${canonicalSha}`), undefined);
 			sinon.assert.notCalled(downstream);
 		});
+
+		for (const operation of ["write", "delete"] as const) {
+			it(`invalidates proofless durable summaries after a validated ${operation}`, async () => {
+				const cache = new TestCache();
+				const legacy = new RestGitService(storage, false, tenantId, documentId, cache);
+				const validated = new RestGitService(
+					storage,
+					false,
+					tenantId,
+					documentId,
+					cache,
+					undefined,
+					undefined,
+					false,
+					undefined,
+					undefined,
+					{
+						tenantId,
+						documentId,
+						operation: operation === "write" ? "write" : "delete",
+						containerType: "durable",
+						source: "alfred-fallback",
+						state: "active",
+						lifecycleVersion: "creation",
+					},
+				);
+				const payload = {
+					type: "container" as const,
+					message: "summary",
+					sequenceNumber: 0,
+					entries: [],
+				};
+				const initial = { id: canonicalSha, trees: [], blobs: [] };
+				const updated = { ...initial, id: "c".repeat(40) };
+				const post = sandbox.stub(BasicRestWrapper.prototype, "post").resolves(initial);
+				const get = sandbox.stub(BasicRestWrapper.prototype, "get").resolves(updated);
+				await legacy.createSummary(payload);
+				assert.strictEqual(await legacy.getSummary("latest", false), initial);
+				if (operation === "write") {
+					post.resolves(updated);
+					await validated.createSummary(payload);
+					assert.strictEqual(await legacy.getSummary("latest", false), updated);
+				} else {
+					sandbox.stub(BasicRestWrapper.prototype, "delete").resolves(true);
+					await validated.deleteSummary(false);
+					const notFound = new NetworkError(404, "Summary not found.", false);
+					get.rejects(notFound);
+					await assert.rejects(
+						legacy.getSummary("latest", false),
+						(error) => error === notFound,
+					);
+				}
+				sinon.assert.calledOnce(get);
+			});
+		}
 
 		for (const ephemeral of [false, true]) {
 			it(`keeps summary body, latest SHA and invalidation scoped for ephemeral=${ephemeral}`, async () => {
@@ -362,8 +445,10 @@ describe("RestGitService Git object SHA validation", () => {
 					{ type: "container", message: "summary", sequenceNumber: 0, entries: [] },
 					true,
 				);
+				const cacheGet = sandbox.spy(cache, "get");
 				assert.strictEqual(await service.getSummary("latest", false), summary);
 				assert.strictEqual(await service.getSummary(canonicalSha, false), summary);
+				sinon.assert.callCount(cacheGet, 3);
 				sinon.assert.notCalled(downstream);
 				assert.strictEqual(await other.getSummary("latest", false), otherSummary);
 
@@ -378,8 +463,72 @@ describe("RestGitService Git object SHA validation", () => {
 				);
 				sinon.assert.calledTwice(downstream);
 			});
+
+			it(`fetches the requested version when the cached summary ID mismatches for ephemeral=${ephemeral}`, async () => {
+				const cache = new TestCache();
+				const service = new RestGitService(
+					storage,
+					false,
+					tenantId,
+					documentId,
+					cache,
+					undefined,
+					undefined,
+					ephemeral,
+				);
+				const requestedSummary = { id: canonicalSha, trees: [], blobs: [] };
+				const newerSummary = { ...requestedSummary, id: "c".repeat(40) };
+				sandbox.stub(BasicRestWrapper.prototype, "post").resolves(requestedSummary);
+				const downstream = sandbox
+					.stub(BasicRestWrapper.prototype, "get")
+					.resolves(requestedSummary);
+				await service.createSummary({
+					type: "container",
+					message: "summary",
+					sequenceNumber: 0,
+					entries: [],
+				});
+				await cache.set(
+					`ownership-v2:tenant:document:${
+						ephemeral ? "ephemeral" : "durable"
+					}:::::tenant:document:summary:container`,
+					newerSummary,
+				);
+				assert.strictEqual(await service.getSummary("latest", false), newerSummary);
+				const cacheGet = sandbox.spy(cache, "get");
+
+				assert.strictEqual(await service.getSummary(canonicalSha, false), requestedSummary);
+				sinon.assert.callCount(cacheGet, 2);
+				sinon.assert.calledOnceWithExactly(
+					downstream,
+					`/repos/owner/repository/git/summaries/${canonicalSha}`,
+				);
+			});
 		}
 	});
+
+	for (const identity of [
+		{ tenant: "tenant:alias", document: documentId },
+		{ tenant: tenantId, document: "document:alias" },
+	]) {
+		for (const operation of ["backfillDocumentStorage"] as const) {
+			it(`rejects ambiguous metadata target ${identity.tenant}/${identity.document} for ${operation}`, async () => {
+				const service = new RestGitService(
+					storage,
+					false,
+					identity.tenant,
+					identity.document,
+				);
+				const downstream = sandbox.stub(BasicRestWrapper.prototype, "post").resolves();
+
+				await assert.rejects(
+					service[operation](),
+					(error: unknown) => error instanceof NetworkError && error.code === 400,
+				);
+				sinon.assert.notCalled(downstream);
+			});
+		}
+	}
 
 	it("sends the authorized physical root to GitRest", async () => {
 		let capturedHeaders: Record<string, string | string[] | undefined> = {};

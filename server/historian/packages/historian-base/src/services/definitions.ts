@@ -113,6 +113,8 @@ export interface ICreateGitServiceArgs {
 	storageName?: string;
 	allowDisabledTenant?: boolean;
 	isEphemeralContainer?: boolean;
+	/** Overrides the routing configuration with the caller's effective setting. */
+	ignoreEphemeralFlag?: boolean;
 	ephemeralDocumentTTLSec?: number; // 24 hours
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever;
 	postEphemeralContainerChecker?: IPostEphemeralContainerChecker;
@@ -134,6 +136,8 @@ export interface ICreateGitServiceArgs {
 	trustedCreateContext?: ITrustedCreateContext;
 	documentAccessAuthorizer?: IDocumentAccessAuthorizer;
 	summaryAccessContext?: ISummaryAccessContext;
+	/** Validate durable summary access using this request's shared document lookup. */
+	validateDurableSummaryAccess?: boolean;
 }
 
 export interface ITenantService {

@@ -105,6 +105,7 @@ declare type old_as_current_for_Class_NetworkError = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "Class_NetworkError": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_NetworkError = requireAssignableTo<TypeOnly<current.NetworkError>, TypeOnly<old.NetworkError>>
 
 /*
@@ -222,6 +223,7 @@ declare type current_as_old_for_ClassStatics_Historian = requireAssignableTo<Typ
  * typeValidation.broken:
  * "ClassStatics_NetworkError": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_NetworkError = requireAssignableTo<TypeOnly<typeof current.NetworkError>, TypeOnly<typeof old.NetworkError>>
 
 /*
@@ -276,6 +278,7 @@ declare type old_as_current_for_Enum_InternalErrorCode = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Enum_InternalErrorCode": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Enum_InternalErrorCode = requireAssignableTo<TypeOnly<current.InternalErrorCode>, TypeOnly<old.InternalErrorCode>>
 
 /*
@@ -762,6 +765,7 @@ declare type old_as_current_for_Interface_INetworkErrorDetails = requireAssignab
  * typeValidation.broken:
  * "Interface_INetworkErrorDetails": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_INetworkErrorDetails = requireAssignableTo<TypeOnly<current.INetworkErrorDetails>, TypeOnly<old.INetworkErrorDetails>>
 
 /*
