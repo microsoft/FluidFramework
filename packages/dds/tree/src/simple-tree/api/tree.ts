@@ -916,6 +916,9 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 * @remarks
 	 * Only valid to call when this view's {@link SchemaCompatibilityStatus.canInitialize} is true.
 	 *
+	 * If the initial content fails schema validation, you can retry on the same view with valid content.
+	 * Calling this method on an already initialized tree throws without changing the tree or invalidating the view.
+	 *
 	 * When using {@link TreeViewConfigurationAlpha} with a {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy},
 	 * staged schema upgrades matching the configured policy are included in the initial stored schema.
 	 *

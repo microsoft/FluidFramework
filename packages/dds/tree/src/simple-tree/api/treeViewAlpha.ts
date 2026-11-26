@@ -7,7 +7,6 @@ import type { Listenable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
 import type { SchemaUpgrade } from "../core/index.js";
 import type {
 	ImplicitFieldSchema,
@@ -16,7 +15,6 @@ import type {
 	ReadableField,
 	ReadSchema,
 } from "../fieldSchema.js";
-import type { InsertableContent } from "../unhydratedFlexTreeFromInsertable.js";
 import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
 import type { TreeViewConfiguration } from "./configuration.js";
@@ -141,6 +139,9 @@ export interface TreeViewAlpha<
 	 * @remarks
 	 * Only valid to call when this view's {@link SchemaCompatibilityStatus.canInitialize} is true.
 	 *
+	 * If the initial content fails schema validation, you can retry on the same view with valid content.
+	 * Calling this method on an already initialized tree throws without changing the tree or invalidating the view.
+	 *
 	 * Enables staged schema upgrades declared by {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy} when generating the initial stored schema.
 	 *
 	 * Applications should typically call this function before attaching a `SharedTree`.
@@ -254,20 +255,14 @@ export namespace TreeViewAlpha {
 		config: TreeViewConfiguration<TRoot>,
 		initialContent: InsertableTreeFieldFromImplicitField<TRoot>,
 	): TreeViewAlpha<TRoot> {
-		const view = asTreeViewAlpha(tree.viewWith(config));
+		const view = tree.viewWith(config);
 		try {
-			// Check the internal initialization operation without importing the checkout implementation at runtime.
-			const implementation = view as SchematizingSimpleTreeView<TRoot>;
-			assert(
-				typeof implementation.initializeWithContent === "function",
-				"Expected a schema-aware SharedTree view",
-			);
-			implementation.initializeWithContent(initialContent as InsertableContent | undefined);
+			view.initialize(initialContent);
 			assert(
 				view.compatibility.canView,
 				"A newly initialized tree must support its own view schema",
 			);
-			return view;
+			return asTreeViewAlpha(view);
 		} catch (error) {
 			if (!view.disposed) {
 				view.dispose();

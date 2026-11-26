@@ -111,7 +111,8 @@ If the app needs to coordinate this change across versions, follow the [schema e
 Both methods take an `ITree` and a `TreeViewConfiguration<TRoot>`. Pass the tree from the container directly.
 `TreeViewAlpha.initializeNew` also requires the initial content, typed as `InsertableTreeFieldFromImplicitField<TRoot>`, and returns `TreeViewAlpha<TRoot>`.
 It does not attempt an upgrade on an initialized tree, even if the configuration would permit one.
-If the content does not match the schema, the tree remains available for another initialization attempt.
+If the content does not match the schema, the factory releases its temporary view so you can call it again with corrected content.
+If you already own a view and call `view.initialize` directly, you can retry on that same view instead.
 
 `TreeViewAlpha.openExisting` returns `ViewExistingResult<TRoot>`.
 With `canView: true`, you own `result.view`; with `canView: false`, `result.incompatibilities` explains both blockers and there is nothing to dispose.

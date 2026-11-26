@@ -332,22 +332,10 @@ export class SchematizingSimpleTreeView<
 		};
 	}
 
-	public initialize(content: InsertableField<TRootSchema>): void {
-		this.initializeWithContent(content as InsertableContent | undefined);
-	}
-
-	/**
-	 * Initializes the tree with the supplied content.
-	 *
-	 * @remarks
-	 * `@throwIfBroken` lets this method report invalid content without marking the checkout as broken.
-	 * `TreeViewAlpha.initializeNew` calls it directly so the caller can retry with valid content.
-	 * The edit itself runs in `runSchemaEdit`, where a failure still marks the checkout as broken.
-	 *
-	 * By contrast, {@link SchematizingSimpleTreeView.initialize} marks the checkout as broken even when input validation fails before the edit.
-	 */
+	// Opt out of `@breakingClass` during validation so the caller can retry on the same view.
+	// `runSchemaEdit` still breaks the checkout if initialization fails during the edit.
 	@throwIfBroken
-	public initializeWithContent(content: InsertableContent | undefined): void {
+	public initialize(content: InsertableField<TRootSchema>): void {
 		this.ensureUndisposed();
 
 		const compatibility = this.compatibility;
@@ -366,7 +354,7 @@ export class SchematizingSimpleTreeView<
 		// only after the final schema is installed, before exposing the root to event listeners.
 		let hydrate: (() => void) | undefined;
 		const mapTree = prepareForInsertionContextless(
-			content,
+			content as InsertableContent | undefined,
 			this.rootFieldSchema,
 			{
 				schema,
