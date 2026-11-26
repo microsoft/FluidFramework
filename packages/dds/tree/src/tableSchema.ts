@@ -1472,7 +1472,7 @@ export namespace System_TableSchema {
 
 /**
  * Sets up scope for table schema built-in types.
- * @remarks User-provided factory scoping will be applied as `com.fluidframework.table<user-scope>`.
+ * @remarks User-provided factory scoping will be applied as `com.fluidframework.tableV2<user-scope>`.
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createTableScopedFactory<TUserScope extends string>(
@@ -1616,6 +1616,8 @@ function removeRangeFromArray<TNodeSchema extends ImplicitAllowedTypes>(
  * The above examples are backed by tests in `tableSchema.spec.ts`.
  * Those tests and these examples should be kept in-sync to ensure that the examples are correct.
  *
+ * @see {@link https://fluidframework.com/docs/data-structures/tree/schema-patterns/configuration-and-composition | Configuration and Composition} for consumer-supplied schemas.
+ * @see {@link https://fluidframework.com/docs/data-structures/tree/schema-patterns/encapsulation-and-exports | Encapsulation and Exports} for model boundaries.
  * @beta
  */
 export namespace TableSchema {
