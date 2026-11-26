@@ -2555,6 +2555,12 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
     readonly schemaVersion: TreeViewSchemaVersions;
 }
 
+// @alpha
+export namespace TreeViewAlpha {
+    export function initializeNew<TRoot extends ImplicitFieldSchema>(tree: ITree, config: TreeViewConfiguration<TRoot>, initialContent: InsertableTreeFieldFromImplicitField<TRoot>): TreeViewAlpha<TRoot>;
+    export function openExisting<TRoot extends ImplicitFieldSchema>(tree: ITree, config: TreeViewConfiguration<TRoot>): ViewExistingResult<TRoot>;
+}
+
 // @beta @sealed
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, UntypedTreeView {
     // (undocumented)
@@ -2742,6 +2748,27 @@ export interface ViewContent {
     readonly idCompressor: IIdCompressor;
     readonly schema: JsonCompatible;
     readonly tree: JsonCompatible<IFluidHandle>;
+}
+
+// @alpha @sealed
+export interface ViewExistingFailure {
+    readonly canView: false;
+    readonly incompatibilities: ViewTreeIncompatibilities;
+}
+
+// @alpha @sealed
+export type ViewExistingResult<TRoot extends ImplicitFieldSchema> = ViewExistingSuccess<TRoot> | ViewExistingFailure;
+
+// @alpha @sealed
+export interface ViewExistingSuccess<in out TRoot extends ImplicitFieldSchema> {
+    readonly canView: true;
+    readonly view: TreeViewAlpha<TRoot>;
+}
+
+// @alpha @sealed
+export interface ViewTreeIncompatibilities {
+    readonly upgrade: readonly SchemaUpgradeIncompatibility[];
+    readonly view: readonly SchemaViewIncompatibility[];
 }
 
 // @alpha @input

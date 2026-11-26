@@ -167,7 +167,7 @@ export function createIndependentTreeView<const TSchema extends ImplicitFieldSch
  *
  * This can be useful for testing, as well as use-cases like working on local files instead of documents stored in some Fluid service.
  * @privateRemarks
- * TODO: Providing an API which generates a {@link ViewableTree} extended with export options from {@link ITreeAlpha} and maybe even branching APIs would likely be better that just exposing a {@link TreeViewAlpha}.
+ * TODO: Providing an API which generates a {@link ViewableTree} extended with export options from {@link ITreeAlpha} and maybe even branching APIs would likely be better that just exposing a {@link (TreeViewAlpha:interface) | TreeViewAlpha}.
  * @alpha
  */
 export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(

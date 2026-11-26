@@ -45,7 +45,7 @@ export function asAlpha(tree: ITree): ITreeAlpha;
 export function asAlpha(tree: ViewableTree): ViewableTreeAlpha;
 
 /**
- * Retrieve the {@link TreeViewAlpha | alpha API} for a {@link TreeView}.
+ * Retrieve the {@link (TreeViewAlpha:interface) | alpha API} for a {@link TreeView}.
  * @alpha
  */
 export function asAlpha<TSchema extends ImplicitFieldSchema>(

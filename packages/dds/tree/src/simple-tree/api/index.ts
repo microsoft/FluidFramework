@@ -51,7 +51,6 @@ export type {
 	SchemaUpgradeUnsatisfiedNodeSchemaIncompatibility,
 	SchemaUpgradeVersionIncompatibility,
 	SchemaUpgradeViewIncompatibility,
-	TreeViewAlpha,
 	TreeViewSchemaVersions,
 	TreeViewBeta,
 	UntypedTreeView,
@@ -64,7 +63,14 @@ export type {
 	TreeContextAlpha,
 	ITreeAlpha,
 } from "./tree.js";
-export { asTreeViewAlpha } from "./tree.js";
+export {
+	asTreeViewAlpha,
+	TreeViewAlpha,
+	type ViewExistingFailure,
+	type ViewExistingResult,
+	type ViewExistingSuccess,
+	type ViewTreeIncompatibilities,
+} from "./treeViewAlpha.js";
 export type {
 	TreeLocation,
 	TextLocationNode,

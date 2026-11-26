@@ -13,7 +13,12 @@ import {
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { asAlpha, asBeta } from "../../api.js";
-import { CommitKind, type RevertibleAlpha, type TransactionLabels } from "../../core/index.js";
+import {
+	CommitKind,
+	TreeStoredSchemaRepository,
+	type RevertibleAlpha,
+	type TransactionLabels,
+} from "../../core/index.js";
 import {
 	jsonableTreeFromFieldCursor,
 	MockNodeIdentifierManager,
@@ -424,7 +429,7 @@ describe("SchematizingSimpleTreeView", () => {
 	describe("initialize", () => {
 		it("Initialize document", () => {
 			const emptyContent = {
-				schema: emptySchema,
+				schema: new TreeStoredSchemaRepository(),
 				initialTree: undefined,
 			};
 			const checkout = checkoutWithContent(emptyContent);
@@ -440,15 +445,53 @@ describe("SchematizingSimpleTreeView", () => {
 
 			view.initialize(5);
 			assert.equal(view.root, 5);
+		});
+
+		it("allows retry on the same view after initial content fails validation", () => {
+			const view = new TestTreeProviderLite().trees[0].viewWith(config);
+			assert.throws(
+				// @ts-expect-error -- A JavaScript caller can supply a string for a number root.
+				() => view.initialize("not a number"),
+				validateUsageError(/./),
+			);
+			assert.equal(view.compatibility.canInitialize, true);
+			view.initialize(5);
+			assert.equal(view.root, 5);
+			view.dispose();
+		});
+
+		it("keeps the existing content and view usable after a second initialization attempt", () => {
+			const view = new TestTreeProviderLite().trees[0].viewWith(config);
+			view.initialize(5);
 
 			assert.throws(
-				() => view.initialize(5),
+				() => view.initialize(10),
 				validateUsageError(/initialized more than once/),
 			);
+			assert.equal(view.root, 5);
+			view.root = 6;
+			assert.equal(view.root, 6);
+			view.dispose();
 		});
+
+		it("still breaks the checkout if an error escapes the initialization edit", () => {
+			const view = new TestTreeProviderLite().trees[0].viewWith(config);
+			const failure = new Error("initial root notification failed");
+
+			// rootChanged fires inside the schema edit, after validation has succeeded.
+			view.events.on("rootChanged", () => {
+				throw failure;
+			});
+			assert.throws(
+				() => view.initialize(5),
+				(error) => error === failure,
+			);
+			assert.throws(() => view.root, validateUsageError(/invalid state by another error/));
+		});
+
 		{
 			const emptyContent = {
-				schema: emptySchema,
+				schema: new TreeStoredSchemaRepository(),
 				initialTree: undefined,
 			};
 			class SimpleTestObject extends schema.object("TestObject", {
@@ -527,7 +570,9 @@ describe("SchematizingSimpleTreeView", () => {
 						validateUsageError(/Tree does not conform to schema./),
 					);
 
-					assert.throws(() => view.root, validateUsageError(/invalid state by another error/));
+					assert.equal(view.compatibility.canInitialize, true);
+					view.initialize({ content: 5 });
+					assert.equal(view.root.content, 5);
 				});
 
 				it(`Initialize invalid content: staged allowed type with enableSchemaValidation: ${enableSchemaValidation}, additionalAsserts: ${additionalAsserts}`, () => {
@@ -540,7 +585,7 @@ describe("SchematizingSimpleTreeView", () => {
 					) {}
 
 					const emptyContent = {
-						schema: emptySchema,
+						schema: new TreeStoredSchemaRepository(),
 						initialTree: undefined,
 					};
 					const checkout = checkoutWithContent(emptyContent);
