@@ -337,11 +337,14 @@ export class SchematizingSimpleTreeView<
 	}
 
 	/**
-	 * Initializes the view without breaking the checkout on invalid input or a tree that is already initialized.
+	 * Initializes the tree with the supplied content.
 	 *
 	 * @remarks
-	 * Only the mutation needs a breaking scope here. The existing `TreeView.initialize` method
-	 * retains its own breaking scope, including input validation.
+	 * `@throwIfBroken` lets this method report invalid content without marking the checkout as broken.
+	 * `TreeViewAlpha.initializeNew` calls it directly so the caller can retry with valid content.
+	 * The edit itself runs in `runSchemaEdit`, where a failure still marks the checkout as broken.
+	 *
+	 * By contrast, {@link SchematizingSimpleTreeView.initialize} marks the checkout as broken even when input validation fails before the edit.
 	 */
 	@throwIfBroken
 	public initializeWithContent(content: InsertableContent | undefined): void {
