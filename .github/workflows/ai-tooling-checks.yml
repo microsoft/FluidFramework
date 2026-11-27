@@ -1,0 +1,39 @@
+name: AI tooling checks
+
+on:
+  pull_request:
+    paths:
+      - ".agency/**"
+      - ".devcontainer/**"
+      - ".github/copilot-instructions.md"
+      - ".github/instructions/**"
+      - ".github/skills/**"
+      - ".github/scripts/**"
+      - ".github/workflows/pr-review-*"
+      - ".github/workflows/ai-tooling-checks.yml"
+      - "scripts/codespace-setup/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+      - name: Install test dependencies
+        run: python -m pip install -r .github/scripts/requirements-test.txt
+      - name: Check shell syntax
+        run: |
+          bash -n scripts/codespace-setup/agent-aliases.sh
+          bash -n .github/skills/ci-readiness-check/ci-readiness-check.sh
+      - name: Run offline tooling tests
+        run: python -m pytest .github/scripts -q
