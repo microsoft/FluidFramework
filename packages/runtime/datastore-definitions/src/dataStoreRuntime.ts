@@ -15,11 +15,11 @@ import type {
 } from "@fluidframework/core-interfaces";
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type { IQuorumClients } from "@fluidframework/driver-definitions";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IInboundSignalMessage,
 	OldestSupportedClientVersion,
+	ISequencedRuntimeMessage,
 } from "@fluidframework/runtime-definitions/internal";
 
 import type { IChannel } from "./channel.js";
@@ -33,7 +33,7 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
 	(event: "dispose", listener: () => void);
 	(event: "attaching", listener: () => void);
 	(event: "attached", listener: () => void);
-	(event: "op", listener: (message: ISequencedDocumentMessage) => void);
+	(event: "op", listener: (message: ISequencedRuntimeMessage) => void);
 	(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 	(event: "connected", listener: (clientId: string) => void);
 	/*
