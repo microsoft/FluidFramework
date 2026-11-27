@@ -54,6 +54,7 @@ export class LevelDb extends EventEmitter implements IDb {
 					indexes: ["tenantId", "documentId"],
 				};
 			}
+			case "checkpoints":
 			case "nodes": {
 				return {
 					indexes: ["_id"],

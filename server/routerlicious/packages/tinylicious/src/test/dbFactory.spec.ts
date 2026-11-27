@@ -179,6 +179,56 @@ describe("Tinylicious", () => {
 					});
 				});
 
+				if (configFactory.name === "levelDb") {
+					describe("checkpoints", () => {
+						it("upserts checkpoint fields without losing the document identity or other services", async () => {
+							const checkpoints = db.collection<{
+								_id: string;
+								documentId: string;
+								deli?: string;
+								scribe?: string;
+							}>("checkpoints");
+							const filter = { _id: "document-test", documentId: testDocumentId };
+							const otherFilter = {
+								_id: "document-other",
+								documentId: testDocumentId,
+							};
+							await checkpoints.upsert(filter, { deli: "first" }, undefined);
+							await checkpoints.upsert(filter, { scribe: "summary" }, undefined);
+							await checkpoints.upsert(filter, { deli: "second" }, undefined);
+							await checkpoints.upsert(
+								otherFilter,
+								{ deli: "other tenant" },
+								undefined,
+							);
+							await db.close();
+							const reopenedFactory = await getDbFactory(
+								new Provider().defaults(config.value),
+							);
+							const reopenedDb = await reopenedFactory.connect(false);
+							try {
+								const reopenedCheckpoints = reopenedDb.collection("checkpoints");
+								assert.deepStrictEqual(await reopenedCheckpoints.findOne(filter), {
+									...filter,
+									deli: "second",
+									scribe: "summary",
+								});
+								await reopenedCheckpoints.deleteOne(filter);
+								assert.equal(await reopenedCheckpoints.findOne(filter), null);
+								assert.deepStrictEqual(
+									await reopenedCheckpoints.findOne(otherFilter),
+									{
+										...otherFilter,
+										deli: "other tenant",
+									},
+								);
+							} finally {
+								await reopenedDb.close();
+							}
+						});
+					});
+				}
+
 				describe("deltas", () => {
 					let c: ICollection<ITestDelta>;
 

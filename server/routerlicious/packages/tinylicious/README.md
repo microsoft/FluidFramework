@@ -60,3 +60,13 @@ The config.json file can be used to configure the Tinylicious service.
 | `storage`     | Storage path for snapshots                                     | "/var/tmp/tinylicious" |
 
 See config.json for more settings and their defaults.
+
+To use the file-backed LevelDB database, set `db.inMemory` to `false` and `db.path` to a writable directory.
+On Linux, you can also select it with environment variables:
+
+```sh
+db__inMemory=false db__path=/var/tmp/tinylicious-db node dist/index.js
+```
+
+The database stores documents, operations, and service checkpoints; the separate `storage` directory holds Git summaries in either database mode.
+LevelDB writes do not explicitly request synchronous persistence, so file-backed storage does not imply a power-loss durability guarantee for each acknowledged operation.
