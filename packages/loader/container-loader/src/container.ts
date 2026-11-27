@@ -2499,6 +2499,10 @@ export class Container
 				submitSignalFn: (content, targetClientId) =>
 					this.submitSignal(content, targetClientId),
 				fetchOps: this.fetchOps,
+				captureCheckpointProtocol: () =>
+					this.storageAdapter.summarizeProtocolTree
+						? this.captureProtocolSummary()
+						: undefined,
 				disposeFn: (error?: ICriticalContainerError) => this.dispose(error),
 				closeFn: (error?: ICriticalContainerError) => this.close(error),
 				updateDirtyContainerState: this.updateDirtyContainerState,

@@ -180,6 +180,31 @@ for (const attachState of [AttachState.Detached, AttachState.Attached]) {
 		});
 
 		for (const useFlatFormat of [false, true]) {
+			if (attachState === AttachState.Attached && useFlatFormat) {
+				it("retains acknowledged local edits across flat snapshot chunks", async () => {
+					const sharedString = createString({ runtime: useFlatFormat });
+					sharedString.insertText(2, " first");
+					sharedString.insertText(sharedString.getLength(), " second");
+					containerRuntimeFactory.processAllMessages();
+					assert.equal(sharedString.getText(), "be firstfore second");
+					const { summary } = await sharedString.summarize();
+					const loaded = await loadString(summary, {});
+					assert.equal(loaded.getText(), sharedString.getText());
+				});
+			}
+			if (attachState === AttachState.Attached) {
+				it(`retains catch-up edits in ${useFlatFormat ? "flat" : "legacy"} summaries from a non-editing client`, async () => {
+					const sharedString = createString({ runtime: useFlatFormat });
+					const observer = await loadString(sharedString.getAttachSummary().summary, {});
+					sharedString.insertText(sharedString.getLength(), " first");
+					sharedString.insertText(sharedString.getLength(), " second");
+					containerRuntimeFactory.processAllMessages();
+					assert.equal(observer.getText(), "before first second");
+					const { summary } = await observer.summarize();
+					const loaded = await loadString(summary, {});
+					assert.equal(loaded.getText(), observer.getText());
+				});
+			}
 			it(`retains ${useFlatFormat ? "flat" : "legacy"} selection after reload and edits without an explicit flag`, async () => {
 				const sharedString = createString({ runtime: useFlatFormat });
 				const summary = await sharedString.summarize();

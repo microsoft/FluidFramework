@@ -286,7 +286,7 @@ export class SnapshotLoader {
 			mergeTree.insertSegments(
 				mergeTree.root.cachedLength ?? 0,
 				segments,
-				new PriorPerspective(UniversalSequenceNumber, clientId),
+				new PriorPerspective(headerMetadata.sequenceNumber, NonCollabClient),
 				{ seq, clientId },
 				undefined,
 			);
@@ -297,6 +297,7 @@ export class SnapshotLoader {
 		const flushBatch = (): void => {
 			if (batch.length > 0) {
 				append(batch, NonCollabClient, UniversalSequenceNumber);
+				batch.length = 0;
 			}
 		};
 

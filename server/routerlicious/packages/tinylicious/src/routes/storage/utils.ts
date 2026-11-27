@@ -27,7 +27,14 @@ export function handleResponse<T>(
 			response.status(status).json(result);
 		},
 		(error) => {
-			response.status(400).json(error);
+			// Error.message and Error.name are non-enumerable; serializing an Error alone yields {}.
+			response
+				.status(400)
+				.json(
+					error instanceof Error
+						? { ...error, name: error.name, message: error.message }
+						: error,
+				);
 		},
 	);
 }

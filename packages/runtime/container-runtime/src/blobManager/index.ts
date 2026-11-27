@@ -19,4 +19,5 @@ export {
 	type IBlobManagerLoadInfo,
 	loadBlobManagerLoadInfo,
 	redirectTableBlobName,
+	summarizeBlobManagerState,
 } from "./blobManagerSnapSum.js";
