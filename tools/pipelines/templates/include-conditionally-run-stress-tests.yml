@@ -47,6 +47,11 @@ stages:
     - job: Job
       displayName: Check for DDS package changes
       steps:
+      - checkout: self
+        # Change detection compares HEAD with its first parent.
+        fetchDepth: 2
+        fetchTags: false
+
       - ${{ each package in parameters.packages }}:
         - task: PowerShell@2
           inputs:
@@ -54,7 +59,10 @@ stages:
             script: |
               $filesWereChanged = 0
               foreach ($path in $env:AFFECTED_PATHS.Split(";")) {
-                $pathsChanged = git diff --name-only HEAD~1 $path
+                $pathsChanged = git diff --name-only HEAD~1 -- $path
+                if ($LASTEXITCODE -ne 0) {
+                  throw "Failed to determine changed files for $path"
+                }
                 if ($pathsChanged -ne $null) {
                   Write-Host "Found the following files changed in ${path}:"
                   Write-Host $pathsChanged
