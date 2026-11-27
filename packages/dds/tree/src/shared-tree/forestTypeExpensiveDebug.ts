@@ -6,6 +6,7 @@
 import {
 	buildChunkedForest,
 	buildForest,
+	checkForestSchema,
 	ComparisonForest,
 	defaultSchemaPolicy,
 	makeTreeChunker,
@@ -31,6 +32,6 @@ export const ForestTypeExpensiveDebug = toForestType(
 				idCompressor,
 				breaker,
 			),
-			buildForest(breaker, schema, undefined, true),
+			buildForest(breaker, schema, undefined, checkForestSchema),
 		),
 );

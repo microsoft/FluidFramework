@@ -4,3 +4,4 @@
  */
 
 export { buildForest } from "./objectForest.js";
+export { checkForestSchema } from "./checkForestSchema.js";

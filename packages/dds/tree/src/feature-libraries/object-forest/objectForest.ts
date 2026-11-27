@@ -29,7 +29,6 @@ import {
 	type PlaceIndex,
 	type Range,
 	type TreeChunk,
-	type TreeFieldStoredSchema,
 	TreeNavigationResult,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchemaSubscription,
@@ -39,22 +38,18 @@ import {
 	combineVisitors,
 	deepCopyMapTree,
 	makeBreakingVisitor,
-	rootFieldKey,
 } from "../../core/index.js";
 import {
 	assertNonNegativeSafeInteger,
 	assertValidIndex,
 	assertValidRange,
 	brand,
-	breakingMethod,
 	replaceArrayRange,
 	type Breakable,
 	type WithBreakable,
 } from "../../util/index.js";
 import { chunkField, defaultChunkPolicy } from "../chunked-forest/index.js";
-import { defaultSchemaPolicy, FieldKinds } from "../default-schema/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
-import { isFieldInSchema, throwOutOfSchema } from "../schemaChecker.js";
 import { type CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
 
 /** A `MapTree` with mutable fields */
@@ -103,7 +98,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 		 */
 		public readonly schema: TreeStoredSchemaSubscription | undefined,
 		public readonly anchors: AnchorSet = new AnchorSet(),
-		public readonly additionalAsserts: boolean = false,
+		private readonly validate?: (forest: ObjectForest) => void,
 		roots?: MapTree,
 	) {
 		this.#roots =
@@ -114,9 +109,11 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 					}
 				: deepCopyMapTree(roots);
 
-		if (additionalAsserts) {
-			this.checkSchema();
-		}
+		this.validate?.(this);
+	}
+
+	public get additionalAsserts(): boolean {
+		return this.validate !== undefined;
 	}
 
 	public get isEmpty(): boolean {
@@ -130,7 +127,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 			breaker ?? this.breaker,
 			schema,
 			undefined,
-			this.additionalAsserts,
+			this.validate,
 			this.roots,
 		);
 	}
@@ -142,41 +139,6 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 
 	public forgetAnchor(anchor: Anchor): void {
 		this.anchors.forget(anchor);
-	}
-
-	/**
-	 * Throw (and break) if content does not match schema.
-	 */
-	@breakingMethod
-	public checkSchema(): void {
-		const schema = this.schema;
-		if (schema !== undefined) {
-			const roots = new Set([...this.roots.fields.keys(), rootFieldKey]);
-			for (const key of roots) {
-				const documentRoot = this.roots.fields.get(key) ?? [];
-				const fieldSchema: TreeFieldStoredSchema =
-					key === rootFieldKey
-						? schema.rootFieldSchema
-						: // TODO: someday we should have schema for detached fields, and use that instead of generating one here.
-							{
-								// Some detached fields may have multiple nodes, so we must treat them as sequences:
-								kind: FieldKinds.sequence.identifier,
-								types: new Set(documentRoot.map((node) => node.type)),
-
-								// Metadata is not used for schema checks
-								persistedMetadata: undefined,
-							};
-				isFieldInSchema(
-					documentRoot,
-					fieldSchema,
-					{
-						schema,
-						policy: defaultSchemaPolicy,
-					},
-					throwOutOfSchema,
-				);
-			}
-		}
 	}
 
 	public acquireVisitor(): DeltaVisitor {
@@ -227,11 +189,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 					0x76d /* Multiple free calls for same visitor */,
 				);
 				this.forest.activeVisitor = undefined;
-				if (this.forest.additionalAsserts) {
-					// Schema validation:
-					// When doing "additionalAsserts", validate the content against the schema after every batch of edits.
-					this.forest.checkSchema();
-				}
+				this.forest.validate?.(this.forest);
 			}
 			public destroy(detachedField: FieldKey, count: number): void {
 				preEdit();
@@ -663,7 +621,7 @@ export function buildForest(
 	breaker: Breakable,
 	schema?: TreeStoredSchemaSubscription,
 	anchors?: AnchorSet,
-	additionalAsserts: boolean = false,
+	validate?: (forest: ObjectForest) => void,
 ): ObjectForest {
-	return new ObjectForest(breaker, schema, anchors, additionalAsserts);
+	return new ObjectForest(breaker, schema, anchors, validate);
 }
