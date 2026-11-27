@@ -8,6 +8,10 @@ This package currently has some experimental APIs focused on integrating SharedT
 
 This package is currently ESM only and does not support CommonJS.
 
+This package supports React 18 and React 19.
+To avoid exposing version-specific React types, its public API uses the compatible types defined in `src/reactTypes.ts`.
+The implementation is type checked against both React 18 and React 19, and the test suite runs against both versions.
+
 These are a mix of issues that were encountered when authoring this package, as well as limitations of this package.
 
 Some of this logic would be useful for non-react applications: to avoid creating even more septate packages, that logic is not split into its own package.
