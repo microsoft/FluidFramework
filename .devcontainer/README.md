@@ -37,7 +37,7 @@ The devcontainer lifecycle hooks are structured for prebuild optimization:
 | --- | --- | --- |
 | `onCreateCommand` | Node.js setup and `flub` installation for AI-enabled | Yes |
 | `postCreateCommand` | Welcome notice or AI tooling setup | Yes |
-| `postStartCommand` | bwrap/sandbox setup for AI-enabled | No |
+| `postStartCommand` | No additional setup configured | No |
 
 Heavy setup work runs in `onCreateCommand` so it is captured by Codespace prebuilds, making the user-connect experience faster.
 

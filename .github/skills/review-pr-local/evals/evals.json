@@ -18,12 +18,12 @@
 			"id": 2,
 			"name": "github-pr-url-trigger",
 			"prompt": "can you pull https://github.com/octocat/hello-world/pull/42 so I can review it in VSCode",
-			"expected_output": "Detects GitHub from the URL, resolves head/base via gh pr view, fetches pull/42/head, and creates an isolated worktree.",
+			"expected_output": "Detects GitHub from the URL, resolves head/base and the base clone URL via gh api, fetches pull/42/head from that repository, and creates an isolated worktree.",
 			"files": [],
 			"expectations": [
 				"Detects the platform as GitHub from the URL host",
 				"Parses owner=octocat, repo=hello-world, number=42 from the URL",
-				"Uses gh pr view --json to resolve head/base refs and commits",
+				"Uses gh api repos/octocat/hello-world/pulls/42 to resolve head/base refs, commits, and the base clone URL",
 				"Fetches the head via pull/42/head so fork PRs work, then creates an isolated worktree"
 			]
 		},
@@ -31,12 +31,12 @@
 			"id": 3,
 			"name": "surface-diff-in-editor",
 			"prompt": "I checked out the PR worktree but Source Control shows no changes",
-			"expected_output": "Explains that Source Control only shows uncommitted changes and soft-resets the worktree to the PR merge-base so the changes appear as staged.",
+			"expected_output": "Explains the editor behavior, checks the worktree status, and asks before resetting a reused worktree to surface the PR as staged changes.",
 			"files": [],
 			"expectations": [
 				"Explains the editor Source Control panel only shows uncommitted changes, so a committed PR branch looks empty",
 				"Computes the merge-base between head and base commits",
-				"Runs git reset --soft to the merge-base so the PR changes surface as staged changes",
+				"Does not reset a reused worktree without explicit approval and preserves any human edits",
 				"Warns the user not to run git pull in the worktree"
 			]
 		},
@@ -76,7 +76,43 @@
 				"Does not run git checkout or gh pr checkout in the user's working directory",
 				"Creates a separate git worktree as a sibling of the repo root",
 				"The user's current branch and uncommitted changes remain untouched",
-				"Provides a git worktree remove cleanup step for when the review is finished"
+				"Keeps the review worktree available and describes cleanup only on human request"
+			]
+		},
+		{
+			"id": 7,
+			"name": "different-origin-repository",
+			"prompt": "Pull https://github.com/octocat/hello-world/pull/42 for review. My checkout's origin is a fork of a different repository.",
+			"expected_output": "Resolves the PR's base clone URL and uses it for both head and base fetches, without relying on origin.",
+			"files": [],
+			"expectations": [
+				"Fetches pull/42/head from the base repository clone URL returned by the PR API",
+				"Checks the fetched head SHA against PR metadata",
+				"Does not fetch the PR from the unrelated origin remote"
+			]
+		},
+		{
+			"id": 8,
+			"name": "preserve-review-worktree",
+			"prompt": "I'm done reading the PR for now. I added a scratch file and some notes in its worktree.",
+			"expected_output": "Leaves the review worktree intact and reports its path instead of force-removing human work.",
+			"files": [],
+			"expectations": [
+				"Does not run git worktree remove --force",
+				"Preserves untracked files and human edits",
+				"Requests explicit approval before any destructive cleanup"
+			]
+		},
+		{
+			"id": 9,
+			"name": "ado-fork-source",
+			"prompt": "Review this ADO PR locally: https://dev.azure.com/myorg/myproject/_git/myrepo/pullrequest/1234. It comes from a fork.",
+			"expected_output": "Uses forkSource.repository.remoteUrl for the head and repository.remoteUrl for the base, preserving the metadata commit SHAs.",
+			"files": [],
+			"expectations": [
+				"Fetches the head commit from the fork's source clone URL",
+				"Fetches the base commit from the target repository clone URL",
+				"Does not assume origin contains either commit"
 			]
 		}
 	]
