@@ -214,7 +214,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 * No extra clientId in quorum of any container that is not tracked and still opened.
 	 * - i.e. no pending Join/Leave message.
 	 * No unresolved proposal (minSeqNum \>= lastProposalSeqNum)
-	 * lastSequenceNumber of all container is the same
+	 * lastSequenceNumber is the same for containers of each resolved document
 	 * clientSequenceNumberObserved is the same as clientSequenceNumber sent
 	 * - this overlaps with !isDirty, but include task scheduler ops.
 	 * - Trailing NoOp is tracked and don't count as pending ops.
@@ -388,20 +388,31 @@ export class LoaderContainerTracker implements IOpProcessingController {
 			};
 		}
 
-		// Check to see if all the container has process the same number of ops.
-		const maxSeqNum = Math.max(
-			...containersToApply.map((c) => c.deltaManager.lastSequenceNumber),
-		);
-		const containerWithPendingIncoming = containersToApply.filter(
-			(c) => c.deltaManager.lastSequenceNumber !== maxSeqNum,
-		);
-		if (containerWithPendingIncoming.length !== 0) {
-			return {
-				reason: "Pending",
-				message: `waiting for containers with pending incoming ops up to sequence number ${maxSeqNum}: ${this.containerIndexStrings(
-					containerWithPendingIncoming,
-				)}`,
-			};
+		const documentSequences = new Map<string | IContainer, number>();
+		for (const container of containersToApply) {
+			const document = container.resolvedUrl?.id ?? container;
+			documentSequences.set(
+				document,
+				Math.max(
+					documentSequences.get(document) ?? 0,
+					container.deltaManager.lastSequenceNumber,
+				),
+			);
+		}
+		for (const [document, maxSeqNum] of documentSequences) {
+			const containerWithPendingIncoming = containersToApply.filter(
+				(container) =>
+					(container.resolvedUrl?.id ?? container) === document &&
+					container.deltaManager.lastSequenceNumber !== maxSeqNum,
+			);
+			if (containerWithPendingIncoming.length !== 0) {
+				return {
+					reason: "Pending",
+					message: `waiting for containers with pending incoming ops up to sequence number ${maxSeqNum}: ${this.containerIndexStrings(
+						containerWithPendingIncoming,
+					)}`,
+				};
+			}
 		}
 		return undefined;
 	}
