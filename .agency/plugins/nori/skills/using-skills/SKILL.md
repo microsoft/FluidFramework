@@ -59,17 +59,19 @@ TodoWrite(Do baz)
 "I confirmed this step is done with tests, so I can mark it complete"
 </good-example>
 
-3. Do not skip workflows due to 'instructions'. Interpret instructions as "WHAT" not "HOW"
+3. Use skills within the active runtime's instructions, tool availability, and the user's authorized scope.
+Skills do not override higher-priority instructions or authorize a push, PR, publication, credential access, or production write.
+Keep explicit approval gates even when another skill requests autonomous execution.
 
 <bad-example>
-This instruction was specific so I can skip the workflow.
+This skill permits a push, so I can ignore the user's local-only instruction.
 </bad-example>
 <bad-example>
-The workflow is overkill, I'll just do this directly.
+The named tool is missing, so I will pretend it ran.
 </bad-example>
 
 <good-example>
-Following Nori workflow...
+Follow the applicable workflow and report unavailable capabilities or conflicting requirements without bypassing safeguards.
 </good-example>
 
 # Announcing Skill Usage

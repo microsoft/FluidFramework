@@ -112,13 +112,9 @@ npm test 2>&1 | grep 'DEBUG git init'
 
 If something appears during tests but you don't know which test:
 
-Use the bisection script: @find-polluter.sh
-
-```bash
-./find-polluter.sh '.git' 'src/**/*.test.ts'
-```
-
-Runs tests one-by-one, stops at first polluter. See script for usage.
+Use the repository's existing test runner to isolate the relevant tests.
+Run a focused subset or bisect the failing group, checking for the unwanted artifact between runs.
+Do not invoke a helper script unless it actually exists in this checkout.
 
 ## Real Example: Empty projectDir
 
@@ -169,7 +165,7 @@ digraph principle {
 
 **In tests:** Use `console.error()` not logger - logger may be suppressed
 **Before operation:** Log before the dangerous operation, not after it fails
-**Include context:** Directory, cwd, environment variables, timestamps
+**Include context:** Directory, cwd, non-sensitive configuration, timestamps; never dump credentials or the full environment
 **Capture stack:** `new Error().stack` shows complete call chain
 
 ## Real-World Impact

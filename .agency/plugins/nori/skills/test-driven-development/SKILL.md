@@ -8,7 +8,8 @@ description: Use when implementing any feature or bugfix, before writing impleme
 
 1. Write failing tests (RED phase)
 
-2. Create a subagent using the nori-task-runner to evaluate test quality.
+2. Evaluate test quality.
+   Use a suitable subagent only if one is available in the active runtime and the review benefits from separate context; otherwise perform this checklist directly.
 - Ensure that each test does not just test mocks. If it does, remove the test and try again.
 - Ensure each test does not test implementation detail. If it does, rewrite the test so that it tests boundary behavior.
 - Ensure each test does not test data structure format or types. If it does, remove the test and try again.

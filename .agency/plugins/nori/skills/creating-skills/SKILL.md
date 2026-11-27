@@ -61,7 +61,9 @@ that instruction to the <required> block.
 
 Document which tools are necessary for the skill.
 
-The SKILL should explicitly encourage writing code. The agent should be told to write code to call a tool any time the agent needs to call any tools more than once. The agent should write code instead of calling tools itself.
+Use the active runtime's supported tools directly for a small number of calls.
+Write a script only for repeatable work that benefits from deterministic processing or batching.
+Do not invent tool names, bypass approval prompts, or extract credentials to make a script work.
 
 Steps that reference tools and APIs should inline them in the step by step process.
 
@@ -69,7 +71,8 @@ Steps that reference tools and APIs should inline them in the step by step proce
 - Write a python script that uses the slack api to pull my unread messages. The script should write my messages to a folder, /home/foobar/daily-analysis/<DD-MM-YYYY>/slack
 - Write a python script that uses the gmail api to pull my inbox. The script should write my emails to a folder, /home/foobar/daily-analysis/<DD-MM-YYYY>/email
 - Write a python script to identify the most urgent messages that I need to respond to.
-<system-reminder> Auth credentials can be found at /home/foobar/authentication/auth.txt
+Use the active profile's approved authentication flow.
+Do not read credential files or include secrets in skill examples.
 </good-example>
 
 <bad-example>
