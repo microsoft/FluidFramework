@@ -131,6 +131,12 @@ export class DataStoreContexts
 		return this._contexts.delete(id);
 	}
 
+	/** Releases an unpublished ID after creation fails. Existing waiters can observe a retry. */
+	public discardUnbound(id: string): void {
+		assert(this.notBoundContexts.delete(id), "Cannot discard a bound context");
+		this._contexts.delete(id);
+	}
+
 	/**
 	 * Map of recently deleted contexts for diagnostic purposes for GC.
 	 * Allows retrieval of context information even after deletion for logging/telemetry.

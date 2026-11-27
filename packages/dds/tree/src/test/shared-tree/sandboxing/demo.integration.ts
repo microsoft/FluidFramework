@@ -13,7 +13,7 @@ import {
 	startEphemeralService,
 } from "@fluidframework/local-driver/internal";
 import {
-	sharedObjectRegistryFromIterable,
+	dataStoreRegistryFromIterable,
 	defineDataStore,
 } from "@fluidframework/shared-object-base/internal";
 import {
@@ -24,7 +24,7 @@ import {
 } from "../../../simple-tree/index.js";
 import { Sandboxing } from "../../../index.js";
 import { SharedTreeAlpha } from "../../../treeFactory.js";
-import type { SharedObjectCreator } from "@fluidframework/shared-object-base/internal";
+import type { DataStoreCreator } from "@fluidframework/driver-definitions/internal";
 import type { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { asBeta } from "../../../api.js";
@@ -56,9 +56,9 @@ describe("End to End Host and Guest integrations", () => {
 		// defineTreeDataStore should get an overload or alternative which omits the config and does not crate the view for you.
 		const TestDataStore = defineDataStore<ViewableTree, ITree>({
 			type: "testTree",
-			registry: sharedObjectRegistryFromIterable([SharedTreeAlpha]),
-			async instantiateFirstTime(rootCreator: SharedObjectCreator): Promise<ITree> {
-				return rootCreator.createSharedObject(SharedTreeAlpha);
+			registry: dataStoreRegistryFromIterable([SharedTreeAlpha]),
+			async instantiateFirstTime(rootCreator: DataStoreCreator): Promise<ITree> {
+				return rootCreator.createDataStore(SharedTreeAlpha);
 			},
 			async view(tree): Promise<ITree> {
 				return tree;

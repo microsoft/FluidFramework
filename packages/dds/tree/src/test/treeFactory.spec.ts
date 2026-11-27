@@ -16,20 +16,20 @@ describe("treeFactory", () => {
 			["default", {}],
 			["non-default", { retainHistory: true }],
 		] as const) {
-			it(`preserves alpha kind capabilities with ${name} options`, () => {
+			it(`preserves alpha kind capabilities with ${name} options`, async () => {
 				// Keep the inferred return type: an annotation or cast could hide the capability loss.
 				const configured = configuredSharedTreeAlpha(options);
 				type _kind = requireAssignableTo<typeof configured, typeof SharedTreeAlpha>;
 				assert.equal(configured.type, SharedTreeAlpha.type);
 
-				const adapted = configured.adapt(configured);
+				const adapted = await configured.adapt(Promise.resolve(configured));
 				type _adaptedKind = requireAssignableTo<typeof adapted, typeof SharedTreeAlpha>;
 				assert.equal(adapted, configured);
 
 				// Adaptation checks kind identity, not just the common SharedTree type identifier.
-				assert.throws(
-					() => configured.adapt(SharedTreeAlpha),
-					validateUsageError(/Conflicting SharedObjectKinds with same type/),
+				await assert.rejects(
+					configured.adapt(Promise.resolve(SharedTreeAlpha)),
+					validateUsageError(/Conflicting DataStoreKinds with same type/),
 				);
 			});
 		}

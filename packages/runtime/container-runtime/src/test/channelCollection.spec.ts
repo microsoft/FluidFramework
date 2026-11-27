@@ -174,6 +174,21 @@ describe("Runtime", () => {
 			});
 		});
 		describe("detectOutboundReferences", () => {
+			it("attributes an intrinsic leaf's references to its own node", () => {
+				const outboundReferences: [string, string][] = [];
+				detectOutboundReferences(
+					"leaf",
+					{
+						type: "op",
+						content: {
+							address: "",
+							contents: { handle: { type: "__fluid_handle__", url: "/target" } },
+						},
+					},
+					(from, to) => outboundReferences.push([from, to]),
+				);
+				assert.deepEqual(outboundReferences, [["/leaf", "/target"]]);
+			});
 			it("Can find handles", () => {
 				const outboundReferences: [string, string][] = [];
 				detectOutboundReferences(

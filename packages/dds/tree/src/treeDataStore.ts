@@ -3,17 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidLoadable } from "@fluidframework/core-interfaces";
-import type { DataStoreKind } from "@fluidframework/driver-definitions/internal";
 import type {
-	SharedObjectCreator,
-	SharedObjectKey,
-	SharedObjectRegistry,
-	SharedObjectKindAlpha,
-	DataStoreOptions,
-} from "@fluidframework/shared-object-base/internal";
+	DataStoreKind,
+	DataStoreCreator,
+	DataStoreKey,
+	DataStoreRegistry,
+} from "@fluidframework/driver-definitions/internal";
+import type { DataStoreOptions } from "@fluidframework/shared-object-base/internal";
 import {
-	sharedObjectRegistryFromIterable,
+	dataStoreRegistryFromIterable,
 	defineDataStore,
 } from "@fluidframework/shared-object-base/internal";
 
@@ -42,7 +40,7 @@ export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema>
 	 * If provided, used to initialize the tree content when creating a new instance of the data store.
 	 */
 	readonly initializer?: (
-		creator: SharedObjectCreator,
+		creator: DataStoreCreator,
 	) => InsertableTreeFieldFromImplicitField<TSchema>;
 
 	/**
@@ -50,9 +48,12 @@ export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema>
 	 * @remarks
 	 * {@link configuredSharedTree} can be used to customize the SharedTree kind used in the registry.
 	 */
-	readonly registry?: Iterable<SharedObjectKindAlpha<IFluidLoadable>> | SharedObjectRegistry;
+	readonly registry?: Iterable<DataStoreKind> | DataStoreRegistry;
 
-	readonly key?: SharedObjectKey<ITree>;
+	/**
+	 * Key for the kind that supplies the root tree.
+	 */
+	readonly key?: DataStoreKey<ITree>;
 }
 
 /**
@@ -67,17 +68,17 @@ export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema>
 export function defineTreeDataStore<const TSchema extends ImplicitFieldSchema>(
 	options: TreeDataStoreOptions<TSchema>,
 ): DataStoreKind<TreeView<TSchema>> {
-	const registry: SharedObjectRegistry =
+	const registry: DataStoreRegistry =
 		typeof options.registry === "function"
 			? options.registry
-			: sharedObjectRegistryFromIterable([...(options.registry ?? [SharedTreeAlpha])]);
+			: dataStoreRegistryFromIterable([...(options.registry ?? [SharedTreeAlpha])]);
 
 	const result = defineDataStore<TreeView<TSchema>, ITree>({
 		type: options.type,
 		registry,
 		async instantiateFirstTime(
-			rootCreator: SharedObjectCreator,
-			creator: SharedObjectCreator,
+			rootCreator: DataStoreCreator,
+			creator: DataStoreCreator,
 		): Promise<ITree> {
 			return instantiateTreeFirstTime(
 				rootCreator,
@@ -102,12 +103,12 @@ export function defineTreeDataStore<const TSchema extends ImplicitFieldSchema>(
  * @alpha
  */
 export async function instantiateTreeFirstTime<TSchema extends ImplicitFieldSchema>(
-	rootCreator: SharedObjectCreator,
-	creator: SharedObjectCreator,
-	treeKind: SharedObjectKey<ITree>,
+	rootCreator: DataStoreCreator,
+	creator: DataStoreCreator,
+	treeKind: DataStoreKey<ITree>,
 	options: Pick<TreeDataStoreOptions<TSchema>, "config" | "initializer">,
 ): Promise<ITree> {
-	const tree = await rootCreator.createSharedObject(treeKind);
+	const tree = await rootCreator.createDataStore(treeKind);
 	initializeTreeFirstTime(tree, options, creator);
 	return tree;
 }
@@ -115,7 +116,7 @@ export async function instantiateTreeFirstTime<TSchema extends ImplicitFieldSche
 function initializeTreeFirstTime<TSchema extends ImplicitFieldSchema>(
 	tree: ITree,
 	options: Pick<TreeDataStoreOptions<TSchema>, "config" | "initializer">,
-	creator: SharedObjectCreator,
+	creator: DataStoreCreator,
 ): void {
 	if (options.initializer !== undefined) {
 		const view = tree.viewWith(options.config);

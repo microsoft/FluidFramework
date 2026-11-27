@@ -38,6 +38,28 @@ Read the **@fluidframework/runtime-utils** API documentation at <https://fluidfr
 <!-- prettier-ignore-end -->
 <!-- markdown-magic:end -->
 
+## Using legacy data-store factories with ServiceClient
+
+Import `dataStoreKindFromFactory` from `@fluidframework/runtime-utils/legacy/alpha` to use an existing data-store factory as an alpha `DataStoreKind`.
+Pass the resulting kind to ServiceClient creation/loading APIs or register it in a data-store registry.
+The bridge preserves the original factory identity, its child registry, entry point, and document format.
+It does not add a persisted hosting object or change named channels.
+
+The generic type argument describes the factory's entry point.
+Legacy factories erase this type, so you must supply the correct type; the bridge does not validate it.
+Repeated calls for the same factory return the same kind.
+Different factories with the same type identifier remain different kinds.
+
+The factory bridge does not change container root discovery.
+ServiceClient currently expects the `root` data-store alias.
+For other conventions, use the existing legacy loader and root-discovery code, then call `fluidContainerFromLegacy(container, data, registry, id)` from the same legacy-alpha entrypoint.
+Supply the service-facing ID used to reopen the document, not necessarily `container.resolvedUrl.id`.
+For example, ODSP reloads by item ID, whereas the resolved URL ID is a document hash.
+This exposes an attached legacy container through the alpha container API without changing its root or persisted structure.
+The registry must identify factories already registered in the legacy runtime; it does not install new factories in that runtime.
+Closing this alpha view also closes the original container.
+Specialized helpers for named-channel access can be added if customer needs justify them; the factory bridge lets existing implementations continue to use legacy APIs directly.
+
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

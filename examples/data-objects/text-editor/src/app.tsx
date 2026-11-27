@@ -36,14 +36,11 @@ import {
 import { TreeViewConfiguration, type ITree } from "fluid-framework";
 import {
 	asAlpha,
-	defineDataStore,
 	FluidClientVersion,
 	ForestTypeOptimized,
 	incrementalEncodingPolicyForAllowedTypes,
 	incrementalSummaryHint,
-	instantiateTreeFirstTime,
 	SchemaFactoryAlpha,
-	sharedObjectRegistryFromIterable,
 	PlainText,
 	TreeCompressionStrategy,
 	type FluidContainer,
@@ -82,30 +79,6 @@ const SharedTree = configuredSharedTree({
 	),
 	minVersionForCollab: FluidClientVersion.v2_74,
 });
-
-/**
- * Creates or loads the document's SharedTree and exposes a typed view to each user.
- */
-const TextEditorDataStore = defineDataStore<TextEditorData, ITree>({
-	type: "text-editor",
-	registry: sharedObjectRegistryFromIterable([SharedTree]),
-	instantiateFirstTime: async (rootCreator, creator) =>
-		instantiateTreeFirstTime(rootCreator, creator, SharedTree, {
-			config: treeConfig,
-			initializer: () => createInitialRoot(),
-		}),
-	view: async (tree) => ({ tree, treeView: asAlpha(tree.viewWith(treeConfig)) }),
-});
-
-/**
- * Data exposed by the text editor's root data store.
- */
-interface TextEditorData {
-	/** The shared object registered with Devtools for inspection. */
-	tree: ITree;
-	/** This client's typed view used to read and edit the document. */
-	treeView: TreeViewAlpha<typeof TextEditorRoot>;
-}
 
 type ViewType = "plainTextarea" | "plainQuill" | "formatted";
 
@@ -152,7 +125,7 @@ export interface UserView {
 	 * close it when the panel is removed. Everything the panel renders comes from
 	 * {@link UserView.treeView}.
 	 */
-	readonly container: FluidContainer<TextEditorData>;
+	readonly container: FluidContainer<ITree>;
 	/** This user's view of the shared text, rendered and edited by the panel. */
 	readonly treeView: TreeViewAlpha<typeof TextEditorRoot>;
 }
@@ -163,7 +136,7 @@ export interface UserView {
  */
 const devtoolsContainerProps = (user: UserView): FluidContainerDevtoolsProps => ({
 	container: user.container,
-	containerData: { tree: user.container.data.tree },
+	containerData: { tree: user.container.data },
 	containerKey: `User ${user.id} Container`,
 });
 
@@ -204,18 +177,34 @@ async function initializeFluid(): Promise<{
 	connectUser: ConnectUser;
 }> {
 	const devtoolsLogger = createDevtoolsLogger();
-	const client = getExampleServiceClient({ ...defaultServiceOptions, logger: devtoolsLogger });
+	const client = getExampleServiceClient({
+		...defaultServiceOptions,
+		oldestSupportedClient: "3.12.0",
+		logger: devtoolsLogger,
+	});
 	const connectUser: ConnectUser = async (documentId) => {
-		const loaded = await client.loadContainer(documentId, TextEditorDataStore);
-		return { id: makeUserId(), container: loaded, treeView: loaded.data.treeView };
+		const loaded = await client.loadContainer(documentId, SharedTree);
+		return {
+			id: makeUserId(),
+			container: loaded,
+			treeView: asAlpha(loaded.data.viewWith(treeConfig)),
+		};
 	};
-	const container = await createOrLoadExampleContainer(client, TextEditorDataStore);
+	const container = await createOrLoadExampleContainer(client, SharedTree, (tree) => {
+		const view = tree.viewWith(treeConfig);
+		try {
+			view.initialize(createInitialRoot());
+		} finally {
+			// Release the initialization view before creating the user's view: a tree permits only one live view.
+			view.dispose();
+		}
+	});
 	const containerId = container.id;
 	if (containerId === undefined) {
 		throw new Error("The example container is not attached.");
 	}
 	const initialUsers: UserView[] = [
-		{ id: makeUserId(), container, treeView: container.data.treeView },
+		{ id: makeUserId(), container, treeView: asAlpha(container.data.viewWith(treeConfig)) },
 	];
 
 	// Connect the remaining initial users (the first was connected/created above).

@@ -184,6 +184,7 @@ function ExampleServiceTroubleshooting(): ReactNode {
  * @typeParam T - The type of the root data store.
  * @param client - The service client used to load or create the container.
  * @param rootStore - The kind of data store to use as the container root.
+ * @param initialize - Initializes a newly created root before attachment. Not called when loading.
  * @returns The loaded or newly attached container.
  * @remarks
  * This function assumes its the only thing using the `location.hash`: if your application uses it for anything else,
@@ -193,15 +194,23 @@ function ExampleServiceTroubleshooting(): ReactNode {
 export async function createOrLoadExampleContainer<T>(
 	client: ServiceClient,
 	rootStore: DataStoreKind<T>,
+	initialize?: (data: T) => void | Promise<void>,
 ): Promise<FluidContainer<T>> {
 	const id = location.hash.slice(1);
 	if (id.length > 0) {
 		return client.loadContainer(id, rootStore);
 	}
-	const container = await client.createAttachedContainer(rootStore);
-	// eslint-disable-next-line require-atomic-updates -- this example setup assumes this function controls the location hash.
-	location.hash = container.id;
-	return container;
+	const container = await client.createContainer(rootStore);
+	try {
+		await initialize?.(container.data);
+		const attached = await container.attach();
+		// eslint-disable-next-line require-atomic-updates -- this example setup assumes this function controls the location hash.
+		location.hash = attached.id;
+		return attached;
+	} catch (error) {
+		container.close();
+		throw error;
+	}
 }
 
 /**

@@ -4,6 +4,7 @@
  */
 
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type { DataStoreKind } from "@fluidframework/driver-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import {
 	type ISharedObject,
@@ -118,7 +119,7 @@ export const SharedTree: ISharedObjectKind<ITree> & SharedObjectKind<ITree> =
  * {@link SharedTree} but without legacy types, and with alpha types.
  * @alpha
  */
-export const SharedTreeAlpha: SharedObjectKindAlpha<ITree> = configuredSharedTree({});
+export const SharedTreeAlpha: DataStoreKind<ITree> = configuredSharedTree({});
 
 /**
  * {@link SharedTree} but allowing a non-default configuration.
@@ -163,15 +164,13 @@ export function configuredSharedTreeBetaLegacy(
 
 /**
  * {@link configuredSharedTreeBeta} but including the alpha {@link SharedTreeOptions} and
- * {@link @fluidframework/shared-object-base#SharedObjectKindAlpha} capabilities.
+ * {@link @fluidframework/driver-definitions#DataStoreKind} capabilities.
  *
  * @param options - Configuration options for the SharedTree kind.
  * @returns A configured SharedTree kind with experimental capabilities.
  * @alpha
  */
-export function configuredSharedTreeAlpha(
-	options: SharedTreeOptions,
-): SharedObjectKindAlpha<ITree> {
+export function configuredSharedTreeAlpha(options: SharedTreeOptions): DataStoreKind<ITree> {
 	return configuredSharedTree(options);
 }
 

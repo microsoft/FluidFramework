@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { stub } from "sinon";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import {
@@ -13,6 +14,7 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType, type SummaryObject } from "@fluidframework/driver-definitions";
 import type {
 	DataStoreKind,
@@ -21,9 +23,15 @@ import type {
 	FluidContainerWithService,
 } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
+import { defineDataStore } from "@fluidframework/shared-object-base/internal";
 import type {
+	IAttachMessage,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
+	IFluidDataStoreFactoryInternal,
+	IFluidDataStoreChannelCollection,
+	FluidDataStoreContextInternal,
+	OldestSupportedClientVersion,
 	IFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -39,6 +47,7 @@ import {
 	createSummarizerCore,
 	defaultTestOldestSupportedClient,
 	summarizeNow,
+	waitForContainerConnection,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
@@ -101,6 +110,68 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		},
 	};
 	const kind = dataStoreKindFromFactory<ISharedMap>(factory);
+	const collections = new WeakMap<ISharedMap, IFluidDataStoreChannelCollection>();
+	const leafRuntimes = new WeakMap<ISharedMap, IFluidDataStoreRuntime>();
+	const leafFactory: IFluidDataStoreFactoryInternal = {
+		type: mapFactory.type,
+		isLeafChannel: true,
+		get IFluidDataStoreFactory() {
+			return this;
+		},
+		async instantiateDataStore(context, existing) {
+			const runtime = await apis.dataRuntime.packages.datastore.LeafChannelRuntime.load(
+				context,
+				existing,
+				mapFactory,
+			);
+			const map = await runtime.entryPoint.get();
+			assert(SharedMap.is(map));
+			leafRuntimes.set(map, runtime);
+			return runtime;
+		},
+	};
+	/**
+	 * Replaces the parent runtime while retaining its factory type and root name, unlike the bridge-only fixture.
+	 * This "NoCompat" suite exercises mixed APIs/layouts using current packages, not older framework versions.
+	 */
+	const modernFactory: IFluidDataStoreFactory & {
+		IFluidDataStoreRegistry: IFluidDataStoreRegistry;
+	} = {
+		type: factory.type,
+		get IFluidDataStoreFactory() {
+			return this;
+		},
+		IFluidDataStoreRegistry: {
+			get IFluidDataStoreRegistry() {
+				return this;
+			},
+			async get(type) {
+				return type === leafFactory.type
+					? leafFactory
+					: type === factory.type
+						? factory
+						: undefined;
+			},
+		},
+		async instantiateDataStore(context, existing) {
+			const internal = context as FluidDataStoreContextInternal;
+			assert(internal.createChannelCollection !== undefined);
+			return internal.createChannelCollection(async (collection) => {
+				if (!existing) {
+					const root = await collection.createDataStore(
+						leafFactory,
+						"application-selected-root",
+					);
+					collection.bind(root.entryPoint);
+				}
+				const handle = await collection.getDataStoreEntryPoint("application-selected-root");
+				const map = (await handle.get()) as ISharedMap;
+				collections.set(map, collection);
+				return map;
+			});
+		},
+	};
+	const modernKind = dataStoreKindFromFactory<ISharedMap>(modernFactory);
 	const kinds: DataStoreRegistry = async (type) => {
 		assert.equal(type, factory.type);
 		return kind;
@@ -158,11 +229,12 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 	async function alphaFactory(
 		registryKinds: DataStoreRegistry,
 		root?: DataStoreKind,
+		oldestSupportedClient: OldestSupportedClientVersion = defaultTestOldestSupportedClient,
 		summarizer = false,
 	): Promise<IRuntimeFactory> {
 		const loader = makeCodeLoader(
 			registryKinds,
-			defaultTestOldestSupportedClient,
+			oldestSupportedClient,
 			async (parameters) => {
 				const { runtime } = await ContainerRuntime.loadRuntime2({
 					...parameters,
@@ -244,6 +316,220 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		const entry = await convertRegistry(kinds).get(factory.type);
 		assert.equal(entry?.IFluidDataStoreFactory, factory);
 		assert.equal(entry?.IFluidDataStoreRegistry, registry);
+	});
+
+	it("preserves a legacy .aliases child and rejects metadata that would overwrite it", async () => {
+		const container = await provider.createContainer(new LegacyCreatingFactory());
+		const legacy = (await container.getEntryPoint()) as ISharedMap;
+		const runtime = runtimes.get(legacy);
+		assert(runtime !== undefined);
+		const reserved = SharedMap.create(runtime, ".aliases");
+		reserved.set("value", 42);
+		legacy.set("reserved", reserved.handle);
+		await provider.ensureSynchronized();
+
+		const runtimeFactory = await alphaFactory(async () => modernKind, undefined, "3.12.0");
+		const modern = await provider.loadContainer(runtimeFactory);
+		await provider.ensureSynchronized();
+		const root = (await modern.getEntryPoint()) as ISharedMap;
+		const collection = collections.get(root);
+		assert(collection !== undefined);
+		const child = await collection.createDataStore(leafFactory);
+		await assert.rejects(child.trySetAlias("named"), /existing .aliases child/);
+		root.set("child", child.entryPoint);
+		await provider.ensureSynchronized();
+		const loader = provider.createLoader([
+			[
+				provider.defaultCodeDetails,
+				await alphaFactory(async () => modernKind, undefined, "3.12.0", true),
+			],
+		]);
+		const { summarizer } = await createSummarizerCore(modern, loader);
+		await provider.ensureSynchronized();
+		const { summaryVersion } = await summarizeNow(summarizer);
+		const reloaded = await provider.loadContainer(legacyFactory, undefined, {
+			[LoaderHeader.version]: summaryVersion,
+		});
+		const reloadedRoot = (await reloaded.getEntryPoint()) as ISharedMap;
+		const handle = reloadedRoot.get<IFluidHandle<ISharedMap>>("reserved");
+		assert(handle !== undefined);
+		assert.equal((await handle.get()).get("value"), 42);
+	});
+
+	it("migrates the parent runtime while preserving legacy DDS operations and attachment", async () => {
+		const container = await provider.createDetachedContainer(new LegacyCreatingFactory());
+		const legacy = (await container.getEntryPoint()) as ISharedMap;
+		const runtime = runtimes.get(legacy);
+		assert(runtime !== undefined);
+		const getAttachSummary = runtime.getAttachSummary.bind(runtime);
+		// Older documents contained a search metadata tree alongside their DDS trees.
+		const snapshot = stub(runtime, "getAttachSummary").callsFake((...args) => {
+			const attachSummary = getAttachSummary(...args);
+			attachSummary.summary.tree._search = { type: SummaryType.Tree, tree: {} };
+			return attachSummary;
+		});
+		try {
+			await provider.attachDetachedContainer(container);
+		} finally {
+			snapshot.restore();
+		}
+		legacy.set("value", 1);
+		await provider.ensureSynchronized();
+		const alpha = await client.loadContainer(provider.documentId, modernKind);
+		await provider.ensureSynchronized();
+		assert.equal(alpha.data.get("value"), 1);
+		alpha.data.set("value", 2);
+		await provider.ensureSynchronized();
+		assert.equal(legacy.get("value"), 2);
+		const oldChild = SharedMap.create(runtime, "later-old-child");
+		oldChild.set("value", 42);
+		const context = contexts.get(legacy);
+		assert(context !== undefined);
+		const submit = context.submitMessage.bind(context);
+		// Older DDS attach ops identified the factory in the message, without an attributes blob.
+		const sender = stub(context, "submitMessage").callsFake((type, content, metadata) => {
+			if (type === "attach") {
+				const message = content as IAttachMessage;
+				submit(
+					type,
+					{
+						...message,
+						snapshot: {
+							...message.snapshot,
+							entries: message.snapshot.entries.filter(
+								(entry) => entry.path !== ".attributes",
+							),
+						},
+					},
+					metadata,
+				);
+				return;
+			}
+			submit(type, content, metadata);
+		});
+		try {
+			legacy.set("oldChild", oldChild.handle);
+		} finally {
+			sender.restore();
+		}
+		await provider.ensureSynchronized();
+		const oldHandle = alpha.data.get<IFluidHandle<ISharedMap>>("oldChild");
+		assert(oldHandle !== undefined);
+		const newView = await oldHandle.get();
+		newView.set("value", 43);
+		await provider.ensureSynchronized();
+		assert.equal(oldChild.get("value"), 43);
+		const collection = collections.get(alpha.data);
+		assert(collection !== undefined);
+		const summary = await collection.summarize(true, false);
+		assert.equal(summary.summary.tree._search, undefined);
+		assert(summary.summary.tree["application-selected-root"] !== undefined);
+		for (const url of [
+			"/later-old-child",
+			"/_channels/later-old-child",
+			"/_custom/later-old-child",
+		]) {
+			const response = await collection.request({
+				url,
+				headers: { viaHandle: true, wait: false },
+			});
+			assert.equal(response.status, 200, url);
+			assert.equal(response.value, newView, url);
+		}
+		const newChild = await collection.createDataStore(leafFactory);
+		const newMap = (await newChild.entryPoint.get()) as ISharedMap;
+		newMap.set("value", 44);
+		alpha.data.set("newChild", newMap.handle);
+		await provider.ensureSynchronized();
+		const newHandle = legacy.get<IFluidHandle<ISharedMap>>("newChild");
+		assert(newHandle !== undefined);
+		assert.equal((await newHandle.get()).get("value"), 44);
+		assert.equal(
+			toFluidHandleInternal(alpha.data.handle).absolutePath,
+			toFluidHandleInternal(legacy.handle).absolutePath,
+		);
+	});
+
+	it("adds a composite child after rollout without relocating existing DDS children", async () => {
+		const oldContainer = await provider.createContainer(new LegacyCreatingFactory());
+		const oldRoot = (await oldContainer.getEntryPoint()) as ISharedMap;
+		oldRoot.set("value", 42);
+		const rootPath = toFluidHandleInternal(oldRoot.handle).absolutePath;
+		await provider.ensureSynchronized();
+		oldContainer.close();
+		const runtimeFactory = await alphaFactory(async () => modernKind, undefined, "3.12.0");
+		const container = await provider.loadContainer(runtimeFactory);
+		const root = (await container.getEntryPoint()) as ISharedMap;
+		assert.equal(toFluidHandleInternal(root.handle).absolutePath, rootPath);
+		const collection = collections.get(root);
+		assert(collection !== undefined);
+		const nested = await collection.createDataStore(factory);
+		const nestedMap = (await nested.entryPoint.get()) as ISharedMap;
+		nestedMap.set("value", 43);
+		root.set("nested", nestedMap.handle);
+		await provider.ensureSynchronized();
+		const loader = provider.createLoader([
+			[
+				provider.defaultCodeDetails,
+				await alphaFactory(async () => modernKind, undefined, "3.12.0", true),
+			],
+		]);
+		const { summarizer } = await createSummarizerCore(container, loader);
+		await provider.ensureSynchronized();
+		const { summaryVersion, summaryTree } = await summarizeNow(summarizer);
+		const channels: SummaryObject | undefined = summaryTree.tree[".channels"];
+		assert(channels?.type === SummaryType.Tree);
+		const context = contexts.get(oldRoot);
+		assert(context !== undefined);
+		const store: SummaryObject | undefined = channels.tree[context.id];
+		assert(store?.type === SummaryType.Tree);
+		const children: SummaryObject | undefined = store.tree[".channels"];
+		assert(children?.type === SummaryType.Tree);
+		const named: SummaryObject | undefined = children.tree["application-selected-root"];
+		assert(named?.type === SummaryType.Tree);
+		assert(named.tree[".attributes"]?.type === SummaryType.Blob);
+		assert.equal(named.tree[".component"], undefined);
+		assert.equal(named.tree[".channels"], undefined);
+		const remote = await provider.loadContainer(runtimeFactory, undefined, {
+			[LoaderHeader.version]: summaryVersion,
+		});
+		const remoteRoot = (await remote.getEntryPoint()) as ISharedMap;
+		assert.equal(remoteRoot.get("value"), 42);
+		assert.equal(toFluidHandleInternal(remoteRoot.handle).absolutePath, rootPath);
+		const handle = remoteRoot.get<IFluidHandle<ISharedMap>>("nested");
+		assert(handle !== undefined);
+		assert.equal((await handle.get()).get("value"), 43);
+	});
+
+	it("preserves legacy broadcast signals without interpreting application payloads as routing", async () => {
+		const container = await provider.createContainer(new LegacyCreatingFactory());
+		const legacy = (await container.getEntryPoint()) as ISharedMap;
+		const alpha = await client.loadContainer(provider.documentId, modernKind);
+		assert(alpha instanceof TestServiceContainer);
+		await Promise.all([
+			waitForContainerConnection(container),
+			waitForContainerConnection(alpha.container),
+		]);
+		const oldRuntime = runtimes.get(legacy);
+		const newRuntime = leafRuntimes.get(alpha.data);
+		assert(oldRuntime !== undefined && newRuntime !== undefined);
+		await provider.ensureSynchronized();
+		const payload = { address: "application-data", contents: 42 };
+		const receivedNew = new Promise<unknown>((resolve) => {
+			newRuntime.on("signal", (message, local) => {
+				if (!local && message.type === "__fluid_native_channel_signal")
+					resolve(message.content);
+			});
+		});
+		oldRuntime.submitSignal("__fluid_native_channel_signal", payload);
+		assert.deepEqual(await receivedNew, payload);
+		const receivedOld = new Promise<unknown>((resolve) => {
+			oldRuntime.on("signal", (message, local) => {
+				if (!local && message.type === "reply") resolve(message.content);
+			});
+		});
+		newRuntime.submitSignal("reply", payload);
+		assert.deepEqual(await receivedOld, payload);
 	});
 
 	it("adopts an attached legacy container with an application-selected root alias", async () => {
@@ -380,7 +666,17 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		};
 		const parentKind = dataStoreKindFromFactory<ISharedMap>(parentFactory);
 		const parentKinds: DataStoreRegistry = async () => parentKind;
-		const runtimeFactory = await alphaFactory(parentKinds, parentKind);
+		const nested = defineDataStore<ISharedMap, ISharedMap>({
+			type: "nested-initializing-parent",
+			registry: parentKinds,
+			instantiateFirstTime: async (creator) => creator.createDataStore(parentKind),
+			view: async (map) => map,
+		});
+		const runtimeFactory = await alphaFactory(
+			async (type) => (type === nested.type ? nested : parentKind),
+			nested,
+			"3.12.0",
+		);
 		const container = await provider.createContainer(runtimeFactory);
 		const root = (await container.getEntryPoint()) as ISharedMap;
 		const alpha = fluidContainerFromLegacy(container, root, parentKinds, provider.documentId);
@@ -393,6 +689,9 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		const remote = await provider.loadContainer(runtimeFactory);
 		await provider.ensureSynchronized();
 		const remoteRoot = (await remote.getEntryPoint()) as ISharedMap;
+		const nestedChild = remoteRoot.get<IFluidHandle<ISharedMap>>("child");
+		assert(nestedChild !== undefined);
+		assert.equal((await nestedChild.get()).get("value"), 42);
 		const additionalHandle = remoteRoot.get<IFluidHandle<ISharedMap>>("additional");
 		assert(additionalHandle !== undefined);
 		const remoteAdditional = await additionalHandle.get();
@@ -446,7 +745,7 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 		assert.equal(alpha.data.get("value"), 43);
 	});
 
-	for (const writer of ["legacy", "alpha"] as const) {
+	for (const writer of ["legacy", "alpha", "generalized"] as const) {
 		it(`reloads a ${writer} summary through the other API`, async () => {
 			const container = await provider.createContainer(new LegacyCreatingFactory());
 			const legacy = (await container.getEntryPoint()) as ISharedMap;
@@ -455,7 +754,12 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 			const summaryFactory =
 				writer === "legacy"
 					? makeLegacyFactory(true)
-					: await alphaFactory(kinds, undefined, true);
+					: await alphaFactory(
+							writer === "generalized" ? async () => modernKind : kinds,
+							undefined,
+							defaultTestOldestSupportedClient,
+							true,
+						);
 			const loader = provider.createLoader([[provider.defaultCodeDetails, summaryFactory]]);
 			const { summarizer } = await createSummarizerCore(container, loader);
 			await provider.ensureSynchronized();
@@ -475,7 +779,8 @@ describeCompat("Legacy data-store kind bridge", "NoCompat", (getTestObjectProvid
 			assert.equal(named.tree[".component"], undefined);
 			assert.equal(named.tree[".channels"], undefined);
 
-			const readerFactory = writer === "legacy" ? await alphaFactory(kinds) : legacyFactory;
+			const readerFactory =
+				writer === "legacy" ? await alphaFactory(async () => modernKind) : legacyFactory;
 			const reader = await provider.loadContainer(readerFactory, undefined, {
 				// Read the exact summary just inspected, rather than a default or earlier version.
 				[LoaderHeader.version]: summaryVersion,

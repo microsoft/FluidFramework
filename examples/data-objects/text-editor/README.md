@@ -2,6 +2,13 @@
 
 Minimal sample demonstrating use of the SharedTree API for collaborative text editing with Quill.
 
+The configured SharedTree is the container root; no wrapper data store is persisted.
+New trees are initialized before attachment, and each user creates a local typed view.
+Direct shared-object hosting requires the example's `oldestSupportedClient` target of `3.12.0`.
+
+Documents created by the earlier wrapper-based version of this example use a different root kind.
+Remove the URL hash to create a new document when switching to this version.
+
 <!-- markdown-magic:begin {"transform":"example-app-readme-header","serviceClient":true,"headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
