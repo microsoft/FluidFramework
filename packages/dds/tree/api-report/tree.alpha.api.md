@@ -1004,6 +1004,7 @@ export interface LeafSchema<Name extends string, T extends TreeLeafValue> extend
 export interface LocalChangeMetadata extends Extract<ChangeMetadataBeta, {
     readonly isLocal: true;
 }> {
+    readonly commits: readonly TreeBranchCommitMetadata[];
     getChange(): JsonCompatibleReadOnly;
     getRevertible(onDisposed?: (revertible: RevertibleAlpha) => void): RevertibleAlpha | undefined;
     readonly label?: unknown;
@@ -1269,6 +1270,7 @@ export const RecordNodeSchema: {
 export interface RemoteChangeMetadata extends Extract<ChangeMetadataBeta, {
     readonly isLocal: false;
 }> {
+    readonly commits: readonly TreeBranchCommitMetadata[];
     readonly getChange?: undefined;
     readonly getRevertible?: undefined;
     readonly label?: undefined;
