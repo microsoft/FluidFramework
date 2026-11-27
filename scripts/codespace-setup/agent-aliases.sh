@@ -21,11 +21,32 @@ _ensure_agency() {
 	fi
 }
 
+_launch_auto_agent() {
+	_ensure_agency || return 1
+	local profile="$1" default_agent="$2"
+	shift 2
+	local -a agency_args=(--profile "$profile") cli_args=()
+	if [[ -n "$default_agent" ]]; then
+		cli_args+=(--agent "$default_agent")
+	fi
+	cli_args+=(-i "/yolo auto")
+	local cli=false arg
+	for arg in "$@"; do
+		if [[ "$arg" == "--" && "$cli" == false ]]; then
+			cli=true
+		elif [[ "$cli" == true ]]; then
+			cli_args+=("$arg")
+		else
+			agency_args+=("$arg")
+		fi
+	done
+	agency copilot "${agency_args[@]}" -- "${cli_args[@]}"
+}
+
 # Agent launcher functions. Extra args (e.g. --mcp 'kusto ...') are inserted
 # before the -- separator so they reach agency, not Copilot directly.
 dev() {
-	_ensure_agency || return 1
-	agency copilot --profile nori --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' "$@" -- -i "/yolo auto"
+	_launch_auto_agent nori "" --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' "$@"
 }
 
 copilot() {
@@ -34,8 +55,7 @@ copilot() {
 }
 
 oce() {
-	_ensure_agency || return 1
-	agency copilot --profile ff-oce "$@" -- --agent ff-oce:ff-oce -i "/yolo auto"
+	_launch_auto_agent ff-oce ff-oce:ff-oce "$@"
 }
 
 start() {

@@ -51,6 +51,13 @@ These shell functions are available in all terminal sessions. `dev` is the recom
 | `copilot` | `agency copilot` | Copilot CLI without an FF-specific profile or default MCP servers |
 | `oce` | `agency copilot --profile ff-oce ... -- --agent ff-oce:ff-oce -i "/yolo auto"` | Copilot CLI configured for on-call engineer workflows |
 
+`dev` and `oce` start with `/yolo auto` to use the AI-driven automatic permission classifier.
+`copilot` does not set a permission mode.
+The OCE agent's confirmation before writes still applies.
+Arguments before `--` configure Agency; arguments after it configure Copilot CLI.
+For example, `dev -- --model <available-model>` or `oce -- --model <available-model>` preserves your model choice.
+`start --model <available-model>` selects the recommendation assistant's model, not the launched agent's model.
+
 ### Custom MCP Servers
 
 The `dev` launcher includes ADO, WorkIQ, and EngHub MCP servers by default.
