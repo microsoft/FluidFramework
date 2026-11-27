@@ -1,0 +1,5 @@
+{
+	"name": "trust-policy",
+	"description": "Audit pnpm, Yarn, and npm dependency trust, or verify single-package provenance and find attested alternatives.",
+	"version": "0.1.0"
+}

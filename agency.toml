@@ -22,3 +22,6 @@ default = ["local:./.agency/plugins/ff-oce"]
 
 [profiles.nori.plugins]
 default = ["local:./.agency/plugins/nori"]
+
+[profiles.trust-policy.plugins]
+default = ["local:./.agency/plugins/trust-policy"]
