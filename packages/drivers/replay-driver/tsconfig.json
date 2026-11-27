@@ -5,5 +5,7 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",
+		// Record index access is enforced by @fluid-internal/fluid/no-unchecked-record-access.
+		"noUncheckedIndexedAccess": false,
 	},
 }
